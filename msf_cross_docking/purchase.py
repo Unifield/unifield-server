@@ -24,13 +24,20 @@ from osv import fields
 from tools.translate import _
 
 class purchase_order(osv.osv):
+    '''
+    Enables the option cross docking
+    '''
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking?'),
     }
-    
+
+    _defaults = {
+        'cross_docking_ok': False,
+    }
+
     def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, context=None):
         """ Finds location id for changed cross_docking_ok.
         @param cross_docking_ok: Changed value of cross_docking_ok.
@@ -42,55 +49,102 @@ class purchase_order(osv.osv):
         elif cross_docking_ok == False:
             l = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
         return {'value': {'location_id': l}}
+
+    def write(self, cr, uid, ids, vals, context=None):
+        obj_data = self.pool.get('ir.model.data')
+        if vals.get('cross_docking_ok'):
+            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1],})
+        elif vals.get('cross_docking_ok') == False:
+            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1], })
+        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+
+    def create(self, cr, uid, vals, context={}):
+        obj_data = self.pool.get('ir.model.data')
+        if vals.get('cross_docking_ok'):
+            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1],})
+        elif vals.get('cross_docking_ok') == False:
+            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1], })
+        id = super(purchase_order, self).create(cr, uid, vals, context=context)
+        return id
     
-    def test_cross_docking_ok(self, cr, uid, ids):
-        """ Tests whether cross docking is True or False.
-        @return: True or False
-        """
-        for order in self.browse(cr, uid, ids):
-            return order.cross_docking_ok
 purchase_order()
 
-#class procurement_order(osv.osv):
-#    '''
-#    date modifications
-#    '''
-#    _inherit = 'procurement.order'
-#    
-#    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-#        '''
-#        Please copy this to your module's method also.
-#        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-#        
-#        - allow to modify the data for purchase order line creation
-#        '''
+class procurement_order(osv.osv):
+    '''
+    We modify location_id in purchase order created from sale order (type = make_to_order) 
+    to set 'cross docking'
+    '''
+    _inherit = 'procurement.order'
+    
+    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+        
+        - allow to modify the data for purchase order creation
+        '''
+        if context is None:
+            context = {}
+        sol_obj = self.pool.get('sale.order.line')
+        obj_data = self.pool.get('ir.model.data')
+        procurement = kwargs['procurement']
+        
+        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if len(ids):
+            values.update({'cross_docking_ok': True, 'location_id' : obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1],})
+        return values  
+
+procurement_order()
+
+class stock_picking(osv.osv):
+    '''
+    do_partial modification
+    '''
+    _inherit = 'stock.picking'
+    
+#    def choose_cross_docking(self, cr, uid, ids, context=None):
+#        res = []
 #        if context is None:
 #            context = {}
-#        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-#        procurement = kwargs['procurement']
-#        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
-#        # confirmed_delivery_date (confirmed date) = False
-#        line.update({'date_planned': procurement.date_planned, 'confirmed_delivery_date': False,})
-#        return line
-#    
-#    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-#        '''
-#        Please copy this to your module's method also.
-#        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-#        
-#        - allow to modify the data for purchase order creation
-#        '''
-#        if context is None:
-#            context = {}
-#        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-#        line = kwargs['line']
-#        procurement = kwargs['procurement']
-#        # update from yml flag
-#        values['from_yml_test'] = procurement.from_yml_test
-#        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
-#        # confirmed_delivery_date (confirmed date) = False
-#        # both values are taken from line 
-#        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line['confirmed_delivery_date'],})
-#        return values  
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        obj_data = self.pool.get('ir.model.data')
+#        for var in self.pool.get('stock.move').browse(cr, uid, ids, context=context):
+#            if var.location_dest_id.id != obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]:
+#                res = 'location_dest_id' == obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+#        return res
 #
-#procurement_order()
+#    def do_not_choose_cross_docking(self, cr, uid, ids, context=None):
+#        res = []
+#        if context is None:
+#            context = {}
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        obj_data = self.pool.get('ir.model.data')
+#        
+#        move_line = self.pool.get('stock.move').browse(cr, uid, ids, context=context)
+#        for var in move_line.location_dest_id.id:
+#            if var == obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]:
+#                res = self.write(cr, uid, [move'location_dest_id': obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]), context=context)
+#        return res
+    
+    def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_process method from stock>stock.py>stock_picking
+        - allow to modify the data for wizard display
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
+        wizard_obj = self.pool.get('wizard')
+        res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
+                                                                               wizard_ids=[res['res_id']],
+                                                                               wizard_name=res['name'],
+                                                                               model=res['res_model'],
+                                                                               step='default'))
+        return res
+stock_picking()

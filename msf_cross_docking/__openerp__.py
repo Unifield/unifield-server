@@ -33,6 +33,7 @@
         'cross_docking_view.xml',
 #        'workflow/purchase_workflow.xml',
 #        'workflow/cross_docking_workflow.xml',
+#         'stock_picking_view.xml',
     ],
     'test': [
     ],
