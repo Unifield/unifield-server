@@ -105,7 +105,7 @@ class hr_employee(osv.osv):
                 if (not emp.cost_center_id and not vals.get('cost_center_id', False)) or not vals.get('cost_center_id', False):
                     cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
                     if not cc_id:
-                        raise osv.except_osv(_('Warning'), _('You should give a Cost Center (CC) for local staff! "%s" have no CC!') % emp.name)
+                        raise osv.except_osv(_('Warning'), _('You should give a Cost Center (CC) for local staff! "%s" have no CC!') % (emp.name,))
                     vals.update({'cost_center_id': cc_id})
         return super(hr_employee, self).write(cr, uid, ids, vals, context)
 

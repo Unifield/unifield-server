@@ -259,7 +259,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             else:
-                raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % staff_file)
+                raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
             try:
                 reader.next()
             except:

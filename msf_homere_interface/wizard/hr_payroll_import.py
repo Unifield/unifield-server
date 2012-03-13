@@ -86,29 +86,29 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s' % date[0]))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
-            raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % line_date)
+            raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (line_date,))
         if len(period_ids) > 1:
-            raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % line_date)
+            raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (line_date,))
         period_id = period_ids[0]
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that period have not been inserted in database yet
         period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id)])
         if period_validated_ids:
-            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % period.name)
+            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % (period.name,))
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that account exists in OpenERP
         if not accounting_code or not accounting_code[0]:
             raise osv.except_osv(_('Warning'), _('One accounting code is missing!'))
         account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', ustr(accounting_code[0]))])
         if not account_ids:
-            raise osv.except_osv(_('Warning'), _('The accounting code \'%s\' doesn\'t exist!') % ustr(accounting_code[0]))
+            raise osv.except_osv(_('Warning'), _('The accounting code \'%s\' doesn\'t exist!') % (ustr(accounting_code[0]),))
         if len(account_ids) > 1:
-            raise osv.except_osv(_('Warning'), _('There is more than one account that have \'%s\' code!') % ustr(accounting_code[0]))
+            raise osv.except_osv(_('Warning'), _('There is more than one account that have \'%s\' code!') % (ustr(accounting_code[0]),))
         # Verify account type
         # if view type, raise an error
         account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
         if account.type == 'view':
-            raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % ustr(accounting_code[0]))
+            raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % (ustr(accounting_code[0]),))
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
             # Check second description (if not equal to 'Payroll rounding')
@@ -117,9 +117,9 @@ class hr_payroll_import(osv.osv_memory):
                 employee_identification_id = ustr(second_description[0]).split(' ')[-1]
                 employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
                 if not employee_ids:
-                    raise osv.except_osv(_('Error'), _('No employee found for this code: %s.') % employee_identification_id)
+                    raise osv.except_osv(_('Error'), _('No employee found for this code: %s.') % (employee_identification_id,))
                 if len(employee_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % employee_identification_id)
+                    raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                 employee_id = employee_ids[0]
                 # Create description
                 name = 'Salary ' + time.strftime('%b %Y')
@@ -143,9 +143,9 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('One currency is missing!'))
         currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', ustr(currency[0])), ('active', '=', True)])
         if not currency_ids:
-            raise osv.except_osv(_('Error'), _('No \'%s\' currency or non-active currency.') % ustr(currency[0]))
+            raise osv.except_osv(_('Error'), _('No \'%s\' currency or non-active currency.') % (ustr(currency[0]),))
         if len(currency_ids) > 1:
-            raise osv.except_osv(_('Error'), _('More than one currency \'%s\' found.') % ustr(currency[0]))
+            raise osv.except_osv(_('Error'), _('More than one currency \'%s\' found.') % (ustr(currency[0]),))
         currency_id = currency_ids[0]
         # Create the payroll entry
         vals = {
@@ -199,7 +199,7 @@ class hr_payroll_import(osv.osv_memory):
         # Search homere password file
         homere_file = os.path.join(os.path.expanduser('~'),relativepath)
         if not os.path.exists(homere_file):
-            raise osv.except_osv(_("Error"), _("File '%s' doesn't exist!") % homere_file)
+            raise osv.except_osv(_("Error"), _("File '%s' doesn't exist!") % (homere_file,))
         
         # Read homere file
         homere_file_data = open(homere_file, 'rb')
