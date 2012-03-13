@@ -33,7 +33,7 @@ class hr_employee(osv.osv):
     _columns = {
         'date_from': fields.date(string='Active from'),
         'employee_type': fields.selection([('', ''), ('local', 'Local Staff'), ('ex', 'Expatriate employee')], string="Type", required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -45,7 +45,6 @@ class hr_employee(osv.osv):
     }
 
     _defaults = {
-        'cost_center_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False,
         'employee_type': lambda *a: 'ex',
         'homere_codeterrain': lambda *a: '',
         'homere_id_staff': lambda *a: 0.0,
@@ -61,8 +60,12 @@ class hr_employee(osv.osv):
         if not context:
             context = {}
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
+            # Raise an error if employee is created manually
             if not context.get('from', False) or context.get('from') not in ['yaml', 'import']:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+            # Raise an error if no cost_center
+            if not vals.get('cost_center_id', False):
+                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
         return super(hr_employee, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context={}):
@@ -73,13 +76,37 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if 'employee_type' in vals and vals.get('employee_type') == 'local':
-            if not context.get('from', False) or context.get('from') not in ['yaml', 'import']:
+        local = False
+        ex = False
+        allowed = False
+        if vals.get('employee_type', False):
+            if vals.get('employee_type') == 'local':
+                local = True
+            elif vals.get('employee_type') == 'ex':
+                ex = True
+        if context.get('from', False) and context.get('from') in ['yaml', 'import']:
+            allowed = True
+        # Raise an error if attempt to change local into expat and expat into local
+        for emp in self.browse(cr, uid, ids):
+            if emp.employee_type == 'ex' and local and not allowed:
+                raise osv.except_osv(_('Error'), _('You are not allowed to change an expatriate to local staff!'))
+            if emp.employee_type == 'local' and ex and not allowed:
+                raise osv.except_osv(_('Error'), _('You are not allowed to change a local staff to expatriate!'))
+        if local:
+            # Do not change any field except analytic distribution
+            if not allowed:
                 new_vals = {}
                 for el in vals:
                     if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
                         new_vals.update({el: vals[el],})
                 vals = new_vals
+            # Browse all record and raise an error if no cost_center in employee OR in vals
+            for emp in self.browse(cr, uid, ids):
+                if (not emp.cost_center_id and not vals.get('cost_center_id', False)) or not vals.get('cost_center_id', False):
+                    cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
+                    if not cc_id:
+                        raise osv.except_osv(_('Warning'), _('You should give a Cost Center (CC) for local staff! "%s" have no CC!') % emp.name)
+                    vals.update({'cost_center_id': cc_id})
         return super(hr_employee, self).write(cr, uid, ids, vals, context)
 
     def unlink(self, cr, uid, ids, context={}):
