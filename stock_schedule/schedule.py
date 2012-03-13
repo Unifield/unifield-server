@@ -77,7 +77,7 @@ class stock_frequence(osv.osv):
         Check if all required data aren't empty
         '''
         if data['name'] == 'daily':
-            if  not data.get('daily_frequency_ok', False):
+            if  not data.get('daily_frequency', False):
                 raise osv.except_osv(_('Error'), _('You should make a choice for the Daily configuration'))
         elif data['name'] == 'weekly':
             if (not 'weekly_sunday_ok' in data or not data.get('weekly_sunday_ok', False)) and \

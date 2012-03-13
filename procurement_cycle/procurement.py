@@ -200,6 +200,17 @@ class stock_warehouse_order_cycle(osv.osv):
             if proc.frequence_id and proc.frequence_id.id:
                 frequence_id = proc.frequence_id.id
                 res_ok = True
+            else:
+                frequence_data = {'name': 'monthly',
+                                  'monthly_choose_freq': 1,
+                                  'monthly_choose_day': 'monday',
+                                  'monthly_frequency': 1,
+                                  'monthly_one_day': True,
+                                  'no_end_date': True,
+                                  'start_date': time.strftime('%Y-%m-%d'),}
+                frequence_id = self.pool.get('stock.frequence').create(cr, uid, frequence_data, context=context)
+                self.write(cr, uid, proc.id, {'frequence_id': frequence_id}, context=context)
+                res_ok = True
             
         context.update({'active_id': res_id, 
                         'active_model': 'stock.warehouse.order.cycle',
