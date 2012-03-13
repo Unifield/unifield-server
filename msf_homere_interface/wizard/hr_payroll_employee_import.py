@@ -125,11 +125,13 @@ class hr_payroll_employee_import(osv.osv_memory):
 
     def update_employee_infos(self, cr, uid, employee_data=''):
         """
-        Get employee infos and 
+        Get employee infos and set them to DB.
         """
         # Some verifications
+        created = 0
+        updated = 0
         if not employee_data:
-            return False
+            return False, created, updated
         # Prepare some values
         vals = {}
         current_date = strftime('%Y-%m-%d')
@@ -148,6 +150,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0]), ('homere_id_unique', '=', id_unique[0])])
             # Prepare vals
+            res = False
             vals = {
                 'active': True,
                 'date_from': current_date,
@@ -208,12 +211,16 @@ class hr_payroll_employee_import(osv.osv_memory):
             if dateexpiration and dateexpiration[0] and dateexpiration <= current_date:
                 vals.update({'active': False})
             if not e_ids:
-                self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
+                res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
+                if res:
+                    created += 1
             else:
-                self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
+                res = self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
+                if res:
+                    updated += 1
         else:
-            return False
-        return True
+            return False, created, updated
+        return True, created, updated
 
     def button_validate(self, cr, uid, ids, context={}):
         """
@@ -225,6 +232,8 @@ class hr_payroll_employee_import(osv.osv_memory):
         staff_file = 'staff.csv'
         res = False
         message = "Employee import failed."
+        created = 0
+        updated = 0
         for wiz in self.browse(cr, uid, ids):
             fileobj = NamedTemporaryFile('w+')
             fileobj.write(decodestring(wiz.file))
@@ -240,9 +249,11 @@ class hr_payroll_employee_import(osv.osv_memory):
             self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
             res = True
             for employee_data in reader:
-                update = self.update_employee_infos(cr, uid, employee_data)
+                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data)
                 if not update:
                     res = False
+                created += nb_created
+                updated += nb_updated
             fileobj.close()
         if res:
             message = "Employee import successful."
@@ -254,6 +265,8 @@ class hr_payroll_employee_import(osv.osv_memory):
         # This is to redirect to Employee Tree View
         context.update({'from': 'employee_import'})
         
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': created + updated})
+        
         return {
             'name': 'Employee Import Confirmation',
             'type': 'ir.actions.act_window',
@@ -261,6 +274,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             'view_mode': 'form',
             'view_type': 'form',
             'view_id': [view_id],
+            'res_id': res_id,
             'target': 'new',
             'context': context,
         }
