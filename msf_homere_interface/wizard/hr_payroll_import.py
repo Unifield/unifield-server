@@ -118,7 +118,7 @@ class hr_payroll_import(osv.osv_memory):
             debit = float(expense[0])
         if receipt and receipt[0]:
             credit = float(receipt[0])
-        amount = debit - credit
+        amount = round(debit - credit, 2)
         # Check if currency exists
         if not currency and not currency[0]:
             raise osv.except_osv(_('Warning'), _('One currency is missing!'))
@@ -213,12 +213,24 @@ class hr_payroll_import(osv.osv_memory):
                     for line in reader:
                         processed += 1
                         update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
-                        res_amount += amount
+                        res_amount += round(amount, 2)
                         if not update:
                             res = False
                         created += nb_created
-                    if res_amount != 0.0 and abs(res_amount) >= 10**-2:
-                        raise osv.except_osv(_('Error'), _('Elements from given file are unbalanced!'))
+                    # Check balance
+                    if round(res_amount, 2) != 0.0:
+                        # adapt difference by writing on payroll rounding line
+                        pr_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), ('name', '=', 'Payroll rounding')])
+                        if not pr_ids:
+                            raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
+                        # Fetch Payroll rounding amount
+                        pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
+                        # To compute new amount, you should:
+                        # - take payroll rounding amount
+                        # - take the opposite of res_amount (wich is the current difference)
+                        # - add both
+                        new_amount = round(pr.amount, 2) + (-1 * round(res_amount, 2))
+                        self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
             fileobj.close()
         
         if res:
