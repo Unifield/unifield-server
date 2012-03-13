@@ -32,6 +32,20 @@ from tools.misc import ustr
 from tools.translate import _
 import time
 
+class hr_payroll_import_period(osv.osv):
+    _name = 'hr.payroll.import.period'
+    _description = 'Payroll Import Periods'
+
+    _columns = {
+        'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
+    }
+
+    _sql_constraints = [
+        ('period_uniq', 'unique (period_id)', 'This period have already been validated!'),
+    ]
+
+hr_payroll_import_period()
+
 class hr_payroll_import(osv.osv_memory):
     _name = 'hr.payroll.import'
     _description = 'Payroll Import'
@@ -76,6 +90,11 @@ class hr_payroll_import(osv.osv_memory):
         if len(period_ids) > 1:
             raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % line_date)
         period_id = period_ids[0]
+        period = self.pool.get('account.period').browse(cr, uid, period_id)
+        # Check that period have not been inserted in database yet
+        period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id)])
+        if period_validated_ids:
+            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % period.name)
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that account exists in OpenERP
         if not accounting_code or not accounting_code[0]:
@@ -211,33 +230,35 @@ class hr_payroll_import(osv.osv_memory):
                     try:
                         reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
                         reader.next()
-                        res = True
-                        res_amount = 0.0
-                        amount = 0.0
-                        for line in reader:
-                            processed += 1
-                            update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
-                            res_amount += round(amount, 2)
-                            if not update:
-                                res = False
-                            created += nb_created
-                        # Check balance
-                        if round(res_amount, 2) != 0.0:
-                            # adapt difference by writing on payroll rounding line
-                            pr_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), ('name', '=', 'Payroll rounding')])
-                            if not pr_ids:
-                                raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
-                            # Fetch Payroll rounding amount
-                            pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
-                            # To compute new amount, you should:
-                            # - take payroll rounding amount
-                            # - take the opposite of res_amount (wich is the current difference)
-                            # - add both
-                            new_amount = round(pr.amount, 2) + (-1 * round(res_amount, 2))
-                            self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
                     except:
                         fileobj.close()
-                        raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
+                        raise osv.except_osv(_('Error'), _('Problem to read given file.'))
+                    res = True
+                    res_amount = 0.0
+                    amount = 0.0
+                    for line in reader:
+                        processed += 1
+                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
+                        res_amount += round(amount, 2)
+                        if not update:
+                            res = False
+                        created += nb_created
+                    # Check balance
+                    if round(res_amount, 2) != 0.0:
+                        # adapt difference by writing on payroll rounding line
+                        pr_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), ('name', '=', 'Payroll rounding')])
+                        if not pr_ids:
+                            raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
+                        # Fetch Payroll rounding amount
+                        pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
+                        # To compute new amount, you should:
+                        # - take payroll rounding amount
+                        # - take the opposite of res_amount (wich is the current difference)
+                        # - add both
+                        new_amount = round(pr.amount, 2) + (-1 * round(res_amount, 2))
+                        self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
+                else:
+                    raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
         
         if res:

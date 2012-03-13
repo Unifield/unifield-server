@@ -63,6 +63,12 @@ class hr_payroll_validation(osv.osv):
         period_id = one_line_data.get('period_id', False) and one_line_data.get('period_id')[0] or False
         if not period_id:
             raise osv.except_osv(_('Error'), _('Unknown period'))
+        # Search if this period have already been validated
+        period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id)])
+        if period_validated_ids:
+            period_validated = self.pool.get('hr.payroll.import.period').browse(cr, uid, period_validated_ids[0])
+            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % period_validated.period_id.name)
+        # Fetch default funding pool: MSF Private Fund
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
@@ -135,6 +141,8 @@ class hr_payroll_validation(osv.osv):
         self.pool.get('account.move').post(cr, uid, [move_id])
         # Update payroll lines status
         self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, {'state': 'valid'})
+        # Update Payroll import period table
+        self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id})
         return { 'type': 'ir.actions.act_window_close', 'context': context}
 
 hr_payroll_validation()

@@ -213,6 +213,13 @@ class hr_payroll_employee_import(osv.osv_memory):
             # If employee have a expired date, so desactivate it
             if dateexpiration and dateexpiration[0] and dateexpiration <= current_date:
                 vals.update({'active': False})
+            # Add an analytic distribution
+            try:
+                cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
+            except:
+                cc_id = 0
+            if cc_id:
+                vals.update({'cost_center_id': cc_id,})
             if not e_ids:
                 res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
                 if res:
@@ -251,23 +258,26 @@ class hr_payroll_employee_import(osv.osv_memory):
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+            else:
+                raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % staff_file)
             try:
                 reader.next()
-                # Unactivate all local employees
-                e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
-                self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
-                res = True
-                for employee_data in reader:
-                    processed += 1
-                    update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data)
-                    if not update:
-                        res = False
-                    created += nb_created
-                    updated += nb_updated
             except:
-                raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % staff_file)
-            finally:
                 fileobj.close()
+                raise osv.except_osv(_('Error'), _('Problem to read given file.'))
+            # Unactivate all local employees
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
+            self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
+            res = True
+            for employee_data in reader:
+                processed += 1
+                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data)
+                if not update:
+                    res = False
+                created += nb_created
+                updated += nb_updated
+            # Close Temporary File
+            fileobj.close()
         if res:
             message = "Employee import successful."
         context.update({'message': message})
