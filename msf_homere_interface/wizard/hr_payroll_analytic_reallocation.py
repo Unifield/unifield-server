@@ -77,7 +77,12 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
-        vals = {}
+        vals = {
+            'cost_center_id': False,
+            'funding_pool_id': False,
+            'free1_id': False,
+            'free2_id': False,
+        }
         for el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
             obj = getattr(wiz, el, None)
             if obj:
