@@ -36,6 +36,18 @@ class hr_payroll_import_confirmation(osv.osv_memory):
     _name = 'hr.payroll.import.confirmation'
     _description = 'Import Confirmation'
 
+    _columns = {
+        'updated': fields.integer(string="Updated", size=64, readonly=True),
+        'created': fields.integer(string="Created", size=64, readonly=True),
+        'total': fields.integer(string="Total", size=64, readonly=True),
+    }
+
+    _defaults = {
+        'updated': lambda *a: 0,
+        'created': lambda *a: 0,
+        'total': lambda *a: 0,
+    }
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Change message field

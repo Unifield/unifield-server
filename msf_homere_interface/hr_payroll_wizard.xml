@@ -79,6 +79,11 @@
             <field name="arch" type="xml">
                 <form string="Import Confirmation">
                     <label string="Nothing" colspan="4" align="0.0"/>
+                    <group colspan="4" col="6">
+                        <field name="updated"/>
+                        <field name="created"/>
+                        <field name="total"/>
+                    </group>
                     <group colspan="4" col="2">
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
                         <label string="" colspan="1"/>
