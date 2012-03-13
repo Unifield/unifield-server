@@ -16,6 +16,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -31,7 +32,7 @@
     res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1')], context=context)
     assert res_ids, "No procurement created for product 1"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 1"
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 1 (Expected 175.00 :: %s)" % res.product_qty
 -
   I create a threshold rule for product2
 -
@@ -45,6 +46,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -72,6 +74,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -99,6 +102,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -114,7 +118,7 @@
     res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold4')], context=context)
     assert res_ids, "No procurement created for product 4"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 75.00, "Bad quantity on procurement order for Threshold 4"
+    assert res.product_qty == 75.00, "Bad quantity on procurement order for Threshold 4 (Expected 75.00 :: %s)" % res.product_qty
 -
   I create a threshold rule for product5
 -
@@ -128,6 +132,7 @@
     qty_to_order: 150.00
     qty_order_manual_ok: True
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -143,7 +148,7 @@
     res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold5')], context=context)
     assert res_ids, "No procurement created for product 5"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 5"
+    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 5 (Expected 150.00 :: %s)" % res.product_qty
 -
   I create a threshold rule for product6
 -
@@ -157,6 +162,7 @@
     qty_to_order: 150.00
     qty_order_manual_ok: True
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -172,7 +178,7 @@
     res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold6')], context=context)
     assert res_ids, "No procurement created for product 6"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 6"
+    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 6 (Expected 150.00 :: %s)" % res.product_qty
 -
   I create a threshold rule for product7
 -
@@ -186,6 +192,7 @@
     qty_to_order: 150.00
     qty_order_manual_ok: True
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -213,6 +220,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: True
@@ -228,7 +236,7 @@
     res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold8')], context=context)
     assert res_ids, "No procurement created for product 8"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 8"
+    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 8 (Expected 150.00 :: %s)" % res.product_qty
 -
   I create a threshold rule for product9
 -
@@ -241,6 +249,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -257,7 +266,7 @@
     assert len(res_ids) == 1, "Too procurement created for threshold 9"
     res = self.browse(cr, uid, res_ids[0], context=context)
     assert res.product_id.id == ref('product9'), "No procurement created for product 9"
-    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 9"
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 9 (Expected 175.00 :: %s)" % res.product_qty
 -
   I create a threshold rule for product11
 -
@@ -270,6 +279,7 @@
     qty_to_order: 0.00
     qty_order_manual_ok: False
     frequency: 3.00
+    consumption_period: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
@@ -286,4 +296,4 @@
     assert len(res_ids) == 1, "Too procurement created for threshold 11"
     res = self.browse(cr, uid, res_ids[0], context=context)
     assert res.product_id.id == ref('product11'), "Bad product on procurement order for Threshold 11"
-    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 1"
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 1 (Expected 175.00 :: %s)" % res.product_qty

@@ -27,7 +27,7 @@ import time
 import pooler
 import netsvc
 
-
+from mx.DateTime import *
 
 class procurement_order(osv.osv):
     _name = 'procurement.order'
@@ -55,8 +55,14 @@ class procurement_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         
         for threshold in threshold_obj.browse(cr, uid, threshold_ids, context=context):
+            if threshold.consumption_method == 'amc':
+                consumption_period = threshold.consumption_period or threshold.frequency
+                consumption_to = (now() + RelativeDate(months=1, days=-1)).strftime('%Y-%m-%d')
+                consumption_from = (now() - RelativeDate(months=consumption_period-1, day=1)).strftime('%Y-%m-%d')
+                context.update({'from_date': consumption_from, 'to_date': consumption_to})
+
             # Set location_id in context for tre AMC calculation
-            context.update({'location_id': threshold.location_id and threshold.location_id.id or False})
+            context.update({'location_id': threshold.location_id and threshold.location_id.id or False,})
             
             # Set the product list according to the category or product defined in the rule
             products = []
@@ -66,9 +72,14 @@ class procurement_order(osv.osv):
                 products.append(threshold.product_id.id)
             
             # Set different data by products for calculation
-            for product_id in products:
-                product = product_obj.browse(cr, uid, product_id, context=context)
-                amc = product_obj.compute_amc(cr, uid, product_id, context=context)
+            c = context.copy()
+            c.update({'from_date': False, 'to_date': False})
+            for product in product_obj.browse(cr, uid, products, context=c):
+                product_id = product.id
+                if threshold.consumption_method == 'amc':
+                    amc = product_obj.compute_amc(cr, uid, product_id, context=context)
+                else:
+                    amc = product.reviewed_consumption
                 
                 # Set lead time according to choices in threshold rule (supplier or manual lead time)
                 lead_time = threshold.supplier_lt and float(product.seller_delay)/30.0 or threshold.lead_time
@@ -80,29 +91,29 @@ class procurement_order(osv.osv):
                 # Check if the quantity in stock needs a supply of products or not
                 if product.virtual_available <= threshold_value:
                     # Compute the quantity to re-order
+                    product_available = product.qty_available
                     qty_to_order = threshold.qty_order_manual_ok and threshold.qty_to_order \
                                     or amc * (threshold.frequency + lead_time + threshold.safety_month)\
-                                    - product.qty_available + product.incoming_qty - product.outgoing_qty 
+                                    - product_available + product.incoming_qty - product.outgoing_qty 
                     qty_to_order = self.pool.get('product.uom')._compute_qty(cr, uid, threshold.uom_id and \
                                                                              threshold.uom_id.id or product.uom_id.id, qty_to_order,\
                                                                              product.uom_id.id)
                     
-                    proc_id = proc_obj.create(cr, uid, {
-                                        'name': _('Threshold value: %s') % (threshold.name,),
-                                        'origin': threshold.name,
-                                        'date_planned': time.strftime('%Y-%m-%d %H:%M:%S'),
-                                        'product_id': product.id,
-                                        'product_qty': qty_to_order,
-                                        'product_uom': product.uom_id.id,
-                                        'location_id': threshold.location_id.id,
-                                        'procure_method': 'make_to_order',
-                    })
-                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                    
-                    created_proc.append(proc_id)
-                
-                
+                    if qty_to_order >= 1.00:
+                        proc_id = proc_obj.create(cr, uid, {
+                                            'name': _('Threshold value: %s') % (threshold.name,),
+                                            'origin': threshold.name,
+                                            'date_planned': time.strftime('%Y-%m-%d %H:%M:%S'),
+                                            'product_id': product.id,
+                                            'product_qty': qty_to_order,
+                                            'product_uom': product.uom_id.id,
+                                            'location_id': threshold.location_id.id,
+                                            'procure_method': 'make_to_order',
+                        })
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                        
+                        created_proc.append(proc_id)
                     
         for proc in proc_obj.browse(cr, uid, created_proc):
             if proc.state == 'exception':

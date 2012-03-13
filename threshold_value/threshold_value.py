@@ -22,10 +22,64 @@
 
 from osv import osv, fields
 
+from mx.DateTime import *
 
 class threshold_value(osv.osv):
     _name = 'threshold.value'
     _description = 'Threshold value'
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Get or compute threshold value and qty to order
+        '''
+        if not vals.get('threshold_manual_ok') or not vals.get('qty_order_manual_ok') \
+            or not vals.get('theshold_value') or not vals.get('qty_to_order'):
+            res = self.compute_threshold_qty_order(cr, uid, 1, vals.get('category_id'), 
+                                                               vals.get('product_id'), 
+                                                               vals.get('location_id'), 
+                                                               vals.get('frequency'), 
+                                                               vals.get('lead_time'),
+                                                               vals.get('supplier_lt'), 
+                                                               vals.get('safety_month'),
+                                                               vals.get('threshold_manual_ok'),
+                                                               vals.get('qty_order_manual_ok'), 
+                                                               vals.get('consumption_period'), 
+                                                               vals.get('consumption_method'), context=context)
+            
+        if not vals.get('threshold_manual_ok') or not vals.get('threshold_value'):
+            vals['threshold_value'] = res['value']['threshold_value']
+            
+        if not vals.get('qty_order_manual_ok') or not vals.get('qty_to_order'):
+            vals['qty_to_order'] = res['value']['qty_to_order']
+            
+        return super(threshold_value, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Get or compute threshold value and qty to order
+        '''
+        for th_value in self.browse(cr, uid, ids, context=context):
+            if (not vals.get('threshold_value') and not vals.get('threshold_manual_ok')) \
+                or (not vals.get('qty_order_manual_ok') and not vals.get('qty_to_order')):
+                res = self.compute_threshold_qty_order(cr, uid, 1, vals.get('category_id', th_value.category_id.id), 
+                                                                   vals.get('product_id',th_value.product_id.id), 
+                                                                   vals.get('location_id',th_value.location_id.id), 
+                                                                   vals.get('frequency',th_value.frequency), 
+                                                                   vals.get('lead_time',th_value.lead_time),
+                                                                   vals.get('supplier_lt',th_value.supplier_lt), 
+                                                                   vals.get('safety_month',th_value.safety_month),
+                                                                   vals.get('threshold_manual_ok',th_value.threshold_manual_ok),
+                                                                   vals.get('qty_order_manual_ok',th_value.qty_order_manual_ok),
+                                                                   vals.get('consumption_period',th_value.consumption_period), 
+                                                                   vals.get('consumption_method',th_value.consumption_method), context=context)
+            
+        if not vals.get('threshold_value') and not vals.get('threshold_manual_ok'):
+            vals['threshold_value'] = res['value']['threshold_value']
+            
+        if not vals.get('qty_to_order') and not vals.get('qty_order_manual_ok'):
+            vals['qty_to_order'] = res['value']['qty_to_order']
+            
+        return super(threshold_value, self).write(cr, uid, ids, vals, context=context)    
     
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
@@ -39,6 +93,11 @@ class threshold_value(osv.osv):
         'threshold_manual_ok': fields.boolean(string='Manual threshold value'),
         'qty_to_order': fields.float(digits=(16,2), string='Quantity to Order (in UoM)', required=True),
         'qty_order_manual_ok': fields.boolean(string='Manual quantity to order'),
+        'consumption_method': fields.selection([('amc', 'Average Monthly Consumption'), ('fmc', 'Forecasted Monthly Consumption')],
+                                               string='Consumption Method'),
+        'consumption_period': fields.integer(string='Period of calculation', 
+                                             help='This period is a number of past months the system has to consider for AMC calculation.'\
+                                             'By default this value is equal to the frequency in the Threshold.'),
         'frequency': fields.float(digits=(16,2), string='Order frequency'),
         'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
         'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
@@ -50,14 +109,19 @@ class threshold_value(osv.osv):
         'active': lambda *a: True,
         'threshold_manual_ok': lambda *a: False,
         'qty_order_manual_ok': lambda *a: False,
+        'consumption_period': lambda *a: 3,
+        'frequency': lambda *a: 3,
+        'consumption_method': lambda *a: 'amc',
     }
     
-    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, context={}):
+    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, 
+                                    supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, 
+                                    consumption_period, consumption_method, context={}):
         '''
         Computes the threshold value and quantity to order according to parameters
         
-        Threshold value = fixed manually or AMC * (LT + SS)
-        Order quantity = fixed manually or AMC * (OF + LT + SS) - Real Stock - Back orders
+        Threshold value = fixed manually or AMC or FMC * (LT + SS)
+        Order quantity = fixed manually or AMC or FMC * (OF + LT + SS) - Real Stock - Back orders
         
         IMPORTANT :
         ###########
@@ -75,14 +139,24 @@ class threshold_value(osv.osv):
             * Back orders : product quantities ordered but not yet delivered (expressed in standard unit of distribution)
         '''
         v = {}
-        m = {}
         
         if location_id:
             context.update({'location_id': location_id})
         
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            amc = self.pool.get('product.product').compute_amc(cr, uid, product_id, context=context)
+            if consumption_method == 'amc':
+                if not consumption_period:
+                    consumption_period = frequency
+                consumption_to = (now() + RelativeDate(months=1, days=-1)).strftime('%Y-%m-%d')
+                consumption_from = (now() - RelativeDate(months=consumption_period-1, day=1)).strftime('%Y-%m-%d')
+                c = context.copy()
+                c.update({'from_date': consumption_from, 'to_date': consumption_to})
+                v.update({'consumption_from': consumption_from, 'consumption_to': consumption_to})
+            
+                amc = self.pool.get('product.product').compute_amc(cr, uid, product_id, context=c)
+            else:
+                amc = product.reviewed_consumption
             
             # The supplier lead time is priority if the checkbox was checked
             if supplier_lt:
@@ -93,14 +167,14 @@ class threshold_value(osv.osv):
                 threshold_value = amc * (lead_time + safety_month)
                 threshold_value = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, threshold_value, product.uom_id.id)
             
-                v.update({'threshold_value': threshold_value})
+                v.update({'threshold_value': threshold_value > 0.00 and threshold_value or 0.00})
             
             # If the user hasn't fill manually the qty to order value, compute them
             if not qty_order_manual_ok:
                 qty_order = amc * (lead_time + safety_month + frequency) - product.qty_available + product.incoming_qty - product.outgoing_qty
                 qty_order = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_order, product.uom_id.id)
                 
-                v.update({'qty_to_order': qty_order})
+                v.update({'qty_to_order': qty_order > 0.00 and qty_order or 0.00})
         
         # Reset all values if no product
         if not product_id:
