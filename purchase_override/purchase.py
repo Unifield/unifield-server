@@ -230,20 +230,33 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
     
-    def wkf_confirm_order(self, cr, uid, ids, context=None):
+    def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
+        Checks if the invoice should be create from the purchase order
+        or not
         If the PO is a DPO, set all related OUT stock move to 'done' state
         '''
+        line_obj = self.pool.get('purchase.order.line')
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
-                
-        res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
         
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         todo = []
         todo2 = []
         todo3 = []
-        for order in self.browse(cr, uid, ids, context=context):
+        for order in self.browse(cr, uid, ids):
+            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
+                         order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
+
+            message = _("Purchase order '%s' is confirmed.") % (order.name,)
+            self.log(cr, uid, order.id, message)
+            
             if order.order_type == 'direct':
+                self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
                 for line in order.order_line:
                     if line.procurement_id: todo.append(line.procurement_id.id)
                     
@@ -259,26 +272,6 @@ class purchase_order(osv.osv):
         if todo3:
             for pick_id in todo3:
                 wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-        
-        return res
-    
-    def wkf_approve_order(self, cr, uid, ids, context=None):
-        '''
-        Checks if the invoice should be create from the purchase order
-        or not
-        '''
-        line_obj = self.pool.get('purchase.order.line')
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        for order in self.browse(cr, uid, ids):
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
-                         order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
-                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
-                line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
-
-            message = _("Purchase order '%s' is confirmed.") % (order.name,)
-            self.log(cr, uid, order.id, message)
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
