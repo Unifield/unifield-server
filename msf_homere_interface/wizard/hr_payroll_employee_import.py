@@ -72,10 +72,12 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             return {'type': 'ir.actions.act_window_close'}
         if context.get('from', False):
             result = False
+            domain = False
             if context.get('from') == 'employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
+                domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
             if result:
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', result[0])
                 if view_id:
@@ -89,6 +91,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                     'context': context,
                     'target': 'crush',
                     'context': context,
+                    'domain': domain,
                 }
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
