@@ -38,10 +38,18 @@ class stock_warehouse_order_cycle(osv.osv):
         
         return super(stock_warehouse_order_cycle, self).create(cr, uid, data, context=context)
         
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Checks if a frequence was choosen for the cycle
         '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if data.get('sublist_id',False):
+            data.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if data.get('nomen_manda_0',False):
+            data.update({'sublist_id':False})
         if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
             for proc in self.browse(cr, uid, ids):
                 if not proc.frequence_id:
@@ -94,6 +102,11 @@ class stock_warehouse_order_cycle(osv.osv):
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context={}: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
@@ -105,7 +118,52 @@ class stock_warehouse_order_cycle(osv.osv):
         'order_coverage': lambda *a: 3,
     }
     
-    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, product_id, field='past'):
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        if context is None:
+            context = {}
+        for report in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+
+            nom = False
+            field = False
+            # Get all products for the defined nomenclature
+            if report.nomen_manda_3:
+                nom = report.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif report.nomen_manda_2:
+                nom = report.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif report.nomen_manda_1:
+                nom = report.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif report.nomen_manda_0:
+                nom = report.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if report.sublist_id:
+                for line in report.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+
+            # Check if the product is not already on the report
+            l = [(6,0,x) for x in product_ids]
+            self.write(cr, uid, [report.id], {'product_ids': [(6,0,product_ids)]}, context=context)
+        
+        return True
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, field='past'):
         '''
         Uncheck a box when the other is checked
         '''
@@ -118,9 +176,9 @@ class stock_warehouse_order_cycle(osv.osv):
             v.update({'past_consumption': 0, 'manual_consumption': 0.00})
         elif field == 'review' and not reviewed_consumption:
             v.update({'past_consumption': 1, 'manual_consumption': 0.00})
-        elif field == 'manual' and manual_consumption != 0.00 and product_id:
+        elif field == 'manual' and manual_consumption != 0.00 :
             v.update({'reviewed_consumption': 0, 'past_consumption': 0})
-        elif field == 'manual' and (manual_consumption == 0.00 or not product_id):
+        elif field == 'manual' and (manual_consumption == 0.00 ):
             v.update({'past_consumption': 1})
             
         return {'value': v}
