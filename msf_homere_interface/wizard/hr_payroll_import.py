@@ -47,9 +47,14 @@ class hr_payroll_import(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
+        # Prepare some values
+        # to have more info on import
         res_amount = 0.0
+        res = False
+        created = 0
+        # verify that some data exists
         if not data:
-            return False, res_amount
+            return False, res_amount, created
         # Prepare some values
         vals = {}
         employee_id = False
@@ -145,8 +150,10 @@ class hr_payroll_import(osv.osv_memory):
                 'free2_id': employee_data and employee_data.get('free2_id', False) and employee_data.get('free2_id')[0] or False,
             })
         # Write payroll entry
-        self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
-        return True, amount
+        res = self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
+        if res:
+            created += 1
+        return True, amount, created
 
     def button_validate(self, cr, uid, ids, context={}):
         """
@@ -167,6 +174,8 @@ class hr_payroll_import(osv.osv_memory):
         relativepath = 'tmp/homere.password' # relative path from user directory to homere password file
         message = "Payroll import failed."
         res = False
+        created = 0
+        processed = 0
         
         # Search homere password file
         homere_file = os.path.join(os.path.expanduser('~'),relativepath)
@@ -202,10 +211,12 @@ class hr_payroll_import(osv.osv_memory):
                     res_amount = 0.0
                     amount = 0.0
                     for line in reader:
-                        update, amount = self.update_payroll_entries(cr, uid, line)
+                        processed += 1
+                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
                         res_amount += amount
                         if not update:
                             res = False
+                        created += nb_created
                     if res_amount != 0.0 and abs(res_amount) >= 10**-2:
                         raise osv.except_osv(_('Error'), _('Elements from given file are unbalanced!'))
             fileobj.close()
@@ -220,6 +231,8 @@ class hr_payroll_import(osv.osv_memory):
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
         
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed})
+        
         return {
             'name': 'Payroll Import Confirmation',
             'type': 'ir.actions.act_window',
@@ -227,6 +240,7 @@ class hr_payroll_import(osv.osv_memory):
             'view_mode': 'form',
             'view_type': 'form',
             'view_id': [view_id],
+            'res_id': res_id,
             'target': 'new',
             'context': context,
         }
