@@ -237,6 +237,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         message = "Employee import failed."
         created = 0
         updated = 0
+        processed = 0
         for wiz in self.browse(cr, uid, ids):
             fileobj = NamedTemporaryFile('w+')
             fileobj.write(decodestring(wiz.file))
@@ -252,6 +253,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
             res = True
             for employee_data in reader:
+                processed += 1
                 update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data)
                 if not update:
                     res = False
@@ -268,7 +270,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # This is to redirect to Employee Tree View
         context.update({'from': 'employee_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': created + updated})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed})
         
         return {
             'name': 'Employee Import Confirmation',
