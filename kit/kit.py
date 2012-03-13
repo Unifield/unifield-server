@@ -936,7 +936,7 @@ class composition_item(osv.osv):
                 'item_kit_type': fields.function(_vals_get, method=True, type='char', size=1024, string='Kit Type', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                                 'composition.kit': (_get_composition_item_ids, ['composition_type'], 10)}),
-                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_STATE, size=1024, string='State', readonly=True, multi='get_vals',
+                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_STATE, string='State', readonly=True, multi='get_vals',
                                 store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                         'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
                 'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),

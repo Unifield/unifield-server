@@ -37,11 +37,32 @@ KIT_CREATION_STATE = [('draft', 'Draft'),
                       ('cancel', 'Cancelled'),
                       ]
 
+KIT_TO_CONSUME_AVAILABILITY = [('empty', ''),
+                               ('not_available', 'Not Available'),
+                               ('partially_available', 'Partially Available'),
+                               ('available', 'Available')]
+
 class kit_creation(osv.osv):
     '''
     kit composition class, representing both theoretical composition and actual ones
     '''
     _name = 'kit.creation'
+    
+    def mark_as_active(self, cr, uid, ids, context=None):
+        '''
+        button function
+        set the active flag to False
+        
+        to consumed state function test
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        self.write(cr, uid, ids, {'state': 'in_production'}, context=context)
+        return True
     
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
@@ -67,20 +88,179 @@ class kit_creation(osv.osv):
         
         return result
     
-    _columns = {'reference_kit_creation': fields.char(string='Reference', size=1024, required=True),
+    _columns = {'name': fields.char(string='Reference', size=1024, required=True),
                 'creation_date_kit_creation': fields.date(string='Creation Date', required=True),
                 'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
                 'version_id_kit_creation': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]),
                 'qty_kit_creation': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_kit_creation': fields.many2one('product.uom', string='UoM', required=True),
                 'notes_kit_creation': fields.text(string='Notes'),
+                'default_location_src_id_kit_creation': fields.many2one('stock.location', string='Default Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'state': fields.selection(KIT_CREATION_STATE, string='State', readonly=True, required=True),
+                'to_consume_ids_kit_creation': fields.one2many('kit.creation.to.consume', 'kit_creation_id_consume_common', string='To Consume'),
+                'consumed_ids_kit_creation': fields.one2many('kit.creation.consumed', 'kit_creation_id_consume_common', string='Consumed', readonly=True),
                 # related
                 'batch_check_kit_creation': fields.related('product_id_kit_creation', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
                 'expiry_check_kit_creation': fields.related('product_id_kit_creation', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
                 }
     
+    _defaults = {'state': 'draft',
+                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'kit.creation'),
+                 'creation_date_kit_creation': lambda *a: time.strftime('%Y-%m-%d'),
+                 'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False}
 
 kit_creation()
+
+
+class kit_creation_consume_common(osv.osv):
+    '''
+    common ancestor
+    '''
+    _name = 'kit.creation.consume.common'
+    _rec_name = 'product_id_consume_common'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # batch management
+            result[obj.id].update({'hidden_batch_management_mandatory': obj.item_product_id.batch_management})
+            # perishable
+            result[obj.id].update({'hidden_perishable_mandatory': obj.item_product_id.perishable})
+        return result
+    
+    _columns = {'kit_creation_id_consume_common': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
+                'product_id_consume_common': fields.many2one('product.product', string='Product', required=True),
+                'qty_consume_common': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'uom_id_consume_common': fields.many2one('product.uom', string='UoM', required=True),
+                'location_src_id_consume_common': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
+                # functions
+                # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
+                'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
+                'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Lot', multi='get_vals', store=False, readonly=True),
+                }
+    
+kit_creation_consume_common()
+
+
+class kit_creation_to_consume(osv.osv):
+    '''
+    products to be consumed
+    '''
+    _name = 'kit.creation.to.consume'
+    _inherit = 'kit.creation.consume.common'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # total_qty
+            result[obj.id].update({'total_qty_to_consume': obj.kit_creation_id_consume_common.qty_kit_creation * obj.qty_consume_common})
+            # state
+            result[obj.id].update({'state': obj.kit_creation_id_consume_common.state})
+        return result
+    
+    def _get_to_consume_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of composition.kit objects for which values have changed
+        
+        return the list of ids of composition.item objects which need to get their fields updated
+        
+        self is an composition.kit object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        to_consume_obj = self.pool.get('kit.creation.to.consume')
+        result = to_consume_obj.search(cr, uid, [('kit_creation_id_consume_common', 'in', ids)], context=context)
+        return result
+    
+    _columns = {'availability_to_consume': fields.selection(KIT_TO_CONSUME_AVAILABILITY, string='Availability', readonly=True, required=True),
+                # functions
+                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='get_vals'),
+                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
+                                         store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_consume_common'], 10),
+                                                 'kit.creation': (_get_to_consume_ids, ['state'], 10)}),
+                }
+    
+    _defaults = {'availability_to_consume': 'empty'}
+    
+kit_creation_to_consume()
+
+
+class kit_creation_consumed(osv.osv):
+    '''
+    products to be consumed
+    '''
+    _name = 'kit.creation.consumed'
+    _inherit = 'kit.creation.consume.common'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # state
+            result[obj.id].update({'state': obj.kit_creation_id_consume_common.state})
+        return result
+    
+    def _get_consumed_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of composition.kit objects for which values have changed
+        
+        return the list of ids of composition.item objects which need to get their fields updated
+        
+        self is an composition.kit object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        consumed_obj = self.pool.get('kit.creation.consumed')
+        result = consumed_obj.search(cr, uid, [('kit_creation_id_consume_common', 'in', ids)], context=context)
+        return result
+    
+    _columns = {'lot_id_consumed': fields.char(string='Batch Nb', size=1024),
+                'expiry_date_consumed': fields.date(string='Expiry Date'),
+                'kit_id_consumed': fields.many2one('kit.creation', string='Kit Ref', readonly=True),
+                # functions
+                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
+                                         store= {'kit.creation.consumed': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_consume_common'], 10),
+                                                 'kit.creation': (_get_consumed_ids, ['state'], 10)}),
+                }
+    
+kit_creation_consumed()
+
 

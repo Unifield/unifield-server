@@ -14,6 +14,19 @@
             <field name="prefix">K/</field>
             <field name="padding">5</field>
         </record>
+        
+        <!-- Sequence for Kitting Order -->
+        <record id="seq_type_kit_lot" model="ir.sequence.type">
+            <field name="name">Kit Creation</field>
+            <field name="code">kit.creation</field>
+        </record>
+
+        <record id="seq_kit_lot" model="ir.sequence">
+            <field name="name">Kit Creation</field>
+            <field name="code">kit.creation</field>
+            <field name="prefix">KO/</field>
+            <field name="padding">5</field>
+        </record>
 
 	</data>
 </openerp>

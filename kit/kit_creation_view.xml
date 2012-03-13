@@ -15,7 +15,7 @@
                         	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
             			</group>
                         <group col="4" colspan="2">
-                        	<field name="reference_kit_creation" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        	<field name="name" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="creation_date_kit_creation" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="batch_check_kit_creation" invisible="True" colspan="2" />
 	                        <field name="expiry_check_kit_creation" invisible="True" colspan="2" />
@@ -27,6 +27,12 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Components">
+                    		<field name="default_location_src_id_kit_creation" />
+                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" />
+                    		<group colspan="2" />
+                    		<button name="reset_to_version" type="object" string="Check Availability" icon="gtk-clear" />
+                    		<button name="reset_to_version" type="object" string="Process All Lines" icon="gtk-clear" />
+                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" />
                     		
                     	</page>
                     	<page string="Kits">
@@ -58,13 +64,48 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Kitting Order">
-            		<field name="reference_kit_creation" />
+            		<field name="name" />
             		<field name="product_id_kit_creation" />
             		<field name="version_id_kit_creation" />
             		<field name="qty_kit_creation" />
             		<field name="uom_id_kit_creation" />
             		<field name="creation_date_kit_creation" />
             		<field name="state" />
+            	</tree>
+            </field>
+		</record>
+		
+		<record id="view_kit_creation_to_consume_tree" model="ir.ui.view">
+            <field name="name">kit.creation.to.consume.tree</field>
+            <field name="model">kit.creation.to.consume</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Components to Consume" editable="top">
+            		<field name="product_id_consume_common" />
+            		<field name="qty_consume_common" string="Qty per Kit" />
+            		<field name="total_qty_to_consume" />
+            		<field name="uom_id_consume_common" />
+            		<field name="location_src_id_consume_common" />
+            		<field name="availability_to_consume" />
+            		<field name="state" invisible="True" />
+            	</tree>
+            </field>
+		</record>
+		
+		<record id="view_kit_creation_consumed_tree" model="ir.ui.view">
+            <field name="name">kit.creation.consumed.tree</field>
+            <field name="model">kit.creation.consumed</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Components Consumed" editable="top">
+            		<field name="product_id_consume_common" />
+            		<field name="qty_consume_common" />
+            		<field name="uom_id_consume_common" />
+            		<field name="lot_id_consumed" />
+            		<field name="expiry_date_consumed" />
+            		<field name="location_src_id_consume_common" />
+            		<field name="kit_id_consumed" />
+            		<field name="state" invisible="True" />
             	</tree>
             </field>
 		</record>
@@ -79,7 +120,7 @@
                     <filter icon="terp-stock_effects-object-colorize" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <separator orientation="vertical" />
-                    <field name="reference_kit_creation" select="1" />
+                    <field name="name" select="1" />
                     <field name="product_id_kit_creation" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="version_id_kit_creation" select="1" context="{'wizard_composition_type': 'theoretical'}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="creation_date_kit_creation" />
