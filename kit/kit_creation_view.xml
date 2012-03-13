@@ -81,11 +81,15 @@
             <field name="model">kit.creation.to.consume</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-            	<tree string="Components to Consume" editable="top" colors="red:qty_available_to_consume &lt;= 0.0">
-            		<field name="product_id_consume_common" on_change="on_change_product_id(product_id_consume_common, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />
-            		<field name="qty_consume_common" string="Qty per Kit" on_change="on_change_qty(qty_consume_common, parent.qty_kit_creation, context)" />
+            	<tree string="Components to Consume" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume">
+            		<field name="product_id_consume_common"
+            			on_change="on_change_product_id(product_id_consume_common, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />
+            		<field name="qty_consume_common"
+            			string="Qty per Kit"
+            			on_change="on_change_qty(qty_consume_common, parent.qty_kit_creation, context)" />
             		<field name="total_qty_to_consume" />
-            		<field name="uom_id_consume_common" />
+            		<field name="uom_id_consume_common"
+            			on_change="on_change_uom_id(product_id_consume_common, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_consume_common, location_src_id_consume_common, context)" />
             		<field name="location_src_id_consume_common" />
             		<field name="qty_available_to_consume" />
             		<field name="availability_to_consume" invisible="True" />

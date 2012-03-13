@@ -92,7 +92,7 @@ class kit_creation(osv.osv):
                 'creation_date_kit_creation': fields.date(string='Creation Date', required=True),
                 'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
                 'version_id_kit_creation': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]),
-                'qty_kit_creation': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'qty_kit_creation': fields.integer(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_kit_creation': fields.many2one('product.uom', string='UoM', required=True),
                 'notes_kit_creation': fields.text(string='Notes'),
                 'default_location_src_id_kit_creation': fields.many2one('stock.location', string='Default Source Location', required=True, domain=[('usage', '=', 'internal')], help='The Kitting Order needs to be saved in order this option to be taken into account.'),
@@ -111,7 +111,27 @@ class kit_creation(osv.osv):
                  'creation_date_kit_creation': lambda *a: time.strftime('%Y-%m-%d'),
                  'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'consider_child_locations_kit_creation': True,
+                 'qty_kit_creation': 1,
                  }
+    
+    def _kit_creation_constraint(self, cr, uid, ids, context=None):
+        '''
+        constraint on item composition 
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.qty_kit_creation <= 0.0:
+                # qty to consume cannot be empty
+                raise osv.except_osv(_('Warning !'), _('Number of Kit to produce must be greater than 0.'))
+                
+        return True
+    
+    _constraints = [(_kit_creation_constraint, 'Constraint error on Kit Creation.', []),]
 
 kit_creation()
 
@@ -188,6 +208,25 @@ class kit_creation_to_consume(osv.osv):
     _name = 'kit.creation.to.consume'
     _inherit = 'kit.creation.consume.common'
     
+    def _compute_availability(self, cr, uid, ids, consider_child_locations, product_id, uom_id, context=None):
+        '''
+        call stock computation function
+        
+        ids represent location ids !!!
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        # do we want the child location
+        stock_context = dict(context, compute_child=consider_child_locations)
+        # we check for the available qty (in:done, out: assigned, done)
+        res = loc_obj._product_reserve_lot(cr, uid, ids, product_id, uom_id, context=stock_context, lock=True)
+        return res
+    
     def _vals_get2(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -213,36 +252,39 @@ class kit_creation_to_consume(osv.osv):
             product = obj.product_id_consume_common
             # uom from product is taken by default if needed
             uom_id = obj.uom_id_consume_common.id
-            # do we want the children location
+            # compute child
             compute_child = obj.kit_creation_id_consume_common.consider_child_locations_kit_creation
-            stock_context = dict(context, compute_child=compute_child)
             # we check for the available qty (in:done, out: assigned, done)
-            res = loc_obj._product_reserve_lot(cr, uid, [obj.location_src_id_consume_common.id], product.id, uom_id, context=stock_context, lock=True)
+            res = self._compute_availability(cr, uid, [obj.location_src_id_consume_common.id], compute_child, product.id, uom_id, context=context)
             result.setdefault(obj.id, {}).update({'qty_available_to_consume': res['total']})
         return result
     
-    def on_change_product_id(self, cr, uid, ids, product_id, default_location_src_id_kit_creation, consider_child_locations_kit_creation, context=None):
+    def on_change_product_id(self, cr, uid, ids, product_id, default_location_src_id, consider_child_locations, context=None):
         '''
         on change function
         
         version - qty - uom are set to False
         '''
-        result = super(kit_creation_to_consume, self).on_change_product_id(cr, uid, ids, product_id, default_location_src_id_kit_creation, context=context)
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        prod_obj = self.pool.get('product.product')
+        
+        result = super(kit_creation_to_consume, self).on_change_product_id(cr, uid, ids, product_id, default_location_src_id, context=context)
         result.setdefault('value', {}).update({'total_qty_to_consume': 0.0})
         
-        if product_id and default_location_src_id_kit_creation:
+        if product_id and default_location_src_id:
             # availability flag
-            # objects
-            loc_obj = self.pool.get('stock.location')
-            prod_obj = self.pool.get('product.product')
             # corresponding product object
             product = prod_obj.browse(cr, uid, product_id, context=context)
             # uom from product is taken by default if needed
             uom_id = product.uom_id.id
-            # do we want the children location
-            stock_context = dict(context, compute_child=consider_child_locations_kit_creation)
             # we check for the available qty (in:done, out: assigned, done)
-            res = loc_obj._product_reserve_lot(cr, uid, [default_location_src_id_kit_creation], product_id, uom_id, context=stock_context, lock=True)
+            res = self._compute_availability(cr, uid, [default_location_src_id], consider_child_locations, product_id, uom_id, context=context)
             result.setdefault('value', {}).update({'qty_available_to_consume': res['total']})
         
         return result
@@ -250,11 +292,43 @@ class kit_creation_to_consume(osv.osv):
     def on_change_qty(self, cr, uid, ids, qty, creation_qty, context=None):
         '''
         on change function
-        
-        version - qty - uom are set to False
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         result = {}
         result.setdefault('value', {}).update({'total_qty_to_consume': qty * creation_qty})
+        
+        return result
+    
+    def on_change_uom_id(self, cr, uid, ids, product_id, default_location_src_id, consider_child_locations, uom_id, location_src_id, context=None):
+        '''
+        on change function
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        prod_obj = self.pool.get('product.product')
+        
+        result = {}
+        # priority to line location
+        location_id = location_src_id or default_location_src_id
+        if product_id and location_id:
+            # availability flag
+            # corresponding product object
+            product = prod_obj.browse(cr, uid, product_id, context=context)
+            # uom from product is taken by default if needed - priority to selected uom
+            uom_id = uom_id or product.uom_id.id
+            # we check for the available qty (in:done, out: assigned, done)
+            res = self._compute_availability(cr, uid, [location_id], consider_child_locations, product_id, uom_id, context=context)
+            result.setdefault('value', {}).update({'qty_available_to_consume': res['total']})
         
         return result
     
@@ -287,6 +361,25 @@ class kit_creation_to_consume(osv.osv):
     
     _defaults = {'availability_to_consume': 'empty',
                  }
+    
+    def _kit_creation_to_consume_constraint(self, cr, uid, ids, context=None):
+        '''
+        constraint on item composition 
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.qty_consume_common <= 0.0:
+                # qty to consume cannot be empty
+                raise osv.except_osv(_('Warning !'), _('Quantity to consume must be greater than 0.0.'))
+                
+        return True
+    
+    _constraints = [(_kit_creation_to_consume_constraint, 'Constraint error on Kit Creation to Consume.', []),]
     
 kit_creation_to_consume()
 
