@@ -195,7 +195,11 @@ class hr_payroll_import(osv.osv_memory):
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format
             fileobj.seek(0)
-            zipobj = zf(fileobj.name, 'r')
+            try:
+                zipobj = zf(fileobj.name, 'r')
+            except:
+                fileobj.close()
+                raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
             if zipobj.namelist():
                 namelist = zipobj.namelist()
                 # Search CSV
@@ -204,33 +208,36 @@ class hr_payroll_import(osv.osv_memory):
                     if name.split(file_ext_separator) and name.split(file_ext_separator)[-1] == file_ext:
                       csvfile = name
                 if csvfile:
-                    reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
-                    if reader:
+                    try:
+                        reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
                         reader.next()
-                    res = True
-                    res_amount = 0.0
-                    amount = 0.0
-                    for line in reader:
-                        processed += 1
-                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
-                        res_amount += round(amount, 2)
-                        if not update:
-                            res = False
-                        created += nb_created
-                    # Check balance
-                    if round(res_amount, 2) != 0.0:
-                        # adapt difference by writing on payroll rounding line
-                        pr_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), ('name', '=', 'Payroll rounding')])
-                        if not pr_ids:
-                            raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
-                        # Fetch Payroll rounding amount
-                        pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
-                        # To compute new amount, you should:
-                        # - take payroll rounding amount
-                        # - take the opposite of res_amount (wich is the current difference)
-                        # - add both
-                        new_amount = round(pr.amount, 2) + (-1 * round(res_amount, 2))
-                        self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
+                        res = True
+                        res_amount = 0.0
+                        amount = 0.0
+                        for line in reader:
+                            processed += 1
+                            update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
+                            res_amount += round(amount, 2)
+                            if not update:
+                                res = False
+                            created += nb_created
+                        # Check balance
+                        if round(res_amount, 2) != 0.0:
+                            # adapt difference by writing on payroll rounding line
+                            pr_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), ('name', '=', 'Payroll rounding')])
+                            if not pr_ids:
+                                raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
+                            # Fetch Payroll rounding amount
+                            pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
+                            # To compute new amount, you should:
+                            # - take payroll rounding amount
+                            # - take the opposite of res_amount (wich is the current difference)
+                            # - add both
+                            new_amount = round(pr.amount, 2) + (-1 * round(res_amount, 2))
+                            self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
+                    except:
+                        fileobj.close()
+                        raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
         
         if res:

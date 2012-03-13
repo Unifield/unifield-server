@@ -85,7 +85,7 @@
                         <field name="total"/>
                     </group>
                     <group colspan="4" col="2">
-                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                        <button name="button_validate" type="object" string="Ok" icon="gtk-ok"/>
                         <label string="" colspan="1"/>
                     </group>
                 </form>

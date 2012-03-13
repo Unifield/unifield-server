@@ -234,7 +234,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Prepare some values
         staff_file = 'staff.csv'
         res = False
-        message = "Employee import failed."
+        message = "Employee import FAILED."
         created = 0
         updated = 0
         processed = 0
@@ -243,23 +243,31 @@ class hr_payroll_employee_import(osv.osv_memory):
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format
             fileobj.seek(0)
-            zipobj = zf(fileobj.name)
+            try:
+                zipobj = zf(fileobj.name)
+            except:
+                fileobj.close()
+                raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-            reader.next()
-            # Unactivate all local employees
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
-            self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
-            res = True
-            for employee_data in reader:
-                processed += 1
-                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data)
-                if not update:
-                    res = False
-                created += nb_created
-                updated += nb_updated
-            fileobj.close()
+            try:
+                reader.next()
+                # Unactivate all local employees
+                e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
+                self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
+                res = True
+                for employee_data in reader:
+                    processed += 1
+                    update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data)
+                    if not update:
+                        res = False
+                    created += nb_created
+                    updated += nb_updated
+            except:
+                raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % staff_file)
+            finally:
+                fileobj.close()
         if res:
             message = "Employee import successful."
         context.update({'message': message})
