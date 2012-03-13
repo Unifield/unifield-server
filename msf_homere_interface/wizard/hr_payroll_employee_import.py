@@ -38,6 +38,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
+        Change message field
         """
         if not context:
             context = {}
@@ -50,6 +51,34 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 label.set('string', "%s" % message)
             view['arch'] = etree.tostring(tree)
         return view
+
+    def button_validate(self, cr, uid, ids, context={}):
+        """
+        Return rigth view
+        """
+        if not context:
+            return {'type': 'ir.actions.act_window_close'}
+        if context.get('from', False):
+            result = False
+            if context.get('from') == 'employee_import':
+                result = ('editable_view_employee_tree', 'hr.employee')
+            if context.get('from') == 'payroll_import':
+                result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
+            if result:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', result[0])
+                if view_id:
+                    view_id = view_id and view_id[1] or False
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': result[1],
+                    'view_type': 'form',
+                    'view_mode': 'tree',
+                    'view_id': [view_id],
+                    'context': context,
+                    'target': 'crush',
+                    'context': context,
+                }
+        return {'type': 'ir.actions.act_window_close', 'context': context}
 
 hr_payroll_import_confirmation()
 
@@ -209,6 +238,9 @@ class hr_payroll_employee_import(osv.osv_memory):
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
+        
+        # This is to redirect to Employee Tree View
+        context.update({'from': 'employee_import'})
         
         return {
             'name': 'Employee Import Confirmation',

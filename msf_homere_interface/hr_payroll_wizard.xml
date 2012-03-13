@@ -80,7 +80,7 @@
                 <form string="Import Confirmation">
                     <label string="Nothing" colspan="4" align="0.0"/>
                     <group colspan="4" col="2">
-                        <button string="Validate" special="cancel" icon="terp-camera_test"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
                         <label string="" colspan="1"/>
                     </group>
                 </form>

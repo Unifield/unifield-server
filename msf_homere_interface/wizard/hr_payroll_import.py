@@ -217,6 +217,9 @@ class hr_payroll_import(osv.osv_memory):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
         
+        # This is to redirect to Payroll Tree View
+        context.update({'from': 'payroll_import'})
+        
         return {
             'name': 'Payroll Import Confirmation',
             'type': 'ir.actions.act_window',
