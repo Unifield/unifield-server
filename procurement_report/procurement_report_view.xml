@@ -2,80 +2,78 @@
 <openerp>
     <data>
     
-        <record id="procurement_report_policies_tree" model="ir.ui.view">
-            <field name="name">procurement.report.policies.tree</field>
-            <field name="model">report.procurement.policies</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Procurement Rules Analysis" editable="bottom">
-                    <field name="location_id" />
-                    <field name="categ_id" />
-                    <field name="product_id" />
-                    <field name="automatic_supply_id" />
-                    <field name="order_cycle_id" />
-                    <field name="mini_rule_id" />
-                </tree>
-            </field>
-        </record>
-        
-        <record id="procurement_report_policies_form" model="ir.ui.view">
-            <field name="name">procurement.report.policies.form</field>
-            <field name="model">report.procurement.policies</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Test">
-                    <field name="location_id" readonly="1" />
-                    <field name="categ_id" readonly="1" />
-                    <field name="product_id" readonly="1" />
-                    <field name="automatic_supply_id" readonly="1" />
-                    <field name="order_cycle_id" readonly="1" />
-                    <field name="mini_rule_id" readonly="1" />
-                </form>
-            </field>
-        </record>
-        
-        <record id="procurement_report_policies_search" model="ir.ui.view">
-            <field name="name">procurement.report.policies.search</field>
-            <field name="model">report.procurement.policies</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="Procurement Rules Analysis">
-                    <group string="Filters..." expand="1">
-	                    <filter name="no_auto" string="No Automatic Supply Rule" domain="[('automatic_supply_id', '=', False)]" />
-	                    <filter name="no_auto" string="No Order Cycle Rule" domain="[('order_cycle_id', '=', False)]" />
-	                    <filter name="no_auto" string="No Mini. Stock Rule" domain="[('mini_rule_id', '=', False)]" />
-	                    <separator orientation="vertical" />
-	                    <field name="product_id" />
-	                    <field name="categ_id" />
-	                    <field name="location_id" />
-                    </group>
-                    <newline />
-                    <group string="Group By..." expand="1">
-                        <filter name="group_sloc_id" string="Location" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'location_id'}"/>
-                        <separator orientation="vertical" />
-                        <filter name="group_categ_id" string="Product Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'categ_id'}"/>
-                        <filter name="group_product_id" string="Product" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'product_id'}"/>
-                        <separator orientation="vertical" />
-                        <filter name="group_order_id" string="Order Cycle" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_cycle_id'}"/>
-                        <filter name="group_auto_id" string="Automatic Supply" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'automatic_supply_id'}"/>
-                        <filter name="group_min_id" string="Min/Max" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'mini_rule_id'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
-        
-        <record id="procurement_report_policies_action" model="ir.actions.act_window">
-            <field name="name">Procurement Rules Analysis</field>
-            <field name="res_model">report.procurement.policies</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_group_product_id': 0, 'search_default_group_categ_id': 0, 'search_default_group_sloc_id': 0}</field>
-            <field name="search_view_id" ref="procurement_report_policies_search" />
-        </record>
-        
-        <menuitem action="procurement_report_policies_action"
-                  id="menu_report_procurement_policies"
-                  parent="stock.next_id_61" />
+    	<record id="procurement_rules_report_tree_view" model="ir.ui.view">
+    		<field name="name">procurement.rules.report.tree.view</field>
+    		<field name="model">procurement.rules.report</field>
+    		<field name="type">tree</field>
+    		<field name="arch" type="xml">
+    			<tree string="Replenishment Rules Analysis" editable="top" noteditable="1"
+    				hide_new_button="1" hide_delete_button="1"
+    				colors="red: auto_supply_ok=='no' and order_cycle_ok=='no' and min_max_ok=='no' and threshold_ok=='no'">
+    				<field name="product_id" />
+    				<field name="location_id" />
+    				<field name="auto_supply_ok" />
+    				<field name="order_cycle_ok" />
+    				<field name="min_max_ok" />
+    				<field name="threshold_ok" />
+    			</tree>
+    		</field>
+    	</record>
+    	
+    	<record id="procurement_rules_report_search_view" model="ir.ui.view">
+    		<field name="name">procurement.rules.report.search.view</field>
+    		<field name="model">procurement.rules.report</field>
+    		<field name="type">search</field>
+    		<field name="arch" type="xml">
+    			<search string="Replenishment Rules Analysis" >
+    				<field name="product_reference" />
+    				<field name="product_name" />
+    				<field name="product_id" />
+    				<field name="location_id" />
+    				<field name="auto_supply_ok" />
+    				<field name="order_cycle_ok" />
+    				<field name="min_max_ok" />
+    				<field name="threshold_ok" />
+    				<newline />
+    				<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', False)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+					</group>
+    				<newline />
+    				<group expand="0" string="Group By...">
+    					<filter string="Product" context="{'group_by': 'product_id'}" />
+    					<separator orientation="vertical" />
+    					<filter string="Location" context="{'group_by': 'location_id'}" />
+    				</group>
+    			</search>
+    		</field>
+    	</record>
+    	
+    	<record id="action_procurement_rules_report" model="ir.actions.act_window">
+    		<field name="name">Procurement Rules Analysis</field>
+    		<field name="res_model">procurement.rules.report</field>
+    		<field name="view_type">form</field>
+    		<field name="view_mode">tree</field>
+    		<field name="context">{}</field>
+    	</record>
+    	
+    	<menuitem action="action_procurement_rules_report"
+    			  id="menu_procurement_rules_report"
+    			  parent="stock_schedule.stock_automatic_procurements_menu" />
     
     </data>
 </openerp>
