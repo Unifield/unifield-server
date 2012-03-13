@@ -846,7 +846,11 @@ class procurement_order(osv.osv):
             return purchase_ids[0]
         else:
             if procurement.po_cft == 'dpo':
-                values.update({'order_type': 'direct'})
+                sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+                sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+                values.update({'order_type': 'direct', 
+                               'dest_partner_id': sol.order_id.partner_id.id, 
+                               'dest_address_id': sol.order_id.partner_shipping_id.id})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     
