@@ -82,6 +82,22 @@ class hr_employee(osv.osv):
                 vals = new_vals
         return super(hr_employee, self).write(cr, uid, ids, vals, context)
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Delete local staff is not allowed except if 'unlink' is in context and its value is 'auto'
+        """
+        # Some verification
+        if not context:
+            context = {}
+        delete_local_staff = False
+        if context.get('unlink', False) and context.get('unlink') == 'auto':
+            delete_local_staff = True
+        # Browse all employee
+        for emp in self.browse(cr, uid, ids):
+            if emp.employee_type == 'local' and not delete_local_staff:
+                raise osv.except_osv(_('Warning'), _('You are not allowed to delete local staff manually!'))
+        return super(hr_employee, self).unlink(cr, uid, ids, context)
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Change funding pool domain in order to include MSF Private fund
