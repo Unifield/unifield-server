@@ -143,7 +143,28 @@ class hr_payroll_validation(osv.osv):
         self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, {'state': 'valid'})
         # Update Payroll import period table
         self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id})
-        return { 'type': 'ir.actions.act_window_close', 'context': context}
+        # Display a confirmation wizard
+        period = self.pool.get('account.period').browse(cr, uid, period_id)
+        context.update({'message': _('Payroll entries validation is successful for this period: %s') % (period.name,)})
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+        view_id = view_id and view_id[1] or False
+        
+        # This is to redirect to Payroll Tree View
+        context.update({'from': 'payroll_import'})
+        
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'state': 'none'})
+        
+        return {
+            'name': 'Payroll Validation Confirmation',
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.payroll.import.confirmation',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'view_id': [view_id],
+            'res_id': res_id,
+            'target': 'new',
+            'context': context,
+        }
 
 hr_payroll_validation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
