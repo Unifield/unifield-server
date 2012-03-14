@@ -56,7 +56,7 @@
                         <tree string="Products" editable="top" colors="red:prodlot_id and consumed_qty>product_qty or not prodlot_id and batch_mandatory;blue: not prodlot_id and consumed_qty>product_qty">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False}"
-                                domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
+                                domain="[('list_ids', '=', parent.sublist_id)]" />
                             <field name="uom_id" 
                                 on_change="uom_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"/>
                             <field name="product_qty" />
@@ -109,6 +109,11 @@
                     <field name="period_to" />
                     <field name="nb_lines" />
                     <field name="created_ok" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -133,7 +138,10 @@
                         <filter string="Activity" icon="terp-administration" domain="" context="{'group_by':'activity_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
-                        <filter string="Nomenclature" icon="terp-tools" domain="" context="{'group_by':'nomen_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
                     </group>
                 </search>
             </field>
@@ -216,7 +224,7 @@
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list">
                         <tree string="Products" editable="top"> 
                             <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" 
-                            	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
+                            	domain="[('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
                             <field name="fmc" on_change="fmc_change(amc, fmc, name)" attrs="{'readonly': [('valid_ok', '=', True)]}" />
                             <field name="last_reviewed" />
@@ -242,6 +250,11 @@
                     <field name="period_from" />
                     <field name="period_to" />
                     <field name="nb_lines" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -259,7 +272,10 @@
                     <newline/>
                     <group expand="0" string="Group By...">
                         <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
-                        <filter string="Nomenclature" icon="terp-tools" domain="" context="{'group_by':'nomen_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
                     </group>
                 </search>
             </field>
