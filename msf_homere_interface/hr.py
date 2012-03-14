@@ -30,6 +30,8 @@ class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
 
+    _order = 'name_resource'
+
     _columns = {
         'date_from': fields.date(string='Active from'),
         'employee_type': fields.selection([('', ''), ('local', 'Local Staff'), ('ex', 'Expatriate employee')], string="Type", required=True),
@@ -42,6 +44,7 @@ class hr_employee(osv.osv):
         'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
+        'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
     }
 
     _defaults = {
