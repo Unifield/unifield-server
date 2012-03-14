@@ -328,6 +328,11 @@ class sourcing_line(osv.osv):
                     else:
                         # no partner is selected, erase the date
                         values.update({'estimated_delivery_date': False})
+                
+                # Remove the saved estimated DD on cancellation of the FO line
+                if 'state' in vals and vals['state'] == 'cancel':
+                    values.update({'cf_estimated_delivery_date': False})    
+                    
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
         
