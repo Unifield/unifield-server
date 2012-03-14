@@ -30,11 +30,15 @@
                     	<page string="Components">
                     		<field name="default_location_src_id_kit_creation" />
                     		<field name="consider_child_locations_kit_creation" /> 
-                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_consume_common': default_location_src_id_kit_creation}" />
+                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" />
                     		<group colspan="2" />
                     		<button name="dummy_function" type="object" string="Check Availability" icon="gtk-find" />
                     		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" />
-                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" />
+                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph">
+                    			<tree string="Consumed Stock Moves">
+                    				<field name="kit_creation_id_stock_move" />
+                    			</tree>
+                    		</field>
                     		
                     	</page>
                     	<page string="Kits">
@@ -83,20 +87,20 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Components to Consume" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume">
-            		<field name="product_id_consume_common"
-            			on_change="on_change_product_id(product_id_consume_common, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />
-            		<field name="qty_consume_common"
+            		<field name="product_id_to_consume"
+            			on_change="on_change_product_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />
+            		<field name="qty_to_consume"
             			string="Qty per Kit"
-            			on_change="on_change_qty(qty_consume_common, parent.qty_kit_creation, context)" />
+            			on_change="on_change_qty(qty_to_consume, parent.qty_kit_creation, context)" />
             		<field name="total_qty_to_consume" />
-            		<field name="uom_id_consume_common"
-            			on_change="on_change_uom_id(product_id_consume_common, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_consume_common, location_src_id_consume_common, context)" />
-            		<field name="location_src_id_consume_common" />
+            		<field name="uom_id_to_consume"
+            			on_change="on_change_uom_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_to_consume, location_src_id_to_consume, context)" />
+            		<field name="location_src_id_to_consume" />
             		<field name="qty_available_to_consume" />
             		<field name="availability_to_consume" invisible="True" />
             		<field name="state" invisible="True" />
-            		<field name="batch_check_kit_creation_consume_common" />
-            		<field name="expiry_check_kit_creation_consume_common" />
+            		<field name="batch_check_kit_creation_to_consume" />
+            		<field name="expiry_check_kit_creation_to_consume" />
             	</tree>
             </field>
 		</record>
@@ -107,16 +111,16 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Components Consumed" editable="top">
-            		<field name="product_id_consume_common" />
-            		<field name="qty_consume_common" />
-            		<field name="uom_id_consume_common" />
+            		<field name="product_id_to_consume" />
+            		<field name="qty_to_consume" />
+            		<field name="uom_id_to_consume" />
             		<field name="lot_id_consumed" />
             		<field name="expiry_date_consumed" />
-            		<field name="location_src_id_consume_common" />
+            		<field name="location_src_id_to_consume" />
             		<field name="kit_id_consumed" />
             		<field name="state" invisible="True" />
-            		<field name="batch_check_kit_creation_consume_common" />
-            		<field name="expiry_check_kit_creation_consume_common" />
+            		<field name="batch_check_kit_creation_to_consume" />
+            		<field name="expiry_check_kit_creation_to_consume" />
             	</tree>
             </field>
 		</record>
