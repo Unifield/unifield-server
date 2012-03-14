@@ -77,11 +77,11 @@ class procurement_order(osv.osv):
                         'manual_consumption': cycle.manual_consumption,}
 
             if not cycle.product_id:
-                not_products = []
+                products = []
                 for p in cycle.product_ids:
-                    not_products.append(p.id)
+                    products.append(p.id)
 
-                product_ids = product_obj.search(cr, uid, [('categ_id', 'child_of', cycle.category_id.id), ('id', 'not in', not_products)])
+                product_ids = product_obj.search(cr, uid, [('id', 'in', products)])
                 
                 for product in product_obj.browse(cr, uid, product_ids):
                     proc_id = self.create_proc_cycle(cr, uid, cycle, product.id, location_id, d_values, cache=cache)
