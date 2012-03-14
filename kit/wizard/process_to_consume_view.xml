@@ -8,100 +8,23 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             	<form string="Process Components to Consume">
-            		<group col="4" colspan="4">
-            			<field name="kit_creation_id_process_to_consume" />
-                    </group>
                     <group col="4" colspan="4">
-                        <field name="composition_item_ids" nolabel="True" mode="tree,form,graph" domain="[('wizard_id', '=', wizard_id), ('kit_id_mirror', '=', kit_id)]">
-                        	<tree hide_new_button="True" hide_delete_button="True" string="Items from Kit to Stock" editable="top" colors="red:integrity_status!='empty'">
-	                			<field name="module_substitute_item" readonly="True" />
-			            		<field name="product_id_substitute_item" readonly="True" />
-			            		<field name="qty_substitute_item" readonly="True" />
-			            		<field name="uom_id_substitute_item" readonly="True" />
-			            		<field name="lot_mirror"
-               						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
-                        			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
-			            		<field name="exp_substitute_item"
-                					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
-                					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
-                				<field name="type_check" invisible="True" />
-                				<field name="hidden_batch_management_mandatory" string="Lot" />
-                				<field name="hidden_perishable_mandatory" string="Exp" />
-            					<field name="hidden_stock_available" invisible="True" />
-            					<field name="integrity_status" />
-                        	</tree>
-                        </field>
-                    </group>
-                    <group col="4" colspan="4">
-                        <field name="replacement_item_ids" nolabel="True">
-                        	<tree string="Items from Stock to Kit" editable="top" colors="red:hidden_stock_available&lt;qty_substitute_item or qty_substitute_item&lt;=0.0">
-                        		<field name="location_id_substitute_item"
-                        			on_change="on_change_location_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
-                        			context="{'product_id':product_id_substitute_item, 'prodlot_id':lot_id_substitute_item, 'specific_rules_tree_view':True, 'compute_child':False}" />
-	                			<field name="module_substitute_item" />
-                				<field name="product_id_substitute_item"
-                					on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item, context)"
-                					context="location=location_id_substitute_item, uom=uom_id_substitute_item" />
-                				<field name="qty_substitute_item" />
-                				<field name="uom_id_substitute_item" />
-               					<field name="lot_id_substitute_item"
-               						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
-               						context="{'location_id':location_id_substitute_item, 'product_id':product_id_substitute_item, 'hidden_perishable_mandatory':hidden_perishable_mandatory, 'search_default_real': True}"
-                        			domain="[('check_type','=', True), ('product_id', '=?', product_id_substitute_item)]"
-                        			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
-                				<field name="exp_substitute_item"
-                					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
-                					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', True)]}" />
-                				<field name="type_check" invisible="True" />
-                				<field name="hidden_batch_management_mandatory" string="Lot" />
-                				<field name="hidden_perishable_mandatory" string="Exp" />
-            					<field name="hidden_stock_available" invisible="True" />
-            					<field name="integrity_status" />
+                        <field name="components_to_consume_ids" nolabel="True" mode="tree,form,graph">
+                        	<tree hide_new_button="True" string="Items from Kit to Stock" editable="top" colors="red:qty_available_process_to_consume&lt;qty_process_to_consume">
+	                			<field name="product_id_process_to_consume" />
+			            		<field name="qty_process_to_consume" readonly="True" />
+			            		<field name="selected_qty_process_to_consume" />
+			            		<field name="uom_id_process_to_consume" readonly="True" />
                         	</tree>
                         </field>
                     </group>
                     <group col="4" colspan="4">
 	                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-	                    <button name="check_integrity" string="Check Integrity" type="object" icon="gtk-find" />
-	                    <button name="check_availability" string="Check Availability" type="object" icon="gtk-find" />
-	                    <button name="do_substitute" string="Process" type="object" icon="gtk-go-forward" />
-	                    <button name="do_de_kitting" string="Process" type="object" icon="gtk-go-forward" />
+	                    <button name="do_process_to_consume" string="Process" type="object" icon="gtk-go-forward" />
                     </group>
             	</form>
             </field>
 		</record>
-		
-		<record id="view_substitute_item_mirror_tree" model="ir.ui.view">
-            <field name="name">substitute.item.mirror.tree</field>
-            <field name="model">substitute.item.mirror</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-            	<tree string="Kit Item">
-            		<field name="module_substitute_item" readonly="True" />
-            		<field name="product_id_substitute_item" readonly="True" />
-            		<field name="qty_substitute_item" readonly="True" />
-            		<field name="uom_id_substitute_item" readonly="True" />
-            		<field name="lot_mirror" />
-            		<field name="exp_substitute_item" />
-            		<field name="hidden_batch_management_mandatory" />
-            		<field name="hidden_perishable_mandatory" />
-            	</tree>
-            </field>
-		</record>
-		
-		<record id="view_substitute_item_mirror_filter" model="ir.ui.view">
-            <field name="name">substitute.item.mirror.filter</field>
-            <field name="model">substitute.item.mirror</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="Search Real Kit Composition Item">
-                    <field name="module_substitute_item" select="1" />
-                    <field name="product_id_substitute_item" select="1" />
-                    <field name="lot_mirror" select="1" />
-                    <field name="exp_substitute_item" select="1" />
-              	</search>
-            </field>
-        </record>
     
     </data>
 </openerp>

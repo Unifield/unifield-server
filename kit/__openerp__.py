@@ -38,6 +38,7 @@
         'wizard/confirm_view.xml',
         'wizard/kit_selection_view.xml',
         'wizard/modify_expiry_date_view.xml',
+        'wizard/process_to_consume_view.xml',
     ],
     "demo_xml": [],
     'test': ['test/kit_data.yml',

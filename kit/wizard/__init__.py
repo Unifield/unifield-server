@@ -25,3 +25,4 @@ import stock_partial_picking
 import confirm
 import kit_selection
 import modify_expiry_date
+import process_to_consume

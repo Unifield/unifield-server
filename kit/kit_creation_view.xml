@@ -32,7 +32,7 @@
                     		<field name="consider_child_locations_kit_creation" /> 
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" />
                     		<group colspan="2" />
-                    		<button name="dummy_function" type="object" string="Check Availability" icon="gtk-find" />
+                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-find" />
                     		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" />
                     		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph">
                     			<tree string="Consumed Stock Moves">
@@ -87,6 +87,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Components to Consume" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume">
+            		<field name="line_number_to_consume" />
             		<field name="product_id_to_consume"
             			on_change="on_change_product_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />
             		<field name="qty_to_consume"
@@ -101,6 +102,7 @@
             		<field name="state" invisible="True" />
             		<field name="batch_check_kit_creation_to_consume" />
             		<field name="expiry_check_kit_creation_to_consume" />
+            		<button name="process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" />
             	</tree>
             </field>
 		</record>
