@@ -1,8 +1,0 @@
-<openerp>
-    <data noupdate="1">
-    
-        <record id="msf_profile.stock.stock_location_cross_docking" model="stock.location">
-        </record>
-
-    </data>
-</openerp>

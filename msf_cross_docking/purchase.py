@@ -76,10 +76,10 @@ class purchase_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
         for p in self.browse(cr, uid, ids, context=context):
-            if p.cross_docking_ok and p.location_id.id == cross_docking_location:
-                return True
-            elif not p.cross_docking_ok and p.location_id.id != cross_docking_location:
+            if p.cross_docking_ok and p.location_id.id != cross_docking_location:
                 raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
+            else:
+                return True
 
     _constraints = [
         (_check_cross_docking, 'If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"', ['location_id']),
