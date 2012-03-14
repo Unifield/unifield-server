@@ -122,7 +122,7 @@ class hr_payroll_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                 employee_id = employee_ids[0]
                 # Create description
-                name = 'Salary ' + time.strftime('%b %Y')
+                name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], '%d/%m/%Y')))
                 # Create reference
                 separator = str(time.strftime('%m/%Y', time.strptime(date[0], '%d/%m/%Y')))
                 ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
