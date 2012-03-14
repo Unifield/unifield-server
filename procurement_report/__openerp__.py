@@ -35,6 +35,7 @@
     ],
     'update_xml': [
         'procurement_report_view.xml',
+        'min_max_report_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [
