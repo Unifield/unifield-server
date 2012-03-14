@@ -12,12 +12,18 @@
         			<field name="name" />
         			<field name="warehouse_id" widget="selection" 
         				on_change="onchange_warehouse_id(warehouse_id)" />
+        			<!-- 
         			<field name="category_id" on_change="category_on_change(category_id)" />
+        			 -->
         			<field name="location_id"  />
+        			<!-- 
         			<field name="product_id" on_change="product_on_change(product_id)" 
         				attrs="{'invisible': [('category_id', '!=', False)], 'required': [('category_id', '=', False)]}" />
+        			 -->
         			<field name="active" />
+        			<!-- 
         			<field name="uom_id" attrs="{'invisible': [('category_id', '!=', False)]}" />
+        			 -->
         			<newline />
         			<group colspan="2" col="2">
         				<separator colspan="2" string="Quantity rules" />
@@ -39,6 +45,44 @@
         				<field name="supplier_lt" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
         					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
         			</group>
+                    <separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" />
+                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
+                    <group colspan="4" col="4">
+                        <separator colspan="4" string="Order quantity by product" />
+                        <field name="line_ids" nolabel="1" colspan="4">
+                            <tree string="Products" editable="top">
+                                <field name="product_id" on_change="onchange_product_id(product_id)" domain="[('list_ids', '=', parent.sublist_id)]"/>
+                                <field name="product_uom_id" />
+                                <field name="product_qty" />
+                            </tree>
+                        </field>
+                    </group>
         		</form>
         	</field>
         </record>
@@ -85,6 +129,7 @@
         	<field name="res_model">threshold.value</field>
         	<field name="view_type">form</field>
         	<field name="view_mode">tree,form</field>
+        	<field name="context">{'withnum': 1}</field>
         </record>
         
         <menuitem id="menu_threshold_value"
