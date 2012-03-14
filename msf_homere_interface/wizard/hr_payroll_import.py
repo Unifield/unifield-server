@@ -124,13 +124,13 @@ class hr_payroll_import(osv.osv_memory):
                 # Create description
                 name = 'Salary ' + time.strftime('%b %Y')
                 # Create reference
-                ref = description and description[0] and ustr(description[0])
+                separator = str(time.strftime('%m/%Y', time.strptime(date[0], '%d/%m/%Y')))
+                ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
         # Fetch description
         if not name:
             name = description and description[0] and ustr(description[0]) or ''
         if ustr(second_description[0]) == 'Payroll rounding':
                 name = 'Payroll rounding'
-                ref = description and description[0] and ustr(description[0]) or ''
         debit = 0.0
         credit = 0.0
         if expense and expense[0]:
