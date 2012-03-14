@@ -94,9 +94,13 @@
         	<field name="arch" type="xml">
         		<tree string="Threshold value">
         			<field name="name" />
-        			<field name="category_id" />
         			<field name="product_id" />
         			<field name="location_id" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
         		</tree>
         	</field>
         </record>
@@ -110,15 +114,19 @@
         			 <group expand="1" string="Filters...">
         			 	<field name="name" default_focus="1" />
         			 	<field name="product_id" eval="context.get('product_id', False)" />
-        			 	<field name="category_id" eval="context.get('category_id', False)" />
         			 	<field name="location_id" eval="context.get('location_id', False)" />
 	                </group>
 	                <newline/>
 	                <group expand="1" string="Group By...">
-	                	<filter name="group_product_categ_id" string="Product Category" icon="terp-stock_symbol-selection" context="{'group_by':'product_categ_id'}"/>
 	                	<filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
 	                	<separator orientation="vertical"/>
 	                	<filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
 	                </group>
         		</search>
         	</field>
