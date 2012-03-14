@@ -24,7 +24,7 @@
     'category': 'Stock',
     'author': 'MSF, TeMPO Consulting, Smile',
     'developer': 'Matthieu Choplin',
-    'depends': ['purchase_msf'],
+    'depends': ['purchase_msf','delivery_mechanism'],
     'description': '''
         Cross Docking Management
     ''',
