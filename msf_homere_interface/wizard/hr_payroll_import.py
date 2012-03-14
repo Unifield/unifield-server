@@ -191,7 +191,7 @@ class hr_payroll_import(osv.osv_memory):
         file_ext_separator = '.'
         file_ext = "csv"
         relativepath = 'tmp/homere.password' # relative path from user directory to homere password file
-        message = "Payroll import failed."
+        message = _("Payroll import failed.")
         res = False
         created = 0
         processed = 0
@@ -262,7 +262,7 @@ class hr_payroll_import(osv.osv_memory):
             fileobj.close()
         
         if res:
-            message = "Payroll import successful"
+            message = _("Payroll import successful")
         context.update({'message': message})
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')

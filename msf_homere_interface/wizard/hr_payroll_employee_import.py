@@ -245,7 +245,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Prepare some values
         staff_file = 'staff.csv'
         res = False
-        message = "Employee import FAILED."
+        message = _("Employee import FAILED.")
         created = 0
         updated = 0
         processed = 0
@@ -283,7 +283,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Close Temporary File
             fileobj.close()
         if res:
-            message = "Employee import successful."
+            message = _("Employee import successful.")
         context.update({'message': message})
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
