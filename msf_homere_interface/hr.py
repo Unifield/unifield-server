@@ -156,5 +156,26 @@ class hr_employee(osv.osv):
         view['arch'] = etree.tostring(form)
         return view
 
+    def onchange_cc(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
+        """
+        Update FP or CC regarding both.
+        """
+        # Prepare some values
+        vals = {}
+        if not cost_center_id or not funding_pool_id:
+            return {}
+        if cost_center_id and funding_pool_id:
+            fp = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except:
+                fp_id = 0
+            # Exception for MSF Private Fund
+            if funding_pool_id == fp_id:
+                return {}
+            if cost_center_id not in [x.id for x in fp.cost_center_ids]:
+                vals.update({'funding_pool_id': False})
+        return {'value': vals}
+
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
