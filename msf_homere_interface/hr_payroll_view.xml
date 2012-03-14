@@ -83,7 +83,7 @@
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="account_id"/>
-                    <field name="amount"/>
+                    <field name="amount" sum="Total amount"/>
                     <field name="currency_id"/>
                     <field name="state"/>
                     <field name="cost_center_id"/>
