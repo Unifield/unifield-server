@@ -80,9 +80,8 @@
                 <form string="Import Confirmation">
                     <label string="Nothing" colspan="4" align="0.0"/>
                     <group colspan="4" col="6">
-                        <field name="updated" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
                         <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
-                        <field name="total" attrs="{'invisible': [('state', '=', 'none')]}"/>
+                        <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
                     </group>
                     <group colspan="4" col="2">
                         <button name="button_validate" type="object" string="Ok" icon="gtk-ok"/>
