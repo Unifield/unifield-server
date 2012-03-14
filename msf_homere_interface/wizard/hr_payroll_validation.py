@@ -82,9 +82,10 @@ class hr_payroll_validation(osv.osv):
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
         # Create lines into this move
-        for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
+        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 
+            'free1_id', 'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id']):
             # fetch amounts
-            amount = line.amount or 0.0
+            amount = line.get('amount', 0.0)
             debit = credit = 0.0
             if amount < 0.0:
                 credit = abs(amount)
@@ -92,21 +93,21 @@ class hr_payroll_validation(osv.osv):
                 debit = amount
             # create new distribution (only for expense accounts)
             distrib_id = False
-            if line.cost_center_id:
-                cc_id = line.cost_center_id and line.cost_center_id.id or False
-                fp_id = line.funding_pool_id and line.funding_pool_id.id or False
-                f1_id = line.free1_id and line.free1_id.id or False
-                f2_id = line.free2_id and line.free2_id.id or False
-                if not line.funding_pool_id:
+            if line.get('cost_center_id', False):
+                cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
+                fp_id = line.get('funding_pool_id', False) and line.get('funding_pool_id')[0] or False
+                f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
+                f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
+                if not line.get('funding_pool_id', False):
                     fp_id = msf_fp_id
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                 if distrib_id:
                     common_vals = {
                         'distribution_id': distrib_id,
-                        'currency_id': line.currency_id and line.currency_id.id or False,
+                        'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
                         'percentage': 100.0,
-                        'date': line.date or current_date,
-                        'source_date': line.date or current_date,
+                        'date': line.get('date', False) or current_date,
+                        'source_date': line.get('date', False) or current_date,
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
@@ -122,18 +123,18 @@ class hr_payroll_validation(osv.osv):
             # create move line values
             line_vals = {
                 'move_id': move_id,
-                'name': line.name,
-                'date': line.date,
-                'ref': line.ref,
-                'partner_id': line.partner_id and line.partner_id.id or False,
-                'employee_id': line.employee_id and line.employee_id.id or False,
-                'transfer_journal_id': line.journal_id and line.journal_id.id or False,
-                'account_id': line.account_id and line.account_id.id or False,
+                'name': line.get('name', ''),
+                'date': line.get('date', ''),
+                'ref': line.get('ref', ''),
+                'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
+                'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
+                'transfer_journal_id': line.get('journal_id', False) and line.get('journal_id')[0] or False,
+                'account_id': line.get('account_id', False) and line.get('account_id')[0] or False,
                 'debit_currency': debit,
                 'credit_currency': credit,
                 'journal_id': journal_id,
-                'period_id': line.period_id and line.period_id.id or period_id,
-                'currency_id': line.currency_id and line.currency_id.id or False,
+                'period_id': line.get('period_id', False) and line.get('period_id')[0] or period_id,
+                'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
                 'analytic_distribution_id': distrib_id or False,
             }
             # create move line
