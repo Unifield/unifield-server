@@ -114,7 +114,7 @@
                         <group string="Priority" expand="0">
 	                        <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
 	                        <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-	                        <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+	                        <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
                         </group>
                         <newline />
                         <group string="Category" expand="0">
