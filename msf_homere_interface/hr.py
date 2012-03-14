@@ -89,22 +89,20 @@ class hr_employee(osv.osv):
                 ex = True
         if context.get('from', False) and context.get('from') in ['yaml', 'import']:
             allowed = True
+        # Do not change any field except analytic distribution (if not allowed)
+        if not allowed:
+            new_vals = {}
+            for el in vals:
+                if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
+                    new_vals.update({el: vals[el],})
+            vals = new_vals
         # Raise an error if attempt to change local into expat and expat into local
         for emp in self.browse(cr, uid, ids):
             if emp.employee_type == 'ex' and local and not allowed:
                 raise osv.except_osv(_('Error'), _('You are not allowed to change an expatriate to local staff!'))
             if emp.employee_type == 'local' and ex and not allowed:
                 raise osv.except_osv(_('Error'), _('You are not allowed to change a local staff to expatriate!'))
-        if local:
-            # Do not change any field except analytic distribution
-            if not allowed:
-                new_vals = {}
-                for el in vals:
-                    if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
-                        new_vals.update({el: vals[el],})
-                vals = new_vals
-            # Browse all record and raise an error if no cost_center in employee OR in vals
-            for emp in self.browse(cr, uid, ids):
+            if local or emp.employee_type == 'local':
                 if (not emp.cost_center_id and not vals.get('cost_center_id', False)) or not vals.get('cost_center_id', False):
                     cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
                     if not cc_id:
