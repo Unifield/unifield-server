@@ -20,9 +20,10 @@
 	                        <field name="batch_check_kit_creation" invisible="True" colspan="2" />
 	                        <field name="expiry_check_kit_creation" invisible="True" colspan="2" />
 	                        <field name="version_id_kit_creation"
-                        		attrs="{'readonly': [('state', '!=', 'draft')]}"
                         		domain="[('composition_product_id', '=', product_id_kit_creation), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]"
                         		colspan="4" />
+                        	<group colspan="2" />
+                        	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="2" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -31,8 +32,8 @@
                     		<field name="consider_child_locations_kit_creation" /> 
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_consume_common': default_location_src_id_kit_creation}" />
                     		<group colspan="2" />
-                    		<button name="reset_to_version" type="object" string="Check Availability" icon="gtk-clear" />
-                    		<button name="reset_to_version" type="object" string="Process All Lines" icon="gtk-clear" />
+                    		<button name="dummy_function" type="object" string="Check Availability" icon="gtk-find" />
+                    		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" />
                     		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" />
                     		
                     	</page>

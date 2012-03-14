@@ -48,6 +48,118 @@ class kit_creation(osv.osv):
     '''
     _name = 'kit.creation'
     
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        create a new sequence
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = 'Kit Creation'
+        code = 'kit.creation'
+
+        types = {'name': name,
+                 'code': code,
+                 }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {'name': name,
+               'code': code,
+               'prefix': '',
+               'padding': 0,
+               }
+        return seq_pool.create(cr, uid, seq)
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create a new sequence for to consume lines
+        '''
+        vals.update({'to_consume_sequence_id': self.create_sequence(cr, uid, vals, context=context)})
+        return super(kit_creation, self).create(cr, uid, vals, context=context)
+    
+    def reset_to_version(self, cr, uid, ids, context=None):
+        '''
+        open confirmation wizard
+        '''
+        # data
+        name = _("Reset Components to Consume to Version Reference. Are you sure?")
+        model = 'confirm'
+        step = 'default'
+        question = 'The list of items to consume will be reset to reference list from the selected Version. Are you sure ?'
+        clazz = 'kit.creation'
+        func = 'do_reset_to_version'
+        args = [ids]
+        kwargs = {}
+        # to reset to version
+        for obj in self.browse(cr, uid, ids, context=context):
+            # must be a real kit
+            if obj.state == 'draft':
+                raise osv.except_osv(_('Warning !'), _('Cannot modify draft Kitting Order.'))
+            # a version must have been selected
+            if not obj.version_id_kit_creation:
+                raise osv.except_osv(_('Warning !'), _('The Kitting order is not linked to any version.'))
+        
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                callback={'clazz': clazz,
+                                                                                                          'func': func,
+                                                                                                          'args': args,
+                                                                                                          'kwargs': kwargs}))
+        return res
+    
+    def do_reset_to_version(self, cr, uid, ids, context=None):
+        '''
+        remove all items and create one item for each item from the referenced version
+        '''
+        # objects
+        item_obj = self.pool.get('kit.creation.to.consume')
+        # unlink all to consume items corresponding to selected kits
+        item_ids = item_obj.search(cr, uid, [('kit_creation_id_consume_common', 'in', ids)], context=context)
+        item_obj.unlink(cr, uid, item_ids, context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            # copy all items from the version
+            for item_v in obj.version_id_kit_creation.composition_item_ids:
+                values = {'kit_creation_id_consume_common': obj.id,
+                          'product_id_consume_common': item_v.item_product_id.id,
+                          'qty_consume_common': item_v.item_qty,
+                          'uom_id_consume_common': item_v.item_uom_id.id,
+                          'location_src_id_consume_common': obj.default_location_src_id_kit_creation.id,
+                          }
+                item_obj.create(cr, uid, values, context=context)
+        return True
+    
+    def dummy_function(self, cr, uid, ids, context=None):
+        '''
+        dummy function to refresh the screen
+        '''
+        return True
+    
+    def process_to_consume(self, cr, uid, ids, context=None):
+        '''
+        open wizard for to consume processing
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # data
+        name = _("Process Components to Consume")
+        model = 'process.to.consume'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # this purchase order line replacement function can only be used when the po is in state ('confirmed', 'Validated'),
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state == 'draft':
+                raise osv.except_osv(_('Warning !'), _('Draft Kitting Order cannot process Components to Consume.'))
+            if not len(obj.to_consume_ids_kit_creation):
+                raise osv.except_osv(_('Warning !'), _('Components to Consume list is empty.'))
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
+        return res
+    
     def mark_as_active(self, cr, uid, ids, context=None):
         '''
         button function
@@ -100,6 +212,7 @@ class kit_creation(osv.osv):
                 'to_consume_ids_kit_creation': fields.one2many('kit.creation.to.consume', 'kit_creation_id_consume_common', string='To Consume'),
                 'consumed_ids_kit_creation': fields.one2many('kit.creation.consumed', 'kit_creation_id_consume_common', string='Consumed', readonly=True),
                 'consider_child_locations_kit_creation': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check. The Kitting Order needs to be saved in order this option to be taken into account.'),
+                'to_consume_sequence_id': fields.many2one('ir.sequence', 'To Consume Sequence', required=True, ondelete='cascade'),
                 # related
                 'batch_check_kit_creation': fields.related('product_id_kit_creation', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
@@ -136,12 +249,29 @@ class kit_creation(osv.osv):
 kit_creation()
 
 
-class kit_creation_consume_common(osv.osv):
+class kit_creation_to_consume(osv.osv):
     '''
     common ancestor
     '''
-    _name = 'kit.creation.consume.common'
+    _name = 'kit.creation.to.consume'
     _rec_name = 'product_id_consume_common'
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        _inherit = 'sale.order.line'
+        
+        add the corresponding line number
+        '''
+        # gather the line number from the sale order sequence
+        order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
+        sequence = order.sequence_id
+        line = sequence.get_id(test='id', context=context)
+        vals.update({'line_number': line})
+        
+        # create the new sale order line
+        result = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        
+        return result
     
     def on_change_product_id(self, cr, uid, ids, product_id, default_location_id, context=None):
         '''
@@ -190,6 +320,7 @@ class kit_creation_consume_common(osv.osv):
                 'qty_consume_common': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_consume_common': fields.many2one('product.uom', string='UoM', required=True),
                 'location_src_id_consume_common': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
+                'line_number_consume_common': fields.integer(string='Line', required=True),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
                 'batch_check_kit_creation_consume_common': fields.function(_vals_get1, method=True, type='boolean', string='B.Num', multi='get_vals1', store=False, readonly=True),
@@ -197,8 +328,9 @@ class kit_creation_consume_common(osv.osv):
                 }
     
     _defaults = {'location_src_id_consume_common': lambda obj, cr, uid, c: c.get('location_src_id_consume_common', False)}
+    _order = 'line_number_consume_common'
     
-kit_creation_consume_common()
+kit_creation_to_consume()
 
 
 class kit_creation_to_consume(osv.osv):
