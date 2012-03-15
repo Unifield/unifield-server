@@ -47,7 +47,7 @@
             <field name='inherit_id' ref='analytic_distribution.analytic_distribution_wizard_view'/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/field[@name='total_amount']" position="before">
+                    <xpath expr="/form/field[@name='amount']" position="before">
                         <field name="date" context="context" 
                             attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
                         <newline/>
