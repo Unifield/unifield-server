@@ -149,7 +149,12 @@ class financing_contract_contract(osv.osv):
         default = default.copy()
         default['code'] = (contract['code'] or '') + '(copy)'
         default['name'] = (contract['name'] or '') + '(copy)'
-        return super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
+        # Copy lines manually
+        default['actual_line_ids'] = []
+        copy_id = super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
+        copy = self.browse(cr, uid, copy_id, context=context)
+        self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.format_id.id, copy.format_id.id, context=context)
+        return copy_id
     
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
         res = {}
@@ -195,6 +200,7 @@ class financing_contract_contract(osv.osv):
                                                                context=context)
         vals = {'name': browse_format_line.name,
                 'code': browse_format_line.code,
+                'line_type': browse_format_line.line_type,
                 'allocated_budget': round(browse_format_line.allocated_budget),
                 'project_budget': round(browse_format_line.project_budget),
                 'allocated_real': round(browse_format_line.allocated_real),
@@ -224,7 +230,8 @@ class financing_contract_contract(osv.osv):
         contract_line_id = reporting_line_obj.create(cr,
                                                      uid,
                                                      vals = {'name': contract.name,
-                                                             'code': contract.code},
+                                                             'code': contract.code,
+                                                             'line_type': 'view'},
                                                      context=context)
         
         # Values to be set

@@ -199,8 +199,16 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context={}):
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        for order in self.browse(cr, uid, ids, context=context):
+            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
 
         return True
+    
+    def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
+        '''
+        Hook the message displayed on sale order confirmation
+        '''
+        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
@@ -394,7 +402,7 @@ class sale_order(osv.osv):
         return result
 
 
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the sale order and all related documents to done state
         '''
@@ -405,25 +413,25 @@ class sale_order(osv.osv):
 
         order_lines = []
         for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                order_lines.append(line.id)
-                if line.procurement_id:
-                    # Done procurement
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
- 
-
             # Done picking
             for pick in order.picking_ids:
                 if pick.state not in ('cancel', 'done'):
                     wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
 
-            # Done loan counterpart
+            for line in order.order_line:
+                order_lines.append(line.id)
+                if line.procurement_id:
+                    # Closed procurement
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+
+            # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
-                self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
+                self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
-            # Done invoices
+            # Closed invoices
             invoice_error_ids = []
             for invoice in order.invoice_ids:
                 if invoice.state == 'draft':
@@ -436,17 +444,18 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
                             'Invoices references : %s') % invoices_ref)            
 
-        # Done stock moves
+        # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
-        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
-        # Detach the PO from his workflow and set the state to done
-        for order_id in ids:
-            wf_service.trg_delete(uid, 'sale.order', order_id, cr)
-            # Search the method called when the workflow enter in last activity
-            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
-            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-            res = _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
+        if all_doc:
+            # Detach the PO from his workflow and set the state to done
+            for order_id in ids:
+                wf_service.trg_delete(uid, 'sale.order', order_id, cr)
+                # Search the method called when the workflow enter in last activity
+                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
+                activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+                res = _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
 
         return True
 

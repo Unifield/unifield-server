@@ -92,7 +92,6 @@ class purchase_report(osv.osv):
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'order_id': fields.many2one('purchase.order', string='Order'),
     }
     _order = 'name desc,price_total desc'
     def init(self, cr):

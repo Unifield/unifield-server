@@ -503,7 +503,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
     model_ids = model_pool.search(cr, uid, [('model', '=', model)])
     model_id = model_ids and model_ids[0] or False
-    assert model_id, _("'%s' Model does not exist..." %(model))
+    assert model_id, _("'%s' Model does not exist...") %(model,)
     model = model_pool.browse(cr, uid, model_id)
 
     if method in ('create'):
@@ -548,6 +548,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
     elif method in ('unlink'):
         res_ids = args[2]
+        if isinstance(res_ids, (int, long)):
+            res_ids = [res_ids]
         model_name = model.name
         model_id = model.id
         old_values = {}
@@ -721,7 +723,7 @@ def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
             for field in thisrule.field_ids:
                 fields_to_trace.append(field.name)
             if getattr(thisrule, 'log_' + method_name):
-                return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, *args)
+                return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, *args, **kwargs)
             return old_method(*args, **kwargs)
     res = my_fct(cr, uid_orig, model, method_name, *args, **kwargs)
     return res

@@ -27,7 +27,7 @@
     "description" : """
         This module aims to add some elements in accounting for MSF.
     """,
-    "author" : "TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     "depends" : ["base", "account", "purchase_msf", "register_accounting"],

@@ -114,6 +114,7 @@
             key2="client_action_multi"
             view_mode="form"
             view_type="form"
+            context="{'analytic_account_from': context.get('analytic_account_from', False) }"
             target="new"/>
 
     <!-- Mass reallocation wizard -->
@@ -123,13 +124,15 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <field name="account_id" colspan="2"/>
+                    <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
                     <newline/>
                     <field name="line_ids" nolabel="1" colspan="4"/>
-                    <group col="6" colspan="4"/>
+                    <group col="6" colspan="4">
                         <label string="" colspan="2"/>
                         <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Verify" icon="terp-camera_test" colspan="1"/>
+                    </group>
+                    <field name="state" invisible="1"/>
                 </form>
             </field>
         </record>

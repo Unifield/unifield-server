@@ -160,27 +160,28 @@ class account_cash_statement(osv.osv):
         for statement in self.browse(cr, uid, ids, context):
             # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
             res[statement.id] += statement.open_advance_amount or 0.0
-                
+            # UF-810: Add a "Unrecorded Expenses" when calculating "Calculated Balance"
+            res[statement.id] += statement.unrecorded_expenses_amount or 0.0
         return res
 
     def _gap_compute(self, cursor, user, ids, name, attr, context=None):
         res = {}
         statements = self.browse(cursor, user, ids, context=context)
         for statement in statements:
-            diff_amount = statement.balance_end - statement.balance_end_cash 
-            res[statement.id] = diff_amount 
-        
+            diff_amount = statement.balance_end - statement.balance_end_cash
+            res[statement.id] = diff_amount
         return res
 
     _columns = {
-            'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', help="Closing balance"),
+            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
             'name': fields.char('Register Name', size=64, required=False, readonly=True),
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
-            'open_advance_amount': fields.float('Open Advances Amount'),
+            'open_advance_amount': fields.float('Unrecorded Open Advances'),
+            'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
             'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }

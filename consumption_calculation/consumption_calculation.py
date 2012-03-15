@@ -384,7 +384,7 @@ class real_average_consumption_line(osv.osv):
             if batch_mandatory:
                 if not obj.prodlot_id:
                     raise osv.except_osv(_('Error'), 
-                        _("Product: %s, You must assign a Batch Number"%(obj.product_id.name, )))
+                        _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
 
                 prodlot_id = obj.prodlot_id.id
                 expiry_date = obj.prodlot_id.life_date
@@ -396,14 +396,14 @@ class real_average_consumption_line(osv.osv):
 #                expiry_date = obj.expiry_date
 #                if not prod_ids:
 #                    raise osv.except_osv(_('Error'), 
-#                        _("Product: %s, no internal batch found for expiry (%s)"%(obj.product_id.name, obj.expiry_date)))
+#                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
 #                prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
             if prodlot_id and obj.consumed_qty > product_qty and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
-                        _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"%(obj.product_id.name, obj.consumed_qty, product_qty)))
+                        _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)")%(obj.product_id.name, obj.consumed_qty, product_qty))
             
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, prodlot_id=%s, expiry_date=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, prodlot_id, expiry_date, obj.id))
@@ -479,7 +479,7 @@ class real_average_consumption_line(osv.osv):
             if new_qty != qty:
                 warn_msg = {
                     'title': _('Error'), 
-                    'message': _("The Qty Consumed %s and rounding uom qty %s are not equal !"%(qty, new_qty))
+                    'message': _("The Qty Consumed %s and rounding uom qty %s are not equal !")%(qty, new_qty)
                 }
                 return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
 
@@ -1270,7 +1270,7 @@ class stock_picking(osv.osv):
         report_ids = self.pool.get('real.average.consumption').search(cr, uid, [('picking_id', '=', pick.id)], context=context)
         if report_ids:
             name = self.pool.get('real.average.consumption').browse(cr, uid, report_ids[0], context=context).picking_id.name
-            return 'Delivery Order %s generated from the consumption report is done.' % name
+            return 'Delivery Order %s generated from the consumption report is closed.' % name
         else:
             return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
 

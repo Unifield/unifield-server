@@ -245,13 +245,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             ana_acc = ana_obj.browse(cr, uid, vals.get('analytic_id'), context=context)
             if ana_acc and ana_acc.category and data[line_type] and data[line_type][0]:
                 if not ana_acc.category == data[line_type][0] and line_type != 'analytic.distribution.wizard.fp.lines':
-                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'." % (ana_acc.name, data[line_type][1])))
+                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'.") % (ana_acc.name, data[line_type][1]))
         # Verify cost_center_id if given
         if vals.get('cost_center_id', False):
             cc = ana_obj.browse(cr, uid, vals.get('cost_center_id'), context=context)
             if cc and cc.category:
                 if not cc.category == 'OC':
-                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category." % cc.name))
+                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category.") % (cc.name,))
         return True
 
     def create(self, cr, uid, vals, context={}):
