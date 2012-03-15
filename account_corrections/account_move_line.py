@@ -374,6 +374,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Delete double and sort it
         move_ids = sorted(list(set(tmp_move_ids)))
         # Browse moves
+        success_move_ids = []
         for m in move_obj.browse(cr, uid, move_ids, context=context):
             # Verify this move could be reversed
             corrigible = True
@@ -448,7 +449,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     success_move_line_ids.append(ml.id)
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
-        return success_move_line_ids
+            success_move_ids.append(new_move_id)
+        return success_move_line_ids, success_move_ids
 
     def update_account_on_st_line(self, cr, uid, ids, account_id=None, context={}):
         """

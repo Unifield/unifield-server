@@ -25,6 +25,7 @@ from osv import osv
 import time
 import netsvc
 from tools.translate import _
+from tools.misc import flatten
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -136,69 +137,11 @@ class account_move_line(osv.osv):
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
         
-        ############################################################
-        ### Addendum line verification and creation if necessary ###
-        ############################################################
         if func_balance != 0.0:
-            # Prepare some values
-            date = time.strftime('%Y-%m-%d')
-            j_obj = self.pool.get('account.journal')
-            # Search Miscellaneous Transactions journal
-            j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], order='id', context=context)
-            if not j_ids:
-                raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
-            journal_id = j_ids[0]
-            # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
-            journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
-            if not journal.default_debit_account_id:
-                raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
-            addendum_line_account_id = journal.default_debit_account_id.id
-            # Search attached period
-            period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
-                limit=1, order='date_start, name')
-            if not period_ids:
-                raise osv.except_osv(_('Error'), _('No attached period found or current period not open!'))
-            period_id = period_ids[0]
-            # Create a new move
-            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': date}, 
-                context=context)
-            # Create default vals for the new two move lines
-            vals = {
-                'move_id': move_id,
-                'date': date,
-                'source_date': date,
-                'journal_id': journal_id,
-                'period_id': period_id,
-                'partner_id': partner_id,
-                'employee_id': employee_id,
-                'register_id': register_id,
-                'credit': 0.0,
-                'debit': 0.0,
-                'name': 'Realised loss/gain',
-                'is_addendum_line': True,
-                'currency_id': functional_currency_id,
-#                'functional_currency_id': functional_currency_id,
-            }
-            # Note that if func_balance == 0.0 we are not in this loop (normal reconciliation)
-            # If func_balance inferior to 0, some amount is missing @debit for partner
-            partner_db = partner_cr = addendum_db = addendum_cr = None
-            if func_balance < 0.0:
-                # data for partner line
-                partner_db = addendum_cr = abs(func_balance)
-            # Conversely some amount is missing @credit for partner
-            else:
-                partner_cr = addendum_db = abs(func_balance)
-            # Create partner line
-            vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
-            partner_line_id = self.create(cr, uid, vals, context=context)
-            # Create addendum_line
-            vals.update({'account_id': addendum_line_account_id, 'debit': addendum_db or 0.0, 'credit': addendum_cr or 0.0,})
-            addendum_line_id = self.create(cr, uid, vals, context=context)
-            # Validate move
-            self.pool.get('account.move').post(cr, uid, [move_id], context=context)
+            partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
+
             # Add partner_line to do total reconciliation
             ids.append(partner_line_id)
-        ############################################################
 
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
@@ -220,7 +163,7 @@ class account_move_line(osv.osv):
 
     def _remove_move_reconcile(self, cr, uid, move_ids=[], context={}):
         """
-        Delete reconciliation object from given move lines ids (move_ids)
+        Delete reconciliation object from given move lines ids (move_ids) and reverse gain/loss lines.
         """
         # Some verifications
         if not context:
@@ -228,7 +171,7 @@ class account_move_line(osv.osv):
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
         # Prepare some values
-        to_delete = []
+        to_reverse = []
         # Retrieve all addendum lines
         # First search all reconciliation ids to find ALL move lines (some could be not selected but unreconciled after
         reconcile_ids = [(x.reconcile_id and x.reconcile_id.id) or (x.reconcile_partial_id and x.reconcile_partial_id.id) or None for x in self.browse(cr, uid, move_ids, context=context)]
@@ -241,17 +184,29 @@ class account_move_line(osv.osv):
             # Search addendum line to delete
             for line in self.browse(cr, uid, ml_ids, context=context):
                 if line.is_addendum_line:
-                    to_delete.append(line.move_id and line.move_id.id)
+                    lines = [x.id for x in line.move_id.line_id]
+                    to_reverse.append(lines)
         # Retrieve default behaviour
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
         # If success, verify that no addendum line exists
-        if res and to_delete:
+        if res and to_reverse:
             # Delete doublons
-            to_delete = list(set(to_delete))
-            # First cancel moves
-            self.pool.get('account.move').button_cancel(cr, uid, to_delete, context=context)
-            # Then delete moves
-            self.pool.get('account.move').unlink(cr, uid, to_delete, context=context)
+            to_reverse = flatten(to_reverse)
+            # Reverse move
+            success_ids, move_ids = self.reverse_move(cr, uid, to_reverse, context=context)
+            # Search all move lines attached to given move_ids
+            moves = self.pool.get('account.move').browse(cr, uid, move_ids, context=context)
+            lines = []
+            for move in moves:
+                lines += [x.id for x in move.line_id]
+            lines = flatten(lines)
+            # Set booking debit/credit to 0 for these lines
+            sql = """
+                UPDATE account_move_line
+                SET debit_currency=%s, credit_currency=%s, amount_currency=%s
+                WHERE id IN %s
+            """
+            cr.execute(sql, [0.0, 0.0, 0.0, tuple(lines)])
         return res
 
 account_move_line()

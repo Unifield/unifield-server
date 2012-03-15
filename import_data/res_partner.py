@@ -19,7 +19,7 @@ class res_partner_category(osv.osv):
         if not args:
             return []
         if args[0][1] != "=":
-            raise osv.except_osv(_('Error !'), 'Filter not implemented on %s'%(name,))
+            raise osv.except_osv(_('Error !'), _('Filter not implemented on %s')%(name,))
 
         parent_ids = None
         for path in args[0][2].split('/'):

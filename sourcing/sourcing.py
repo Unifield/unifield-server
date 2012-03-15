@@ -162,7 +162,7 @@ class sourcing_line(osv.osv):
         result = ids
         return result
     
-    def _get_fake(self, cr, uid, ids, context=None):
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = {}
