@@ -30,7 +30,7 @@
                 <search string="Local Transport Costs">
                     <group colspan="10" col="12">
                         <filter icon="terp-check" name="approved" string="Confirmed" domain="[('order_state','=','approved')]" separator="1" />
-                        <filter icon="gtk-yes" name="done" string="Done" domain="[('order_state','=','done')]" separator="1" />
+                        <filter icon="gtk-yes" name="done" string="Closed" domain="[('order_state','=','done')]" separator="1" />
                         <separator orientation="vertical" />
                         <field name="transport_mode" />
                         <field name="transport_cost" />

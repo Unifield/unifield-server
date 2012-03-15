@@ -69,11 +69,12 @@ class analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for id in ids:
+            vals2 = vals.copy()
             if not 'account_id' in vals:
                 line = self.browse(cr, uid, [id], context=context)
                 account_id = line and line[0] and line[0].account_id.id or False
-                vals.update({'account_id': account_id})
-            self._check_date(cr, uid, vals, context=context)
+                vals2.update({'account_id': account_id})
+            self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
     def update_account(self, cr, uid, ids, account_id, context={}):
@@ -197,7 +198,12 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 # Verify that:
                 # - the line doesn't have any draft/open contract
-                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
+                link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aline.account_id.id)], context=context)
+                format_ids = []
+                for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
+                    if link.contract_id:
+                        format_ids.append(link.contract_id.id)
+                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
                 valid = True
                 for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
                     if contract.state in ['soft_closed', 'hard_closed']:

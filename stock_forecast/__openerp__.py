@@ -23,7 +23,8 @@
 {
     "name" : "Stock Level Forecast",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase", "stock", "msf_order_date", "order_types", "tender_flow", "msf_outgoing",],
     "init_xml" : [],

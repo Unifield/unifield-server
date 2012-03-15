@@ -46,6 +46,28 @@ class purchase_order(osv.osv):
 
         return res
 
+    def create(self, cr, uid, vals, context={}):
+        '''
+        If the partner is international, set 'display_intl_transport_ok' to True
+        '''
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
+            if partner.zone == 'international':
+                vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        If the partner is international, set 'display_intl_transport_ok' to True
+        '''
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
+            if partner.zone == 'international':
+                vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+
+        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+
     def copy(self, cr, uid, ids, defaults={}, context=None):
         '''
         Remove the linked documents on copy

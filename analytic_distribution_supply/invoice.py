@@ -120,9 +120,22 @@ class account_invoice(osv.osv):
                 self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'open'}, context=context)
             # Try to update engagement lines regarding invoice line amounts and account
             invoice_lines = defaultdict(list)
-            # Group by account
+            # Group by account (those from purchase order line)
             for invl in inv.invoice_line:
-                invoice_lines[invl.account_id.id].append(invl)
+                # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
+                if not invl.order_line_id:
+                    continue
+                # Fetch purchase order line account
+                pol = invl.order_line_id
+                if pol.product_id:
+                    a = pol.product_id.product_tmpl_id.property_account_expense.id
+                    if not a:
+                        a = pol.product_id.categ_id.property_account_expense_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+                else:
+                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                invoice_lines[a].append(invl)
             # Browse result
             diff_lines = []
             processed_commitment_line = []

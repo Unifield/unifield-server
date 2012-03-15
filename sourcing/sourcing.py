@@ -162,7 +162,7 @@ class sourcing_line(osv.osv):
         result = ids
         return result
     
-    def _get_fake(self, cr, uid, ids, context=None):
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = {}
@@ -524,8 +524,22 @@ class sale_order(osv.osv):
         # uf-583 - the location defined for the procurementis input instead of stock
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
-        
+
         return result
+
+    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to customize the execution condition
+        '''
+        line = kwargs['line']
+        
+        if line.type == 'make_to_stock' and line.order_id.procurement_request:
+            return False
+
+        return True
 
 sale_order()
 
@@ -770,6 +784,18 @@ class procurement_order(osv.osv):
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
     }
+    
+    def action_check_finished(self, cr, uid, ids):
+        res = super(procurement_order, self).action_check_finished(cr, uid, ids)
+        
+        # If the procurement has been generated from an internal request, close the order
+        for order in self.browse(cr, uid, ids):
+            line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', order.id)])
+            for line in self.pool.get('sale.order.line').browse(cr, uid, line_ids):
+                if line.order_id.procurement_request:
+                    return True
+        
+        return res
 
     def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -787,6 +813,9 @@ class procurement_order(osv.osv):
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})
+            purchase = po_obj.browse(cr, uid, purchase_ids[0], context=context)
+            if not purchase.origin_tender_id or not purchase.origin_tender_id.sale_order_id or purchase.origin_tender_id.sale_order_id.name != procurement.origin:
+                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': '%s/%s' % (purchase.origin, procurement.origin)}, context=context)
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:

@@ -27,6 +27,7 @@ from tools.translate import _
 from time import strftime
 import decimal_precision as dp
 from account_tools import get_period_from_date
+from tools.misc import flatten
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -117,6 +118,8 @@ class account_commitment(osv.osv):
         # Browse elements if 'date' in vals
         if vals.get('date', False):
             date = vals.get('date')
+            period_ids = get_period_from_date(self, cr, uid, date, context=context)
+            vals.update({'period_id': period_ids and period_ids[0]})
             for c in self.browse(cr, uid, ids, context=context):
                 if c.state == 'open':
                     for cl in c.line_ids:
@@ -126,11 +129,11 @@ class account_commitment(osv.osv):
                         elif cl.commit_id and cl.commit_id.analytic_distribution_id:
                             distrib = cl.commit_id.analytic_distribution_id
                         else:
-                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s' % (cl.account_id.code, cl.initial_amount)))
+                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s') % (cl.account_id.code, cl.initial_amount))
                         for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                             for distrib_line in distrib_lines:
                                 if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or (distrib_line.analytic_id.date and date > distrib_line.analytic_id.date):
-                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.' % distrib_line.analytic_id.name))
+                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') % (distrib_line.analytic_id.name,))
                         self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines], {'date': date, 'source_date': date}, context=context)
         # Default behaviour
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
@@ -211,6 +214,37 @@ class account_commitment(osv.osv):
         # trick to refresh view and update total amount
         return self.write(cr, uid, ids, [], context=context)
 
+    def get_engagement_lines(self, cr, uid, ids, context={}):
+        """
+        Return all engagement lines from given commitments
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        valid_ids = []
+        # Search valid ids
+        for co in self.browse(cr, uid, ids):
+            for line in co.line_ids:
+                if line.analytic_lines:
+                    valid_ids.append([x.id for x in line.analytic_lines])
+        valid_ids = flatten(valid_ids)
+        domain = [('id', 'in', valid_ids)]
+        # Permit to only display engagement lines
+        context.update({'search_default_engagements': 1})
+        return {
+            'name': 'Analytic Entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
     def onchange_date(self, cr, uid, ids, date, period_id=False, context={}):
         """
         Update period regarding given date
@@ -244,8 +278,8 @@ class account_commitment(osv.osv):
                     continue
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".' % 
-                        (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name)))
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".') % 
+                        (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name))
                 # Take analytic distribution either from line or from commitment voucher
                 distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
                 if not distrib_id:
@@ -372,13 +406,26 @@ class account_commitment_line(osv.osv):
             string='Header Distrib.?'),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
+        'first': fields.boolean(string="Is not created?", help="Useful for onchange method for views. Should be False after line creation.", 
+            readonly=True),
     }
 
     _defaults = {
         'initial_amount': lambda *a: 0.0,
         'amount': lambda *a: 0.0,
         'from_yml_test': lambda *a: False,
+        'first': lambda *a: True,
     }
+
+    def onchange_initial_amount(self, cr, uid, ids, first, amount):
+        """
+        """
+        # Prepare some values
+        res = {}
+        # Some verification
+        if first and amount:
+            res['value'] = {'amount': amount}
+        return res
 
     def update_analytic_lines(self, cr, uid, ids, amount, account_id=False, context={}):
         """
@@ -414,6 +461,11 @@ class account_commitment_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        # Change 'first' value to False (In order view correctly displayed)
+        if not 'first' in vals:
+            vals.update({'first': False})
+        # Copy initial_amount to amount
+        vals.update({'amount': vals.get('initial_amount', 0.0)})
         if 'account_id' in vals:
             account_id = vals.get('account_id')
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]

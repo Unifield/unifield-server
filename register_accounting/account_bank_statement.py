@@ -158,12 +158,20 @@ class account_bank_statement(osv.osv):
         journal_name = False
         if journal_id:
             journal_name = self.pool.get('account.journal').read(cr, uid, journal_id, ['name'], context=context)['name']
-        
         return journal_name
-    
+
+    def _balance_gap_compute(self, cr, uid, ids, name, attr, context=None):
+        """
+        Calculate Gap between bank register balance (balance_end_real) and calculated balance (balance_end)
+        """
+        res = {}
+        for statement in self.browse(cr, uid, ids):
+            res[statement.id] = ((statement.balance_end_real or 0.0) - (statement.balance_end or 0.0)) or 0.0
+        return res
+
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
-            help="Closing balance"),
+        'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', \
+            help="Calculated balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
@@ -173,6 +181,7 @@ class account_bank_statement(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
     }
 
     _defaults = {
@@ -315,8 +324,12 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
 #            done.append(st.id)
         # Display the bank confirmation wizard
+        title = "Bank"
+        if context.get('confirm_from', False) and context.get('confirm_from') == 'cheque':
+            title = "Cheque"
+        title += " confirmation wizard"
         return {
-            'name': "Bank confirmation wizard",
+            'name': title,
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.confirm.bank',
             'target': 'new',
@@ -808,7 +821,7 @@ class account_bank_statement_line(osv.osv):
             period_stop = register.period_id.date_stop
             # Verify that the date is included between period_start and period_stop
             if date < period_start or date > period_stop:
-                raise osv.except_osv(_('Error'), _('The date for "%s" is outside the register period!' % st_line.name))
+                raise osv.except_osv(_('Error'), _('The date for "%s" is outside the register period!') % (st_line.name,))
             # Verify that the date is useful with default debit or credit account activable date 
             #+ (in fact the default debit and credit account have an activation date, and the given account_id too)
             #+ That means default debit and credit account are required for registers !
@@ -824,12 +837,12 @@ class account_bank_statement_line(osv.osv):
             if register_account:
                 if date < register_account.activation_date or (register_account.inactivation_date and date > register_account.inactivation_date):
                     raise osv.except_osv(_('Error'), 
-                        _('Posting date for "%s" is outside the validity period of the default account for this register!' % st_line.name))
+                        _('Posting date for "%s" is outside the validity period of the default account for this register!') % (st_line.name,))
             if account_id:
                 account = acc_obj.browse(cr, uid, account_id, context=context)
                 if date < account.activation_date or (account.inactivation_date and date > account.inactivation_date):
                     raise osv.except_osv(_('Error'), 
-                        _('Posting date for "%s" is outside the validity period of the selected account for this record!' % st_line.name))
+                        _('Posting date for "%s" is outside the validity period of the selected account for this record!') % (st_line.name,))
         return True
 
     _constraints = [
@@ -1053,6 +1066,7 @@ class account_bank_statement_line(osv.osv):
                         'statement_id': st_line.statement_id.id,
                         'currency_id': st_line.statement_id.currency.id,
                         'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
+                        'date': st_line.date,
                     }
                     process_invoice_move_line_ids.append(invoice_move_line.id)
                     move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)
