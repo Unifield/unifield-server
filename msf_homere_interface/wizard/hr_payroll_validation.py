@@ -138,7 +138,7 @@ class hr_payroll_validation(osv.osv):
                 'analytic_distribution_id': distrib_id or False,
             }
             # create move line
-            self.pool.get('account.move.line').create(cr, uid, line_vals)
+            self.pool.get('account.move.line').create(cr, uid, line_vals, check=False)
         self.pool.get('account.move').post(cr, uid, [move_id])
         # Update payroll lines status
         self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, {'state': 'valid'})
