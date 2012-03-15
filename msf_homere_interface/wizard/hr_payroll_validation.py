@@ -35,7 +35,7 @@ class hr_payroll_validation(osv.osv):
         """
         if not context:
             context = {}
-        res = super(hr_payroll_validation, self).fields_view_get(cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False)
+        res = super(hr_payroll_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         # Verification
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
         for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
