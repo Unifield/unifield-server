@@ -221,7 +221,7 @@ class threshold_value_line(osv.osv):
             res[line.id] = {'threshold_value': 0.00, 'product_qty': 0.00}
             
             rule = line.threshold_value_id
-            res[line.id] = self._get_threshold_value(cr, uid, line.id, line.product_id, rule.compute_method, rule.consumption_method, 
+            res[line.id] = self._get_threshold_value(cr, uid, line.id, line.product_id.id, rule.compute_method, rule.consumption_method, 
                                                      rule.consumption_period_from, rule.consumption_period_to, rule.frequency, 
                                                      rule.safety_month, rule.lead_time, rule.supplier_lt, line.product_uom_id.id, context)
         
@@ -238,7 +238,7 @@ class threshold_value_line(osv.osv):
         'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
     
-    def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
+    def _get_threshold_value(self, cr, uid, line_id, product_id, compute_method, consumption_method,
                                 consumption_period_from, consumption_period_to, frequency,
                                 safety_month, lead_time, supplier_lt, uom_id, context=None):
         '''
@@ -248,6 +248,8 @@ class threshold_value_line(osv.osv):
         threshold_value = 0.00
         qty_to_order = 0.00
         if compute_method == 'computed':
+            context.update({'period_from': consumption_period_from, 'period_to': consumption_period_to})
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             cons = consumption_method == 'fmc' and product.reviewed_consumption or product.product_amc
             
             # Set lead time according to choices in threshold rule (supplier or manual lead time)
