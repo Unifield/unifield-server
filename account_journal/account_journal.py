@@ -174,7 +174,7 @@ class account_journal(osv.osv):
             context.update({'from_journal_creation': True})
             self.pool.get('account.bank.statement') \
                 .create(cr, uid, {'journal_id': journal_obj,
-                                  'name': "REG1" + vals['code'],
+                                  'name': vals['name'],
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
                                   context=context)
