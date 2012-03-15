@@ -14,8 +14,8 @@
             <field name="arch" type="xml">
                 <page string="Configuration" position="inside">
                   <group col="2" colspan="2">
-                      <separator string="Import invoice default account for Debit Note" colspan="2"/>
-                      <field name="import_invoice_default_account" domain="[('type', '!=', 'view')]" colspan="2"/>
+                      <separator string="Re-billing Inter-section account" colspan="2"/>
+                      <field name="import_invoice_default_account" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'receivables')]" colspan="2"/>
                   </group>
                 </page>
             </field>

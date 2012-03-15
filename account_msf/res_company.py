@@ -29,7 +29,7 @@ class res_company(osv.osv):
     _inherit = 'res.company'
 
     _columns = {
-        'import_invoice_default_account': fields.many2one('account.account', string="Import invoice default account for Debit note", 
+        'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account", 
             help="Default account for an import invoice on a Debit note"),
     }
 
