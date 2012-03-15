@@ -22,7 +22,7 @@
 {
     "name" : "Account override",
     "version" : "1.0",
-    "author" : "MSF",
+    "author" : "MSF, TeMPO Consulting",
     "description" : """
     Add hook to account class, workflow, etc.
     """,

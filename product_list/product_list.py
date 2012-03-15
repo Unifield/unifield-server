@@ -46,7 +46,7 @@ class product_list(osv.osv):
         vals['reviewer_id'] = uid
         vals['last_update_date'] = time.strftime('%Y-%m-%d')
         
-        return super(product_list, self).write(cr, uid, ids, vals=vals, context=context)
+        return super(product_list, self).write(cr, uid, ids, vals, context=context)
     
         
     def copy(self, cr, uid, id, defaults={}, context={}):

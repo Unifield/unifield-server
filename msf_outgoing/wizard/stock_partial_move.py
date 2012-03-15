@@ -24,6 +24,8 @@ from tools.translate import _
 import time
 import decimal_precision as dp
 
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
+
 
 class stock_partial_move_memory_out(osv.osv_memory):
     '''
@@ -47,6 +49,67 @@ class stock_partial_move_memory_out(osv.osv_memory):
         # we need to get the memory move id to know which line to split
         # and class name, to know which type of moves
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
+    
+    def change_product(self, cr, uid, ids, context=None):
+        '''
+        open the change product wizard, the user can select the new product
+        '''
+        # we need the context for the wizard switch
+        assert context, 'no context defined'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        wiz_obj = self.pool.get('wizard')
+        # data - no step needed for present split wizard
+        name = _("Change Product of Selected Stock Move")
+        model = 'change.product.memory.move'
+        # we need to get the memory move id to know which line to split
+        # and class name, to know which type of moves
+        data = self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context)[0]
+        product_id = data['product_id']
+        uom_id = data['product_uom']
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model,
+                                   type='create', context=dict(context,
+                                                               memory_move_ids=ids,
+                                                               class_name=self._name,
+                                                               product_id=product_id,
+                                                               uom_id=uom_id))
+    
+#    update code to allow delete lines (or not but must be consistent in all wizards)
+#    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
+#    because then the user can always see the corresponding full list and change its mind
+#    if deleted, must cancel and redo
+#    
+#    would be nice a validator decorator !
+    _columns={'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+              'force_complete' : fields.boolean(string='Force'),
+              'line_number': fields.integer(string='Line'),
+              'change_reason': fields.char(string='Change Reason', size=1024),
+              'initial_qty': fields.related('move_id', 'product_qty', string='Initial Qty', readonly=True),
+              # override to change the name
+              'quantity' : fields.float("Selected Qty", required=True),
+              }
+    
+    _defaults = {'integrity_status': 'empty',
+                 'force_complete': False,
+                 }
+    
+    def _check_quantity(self, cr, uid, ids, context=None):
+        '''
+        Checks if quantity is correct
+        '''
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.quantity < 0:
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive quantity value or 0.'))
+        return True
+
+# no constraint at move level for now because of OEB-99
+#    _constraints = [(_check_quantity,
+#                     'You must assign a positive quantity value or 0.',
+#                     ['quantity']),
+#                    ]
+    
+    _order = 'line_number asc'
 
 stock_partial_move_memory_out()
 
@@ -77,6 +140,27 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM') ),
                 }
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
+    
+    def _check_qty_to_return(self, cr, uid, ids, context=None):
+        '''
+        Checks if qty_to_return is correct
+        '''
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.qty_to_return < 0:
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive "quantity to return" value or 0.'))
+        return True
+    
+# no constraint at move level for now because of OEB-99
+#    _constraints = [(_check_qty_to_return,
+#                     'You must assign a positive quantity to return value or 0',
+#                     ['qty_to_return']),
+#                    ]
+    
     _defaults = {
         'qty_to_return': 0.0,
     }
@@ -104,10 +188,19 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             # number of packs with from/to values
             num_of_packs = memory_move.to_pack - memory_move.from_pack + 1
             values['num_of_packs'] = num_of_packs
-            qty_per_pack = memory_move.quantity / num_of_packs
+            if num_of_packs:
+                qty_per_pack = memory_move.quantity / num_of_packs
+            else:
+                qty_per_pack = 0
             values['qty_per_pack'] = qty_per_pack
                     
         return result
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
     
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
@@ -134,33 +227,18 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             vals.update(to_pack=1)
             
         return super(stock_partial_move_memory_ppl, self).create(cr, uid, vals, context)
-        
     
-    def _check_qty_per_pack(self, cr, uid, ids, context=None):
-        """ Checks if qty_per_pack is assigned to memory move or not.
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if not move.qty_per_pack:
-                return False
-        return True
-    
-    def _check_from_pack(self, cr, uid, ids, context=None):
+    def _check_from_to_pack(self, cr, uid, ids, context=None):
         """ Checks if from_pack is assigned to memory move or not.
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if not move.from_pack:
-                return False
-        return True
-    
-    def _check_to_pack(self, cr, uid, ids, context=None):
-        """ Checks if to_pack is assigned to memory move or not.
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if not move.to_pack:
-                return False
+            if move.from_pack < 1:
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive "from pack" value.'))
+            if move.to_pack < 1:
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive "to pack" value.'))
+            if move.to_pack < move.from_pack:
+                raise osv.except_osv(_('Warning !'), _('"to pack" value must be greater or equal to "from pack" value.'))
         return True
     
     # existence integrity
@@ -168,16 +246,11 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
     # want to wait until the end of ppl2 and stock.move update to validate
     # the data of this wizard. this is possible because we set default values
     # for qty_per_pack, from_pack and to_pack different from 0
-    _constraints = [
-        (_check_qty_per_pack,
-            'You must assign a positive "quantity per pack" value',
-            ['qty_per_pack']),
-        (_check_from_pack,
-            'You must assign a positive "from pack" value',
-            ['from_pack']),
-        (_check_to_pack,
-            'You must assign a positive "to pack" value',
-            ['to_pack']),]
+# no constraint at move level for now because of OEB-99
+#    _constraints = [(_check_from_to_pack,
+#                     'You must assign a positive "from/to pack" value',
+#                     ['from_pack', 'to_pack']),
+#                    ]
 
 stock_partial_move_memory_ppl()
 
@@ -199,7 +272,17 @@ class stock_partial_move_memory_families(osv.osv_memory):
         'height' : fields.float(digits=(16,2), string='Height [cm]'),
         'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
         'wizard_id' : fields.many2one('stock.partial.move', string="Wizard"),
+        'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
     }
+    
+    _defaults = {'integrity_status': 'empty',
+                 }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
     
 stock_partial_move_memory_families()
 
@@ -232,6 +315,12 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                     
         return result
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
+    
     _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
@@ -239,7 +328,22 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals_X',), # old_multi get_vals
-    }
+                }
+    
+    def _check_selected_number(self, cr, uid, ids, context=None):
+        ''' 
+        Checks if selected number is correct
+        '''
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.selected_number < 0:
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive selected number of packs value or 0.'))
+        return True
+# no constraint at move level for now because of OEB-99
+#    _constraints = [(_check_selected_number,
+#                     'You cannot select negative number.',
+#                     ['selected_number']),
+#                    ]
+    
     
 stock_partial_move_memory_shipment_create()
 
@@ -252,6 +356,12 @@ class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
     '''
     _name = "stock.move.memory.shipment.returnpacks"
     _inherit = "stock.move.memory.shipment.create"
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
     
 stock_partial_move_memory_shipment_returnpacks()
 
@@ -295,6 +405,12 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
         
         # udpate the original wizard
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
     
     
 stock_partial_move_memory_shipment_returnpacksfromshipment()

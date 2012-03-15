@@ -25,7 +25,7 @@
     "name" : "Account Tools",
     "version" : "0.1",
     "description" : "Some tools in order to develop accounting modules for OpenERP",
-    "author" : "MSF - TeMPO Consulting",
+    "author" : "MSF, TeMPO Consulting",
     "category" : "Tools",
     "depends" : ["base", "account"],
     "init_xml" : [],

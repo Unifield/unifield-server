@@ -32,7 +32,7 @@ class wizard_csv_report(osv.osv_memory):
         if len(string) <= 3:
             return string
         else:
-            return _split_thousands(s[:-3], sep) + sep + s[-3:]
+            return _split_thousands(string[:-3]) + "," + string[-3:]
     
     def _get_contract_header(self, cr, uid, contract, context={}):
         if 'reporting_type' in context:

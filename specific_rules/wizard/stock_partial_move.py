@@ -77,6 +77,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 result[obj.id]['np_check'] = True
             # type of picking
             result[obj.id]['type_check'] = obj.move_id.type
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
     
@@ -137,6 +143,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
     }
 
 stock_partial_move_memory_out()

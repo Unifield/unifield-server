@@ -245,13 +245,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             ana_acc = ana_obj.browse(cr, uid, vals.get('analytic_id'), context=context)
             if ana_acc and ana_acc.category and data[line_type] and data[line_type][0]:
                 if not ana_acc.category == data[line_type][0] and line_type != 'analytic.distribution.wizard.fp.lines':
-                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'." % (ana_acc.name, data[line_type][1])))
+                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'.") % (ana_acc.name, data[line_type][1]))
         # Verify cost_center_id if given
         if vals.get('cost_center_id', False):
             cc = ana_obj.browse(cr, uid, vals.get('cost_center_id'), context=context)
             if cc and cc.category:
                 if not cc.category == 'OC':
-                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category." % cc.name))
+                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category.") % (cc.name,))
         return True
 
     def create(self, cr, uid, vals, context={}):
@@ -415,6 +415,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
         'commitment_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'commitment_line_id': fields.many2one('account.commitment.line', string="Commitment Voucher Line"),
+        'model_line_id': fields.many2one('account.model.line', string="Account Model Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -734,7 +735,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
                     ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
-                    ('commitment_line_id', 'account.commitment.line')]:
+                    ('commitment_line_id', 'account.commitment.line'), ('model_line_id', 'account.model.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)

@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 import tools
 from tools.translate import _
 
@@ -44,5 +45,27 @@ class account_analytic_line(osv.osv):
                     
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
+    def _get_fake(self, cr, uid, ids, *a, **b):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {}.fromkeys(ids, False)
+
+    def _search_contract_open(self, cr, uid, obj, name, args, context):
+        if not len(args):
+            return []
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Warning'), _('Filter contract_open is not implemented with those arguments.'))
+
+        cr.execute('''select distinct fpline.funding_pool_id 
+                from financing_contract_funding_pool_line fpline
+                left join financing_contract_contract contract on contract.format_id = fpline.contract_id
+                where contract.state in ('soft_closed', 'hard_closed') ''')
+        ids = [x[0] for x in cr.fetchall()]
+        return [('account_id', 'not in', ids)]
+
+    _columns = {
+        'contract_open': fields.function(_get_fake, type='boolean', method=True, string='Exclude closed contract', fnct_search=_search_contract_open, help="Field used only to search lines."),
+    }
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

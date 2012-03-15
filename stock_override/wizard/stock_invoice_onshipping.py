@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,10 +21,15 @@
 #
 ##############################################################################
 
-import wizard_list_to_order
-import wizard_list_to_rfq
-import wizard_import_list
-import choose_supplier
+from osv import osv
 
+class stock_invoice_onshipping(osv.osv_memory):
+    _name = 'stock.invoice.onshipping'
+    _inherit = 'stock.invoice.onshipping'
+
+    _defaults = {
+        'journal_id': lambda obj, cr, uid, c: obj.pool.get('stock.invoice.onshipping')._get_journal_id(cr, uid, c) and obj.pool.get('stock.invoice.onshipping')._get_journal_id(cr, uid, c)[0] or False,
+    }
+
+stock_invoice_onshipping()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

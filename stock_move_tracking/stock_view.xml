@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <search string="Tracking Moves Analysis">
                     <group colspan="2">
-                        <filter string="Done"
+                        <filter string="Closed"
                                 name="done"
                                 icon="terp-dialog-close"
                                 domain="[('state','=','done')]"

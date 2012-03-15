@@ -75,11 +75,11 @@ class split_memory_move(osv.osv_memory):
 
             # cannot select more than available
             if leave_qty > available_qty:
-                raise osv.except_osv(_('Error!'),  _('Selected quantity (%0.1f %s) exceeds the available quantity (%0.1f %s)'%(leave_qty, memory_move.product_uom.name, available_qty, memory_move.product_uom.name)))
+                raise osv.except_osv(_('Error!'),  _('Selected quantity (%0.1f %s) exceeds the available quantity (%0.1f %s)')%(leave_qty, memory_move.product_uom.name, available_qty, memory_move.product_uom.name))
             
             # cannot select all available
             if leave_qty == available_qty:
-                raise osv.except_osv(_('Error !'),_('Selected quantity is equal to available quantity (%0.1f %s).'%(available_qty, memory_move.product_uom.name)))
+                raise osv.except_osv(_('Error !'),_('Selected quantity is equal to available quantity (%0.1f %s).')%(available_qty, memory_move.product_uom.name))
             
             # quantity difference for new memory stock move
             new_qty = available_qty - leave_qty
@@ -97,7 +97,8 @@ class split_memory_move(osv.osv_memory):
                            'product_uom': memory_move.product_uom.id,
                            'prodlot_id': memory_move.prodlot_id.id,
                            'move_id': memory_move.move_id.id,
-                           'wizard_id': memory_move.wizard_id.id,
+                           'wizard_pick_id': memory_move.wizard_pick_id and memory_move.wizard_pick_id.id,
+                           'wizard_id': memory_move.wizard_id and memory_move.wizard_id.id,
                            'cost': memory_move.cost,
                            'currency': memory_move.currency.id,
                            'asset_id': memory_move.asset_id.id,

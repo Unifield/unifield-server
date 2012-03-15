@@ -95,12 +95,12 @@ class account_move_line_reconcile(osv.osv_memory):
             account_id = line.account_id.id
             # some verifications
             if not line.account_id.reconcile:
-                raise osv.except_osv(_('Warning'), _('This account is not reconciliable: %s' % line.account_id.code))
+                raise osv.except_osv(_('Warning'), _('This account is not reconciliable: %s') % (line.account_id.code,))
             # verification that there's only one account for each line
             if not prev_acc_id:
                 prev_acc_id = account_id
             if prev_acc_id != account_id:
-                raise osv.except_osv(_('Error'), _('An account is different from others: %s' % line.account_id.code))
+                raise osv.except_osv(_('Error'), _('An account is different from others: %s') % (line.account_id.code,))
             # verification that there's only one 3rd party
             # The 3rd party verification is desactivated in case of transfer with change
             if not transfer:
@@ -112,7 +112,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 if not prev_third_party:
                     prev_third_party = third_party
                 if prev_third_party != third_party:
-                    raise osv.except_osv(_('Error'), _('A third party is different from others: %s' % line.partner_txt))
+                    raise osv.except_osv(_('Error'), _('A third party is different from others: %s') % (line.partner_txt,))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
