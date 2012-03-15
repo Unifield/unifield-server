@@ -77,6 +77,7 @@
                     <group colspan="4" col="4" attrs="{'invisible': [('compute_method', '=', False)]}">
                         <separator colspan="4" string="Order quantity by product" />
                         
+                        <button colspan="4" icon="gtk-reload" string="Refresh values" type="object" name="dummy" />
                         <field name="line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}">
                             <tree string="Products" editable="top">
                                 <field name="product_id" domain="[('list_ids', '=', parent.sublist_id)]"

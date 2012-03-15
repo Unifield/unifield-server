@@ -167,6 +167,9 @@ class threshold_value(osv.osv):
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
+        
+    def dummy(self, cr, uid, ids, context={}):
+        return True
 
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
@@ -218,7 +221,7 @@ class threshold_value_line(osv.osv):
             res[line.id] = {'threshold_value': 0.00, 'product_qty': 0.00}
             
             rule = line.threshold_value_id
-            res[line.id] = self._get_threshold_value(cr, uid, line.product_id, rule.compute_method, rule.consumption_method, 
+            res[line.id] = self._get_threshold_value(cr, uid, line.id, line.product_id, rule.compute_method, rule.consumption_method, 
                                                      rule.consumption_period_from, rule.consumption_period_to, rule.frequency, 
                                                      rule.safety_month, rule.lead_time, rule.supplier_lt, line.product_uom_id.id, context)
         
@@ -235,7 +238,7 @@ class threshold_value_line(osv.osv):
         'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
     
-    def _get_threshold_value(self, cr, uid, product, compute_method, consumption_method,
+    def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
                                 consumption_period_from, consumption_period_to, frequency,
                                 safety_month, lead_time, supplier_lt, uom_id, context=None):
         '''
@@ -260,12 +263,14 @@ class threshold_value_line(osv.osv):
                             - product_available + product.incoming_qty - product.outgoing_qty 
             qty_to_order = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id or product.uom_id.id, \
                                                                      qty_to_order, product.uom_id.id)
+        elif line_id:
+            line = self.browse(cr, uid, line_id, context=context)
+            threshold_value = line.fixed_threshold_value
+            qty_to_order = line.fixed_product_qty
             
         return {'threshold_value': threshold_value, 'product_qty': qty_to_order}
 
-    def onchange_product_id(self, cr, uid, ids, product_id, compute_method, consumption_method,
-                                consumption_period_from, consumption_period_to, frequency,
-                                safety_month, lead_time, supplier_lt, uom_id=False, context={}):
+    def onchange_product_id(self, cr, uid, ids, product_id, context={}):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
