@@ -99,8 +99,8 @@ class account_journal(osv.osv):
         result = self.browse(cr, user, ids, context=context)
         res = []
         for rs in result:
-            code = rs.code
-            res += [(rs.id, code)]
+            txt = rs.name
+            res += [(rs.id, txt)]
         return res
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):

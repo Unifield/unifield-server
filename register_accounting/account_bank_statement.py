@@ -170,7 +170,7 @@ class account_bank_statement(osv.osv):
             help="Closing balance"),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, help='if you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself', states={'confirm': [('readonly', True)]}),
-        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
     }
