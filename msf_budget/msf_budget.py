@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from lxml import etree
 
 class msf_budget(osv.osv):
     _name = "msf.budget"
@@ -33,13 +34,15 @@ class msf_budget(osv.osv):
         'decision_moment': fields.char('Decision Moment', size=32, required=True),
         'version': fields.integer('Version',required=True),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'latest_version': fields.boolean('Latest version')
+        'latest_version': fields.boolean('Latest version'),
+        'display_type': fields.selection([('all', 'All lines'), ('view', 'View lines only')], string="Display type"),
     }
     
     _defaults = {
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'version': 1,
         'state': 'draft',
+        'display_type': 'all',
     }
     
     def unlink(self, cr, uid, ids, context=None):
@@ -56,6 +59,19 @@ class msf_budget(osv.osv):
             if len(previous_budget_ids) > 0:
                 self.write(cr, uid, [previous_budget_ids[0]], {'latest_version': True}, context=context)
         return super(msf_budget, self).unlink(cr, uid, ids, context=context)
+    
+    # Methods for display view lines (warning, dirty, but it works)
+    def button_display_type(self, cr, uid, ids, context={}, *args, **kwargs):
+        """
+        Change display type
+        """
+        display_types = {}
+        for budget in self.read(cr, uid, ids, ['display_type']):
+            display_types[budget['id']] = budget['display_type']
+            
+        for budget_id in ids:
+            self.write(cr, uid, [budget_id], {'display_type': display_types[budget_id] == 'all' and 'view' or 'all'}, context=context)
+        return True
 
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
