@@ -53,4 +53,69 @@ class financing_contract_format(osv.osv):
         
 financing_contract_format()
 
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = 'account.account'
+
+    def _get_used(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        if context is None:
+            context = {}
+        exclude = {}
+
+        if not context.get('contract_id') and not context.get('donor_id'):
+            for id in ids:
+                res[id] = False
+            return res
+
+        if context.get('contract_id'):
+            ctr_obj = self.pool.get('financing.contract.contract')
+            id_toread = context['contract_id']
+        elif context.get('donor_id'):
+            ctr_obj = self.pool.get('financing.contract.donor')
+            id_toread = context['donor_id']
+
+        exclude = {}
+        for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
+            for acc in line.account_ids:
+                exclude[acc.id] = True
+        for id in ids:
+            res[id] = id in exclude
+        return res
+
+    def _search_used(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        if context is None:
+            context = {}
+        assert args[0][1] == '=' and args[0][2], 'Filter not implemented'
+        if not context.get('contract_id') and not context.get('donor_id'):
+            return []
+
+        if context.get('contract_id'):
+            ctr_obj = self.pool.get('financing.contract.contract')
+            id_toread = context['contract_id']
+        elif context.get('donor_id'):
+            ctr_obj = self.pool.get('financing.contract.donor')
+            id_toread = context['donor_id']
+
+        exclude = {}
+        for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
+            for acc in line.account_ids:
+                exclude[acc.id] = True
+
+        return [('id', 'not in', exclude.keys())]
+
+    _columns = {
+        'used': fields.function(_get_used, method=True, type='boolean', string='Used', fnct_search=_search_used),
+    }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        if view_type == 'tree' and (context.get('contract_id') or context.get('donor_id')) :
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'financing_contract', 'view_account_for_contract_tree')[1]
+        return super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

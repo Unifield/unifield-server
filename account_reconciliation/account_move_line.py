@@ -24,7 +24,6 @@
 from osv import osv
 import time
 import netsvc
-from reconciliation_tools import _get_addendum_line_account_id
 from tools.translate import _
 
 class account_move_line(osv.osv):
@@ -88,7 +87,8 @@ class account_move_line(osv.osv):
         lines = self.browse(cr, uid, ids, context=context)
         unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
         credit = debit = func_debit = func_credit = currency = 0.0
-        currency_id = account_id = partner_id = employee_id = register_id = functional_currency_id = False
+        account_id = partner_id = employee_id = register_id = functional_currency_id = False
+        currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         if context is None:
             context = {}
         company_list = []
@@ -105,8 +105,8 @@ class account_move_line(osv.osv):
             func_debit += line['debit']
             func_credit += line['credit']
             currency += line['amount_currency'] or 0.0
-            currency_id = line['currency_id']['id']
-            functional_currency_id = line['functional_currency_id']['id']
+#            currency_id = line['currency_id']['id']
+            functional_currency_id = line['currency_id']['id']
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
             employee_id = (line['employee_id'] and line['employee_id']['id']) or False
@@ -140,8 +140,6 @@ class account_move_line(osv.osv):
         ### Addendum line verification and creation if necessary ###
         ############################################################
         if func_balance != 0.0:
-            # Get default account for addendum_line
-            addendum_line_account_id = _get_addendum_line_account_id(self, cr, uid, ids, context=context)
             # Prepare some values
             date = time.strftime('%Y-%m-%d')
             j_obj = self.pool.get('account.journal')
@@ -150,6 +148,11 @@ class account_move_line(osv.osv):
             if not j_ids:
                 raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
             journal_id = j_ids[0]
+            # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
+            journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
+            if not journal.default_debit_account_id:
+                raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
+            addendum_line_account_id = journal.default_debit_account_id.id
             # Search attached period
             period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
                 limit=1, order='date_start, name')
@@ -173,8 +176,8 @@ class account_move_line(osv.osv):
                 'debit': 0.0,
                 'name': 'Realised loss/gain',
                 'is_addendum_line': True,
-                'currency_id': currency_id,
-                'functional_currency_id': functional_currency_id,
+                'currency_id': functional_currency_id,
+#                'functional_currency_id': functional_currency_id,
             }
             # Note that if func_balance == 0.0 we are not in this loop (normal reconciliation)
             # If func_balance inferior to 0, some amount is missing @debit for partner
@@ -224,19 +227,21 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
+        # Prepare some values
+        to_delete = []
         # Retrieve all addendum lines
         # First search all reconciliation ids to find ALL move lines (some could be not selected but unreconciled after
-        reconcile_ids = [x.reconcile_id and x.reconcile_id.id for x in self.browse(cr, uid, move_ids, context=context)]
-        # Search all account move line for this reconcile_ids
-        operator = 'in'
-        if len(reconcile_ids) == 1:
-            operator = '='
-        ml_ids = self.search(cr, uid, [('reconcile_id', operator, reconcile_ids)])
-        # Search addendum line to delete
-        to_delete = []
-        for line in self.browse(cr, uid, ml_ids, context=context):
-            if line.is_addendum_line:
-                to_delete.append(line.move_id and line.move_id.id)
+        reconcile_ids = [(x.reconcile_id and x.reconcile_id.id) or (x.reconcile_partial_id and x.reconcile_partial_id.id) or None for x in self.browse(cr, uid, move_ids, context=context)]
+        if reconcile_ids:
+            # Search all account move line for this reconcile_ids
+            operator = 'in'
+            if len(reconcile_ids) == 1:
+                operator = '='
+            ml_ids = self.search(cr, uid, [('reconcile_id', operator, reconcile_ids)])
+            # Search addendum line to delete
+            for line in self.browse(cr, uid, ml_ids, context=context):
+                if line.is_addendum_line:
+                    to_delete.append(line.move_id and line.move_id.id)
         # Retrieve default behaviour
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
         # If success, verify that no addendum line exists

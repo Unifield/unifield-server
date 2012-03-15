@@ -102,6 +102,12 @@ class threshold_value(osv.osv):
         'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
         'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
         'supplier_lt': fields.boolean(string='Product\'s supplier LT'),
+        'line_ids': fields.one2many('threshold.value.line', 'threshold_value_id', string="Products"),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
@@ -112,6 +118,8 @@ class threshold_value(osv.osv):
         'consumption_period': lambda *a: 3,
         'frequency': lambda *a: 3,
         'consumption_method': lambda *a: 'amc',
+        'threshold_value':0,
+        'qty_to_order':0,
     }
     
     def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, 
@@ -231,8 +239,110 @@ will can\'t be displayed on this form for each product of the category, but it w
             v = {'location_id': w.lot_stock_id.id}
             return {'value': v}
         return {}
-    
+##############################################################################################################################
+# The code below aims to enable filtering products regarding their sublist or their nomenclature.
+# Then, we fill lines of the one2many object 'threshold.value.line' according to the filtered products
+##############################################################################################################################
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        if context is None:
+            context = {}
+        for report in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+            nom = False
+            field = False
+            # Get all products for the defined nomenclature
+            if report.nomen_manda_3:
+                nom = report.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif report.nomen_manda_2:
+                nom = report.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif report.nomen_manda_1:
+                nom = report.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif report.nomen_manda_0:
+                nom = report.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if report.sublist_id:
+                for line in report.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in report.line_ids:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    self.pool.get('threshold.value.line').unlink(cr, uid, line.id, context=context)
+
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    self.pool.get('threshold.value.line').create(cr, uid, {'product_id': product.id,
+                                                                                            'product_uom_id': product.uom_id.id,
+                                                                                            'product_qty': 1.00,
+                                                                                            'threshold_value_id': report.id})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'threshold.value',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('sublist_id',False):
+            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if vals.get('nomen_manda_0',False):
+            vals.update({'sublist_id':False})
+        ret = super(threshold_value, self).write(cr, uid, ids, vals, context=context)
+        return ret
+
 threshold_value()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
+class threshold_value_line(osv.osv):
+    _name = 'threshold.value.line'
+    _description = 'Threshold Value Line'
+    _rec_name = 'product_id'
+    
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
+        'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
+        'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
+    }
+    
+    _defaults = {
+        'product_qty': lambda *a: 1.00,
+    }
+    
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
+    ]
+    
+    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+        """ Finds UoM for changed product.
+        @param product_id: Changed id of product.
+        @return: Dictionary of values.
+        """
+        if product_id:
+            prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            v = {'product_uom_id': prod.uom_id.id}
+            return {'value': v}
+        return {}
+    
+threshold_value_line()

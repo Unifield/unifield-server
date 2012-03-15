@@ -161,7 +161,7 @@ class sale_order(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
+        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
 
@@ -175,16 +175,28 @@ class sale_order(osv.osv):
         '''
         Remove the possibility to make a SO to user's company
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
-            self._check_own_company(cr, uid, vals['partner_id'], context=context)
+                for obj in self.read(cr, uid, ids, ['procurement_request']):
+                    if not obj['procurement_request']:
+                        self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
     def wkf_validated(self, cr, uid, ids, context={}):
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        for order in self.browse(cr, uid, ids, context=context):
+            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
 
         return True
+    
+    def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
+        '''
+        Hook the message displayed on sale order confirmation
+        '''
+        return _('The sale order \'%s\' has been confirmed.' % kwargs['order'].name)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
@@ -354,11 +366,12 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
-        wf_service = netsvc.LocalService("workflow")
-        #order = kwargs['order']
-        #proc_id = kwargs['proc_id']
-        #if order.procurement_request and order.state == 'progress':
-        #    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+        # Comment because the confirmation of the Internal Request confirmed automatically the associated procurement order
+#        wf_service = netsvc.LocalService("workflow")
+#        order = kwargs['order']
+#        proc_id = kwargs['proc_id']
+#        if order.procurement_request and order.state == 'progress':
+#            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         
         return True
     
@@ -371,6 +384,7 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
+        
         result = result and not line.order_id.procurement_request
         return result
 
@@ -389,22 +403,22 @@ class sale_order(osv.osv):
             for line in order.order_line:
                 order_lines.append(line.id)
                 if line.procurement_id:
-                    # Done procurement
+                    # Closed procurement
                     wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
  
 
-            # Done picking
+            # Closed picking
             for pick in order.picking_ids:
                 if pick.state not in ('cancel', 'done'):
                     wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
 
-            # Done loan counterpart
+            # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
                 self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
 
-            # Done invoices
+            # Closed invoices
             invoice_error_ids = []
             for invoice in order.invoice_ids:
                 if invoice.state == 'draft':
@@ -417,7 +431,7 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
                             'Invoices references : %s') % invoices_ref)            
 
-        # Done stock moves
+        # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
 

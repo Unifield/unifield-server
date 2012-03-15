@@ -95,7 +95,7 @@ class tender(osv.osv):
                 'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft':[('readonly',False)],}, readonly=True),
-                'creation_date': fields.date(string="Creation Date", readonly=True),
+                'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft':[('readonly',False)]}),
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
@@ -231,7 +231,7 @@ class tender(osv.osv):
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('done',)),], context=context)
         if rfq_ids:
-            raise osv.except_osv(_('Error !'), _("Some RfQ are already Done. Integrity failure."))
+            raise osv.except_osv(_('Error !'), _("Some RfQ are already Closed. Integrity failure."))
         # all rfqs must have been treated
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('draft', 'rfq_sent',)),], context=context)
@@ -399,7 +399,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, po_data, context=context)
                 po = po_obj.browse(cr, uid, po_id, context=context)
                 po_obj.log(cr, uid, po_id, 'The Purchase order %s for supplier %s has been created.'%(po.name, po.partner_id.name))
-                wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                #UF-802: the PO created must be in draft state, and not validated!
+                #wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 
             # when the po is generated, the tender is done - no more modification or comparison
             self.done(cr, uid, [tender.id], context=context)
@@ -463,7 +464,7 @@ class tender_line(osv.osv):
     _name = 'tender.line'
     _description= 'Tender Line'
     
-    _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'),]
+    _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'),]
     
     def on_product_change(self, cr, uid, id, product_id, context=None):
         '''
@@ -582,7 +583,7 @@ class procurement_order(osv.osv):
     _columns = {'is_tender': fields.function(_is_tender, method=True, type='boolean', string='Is Tender', readonly=True,),
                 'sale_order_line_ids': fields.one2many('sale.order.line', 'procurement_id', string="Sale Order Lines"),
                 'tender_id': fields.many2one('tender', string='Tender', readonly=True),
-                'is_tender_done': fields.boolean(string="Tender Done"),
+                'is_tender_done': fields.boolean(string="Tender Closed"),
                 'state': fields.selection([('draft','Draft'),
                                            ('confirmed','Confirmed'),
                                            ('exception','Exception'),
@@ -710,7 +711,7 @@ class purchase_order(osv.osv):
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
-                'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
+                'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Closed'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
                 }

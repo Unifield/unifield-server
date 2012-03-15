@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,17 +21,15 @@
 #
 ##############################################################################
 
-def _get_addendum_line_account_id(self, cr, uid, ids, context={}):
-    """
-    Give addendum line account id.
-    """
-    # Some verifications
-    if not context:
-        context = {}
-    if isinstance(ids, (int, long)):
-        ids = [ids]
-    # Retrieve 6308 account
-    account_id = self.pool.get('account.account').search(cr, uid, [('code', '=', '6308')], context=context, limit=1)
-    return account_id and account_id[0] or False
+from osv import osv
 
+class stock_invoice_onshipping(osv.osv_memory):
+    _name = 'stock.invoice.onshipping'
+    _inherit = 'stock.invoice.onshipping'
+
+    _defaults = {
+        'journal_id': lambda obj, cr, uid, c: obj.pool.get('stock.invoice.onshipping')._get_journal_id(cr, uid, c) and obj.pool.get('stock.invoice.onshipping')._get_journal_id(cr, uid, c)[0] or False,
+    }
+
+stock_invoice_onshipping()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

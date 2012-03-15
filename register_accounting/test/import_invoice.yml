@@ -91,7 +91,6 @@
     search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_0'))])
     assert len(search_ids) == 1, "More than one line found: an error occured with Import Invoice Wizard."
     line = self.browse(cr, uid, search_ids)[0]
-    print line.state
     assert line.state == 'temp', "Register line is not Temp posted"
     assert line.amount == -96.0, "Wrong amount"
     assert ref('account_invoice_for_import_in_cash0') in [x.invoice and x.invoice.id for x in line.imported_invoice_line_ids] != False, "First invoice not in results!"

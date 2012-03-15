@@ -122,6 +122,7 @@
     p3_s1_id = self.search(cr, uid, [('product_id', '=', ref('product3')), ('location_id', '=', ref('cycle_sloc1'))])
     assert p3_s1_id, "The scheduler hasn't created the procurement order for P3 in Sloc1"
     for proc in self.browse(cr, uid, p3_s1_id):
+      # 02/03/2012: 3*150 + 6*150 - ( 488 - 50 - 338) 
       assert proc.product_qty == 1250.00, "Bad quantity on procurement order for P3 in Sloc1 %s != 1250"%(proc.product_qty, )
 -
   Check if the procurement for P3 in Sloc2 has good values

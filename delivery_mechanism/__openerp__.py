@@ -29,10 +29,10 @@
                 "stock_override",
                 "purchase_override",
                 "sale_override",
-                "msf_outgoing",
                 "product_asset", # because of asset_id
+                "msf_outgoing",
                 ],
-    "author": "MSF",
+    "author": "MSF, TeMPO Consulting",
     "website": "",
     "category": "Specific Modules",
     "description": """
@@ -60,6 +60,7 @@
              'test/delivery_mechanism-process-split-less-cancel-backorder.yml', #H
              'test/delivery_mechanism-process-split-less-cancel-backorder-update-out-NO-OUT.yml', # in B
              'test/delivery_mechanism-process-change-product-same-qty-delete-one-line.yml', #I
+             'test/delivery_mechanism-cancel-update-out.yml', #J
              ],
     'installable': True,
     'active': False,

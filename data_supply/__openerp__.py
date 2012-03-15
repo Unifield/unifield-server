@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -17,13 +16,29 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# 
 ##############################################################################
-
-import wizard_list_to_order
-import wizard_list_to_rfq
-import wizard_import_list
-import choose_supplier
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
+{
+    "name" : "Supply Data",
+    "version" : "1.0",
+    "author" : "TeMPO Consulting, MSF",
+    "category": "Others",
+    "description": """
+        Modules for Unifield
+    """,
+    "website": "http://unifield.msf.org",
+    "init_xml": [
+    ],
+    "depends" : [
+        "msf_profile"
+    ],
+    "update_xml": [
+        "data.xml",
+    ],
+    "demo_xml": [
+    ],
+    "test": [
+    ],
+    "installable": True,
+    "active": False,
+}

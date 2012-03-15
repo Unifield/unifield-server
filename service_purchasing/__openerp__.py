@@ -21,7 +21,8 @@
 {
     "name" : "Service Purchasing",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "description": """
         Add the capability for a product to be a service with reception in %UOM
@@ -32,12 +33,16 @@
     'update_xml': ['service_purchasing_view.xml',
                    ],
     "demo_xml": [],
-    'test': ['test/service_purchasing.yml',
+    'test': ['test/data.yml',
+             'test/service_purchasing.yml',
              'test/service_purchasing-0.yml',
              'test/service_purchasing-1.yml',
              'test/service_purchasing-2.yml',
              'test/service_purchasing-3.yml',
              'test/service_purchasing-4.yml',
+             'test/service_purchasing-5.yml',
+             'test/service_purchasing-6.yml',
+             'test/service_purchasing-7.yml',
              ],
     'installable': True,
 }

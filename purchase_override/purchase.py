@@ -23,9 +23,9 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
+from mx.DateTime import *
 
 from workflow.wkf_expr import _eval_expr
-from mx.DateTime import *
 import logging
 
 class purchase_order(osv.osv):
@@ -38,7 +38,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
+        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True
         return super(purchase_order, self).create(cr, uid, vals, context=context)
@@ -401,7 +401,7 @@ class purchase_order(osv.osv):
                         move_values.update({'reason_type_id': reason_type_id})
                     
                     move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
-                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line,):
+                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line, move_id=move):
                         self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
                     todo_moves.append(move)
             self.pool.get('stock.move').action_confirm(cr, uid, todo_moves)
@@ -417,7 +417,7 @@ class purchase_order(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
+        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True
         return super(purchase_order, self).create(cr, uid, vals, context)
@@ -497,7 +497,7 @@ class purchase_order(osv.osv):
             if order_id.rfq_ok and order_id.state == 'draft':
                 wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
             elif order_id.tender_id:
-                raise osv.except_osv(_('Error'), _('You cannot \'Done\' a Request for Quotation attached to a tender. Please make the tender %s to \'Done\' before !') % order_id.tender_id.name)
+                raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
             else:
                 wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
                 # Search the method called when the workflow enter in last activity

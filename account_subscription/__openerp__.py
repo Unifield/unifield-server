@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,37 +19,26 @@
 #
 ##############################################################################
 {
-    'name' : 'Purchase list',
-    'version' : '1.0',
-    'author' : 'TeMPO Consulting, MSF',
-    'category': 'Generic Modules/Sales & Purchases',
-    'description': '''
-        This module allows you to create a list of items to procure. You can create automatically RfQ for these lists after choosing a list \
-        of suppliers. You can also compare these RfQ, choose the best supplier for each product and create automatically the associated \
-        purchase orders.
-    ''',
-    'website': 'http://unifield.msf.org',
-    'init_xml': [
-    ],
-    'depends' : [
-        'base',
-        'purchase',
-    ],
+    "name": "Recurring Entries for MSF",
+    "version": "1.0",
+    "depends": ["analytic_distribution"],
+    "author" : "MSF, TeMPO Consulting",
+    "category": "General/Standard",
+    "description": """
+    This module adds analytic distribution and period checks to
+    the standard behavior of recurring entries.
+    Period checks are done in account_period_closing_level module.
+    
+    """,
+    "init_xml": [],
     'update_xml': [
-        'procurement_list_sequence.xml',
-        'procurement_list_view.xml',
-        'partner_view.xml',
-        'procurement_list_wizard.xml',
-        'wizard/wizard_import_list_view.xml',
-        'wizard/choose_supplier_view.xml',
-        'security/ir.model.access.csv',
+        'account_model_view.xml'
     ],
-    'demo_xml': [
+    "test": [
     ],
-    'test': [
-        'test/procurement_list.yml',
-    ],
+    'demo_xml': [],
     'installable': True,
     'active': False,
+#    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

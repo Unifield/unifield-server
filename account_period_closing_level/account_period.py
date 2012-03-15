@@ -23,7 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 import logging
 
-class account_period_closing_level(osv.osv):
+class account_period(osv.osv):
+    _name = "account.period"
     _inherit = "account.period"
     
     # To avoid issues with existing OpenERP code (account move line for example),
@@ -51,18 +52,30 @@ class account_period_closing_level(osv.osv):
         
         # Prepare some elements
         reg_obj = self.pool.get('account.bank.statement')
+        sub_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
         inv_obj = self.pool.get('account.invoice')
         
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
+            # UF-550: A period now can only be opened if all previous periods (of the same fiscal year) have been already opened
+            if period.state == 'created':
+                previous_period_ids = self.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], context=context,)
+                for pp in self.browse(cr, uid, previous_period_ids, context=context):
+                    if pp.state == 'created':
+                        raise osv.except_osv(_('Warning'), _("Cannot open this period. All previous periods must be opened before opening this one."))
+            
             if period.state == 'draft':
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period" % register.name))
+                # check if subscriptions lines were not created for this period
+                sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
+                if len(sub_ids) > 0:
+                    raise osv.except_osv(_('Warning'), _("Recurring entries were not created for period '%s'. Please create them before closing period" % period.name))
                 # then verify that all currencies have a fx rate in this period
                 # retrieve currencies for this period (in account_move_lines)
                 sql = """SELECT DISTINCT currency_id
@@ -109,6 +122,7 @@ class account_period_closing_level(osv.osv):
                         'period_id': period.id,
                     }
                 }
+                
         
         # check if unposted move lines are linked to this period
         move_line_obj = self.pool.get('account.move.line')
@@ -116,6 +130,8 @@ class account_period_closing_level(osv.osv):
         for move_line in move_line_obj.browse(cr, uid, move_lines):
             if move_line.state != 'valid':
                 raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
+            
+
         
         # otherwise, change the period's and journal period's states
         if context['state']:
@@ -147,7 +163,7 @@ class account_period_closing_level(osv.osv):
             logging.getLogger('init').info('Loading default draft state for account.period')
             vals['state'] = 'draft'
 
-        return super(account_period_closing_level, self).create(cr, uid, vals, context=context)
+        return super(account_period, self).create(cr, uid, vals, context=context)
 
     _defaults = {
         'state': lambda *a: 'created',
@@ -193,6 +209,6 @@ class account_period_closing_level(osv.osv):
                     'context': context,
                 }
 
-account_period_closing_level()
+account_period()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -58,13 +58,14 @@
             <field name="arch" type="xml">
                 <search string="Search Purchase Orders">
                     <group col="8" colspan="4">
-                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft',])]" separator="1" help="Purchase orders which are in draft state" />
+                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
                       <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
-                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved', 'done',])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
                       <separator orientation="vertical" />
-                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel',])]" separator="1" help="Purchase orders which are in cancelled state." />
+                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state." />
                       <separator orientation="vertical" />
-                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking',])]" separator="1" help="Purchase orders which are in the exception state." />
+                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking'])]" separator="1" help="Purchase orders which are in the exception state." />
                       <separator orientation="vertical" />
                       <field name="name" select="1" string="Reference" />
                       <field name="partner_id" select="1" string="Supplier" />
@@ -75,7 +76,6 @@
                       <field name="origin" />
                       <field name="create_uid" />
                       <field name="date_order" />
-                      <!-- Creation date from/to − TODO: To validate with Magali -->
                     </group>
                     <newline />
                     <group string="Type" expand="0">
@@ -98,6 +98,7 @@
                       <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                       <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
                       <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
                       <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                </group>
                     <newline />
@@ -126,7 +127,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
-            <field name="domain">[('tender_id', '=', False),]</field>
+            <field name="domain">[('tender_id', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>

@@ -72,9 +72,8 @@
                             <group colspan="4" col="6">
                                 <field name="state" />
                                 <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,progress,validated" />
-                                <button name="procurement_validate" icon="" string="Validate" states="draft" />
+                                <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" />
-                                <button name="order_confirm" icon="gtk-execute" string="Done" states="progress" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
@@ -120,8 +119,9 @@
                 <search string="Internal Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', '=', 'draft')]" />
+                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', '=', 'validated')]" />
                         <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
-                        <filter name="state_done" string="Done" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
+                        <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="origin" />

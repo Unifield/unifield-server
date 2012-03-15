@@ -70,11 +70,11 @@
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
-    <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="P10" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -135,7 +135,6 @@
   <story>
     <para style="P5">[[repeatIn(objects,'o')]]</para>
     <para style="P9">Funding pool code/name: [[ o.code ]]/[[ o.name ]]</para>
-    <para style="P9">Parent account: [[ (o.parent_id and o.parent_id.name) or '' ]]</para>
     <para style="P5">
       <font color="white"> </font>
     </para>
@@ -155,7 +154,7 @@
           <para style="P13">[[ o.date_start ]] </para>
         </td>
         <td>
-          <para style="P13">[[ o.date and o.date or '' ]] </para>
+          <para style="P13">[[ o.date != 'False' and o.date or '' ]] </para>
         </td>
       </tr>
     </blockTable>
@@ -176,26 +175,19 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable colWidths="539.0" style="Table6">
-      <tr>
-        <td>
-          <para style="P17">[[repeatIn(o.cost_center_ids,'line')]]</para>
-          <blockTable colWidths="278.0,255.0" style="Table9">
-            <tr>
-              <td>
-                <para style="P3">[[ line.name ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line.code ]]</para>
-              </td>
-            </tr>
-          </blockTable>
-          <para style="P18">
-            <font color="white"> </font>
-          </para>
-        </td>
-      </tr>
-    </blockTable>
+    <section>
+      <para style="P17">[[repeatIn(o.cost_center_ids,'line')]]</para>
+      <blockTable colWidths="278.0,255.0" style="Table9">
+        <tr>
+          <td>
+            <para style="P3">[[ line.name ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ line.code ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+    </section>
     <para style="P4">
       <font color="white"> </font>
     </para>
@@ -223,7 +215,7 @@
       </tr>
     </blockTable>
     <section>
-      <para style="P30">[[repeatIn(o.account_ids,'line')]]</para>
+      [[repeatIn(o.account_ids,'line')]]
       <blockTable colWidths="79.0,90.0,165.0,122.0,81.0" style="Table5">
         <tr>
           <td>
@@ -236,7 +228,7 @@
             <para style="P11">[[ line.activation_date ]] </para>
           </td>
           <td>
-            <para style="P29">[[ line.inactivation_date<font face="Helvetica" size="9.0"> and line.inactivation_date or ''</font> ]]</para>
+            <para style="P29">[[ line.inactivation_date != 'False' and line.inactivation_date or ' ' ]]</para>
           </td>
           <td>
             <para style="P28">[[ line.note ]]</para>
