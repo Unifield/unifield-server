@@ -112,11 +112,9 @@ class account_cash_statement(osv.osv):
             }
             cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition : 
-        #+ Cash Journal Name + A Sequence Number (like /02)
+        #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
-            seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
-            name = st.journal_id.name + seq
-            res_id = self.write(cr, uid, ids, {'state' : 'open', 'name': name})
+            res_id = self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
             return res_id
         else:
             return False
