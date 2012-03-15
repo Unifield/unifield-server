@@ -168,7 +168,8 @@ class account_invoice(osv.osv):
         def is_partner_line(dico):
             if isinstance(dico, dict):
                 if dico:
-                    amount = dico.get('amount_currency', 0.0)
+                    # In case where no amount_currency filled in, then take debit - credit for amount comparison
+                    amount = dico.get('amount_currency', False) or (dico.get('debit', 0.0) - dico.get('credit', 0.0))
                     if amount == inv.amount_total and dico.get('partner_id', False) == inv.partner_id.id:
                         return True
             return False
