@@ -202,7 +202,7 @@ class sourcing_line(osv.osv):
                             'rts': False}
             if line.supplier:
                 delay = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
-                res[line.id]['estimated_delivery_date'] = line.cf_estimated_delivery_date and line.cf_estimated_delivery_date or delay
+                res[line.id]['estimated_delivery_date'] = line.cf_estimated_delivery_date and line.state in ('done', 'confirmed') and line.cf_estimated_delivery_date or delay
             
             tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
             ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
@@ -281,6 +281,11 @@ class sourcing_line(osv.osv):
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # Remove the saved estimated DD on cancellation of the FO line
+        if 'state' in values and values['state'] == 'cancel':
+            self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
+            
         if 'fromOrderLine' not in context and 'fromOrder' not in context:
             context['fromSourcingLine'] = True
             for sourcingLine in self.browse(cr, uid, ids, context=context):
@@ -328,10 +333,6 @@ class sourcing_line(osv.osv):
                     else:
                         # no partner is selected, erase the date
                         values.update({'estimated_delivery_date': False})
-                
-                # Remove the saved estimated DD on cancellation of the FO line
-                if 'state' in vals and vals['state'] == 'cancel':
-                    values.update({'cf_estimated_delivery_date': False})    
                     
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
@@ -721,6 +722,8 @@ class sale_order_line(osv.osv):
         if 'fromSourcingLine' not in context:
             context['fromOrderLine'] = True
             values = {}
+            if 'state' in vals:
+                values.update({'state': vals['state']})
             if 'supplier' in vals:
                 values.update({'supplier': vals['supplier']})
             if 'po_cft' in vals:
