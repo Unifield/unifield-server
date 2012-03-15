@@ -153,42 +153,6 @@ class substitute(osv.osv_memory):
         '''
         return self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
     
-    def _load_common_data(self, cr, uid, ids, context=None):
-        '''
-        load common data into context
-        - date
-        - reason_type
-        - location ids
-        - company id
-        - ...
-        '''
-        if context is None:
-            context = {}
-        context.setdefault('common', {})
-        # objects
-        date_tools = self.pool.get('date.tools')
-        obj_data = self.pool.get('ir.model.data')
-        comp_obj = self.pool.get('res.company')
-        # date format
-        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        context['common']['db_date_format'] = db_date_format
-        date_format = date_tools.get_date_format(cr, uid, context=context)
-        context['common']['date_format'] = date_format
-        # date is today
-        date = time.strftime('%Y-%m-%d')
-        context['common']['date'] = date
-        # default company id
-        company_id = comp_obj._company_default_get(cr, uid, 'stock.picking', context=context)
-        context['common']['company_id'] = company_id
-        # reason type
-        reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
-        context['common']['reason_type_id'] = reason_type_id
-        # kitting location
-        kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
-        context['common']['kitting_id'] = kitting_id
-        
-        return True
-    
     def _create_picking(self, cr, uid, ids, obj, date, context=None):
         '''
         create internal picking object
@@ -352,8 +316,9 @@ class substitute(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         kit_obj = self.pool.get('composition.kit')
         item_obj = self.pool.get('composition.item')
+        data_tools_obj = self.pool.get('data.tools')
         # load default data
-        self._load_common_data(cr, uid, ids, context=context)
+        data_tools.load_common_data(cr, uid, ids, context=context)
         
         # date is today
         date = context['common']['date']
@@ -447,8 +412,9 @@ class substitute(osv.osv_memory):
         # objects
         move_obj = self.pool.get('stock.move')
         kit_obj = self.pool.get('composition.kit')
+        data_tools_obj = self.pool.get('data.tools')
         # load default data
-        self._load_common_data(cr, uid, ids, context=context)
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         # date is today
         date = context['common']['date']

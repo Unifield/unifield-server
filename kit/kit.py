@@ -36,6 +36,7 @@ KIT_COMPOSITION_TYPE = [('theoretical', 'Theoretical'),
                         ]
 
 KIT_STATE = [('draft', 'Draft'),
+             ('in_production', 'In Production'),
              ('completed', 'Completed'),
              ('done', 'Closed'),
              ]

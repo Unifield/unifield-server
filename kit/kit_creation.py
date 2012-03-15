@@ -135,6 +135,80 @@ class kit_creation(osv.osv):
         '''
         return True
     
+    def _confirm_internal_picking(self, cr, uid, ids, pick_id, context=None):
+        '''
+        confirm the internal picking
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+        return True
+    
+    def _validate_internal_picking(self, cr, uid, ids, pick_id, context=None):
+        '''
+        confirm and validate the internal picking
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+        # simulate check assign button, as stock move must be available
+        pick_obj.force_assign(cr, uid, [pick_id])
+        # trigger standard workflow
+        pick_obj.action_move(cr, uid, [pick_id])
+        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_done', cr)
+        return True
+    
+    def _create_picking(self, cr, uid, ids, obj, date, context=None):
+        '''
+        create internal picking object
+        '''
+        # objects
+        kit_obj = self.pool.get('composition.kit')
+        pick_obj = self.pool.get('stock.picking')
+        # we create the internal picking object
+        data = self.read(cr, uid, ids, ['name'], context=context)[0]
+        kitting_order_name = data['name']
+        pick_values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
+                       'origin': kitting_order_name,
+                       'type': 'internal',
+                       'state': 'draft',
+                       'sale_id': False,
+                       'address_id': False,
+                       'note': 'Internal Picking corresponding to Kitting Order %s.'%kitting_order_name,
+                       'date': context['common']['date'],
+                       'company_id': context['common']['company_id'],
+                       'reason_type_id': context['common']['reason_type_id'],
+                       }
+        pick_id = pick_obj.create(cr, uid, pick_values, context=context)
+        return pick_id
+    
+    def start_production(self, cr, uid, ids, context=None):
+        '''
+        start production - change the state and create internal picking and corresponding kits
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        kit_obj = self.pool.get('composition.kit')
+        data_tools_obj = self.pool.get('data.tools')
+        # load data into the context
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
+        # change the state
+        self.write(cr, uid, ids, {'state': 'in_production'}, context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            # create the internal picking
+            values = {}
+            pick_id = pick_obj.create(cr, uid, values, context=context)
+            # confirm the picking
+            self._confirm_internal_picking(cr, uid, ids, pick_id, context=context)
+            # create kit in production
+            for i in range(obj.qty_kit_creation):
+                values = {}
+                kit_id = kit_obj.create(cr, uid, values, context=context)
+        
+        return True
+    
     def process_to_consume(self, cr, uid, ids, context=None):
         '''
         open wizard for to consume processing
@@ -269,6 +343,24 @@ class kit_creation_to_consume(osv.osv):
         vals.update({'line_number_to_consume': line})
         result = super(kit_creation_to_consume, self).create(cr, uid, vals, context=context)
         return result
+    
+    def process_to_consume(self, cr, uid, ids, context=None):
+        '''
+        open wizard for to consume processing
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        kit_creation_obj = self.pool.get('kit.creation')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # inform the wizard we only want one line in it
+            context.update({'to_consume_line_id': obj.id})
+            # call the kit order method
+            return kit_creation_obj.process_to_consume(cr, uid, [obj.kit_creation_id_to_consume.id], context=context)
     
     def _compute_availability(self, cr, uid, ids, consider_child_locations, product_id, uom_id, context=None):
         '''

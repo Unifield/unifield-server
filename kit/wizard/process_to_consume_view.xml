@@ -15,6 +15,9 @@
 			            		<field name="qty_process_to_consume" readonly="True" />
 			            		<field name="selected_qty_process_to_consume" />
 			            		<field name="uom_id_process_to_consume" readonly="True" />
+			            		<field name="location_src_id_process_to_consume" on_change="on_change_location_src_id(product_id_process_to_consume, uom_id_process_to_consume, location_src_id_process_to_consume, consider_child_locations_process_to_consume, context)" />
+			            		<field name="qty_available_process_to_consume" />
+			            		<field name="consider_child_locations_process_to_consume" invisible="True" />
                         	</tree>
                         </field>
                     </group>

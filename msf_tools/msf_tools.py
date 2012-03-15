@@ -140,3 +140,43 @@ class fields_tools(osv.osv):
         return res
     
 fields_tools()
+
+
+class data_tools(osv.osv):
+    '''
+    data related tools for msf project
+    '''
+    _name = 'data.tools'
+    
+    def load_common_data(self, cr, uid, ids, context=None):
+        '''
+        load common data into context
+        '''
+        if context is None:
+            context = {}
+        context.setdefault('common', {})
+        # objects
+        date_tools = self.pool.get('date.tools')
+        obj_data = self.pool.get('ir.model.data')
+        comp_obj = self.pool.get('res.company')
+        # date format
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        context['common']['db_date_format'] = db_date_format
+        date_format = date_tools.get_date_format(cr, uid, context=context)
+        context['common']['date_format'] = date_format
+        # date is today
+        date = time.strftime(db_date_format)
+        context['common']['date'] = date
+        # default company id
+        company_id = comp_obj._company_default_get(cr, uid, 'stock.picking', context=context)
+        context['common']['company_id'] = company_id
+        # kit reason type
+        reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
+        context['common']['reason_type_id'] = reason_type_id
+        # kitting location
+        kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
+        context['common']['kitting_id'] = kitting_id
+        
+        return True
+
+data_tools()

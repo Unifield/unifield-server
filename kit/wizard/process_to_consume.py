@@ -66,6 +66,7 @@ class process_to_consume(osv.osv_memory):
                 product_id = mem.product_id_process_to_consume.id
                 # uom
                 uom_id = mem.uom_id_process_to_consume.id
+                # find the corresponding LOTS if needed and create possibly many stock moves
                 res = loc_obj._product_reserve_lot(cr, uid, location_ids, product_id, uom_id, context=stock_context, lock=True)
                 # kitting location
                 kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
@@ -89,7 +90,7 @@ class process_to_consume(osv.osv_memory):
                 
         # delete empty lines
         to_consume_obj.unlink(cr, uid, to_consume_ids, context=context)
-        return {'type': 'ir.actions.close_window'}
+        return {'type': 'ir.actions.act_window_close'}
     
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -100,8 +101,10 @@ class process_to_consume(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-            
+        # objects
         kit_creation_obj = self.pool.get('kit.creation')
+        to_consume_obj = self.pool.get('kit.creation.to.consume')
+        
         res = super(process_to_consume, self).default_get(cr, uid, fields, context=context)
         kit_creation_ids = context.get('active_ids', False)
         if not kit_creation_ids:
@@ -109,7 +112,9 @@ class process_to_consume(osv.osv_memory):
 
         result = []
         for obj in kit_creation_obj.browse(cr, uid, kit_creation_ids, context=context):
-            for to_consume in obj.to_consume_ids_kit_creation:
+            if context.get('to_consume_line_id', False):
+                # one line is selected, we load only this one
+                to_consume = to_consume_obj.browse(cr, uid, context.get('to_consume_line_id'), context=context)
                 values = {'kit_creation_id_process_to_consume': obj.id,
                           'to_consume_id_process_to_consume': to_consume.id,
                           # data
@@ -118,8 +123,23 @@ class process_to_consume(osv.osv_memory):
                           'selected_qty_process_to_consume': to_consume.qty_to_consume,
                           'uom_id_process_to_consume': to_consume.uom_id_to_consume.id,
                           'location_src_id_process_to_consume': to_consume.location_src_id_to_consume.id,
+                          'consider_child_locations_process_to_consume': obj.consider_child_locations_kit_creation,
                           }
                 result.append(values)
+            else:
+                # no line selected, we load all lines
+                for to_consume in obj.to_consume_ids_kit_creation:
+                    values = {'kit_creation_id_process_to_consume': obj.id,
+                              'to_consume_id_process_to_consume': to_consume.id,
+                              # data
+                              'product_id_process_to_consume': to_consume.product_id_to_consume.id,
+                              'qty_process_to_consume': to_consume.qty_to_consume,
+                              'selected_qty_process_to_consume': to_consume.qty_to_consume,
+                              'uom_id_process_to_consume': to_consume.uom_id_to_consume.id,
+                              'location_src_id_process_to_consume': to_consume.location_src_id_to_consume.id,
+                              'consider_child_locations_process_to_consume': obj.consider_child_locations_kit_creation,
+                              }
+                    result.append(values)
 
         if 'components_to_consume_ids' in fields:
             res.update({'components_to_consume_ids': result})
@@ -137,6 +157,20 @@ class process_to_consume_line(osv.osv_memory):
     '''
     _name = 'process.to.consume.line'
     
+    def on_change_location_src_id(self, cr, uid, ids, product_id, uom_id, location_src_id, consider_child_locations, context=None):
+        '''
+        on change
+        '''
+        # objects
+        to_consume_obj = self.pool.get('kit.creation.to.consume')
+        # default value
+        result = {'value': {'qty_available_process_to_consume': 0.0}}
+        if product_id and uom_id and location_src_id:
+            # we check for the available qty (in:done, out: assigned, done)
+            res = to_consume_obj._compute_availability(cr, uid, [location_src_id], consider_child_locations, product_id, uom_id, context=context)
+            result.setdefault('value', {}).update({'qty_available_process_to_consume': res['total']})
+        return result
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -146,6 +180,8 @@ class process_to_consume_line(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # objects
+        to_consume_obj = self.pool.get('kit.creation.to.consume')
             
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -157,7 +193,7 @@ class process_to_consume_line(osv.osv_memory):
             # compute child
             compute_child = obj.consider_child_locations_process_to_consume
             # we check for the available qty (in:done, out: assigned, done)
-            res = self._compute_availability(cr, uid, [obj.location_src_id_process_to_consume.id], compute_child, product_id, uom_id, context=context)
+            res = to_consume_obj._compute_availability(cr, uid, [obj.location_src_id_process_to_consume.id], compute_child, product_id, uom_id, context=context)
             result.setdefault(obj.id, {}).update({'qty_available_process_to_consume': res['total']})
         return result
     
@@ -169,7 +205,8 @@ class process_to_consume_line(osv.osv_memory):
                 'qty_process_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True, required=True),
                 'selected_qty_process_to_consume': fields.float(string='Selected Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_process_to_consume': fields.many2one('product.uom', string='UoM', readonly=True, required=True),
-                'location_src_id_process_to_consume': fields.many2one('stock.location', string='Source Location', required=True, readonly=True, domain=[('usage', '=', 'internal')]),
+                'location_src_id_process_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
+                'consider_child_locations_process_to_consume': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check.'),
                 # function
                 'qty_available_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 # related
