@@ -62,7 +62,6 @@ def get_locale(locale=None):
 
     if locale:
         return locale
-
     try:
         return babel.core.Locale.parse(cherrypy.session['locale'])
     except AttributeError:
@@ -73,6 +72,12 @@ def get_locale(locale=None):
     except (ImportError, KeyError):
         pass # we're at the login page and apparently it cannot get rpc
     except babel.core.UnknownLocaleError:
+        pass
+
+    try:
+        if cherrypy.session.get('locale') and '_' in cherrypy.session.get('locale'):
+            return babel.core.Locale.parse(cherrypy.session['locale'].split('_')[0])
+    except (AttributeError, babel.core.UnknownLocaleError):
         pass
 
     try:
