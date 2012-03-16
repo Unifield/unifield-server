@@ -55,6 +55,10 @@
     width: auto;
 }
 
+.grid-cell.text span {
+    white-space: pre-wrap;
+}
+
 .grid-header {
     background: url(../images/gradientlinebg.gif);
 }
