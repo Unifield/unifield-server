@@ -307,7 +307,7 @@
                                 <separator string="Opening Balance" colspan="4"/>
                                 <field name="balance_start" string="Opening Balance" readonly="True"/>
                                 <field name="total_entry_encoding"/>
-                                <field name="open_advance_amount"  attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
+                                <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                                 <field name="unrecorded_expenses_amount"  attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                             </group>
                             <group col="2" colspan="2">
