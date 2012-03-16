@@ -35,29 +35,8 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for po in self.browse(cr, uid, ids, context=context):
-            tmp = po.analytic_distribution_id and po.analytic_distribution_id.lines_count or ''
-            # Transform result with just CC line count
-            if tmp != '':
-                res[po.id] = tmp.split(';')[0]
-        return res
-
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
     }
 
@@ -320,26 +299,6 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for pol in self.browse(cr, uid, ids, context=context):
-            res[pol.id] = ''
-            tmp = pol.analytic_distribution_id and pol.analytic_distribution_id.lines_count or ''
-            # Transform result with just CC line count
-            if tmp != '':
-                res[pol.id] = tmp.split(';')[0]
-        return res
-
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -353,8 +312,6 @@ class purchase_order_line(osv.osv):
 
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id', 
             string="Commitment Voucher Lines", readonly=True),

@@ -52,22 +52,6 @@ class account_commitment(osv.osv):
                 res[co.id] += line.amount
         return res
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for co in self.browse(cr, uid, ids, context=context):
-            res[co.id] = co.analytic_distribution_id and co.analytic_distribution_id.lines_count or 'None'
-        return res
-
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
@@ -79,8 +63,6 @@ class account_commitment(osv.osv):
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Automatic - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
     }
@@ -359,22 +341,6 @@ class account_commitment_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.commit_id.analytic_distribution_id.id, line.account_id.id) 
         return res
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for col in self.browse(cr, uid, ids, context=context):
-            res[col.id] = col.analytic_distribution_id and col.analytic_distribution_id.lines_count or ''
-        return res
-
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
         """
         If Commitment have an analytic distribution, return False, else return True
@@ -397,8 +363,6 @@ class account_commitment_line(osv.osv):
         'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
