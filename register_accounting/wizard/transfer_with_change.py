@@ -30,12 +30,12 @@ class wizard_transfer_with_change(osv.osv_memory):
 
     _columns = {
         'absl_id': fields.many2one('account.bank.statement.line', string='Register Line', required=True),
-        'absl_amount': fields.float(string="Register line absolute amount", readonly=True),
-        'converted_amount': fields.float(string="Converted amount", readonly=True, 
+        'absl_amount': fields.float(string="Transfer amount", readonly=True),
+        'converted_amount': fields.float(string="Transfer amount valuation at system rate (automatic)", readonly=True, 
             help="Register line converted amount using given third party journal currency."),
         'absl_currency': fields.many2one('res.currency', string="Register line currency", readonly=True, help="Register line currency"),
-        'amount_from': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
-        'amount_to': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
+        'amount_from': fields.float(string='Transfer converted amount at real rate', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
+        'amount_to': fields.float(string='Transfer converted amount at real rate', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, help="This currency is those from given third party journal."),
         'currency_from': fields.many2one('res.currency', string="Currency", readonly=True),
         'currency_to': fields.many2one('res.currency', string="Currency", readonly=True),
