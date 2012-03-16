@@ -61,7 +61,7 @@ class threshold_value(osv.osv):
         'active': lambda *a: True,
         'frequency': lambda *a: 3,
         'consumption_method': lambda *a: 'amc',
-        'consumption_period_from': lambda *a: (now() + RelativeDate(day=1, months=-3, days=-1)).strftime('%Y-%m-%d'),
+        'consumption_period_from': lambda *a: (now() + RelativeDate(day=1, months=-2)).strftime('%Y-%m-%d'),
         'consumption_period_to': lambda *a: (now() + RelativeDate(day=1)).strftime('%Y-%m-%d'),
     }
     
@@ -221,7 +221,9 @@ class threshold_value_line(osv.osv):
             res[line.id] = {'threshold_value': 0.00, 'product_qty': 0.00}
             
             rule = line.threshold_value_id
-            res[line.id] = self._get_threshold_value(cr, uid, line.id, line.product_id.id, rule.compute_method, rule.consumption_method, 
+            context.update({'location_id': rule.location_id.id, 'compute_child': True})
+            product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
+            res[line.id] = self._get_threshold_value(cr, uid, line.id, product, rule.compute_method, rule.consumption_method, 
                                                      rule.consumption_period_from, rule.consumption_period_to, rule.frequency, 
                                                      rule.safety_month, rule.lead_time, rule.supplier_lt, line.product_uom_id.id, context)
         
@@ -238,7 +240,7 @@ class threshold_value_line(osv.osv):
         'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
     
-    def _get_threshold_value(self, cr, uid, line_id, product_id, compute_method, consumption_method,
+    def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
                                 consumption_period_from, consumption_period_to, frequency,
                                 safety_month, lead_time, supplier_lt, uom_id, context=None):
         '''
@@ -248,8 +250,13 @@ class threshold_value_line(osv.osv):
         threshold_value = 0.00
         qty_to_order = 0.00
         if compute_method == 'computed':
-            context.update({'period_from': consumption_period_from, 'period_to': consumption_period_to})
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            # Get the product available before change the context (from_date and to_date in context)
+            product_available = product.qty_available
+            
+            # Change the context to compute consumption
+            c = context.copy()
+            c.update({'from_date': consumption_period_from, 'to_date': consumption_period_to})
+            product = self.pool.get('product.product').browse(cr, uid, product.id, context=c)
             cons = consumption_method == 'fmc' and product.reviewed_consumption or product.product_amc
             
             # Set lead time according to choices in threshold rule (supplier or manual lead time)
@@ -260,11 +267,11 @@ class threshold_value_line(osv.osv):
             threshold_value = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, threshold_value, product.uom_id.id)
                 
             # Compute the quantity to re-order
-            product_available = product.qty_available
             qty_to_order = cons * (frequency + lt + safety_month)\
-                            - product_available + product.incoming_qty - product.outgoing_qty 
+                            - product_available - product.incoming_qty + product.outgoing_qty 
             qty_to_order = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id or product.uom_id.id, \
                                                                      qty_to_order, product.uom_id.id)
+            qty_to_order = qty_to_order > 0.00 and qty_to_order or 0.00
         elif line_id:
             line = self.browse(cr, uid, line_id, context=context)
             threshold_value = line.fixed_threshold_value
