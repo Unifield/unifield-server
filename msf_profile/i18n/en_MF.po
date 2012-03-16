@@ -94,7 +94,7 @@ msgstr ""
 "POT-Creation-Date: 2012-03-09 14:11+0000\n"
 "PO-Revision-Date: 2012-03-09 15:49+0000\n"
 "Last-Translator: Duy VO duy.vo@geneva.msf.org\n"
-"Language-Team: Interlingua duy.vo@geneva.msf.org\n"
+"Language-Team: Unifield duy.vo@geneva.msf.org\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -247,7 +247,7 @@ msgstr "\n"
 #. module: sale
 #: view:sale.report:0
 msgid "Sales by Product Category"
-msgstr "Field by Product Category"
+msgstr "Field Order by Product Category"
 
 #. module: sale_override
 #: model:ir.module.module,shortdesc:sale_override.module_meta_information
