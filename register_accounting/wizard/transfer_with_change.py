@@ -69,18 +69,18 @@ class wizard_transfer_with_change(osv.osv_memory):
                         vals.update({'converted_amount': converted_amount or 0.0})
             if absl and absl.currency_id:
                 vals.update({'absl_currency': absl.currency_id.id or False})
-        # Fill in 'amount_from' if transfer type is 'from'
-        if 'amount_from' not in vals and transfer_type == 'from':
-            if absl and absl.transfer_amount:
-                vals.update({'amount_from': absl.transfer_amount})
-            elif 'converted_amount' in vals:
-                vals.update({'amount_from': vals.get('converted_amount')})
-        # Fill in 'amount_to' if transfer type is 'to'
-        if 'amount_to' not in vals and transfer_type == 'to':
-            if absl and absl.transfer_amount:
-                vals.update({'amount_to': absl.transfer_amount})
-            elif 'converted_amount' in vals:
-                vals.update({'amount_to': vals.get('converted_amount')})
+#        # Fill in 'amount_from' if transfer type is 'from'
+#        if 'amount_from' not in vals and transfer_type == 'from':
+#            if absl and absl.transfer_amount:
+#                vals.update({'amount_from': absl.transfer_amount})
+#            elif 'converted_amount' in vals:
+#                vals.update({'amount_from': vals.get('converted_amount')})
+#        # Fill in 'amount_to' if transfer type is 'to'
+#        if 'amount_to' not in vals and transfer_type == 'to':
+#            if absl and absl.transfer_amount:
+#                vals.update({'amount_to': absl.transfer_amount})
+#            elif 'converted_amount' in vals:
+#                vals.update({'amount_to': vals.get('converted_amount')})
         # Default behaviour
         return super(wizard_transfer_with_change, self).create(cr, uid, vals, context=context)
 
