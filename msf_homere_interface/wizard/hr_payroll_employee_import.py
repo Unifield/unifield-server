@@ -160,7 +160,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             res = False
             vals = {
                 'active': True,
-                'date_from': current_date,
                 'employee_type': 'local',
                 'homere_codeterrain': codeterrain[0],
                 'homere_id_staff': id_staff[0],
