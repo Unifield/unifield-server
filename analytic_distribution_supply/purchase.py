@@ -333,6 +333,7 @@ class purchase_order_line(osv.osv):
         res = {}
         # Browse given invoices
         for pol in self.browse(cr, uid, ids, context=context):
+            res[pol.id] = ''
             tmp = pol.analytic_distribution_id and pol.analytic_distribution_id.lines_count or ''
             # Transform result with just CC line count
             if tmp != '':
