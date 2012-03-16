@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -112,26 +112,54 @@ procurement_order()
 
 class stock_picking(osv.osv):
     '''
-    do_partial modification
+    do_partial modification for the selection of the LOCATION for incoming shipments
     '''
     _inherit = 'stock.picking'
     
-    def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_process method from stock>stock.py>stock_picking
-        - allow to modify the data for wizard display
+        This hook refers to delivery_mechanism>delivery_mechanism.py>_do_incoming_shipment.
+        It updates the location_dest_id (to cross docking or to stock) 
+        of selected stock moves when the linked 'incoming shipment' is validated
+        -> only related to 'in' type stock.picking
         '''
+        values = super(stock_picking, self)._do_incoming_shipment_first_hook(cr, uid, ids, context=context, *args, **kwargs)
+        assert values is not None, 'missing values'
+
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
-        wizard_obj = self.pool.get('wizard')
-        res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
-                                                                               wizard_ids=[res['res_id']],
-                                                                               wizard_name=res['name'],
-                                                                               model=res['res_model'],
-                                                                               step='default'))
-        return res
+        res = {}
+        
+        # take ids of the wizard
+        wiz_ids = context.get('wizard_ids')
+        if not wiz_ids:
+            return res
+        # this will help to take ids of the stock moves (see below : move_ids)
+        assert 'partial_datas' in context, 'partial datas not present in context'
+        partial_datas = context['partial_datas']
+
+# ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
+        obj_data = self.pool.get('ir.model.data')
+        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
+# ----------------------------------------------------------------------------------------------------------------
+        move_obj = self.pool.get('stock.move')
+        partial_picking_obj = self.pool.get('stock.partial.picking')
+        stock_picking_obj = self.pool.get('stock.picking')
+        
+        for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
+            if var.process_type == 'to_cross_docking':
+                for pick in stock_picking_obj.browse(cr, uid, ids, context=context):
+                    # treat moves towards CROSS DOCKING
+                    move_ids = partial_datas[pick.id].keys()
+                    for move in move_obj.browse(cr, uid, move_ids, context=context):
+                        values.update({'location_dest_id':cross_docking_location,})
+            elif var.process_type == 'to_stock':
+                for pick in stock_picking_obj.browse(cr, uid, ids, context=context):
+                    # treat moves towards STOCK
+                    move_ids = partial_datas[pick.id].keys()
+                    for move in move_obj.browse(cr, uid, move_ids, context=context):
+                        values.update({'location_dest_id':stock_location_input,})
+        return values
+    
 stock_picking()

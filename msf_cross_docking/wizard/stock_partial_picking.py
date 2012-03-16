@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -66,7 +66,7 @@ class stock_partial_picking(osv.osv_memory):
         return res
 
     def onchange_process_type(self, cr, uid, ids, process_type, context=None):
-        """ Raise a message if the user change a default process type.
+        """ Raise a message if the user change a default process type (cross docking or IN stock).
         @param process_type: Changed value of process_type.
         @return: Dictionary of values.
         """
@@ -107,35 +107,6 @@ class stock_partial_picking(osv.osv_memory):
                 res['arch'] = res['arch'].replace(
                 '<group col="2" colspan="2">',
                 '<group col="4" colspan="4"><field name="process_type" invisible="0" on_change="onchange_process_type(process_type,context)"/>')
-        return res
-
-    # @@@override delivery_mechanism>wizard>stock_partial_picking.py>do_incoming_shipment
-    def do_incoming_shipment(self, cr, uid, ids, context=None):
-        '''
-        update the location_dest_id (to cross docking or to stock) 
-        of selected stock moves when the linked 'incoming shipment' is validated
-        -> only related to 'in' type stock.picking
-        '''
-        if context is None:
-            context = {}
-        res = super(stock_partial_picking, self).do_incoming_shipment(self, cr, uid, ids, context=None)
-        move_obj = self.pool.get('stock.move')
-        obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
-        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
-        
-        picking_obj = self.pool.get('stock.picking')
-        picking_id = context.get('active_ids')
-        if picking_id:
-            picking_id = picking_id[0]
-            data = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)
-            picking_type = data[0]['type']
-            if picking_type == 'in':
-                for var in picking_obj.browse(cr, uid, ids, context=context):
-                    if var.process_type == 'to_cross_docking':
-                        res = move_obj.write(cr, uid, ids, {location_dest_id:'cross_docking_location'}, context=context)
-                    elif var.process_type == 'to_stock' :
-                        res = move_obj.write(cr, uid, ids, {location_dest_id:'stock_location_input'}, context=context)
         return res
 
 stock_partial_picking()

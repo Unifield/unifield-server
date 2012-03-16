@@ -241,6 +241,15 @@ class stock_picking(osv.osv):
         # return updated move or False
         return out_move_id
     
+    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook to update values for stock move if first encountered
+        '''
+        values = kwargs.get('values')
+        assert values is not None, 'missing values'
+        
+        return values
+    
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         '''
         validate the picking ticket from selected stock moves
@@ -303,6 +312,7 @@ class stock_picking(osv.osv):
                                   'asset_id': partial['asset_id'],
                                   'change_reason': partial['change_reason'],
                                   }
+                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                         move_obj.write(cr, uid, [move.id], values, context=context)
                         done_moves.append(move.id)
                         # if split happened, we update the corresponding OUT move
