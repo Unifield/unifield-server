@@ -51,7 +51,7 @@ class wizard_budget_import(osv.osv_memory):
         else:
             fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('code', '=', import_data[2][1])], context=context)
             if len(fy_ids) == 0:
-                raise osv.except_osv(_('Warning !'), _("The fiscal year %s is not defined in the database!" % import_data[2][1]))
+                raise osv.except_osv(_('Warning !'), _("The fiscal year %s is not defined in the database!") % (import_data[2][1],))
             else:
                 result.update({'fiscalyear_id': fy_ids[0]})
         # cost center code
@@ -61,7 +61,7 @@ class wizard_budget_import(osv.osv_memory):
             cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', import_data[3][1]),
                                                                                 ('category', '=', 'OC')], context=context)
             if len(cc_ids) == 0:
-                raise osv.except_osv(_('Warning !'), _("The cost center %s is not defined in the database!" % import_data[3][1]))
+                raise osv.except_osv(_('Warning !'), _("The cost center %s is not defined in the database!") % (import_data[3][1],))
             else:
                 result.update({'cost_center_id': cc_ids[0]})
         # decision moment
@@ -84,11 +84,11 @@ class wizard_budget_import(osv.osv_memory):
                                                                       [('code', '=', import_line[0])],
                                                                       context=context)
                 if len(account_ids) == 0:
-                    raise osv.except_osv(_('Warning !'), _("Account %s does not exist in database!" % import_line[0]))
+                    raise osv.except_osv(_('Warning !'), _("Account %s does not exist in database!") % (import_line[0],))
                 else:
                     account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
                     if account.user_type_code != 'expense':
-                        raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!" % import_line[0]))
+                        raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!") % (import_line[0],))
                     elif account.type != 'view':
                         # Only create "normal" budget lines (view accounts are just discarded)
                         budget_line_vals.update({'account_id': account_ids[0]})
