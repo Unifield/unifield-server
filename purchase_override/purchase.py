@@ -23,9 +23,9 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
+from mx.DateTime import *
 
 from workflow.wkf_expr import _eval_expr
-from mx.DateTime import *
 import logging
 
 class purchase_order(osv.osv):
@@ -444,7 +444,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         return self.write(cr, uid, ids, {'state':'done'}, context=context)
 
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the PO to done state
         '''
@@ -467,7 +467,7 @@ class purchase_order(osv.osv):
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
-                self.pool.get('sale.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
+                self.pool.get('sale.order').set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
             # Done invoices
             invoice_error_ids = []
@@ -484,7 +484,7 @@ class purchase_order(osv.osv):
 
         # Done stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
-        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         # Cancel all procurement ordes which have generated one of these PO
         proc_ids = self.pool.get('procurement.order').search(cr, uid, [('purchase_id', 'in', ids)], context=context)
@@ -492,18 +492,19 @@ class purchase_order(osv.osv):
             self.pool.get('stock.move').write(cr, uid, [proc.move_id.id], {'state': 'cancel'}, context=context)
             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'subflow.cancel', cr)
 
-        # Detach the PO from his workflow and set the state to done
-        for order_id in self.browse(cr, uid, ids, context=context):
-            if order_id.rfq_ok and order_id.state == 'draft':
-                wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
-            elif order_id.tender_id:
-                raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
-            else:
-                wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
-                # Search the method called when the workflow enter in last activity
-                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
-                activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-                res = _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
+        if all_doc:
+            # Detach the PO from his workflow and set the state to done
+            for order_id in self.browse(cr, uid, ids, context=context):
+                if order_id.rfq_ok and order_id.state == 'draft':
+                    wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
+                elif order_id.tender_id:
+                    raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
+                else:
+                    wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
+                    # Search the method called when the workflow enter in last activity
+                    wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
+                    activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+                    res = _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
 
         return True
     

@@ -1,5 +1,0 @@
-'CPU1';'Processor AMD Athlon XP 1800+';'PCE';12,00;'test import';
-'CPU2';'High speed processor config';'PCE';15,00;;'True'
-'CPU3';'Processor AMD Athlon XP 2200+';'PCE';25,00;;
-'CPU_DEM';'Processor on demand';'PCE';30,00;;
-'CPU_GEN';'Regular processor config';'PCE';32,00;;
