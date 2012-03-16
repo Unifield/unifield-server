@@ -87,7 +87,7 @@
     	    	<tree string="Lines">
     				<field name="supplier_id" readonly="1" />
 	    			<field name="price_unit" readonly="1" />
-    				<field name="qty" />
+    				<field name="qty" readonly="1" />
     				<field name="price_total" readonly="1" />
     				<button name="choose_supplier" string="Choose this supplier" icon="terp-camera_test" type="object" />
     			</tree>
@@ -102,7 +102,7 @@
                 <form string="Line">
                     <field name="supplier_id" readonly="1" />
                     <field name="price_unit" readonly="1" />
-                    <field name="qty" />
+                    <field name="qty" readonly="1"/>
                 </form>
             </field>
         </record>
