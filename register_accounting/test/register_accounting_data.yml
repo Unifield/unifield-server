@@ -531,6 +531,13 @@
     default_credit_account_id: account_account_expense1
     allow_date: 0
 -
+  I create an analytic Adjustement Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_journal_adjustement_0}:
+    code: MT
+    name: Analytic Adjustement Journal
+    type: cur_adj
+-
   I create an Adjustement Journal.
 -
   !record {model: account.journal, id: account_journal_adjustement_0}:
@@ -540,15 +547,8 @@
     type: cur_adj
     view_id: account_journal_view0
     default_debit_account_id: account_account_adjustement0
-    allow_date: 0        <record model="account.account" id="msf_chart_of_account.6308">
-            <field name="code">6308</field>
-            <field name="type_for_register">none</field>
-            <field name="type">other</field>
-            <field name="name">Exchange rate differences</field>
-            <field name="parent_id" ref="msf_chart_of_account.63" />
-            <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
-        </record>
+    allow_date: 0
+    analytic_journal_id: account_analytic_journal_adjustement_0
 -
   I create a Partner Category named "Customers".
 -
