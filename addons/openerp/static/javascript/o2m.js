@@ -243,9 +243,8 @@ One2Many.prototype = {
         }, {'source-window': $this[0],
             'list': options['_terp_o2m']
         }, {
-            width: '70%',
-            height: '90%',
-            max_height: 700
+            width: '90%',
+            height: '100%',
         });
         var $form = jQuery('<form>', {
             method: 'POST',
