@@ -25,8 +25,11 @@ class msf_accrual_line(osv.osv):
     _name = 'msf.accrual.line'
     
     def onchange_period(self, cr, uid, ids, period_id, context=None):
-        period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-        return {'value': {'date': period.date_stop}}
+        if period_id is False:
+            return {'value': {'date': False}}
+        else:
+            period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
+            return {'value': {'date': period.date_stop}}
     
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
