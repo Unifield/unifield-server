@@ -8,91 +8,95 @@
         	<field name="type">form</field>
         	<field name="arch" type="xml">
         		<form string="Threshold value">
+        			
         			<separator colspan="4" string="General Information" />
         			<field name="name" />
-        			<field name="warehouse_id" widget="selection" 
-        				on_change="onchange_warehouse_id(warehouse_id)" />
-        			<!-- 
-        			<field name="category_id" on_change="category_on_change(category_id)" />
-        			 -->
-        			<field name="location_id"  />
-        			<!-- 
-        			<field name="product_id" on_change="product_on_change(product_id)" 
-        				attrs="{'invisible': [('category_id', '!=', False)], 'required': [('category_id', '=', False)]}" />
-        			 -->
+        			<field name="warehouse_id" widget="selection" on_change="onchange_warehouse_id(warehouse_id)" />
+        			<field name="compute_method" />
+        			<field name="location_id" />
         			<field name="active" />
-        			<!-- 
-        			<field name="uom_id" attrs="{'invisible': [('category_id', '!=', False)]}" />
-        			 -->
         			<newline />
-        			<group colspan="2" col="2">
-        				<separator colspan="2" string="Quantity rules" />
-        				<field name="threshold_manual_ok" 
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period, consumption_method)" />
-        				<field name="threshold_value"  attrs="{'readonly': [('threshold_manual_ok', '=', False)]}" />
-        				<field name="qty_order_manual_ok" 
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        				<field name="qty_to_order" attrs="{'readonly': [('qty_order_manual_ok', '=', False)]}" />
+        			
+        			<group colspan="4" col="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}">
+        				<separator colspan="4" string="Calculation parameters" />
+        				<field name="consumption_method" on_change="on_change_method(consumption_method)" 
+        						attrs="{'required': [('compute_method', '=', 'computed')]}"/>
+        				
+        				<group colspan="2" col="5">
+	        				<field name="consumption_period_from"
+	        						on_change="on_change_period(consumption_period_from, consumption_period_to)"
+	        						attrs="{'required': [('compute_method', '=', 'computed'), ('consumption_method', '=', 'amc')], 
+	        								'readonly': [('consumption_method', '=', 'fmc')]}" />
+	        				<label string="-" />
+	        				<field name="consumption_period_to" nolabel="1" colspan="2"
+	        						on_change="on_change_period(consumption_period_from, consumption_period_to)"
+	        						attrs="{'required': [('compute_method', '=', 'computed'), ('consumption_method', '=', 'amc')],
+	        								'readonly': [('consumption_method', '=', 'fmc')]}" />
+        				</group>
+        				
+        				<field name="frequency" attrs="{'required': [('compute_method', '=', 'computed')]}" />
+        				<field name="safety_month" attrs="{'required': [('compute_method', '=', 'computed')]}" />
+        				<field name="lead_time" attrs="{'required': [('compute_method', '=', 'computed')], 'readonly': [('supplier_lt', '=', True)]}"  />
+        				<field name="supplier_lt" />
         			</group>
-        			<group colspan="2" col="2">
-        				<separator colspan="2" string="Calculation parameters" />
-        				<field name="consumption_method" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)],
-        												    	 'required': ['|', ('threshold_manual_ok', '=', False), ('qty_order_manual_ok', '=', False)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        				<field name="consumption_period" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)], 
-        													   'required': ['|', ('threshold_manual_ok', '=', False), ('qty_order_manual_ok', '=', False)],
-        													   'invisible': [('consumption_method', '=', 'fmc')]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        				<field name="frequency" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        				<field name="safety_month" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        				<field name="lead_time" attrs="{'readonly': [('supplier_lt', '=', True)], 'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}" 
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        				<field name="supplier_lt" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_period , consumption_method)" />
-        			</group>
-                    <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" />
-                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
-                        <field name="nomen_manda_0"
-                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-                            widget="selection"
-                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_1"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_2"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_3"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                    </group>
-                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
-                    <group colspan="4" col="4">
-                        <separator colspan="4" string="Order quantity by product" />
-                        <field name="line_ids" nolabel="1" colspan="4">
+        			
+        			<group colspan="4" col="4" attrs="{'invisible': [('compute_method', '=', False)]}">
+                    	<separator colspan="4" string="Product filters"  />
+                    	<field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)], 'invisible': [('compute_method', '=', False)]}" />
+                    	<group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)], 'invisible': [('compute_method', '=', False)]}">
+	                        <field name="nomen_manda_0"
+	                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+	                            widget="selection"
+	                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+	                        />
+	                        <field name="nomen_manda_1"
+	                            domain="[('id','=', 0)]"
+	                            widget="selection"
+	                            get_selection="get_nomen"
+	                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+	                        />
+	                        <field name="nomen_manda_2"
+	                            domain="[('id','=', 0)]"
+	                            widget="selection"
+	                            get_selection="get_nomen"
+	                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+	                        />
+	                        <field name="nomen_manda_3"
+	                            domain="[('id','=', 0)]"
+	                            widget="selection"
+	                            get_selection="get_nomen"
+	                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+	                        />
+	                    </group>
+	                </group>
+	                
+	                <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('compute_method', '=', False)]}"/>
+	                
+                    <group colspan="4" col="4" attrs="{'invisible': [('compute_method', '=', False)]}">
+                        <button colspan="4" icon="gtk-reload" string="Refresh values" type="object" name="dummy" />
+                        <field name="line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}">
                             <tree string="Products" editable="top">
-                                <field name="product_id" on_change="onchange_product_id(product_id)" domain="[('list_ids', '=', parent.sublist_id)]"/>
+                                <field name="product_id" domain="[('list_ids', '=', parent.sublist_id)]"
+                                	 	on_change="onchange_product_id(product_id)"/>
                                 <field name="product_uom_id" />
-                                <field name="threshold_value" />
-                                <field name="product_qty" />
+                                <field name="threshold_value" readonly="1" />
+                                <field name="product_qty" readonly="1" />
                             </tree>
                         </field>
+                        
+                        <field name="fixed_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'fixed')]}">
+                            <tree string="Products" editable="top">
+                                <field name="product_id" domain="[('list_ids', '=', parent.sublist_id)]"
+                                	on_change="onchange_product_id(product_id)" />
+                                <field name="product_uom_id" />
+                                <field name="fixed_threshold_value" required="1" />
+                                <field name="fixed_product_qty" required="1" />
+                            </tree>
+                        </field>
+                        
                     </group>
-        		</form>
-        	</field>
+        	</form>
+       	</field>
         </record>
         
         <record id="threshold_value_tree_view" model="ir.ui.view">
@@ -102,7 +106,6 @@
         	<field name="arch" type="xml">
         		<tree string="Threshold value">
         			<field name="name" />
-        			<field name="product_id" />
         			<field name="location_id" />
                     <field name="sublist_id" invisible="1" />
                     <field name="nomen_manda_0" invisible="1" />
@@ -121,8 +124,8 @@
         		<search string="Threshold values">
         			 <group expand="1" string="Filters...">
         			 	<field name="name" default_focus="1" />
-        			 	<field name="product_id" eval="context.get('product_id', False)" />
         			 	<field name="location_id" eval="context.get('location_id', False)" />
+        			 	<field name="compute_method" />
 	                </group>
 	                <newline/>
 	                <group expand="1" string="Group By...">

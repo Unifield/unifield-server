@@ -84,25 +84,24 @@ class threshold_value(osv.osv):
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'active': fields.boolean(string='Active'),
-        'category_id': fields.many2one('product.category', string='Category'),
-        'product_id': fields.many2one('product.product', string='Product'),
-        'uom_id': fields.many2one('product.uom', string='UoM'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'location_id': fields.many2one('stock.location', string='Location', required=True),
-        'threshold_value': fields.float(digits=(16,2), string='Threshold Value (in UoM)', required=True),
-        'threshold_manual_ok': fields.boolean(string='Manual threshold value'),
-        'qty_to_order': fields.float(digits=(16,2), string='Quantity to Order (in UoM)', required=True),
-        'qty_order_manual_ok': fields.boolean(string='Manual quantity to order'),
+        'compute_method': fields.selection([('fixed', 'Fixed values'), ('computed', 'Computed values')],
+                                           string='Method of computation', required=True,
+                                           help="""If 'Fixed values', the scheduler will compare stock of product with the threshold value of the line. \n
+                                           If 'Computed values', the threshold value and the ordered quantity will be calculated according to defined parameters"""),
         'consumption_method': fields.selection([('amc', 'Average Monthly Consumption'), ('fmc', 'Forecasted Monthly Consumption')],
                                                string='Consumption Method'),
-        'consumption_period': fields.integer(string='Period of calculation', 
+        'consumption_period_from': fields.date(string='Period of calculation', 
                                              help='This period is a number of past months the system has to consider for AMC calculation.'\
                                              'By default this value is equal to the frequency in the Threshold.'),
+        'consumption_period_to': fields.date(string='-'),
         'frequency': fields.float(digits=(16,2), string='Order frequency'),
         'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
         'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
         'supplier_lt': fields.boolean(string='Product\'s supplier LT'),
         'line_ids': fields.one2many('threshold.value.line', 'threshold_value_id', string="Products"),
+        'fixed_line_ids': fields.one2many('threshold.value.line', 'threshold_value_id2', string="Products"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
@@ -113,121 +112,11 @@ class threshold_value(osv.osv):
     _defaults = {
         'name': lambda obj, cr, uid, context={}: obj.pool.get('ir.sequence').get(cr, uid, 'threshold.value') or '',
         'active': lambda *a: True,
-        'threshold_manual_ok': lambda *a: False,
-        'qty_order_manual_ok': lambda *a: False,
-        'consumption_period': lambda *a: 3,
         'frequency': lambda *a: 3,
         'consumption_method': lambda *a: 'amc',
-        'threshold_value':0,
-        'qty_to_order':0,
+        'consumption_period_from': lambda *a: (now() + RelativeDate(day=1, months=-2)).strftime('%Y-%m-%d'),
+        'consumption_period_to': lambda *a: (now() + RelativeDate(day=1)).strftime('%Y-%m-%d'),
     }
-    
-    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, 
-                                    supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, 
-                                    consumption_period, consumption_method, context={}):
-        '''
-        Computes the threshold value and quantity to order according to parameters
-        
-        Threshold value = fixed manually or AMC or FMC * (LT + SS)
-        Order quantity = fixed manually or AMC or FMC * (OF + LT + SS) - Real Stock - Back orders
-        
-        IMPORTANT :
-        ###########
-        If the threshold value is defined for an entire product category, the calculation of computed values
-        couldn't be displayed on form but they will be used on scheduler
-        
-        Explanations :
-        ##############
-            * AMC : Average Monthly Consumption (expressed in standard unit of distribution) (see consumption_calcution 
-        module for more explanations).
-            * OF : Order frequency (expressed in months)
-            * LT : Lead Time (expressed in months)
-            * SS : Security Stock (expressed in months)
-            * Real Stock : inventory (expressed in standard unit of distribution)
-            * Back orders : product quantities ordered but not yet delivered (expressed in standard unit of distribution)
-        '''
-        v = {}
-        
-        if location_id:
-            context.update({'location_id': location_id})
-        
-        if product_id:
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            if consumption_method == 'amc':
-                if not consumption_period:
-                    consumption_period = frequency
-                consumption_to = (now() + RelativeDate(months=1, days=-1)).strftime('%Y-%m-%d')
-                consumption_from = (now() - RelativeDate(months=consumption_period-1, day=1)).strftime('%Y-%m-%d')
-                c = context.copy()
-                c.update({'from_date': consumption_from, 'to_date': consumption_to})
-                v.update({'consumption_from': consumption_from, 'consumption_to': consumption_to})
-            
-                amc = self.pool.get('product.product').compute_amc(cr, uid, product_id, context=c)
-            else:
-                amc = product.reviewed_consumption
-            
-            # The supplier lead time is priority if the checkbox was checked
-            if supplier_lt:
-                lead_time = product.seller_id.delay and product.seller_id.delay != 'N/A' and float(product.seller_id.delay) or lead_time
-            
-            # If the user hasn't fill manually the threshold value, compute them
-            if not threshold_manual_ok:                
-                threshold_value = amc * (lead_time + safety_month)
-                threshold_value = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, threshold_value, product.uom_id.id)
-            
-                v.update({'threshold_value': threshold_value > 0.00 and threshold_value or 0.00})
-            
-            # If the user hasn't fill manually the qty to order value, compute them
-            if not qty_order_manual_ok:
-                qty_order = amc * (lead_time + safety_month + frequency) - product.qty_available + product.incoming_qty - product.outgoing_qty
-                qty_order = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_order, product.uom_id.id)
-                
-                v.update({'qty_to_order': qty_order > 0.00 and qty_order or 0.00})
-        
-        # Reset all values if no product
-        if not product_id:
-            v.update({'threshold_value': 0.00,
-                      'qty_to_order': 0.00})
-            
-        
-        return {'value': v,}
-    
-    def product_on_change(self, cr, uid, ids, product_id=False, context={}):
-        '''
-        Update the UoM when the product change
-        
-        If no product, remove the UoM value
-        '''
-        v = {}
-        
-        if not product_id:
-            v.update({'uom_id': False})
-        else:
-            uom_id = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
-            v.update({'uom_id': uom_id,
-                      'thresold_value': 0.00,
-                      'qty_to_order': 0.00,
-                      'lead_time': 0.00,
-                      'safety_month': 0.00,
-                      'frequency': 0.00})
-            
-        return {'value': v}
-    
-    def category_on_change(self, cr, uid, ids, category_id=False, context={}):
-        '''
-        If a category is selected, remove values for product and uom on the form
-        '''
-        v = m = {}
-        
-        if category_id:
-            v.update({'product_id': False,
-                      'uom_id': False})
-            # If the threshold form is for an entire product category, display an explanation message
-            m = {'title': 'Warning',
-                 'message': '''If you define a threshold rule for an entire category, the values for threshold and order quantities
-will can\'t be displayed on this form for each product of the category, but it will be used when the scheduler will compute reorder products !'''}
-            
-        return {'value': v, 'warning': m}
     
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, context=None):
         """ Finds default stock location id for changed warehouse.
@@ -239,10 +128,41 @@ will can\'t be displayed on this form for each product of the category, but it w
             v = {'location_id': w.lot_stock_id.id}
             return {'value': v}
         return {}
-##############################################################################################################################
-# The code below aims to enable filtering products regarding their sublist or their nomenclature.
-# Then, we fill lines of the one2many object 'threshold.value.line' according to the filtered products
-##############################################################################################################################
+    
+    def on_change_method(self, cr, uid, ids, method):
+        '''
+        Unfill the consumption period if the method is FMC
+        '''
+        res = {}
+        
+        if method and method == 'fmc':
+            res.update({'consumption_period_from': False, 'consumption_period_to': False})
+        
+        return {'value': res}
+    
+    def on_change_period(self, cr, uid, ids, from_date, to_date):
+        '''
+        Check if the from date is younger than the to date
+        '''
+        warn = {}
+        val = {}
+        
+        if from_date and to_date and from_date > to_date:
+            warn = {'title': 'Issue on date',
+                    'message': 'The start date must be younger than end date'}
+            
+        if from_date:
+            val.update({'consumption_period_from': (DateFrom(from_date) + RelativeDate(day=1)).strftime('%Y-%m-%d')})
+            
+        if to_date:
+            val.update({'consumption_period_to': (DateFrom(to_date) + RelativeDate(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+        
+        return {'value': val, 'warning': warn}
+    
+    ##############################################################################################################################
+    # The code below aims to enable filtering products regarding their sublist or their nomenclature.
+    # Then, we fill lines of the one2many object 'threshold.value.line' according to the filtered products
+    ##############################################################################################################################
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
 
@@ -300,6 +220,9 @@ will can\'t be displayed on this form for each product of the category, but it w
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
+        
+    def dummy(self, cr, uid, ids, context={}):
+        return True
 
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
@@ -319,6 +242,46 @@ class threshold_value_line(osv.osv):
     _description = 'Threshold Value Line'
     _rec_name = 'product_id'
     
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Add the second link to the threshold value rule
+        '''
+        if 'threshold_value_id' in vals:
+            vals.update({'threshold_value_id2': vals['threshold_value_id']})
+        elif 'threshold_value_id2' in vals:
+            vals.update({'threshold_value_id': vals['threshold_value_id2']})
+        
+        return super(threshold_value_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Add the second link to the threshold value rule
+        '''
+        if 'threshold_value_id' in vals:
+            vals.update({'threshold_value_id2': vals['threshold_value_id']})
+        elif 'threshold_value_id2' in vals:
+            vals.update({'threshold_value_id': vals['threshold_value_id2']})
+        
+        return super(threshold_value_line, self).write(cr, uid, ids, vals, context=context)
+    
+    def _get_values(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Compute and return the threshold value and qty to order
+        '''
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'threshold_value': 0.00, 'product_qty': 0.00}
+            
+            rule = line.threshold_value_id
+            context.update({'location_id': rule.location_id.id, 'compute_child': True})
+            product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
+            res[line.id] = self._get_threshold_value(cr, uid, line.id, product, rule.compute_method, rule.consumption_method, 
+                                                     rule.consumption_period_from, rule.consumption_period_to, rule.frequency, 
+                                                     rule.safety_month, rule.lead_time, rule.supplier_lt, line.product_uom_id.id, context)
+        
+        return res
+    
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
@@ -335,7 +298,46 @@ class threshold_value_line(osv.osv):
         ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
     ]
     
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
+                                consumption_period_from, consumption_period_to, frequency,
+                                safety_month, lead_time, supplier_lt, uom_id, context=None):
+        '''
+        Return the threshold value and ordered qty of a product line
+        '''
+        cons = 0.00
+        threshold_value = 0.00
+        qty_to_order = 0.00
+        if compute_method == 'computed':
+            # Get the product available before change the context (from_date and to_date in context)
+            product_available = product.qty_available
+            
+            # Change the context to compute consumption
+            c = context.copy()
+            c.update({'from_date': consumption_period_from, 'to_date': consumption_period_to})
+            product = self.pool.get('product.product').browse(cr, uid, product.id, context=c)
+            cons = consumption_method == 'fmc' and product.reviewed_consumption or product.product_amc
+            
+            # Set lead time according to choices in threshold rule (supplier or manual lead time)
+            lt = supplier_lt and float(product.seller_delay)/30.0 or lead_time
+                
+            # Compute the threshold value
+            threshold_value = cons * (lt + safety_month)
+            threshold_value = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, threshold_value, product.uom_id.id)
+                
+            # Compute the quantity to re-order
+            qty_to_order = cons * (frequency + lt + safety_month)\
+                            - product_available - product.incoming_qty + product.outgoing_qty 
+            qty_to_order = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id or product.uom_id.id, \
+                                                                     qty_to_order, product.uom_id.id)
+            qty_to_order = qty_to_order > 0.00 and qty_to_order or 0.00
+        elif line_id:
+            line = self.browse(cr, uid, line_id, context=context)
+            threshold_value = line.fixed_threshold_value
+            qty_to_order = line.fixed_product_qty
+            
+        return {'threshold_value': threshold_value, 'product_qty': qty_to_order}
+
+    def onchange_product_id(self, cr, uid, ids, product_id, context={}):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
