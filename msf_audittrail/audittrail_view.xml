@@ -105,8 +105,8 @@
                         <newline />
                         <field name="sub_obj_name" />
                         <field name="field_description" />
-                        <field name="old_value_fct" />
-                        <field name="new_value_fct" />
+                        <field name="old_value_text" />
+                        <field name="new_value_text" />
                         <field name="user_id" />
                     </group>
                 </search>
@@ -124,8 +124,8 @@
                     <field name="sub_obj_name" />
                     <field name="method" />
                     <field name="field_description" />
-                    <field name="old_value_fct" />
-                    <field name="new_value_fct" />
+                    <field name="old_value_text" />
+                    <field name="new_value_text" />
                     <field name="user_id" />
                 </tree>
             </field>

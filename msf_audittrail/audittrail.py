@@ -143,10 +143,12 @@ class audittrail_rule(osv.osv):
                         _('WARNING: audittrail is not part of the pool'),
                         _('Change audittrail depends -- Setting rule as DRAFT'))
                 self.write(cr, uid, [thisrule.id], {"state": "draft"})
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
             val = {
                  "name": 'View Log',
                  "res_model": 'audittrail.log.line',
                  "src_model": thisrule.object_id.model,
+                 "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
 
             }
@@ -264,10 +266,21 @@ class audittrail_log_line(osv.osv):
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
-            if line.field_id:
-                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.object_id.id, context=context)
-                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.object_id.id, context=context)
+            if not line.old_value_text:
+                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.object_id, context=context)
+            else:
+                res[line.id]['old_value_fct'] = line.old_value_text
+            if not line.new_value_text:
+                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.object_id, context=context)
+            else:
+                res[line.id]['new_value_fct'] = line.new_value_text
                 
+            if not line.old_value_text and not line.new_value_text:
+                self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'], 'new_value_text': res[line.id]['new_value_fct']})
+            elif not line.old_value_text:
+                self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'],})
+            elif not line.new_value_text:
+                self.write(cr, uid, [line.id], {'new_value_text': res[line.id]['new_value_fct'],})
         
         return res
 
@@ -282,10 +295,10 @@ class audittrail_log_line(osv.osv):
           'log': fields.integer("Log ID"),
           'old_value_fct': fields.function(_get_values, method=True, string='Old Value Fct', type='char', store=False, multi='values'),
           'new_value_fct': fields.function(_get_values, method=True, string='New Value Fct', type='char', store=False, multi='values'),
+          'old_value_text': fields.char(size=256, string='Old Value'),
+          'new_value_text': fields.char(size=256, string='New Value'),
           'old_value': fields.text("Old Value"),
           'new_value': fields.text("New Value"),
-          'old_value_text': fields.text('Old value Text'),
-          'new_value_text': fields.text('New value Text'),
           'field_description': fields.char('Field Description', size=64),
           'sub_obj_name': fields.char(size=64, string='Order line'),
 #          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
@@ -380,7 +393,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'selection':
             res = False
             if values:
-                fct_object = model_pool.browse(cr, uid, model, context=context).model
+                fct_object = model_pool.browse(cr, uid, model.id, context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
                 res = dict(sel[field['name']]['selection']).get(values)
                 name = '%s,%s' % (fct_object, field['name'])
