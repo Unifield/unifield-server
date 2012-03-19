@@ -255,6 +255,19 @@ class audittrail_log_line(osv.osv):
                 return [('id', 'in', ids)]
 
         return []
+    
+    def _get_values(self, cr, uid, ids, field_name, arg, context={}):
+        #field_obj = self.pool.get('ir.model.fields')
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
+            if line.field_id:
+                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.object_id.id, context=context)
+                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.object_id.id, context=context)
+                
+        
+        return res
 
     _columns = {
           'name': fields.char(size=256, string='Description', required=True),
@@ -266,6 +279,8 @@ class audittrail_log_line(osv.osv):
           'res_id': fields.integer(string='Resource Id'),
           'field_id': fields.many2one('ir.model.fields', 'Fields'),
           'log': fields.integer("Log ID"),
+          'old_value_fct': fields.function(_get_values, method=True, string='Old Value Fct', type='char', store=False, multi='values'),
+          'new_value_fct': fields.function(_get_values, method=True, string='New Value Fct', type='char', store=False, multi='values'),
           'old_value': fields.text("Old Value"),
           'new_value': fields.text("New Value"),
           'old_value_text': fields.text('Old value Text'),
@@ -296,7 +311,7 @@ class audittrail_log_line(osv.osv):
 audittrail_log_line()
 
 
-def get_value_text(self, cr, uid, field_name, values, model, context=None):
+def get_value_text(self, cr, uid, field_id, field_name, values, model, context=None):
     """
     Gets textual values for the fields
     e.g.: For field of type many2one it gives its name value instead of id
@@ -314,13 +329,14 @@ def get_value_text(self, cr, uid, field_name, values, model, context=None):
     pool = pooler.get_pool(cr.dbname)
     field_pool = pool.get('ir.model.fields')
     model_pool = pool.get('ir.model')
-    obj_pool = pool.get(model.model)
-    if obj_pool._inherits:
-        inherits_ids = model_pool.search(cr, uid, [('model', '=', obj_pool._inherits.keys()[0])])
-        field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', 'in', (model.id, inherits_ids[0]))])
-    else:
-        field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', '=', model.id)])
-    field_id = field_ids and field_ids[0] or False
+    if not field_id:
+        obj_pool = pool.get(model.model)
+        if obj_pool._inherits:
+            inherits_ids = model_pool.search(cr, uid, [('model', '=', obj_pool._inherits.keys()[0])])
+            field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', 'in', (model.id, inherits_ids[0]))])
+        else:
+            field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', '=', model.id)])
+        field_id = field_ids and field_ids[0] or False
 
     if field_id:
         field = field_pool.read(cr, uid, field_id)
@@ -329,37 +345,44 @@ def get_value_text(self, cr, uid, field_name, values, model, context=None):
 
         if field['ttype'] == 'many2one':
             res = False
-            relation_id = False
-            if values and type(values) == tuple:
-                relation_id = values[0]
-                if relation_id and relation_model_pool:
-                    relation_model_object = relation_model_pool.read(cr, uid, relation_id, [relation_model_pool._rec_name])
-                    res = relation_model_object[relation_model_pool._rec_name]
+            if values:
+                if values and relation_model_pool:
+                    relation_model_object = relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name])
+                    res = relation_model_object[0][relation_model_pool._rec_name]
             return res
 
         elif field['ttype'] in ('many2many','one2many'):
             res = []
-            for relation_model_object in relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name]):
-                res.append(relation_model_object[relation_model_pool._rec_name])
+            if values and values != '[]':
+                values = values[1:-1].split(',')
+                for v in values:
+                    relation_model_object = relation_model_pool.read(cr, uid, int(v), [relation_model_pool._rec_name])
+                    res.append(relation_model_object[relation_model_pool._rec_name])
             return res
         elif field['ttype'] == 'date':
             res = False
             if values:
-                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-                lang_ids = self.pool.get('res.lang').search(cr, uid, [('code', '=', user.context_lang)], context=context)
-                lang = self.pool.get('res.lang').browse(cr, uid, lang_ids[0], context=context)
+                date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
                 res = datetime.strptime(values, '%Y-%m-%d')
-                res = datetime.strftime(res, lang.date_format)
+                res = datetime.strftime(res, date_format)
             return res
         elif field['ttype'] == 'datetime':
             res = False
             if values:
-                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-                lang_ids = self.pool.get('res.lang').search(cr, uid, [('code', '=', user.context_lang)], context=context)
-                lang = self.pool.get('res.lang').browse(cr, uid, lang_ids[0], context=context)
-                date_format = '%s %s' %(lang.date_format, lang.time_format)
+                date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
                 res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
                 res = datetime.strftime(res, date_format)
+            return res
+        elif field['ttype'] == 'selection':
+            res = False
+            if values:
+                fct_object = model_pool.browse(cr, uid, model, context=context).model
+                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
+                res = dict(sel[field['name']]['selection']).get(values)
+                name = '%s,%s' % (fct_object, field['name'])
+                res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [values])])
+                if res_tr_ids:
+                    res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
             return res
 
     return values
@@ -395,11 +418,9 @@ def create_log_line(self, cr, uid, model, lines=[]):
         # Get the values
         old_value = line.get('old_value')
         new_value = line.get('new_value')
-        old_value_text = line.get('old_value_text')
-        new_value_text = line.get('new_value_text')
         method = line.get('method')
 
-        if old_value_text == new_value_text and method not in ('create', 'unlink'):
+        if old_value == new_value and method not in ('create', 'unlink'):
             continue
         
         res_id = line.get('res_id')
@@ -458,38 +479,16 @@ def create_log_line(self, cr, uid, model, lines=[]):
             if field['ttype'] == 'many2one':
                 if type(old_value) == tuple:
                     old_value = old_value[0]
-                # Get the readable name of the related field
-                if old_value:
-                    old_value = pool.get(field['relation']).name_get(cr, uid, [old_value])[0][1]
                 if type(new_value) == tuple:
                     new_value = new_value[0]
-                # Get the readable name of the related field
-                if new_value:
-                    new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
-            elif field['ttype'] in ('date', 'datetime', 'many2many'):
-                old_value = old_value_text
-                new_value = new_value_text
-            elif field['ttype'] == 'selection':
-                fct_object = self.pool.get('ir.model').browse(cr, uid, fct_object_id or object_id).model
-                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
-                old_value = dict(sel[field['name']]['selection']).get(old_value)
-                new_value = dict(sel[field['name']]['selection']).get(new_value)
-#                res = dict(sel[field['name']]['selection']).get(getattr(fct_object,field['name']),getattr(fct_object,field['name']))
-                name = '%s,%s' % (fct_object, field['name'])
-                old_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [old_value])])
-                new_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [new_value])])
-                if old_tr_ids:
-                    old_value = self.pool.get('ir.translation').read(cr, uid, old_tr_ids, ['value'])[0]['value']
-                if new_tr_ids:
-                    new_value = self.pool.get('ir.translation').read(cr, uid, new_tr_ids, ['value'])[0]['value']
 
 
         vals = {
                 "field_id": field_id,
                 "old_value": old_value,
                 "new_value": new_value,
-                "old_value_text": old_value_text,
-                "new_value_text": new_value_text,
+                #"old_value_text": old_value_text,
+                #"new_value_text": new_value_text,
                 "field_description": field_description,
                 "res_id": res_id,
                 "name": name,
@@ -699,12 +698,13 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
                 if 'id' in resource:
                     del resource['id']
                     
-                old_values_text = {}
+                #old_values_text = {}
                 old_value = {}
                 for field in resource.keys():
                     old_value = resource.copy()
-                    old_values_text[field] = get_value_text(self, cr, uid, field, resource[field], model)
-                old_values[resource_id] = {'text':old_values_text, 'value': old_value}
+                    #old_values_text[field] = get_value_text(self, cr, uid, False, field, resource[field], model)
+#                old_values[resource_id] = {'text':old_values_text, 'value': old_value}
+                old_values[resource_id] = {'value': old_value}
 
         # Run the method on object
         res = fct_src(self, *args, **kwargs)
@@ -740,8 +740,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
                           'name': field,
                           'new_value': resource[field],
                           'old_value': old_values[res_id]['value'][field],
-                          'new_value_text': get_value_text(self, cr, uid, field, resource[field], model),
-                          'old_value_text': old_values[res_id]['text'][field]
+                          #'new_value_text': get_value_text(self, cr, uid, False, field, resource[field], model),
+                          #'old_value_text': old_values[res_id]['text'][field]
                           })
                     lines.append(line)
 
