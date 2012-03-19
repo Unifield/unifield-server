@@ -83,6 +83,7 @@ class account_commitment(osv.osv):
             string="Analytic distribution count", readonly=True, store=False),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Automatic - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'notes': fields.text(string="Comment"),
     }
 
     _defaults = {

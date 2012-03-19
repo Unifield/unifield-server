@@ -29,6 +29,7 @@
                             <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"/>
                         </page>
                     </notebook>
+                    <field name="notes" colspan="4"/>
                     <group col="6" colspan="4">
                         <button name="button_compute" string="Compute total" icon="gtk-execute" colspan="2"/>
                         <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft" colspan="2"/>
