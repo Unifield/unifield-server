@@ -8,7 +8,7 @@
             <field name="model">account.commitment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Commitment Voucher" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Commitment Voucher" hide_duplicate_button="1">
                     <group col="6" colspan="4">
                         <field name="journal_id"/>
                         <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
@@ -45,7 +45,7 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'" hide_delete_button="1">
+                <tree string="Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
                     <field name="date"/>
                     <field name="name"/>
                     <field name="partner_id"/>

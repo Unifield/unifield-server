@@ -162,6 +162,25 @@ class account_commitment(osv.osv):
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Only delete "done" state commitments
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        new_ids = []
+        # Check that elements are in done state
+        for co in self.browse(cr, uid, ids):
+            if co.state == 'done':
+                new_ids.append(co.id)
+        # Give user a message if no done commitments found
+        if not new_ids:
+            raise osv.except_osv(_('Warning'), _('You can only delete done commitments!'))
+        return super(account_commitment, self).unlink(cr, uid, new_ids, context)
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
         Launch analytic distribution wizard on a commitment
