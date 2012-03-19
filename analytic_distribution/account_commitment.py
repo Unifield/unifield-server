@@ -308,7 +308,7 @@ class account_commitment(osv.osv):
                 al_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 if not al_ids:
                     # Create engagement journal lines
-                    self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', c.date, 
+                    self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
                         cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
                         c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         return True
