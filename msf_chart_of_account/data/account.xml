@@ -1416,7 +1416,7 @@
             <field name="code">604024</field>
             <field name="type_for_register">none</field>
             <field name="type">other</field>
-            <field name="name">Shelter (tents, plastic sheets,…)</field>
+            <field name="name">Shelter (tents, plastic sheets,...)</field>
             <field name="parent_id" ref="msf_chart_of_account.60402" />
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
