@@ -323,6 +323,7 @@ class threshold_value_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
+        'threshold_value': fields.float(digit=(16,2), string='Threshold value'),
         'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
     

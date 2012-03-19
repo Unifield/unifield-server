@@ -86,6 +86,7 @@
                             <tree string="Products" editable="top">
                                 <field name="product_id" on_change="onchange_product_id(product_id)" domain="[('list_ids', '=', parent.sublist_id)]"/>
                                 <field name="product_uom_id" />
+                                <field name="threshold_value" />
                                 <field name="product_qty" />
                             </tree>
                         </field>
