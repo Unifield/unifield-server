@@ -138,7 +138,7 @@
     <!-- Menu -->
         <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="5"/>
         <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
-        <menuitem name="Engagement Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
+        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
 
     </data>
 </openerp>
