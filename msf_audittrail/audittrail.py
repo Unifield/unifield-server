@@ -154,7 +154,7 @@ class audittrail_rule(osv.osv):
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
-            res = obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
+            obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
             #End Loop
         
         # Check if an export model already exist for audittrail.rule
@@ -190,7 +190,7 @@ class audittrail_rule(osv.osv):
                 value = "ir.actions.act_window" + ',' + str(w_id[0])
             val_id = val_obj.search(cr, uid, [('model', '=', thisrule.object_id.model), ('value', '=', value)])
             if val_id:
-                res = ir.ir_del(cr, uid, val_id[0])
+                ir.ir_del(cr, uid, val_id[0])
             self.write(cr, uid, [thisrule.id], {"state": "draft"})
         #End Loop
         
@@ -257,7 +257,9 @@ class audittrail_log_line(osv.osv):
         return []
     
     def _get_values(self, cr, uid, ids, field_name, arg, context={}):
-        #field_obj = self.pool.get('ir.model.fields')
+        '''
+        Return the value of the field according to his type
+        '''
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
@@ -273,7 +275,6 @@ class audittrail_log_line(osv.osv):
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
           'user_id': fields.many2one('res.users', string='User'),
-#          'method': fields.char(size=64, string='Method'),
           'method': fields.selection([('create', 'Creation'), ('write', 'Modification'), ('unlink', 'Deletion')], string='Method'),
           'timestamp': fields.datetime(string='Date'),
           'res_id': fields.integer(string='Resource Id'),
@@ -331,6 +332,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
     model_pool = pool.get('ir.model')
     if not field_id:
         obj_pool = pool.get(model.model)
+        # If the field is not in the current object,
+        # search if it's in an inherited object
         if obj_pool._inherits:
             inherits_ids = model_pool.search(cr, uid, [('model', '=', obj_pool._inherits.keys()[0])])
             field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', 'in', (model.id, inherits_ids[0]))])
@@ -345,9 +348,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
 
         if field['ttype'] == 'many2one':
             res = False
-            if values:
-                if values and relation_model_pool:
-                    relation_model_object = relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name])
+            if values and values != '()':
+                values = values[1:-1].split(',')
+                if len(values) and relation_model_pool:
+                    relation_model_object = relation_model_pool.read(cr, uid, values[0], [relation_model_pool._rec_name])
                     res = relation_model_object[0][relation_model_pool._rec_name]
             return res
 
@@ -380,6 +384,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
                 res = dict(sel[field['name']]['selection']).get(values)
                 name = '%s,%s' % (fct_object, field['name'])
+                # Search translation
                 res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [values])])
                 if res_tr_ids:
                     res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
@@ -466,29 +471,18 @@ def create_log_line(self, cr, uid, model, lines=[]):
 
         if field_id:
             field_description = field['field_description']
-            #if method == 'write':
-            #    field_description = 'Change %s'%field_description
-            #elif method == 'create':
-            #    field_description = '%s creation'%field_description
-            #elif method == 'unlink':
-            #    field_description = '%s deletion'%field_description
 
-            # TODO : Now, values of the field is saved when the method is called
-            # In the future, make the possibility to compute the field only when
-            # the user reads the log
-            if field['ttype'] == 'many2one':
-                if type(old_value) == tuple:
-                    old_value = old_value[0]
-                if type(new_value) == tuple:
-                    new_value = new_value[0]
+#            if field['ttype'] == 'many2one':
+#                if type(old_value) == tuple:
+#                    old_value = old_value[0]
+#                if type(new_value) == tuple:
+#                    new_value = new_value[0]
 
 
         vals = {
                 "field_id": field_id,
                 "old_value": old_value,
                 "new_value": new_value,
-                #"old_value_text": old_value_text,
-                #"new_value_text": new_value_text,
                 "field_description": field_description,
                 "res_id": res_id,
                 "name": name,
@@ -502,7 +496,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 "fct_object_id": fct_object_id,
                 "sub_obj_name": sub_obj_name,
                 }
-        line_id = log_line_pool.create(cr, uid, vals)
+        log_line_pool.create(cr, uid, vals)
     #End Loop
     return True
 
@@ -516,13 +510,17 @@ def _get_domain_fields(self, domain=[]):
        
     return ret_f
 
-def _check_domain(self, vals=[], domain=[]):
+def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
     '''
     Check if the values check with the domain
     '''
     res = True
     for d in tuple(domain):
         assert d[1] in ('=', '!=', 'in', 'not in'), _("'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators" %(d[1]))
+        
+        if d[0] not in vals and model and res_id:
+            obj = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])
+            vals[d[0]] = obj[d[0]]
         
         if d[1] == '=' and vals[d[0]] != d[2]:
             res = False
@@ -564,7 +562,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         res_id = fct_src(self, *args, **kwargs)
         
         # If the object doesn't match with the domain
-        if domain and not _check_domain(self, args[2], domain):
+        if domain and not _check_domain(self, cr, uid, args[2], domain, model, res_id):
             return res_id
         
         model_id = model.id
@@ -573,7 +571,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         if parent_field_id:
             parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
             model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
-            if not model_id:
+            if not model_id or not args[2].get(parent_field.name, False):
                 return res_id
             else:
                 model_id = model_id[0]
@@ -585,7 +583,6 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
             res_id2 = resource['id']
         
         vals = {
-#                "name": "%s creation" %model.name,
                 "name": '%s' %model.name,
                 "method": method,
                 "object_id": model_id,
@@ -619,6 +616,9 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         fields_to_read = [name_get_field, 'name']
         fields_to_read.extend(_get_domain_fields(self, domain))
         
+        if parent_field_id and not resource_pool.read(cr, uid, res_id, [parent_field.name])[parent_field.name]:
+            return fct_src(self, *args, **kwargs)
+        
         if parent_field_id:
             parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
             model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
@@ -632,7 +632,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         for res_id in res_ids:
             old_values[res_id] = resource_pool.read(cr, uid, res_id, fields_to_read)
             # If the object doesn't match with the domain
-            if domain and not _check_domain(self, old_values[res_id], domain):
+            if domain and not _check_domain(self, cr, uid, old_values[res_id], domain):
                 res_ids.pop(res_ids.index(res_id))
                 
             vals = {
@@ -686,13 +686,17 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
                 fields.append(parent_field.name)
             
         fields.extend(_get_domain_fields(self, domain))
+        # Remove double entries
+        fields = list(set(fields))
         if name_get_field not in fields:
             fields.append(name_get_field)
 
         # Get old values
         if res_ids:
             for resource in resource_pool.read(cr, uid, res_ids, fields):
-                if domain and not _check_domain(self, resource, domain):
+                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
+                    continue
+                if domain and not _check_domain(self, cr, uid, resource, domain):
                     res_ids.pop(res_ids.index(resource['id']))
                     continue
                 
@@ -700,12 +704,10 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
                 if 'id' in resource:
                     del resource['id']
                     
-                #old_values_text = {}
-                old_value = {}
-                for field in resource.keys():
-                    old_value = resource.copy()
-                    #old_values_text[field] = get_value_text(self, cr, uid, False, field, resource[field], model)
-#                old_values[resource_id] = {'text':old_values_text, 'value': old_value}
+                old_value = resource.copy()
+#                for field in resource.keys():
+#                    old_value = resource.copy()
+                
                 old_values[resource_id] = {'value': old_value}
 
         # Run the method on object
@@ -714,6 +716,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         # Get new values
         if res_ids:
             for resource in resource_pool.read(cr, uid, res_ids, fields):
+                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
+                    continue
                 res_id = resource['id']
                 res_id2 = parent_field_id and resource[parent_field.name][0] or res_id
                 if 'id' in resource:
@@ -742,8 +746,6 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
                           'name': field,
                           'new_value': resource[field],
                           'old_value': old_values[res_id]['value'][field],
-                          #'new_value_text': get_value_text(self, cr, uid, False, field, resource[field], model),
-                          #'old_value_text': old_values[res_id]['text'][field]
                           })
                     lines.append(line)
 
