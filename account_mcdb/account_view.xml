@@ -22,6 +22,7 @@
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="register_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
                     <field name="debit_currency" string="Book. Debit"/>
@@ -108,7 +109,7 @@
                     <group expand="0" string="Group By..." colspan="12" col="10">
                         <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
-                        <filter string="3rd party Register" icon="terp-dolar" domain="[]" context="{'group_by': 'register_id'}"/>
+                        <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
