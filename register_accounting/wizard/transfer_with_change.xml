@@ -11,7 +11,7 @@
                 <form string="Transfer with change">
                     <separator string="User tip" colspan="4"/>
                     <newline/>
-                    <label string="Please indicates an amount and a currency in which the transfer with change will be done or come from." align="0.0" colspan="4"/>
+                    <label string="Please indicate an amount and a currency in which the transfer with change will be done or come from." align="0.0" colspan="4"/>
                     <newline/>
                     <separator string="Transfer details" colspan="4"/>
                     <group col="4" colspan="4">
