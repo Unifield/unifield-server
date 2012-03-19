@@ -39,8 +39,11 @@ class account_move_line(osv.osv):
         give:
             mystring2 - mysupertext
 
+        NB: for 'REV' string, do nothing about incrementation
         """
         result = ''.join([string, '1 - ', text])
+        if string == 'REV':
+            result = ''.join([string, ' - ', text])
         if text == '' or string == '':
             return result
         pattern = re.compile('\%s([0-9]*) - ' % string)
@@ -48,6 +51,8 @@ class account_move_line(osv.osv):
         if m and m.groups():
             number = m.groups() and m.groups()[0]
             replacement = string + str(int(number) + 1) + ' - '
+            if string == 'REV':
+                replacement = string + ' - '
             result = re.sub(pattern, replacement, text, 1)
         return result
 
