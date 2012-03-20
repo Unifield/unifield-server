@@ -124,8 +124,8 @@
                     <field name="sub_obj_name" />
                     <field name="method" />
                     <field name="field_description" />
-                    <field name="old_value_fct"  />
-                    <field name="new_value_fct"  />
+                    <field name="old_value_fct" string="Old value" />
+                    <field name="new_value_fct" string="New value" />
                     <!-- <field name="old_value_text" invisible="1" />
                     <field name="new_value_text" invisible="1" /> -->
                     <field name="user_id" />
