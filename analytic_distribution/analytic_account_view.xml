@@ -55,11 +55,16 @@
             <field name="arch" type="xml">
                 <filter string="Pending" position="before">
                     <filter name="active" icon="terp-check" string="Active"
-                            domain="[('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                     ('|'),
-                                     ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                     ('date', '=', False)]"/>
+                            context="{'filter_inactive_accounts': 1}"/>
                 </filter>
+                <field name="user_id" position="after">
+                    <field name="category"/>
+                </field>
+                <group string="Group By..." position="replace">
+                    <group expand="0" string="Group By...">
+                        <filter string="Parent" icon="terp-folder-orange" domain="[]" context="{'group_by':'parent_id'}"/>
+                    </group>
+                </group>
             </field>
         </record>
 
@@ -79,12 +84,13 @@
                         <field name="type"/>
                         <field name="date_start"/>
                         <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
                         <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" context="context"/>
                     </tree>
                 </tree>
             </field>
         </record>
-        
+
         <record id="view_account_analytic_account_list_inherit" model="ir.ui.view">
             <field name="name">account.analytic.account.list.inherit</field>
             <field name="model">account.analytic.account</field>
@@ -97,21 +103,22 @@
                         <field name="code"/>
                         <field name="description"/>
                         <field name="category"/>
-                        <field name="type"/>
-                        <field name="date_start"/>
-                        <field name="date"/>
-                    </tree>
+	                    <field name="type"/>
+	                    <field name="date_start"/>
+	                    <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
+	                </tree>
                 </tree>
             </field>
         </record>
-        
+
         <record id="action_account_analytic_account_form" model="ir.actions.act_window">
             <field name="name">Analytic Accounts</field>
             <field name="res_model">account.analytic.account</field>
             <field name="inherit_id" ref="account.action_account_analytic_account_form"/>
             <field name="search_view_id" ref="view_analytic_account_search"/>
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
-            <field name="context">{'search_default_active': 1}</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
         </record>
 
         <menuitem action="action_account_analytic_account_form"

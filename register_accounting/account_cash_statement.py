@@ -194,12 +194,20 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
         context['type_posting'] = 'temp'
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
         return {
             'name': 'Temp Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'crush', # use any word to crush the actual tab
@@ -213,12 +221,20 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
         context['type_posting'] = 'hard'
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
         return {
             'name': 'Hard Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'crush', # use any word to crush the actual tab

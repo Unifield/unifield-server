@@ -29,7 +29,6 @@ class analytic_distribution(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=12),
-        'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
         'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
         'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
@@ -41,7 +40,6 @@ class analytic_distribution(osv.osv):
 
     _defaults ={
         'name': lambda *a: 'Distribution',
-        'global_distribution': lambda *a: False,
     }
 
     def copy(self, cr, uid, id, defaults={}, context={}):
@@ -136,39 +134,11 @@ free_2_distribution_line()
 class analytic_distribution(osv.osv):
     _inherit = "analytic.distribution"
 
-    def _get_lines_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Get count of each analytic distribution lines type.
-        Example: with an analytic distribution with 2 cost center, 3 funding pool and 1 Free 1:
-        2 CC; 3 FP; 1 F1; 0 F2; 
-        (Number of chars: 20 chars + 4 x some lines number)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for distrib in self.browse(cr, uid, ids, context=context):
-            txt = ''
-            txt += str(len(distrib.cost_center_lines) or '0') + ' CC; '
-            txt += str(len(distrib.funding_pool_lines) or '0') + ' FP; '
-            txt += str(len(distrib.free_1_lines) or '0') + ' F1; '
-            txt += str(len(distrib.free_2_lines) or '0') + ' F2; '
-            if not txt:
-                txt = ''
-            res[distrib.id] = txt
-        return res
-
     _columns = {
         'cost_center_lines': fields.one2many('cost.center.distribution.line', 'distribution_id', 'Cost Center Distribution'),
         'funding_pool_lines': fields.one2many('funding.pool.distribution.line', 'distribution_id', 'Funding Pool Distribution'),
         'free_1_lines': fields.one2many('free.1.distribution.line', 'distribution_id', 'Free 1 Distribution'),
         'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
-        'lines_count': fields.function(_get_lines_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
     }
 
     def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
