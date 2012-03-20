@@ -70,7 +70,7 @@
         			<field name="uom_id" />
         		</xpath>
         		
-        		<xpath expr="//tree[@string='Pricelist']/field[@name='currency_id']" position="after">
+        		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
         			<field name="rounding" />
         			<field name="min_order_qty" />
         		</xpath>

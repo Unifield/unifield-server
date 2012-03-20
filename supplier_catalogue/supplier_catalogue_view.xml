@@ -96,7 +96,6 @@
 					<field name="line_uom_id" />
 					<field name="unit_price" />
 					<field name="rounding" />
-					<field name="default_code" />
 					</group>
 					<newline />
 					<group expand="1" string="Nomenclature Filters...">
