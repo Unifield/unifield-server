@@ -170,6 +170,36 @@ class account_invoice_line(osv.osv):
                 res[inv.id] = False
         return res
 
+    def _get_is_allocatable(self, cr, uid, ids, name, arg, context={}):
+        """
+        If expense account, then this account is allocatable.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for invl in self.browse(cr, uid, ids):
+            res[invl.id] = True
+            if invl.account_id and invl.account_id.user_type and invl.account_id.user_type.code and invl.account_id.user_type.code != 'expense':
+                res[invl.id] = False
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context={}):
+        """
+        Get a recap from analytic distribution state and if it come from header or not.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for invl in self.browse(cr, uid, ids):
+            res[invl.id] = ''
+            if not invl.is_allocatable:
+                continue
+            from_header = ''
+            if invl.have_analytic_distribution_from_header:
+                from_header = ' (from header)'
+            res[invl.id] = invl.analytic_distribution_state.capitalize() + from_header
+        return res
+
     _columns = {
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
@@ -177,11 +207,17 @@ class account_invoice_line(osv.osv):
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
         'newline': fields.boolean('New line'),
+        'is_allocatable': fields.function(_get_is_allocatable, method=True, type='boolean', string="Is allocatable?", readonly=True, store=False),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, 
+            string="Distribution", 
+            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
     }
     
     _defaults = {
         'newline': lambda *a: True,
         'have_analytic_distribution_from_header': lambda *a: True,
+        'is_allocatable': lambda *a: True,
+        'analytic_distribution_state_recap': lambda *a: '',
     }
 
     def create(self, cr, uid, vals, context={}):

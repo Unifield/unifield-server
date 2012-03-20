@@ -137,6 +137,17 @@ class sale_order(osv.osv):
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'company_id2': fields.many2one('res.company','Company',select=1),
+        'order_policy': fields.selection([
+            ('prepaid', 'Payment Before Delivery'),
+            ('manual', 'Shipping & Manual Invoice'),
+            ('postpaid', 'Invoice On Order After Delivery'),
+            ('picking', 'Invoice From The Picking'),
+        ], 'Shipping Policy', required=True, readonly=True, states={'draft': [('readonly', False)]},
+            help="""The Shipping Policy is used to synchronise invoice and delivery operations.
+  - The 'Pay Before delivery' choice will first generate the invoice and then generate the picking order after the payment of this invoice.
+  - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
+  - The 'Invoice On Order After Delivery' choice will generate the draft invoice based on sales order after all picking lists have been finished.
+  - The 'Invoice From The Picking' choice is used to create an invoice during the picking process."""),
     }
     
     _defaults = {
@@ -146,6 +157,7 @@ class sale_order(osv.osv):
         'loan_duration': lambda *a: 2,
         'from_yml_test': lambda *a: False,
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'order_policy': lambda *a: 'picking',
     }
 
     def _check_own_company(self, cr, uid, company_id, context={}):
@@ -217,8 +229,9 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
-            elif not order.from_yml_test:
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+# COMMENTED because of SP4 WM 12: Invoice Control
+#            elif not order.from_yml_test:
+#                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
     
         if lines:
             line_obj.write(cr, uid, lines, {'invoiced': 1})
@@ -448,4 +461,16 @@ class sale_order(osv.osv):
 
 sale_order()
 
+class sale_config_picking_policy(osv.osv_memory):
+    """
+    Set order_policy to picking
+    """
+    _name = 'sale.config.picking_policy'
+    _inherit = 'sale.config.picking_policy'
+
+    _defaults = {
+        'order_policy': 'picking',
+    }
+
+sale_config_picking_policy()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

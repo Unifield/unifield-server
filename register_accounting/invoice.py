@@ -112,25 +112,4 @@ class account_invoice(osv.osv):
         return True
 
 account_invoice()
-
-class account_invoice_line(osv.osv):
-    _name = 'account.invoice.line'
-    _inherit = 'account.invoice.line'
-
-    def _get_product_code(self, cr, uid, ids, field_name=None, arg=None, context={}):
-        """
-        Give product code for each invoice line
-        """
-        res = {}
-        for inv_line in self.browse(cr, uid, ids, context=context):
-            if inv_line.product_id:
-                res[inv_line.id] = inv_line.product_id.default_code
-        return res
-
-    _columns = {
-        'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='string'),
-    }
-
-account_invoice_line()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

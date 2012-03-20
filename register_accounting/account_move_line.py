@@ -171,8 +171,10 @@ class account_move_line(osv.osv):
             help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
-        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", method=True, string="Canbe imported as invoice in register ?",),
-        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 
+            method=True, string="Can be imported as invoice in register?",),
+        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", 
+            help="This line has been created by a cheque import. This id is the move line imported."),
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
                         store={
                           'account.move.line': (lambda self, cr, uid, ids, c={}: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),

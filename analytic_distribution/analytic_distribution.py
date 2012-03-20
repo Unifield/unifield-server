@@ -42,22 +42,15 @@ class analytic_distribution(osv.osv):
         'name': lambda *a: 'Distribution',
     }
 
-    def copy(self, cr, uid, id, defaults={}, context={}):
-        """
-        Copy an analytic distribution without the one2many links
-        """
-        defaults.update({
-            'analytic_lines': False,
-            'invoice_ids': False,
-            'invoice_line_ids': False,
-            'register_line_ids': False,
-            'move_line_ids': False,
-            'commitment_ids': False,
-            'commitment_line_ids': False,
-        })
-        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
-
     def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
+        """
+        Return distribution state
+        """
+        # Have an analytic distribution on another account than expense account make no sense. So their analaytic distribution is valid
+        if account_id:
+            account =  self.pool.get('account.account').browse(cr, uid, account_id)
+            if account and account.user_type and account.user_type.code != 'expense':
+                return 'valid'
         if not id:
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
@@ -140,6 +133,21 @@ class analytic_distribution(osv.osv):
         'free_1_lines': fields.one2many('free.1.distribution.line', 'distribution_id', 'Free 1 Distribution'),
         'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
     }
+
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        Copy an analytic distribution without the one2many links
+        """
+        defaults.update({
+            'analytic_lines': False,
+            'invoice_ids': False,
+            'invoice_line_ids': False,
+            'register_line_ids': False,
+            'move_line_ids': False,
+            'commitment_ids': False,
+            'commitment_line_ids': False,
+        })
+        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
 
     def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
         """
