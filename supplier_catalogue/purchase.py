@@ -73,4 +73,3 @@ class purchase_order_line(osv.osv):
         return res, product_qty, product_qty, seller_delay
     
 purchase_order_line()
-    
