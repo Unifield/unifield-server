@@ -26,14 +26,14 @@
                             <field name="rev_journal_ids" colspan="2"/>
                             <field name="rev_period_ids" colspan="2"/>
                             <field name="journal_ids" colspan="2" nolabel="1">
-                                <tree string="Journals">
+                                <tree string="Journals" editable="top" noteditable="1">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
                                 </tree>
                             </field>
                             <field name="period_ids" colspan="2" nolabel="1">
-                                <tree string="Periods">
+                                <tree string="Periods" editable="top" noteditable="1">
                                     <field name="name" string="Name"/>
                                     <field name="date_start" string="Start"/>
                                     <field name="date_stop" string="Stop"/>
@@ -47,7 +47,7 @@
                             <field name="rev_analytic_journal_ids" colspan="2"/>
                             <newline/>
                             <field name="analytic_journal_ids" colspan="2" nolabel="1">
-                                <tree string="Analytic Journals">
+                                <tree string="Analytic Journals" editable="top" noteditable="1">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
@@ -66,14 +66,14 @@
                             <field name="rev_account_ids" colspan="2"/>
                             <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>
                             <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
-                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
+                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="type" string="Type"/>
                                 </tree>
                             </field>
                             <field name="account_type_ids" colspan="2" nolabel="1">
-                                <tree string="Account types">
+                                <tree string="Account types" editable="top" noteditable="1">
                                     <field name="code"/>
                                     <field name="name"/>
                                 </tree>
@@ -97,14 +97,14 @@
                             <field name="rev_analytic_account_fp_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="rev_analytic_account_cc_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="analytic_account_fp_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
-                                <tree string="Funding Pool">
+                                <tree string="Funding Pool" editable="top" noteditable="1">
                                     <field name="code" string="Ana. Code"/>
                                     <field name="name" string="Ana. Name"/>
                                     <field name="type" string="Ana. Type"/>
                                 </tree>
                             </field>
                             <field name="analytic_account_cc_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"  domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
-                                <tree string="Cost Center">
+                                <tree string="Cost Center" editable="top" noteditable="1">
                                     <field name="code" string="Ana. Code"/>
                                     <field name="name" string="Ana. Name"/>
                                     <field name="type" string="Ana. Type"/>
@@ -117,14 +117,14 @@
                             <field name="rev_analytic_account_f1_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="rev_analytic_account_f2_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="analytic_account_f1_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
-                                <tree string="Free 1">
+                                <tree string="Free 1" editable="top" noteditable="1">
                                     <field name="code" string="Ana. Code"/>
                                     <field name="name" string="Ana. Name"/>
                                     <field name="type" string="Ana. Type"/>
                                 </tree>
                             </field>
                             <field name="analytic_account_f2_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"  domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
-                                <tree string="Free 2">
+                                <tree string="Free 2" editable="top" noteditable="1">
                                     <field name="code" string="Ana. Code"/>
                                     <field name="name" string="Ana. Name"/>
                                     <field name="type" string="Ana. Type"/>
