@@ -120,7 +120,7 @@
                         <separator string="Third Party" colspan="6"/>
                         <field name="partner_id" colspan="2"/>
                         <field name="employee_id" colspan="2"/>
-                        <field name="register_id" colspan="2"/>
+                        <field name="transfer_journal_id" colspan="2"/>
                     </group>
                     <separator string="Others"/>
                     <group col="4" colspan="6">
