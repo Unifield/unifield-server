@@ -28,59 +28,6 @@ class threshold_value(osv.osv):
     _name = 'threshold.value'
     _description = 'Threshold value'
     
-    def create(self, cr, uid, vals, context={}):
-        '''
-        Get or compute threshold value and qty to order
-        '''
-        if not vals.get('threshold_manual_ok') or not vals.get('qty_order_manual_ok') \
-            or not vals.get('theshold_value') or not vals.get('qty_to_order'):
-            res = self.compute_threshold_qty_order(cr, uid, 1, vals.get('category_id'), 
-                                                               vals.get('product_id'), 
-                                                               vals.get('location_id'), 
-                                                               vals.get('frequency'), 
-                                                               vals.get('lead_time'),
-                                                               vals.get('supplier_lt'), 
-                                                               vals.get('safety_month'),
-                                                               vals.get('threshold_manual_ok'),
-                                                               vals.get('qty_order_manual_ok'), 
-                                                               vals.get('consumption_period'), 
-                                                               vals.get('consumption_method'), context=context)
-            
-        if not vals.get('threshold_manual_ok') or not vals.get('threshold_value'):
-            vals['threshold_value'] = res['value']['threshold_value']
-            
-        if not vals.get('qty_order_manual_ok') or not vals.get('qty_to_order'):
-            vals['qty_to_order'] = res['value']['qty_to_order']
-            
-        return super(threshold_value, self).create(cr, uid, vals, context=context)
-    
-    def write(self, cr, uid, ids, vals, context={}):
-        '''
-        Get or compute threshold value and qty to order
-        '''
-        for th_value in self.browse(cr, uid, ids, context=context):
-            if (not vals.get('threshold_value') and not vals.get('threshold_manual_ok')) \
-                or (not vals.get('qty_order_manual_ok') and not vals.get('qty_to_order')):
-                res = self.compute_threshold_qty_order(cr, uid, 1, vals.get('category_id', th_value.category_id.id), 
-                                                                   vals.get('product_id',th_value.product_id.id), 
-                                                                   vals.get('location_id',th_value.location_id.id), 
-                                                                   vals.get('frequency',th_value.frequency), 
-                                                                   vals.get('lead_time',th_value.lead_time),
-                                                                   vals.get('supplier_lt',th_value.supplier_lt), 
-                                                                   vals.get('safety_month',th_value.safety_month),
-                                                                   vals.get('threshold_manual_ok',th_value.threshold_manual_ok),
-                                                                   vals.get('qty_order_manual_ok',th_value.qty_order_manual_ok),
-                                                                   vals.get('consumption_period',th_value.consumption_period), 
-                                                                   vals.get('consumption_method',th_value.consumption_method), context=context)
-            
-        if not vals.get('threshold_value') and not vals.get('threshold_manual_ok'):
-            vals['threshold_value'] = res['value']['threshold_value']
-            
-        if not vals.get('qty_to_order') and not vals.get('qty_order_manual_ok'):
-            vals['qty_to_order'] = res['value']['qty_to_order']
-            
-        return super(threshold_value, self).write(cr, uid, ids, vals, context=context)    
-    
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'active': fields.boolean(string='Active'),
@@ -285,9 +232,12 @@ class threshold_value_line(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
+        'product_qty': fields.float(digit=(16,2), string='Quantity to order'),
         'threshold_value': fields.float(digit=(16,2), string='Threshold value'),
-        'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
+        'fixed_product_qty': fields.float(digit=(16,2), string='Quantity to order'),
+        'fixed_threshold_value': fields.float(digit=(16,2), string='Threshold value'),
+        'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
+        'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
     }
     
     _defaults = {

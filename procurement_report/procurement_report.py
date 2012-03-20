@@ -86,7 +86,7 @@ class procurement_rules_report(osv.osv):
                     CASE WHEN sum(al.swas_ok) > 0 THEN 'yes' ELSE 'no' END auto_supply_ok,
                     CASE WHEN sum(al.swoc_ok) > 0 THEN 'yes' ELSE 'no' END order_cycle_ok,
                     CASE WHEN sum(al.swop_ok) > 0 THEN 'yes' ELSE 'no' END min_max_ok,
-                    'no' AS threshold_ok,
+                    CASE WHEN sum(al.swtv_ok) > 0 THEN 'yes' ELSE 'no' END threshold_ok,
                     prod.default_code AS product_reference,
                     temp.name AS product_name,
                     temp.nomen_manda_0 AS nomen_manda_0,
@@ -94,10 +94,11 @@ class procurement_rules_report(osv.osv):
                     temp.nomen_manda_2 AS nomen_manda_2,
                     temp.nomen_manda_3 AS nomen_manda_3
                 FROM (
-                (((SELECT
+                ((((SELECT
                     1 AS swas_ok,
                     0 AS swoc_ok,
                     0 AS swop_ok,
+                    0 AS swtv_ok,
                     swasl.product_id AS product_id,
                     swas.location_id AS location_id
                 FROM
@@ -110,6 +111,7 @@ class procurement_rules_report(osv.osv):
                     0 AS swas_ok,
                     1 AS swoc_ok,
                     0 AS swop_ok,
+                    0 AS swtv_ok,
                     ocpr.product_id AS product_id,
                     swoc.location_id AS location_id
                 FROM
@@ -122,15 +124,30 @@ class procurement_rules_report(osv.osv):
                     0 AS swas_ok,
                     0 AS swoc_ok,
                     1 AS swop_ok,
+                    0 AS swtv_ok,
                     swop.product_id AS product_id,
                     swop.location_id AS location_id
                 FROM
                     stock_warehouse_orderpoint swop))
                 UNION
+                (SELECT
+                    0 AS swas_ok,
+                    0 AS swoc_ok,
+                    0 AS swop_ok,
+                    1 AS swtv_ok,
+                    swtvl.product_id AS product_id,
+                    swtv.location_id AS location_id
+                 FROM
+                    threshold_value_line swtvl
+                    LEFT JOIN
+                    threshold_value swtv
+                    ON swtvl.threshold_value_id = swtv.id))
+                UNION
                     (SELECT 
                         0 AS swas_ok,
                         0 AS swoc_ok,
                         0 AS swop_ok,
+                        0 AS swtv_ok,
                         product.id AS product_id,
                         null AS location_id
                     FROM product_product product
