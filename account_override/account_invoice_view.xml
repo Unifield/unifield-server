@@ -48,5 +48,90 @@
             </field>
         </record>
 
+
+    <!--
+        Delete total from Search view for Sales Receipt and Supplier Vouchers (from account_voucher module)
+    -->
+        <record id="inherit_view_voucher_tree" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.tree</field>
+            <field name="model">account.voucher</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_tree"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='amount']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+        Delete total from filter for Sales Receipt and Supplier Vouchers Search view (from account_voucher module)
+    -->
+        <record id="inherit_view_voucher_filter" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.filter</field>
+            <field name="model">account.voucher</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_filter"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[3]/field[@name='amount']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="inherit_view_voucher_filter_vendor" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.filter.vendor</field>
+            <field name="model">account.voucher</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_filter_vendor"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[3]/field[@name='amount']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="inherit_view_voucher_filter_sale" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.filter.sale</field>
+            <field name="model">account.voucher</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_filter_sale"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[3]/field[@name='amount']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+        Delete total from filter for Customer Payment and Supplier Payment (from account_voucher module)
+    -->
+        <record id="inherit_view_voucher_filter_customer_pay" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.filter.customer.pay</field>
+            <field name="model">account.voucher</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_filter_customer_pay"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[3]/field[@name='amount']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="inherit_view_voucher_filter_vendor_pay" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.filter.vendor.pay</field>
+            <field name="model">account.voucher</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_filter_vendor_pay"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[3]/field[@name='amount']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
     </data>
 </openerp>
