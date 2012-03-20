@@ -29,7 +29,6 @@ class analytic_distribution(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=12),
-        'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
         'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
         'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
@@ -41,7 +40,6 @@ class analytic_distribution(osv.osv):
 
     _defaults ={
         'name': lambda *a: 'Distribution',
-        'global_distribution': lambda *a: False,
     }
 
     def copy(self, cr, uid, id, defaults={}, context={}):
