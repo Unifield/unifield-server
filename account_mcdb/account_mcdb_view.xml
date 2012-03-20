@@ -17,6 +17,7 @@
                         <field name="document_date_from" colspan="1" string="Document date"/>
                         <field name="document_date_to" colspan="1" string="to"/>
                         <field name="document_code" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                        <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                     </group>
                     <separator string="Accounting"/>
                     <group col="4" colspan="6">

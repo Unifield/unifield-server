@@ -39,6 +39,7 @@ class account_mcdb(osv.osv_memory):
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
         'document_code': fields.char(string='Document Code', size='255'),
+        'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Document Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),
@@ -256,8 +257,10 @@ class account_mcdb(osv.osv_memory):
                 if getattr(wiz, ll[0]):
                     domain.append((ll[1], 'ilike', '%%%s%%' % getattr(wiz, ll[0])))
             # DOCUMENT DATE fields
-            if wiz.document_code != '':
+            if wiz.document_code and wiz.document_code != '':
                 domain.append(('move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+            if wiz.document_state and wiz.document_state != '':
+                domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
             for sup in [('posting_date_from', 'date')]:
                 if getattr(wiz, sup[0]):
