@@ -11,17 +11,17 @@
         <record id="seq_kit_lot" model="ir.sequence">
             <field name="name">Kit Lot</field>
             <field name="code">kit.lot</field>
-            <field name="prefix">K/</field>
+            <field name="prefix">MSFK/</field>
             <field name="padding">5</field>
         </record>
         
         <!-- Sequence for Kitting Order -->
-        <record id="seq_type_kit_lot" model="ir.sequence.type">
+        <record id="seq_type_kit_creation" model="ir.sequence.type">
             <field name="name">Kit Creation</field>
             <field name="code">kit.creation</field>
         </record>
 
-        <record id="seq_kit_lot" model="ir.sequence">
+        <record id="seq_kit_creation" model="ir.sequence">
             <field name="name">Kit Creation</field>
             <field name="code">kit.creation</field>
             <field name="prefix">KO/</field>

@@ -47,6 +47,12 @@ class composition_kit(osv.osv):
     '''
     _name = 'composition.kit'
     
+    def get_default_expiry_date(self, cr, uid, ids, context=None):
+        '''
+        default value for kits
+        '''
+        return '9999-01-01'
+    
     def _compute_expiry_date(self, cr, uid, ids, context=None):
         '''
         compute the expiry date of real composition.kit based on items
@@ -67,7 +73,7 @@ class composition_kit(osv.osv):
                     if not expiry_date or datetime.strptime(item.item_exp, db_date_format) < datetime.strptime(expiry_date, db_date_format):
                         expiry_date = item.item_exp
             if not expiry_date:
-                expiry_date = '9999-01-01'
+                expiry_date = self.get_default_expiry_date(cr, uid, ids, context=context)
         
         return expiry_date
     

@@ -44,6 +44,9 @@ class process_to_consume(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
         loc_obj = self.pool.get('stock.location')
+        data_tools_obj = self.pool.get('data.tools')
+        # load data into the context
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
             # empty to consume lines will be deleted
@@ -68,24 +71,20 @@ class process_to_consume(osv.osv_memory):
                 uom_id = mem.uom_id_process_to_consume.id
                 # find the corresponding LOTS if needed and create possibly many stock moves
                 res = loc_obj._product_reserve_lot(cr, uid, location_ids, product_id, uom_id, context=stock_context, lock=True)
-                # kitting location
-                kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
-                # reason type
-                reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
                 # create a corresponding stock move
                 values = {'kit_creation_id_stock_move': mem.kit_creation_id_process_to_consume.id,
                           'name': mem.product_id_process_to_consume.name,
                           'picking_id': False, # todo create internal picking with kit.creation
                           'product_uom': mem.uom_id_process_to_consume.id,
                           'product_id': mem.product_id_process_to_consume.id,
-                          'date_expected': time.strftime('%Y-%m-%d'),
-                          'date': time.strftime('%Y-%m-%d'),
+                          'date_expected': context['common']['date'],
+                          'date': context['common']['date'],
                           'product_qty': mem.selected_qty_process_to_consume,
                           'prodlot_id': False,
                           'location_id': mem.location_src_id_process_to_consume.id,
-                          'location_dest_id': kitting_id,
+                          'location_dest_id': context['common']['kitting_id'],
                           'state': 'confirmed',
-                          'reason_type_id': reason_type_id}
+                          'reason_type_id': context['common']['reason_type_id']}
                 move_obj.create(cr, uid, values, context=context)
                 
         # delete empty lines

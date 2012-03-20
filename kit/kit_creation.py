@@ -160,7 +160,7 @@ class kit_creation(osv.osv):
         wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_done', cr)
         return True
     
-    def _create_picking(self, cr, uid, ids, obj, date, context=None):
+    def _create_picking(self, cr, uid, ids, context=None):
         '''
         create internal picking object
         '''
@@ -170,7 +170,8 @@ class kit_creation(osv.osv):
         # we create the internal picking object
         data = self.read(cr, uid, ids, ['name'], context=context)[0]
         kitting_order_name = data['name']
-        pick_values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
+        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+        pick_values = {'name': name,
                        'origin': kitting_order_name,
                        'type': 'internal',
                        'state': 'draft',
@@ -182,7 +183,43 @@ class kit_creation(osv.osv):
                        'reason_type_id': context['common']['reason_type_id'],
                        }
         pick_id = pick_obj.create(cr, uid, pick_values, context=context)
+        # log picking creation
+        pick_obj.log(cr, uid, pick_id, _('The new internal Picking %s has been created.'%name))
         return pick_id
+    
+    def _create_kit(self, cr, uid, ids, obj, context=None):
+        '''
+        create a kit
+        
+        - if the product is batch management, we create a new lot
+        '''
+        # objects
+        lot_obj = self.pool.get('stock.production.lot')
+        kit_obj = self.pool.get('composition.kit')
+        
+        batch_management = obj.product_id_kit_creation.batch_management
+        lot_ref_name = self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
+        default_date = kit_obj.get_default_expiry_date(cr, uid, ids, context=context)
+        if batch_management:
+            # we create a new lot
+            vals = {'product_id': obj.product_id_kit_creation.id,
+                    'name': lot_ref_name,
+                    'life_date': default_date, # default value, the kit does not exist yet
+                    }
+            new_lot_id = lot_obj.create(cr, uid, vals, context=context)
+        
+        values = {'composition_type': 'real',
+                  'composition_product_id': obj.product_id_kit_creation.id,
+                  'composition_version_id': obj.version_id_kit_creation and obj.version_id_kit_creation.id or False,
+                  #'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+                  'composition_reference': not batch_management and lot_ref_name or False,
+                  'composition_lot_id': batch_management and new_lot_id or False,
+                  'composition_ref_exp': not batch_management and default_date or False,
+                  }
+        new_kit_id = kit_obj.create(cr, uid, values, context=context)
+        # log kit creation
+        kit_obj.log(cr, uid, new_kit_id, _('The new empty Kit Composition List %s has been created.'%lot_ref_name))
+        return new_kit_id
     
     def start_production(self, cr, uid, ids, context=None):
         '''
@@ -197,15 +234,11 @@ class kit_creation(osv.osv):
         # change the state
         self.write(cr, uid, ids, {'state': 'in_production'}, context=context)
         for obj in self.browse(cr, uid, ids, context=context):
-            # create the internal picking
-            values = {}
-            pick_id = pick_obj.create(cr, uid, values, context=context)
-            # confirm the picking
-            self._confirm_internal_picking(cr, uid, ids, pick_id, context=context)
+            # create the internal picking - confirmation of internal picking cannot be performed as long as no stock move exist
+            pick_id = self._create_picking(cr, uid, ids, context=context)
             # create kit in production
             for i in range(obj.qty_kit_creation):
-                values = {}
-                kit_id = kit_obj.create(cr, uid, values, context=context)
+                kit_id = self._create_kit(cr, uid, ids, obj, context=context)
         
         return True
     
@@ -289,6 +322,7 @@ class kit_creation(osv.osv):
                 'consumed_ids_kit_creation': fields.one2many('stock.move', 'kit_creation_id_stock_move', string='Stock Moves', readonly=True),
                 'consider_child_locations_kit_creation': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check. The Kitting Order needs to be saved in order this option to be taken into account.'),
                 'to_consume_sequence_id': fields.many2one('ir.sequence', 'To Consume Sequence', required=True, ondelete='cascade'),
+                'internal_picking_kit_creation': fields.many2one('stock.picking', string='Internal Picking', readonly=True),
                 # related
                 'batch_check_kit_creation': fields.related('product_id_kit_creation', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
@@ -337,8 +371,8 @@ class kit_creation_to_consume(osv.osv):
         add the corresponding line number
         '''
         # gather the line number from the sequence
-        to_consume_sequence_id = self.pool.get('kit.creation').browse(cr, uid, vals['kit_creation_id_to_consume'], context)
-        sequence = to_consume_sequence_id.to_consume_sequence_id
+        kit_creation = self.pool.get('kit.creation').browse(cr, uid, vals['kit_creation_id_to_consume'], context)
+        sequence = kit_creation.to_consume_sequence_id
         line = sequence.get_id(test='id', context=context)
         vals.update({'line_number_to_consume': line})
         result = super(kit_creation_to_consume, self).create(cr, uid, vals, context=context)
@@ -434,7 +468,7 @@ class kit_creation_to_consume(osv.osv):
                             'qty_to_consume': 0.0,
                             'total_qty_to_consume': 0.0,
                             'uom_id_to_consume': False,
-                            'location_src_id_to_consume': default_location_id,
+                            'location_src_id_to_consume': default_location_src_id,
                             }}
         
         if product_id:
@@ -520,7 +554,7 @@ class kit_creation_to_consume(osv.osv):
                 'qty_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', required=True),
                 'location_src_id_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
-                'line_number_to_consume': fields.integer(string='Line', required=True),
+                'line_number_to_consume': fields.integer(string='Line', required=True, readonly=True),
                 'availability_to_consume': fields.selection(KIT_TO_CONSUME_AVAILABILITY, string='Availability', readonly=True, required=True),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
