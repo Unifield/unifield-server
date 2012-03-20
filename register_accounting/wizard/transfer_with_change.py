@@ -32,7 +32,7 @@ class wizard_transfer_with_change(osv.osv_memory):
         'absl_id': fields.many2one('account.bank.statement.line', string='Register Line', required=True),
         'absl_amount': fields.float(string="Transfer amount", readonly=True),
         'converted_amount': fields.float(string="Transfer amount valuation at system rate (automatic)", readonly=True, 
-            help="Register line converted amount using given third party journal currency."),
+            help="Register line converted amount at standard rate (based on third party journal currency)"),
         'absl_currency': fields.many2one('res.currency', string="Register line currency", readonly=True, help="Register line currency"),
         'amount_from': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
         'amount_to': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
