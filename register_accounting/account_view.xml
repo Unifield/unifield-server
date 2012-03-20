@@ -20,7 +20,6 @@
                             <newline/>
                             <field name="date" select="1" on_change="onchange_date(date)"/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
-                            <field name="journal_name"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
@@ -159,8 +158,6 @@
                             
                             <field name="user_id" select="1" readonly="1"/>
                             <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
-                            <field name="journal_name"/>
-                            
                             <field name="currency" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
@@ -548,8 +545,6 @@
                         <newline/>
                         <field name="date" select="1" on_change="onchange_date(date)"/>
                         <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
-                        <field name="journal_name"/>
-                        
                         <field name="currency" invisible="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
