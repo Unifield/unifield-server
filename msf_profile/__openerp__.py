@@ -86,6 +86,7 @@
         "documents_done",
         "msf_budget",
         "account_subscription",
+        "msf_accrual",
     ],
     "update_xml": [
         "report.xml",
