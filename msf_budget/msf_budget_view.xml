@@ -7,7 +7,7 @@
             <field name="model">msf.budget</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-               <tree colors="blue:state in ('draft');gray:state in ('done','cancel');black:state in ('confirm','validate')" string="Budget">
+               <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('valid')" string="Budget">
                     <field name="name" colspan="1"/>
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
@@ -26,7 +26,7 @@
                <search string="Budget">
                    <group col="20" colspan="4">
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
-                       <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','validate')]" help="Validated Budgets" />
+                       <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
                        <separator orientation="vertical"/>
                        <field name="name" select="1"/>
                        <field name="code" select="1" />
@@ -51,9 +51,10 @@
                     <field name="code" readonly="1"/>
                     <field name="fiscalyear_id" readonly="1"/>
                     <field name="cost_center_id" readonly="1"/>
-                    <field name="decision_moment" readonly="1"/>
-                    <field name="version" readonly="1"/>
+                    <field name="decision_moment" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="currency_id" readonly="1"/>
+                    <field name="type" readonly="1" invisible="1"/>
                     <group col="4" colspan="2">
                         <field name="display_type" readonly="1"/>
                         <button name="button_display_type" string="Apply display type" type="object" icon="terp-stock_zoom" context="context" colspan="2"/>
@@ -77,10 +78,10 @@
                             </group>
                         </form>
                     </field>
-                    <field name="state" select="1" readonly="1"/>
+                    <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>/>
                     <group col="4" colspan="2">
-                        <button string="Approve" name="validate" states="draft" type="workflow" icon="gtk-ok"/>
-                        <button string="Done" name="done" states="validate" type="workflow" icon="gtk-jump-to" />
+                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}"/>
+                        <button string="Done" name="done" type="workflow" icon="gtk-jump-to" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'valid')]}"/>
                     </group>
                 </form>
             </field>

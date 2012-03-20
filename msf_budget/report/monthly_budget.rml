@@ -2,7 +2,7 @@
 <document filename="test.pdf">
   <template pageSize="(842.0,595.0)" title="Test" author="Martin Simon" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="42.0" width="812" height="539"/>
+      <frame id="first" x1="42.0" y1="42.0" width="758" height="539"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -153,7 +153,6 @@
     <para style="P5">
       <font color="white"> </font>
     </para>
-    <para style="P7">Budget amounts:</para>
     <blockTable colWidths="97.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="Table10">
       <tr>
         <td>

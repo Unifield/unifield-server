@@ -41,33 +41,42 @@ class report_csv_budget_monthly(report_sxw.report_sxw):
                    ['Account','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']]
         return result
     
-    def _get_budget_lines(self, budget):
+    def _get_budget_lines(self, cr, uid, budget, context={}):
+        pool = pooler.get_pool(cr.dbname)
         result = []
         # Parse each budget line
+        budget_line_ids = [budget_line.id for budget_line in budget.budget_line_ids]
+        
+        budget_amounts = pool.get('msf.budget.line')._get_budget_amounts(cr, uid, budget_line_ids, context=context)
+        
         for budget_line in budget.budget_line_ids:
-            if budget_line.budget_values:
-                budget_values = eval(budget_line.budget_values)
-                total = locale.format("%d", sum(budget_values), grouping=True)
-                formatted_budget_values = [locale.format("%d", x, grouping=True) for x in budget_values]
-                csv_budget_line = [budget_line.account_id.code + " " + budget_line.account_id.name]
-                csv_budget_line += formatted_budget_values
-                csv_budget_line.append(total)
-                # append to result
-                result.append(csv_budget_line)
+            budget_amount = budget_amounts[budget_line.account_id.id]
+            total = locale.format("%d", sum(budget_amount), grouping=True)
+            formatted_budget_values = [locale.format("%d", x, grouping=True) for x in budget_amount]
+            csv_budget_line = [budget_line.account_id.code + " " + budget_line.account_id.name]
+            csv_budget_line += formatted_budget_values
+            csv_budget_line.append(total)
+            # append to result
+            result.append(csv_budget_line)
         return result
+    
+    def _enc(self, st):
+        if isinstance(st, unicode):
+            return st.encode('utf8')
+        return st
     
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
         if len(ids) > 0:
             budget = pool.get('msf.budget').browse(cr, uid, ids[0], context=context)
             header_data = self._get_budget_header(budget)
-            budget_line_data = self._get_budget_lines(budget)
+            budget_line_data = self._get_budget_lines(cr, uid, budget, context=context)
             data = header_data + budget_line_data
         
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
-            writer.writerow(line)
+            writer.writerow(map(self._enc,line))
         out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')

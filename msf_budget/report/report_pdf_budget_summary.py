@@ -40,8 +40,10 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         # Process all lines for amounts (avoids multiple calls)
         total_amounts = pool.get('msf.budget.line')._get_total_amounts(self.cr, self.uid, line_names.keys())
         
+        sorted_line_names = sorted(line_names)
+        
         # regroup both dicts in a list
-        for line_id in line_names:
+        for line_id in sorted_line_names:
             result_line = [line_names[line_id],
                            locale.format("%d", total_amounts[line_id]['budget_amount'], grouping=True),
                            locale.format("%d", total_amounts[line_id]['actual_amount'], grouping=True),

@@ -23,6 +23,7 @@ import csv
 import StringIO
 import pooler
 import locale
+import datetime
 
 class report_budget_criteria(report_sxw.report_sxw):
     _name = 'report.budget.criteria'
@@ -86,10 +87,15 @@ class report_budget_criteria(report_sxw.report_sxw):
                                                                            context=context)
         for amount_line in monthly_amounts:
             formatted_amount_line = [amount_line[0]]
-            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:-1]]
+            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
             formatted_monthly_amounts.append(formatted_amount_line)
         result += formatted_monthly_amounts
         return result
+    
+    def _enc(self, st):
+        if isinstance(st, unicode):
+            return st.encode('utf8')
+        return st
     
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
@@ -102,7 +108,7 @@ class report_budget_criteria(report_sxw.report_sxw):
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
-            writer.writerow(line)
+            writer.writerow(map(self._enc,line))
         out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')

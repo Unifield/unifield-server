@@ -27,38 +27,53 @@ class msf_budget(osv.osv):
     
     _columns={
         'name': fields.char('Name', size=64, required=True),
-        'code': fields.char('Code', size=16, required=True),
+        'code': fields.char('Code', size=64, required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal Year', required=True),
-        'state': fields.selection([('draft','Draft'),('validate','Validated'),('done','Done')], 'State', select=True, required=True),
+        'state': fields.selection([('draft','Draft'),('valid','Validated'),('done','Done')], 'State', select=True, required=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC'), ('type', '=', 'normal')], required=True),
-        'decision_moment': fields.char('Decision Moment', size=32, required=True),
-        'version': fields.integer('Version',required=True),
+        'decision_moment': fields.char('Decision Moment', size=32),
+        'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'latest_version': fields.boolean('Latest version'),
         'display_type': fields.selection([('all', 'All lines'), ('view', 'View lines only')], string="Display type"),
+        'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
     }
     
     _defaults = {
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'version': 1,
         'state': 'draft',
         'display_type': 'all',
+        'type': 'normal',
     }
     
-    def unlink(self, cr, uid, ids, context=None):
-        # if a "latest version" budget is deleted, set the flag on the previous budget (if existing)
-        for budget in self.browse(cr, uid, ids, context=context):
-            previous_budget_ids =  self.search(cr,
+    def create(self, cr, uid, vals, context=None):
+        res = super(msf_budget, self).create(cr, uid, vals, context=context)
+        analytic_obj = self.pool.get('account.analytic.account')
+        # If the "parent" budget does not exist, create it.
+        budget = self.browse(cr, uid, res, context=context)
+        if budget.cost_center_id and budget.cost_center_id.parent_id:
+            parent_cost_center = budget.cost_center_id.parent_id
+            parent_budget_ids = self.search(cr,
+                                            uid,
+                                            [('fiscalyear_id','=',budget.fiscalyear_id.id),
+                                             ('cost_center_id','=',parent_cost_center.id)])
+            if len(parent_budget_ids) == 0:
+                parent_budget_id = self.create(cr,
                                                uid,
-                                               [('code','=',budget.code),
-                                                ('name','=',budget.name),
-                                                ('fiscalyear_id','=',budget.fiscalyear_id.id),
-                                                ('cost_center_id','=',budget.cost_center_id.id),
-                                                ('version','=',budget.version - 1)],
-                                               context=context)
-            if len(previous_budget_ids) > 0:
-                self.write(cr, uid, [previous_budget_ids[0]], {'latest_version': True}, context=context)
-        return super(msf_budget, self).unlink(cr, uid, ids, context=context)
+                                               {'name': "Budget " + budget.fiscalyear_id.code[4:6] + " - " + parent_cost_center.name,
+                                                'code': "BU" + budget.fiscalyear_id.code[4:6] + " - " + parent_cost_center.code,
+                                                'fiscalyear_id': budget.fiscalyear_id.id,
+                                                'cost_center_id': budget.cost_center_id.parent_id.id,
+                                                'type': 'view'}, context=context)
+                # Create all lines for all accounts (no budget values, those are retrieved)
+                expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
+                                                                                        ('type', '!=', 'view')], context=context)
+                for expense_account_id in expense_account_ids:
+                    budget_line_vals = {'budget_id': parent_budget_id,
+                                        'account_id': expense_account_id}
+                    self.pool.get('msf.budget.line').create(cr, uid, budget_line_vals, context=context)
+                # validate this parent
+                self.write(cr, uid, [parent_budget_id], {'state': 'valid'}, context=context)
+        return res
     
     # Methods for display view lines (warning, dirty, but it works)
     def button_display_type(self, cr, uid, ids, context={}, *args, **kwargs):

@@ -214,7 +214,6 @@
     decision_moment: 'Test moment'
     version: 1
     currency_id: base.EUR
-    latest_version: True
       
 -
   and its line

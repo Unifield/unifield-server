@@ -136,8 +136,8 @@ class analytic_account(osv.osv):
         res = {'value': {}, 'domain': {}}
         parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
         res['value']['parent_id'] = parent
-        res['domain']['parent_id'] = [('category', '=', category)]
+        res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
+    
 analytic_account()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

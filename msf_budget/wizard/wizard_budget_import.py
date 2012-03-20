@@ -78,7 +78,11 @@ class wizard_budget_import(osv.osv_memory):
             if len(cc_ids) == 0:
                 raise osv.except_osv(_('Warning !'), _("The cost center %s is not defined in the database!" % import_data[3][1]))
             else:
-                result.update({'cost_center_id': cc_ids[0]})
+                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cc_ids[0], context=context)
+                if cost_center.type == 'view':
+                    raise osv.except_osv(_('Warning !'), _("The cost center %s is not an allocable cost center! The budget for it will be created automatically." % import_data[3][1]))
+                else:
+                    result.update({'cost_center_id': cc_ids[0]})
         # decision moment
         if import_data[4][1] == "":
             raise osv.except_osv(_('Warning !'), _("The budget has no decision moment!"))
@@ -151,19 +155,20 @@ class wizard_budget_import(osv.osv_memory):
                 
                 # Version this budget data
                 # Search for latest budget
-                db_budget_ids = budget_obj.search(cr,
-                                                  uid,
-                                                  [('code','=',budget_vals['code']),
-                                                   ('name','=',budget_vals['name']),
-                                                   ('fiscalyear_id','=',budget_vals['fiscalyear_id']),
-                                                   ('cost_center_id','=',budget_vals['cost_center_id']),
-                                                   ('latest_version','=',True)],
-                                                  context=context)
+                cr.execute("SELECT id, version, state FROM msf_budget WHERE code = %s \
+                                                                        AND name = %s \
+                                                                        AND fiscalyear_id = %s \
+                                                                        AND cost_center_id = %s \
+                                                                        ORDER BY version DESC LIMIT 1",
+                                                                       (budget_vals['code'],
+                                                                        budget_vals['name'],
+                                                                        budget_vals['fiscalyear_id'],
+                                                                        budget_vals['cost_center_id']))
+                    
                 
-                if len(db_budget_ids) == 0:
+                if not cr.rowcount:
                     # No budget found; the created one is the first one (and latest)
-                    budget_vals.update({'version': 1,
-                                        'latest_version': True})
+                    budget_vals.update({'version': 1})
                     # Create the final budget and its lines
                     created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
                     for line_vals in budget_line_vals:
@@ -171,14 +176,12 @@ class wizard_budget_import(osv.osv_memory):
                         self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
                 else:
                     # Latest budget found; increment version or overwrite
-                    latest_budget_id = db_budget_ids[0]
-                    latest_budget = budget_obj.read(cr, uid, [latest_budget_id], ['version', 'state'])[0]
-                    if latest_budget['version'] and latest_budget['state']:
-                        if latest_budget['state'] == 'draft':
+                    latest_budget_id, latest_budget_version, latest_budget_state = cr.fetchall()[0]
+                    if latest_budget_version and latest_budget_state:
+                        if latest_budget_state == 'draft':
                             # latest budget is draft
                             # Prepare creation of the "new" one (with no lines)
-                            budget_vals.update({'version': latest_budget['version'],
-                                                'latest_version': True})
+                            budget_vals.update({'version': latest_budget_version})
                             # Create budget (removed in next step if needed)
                             # This is to avoid passing too much stuff in the context
                             created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
@@ -194,14 +197,7 @@ class wizard_budget_import(osv.osv_memory):
                         else:
                             # latest budget is validated
                             # a new version will be created...
-                            budget_vals.update({'version': latest_budget['version'] + 1,
-                                                'latest_version': True})
-                            # ...and the old one loses its "latest version" status
-                            self.pool.get('msf.budget').write(cr,
-                                                              uid,
-                                                              [latest_budget_id],
-                                                              vals={'latest_version': False},
-                                                              context=context)
+                            budget_vals.update({'version': latest_budget_version + 1})
                             # Create the final budget and its lines
                             created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
                             for line_vals in budget_line_vals:
