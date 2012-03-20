@@ -658,7 +658,7 @@ class purchase_order_line(osv.osv):
         order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
         other_lines = self.search(cr, uid, [('order_id', '=', vals['order_id']), ('product_id', '=', vals['product_id']), ('product_uom', '=', vals['product_uom'])], context=context)
         price = self.pool.get('product.pricelist').price_get(cr,uid,[order_id.pricelist_id.id], 
-                                                                vals['product_id'], vals['product_qty'], order_id.partner_id.id,
+                                                                vals['product_id'], float(vals['product_qty']), order_id.partner_id.id,
                                                                 {'uom': vals['product_uom'], 'date': order_id.date_order})[order_id.pricelist_id.id]
         if other_lines and (price is False or price == 0.00):
             price_unit = self.browse(cr, uid, other_lines[0], context=context).price_unit
