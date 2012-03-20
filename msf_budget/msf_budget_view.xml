@@ -141,10 +141,11 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Budget Already Existing">
-                    <label string="A budget with those parameters already exists. Do you want to overwrite it?" align="0.0" colspan="3"/>
+                    <label string="Do you want to overwrite the following budgets:" align="0.0" colspan="3"/>
+                    <field name="budget_list" colspan="4" nolabel="1" readonly="1"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
-                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_cancel" string="No" type="object" icon="gtk-cancel"/>
                         <button name="button_confirm" string="Yes" type="object" icon="gtk-ok"/>
                     </group>
                 </form>

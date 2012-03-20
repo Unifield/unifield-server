@@ -230,7 +230,7 @@ class journal_items_corrections(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         aml_obj = self.pool.get('account.move.line')
         # Do reverse
-        res = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
+        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
     def action_confirm(self, cr, uid, ids, context={}):
