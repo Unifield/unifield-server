@@ -65,7 +65,7 @@
                             <label string="" colspan="2"/>
                             <field name="rev_account_ids" colspan="2"/>
                             <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>
-                            <field name="account_ids" colspan="2" nolabel="1">
+                            <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
                                 <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
                                     <field name="code"/>
                                     <field name="name"/>
