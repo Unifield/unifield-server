@@ -267,11 +267,11 @@ class audittrail_log_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
             if not line.old_value_text:
-                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.object_id, context=context)
+                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.fct_object_id or line.object_id, context=context)
             else:
                 res[line.id]['old_value_fct'] = line.old_value_text
             if not line.new_value_text:
-                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.object_id, context=context)
+                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.fct_object_id or line.object_id, context=context)
             else:
                 res[line.id]['new_value_fct'] = line.new_value_text
                 
@@ -364,8 +364,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             if values and values != '()':
                 values = values[1:-1].split(',')
                 if len(values) and relation_model_pool:
-                    relation_model_object = relation_model_pool.read(cr, uid, values[0], [relation_model_pool._rec_name])
-                    res = relation_model_object[0][relation_model_pool._rec_name]
+                    relation_model_object = relation_model_pool.read(cr, uid, int(values[0]), [relation_model_pool._rec_name])
+                    res = relation_model_object[relation_model_pool._rec_name]
             return res
 
         elif field['ttype'] in ('many2many','one2many'):
