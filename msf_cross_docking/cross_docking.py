@@ -112,7 +112,8 @@ procurement_order()
 
 class stock_picking(osv.osv):
     '''
-    do_partial modification for the selection of the LOCATION for incoming shipments
+    do_partial(=function which is originally called from delivery_mechanism) modification 
+    for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
     '''
     _inherit = 'stock.picking'
     
@@ -130,7 +131,8 @@ class stock_picking(osv.osv):
             context = {}
         res = {}
         
-        # take ids of the wizard
+        # take ids of the wizard from the context. 
+        # NB: the wizard_ids is created in delivery_mechanism>delivery_mecanism.py> in the method "_stock_picking_action_process_hook"
         wiz_ids = context.get('wizard_ids')
         if not wiz_ids:
             return res
@@ -138,23 +140,26 @@ class stock_picking(osv.osv):
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
 
-# ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
+ # ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
-# ----------------------------------------------------------------------------------------------------------------
+ # ----------------------------------------------------------------------------------------------------------------
         move_obj = self.pool.get('stock.move')
         partial_picking_obj = self.pool.get('stock.partial.picking')
         stock_picking_obj = self.pool.get('stock.picking')
         
+        # We browse over the wizard (stock.partial.picking)
         for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
-            if var.process_type == 'to_cross_docking':
+            """For incoming shipment """
+            # we check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
+            if var.dest_type == 'to_cross_docking' and not var.source_type:
                 for pick in stock_picking_obj.browse(cr, uid, ids, context=context):
                     # treat moves towards CROSS DOCKING
                     move_ids = partial_datas[pick.id].keys()
                     for move in move_obj.browse(cr, uid, move_ids, context=context):
                         values.update({'location_dest_id':cross_docking_location,})
-            elif var.process_type == 'to_stock':
+            elif var.dest_type == 'to_stock' and not var.source_type:
                 for pick in stock_picking_obj.browse(cr, uid, ids, context=context):
                     # treat moves towards STOCK
                     move_ids = partial_datas[pick.id].keys()
@@ -162,4 +167,26 @@ class stock_picking(osv.osv):
                         values.update({'location_dest_id':stock_location_input,})
         return values
     
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data of the current object, which is stock.picking.
+        The defaults data are taken from the _do_partial_hook which is on the stock_partial_picking
+        osv_memory object used for the wizard of deliveries.
+        For outgoing shipment 
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'missing move'
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        
+        # calling super method
+        defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        # location_id is equivalent to the source location: does it exist when we go through the "_do_partial_hook" in the msf_cross_docking> stock_partial_piking> "do_partial_hook"
+        location_id = partial_datas.get('move%s'%(move.id), False).get('location_id')
+        if location_id:
+            defaults.update({'location_id': location_id})
+        
+        return defaults
+
 stock_picking()

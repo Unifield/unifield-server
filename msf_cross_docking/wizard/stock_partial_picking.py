@@ -26,14 +26,19 @@ import time
 
 class stock_partial_picking(osv.osv_memory):
     """
-    Enables to choose the location of incoming shipment
+    Enables to choose the location for IN (selection of destination for incoming shipment) 
+    and OUT (selection of the source for delivery orders and picking ticket)
     """
     _inherit = "stock.partial.picking"
 
     _columns = {
-        'process_type': fields.selection([
+        'dest_type': fields.selection([
             ('to_cross_docking', 'To Cross Docking'),
-            ('to_stock', 'To Stock')], string="Process Type", required=True, readonly=False),
+            ('to_stock', 'To Stock'),], string="Destination Type", readonly=False),
+        'source_type': fields.selection([
+            ('from_cross_docking', 'From Cross Docking'),
+            ('from_stock', 'From stock'),], string="Source Type", readonly=False),
+
      }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -57,17 +62,17 @@ class stock_partial_picking(osv.osv_memory):
         
         if context.get('active_ids', []):
             active_id = context.get('active_ids')[0]
-            if 'process_type' in fields:
+            if 'dest_type' in fields:
                 for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
                     if pick.purchase_id.cross_docking_ok == True:
-                       res.update({'process_type':'to_cross_docking'})
+                       res.update({'dest_type':'to_cross_docking'})
                     elif pick.purchase_id.cross_docking_ok == False:
-                        res.update({'process_type':'to_stock'})
+                        res.update({'dest_type':'to_stock'})
         return res
 
-    def onchange_process_type(self, cr, uid, ids, process_type, context=None):
-        """ Raise a message if the user change a default process type (cross docking or IN stock).
-        @param process_type: Changed value of process_type.
+    def onchange_dest_type(self, cr, uid, ids, dest_type, context=None):
+        """ Raise a message if the user change a default dest type (cross docking or IN stock).
+        @param dest_type: Changed value of dest_type.
         @return: Dictionary of values.
         """
         if context is None:
@@ -81,11 +86,11 @@ class stock_partial_picking(osv.osv_memory):
         obj_data = self.pool.get('ir.model.data')
         pick_obj = self.pool.get('stock.picking')
         for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
-            if process_type != 'to_cross_docking'and pick.purchase_id.cross_docking_ok :
+            if pick.purchase_id and dest_type != 'to_cross_docking'and pick.purchase_id.cross_docking_ok :
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('You want to receive the IN on an other location than Cross Docking but "Cross docking" was checked.')}
-            elif process_type == 'to_cross_docking'and not pick.purchase_id.cross_docking_ok :
+            elif pick.purchase_id and dest_type == 'to_cross_docking'and not pick.purchase_id.cross_docking_ok :
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('You want to receive the IN on Cross Docking but "Cross docking" was not checked.')}
@@ -93,7 +98,7 @@ class stock_partial_picking(osv.osv_memory):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
-        add the field 'process_type' for the wizard 'incoming shipment' only
+        add the field 'dest_type' for the wizard 'incoming shipment' and 'delivery orders'
         '''
         res = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
         picking_obj = self.pool.get('stock.picking')
@@ -106,7 +111,53 @@ class stock_partial_picking(osv.osv_memory):
                 # replace line '<group col="2" colspan="2">' for 'incoming_shipment' only to select the 'stock location' destination
                 res['arch'] = res['arch'].replace(
                 '<group col="2" colspan="2">',
-                '<group col="4" colspan="4"><field name="process_type" invisible="0" on_change="onchange_process_type(process_type,context)"/>')
+                '<group col="4" colspan="4"><field name="dest_type" invisible="0" on_change="onchange_dest_type(dest_type,context)" required="0"/>')
+            elif picking_type == 'out':
+                # replace line '<group col="2" colspan="2">' for 'delivery orders' only to select the 'stock location' source
+                res['arch'] = res['arch'].replace(
+                '<group col="2" colspan="2">',
+                '<group col="4" colspan="4"><field name="source_type" invisible="0" required="0"/>')
         return res
+    
+    def do_partial_hook(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        This hook to "do_partial" comes from stock_override>wizard>stock_partial_picking.py
+        It aims to update the source location (location_id) of stock picking according to the Source that the user chooses.
+        To update the stock_move values of the stock_picking object, we need to write an other hook in the stock_picking object.
+        Have a look in cross_docking>cross_docking.py> the method "_do_partial_hook" on the stock_picking object
+        '''
+
+        # call to super
+        partial_datas = super(stock_partial_picking, self).do_partial_hook(cr, uid, context, *args, **kwargs)
+        assert partial_datas, 'partial_datas missing'
+        move = kwargs.get('move')
+        if context is None:
+            context = {}
+        picking_ids = context.get('active_ids', False)
+        wiz_ids = context.get('wizard_ids')
+        if not wiz_ids:
+            return res
+        partial_picking_obj = self.pool.get('stock.partial.picking')
+        pick_obj = self.pool.get('stock.picking')
+
+ # ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
+        obj_data = self.pool.get('ir.model.data')
+        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
+ # ----------------------------------------------------------------------------------------------------------------
+
+        for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
+            if var.source_type == 'from_cross_docking' and not var.dest_type:
+                for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+                    partial_datas['move%s' % (move.move_id.id)].update({
+                                                    'location_id':cross_docking_location,
+                                                    })
+            # do not force the user to choose the value below. Instead, the value should be the one taken from the original delivery order. So, do nothing.
+            elif var.source_type == 'from_stock' and not var.dest_type:
+                for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+                    partial_datas['move%s' % (move.move_id.id)].update({
+                                                'location_id' : stock_location_input,
+                                                })
+        return partial_datas
 
 stock_partial_picking()

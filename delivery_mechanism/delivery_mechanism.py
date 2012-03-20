@@ -247,8 +247,8 @@ class stock_picking(osv.osv):
         '''
         values = kwargs.get('values')
         assert values is not None, 'missing values'
-        
         return values
+
     
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         '''
