@@ -153,13 +153,16 @@ class stock_picking(osv.osv):
         for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
             """For incoming shipment """
             # we check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
-            if var.dest_type == 'to_cross_docking' and not var.source_type:
+            if var.dest_type == 'to_cross_docking' :
+                # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is "default"and we do not want that info on INCOMING shipment
+                var.source_type = None
                 for pick in stock_picking_obj.browse(cr, uid, ids, context=context):
                     # treat moves towards CROSS DOCKING
                     move_ids = partial_datas[pick.id].keys()
                     for move in move_obj.browse(cr, uid, move_ids, context=context):
                         values.update({'location_dest_id':cross_docking_location,})
-            elif var.dest_type == 'to_stock' and not var.source_type:
+            elif var.dest_type == 'to_stock' :
+                var.source_type = None
                 for pick in stock_picking_obj.browse(cr, uid, ids, context=context):
                     # treat moves towards STOCK
                     move_ids = partial_datas[pick.id].keys()
@@ -188,5 +191,5 @@ class stock_picking(osv.osv):
             defaults.update({'location_id': location_id})
         
         return defaults
-
+    
 stock_picking()

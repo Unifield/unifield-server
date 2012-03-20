@@ -34,10 +34,13 @@ class stock_partial_picking(osv.osv_memory):
     _columns = {
         'dest_type': fields.selection([
             ('to_cross_docking', 'To Cross Docking'),
-            ('to_stock', 'To Stock'),], string="Destination Type", readonly=False),
+            ('to_stock', 'To Stock'),
+            ('default', 'Default'),], string="Destination Type", readonly=False, help="The default value is the one set on each stock move line."),
         'source_type': fields.selection([
             ('from_cross_docking', 'From Cross Docking'),
-            ('from_stock', 'From stock'),], string="Source Type", readonly=False),
+            ('from_stock', 'From stock'),
+            ('default', 'Default'),
+            ], string="Source Type", readonly=False),
 
      }
 
@@ -68,6 +71,10 @@ class stock_partial_picking(osv.osv_memory):
                        res.update({'dest_type':'to_cross_docking'})
                     elif pick.purchase_id.cross_docking_ok == False:
                         res.update({'dest_type':'to_stock'})
+                    else:
+                        res.update({'dest_type':'default'})
+            if 'source_type' in fields:
+                res.update({'source_type':'default'})
         return res
 
     def onchange_dest_type(self, cr, uid, ids, dest_type, context=None):
@@ -121,6 +128,7 @@ class stock_partial_picking(osv.osv_memory):
     
     def do_partial_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
+        ON OUTGOING SHIPMENT
         This hook to "do_partial" comes from stock_override>wizard>stock_partial_picking.py
         It aims to update the source location (location_id) of stock picking according to the Source that the user chooses.
         To update the stock_move values of the stock_picking object, we need to write an other hook in the stock_picking object.
@@ -143,20 +151,22 @@ class stock_partial_picking(osv.osv_memory):
  # ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
-        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
+        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
  # ----------------------------------------------------------------------------------------------------------------
 
         for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
-            if var.source_type == 'from_cross_docking' and not var.dest_type:
+            if var.source_type == 'from_cross_docking' :
+                # below, "dest_type" is only used for the incoming shipment. We set it to "None" because by default it is "default"and we do not want that info on outgoing shipment
+                var.dest_type = None
                 for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
                     partial_datas['move%s' % (move.move_id.id)].update({
                                                     'location_id':cross_docking_location,
                                                     })
-            # do not force the user to choose the value below. Instead, the value should be the one taken from the original delivery order. So, do nothing.
-            elif var.source_type == 'from_stock' and not var.dest_type:
+            elif var.source_type == 'from_stock' :
+                var.dest_type = None
                 for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
                     partial_datas['move%s' % (move.move_id.id)].update({
-                                                'location_id' : stock_location_input,
+                                                'location_id' : stock_location_output,
                                                 })
         return partial_datas
 
