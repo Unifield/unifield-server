@@ -89,12 +89,11 @@
                     </group>
                     <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
                         <separator string="Analytic Account" colspan="4"/>
-                        <field name="rev_analytic_account_fp_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                        <field name="rev_analytic_account_cc_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                        <newline/>
                         <group col="4" colspan="6">
                             <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
                             <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <field name="rev_analytic_account_fp_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
+                            <field name="rev_analytic_account_cc_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="analytic_account_fp_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
                                 <tree string="Funding Pool">
                                     <field name="code" string="Ana. Code"/>
@@ -110,12 +109,11 @@
                                 </tree>
                             </field>
                         </group>
-                        <field name="rev_analytic_account_f1_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                        <field name="rev_analytic_account_f2_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                        <newline/>
                         <group col="4" colspan="6">
                             <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
                             <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <field name="rev_analytic_account_f1_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
+                            <field name="rev_analytic_account_f2_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="analytic_account_f1_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
                                 <tree string="Free 1">
                                     <field name="code" string="Ana. Code"/>
