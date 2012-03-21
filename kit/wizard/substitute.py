@@ -638,7 +638,7 @@ class substitute_item(osv.osv_memory):
         # we do not want the children location
         stock_context = dict(context, compute_child=False)
         # we check for the available qty (in:done, out: assigned, done)
-        res = loc_obj._product_reserve_lot(cr, uid, [location_id], product_id, uom_id, context=stock_context, lock=True)
+        res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
         if prodlot_id:
             # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
             qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0

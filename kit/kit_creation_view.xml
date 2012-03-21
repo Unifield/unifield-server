@@ -30,32 +30,34 @@
                     	<page string="Components">
                     		<field name="default_location_src_id_kit_creation" />
                     		<field name="consider_child_locations_kit_creation" /> 
+                    		<field name="internal_picking_id_kit_creation" />
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" />
                     		<group col="4" colspan="4">
                     			<group colspan="2" />
-	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-find" />
+	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" />
 	                    		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" />
                     		</group>
-                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph">
-                    			<tree string="Consumed Stock Moves">
+                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}">
+                    			<tree string="Consumed Stock Moves" editable="top" hide_new_button="True">
                     				<field name="kit_creation_id_stock_move" invisible="True" />
-                    				<field name="product_id" />
-                    				<field name="product_qty" />
-                    				<field name="product_uom" />
-                    				<field name="prodlot_id" />
+                    				<field name="product_id" readonly="True" />
+                    				<field name="product_qty" readonly="True" />
+                    				<field name="product_uom" readonly="True" />
+                    				<field name="prodlot_id" domain="[('product_id', '=', product_id),('check_type','=', True)]" />
                     				<field name="expired_date" />
                     				<field name="location_id" />
+                    				<field name="state" />
                     			</tree>
                     		</field>
                     		<group col="4" colspan="4">
-	                    		<button name="process_to_consume" type="object" string="Cancel All Lines" icon="gtk-go-forward" />
-	                    		<button name="dummy_function" type="object" string="Force Availability" icon="gtk-find" />
-	                    		<button name="process_to_consume" type="object" string="Check Availability" icon="gtk-go-forward" />
+	                    		<button name="cancel_all_lines" type="object" string="Cancel All Lines" icon="gtk-cancel" invisible="True" />
+	                    		<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" />
+	                    		<button name="check_availability" type="object" string="Check Availability" icon="gtk-find" />
 	                    		<button name="process_to_consume" type="object" string="Assign to Kits" icon="gtk-go-forward" />
                     		</group>
                     	</page>
                     	<page string="Kits">
-                    		
+                    		<field name="kit_ids_kit_creation" nolabel="True" readonly="True" />
                     	</page>
                     	<page string="Notes">
                     		<field name="notes_kit_creation" nolabel="True" />

@@ -61,7 +61,7 @@ class process_to_consume(osv.osv_memory):
                     mem.to_consume_id_process_to_consume.write({'qty_to_consume': qty}, context=context)
                 
                 # find the FEFO logic if the product is BATCH MANAGEMENT or EXPIRY DATE
-                stock_context = dict(context, compute_child=mem.consider_child_locations_process_to_consume)
+                consider_child_locations = mem.consider_child_locations_process_to_consume
                 # we check for the available qty (in:done, out: assigned, done)
                 # location
                 location_ids = [mem.location_src_id_process_to_consume.id]
@@ -70,11 +70,11 @@ class process_to_consume(osv.osv_memory):
                 # uom
                 uom_id = mem.uom_id_process_to_consume.id
                 # find the corresponding LOTS if needed and create possibly many stock moves
-                res = loc_obj._product_reserve_lot(cr, uid, location_ids, product_id, uom_id, context=stock_context, lock=True)
+                res = loc_obj.compute_availability(cr, uid, location_ids, consider_child_locations, product_id, uom_id, context=context)
                 # create a corresponding stock move
                 values = {'kit_creation_id_stock_move': mem.kit_creation_id_process_to_consume.id,
                           'name': mem.product_id_process_to_consume.name,
-                          'picking_id': False, # todo create internal picking with kit.creation
+                          'picking_id': mem.kit_creation_id_process_to_consume.internal_picking_id_kit_creation.id,
                           'product_uom': mem.uom_id_process_to_consume.id,
                           'product_id': mem.product_id_process_to_consume.id,
                           'date_expected': context['common']['date'],
@@ -161,12 +161,12 @@ class process_to_consume_line(osv.osv_memory):
         on change
         '''
         # objects
-        to_consume_obj = self.pool.get('kit.creation.to.consume')
+        loc_obj = self.pool.get('stock.location')
         # default value
         result = {'value': {'qty_available_process_to_consume': 0.0}}
         if product_id and uom_id and location_src_id:
             # we check for the available qty (in:done, out: assigned, done)
-            res = to_consume_obj._compute_availability(cr, uid, [location_src_id], consider_child_locations, product_id, uom_id, context=context)
+            res = loc_obj.compute_availability(cr, uid, [location_src_id], consider_child_locations, product_id, uom_id, context=context)
             result.setdefault('value', {}).update({'qty_available_process_to_consume': res['total']})
         return result
     
@@ -180,8 +180,8 @@ class process_to_consume_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        to_consume_obj = self.pool.get('kit.creation.to.consume')
-            
+        loc_obj = self.pool.get('stock.location')
+        
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # qty_available_to_consume
@@ -192,7 +192,7 @@ class process_to_consume_line(osv.osv_memory):
             # compute child
             compute_child = obj.consider_child_locations_process_to_consume
             # we check for the available qty (in:done, out: assigned, done)
-            res = to_consume_obj._compute_availability(cr, uid, [obj.location_src_id_process_to_consume.id], compute_child, product_id, uom_id, context=context)
+            res = loc_obj.compute_availability(cr, uid, [obj.location_src_id_process_to_consume.id], compute_child, product_id, uom_id, context=context)
             result.setdefault(obj.id, {}).update({'qty_available_process_to_consume': res['total']})
         return result
     

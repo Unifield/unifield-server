@@ -581,8 +581,9 @@ class composition_kit(osv.osv):
                 'composition_version_id': fields.many2one('composition.kit', string='Version'),
                 'composition_creation_date': fields.date(string='Creation Date', required=True),
                 'composition_reference': fields.char(string='Reference', size=1024),
-                'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),
+                'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'composition_ref_exp': fields.date(string='Expiry Date for Kit with reference', readonly=True),
+                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order'),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
                 'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
@@ -653,6 +654,8 @@ class composition_kit(osv.osv):
                  'active': True,
                  'state': 'draft',
                  }
+    
+    _order = 'composition_creation_date desc'
     
     def _composition_kit_constraint(self, cr, uid, ids, context=None):
         '''
@@ -1128,6 +1131,24 @@ class stock_location(osv.osv):
     '''
     _inherit = 'stock.location'
     
+    def compute_availability(self, cr, uid, ids, consider_child_locations, product_id, uom_id, context=None):
+        '''
+        call stock computation function
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        # do we want the child location
+        stock_context = dict(context, compute_child=consider_child_locations)
+        # we check for the available qty (in:done, out: assigned, done)
+        res = loc_obj._product_reserve_lot(cr, uid, ids, product_id, uom_id, context=stock_context, lock=True)
+        #print res
+        return res
+    
     def _product_reserve_lot(self, cr, uid, ids, product_id, uom_id, context=None, lock=False):
         """
         refactoring of original reserver method, taking production lot into account
@@ -1246,7 +1267,7 @@ class stock_location(osv.osv):
                                           'product_id': product_id,
                                           'qty': lot_tot})
         # global FEFO sorting
-        sorted(fefo_list, cmp=lambda x, y: cmp(x.get('expired_date'), y.get('expired_date')))
+        data['fefo'] = sorted(fefo_list, cmp=lambda x, y: cmp(x.get('expired_date'), y.get('expired_date')), reverse=False)
         return data
     
 stock_location()
