@@ -423,6 +423,48 @@ class account_bank_statement(osv.osv):
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
+    def button_open_advances(self, cr, uid, ids, context={}):
+        """
+        Open a list of open advances
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        domain = []
+        date = time.strftime('%Y-%m-%d')
+        registers = self.browse(cr, uid, ids, context=context)
+        register = registers and registers[0] or False
+        if not register:
+            raise osv.except_osv(_('Error'), _('Please select a register first.'))
+        domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
+        name = _('Open Advances')
+        if register.journal_id and register.journal_id.currency:
+            # prepare some values
+            name += ' - ' + register.journal_id.currency.name
+            domain.append(('statement_id.journal_id.currency', '=', register.journal_id.currency.id))
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
+        context.update({'open_advance': register.id})
+        return {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
+            'domain': domain,
+            'context': context,
+            'target': 'current',
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):
@@ -1256,6 +1298,8 @@ class account_bank_statement_line(osv.osv):
         # then display the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
         st_obj = self.pool.get('account.bank.statement.line')
         st = st_obj.browse(cr, uid, ids[0]).statement_id
+        if 'open_advance' in context:
+            st = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         if st and st.state != 'open':
             raise osv.except_osv(_('Error'), _('You cannot do a cash return in Register which is in another state that "open"!'))
         statement_id = st.id
@@ -1265,6 +1309,13 @@ class account_bank_statement_line(osv.osv):
         wiz_obj = self.pool.get('wizard.cash.return')
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
             'currency_id': st_line.statement_id.currency.id}, context=context)
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+            'statement_line_id': ids[0],
+            'statement_id': statement_id,
+            'amount': amount
+        })
         if statement_id:
             return {
                 'name' : "Advance Return",
@@ -1274,14 +1325,7 @@ class account_bank_statement_line(osv.osv):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'res_id': [wiz_id],
-                'context': 
-                {
-                    'active_id': ids[0],
-                    'active_ids': ids,
-                    'statement_line_id': ids[0],
-                    'statement_id': statement_id,
-                    'amount': amount
-                }
+                'context': context,
             }
         else:
             return False
@@ -1420,7 +1464,6 @@ class account_bank_statement_line(osv.osv):
         return res
 
 account_bank_statement_line()
-
 
 class ir_values(osv.osv):
     _name = 'ir.values'

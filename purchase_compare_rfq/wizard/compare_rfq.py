@@ -250,10 +250,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                                              'po_line_id': l.id,
                                                              'price_unit': l.price_unit,
                                                              'qty': l.product_qty,
+                                                             'notes': l.notes,
                                                              'compare_line_id': line_id.id,
                                                              'compare_id': line_id.compare_id.id,
                                                              'price_total': l.product_qty*l.price_unit}))
-        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)]})
+        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)],
+                                                 'line_notes_ids': [(6,0,line_ids)]})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.choose.supplier',
@@ -275,6 +277,8 @@ class wizard_choose_supplier(osv.osv_memory):
         'product_id': fields.many2one('product.product', string='Product'),
         'supplier_id': fields.many2one('res.partner', string='Supplier'),
         'line_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
+                                     string='Lines'),
+        'line_notes_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
                                      string='Lines'),
         'compare_id': fields.many2one('wizard.compare.rfq.line', string='Wizard'),
     }
@@ -313,6 +317,7 @@ class wizard_choose_supplier_line(osv.osv_memory):
         'price_unit': fields.float(digits=(16,2), string='Unit Price'),
         'qty': fields.float(digits=(16,2), string='Qty'),
         'price_total': fields.float(digits=(16,2), string='Total Price'),
+        'notes': fields.text(string='Notes'),
     }
     
     def write(self, cr, uid, ids, data, context={}):

@@ -42,7 +42,7 @@ class account_mcdb(osv.osv_memory):
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),
         'employee_id': fields.many2one('hr.employee', string="Employee"),
-        'register_id': fields.many2one('account.bank.statement', string="Register"),
+        'transfer_journal_id': fields.many2one('account.journal', string="Journal"),
         'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciled?'),
         'functional_currency_id': fields.many2one('res.currency', string="Functional currency", readonly=True),
         'amount_func_from': fields.float('Begin amount in functional currency'),
@@ -227,7 +227,7 @@ class account_mcdb(osv.osv_memory):
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
-                ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
+                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
