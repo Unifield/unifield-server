@@ -30,6 +30,9 @@ class analytic_account(osv.osv):
     _inherit = "account.analytic.account"
     
     _columns = {
+        'name': fields.char('Name', size=128, required=True),
+        'code': fields.char('Code', size=24),
+        'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
         'date_start': fields.date('Active from', required=True),
         'date': fields.date('Inactive from', select=True),
         'category': fields.selection([('OC','Cost Center'),
