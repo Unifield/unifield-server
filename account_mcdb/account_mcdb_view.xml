@@ -25,9 +25,12 @@
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
                             <group col="2" colspan="2">
                                 <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
-                                <button name="button_journal_add" type="object" string="Add all journals" icon="gtk-add" colspan="1"/>
+                                <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
                             </group>
-                            <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
+                            <group col="2" colspan="2">
+                                <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
+                                <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
+                            </group>
                             <field name="rev_journal_ids" colspan="2"/>
                             <field name="rev_period_ids" colspan="2"/>
                             <field name="journal_ids" colspan="2" nolabel="1">
@@ -47,7 +50,10 @@
                             </field>
                         </group>
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                            <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="2"/>
+                            <group col="2" colspan="2">
+                                <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="1"/>
+                                <button name="button_analytic_journal_add" type="object" string="Add all Analytic Journals" icon="gtk-add" colspan="1"/>
+                            </group>
                             <newline/>
                             <field name="rev_analytic_journal_ids" colspan="2"/>
                             <newline/>
@@ -66,10 +72,16 @@
                         
                         <newline/>
                         <group col="4" colspan="6">
-                            <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="2"/>
-                            <label string="" colspan="2"/>
+                            <group colspan="2" col="2">
+                                <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="1"/>
+                                <button name="button_account_add" type="object" string="Add all Accounts" icon="gtk-add" colspan="1"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="1"/>
+                                <button name="button_account_type_add" type="object" string="Add all Account Types" icon="gtk-add" colspan="1"/>
+                            </group>
                             <field name="rev_account_ids" colspan="2"/>
-                            <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>
+                            <field name="rev_account_type_ids" colspan="2"/>
                             <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
                                 <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
                                     <field name="code"/>
@@ -97,8 +109,14 @@
                     <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
                         <separator string="Analytic Account" colspan="4"/>
                         <group col="4" colspan="6">
-                            <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <group col="2" colspan="2">
+                                <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                                <button name="button_funding_pool_add" type="object" string="Add all Funding Pool" icon="gtk-add" colspan="1"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                                <button name="button_cost_center_add" type="object" string="Add all Cost Center" icon="gtk-add" colspan="1"/>
+                            </group>
                             <field name="rev_analytic_account_fp_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="rev_analytic_account_cc_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="analytic_account_fp_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
@@ -108,7 +126,7 @@
                                     <field name="type" string="Ana. Type"/>
                                 </tree>
                             </field>
-                            <field name="analytic_account_cc_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"  domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                            <field name="analytic_account_cc_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
                                 <tree string="Cost Center" editable="top" noteditable="1">
                                     <field name="code" string="Ana. Code"/>
                                     <field name="name" string="Ana. Name"/>
@@ -117,8 +135,14 @@
                             </field>
                         </group>
                         <group col="4" colspan="6">
-                            <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <group col="2" colspan="2">
+                                <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                                <button name="button_free_1_add" type="object" string="Add all Free 1" icon="gtk-add" colspan="1"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                                <button name="button_free_2_add" type="object" string="Add all Free 2" icon="gtk-add" colspan="1"/>
+                            </group>
                             <field name="rev_analytic_account_f1_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="rev_analytic_account_f2_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
                             <field name="analytic_account_f1_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">

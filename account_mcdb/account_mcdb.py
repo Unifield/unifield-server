@@ -403,7 +403,7 @@ class account_mcdb(osv.osv_memory):
             'target': 'crush',
         }
 
-    def _button_add(self, cr, uid, ids, obj=False, field=False, args=False, context={}):
+    def _button_add(self, cr, uid, ids, obj=False, field=False, args=[], context={}):
         """
         Search all elements of an object (obj) regarding criteria (args). Then return wizard and complete given field (field).
         NB: We consider field is always a MANY2ONE field! (no sense to add all elements of another field…
@@ -421,12 +421,9 @@ class account_mcdb(osv.osv_memory):
             'active_ids': ids,
         })
         res_id = ids[0]
-        domain = []
-        if args:
-            domain = [args]
         if obj and field:
             # Search all elements
-            element_ids = self.pool.get(obj).search(cr, uid, domain)
+            element_ids = self.pool.get(obj).search(cr, uid, args)
             if element_ids:
                 self.write(cr, uid, ids, {field: [(6, 0, element_ids)]})
         return {
@@ -464,7 +461,7 @@ class account_mcdb(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         obj = 'account.journal'
-        args = False
+        args = []
         field = 'journal_ids'
         return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
@@ -480,6 +477,21 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'period_ids' field
         return self.button_clear(cr, uid, ids, field='period_ids', context=context)
 
+    def button_period_add(self, cr, uid, ids, context={}):
+        """
+        Add all periods in period_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.period'
+        args = []
+        field = 'period_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
     def button_analytic_journal_clear(self, cr, uid, ids, context={}):
         """
         Delete analytic_journal_ids field content
@@ -491,6 +503,21 @@ class account_mcdb(osv.osv_memory):
             ids = [ids]
         # Return default behaviour with 'analytic_journal_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_journal_ids', context=context)
+
+    def button_analytic_journal_add(self, cr, uid, ids, context={}):
+        """
+        Add all Analytic journals in analytic_journal_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.analytic.journal'
+        args = []
+        field = 'analytic_journal_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
     def button_account_clear(self, cr, uid, ids, context={}):
         """
@@ -504,6 +531,21 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'account_ids' field
         return self.button_clear(cr, uid, ids, field='account_ids', context=context)
 
+    def button_account_add(self, cr, uid, ids, context={}):
+        """
+        Add all Accounts in account_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.account'
+        args = [('parent_id', '!=', False)]
+        field = 'account_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
     def button_account_type_clear(self, cr, uid, ids, context={}):
         """
         Delete account_type_ids field content
@@ -515,6 +557,21 @@ class account_mcdb(osv.osv_memory):
             ids = [ids]
         # Return default behaviour with 'account_type_ids' field
         return self.button_clear(cr, uid, ids, field='account_type_ids', context=context)
+
+    def button_account_type_add(self, cr, uid, ids, context={}):
+        """
+        Add all Account Type in account_type_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.account.type'
+        args = []
+        field = 'account_type_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
     def button_funding_pool_clear(self, cr, uid, ids, context={}):
         """
@@ -528,6 +585,21 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'analytic_account_fp_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_fp_ids', context=context)
 
+    def button_funding_pool_add(self, cr, uid, ids, context={}):
+        """
+        Add all Funding Pool in analytic_account_fp_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.analytic.account'
+        args = [('type', '!=', 'view'), ('category', '=', 'FUNDING')]
+        field = 'analytic_account_fp_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
     def button_cost_center_clear(self, cr, uid, ids, context={}):
         """
         Delete analytic_account_cc_ids field content
@@ -539,6 +611,21 @@ class account_mcdb(osv.osv_memory):
             ids = [ids]
         # Return default behaviour with 'analytic_account_cc_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_cc_ids', context=context)
+
+    def button_cost_center_add(self, cr, uid, ids, context={}):
+        """
+        Add all Cost Center in analytic_account_cc_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.analytic.account'
+        args = [('type', '!=', 'view'), ('category', '=', 'OC')]
+        field = 'analytic_account_cc_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
     def button_free_1_clear(self, cr, uid, ids, context={}):
         """
@@ -552,6 +639,21 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'analytic_account_f1_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_f1_ids', context=context)
 
+    def button_free_1_add(self, cr, uid, ids, context={}):
+        """
+        Add all Free 1 in analytic_account_f1_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.analytic.account'
+        args = [('type', '!=', 'view'), ('category', '=', 'FREE1')]
+        field = 'analytic_account_f1_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
     def button_free_2_clear(self, cr, uid, ids, context={}):
         """
         Delete analytic_account_f2_ids field content
@@ -563,6 +665,21 @@ class account_mcdb(osv.osv_memory):
             ids = [ids]
         # Return default behaviour with 'analytic_account_f2_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_f2_ids', context=context)
+
+    def button_free_2_add(self, cr, uid, ids, context={}):
+        """
+        Add all Free 2 in analytic_account_f2_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.analytic.account'
+        args = [('type', '!=', 'view'), ('category', '=', 'FREE2')]
+        field = 'analytic_account_f2_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
