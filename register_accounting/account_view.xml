@@ -16,12 +16,10 @@
                     <form string="Bank Register" hide_new_button="1" hide_delete_button="1">
                         <group col="6" colspan="4">
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="code" />
                             <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
                             <field name="date" select="1" on_change="onchange_date(date)"/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
-                            <field name="journal_name"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
@@ -158,15 +156,12 @@
                     <form string="Statement" hide_new_button="1" hide_delete_button="1">
                         <group col="6" colspan="4">
                             <field name="name" readonly="1"/>
-                            <field name="code"   attrs="{'readonly': [('state', 'not in',('draft'))]}"/>
                             <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash')]" select="1"/>
                             <newline/>
                             
                             <field name="user_id" select="1" readonly="1"/>
                             <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
-                            <field name="journal_name"/>
-                            
                             <field name="currency" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
@@ -573,13 +568,10 @@
                 <form string="Cheque Register" hide_new_button="1" hide_delete_button="1">
                     <group col="7" colspan="4">
                         <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="code" />
                         <field name="journal_id" domain="[('type', '=', 'cheque')]" on_change="onchange_journal_id(journal_id)" select="1"/>
                         <newline/>
                         <field name="date" select="1" on_change="onchange_date(date)"/>
                         <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
-                        <field name="journal_name"/>
-                        
                         <field name="currency" invisible="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
