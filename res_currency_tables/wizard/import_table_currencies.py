@@ -96,7 +96,7 @@ class import_table_currencies(osv.osv_memory):
         
         return {
                 'type': 'ir.actions.act_window',
-                'res_model': 'confirm.currencies',
+                'res_model': 'confirm.import.currencies',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
