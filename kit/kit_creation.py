@@ -77,6 +77,12 @@ class kit_creation(osv.osv):
         vals.update({'to_consume_sequence_id': self.create_sequence(cr, uid, vals, context=context)})
         return super(kit_creation, self).create(cr, uid, vals, context=context)
     
+    def copy(self, cr, uid, id, defaults=None, context=None):
+        '''
+        avoid copy
+        '''
+        raise osv.except_osv(_('Warning !'), _('Copy is deactivated for Kitting Order.'))
+    
     def reset_to_version(self, cr, uid, ids, context=None):
         '''
         open confirmation wizard
@@ -216,6 +222,7 @@ class kit_creation(osv.osv):
                   'composition_lot_id': batch_management and new_lot_id or False,
                   'composition_ref_exp': not batch_management and default_date or False,
                   'composition_kit_creation_id': obj.id,
+                  'state': 'in_production',
                   }
         new_kit_id = kit_obj.create(cr, uid, values, context=context)
         # log kit creation
@@ -407,22 +414,6 @@ class kit_creation(osv.osv):
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
-    
-    def mark_as_active(self, cr, uid, ids, context=None):
-        '''
-        button function
-        set the active flag to False
-        
-        to consumed state function test
-        '''
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        
-        self.write(cr, uid, ids, {'state': 'in_production'}, context=context)
-        return True
     
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
@@ -676,7 +667,7 @@ class kit_creation_to_consume(osv.osv):
         result = to_consume_obj.search(cr, uid, [('kit_creation_id_to_consume', 'in', ids)], context=context)
         return result
     
-    _columns = {'kit_creation_id_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
+    _columns = {'kit_creation_id_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True, on_delete='cascade'),
                 'product_id_to_consume': fields.many2one('product.product', string='Product', required=True),
                 'qty_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', required=True),
@@ -781,7 +772,8 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     
-    _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True)}
+    _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
+                'hidden_state': fields.related('state', )}
     
     def check_assign_lot(self, cr, uid, ids, context=None):
         """

@@ -583,7 +583,7 @@ class composition_kit(osv.osv):
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'composition_ref_exp': fields.date(string='Expiry Date for Kit with reference', readonly=True),
-                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order'),
+                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order', readonly=True),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
                 'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),

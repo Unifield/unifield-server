@@ -28,16 +28,16 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Components">
-                    		<field name="default_location_src_id_kit_creation" />
-                    		<field name="consider_child_locations_kit_creation" /> 
+                    		<field name="default_location_src_id_kit_creation" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
+                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', '!=', 'in_production')]}" /> 
                     		<field name="internal_picking_id_kit_creation" />
-                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" />
+                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
                     		<group col="4" colspan="4">
                     			<group colspan="2" />
-	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" />
-	                    		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" />
+	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+	                    		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
                     		</group>
-                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}">
+                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}" attrs="{'readonly': [('state', '!=', 'in_production')]}">
                     			<tree string="Consumed Stock Moves" editable="top" hide_new_button="True">
                     				<field name="kit_creation_id_stock_move" invisible="True" />
                     				<field name="product_id" readonly="True" />
@@ -47,13 +47,16 @@
                     				<field name="expired_date" />
                     				<field name="location_id" />
                     				<field name="state" />
+                    				<field name="hidden_state" />
+                    				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('state', '!=', 'confirmed')]}" />
+                    				<button name="assign_to_kit" type="object" string="Assign to Kits" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'assigned')]}" />
                     			</tree>
                     		</field>
                     		<group col="4" colspan="4">
 	                    		<button name="cancel_all_lines" type="object" string="Cancel All Lines" icon="gtk-cancel" invisible="True" />
-	                    		<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" />
-	                    		<button name="check_availability" type="object" string="Check Availability" icon="gtk-find" />
-	                    		<button name="process_to_consume" type="object" string="Assign to Kits" icon="gtk-go-forward" />
+	                    		<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+	                    		<button name="check_availability" type="object" string="Check Availability" icon="gtk-find" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+	                    		<button name="process_to_consume" type="object" string="Assign to Kits" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
                     		</group>
                     	</page>
                     	<page string="Kits">
@@ -68,13 +71,7 @@
                     </group>
                     <group col="7" colspan="2">
                     	<button name="start_production" type="object" string="Start Production" icon="gtk-clear" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
-                    	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
-                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
-                        <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
+                    	<button name="confirm_kitting" type="object" string="Confirm Kitting" icon="gtk-apply" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
                     </group>
             	</form>
             </field>
