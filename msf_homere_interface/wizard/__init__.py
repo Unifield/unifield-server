@@ -21,7 +21,7 @@
 #
 ##############################################################################
 
-import hr_payroll_analytic_reallocation
+import hr_analytic_reallocation
 import hr_payroll_import
 import hr_payroll_validation
 import hr_payroll_employee_import

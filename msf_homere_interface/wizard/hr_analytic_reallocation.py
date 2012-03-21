@@ -26,8 +26,8 @@ from osv import fields
 from lxml import etree
 
 class hr_payroll_analytic_reallocation(osv.osv_memory):
-    _name = 'hr.payroll.analytic.reallocation'
-    _description = 'Payroll analytic reallocation wizard'
+    _name = 'hr.analytic.reallocation'
+    _description = 'Analytic reallocation wizard'
 
     _columns = {
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -71,6 +71,9 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         """
         if not context:
             raise osv.except_osv(_('Error'), _('Unknown error'))
+        model = context.get('active_model')
+        if not model:
+            raise osv.except_osv(_('Error'), _('Unknown error. Please contact an administrator to resolve this problem. This is probably due to Web server error.'))
         line_ids = context.get('active_ids', [])
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
@@ -87,7 +90,7 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
             obj = getattr(wiz, el, None)
             if obj:
                 vals.update({el: getattr(obj, 'id', None)})
-        self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, vals)
+        self.pool.get(model).write(cr, uid, line_ids, vals)
         return { 'type': 'ir.actions.act_window_close', 'context': context}
 
 hr_payroll_analytic_reallocation()

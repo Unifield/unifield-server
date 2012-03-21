@@ -6,12 +6,12 @@
         Wizard form
     -->
 
-        <record id="payroll_analytic_reallocation_wizard" model="ir.ui.view">
-            <field name="name">payroll.analytic.reallocation.wizard</field>
-            <field name="model">hr.payroll.analytic.reallocation</field>
+        <record id="analytic_reallocation_wizard" model="ir.ui.view">
+            <field name="name">analytic.reallocation.wizard</field>
+            <field name="model">hr.analytic.reallocation</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Payroll Analytic Reallocation">
+                <form string="Analytic Reallocation">
                     <field name="cost_center_id"/>
                     <field name="funding_pool_id"/>
                     <newline/>
@@ -113,18 +113,29 @@
         Actions
     -->
 
-    <!-- Mass reallocation wizard -->
+        <!-- Mass reallocation wizard for Payroll -->
         <act_window id="action_payroll_analytic_reallocation"
-            name="Analytic reallocation"
-            res_model="hr.payroll.analytic.reallocation"
+            name="Payroll Analytic reallocation"
+            res_model="hr.analytic.reallocation"
             src_model="hr.payroll.msf"
             key2="client_action_multi"
             view_mode="form"
             view_type="form"
             target="new"
-            view_id="payroll_analytic_reallocation_wizard"/>
+            view_id="analytic_reallocation_wizard"/>
 
-    <!-- Payroll entries validation wizard -->
+        <!-- Mass reallocation wizard for Employee -->
+        <act_window id="action_employee_analytic_reallocation"
+            name="Employee Analytic reallocation"
+            res_model="hr.analytic.reallocation"
+            src_model="hr.employee"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="analytic_reallocation_wizard"/>
+
+        <!-- Payroll entries validation wizard -->
         <act_window id="action_payroll_validation"
             name="Validate draft entries"
             res_model="hr.payroll.validation"
@@ -135,7 +146,7 @@
             target="new"
             view_id="payroll_validation_wizard"/>
 
-    <!-- Payroll entries deletion wizard -->
+        <!-- Payroll entries deletion wizard -->
         <act_window id="action_payroll_deletion"
             name="Delete draft entries"
             res_model="hr.payroll.deletion"
