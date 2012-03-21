@@ -33,6 +33,8 @@
         'cross_docking_view.xml',
     ],
     'test': [
+        'test/data.yml',
+        'test/msf_cross_docking.yml',
     ],
     'installable': True,
     'active': False,
