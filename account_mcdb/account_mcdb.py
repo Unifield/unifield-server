@@ -403,6 +403,44 @@ class account_mcdb(osv.osv_memory):
             'target': 'crush',
         }
 
+    def _button_add(self, cr, uid, ids, obj=False, field=False, args=False, context={}):
+        """
+        Search all elements of an object (obj) regarding criteria (args). Then return wizard and complete given field (field).
+        NB: We consider field is always a MANY2ONE field! (no sense to add all elements of another field…
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_mcdb_form')
+        view_id = view_id and view_id[1] or False
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        res_id = ids[0]
+        domain = []
+        if args:
+            domain = [args]
+        if obj and field:
+            # Search all elements
+            element_ids = self.pool.get(obj).search(cr, uid, domain)
+            if element_ids:
+                self.write(cr, uid, ids, {field: [(6, 0, element_ids)]})
+        return {
+            'name': _('Multi-Criteria Data Browser'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'res_id': res_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'context': context,
+            'target': 'crush',
+        }
+
     def button_journal_clear(self, cr, uid, ids, context={}):
         """
         Delete journal_ids field content
@@ -425,36 +463,10 @@ class account_mcdb(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        res_id = ids[0]
         obj = 'account.journal'
         args = False
-        domain = []
-        if args:
-            domain = [args]
         field = 'journal_ids'
-        # Search all journals
-        journal_ids = self.pool.get(obj).search(cr, uid, domain)
-        if journal_ids:
-            self.write(cr, uid, ids, {field: [(6, 0, journal_ids)]})
-        # Update context
-        context.update({
-            'active_id': ids[0],
-            'active_ids': ids,
-        })
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_mcdb_form')
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': _('Multi-Criteria Data Browser'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
     def button_period_clear(self, cr, uid, ids, context={}):
         """
