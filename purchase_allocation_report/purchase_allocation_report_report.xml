@@ -7,7 +7,8 @@
             id="purchase_allocation_report.po_line_allocation_report"
             model="purchase.order" 
             name="po.line.allocation.report" 
-            rml="purchase_allocation_report/report/po_line_allocation_report.rml" 
+            rml="purchase_allocation_report/report/po_line_allocation_report.rml"
+            header="False" 
             string="Allocation report" />
             
         <report 
