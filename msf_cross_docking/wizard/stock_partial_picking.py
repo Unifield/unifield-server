@@ -168,6 +168,8 @@ class stock_partial_picking(osv.osv_memory):
                     partial_datas['move%s' % (move.move_id.id)].update({
                                                 'location_id' : stock_location_output,
                                                 })
+            elif var.source_type != None:
+                var.dest_type = None
         return partial_datas
 
 stock_partial_picking()

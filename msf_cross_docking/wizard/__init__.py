@@ -20,3 +20,4 @@
 ##############################################################################
 
 import stock_partial_picking
+import create_picking

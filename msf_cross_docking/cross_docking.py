@@ -31,7 +31,7 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     _columns = {
-        'cross_docking_ok': fields.boolean('Cross docking?'),
+        'cross_docking_ok': fields.boolean('Cross docking'),
     }
 
     _defaults = {
@@ -191,5 +191,47 @@ class stock_picking(osv.osv):
             defaults.update({'location_id': location_id})
         
         return defaults
+
+    def do_create_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update values data. Originally: to complete msf_cross_docking module
+        '''
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        # calling super method
+        values = super(stock_picking, self).do_create_picking_first_hook(cr, uid, ids, context, *args, **kwargs)
+        # location_id is equivalent to the source location: does it exist when we go through the "_do_partial_hook" in the msf_cross_docking> stock_partial_piking> "do_partial_hook"
+        move = kwargs.get('move')
+        picking_ids = context.get('active_ids', False)
+        pick_obj = self.pool.get('stock.picking')
+        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            move_list = partial_datas[pick.id][move.id]
+            for dico in move_list:
+                location_id = dico.get('location_id')
+        if location_id:
+            values.update({'location_id': location_id})
+
+        return values
+
+    def do_validate_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update values data. Originally: to complete msf_cross_docking module
+        '''
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        # calling super method
+        values = super(stock_picking, self).do_validate_picking_first_hook(cr, uid, ids, context, *args, **kwargs)
+        # location_id is equivalent to the source location: does it exist when we go through the "_do_partial_hook" in the msf_cross_docking> stock_partial_piking> "do_partial_hook"
+        move = kwargs.get('move')
+        picking_ids = context.get('active_ids', False)
+        pick_obj = self.pool.get('stock.picking')
+        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            move_list = partial_datas[pick.id][move.id]
+            for dico in move_list:
+                location_id = dico.get('location_id')
+        if location_id:
+            values.update({'location_id': location_id})
+
+        return values
     
 stock_picking()
