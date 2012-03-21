@@ -772,8 +772,17 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     
+    SELECTION = [('draft', 'Draft'),
+                 ('waiting', 'Waiting'),
+                 ('confirmed', 'Not Available'),
+                 ('assigned', 'Available'),
+                 ('done', 'Closed'),
+                 ('cancel', 'Cancelled'),
+                 ]
+    
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
-                'hidden_state': fields.related('state', )}
+                'hidden_state': fields.related('state', type='selection', selection=SELECTION),
+                }
     
     def check_assign_lot(self, cr, uid, ids, context=None):
         """

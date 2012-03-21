@@ -33,6 +33,21 @@ class wizard_budget_import(osv.osv_memory):
         'import_file': fields.binary("CSV File"),
     }
     
+    def split_budgets(self, import_data):
+        result = []
+        current_budget = []
+        for line in import_data:
+            if line[0] == '':
+                # split must be done
+                result.append(current_budget)
+                current_budget = []
+            else:
+                # append line to current budget
+                current_budget.append(line)
+        # last append
+        result.append(current_budget)
+        return result
+    
     def fill_header_data(self, cr, uid, import_data, context={}):
         result = {}
         # name
@@ -51,7 +66,7 @@ class wizard_budget_import(osv.osv_memory):
         else:
             fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('code', '=', import_data[2][1])], context=context)
             if len(fy_ids) == 0:
-                raise osv.except_osv(_('Warning !'), _("The fiscal year %s is not defined in the database!" % import_data[2][1]))
+                raise osv.except_osv(_('Warning !'), _("The fiscal year %s is not defined in the database!") % (import_data[2][1],))
             else:
                 result.update({'fiscalyear_id': fy_ids[0]})
         # cost center code
@@ -61,7 +76,7 @@ class wizard_budget_import(osv.osv_memory):
             cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', import_data[3][1]),
                                                                                 ('category', '=', 'OC')], context=context)
             if len(cc_ids) == 0:
-                raise osv.except_osv(_('Warning !'), _("The cost center %s is not defined in the database!" % import_data[3][1]))
+                raise osv.except_osv(_('Warning !'), _("The cost center %s is not defined in the database!") % (import_data[3][1],))
             else:
                 result.update({'cost_center_id': cc_ids[0]})
         # decision moment
@@ -74,7 +89,7 @@ class wizard_budget_import(osv.osv_memory):
     def fill_budget_line_data(self, cr, uid, import_data, context={}):
         result = []
         # Check that the account exists
-        for import_line in import_data[7:]:
+        for import_line in import_data[6:]:
             budget_line_vals = {}
             if import_line[0] == "":
                 raise osv.except_osv(_('Warning !'), _("A budget line has no account!"))
@@ -84,28 +99,29 @@ class wizard_budget_import(osv.osv_memory):
                                                                       [('code', '=', import_line[0])],
                                                                       context=context)
                 if len(account_ids) == 0:
-                    raise osv.except_osv(_('Warning !'), _("Account %s does not exist in database!" % import_line[0]))
+                    raise osv.except_osv(_('Warning !'), _("Account %s does not exist in database!") % (import_line[0],))
                 else:
                     account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
                     if account.user_type_code != 'expense':
-                        raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!" % import_line[0]))
+                        raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!") % (import_line[0],))
                     elif account.type != 'view':
                         # Only create "normal" budget lines (view accounts are just discarded)
                         budget_line_vals.update({'account_id': account_ids[0]})
-                        budget_values = "["
+                        budget_values = []
                         for budget_value in import_line[1:13]:
                             if budget_value == "":
-                                budget_values += "0"
+                                budget_values.append(0)
                             else:
                                 # try to parse as int
                                 try:
-                                    test_value = int(budget_value)
+                                    int_value = int(budget_value)
                                 except:
                                     raise osv.except_osv(_('Warning !'), _("The value '%s' is not an integer!") % budget_value)
-                                budget_values += budget_value
-                            budget_values += ","
-                        budget_values = budget_values[:-1] + "]"
-                        budget_line_vals.update({'budget_values': budget_values})
+                                budget_values.append(int_value)
+                        # Sometimes, the CSV has not all the needed columns. It's padded.
+                        if len(budget_values) != 12:
+                            budget_values += [0]*(12-len(budget_values))
+                        budget_line_vals.update({'budget_values': str(budget_values)})
                         
                         result.append(budget_line_vals)
             
@@ -121,76 +137,107 @@ class wizard_budget_import(osv.osv_memory):
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-            # Parse budget general info and except if issue
-            budget_vals = self.fill_header_data(cr, uid, import_data, context)
-            # Parse budget lines and except if issue
-            budget_line_vals = self.fill_budget_line_data(cr, uid, import_data, context)
+            # Split budgets (if more than one)
+            split_budget_data = self.split_budgets(import_data)
             
-            # Version this budget data
-            # Search for latest budget
-            db_budget_ids = budget_obj.search(cr,
-                                              uid,
-                                              [('code','=',budget_vals['code']),
-                                               ('name','=',budget_vals['name']),
-                                               ('fiscalyear_id','=',budget_vals['fiscalyear_id']),
-                                               ('cost_center_id','=',budget_vals['cost_center_id']),
-                                               ('latest_version','=',True)],
-                                              context=context)
-            
-            if len(db_budget_ids) == 0:
-                # No budget found; the created one is the first one (and latest)
-                budget_vals.update({'version': 1,
-                                    'latest_version': True})
-            else:
-                # Latest budget found; increment version or overwrite
-                latest_budget_id = db_budget_ids[0]
-                latest_budget = budget_obj.read(cr, uid, [latest_budget_id], ['version', 'state'])[0]
-                if latest_budget['version'] and latest_budget['state']:
-                    if latest_budget['state'] == 'draft':
-                        # latest budget is draft
-                        # Prepare creation of the "new" one (with no lines)
-                        budget_vals.update({'version': latest_budget['version'],
-                                            'latest_version': True})
-                        # add to context
-                        context.update({'latest_budget_id': latest_budget_id,
-                                        'budget_vals': budget_vals,
-                                        'budget_line_vals': budget_line_vals})
-                        # we open a wizard
-                        return {
-                                'type': 'ir.actions.act_window',
-                                'res_model': 'wizard.budget.import.confirm',
-                                'view_type': 'form',
-                                'view_mode': 'form',
-                                'target': 'new',
-                                'context': context
-                        }
-                    else:
-                        # latest budget is validated
-                        # a new version will be created...
-                        budget_vals.update({'version': latest_budget['version'] + 1,
-                                            'latest_version': True})
-                        # ...and the old one loses its "latest version" status
-                        self.pool.get('msf.budget').write(cr,
-                                                          uid,
-                                                          [latest_budget_id],
-                                                          vals={'latest_version': False},
-                                                          context=context)
-                        
-            # Create the final budget and its lines
-            created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
-            for line_vals in budget_line_vals:
-                line_vals.update({'budget_id': created_budget_id})
-                self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
+            # dict of existing budgets
+            budgets_to_be_approved = {}
+            # parse each budget
+            for budget_data in split_budget_data:
+                # Parse budget general info and except if issue
+                budget_vals = self.fill_header_data(cr, uid, budget_data, context)
+                # Parse budget lines and except if issue
+                budget_line_vals = self.fill_budget_line_data(cr, uid, budget_data, context)
                 
-        # we open a wizard
-        return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.budget.import.finish',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context
-        }
+                # Version this budget data
+                # Search for latest budget
+                db_budget_ids = budget_obj.search(cr,
+                                                  uid,
+                                                  [('code','=',budget_vals['code']),
+                                                   ('name','=',budget_vals['name']),
+                                                   ('fiscalyear_id','=',budget_vals['fiscalyear_id']),
+                                                   ('cost_center_id','=',budget_vals['cost_center_id']),
+                                                   ('latest_version','=',True)],
+                                                  context=context)
+                
+                if len(db_budget_ids) == 0:
+                    # No budget found; the created one is the first one (and latest)
+                    budget_vals.update({'version': 1,
+                                        'latest_version': True})
+                    # Create the final budget and its lines
+                    created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
+                    for line_vals in budget_line_vals:
+                        line_vals.update({'budget_id': created_budget_id})
+                        self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
+                else:
+                    # Latest budget found; increment version or overwrite
+                    latest_budget_id = db_budget_ids[0]
+                    latest_budget = budget_obj.read(cr, uid, [latest_budget_id], ['version', 'state'])[0]
+                    if latest_budget['version'] and latest_budget['state']:
+                        if latest_budget['state'] == 'draft':
+                            # latest budget is draft
+                            # Prepare creation of the "new" one (with no lines)
+                            budget_vals.update({'version': latest_budget['version'],
+                                                'latest_version': True})
+                            # Create budget (removed in next step if needed)
+                            # This is to avoid passing too much stuff in the context
+                            created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
+                            for line_vals in budget_line_vals:
+                                line_vals.update({'budget_id': created_budget_id})
+                                self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
+                            # add to approval list
+                            budget_to_be_approved = {'latest_budget_id': latest_budget_id,
+                                                     'created_budget_id': created_budget_id}
+                            budgets_to_be_approved[budget_vals['name']] = budget_to_be_approved
+                            # skip creation
+                            continue
+                        else:
+                            # latest budget is validated
+                            # a new version will be created...
+                            budget_vals.update({'version': latest_budget['version'] + 1,
+                                                'latest_version': True})
+                            # ...and the old one loses its "latest version" status
+                            self.pool.get('msf.budget').write(cr,
+                                                              uid,
+                                                              [latest_budget_id],
+                                                              vals={'latest_version': False},
+                                                              context=context)
+                            # Create the final budget and its lines
+                            created_budget_id = budget_obj.create(cr, uid, vals=budget_vals, context=context)
+                            for line_vals in budget_line_vals:
+                                line_vals.update({'budget_id': created_budget_id})
+                                self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
+                            
+                    
+        if len(budgets_to_be_approved) > 0:
+            # we open a wizard
+            budget_list = ""
+            for budget_name in budgets_to_be_approved.keys():
+                budget_list += budget_name + "\n"
+            wizard_id = self.pool.get('wizard.budget.import.confirm').create(cr,
+                                                                             uid,
+                                                                             {'budget_list': budget_list},
+                                                                             context=context)
+            context.update({'budgets': budgets_to_be_approved})
+            return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.budget.import.confirm',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wizard_id,
+                    'context': context
+                   }
+        else:
+            # we open a wizard
+            return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.budget.import.finish',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context
+            }
 
 wizard_budget_import()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

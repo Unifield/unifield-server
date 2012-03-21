@@ -87,6 +87,7 @@
         "msf_budget",
         "account_subscription",
         "kit",
+        "msf_accrual",
     ],
     "update_xml": [
         "report.xml",

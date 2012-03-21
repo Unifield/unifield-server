@@ -160,7 +160,8 @@ class account_cash_statement(osv.osv):
         for statement in self.browse(cr, uid, ids, context):
             # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
             res[statement.id] += statement.open_advance_amount or 0.0
-                
+            # UF-810: Add a "Unrecorded Expenses" when calculating "Calculated Balance"
+            res[statement.id] += statement.unrecorded_expenses_amount or 0.0
         return res
 
     def _gap_compute(self, cursor, user, ids, name, attr, context=None):
@@ -179,8 +180,9 @@ class account_cash_statement(osv.osv):
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
-            'open_advance_amount': fields.float('Open Advances Amount'),
-            'closing_gap': fields.function(_gap_compute, method=True, string='Gap', readonly=True),
+            'open_advance_amount': fields.float('Unrecorded Open Advances'),
+            'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
+            'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }
 
@@ -192,12 +194,20 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
         context['type_posting'] = 'temp'
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
         return {
             'name': 'Temp Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'crush', # use any word to crush the actual tab
@@ -211,12 +221,20 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
         context['type_posting'] = 'hard'
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
         return {
             'name': 'Hard Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'crush', # use any word to crush the actual tab

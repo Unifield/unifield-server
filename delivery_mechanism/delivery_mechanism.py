@@ -237,7 +237,7 @@ class stock_picking(osv.osv):
                                                     'product_uos_qty': new_qty,}, context=context)
             # log the modification
             # log creation message
-            move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.'%(stock_move_name, picking_out_name, new_qty, uom_name)))
+            move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.')%(stock_move_name, picking_out_name, new_qty, uom_name))
         # return updated move or False
         return out_move_id
     
@@ -451,7 +451,7 @@ class stock_picking(osv.osv):
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
-                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.'%(obj.purchase_id.name, obj.purchase_id.shipped_rate)))
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.')%(obj.purchase_id.name, obj.purchase_id.shipped_rate))
             # correct the corresponding so
             for sale_id in sale_ids:
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)

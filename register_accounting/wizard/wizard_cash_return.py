@@ -392,6 +392,8 @@ class wizard_cash_return(osv.osv_memory):
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
         register = wizard.advance_st_line_id.statement_id
+        if 'open_advance' in context:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         journal = register.journal_id
         period_id = register.period_id.id
         move_name = "Advance return" + "/" + wizard.advance_st_line_id.statement_id.journal_id.code

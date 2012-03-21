@@ -47,9 +47,9 @@
                     				<field name="expired_date" />
                     				<field name="location_id" />
                     				<field name="state" />
-                    				<field name="hidden_state" />
-                    				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('state', '!=', 'confirmed')]}" />
-                    				<button name="assign_to_kit" type="object" string="Assign to Kits" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'assigned')]}" />
+                    				<field name="hidden_state" invisible="True" />
+                    				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
+                    				<button name="assign_to_kit" type="object" string="Assign to Kits" icon="gtk-go-forward" attrs="{'invisible': [('hidden_state', '!=', 'assigned')]}" />
                     			</tree>
                     		</field>
                     		<group col="4" colspan="4">
