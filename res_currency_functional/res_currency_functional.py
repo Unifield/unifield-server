@@ -22,10 +22,16 @@
 import time
 from osv import fields, osv
 from tools.translate import _
+import tools
 
 class res_currency_functional(osv.osv):
     _inherit = 'res.currency'
 
+    def hook_get_name_currency(self, cr, uid, ids, context):
+        # UF-886: Do not use the symbol provided by OpenERP, currency is only shown as abbr: USD and not USD($))
+        reads = self.read(cr, uid, ids, ['name'], context, load='_classic_write')
+        return [(x['id'], tools.ustr(x['name'])) for x in reads]
+    
     def _verify_rate(self, cr, uid, ids, context={}):
         """
         Verify that a currency set to active has a non-zero rate.
