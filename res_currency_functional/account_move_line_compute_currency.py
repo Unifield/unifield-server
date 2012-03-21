@@ -170,12 +170,12 @@ class account_move_line_compute_currency(osv.osv):
             addendum_line_id = self.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
-            
+
             # Update analytic line with right amount (instead of "0.0")
             analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', addendum_line_id)], context=context)
             addendum_line_amount_curr = -1*total or 0.0
             self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'currency_id': company_currency_id, 'amount': addendum_line_amount_curr, 'amount_currency': addendum_line_amount_curr})
-            
+
             return partner_line_id
 
     def reconciliation_update(self, cr, uid, ids, context={}):
@@ -312,7 +312,7 @@ class account_move_line_compute_currency(osv.osv):
         if 'period_id' in vals and 'date' in vals:
             period = self.pool.get('account.period').read(cr, uid, vals['period_id'], ['date_start', 'date_stop'])
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
-                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
+                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % (period.name or '',))
 
     def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
         newvals = {}

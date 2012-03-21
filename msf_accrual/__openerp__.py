@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,28 +18,28 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from osv import osv
-
-class account_invoice_refund(osv.osv_memory):
-    _name = 'account.invoice.refund'
-    _inherit = 'account.invoice.refund'
-
-    def _hook_fields_for_modify_refund(self, cr, uid, *args):
-        """
-        Add analytic_distribution_id field in result
-        """
-        res = super(account_invoice_refund, self)._hook_fields_for_modify_refund(cr, uid, args)
-        res.append('analytic_distribution_id')
-        return res
-
-    def _hook_fields_m2o_for_modify_refund(self, cr, uid, *args):
-        """
-        Add analytic_distribution_id field in result
-        """
-        res = super(account_invoice_refund, self)._hook_fields_m2o_for_modify_refund(cr, uid, args)
-        res.append('analytic_distribution_id')
-        return res
-
-account_invoice_refund()
+{
+    "name" : "Accruals for MSF",
+    "version": "1.1",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["register_accounting"],
+    "description": """Module for defining accrual expenses.
+    """,
+    "init_xml" : [],
+    "update_xml": [
+        'security/ir.model.access.csv',
+        'msf_accrual_view.xml',
+        'wizard/wizard_accrual_view.xml'
+    ],
+    'test': [
+        'test/accrual_test.yml'
+    ],
+    'demo_xml': [
+    ],
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
+}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

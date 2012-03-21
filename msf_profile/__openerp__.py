@@ -87,6 +87,7 @@
         "msf_budget",
         "account_subscription",
         "msf_homere_interface",
+        "msf_accrual",
     ],
     "update_xml": [
         "report.xml",

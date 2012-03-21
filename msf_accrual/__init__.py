@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,28 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+import msf_accrual_line
+import wizard
 
-from osv import osv
-
-class account_invoice_refund(osv.osv_memory):
-    _name = 'account.invoice.refund'
-    _inherit = 'account.invoice.refund'
-
-    def _hook_fields_for_modify_refund(self, cr, uid, *args):
-        """
-        Add analytic_distribution_id field in result
-        """
-        res = super(account_invoice_refund, self)._hook_fields_for_modify_refund(cr, uid, args)
-        res.append('analytic_distribution_id')
-        return res
-
-    def _hook_fields_m2o_for_modify_refund(self, cr, uid, *args):
-        """
-        Add analytic_distribution_id field in result
-        """
-        res = super(account_invoice_refund, self)._hook_fields_m2o_for_modify_refund(cr, uid, args)
-        res.append('analytic_distribution_id')
-        return res
-
-account_invoice_refund()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
