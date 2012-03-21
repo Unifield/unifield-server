@@ -415,6 +415,47 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'journal_ids' field
         return self.button_clear(cr, uid, ids, field='journal_ids', context=context)
 
+    def button_journal_add(self, cr, uid, ids, context={}):
+        """
+        Add all journals in journal_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res_id = ids[0]
+        obj = 'account.journal'
+        args = False
+        domain = []
+        if args:
+            domain = [args]
+        field = 'journal_ids'
+        # Search all journals
+        journal_ids = self.pool.get(obj).search(cr, uid, domain)
+        if journal_ids:
+            self.write(cr, uid, ids, {field: [(6, 0, journal_ids)]})
+        # Update context
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Search view_id
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_mcdb_form')
+        view_id = view_id and view_id[1] or False
+        return {
+            'name': _('Multi-Criteria Data Browser'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'res_id': res_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'context': context,
+            'target': 'crush',
+        }
+
     def button_period_clear(self, cr, uid, ids, context={}):
         """
         Delete period_ids field content

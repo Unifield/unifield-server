@@ -23,7 +23,10 @@
                     <group col="4" colspan="6">
                         <field name="abs_id" colspan="2" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
-                            <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="2"/>
+                            <group col="2" colspan="2">
+                                <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
+                                <button name="button_journal_add" type="object" string="Add all journals" icon="gtk-add" colspan="1"/>
+                            </group>
                             <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
                             <field name="rev_journal_ids" colspan="2"/>
                             <field name="rev_period_ids" colspan="2"/>
