@@ -345,17 +345,6 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
-    _STOCK_MOVE_STATE = [('draft', 'Draft'),
-                         ('waiting', 'Waiting'),
-                         ('confirmed', 'Not Available'),
-                         ('assigned', 'Available'),
-                         ('done', 'Closed'),
-                         ('cancel', 'Cancel'),]
-
-    _columns = {
-        'state': fields.selection(_STOCK_MOVE_STATE, string='State', readonly=True, select=True),
-    }
-
     def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the stock move to manually done
