@@ -264,8 +264,16 @@
             <menuitem id="donor_reporting_menu" name="Donor Management" parent="account.menu_finance"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
-            <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
-            
+
+	        <record id="action_account_analytic_account_form" model="ir.actions.act_window">
+	            <field name="name">Analytic Accounts</field>
+	            <field name="res_model">account.analytic.account</field>
+	            <field name="view_type">form</field>
+	            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
+	        </record>
+
+	        <menuitem action="action_account_analytic_account_form" id="menu_action_account_analytic_account_form" parent="donor_reporting_menu" />
+
             <record id="view_financing_contract_format_line_tree" model="ir.ui.view">
                 <field name="name">financing.contract.format.line.tree</field>
                 <field name="model">financing.contract.format.line</field>
