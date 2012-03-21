@@ -1,172 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE TESTS [
+    <!ENTITY general SYSTEM "mcdb_view_general.xml">
+    <!ENTITY account SYSTEM "mcdb_view_account.xml">
+    <!ENTITY currency SYSTEM "mcdb_view_currency.xml">
+    <!ENTITY end SYSTEM "mcdb_view_end.xml">
+]>
+
 <openerp>
     <data>
 
-    <!-- Account Multi-Criteria Data Browser Form -->
+        <!-- Account Multi-Criteria Data Browser Form -->
         <record model="ir.ui.view" id="account_mcdb_form">
             <field name="name">account.mcdb.form</field>
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Journal Items MCDB" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
-                    <separator string="General"/>
-                    <group col="4" colspan="6">
-                        <field name="company_id" widget="selection" colspan="2"/><label string="" colspan="4"/>
-                        <field name="posting_date_from" colspan="1" string="Posting date"/>
-                        <field name="posting_date_to" colspan="1" string="to"/>
-                        <field name="document_date_from" colspan="1" string="Document date"/>
-                        <field name="document_date_to" colspan="1" string="to"/>
+                    &general;
+                    <field name="abs_id" colspan="2"/>
+                    <label string="" colspan="2"/>
+                    <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="2"/>
+                    <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
+                    <group colspan="4" col="4">
+                        <field name="rev_journal_ids"/>
+                        <field name="rev_period_ids"/>
                     </group>
-                    <separator string="Accounting"/>
-                    <group col="4" colspan="6">
-                        <field name="abs_id" colspan="2" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
-                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
-                            <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="2"/>
-                            <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
-                            <field name="rev_journal_ids" colspan="2"/>
-                            <field name="rev_period_ids" colspan="2"/>
-                            <field name="journal_ids" colspan="2" nolabel="1">
-                                <tree string="Journals">
-                                    <field name="code"/>
-                                    <field name="name" string="Name"/>
-                                    <field name="type"/>
-                                </tree>
-                            </field>
-                            <field name="period_ids" colspan="2" nolabel="1">
-                                <tree string="Periods">
-                                    <field name="name" string="Name"/>
-                                    <field name="date_start" string="Start"/>
-                                    <field name="date_stop" string="Stop"/>
-                                    <field name="state"/>
-                                </tree>
-                            </field>
-                        </group>
-                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                            <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="2"/>
-                            <newline/>
-                            <field name="rev_analytic_journal_ids" colspan="2"/>
-                            <newline/>
-                            <field name="analytic_journal_ids" colspan="2" nolabel="1">
-                                <tree string="Analytic Journals">
-                                    <field name="code"/>
-                                    <field name="name" string="Name"/>
-                                    <field name="type"/>
-                                </tree>
-                            </field>
-                            <label string="" colspan="2"/>
-                        </group>
-                    </group>
-                    <separator string="Account"/>
-                    <group col="4" colspan="6">
-                        
-                        <newline/>
-                        <group col="4" colspan="6">
-                            <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="2"/>
-                            <label string="" colspan="2"/>
-                            <field name="rev_account_ids" colspan="2"/>
-                            <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>
-                            <field name="account_ids" colspan="2" nolabel="1">
-                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
-                                    <field name="code"/>
-                                    <field name="name"/>
-                                    <field name="type" string="Type"/>
-                                </tree>
-                            </field>
-                            <field name="account_type_ids" colspan="2" nolabel="1">
-                                <tree string="Account types">
-                                    <field name="code"/>
-                                    <field name="name"/>
-                                </tree>
-                            </field>
-                            <newline/>
-                        </group>
-                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
-                            <separator string="Reconciliation"/>
-                            <field name="reconciled"/><field name="reconcile_id"/>
-                        </group>
-                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                            <separator string="Reallocation"/>
-                            <field name="reallocated"/><field name="reversed"/>
-                        </group>
-                    </group>
-                    <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                        <separator string="Analytic Account" colspan="4"/>
-                        <group col="4" colspan="6">
-                            <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <field name="rev_analytic_account_fp_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                            <field name="rev_analytic_account_cc_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                            <field name="analytic_account_fp_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
-                                <tree string="Funding Pool">
-                                    <field name="code" string="Ana. Code"/>
-                                    <field name="name" string="Ana. Name"/>
-                                    <field name="type" string="Ana. Type"/>
-                                </tree>
-                            </field>
-                            <field name="analytic_account_cc_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"  domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
-                                <tree string="Cost Center">
-                                    <field name="code" string="Ana. Code"/>
-                                    <field name="name" string="Ana. Name"/>
-                                    <field name="type" string="Ana. Type"/>
-                                </tree>
-                            </field>
-                        </group>
-                        <group col="4" colspan="6">
-                            <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <field name="rev_analytic_account_f1_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                            <field name="rev_analytic_account_f2_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                            <field name="analytic_account_f1_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
-                                <tree string="Free 1">
-                                    <field name="code" string="Ana. Code"/>
-                                    <field name="name" string="Ana. Name"/>
-                                    <field name="type" string="Ana. Type"/>
-                                </tree>
-                            </field>
-                            <field name="analytic_account_f2_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}"  domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
-                                <tree string="Free 2">
-                                    <field name="code" string="Ana. Code"/>
-                                    <field name="name" string="Ana. Name"/>
-                                    <field name="type" string="Ana. Type"/>
-                                </tree>
-                            </field>
-                        </group>
-                    </group>
-                    <separator string="Amount &amp; Currency"/>
-                    <group col="8" colspan="6">
-                        <field name="currency_choice" colspan="2" on_change="onchange_currency_choice(currency_choice, functional_currency_id, amount_from, amount_to)"/>
-                        <field name="currency_id" attrs="{'readonly': [('currency_choice', '=', 'functional')]}" widget="selection" colspan="2" on_change="onchange_currency(currency_choice, currency_id)" domain="[('currency_table_id', '=', False)]"/>
-                        <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
-                        <field name="display_in_output_currency" colspan="2" domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"/>
-                        <newline/>
-                        <field name="amount_from" string="Amount from" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
-                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
-                    </group>
-                    <group col="6" colspan="6">
-                        <field name="functional_currency_id" colspan="2" invisible="1"/>
-                        <field name="amount_func_from" string="Amount" colspan="2" invisible="1"/>
-                        <field name="amount_func_to" string="to" colspan="2" invisible="1"/>
-                        <field name="booking_currency_id" widget="selection" colspan="2" invisible="1"/>
-                        <field name="amount_book_from" string="Amount" colspan="2" invisible="1"/>
-                        <field name="amount_book_to" string="to" colspan="2" invisible="1"/>
-                    </group>
-                    <group col="6" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                    <field name="journal_ids" colspan="2" nolabel="1">
+                        <tree string="Journals">
+                            <field name="code"/>
+                            <field name="name" string="Name"/>
+                            <field name="type"/>
+                        </tree>
+                    </field>
+                    <field name="period_ids" colspan="2" nolabel="1">
+                        <tree string="Periods">
+                            <field name="name" string="Name"/>
+                            <field name="date_start" string="Start"/>
+                            <field name="date_stop" string="Stop"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                    &account;
+                    <separator string="Reconciliation" colspan="4"/>
+                    <field name="reconciled"/>
+                    <field name="reconcile_id"/>
+                    &currency;
+                    <group colspan="4" col="6">
                         <separator string="Third Party" colspan="6"/>
                         <field name="partner_id" colspan="2"/>
                         <field name="employee_id" colspan="2"/>
                         <field name="register_id" colspan="2"/>
                     </group>
-                    <separator string="Others"/>
-                    <group col="4" colspan="6">
-                        <field name="ref" colspan="2"/>
-                        <field name="name" colspan="2"/>
+                    &end;
+                </form>
+            </field>
+        </record>
+
+        <!-- Analytic Multi-Criteria Data Browser Form -->
+        <record model="ir.ui.view" id="account_mcdb_analytic_form">
+            <field name="name">account.mcdb.analytic.form</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Journal Items MCDB" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    &general;
+                    <group colspan="2" col="2">
+                        <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_analytic_journal_ids" colspan="2"/>
+                        <field name="analytic_journal_ids" colspan="2" nolabel="1">
+                            <tree string="Analytic Journals">
+                                <field name="code"/>
+                                <field name="name" string="Name"/>
+                                <field name="type"/>
+                            </tree>
+                        </field>
                     </group>
-                    <separator string=" "/>
-                    <group col="4" colspan="6">
-                        <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
-                        <button name="button_validate" type="object" string="Search" icon="gtk-find" colspan="2"/>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
                     </group>
-                    <field name="model" invisible="1"/>
+                    &account;
+                    <separator string="Reallocation" colspan="4"/>
+                    <field name="reallocated" colspan="2"/>
+                    <field name="reversed" colspan="2"/>
+                    <separator string="Analytic Account" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                        <field name="rev_analytic_account_fp_ids"/>
+                        <field name="analytic_account_fp_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
+                            <tree string="Funding Pool">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                        <field name="rev_analytic_account_cc_ids"/>
+                        <field name="analytic_account_cc_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                            <tree string="Cost Center">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_analytic_account_f1_ids"/>
+                        <field name="analytic_account_f1_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
+                            <tree string="Free 1">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_analytic_account_f2_ids"/>
+                        <field name="analytic_account_f2_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
+                            <tree string="Free 2">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    &currency;
+                    &end;
                 </form>
             </field>
         </record>
@@ -185,7 +150,7 @@
             <field name="res_model">account.mcdb</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="account_mcdb_form"/>
+            <field name="view_id" ref="account_mcdb_analytic_form"/>
             <field name="context">{'from': 'account.analytic.line'}</field>
         </record>
 
