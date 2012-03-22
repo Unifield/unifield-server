@@ -77,7 +77,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     al.unit_price,
                     al.analytic_id,
                     al.percentage,
-                    al.subtotal,
+                    (al.unit_price*al.product_qty*al.percentage)/100.00 as subtotal,
                     al.currency_id,
                     al.cost_center_id,
                     al.account_id,
