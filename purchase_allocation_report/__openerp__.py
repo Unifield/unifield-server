@@ -22,7 +22,7 @@
 {
     "name": "Purchase order allocation report",
     "version": "1.0",
-    "depends": ["base", "purchase", "analytic_distribution_supply", "purchase_override"],
+    "depends": ["base", "purchase", "analytic_distribution_supply", "purchase_override", "delivery_mechanism"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Tools",
