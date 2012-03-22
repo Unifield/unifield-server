@@ -99,8 +99,8 @@ class kit_creation(osv.osv):
         # to reset to version
         for obj in self.browse(cr, uid, ids, context=context):
             # must be a real kit
-            if obj.state == 'draft':
-                raise osv.except_osv(_('Warning !'), _('Cannot modify draft Kitting Order.'))
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             # a version must have been selected
             if not obj.version_id_kit_creation:
                 raise osv.except_osv(_('Warning !'), _('The Kitting order is not linked to any version.'))
@@ -239,6 +239,8 @@ class kit_creation(osv.osv):
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
+        # load the consume lines
+        self.do_reset_to_version(cr, uid, ids, context=context)
         for obj in self.browse(cr, uid, ids, context=context):
             # create the internal picking - confirmation of internal picking cannot be performed as long as no stock move exist
             pick_id = self._create_picking(cr, uid, ids, context=context)
@@ -252,11 +254,27 @@ class kit_creation(osv.osv):
         
         return True
     
+    def confirm_kitting(self, cr, uid, ids, context=None):
+        '''
+        confirm the kitting, assign the production to kits
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            # all products to consume must have been consumed
+            
+            # all moves must be done
+            
+            # all moves with perishable/batch management products must have been assigned
+            
+            # 
+            pass
+    
     def force_assign(self, cr, uid, ids, context=None):
         '''
         force assign moves in 'confirmed' (Not Available) state
         '''
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             return obj.internal_picking_id_kit_creation.force_assign(cr, uid, ids, context)
     
     def cancel_all_lines(self, cr, uid, ids, context=None):
@@ -285,6 +303,8 @@ class kit_creation(osv.osv):
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             # data
             data = {}
             # moves consolidated
@@ -407,8 +427,8 @@ class kit_creation(osv.osv):
         wiz_obj = self.pool.get('wizard')
         # this purchase order line replacement function can only be used when the po is in state ('confirmed', 'Validated'),
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.state == 'draft':
-                raise osv.except_osv(_('Warning !'), _('Draft Kitting Order cannot process Components to Consume.'))
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             if not len(obj.to_consume_ids_kit_creation):
                 raise osv.except_osv(_('Warning !'), _('Components to Consume list is empty.'))
         # open the selected wizard
@@ -445,8 +465,8 @@ class kit_creation(osv.osv):
                 'to_consume_sequence_id': fields.many2one('ir.sequence', 'To Consume Sequence', required=True, ondelete='cascade'),
                 'creation_date_kit_creation': fields.date(string='Creation Date', required=True),
                 'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
-                'version_id_kit_creation': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]),
-                'qty_kit_creation': fields.integer(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'version_id_kit_creation': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')], required=True),
+                'qty_kit_creation': fields.integer(string='Qty', required=True),
                 'uom_id_kit_creation': fields.many2one('product.uom', string='UoM', required=True),
                 'notes_kit_creation': fields.text(string='Notes'),
                 'default_location_src_id_kit_creation': fields.many2one('stock.location', string='Default Source Location', required=True, domain=[('usage', '=', 'internal')], help='The Kitting Order needs to be saved in order this option to be taken into account.'),
@@ -494,6 +514,17 @@ class kit_creation(osv.osv):
 kit_creation()
 
 
+class composition_kit(osv.osv):
+    '''
+    kit composition class, representing both theoretical composition and actual ones
+    '''
+    _inherit = 'composition.kit'
+    
+    _columns = {'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order', readonly=True)}
+    
+composition_kit()
+
+
 class kit_creation_to_consume(osv.osv):
     '''
     common ancestor
@@ -526,6 +557,8 @@ class kit_creation_to_consume(osv.osv):
         kit_creation_obj = self.pool.get('kit.creation')
         
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             # inform the wizard we only want one line in it
             context.update({'to_consume_line_id': obj.id})
             # call the kit order method
@@ -782,7 +815,30 @@ class stock_move(osv.osv):
     
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
                 'hidden_state': fields.related('state', type='selection', selection=SELECTION),
+                'hidden_prodlot_id': fields.related('prodlot_id', type='many2one', relation='stock.production.lot'),
                 }
+    
+    def assign_to_kit(self, cr, uid, ids, context=None):
+        '''
+        open the assign to kit wizard
+        '''
+        if context is None:
+            context = {}
+        # data
+        name = _("Assign to Kit")
+        model = 'assign.to.kit'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
+        return res
+    
+    def validate_assign(self, cr, uid, ids, context=None):
+        '''
+        set the state to done, so the move can be assigned to a kit
+        '''
+        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        return True
     
     def check_assign_lot(self, cr, uid, ids, context=None):
         """

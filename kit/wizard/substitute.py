@@ -318,7 +318,7 @@ class substitute(osv.osv_memory):
         item_obj = self.pool.get('composition.item')
         data_tools_obj = self.pool.get('data.tools')
         # load default data
-        data_tools.load_common_data(cr, uid, ids, context=context)
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         # date is today
         date = context['common']['date']

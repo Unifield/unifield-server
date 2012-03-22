@@ -79,7 +79,7 @@ class process_to_consume(osv.osv_memory):
                           'product_id': mem.product_id_process_to_consume.id,
                           'date_expected': context['common']['date'],
                           'date': context['common']['date'],
-                          'product_qty': mem.selected_qty_process_to_consume,
+                          'product_qty': mem.total_selected_qty_process_to_consume,
                           'prodlot_id': False,
                           'location_id': mem.location_src_id_process_to_consume.id,
                           'location_dest_id': context['common']['kitting_id'],
@@ -194,6 +194,9 @@ class process_to_consume_line(osv.osv_memory):
             # we check for the available qty (in:done, out: assigned, done)
             res = loc_obj.compute_availability(cr, uid, [obj.location_src_id_process_to_consume.id], compute_child, product_id, uom_id, context=context)
             result.setdefault(obj.id, {}).update({'qty_available_process_to_consume': res['total']})
+            # total selected qty
+            total_qty = obj.selected_qty_process_to_consume * obj.kit_creation_id_process_to_consume.qty_kit_creation
+            result.setdefault(obj.id, {}).update({'total_selected_qty_process_to_consume': total_qty})
         return result
     
     _columns = {'kit_creation_id_process_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
@@ -201,12 +204,13 @@ class process_to_consume_line(osv.osv_memory):
                 'wizard_id_process_to_consume': fields.many2one('substitute', string='Substitute wizard'),
                 # data
                 'product_id_process_to_consume': fields.many2one('product.product', string='Product', readonly=True, required=True),
-                'qty_process_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True, required=True),
-                'selected_qty_process_to_consume': fields.float(string='Selected Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'qty_process_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True, required=True),
+                'selected_qty_process_to_consume': fields.float(string='Selected Qty per Kit', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_process_to_consume': fields.many2one('product.uom', string='UoM', readonly=True, required=True),
                 'location_src_id_process_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'consider_child_locations_process_to_consume': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check.'),
                 # function
+                'total_selected_qty_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Selected Qty', multi='get_vals', store=False, readonly=True),
                 'qty_available_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 # related
                 'line_number_process_to_consume': fields.related('to_consume_id_process_to_consume', 'line_number_to_consume', type='integer', string='Line'),

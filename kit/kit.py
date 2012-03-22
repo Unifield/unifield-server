@@ -583,7 +583,7 @@ class composition_kit(osv.osv):
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'composition_ref_exp': fields.date(string='Expiry Date for Kit with reference', readonly=True),
-                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order', readonly=True),
+#                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order', readonly=True),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
                 'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
@@ -937,6 +937,7 @@ class composition_item(osv.osv):
                 'item_exp': fields.date(string='Expiry Date'),
                 'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
+                'item_stock_move_id': fields.many2one('stock.move', string='Kitting Order Stock Move', readonly=True, help='This field represents the stock move corresponding to this item for Kit production.'),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),

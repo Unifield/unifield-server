@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+    	<record id="view_assign_to_kit_form" model="ir.ui.view">
+            <field name="name">assign.to.kit.form</field>
+            <field name="model">assign.to.kit</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Assign to Kit">
+            		<group col="4" colspan="4">
+            			<field name="product_id_assign_to_kit" colspan="4" />
+            			<field name="qty_assign_to_kit" />
+            			<field name="uom_id_assign_to_kit" />
+            			<field name="prodlot_id_assign_to_kit" />
+            			<field name="expiry_date_assign_to_kit" />
+            		</group>
+                    <group col="4" colspan="4">
+                        <field name="kit_ids_assign_to_kit" nolabel="True" mode="tree,form,graph">
+                        	<tree hide_new_button="True" string="Items from Kit to Stock" editable="top" colors="red:qty_available_process_to_consume&lt;qty_process_to_consume">
+	                			<field name="kit_id_assign_to_kit_line" />
+			            		<field name="assigned_qty_assign_to_kit_line" />
+                        	</tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="4">
+	                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+	                    <button name="do_assign_to_kit" string="Process" type="object" icon="gtk-go-forward" />
+                    </group>
+            	</form>
+            </field>
+		</record>
+    
+    </data>
+</openerp>
