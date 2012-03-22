@@ -38,7 +38,7 @@
 	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
                     		</group>
-                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}" readonly="True">
+                    		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}">
                     			<tree string="Consumed Stock Moves" editable="top" hide_new_button="True">
                     				<field name="kit_creation_id_stock_move" invisible="True" />
                     				<field name="product_id" readonly="True" />
@@ -103,7 +103,7 @@
             <field name="model">kit.creation.to.consume</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-            	<tree string="Components to Consume" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume">
+            	<tree string="Components to Consume" hide_new_button="True" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume">
             		<field name="line_number_to_consume" />
             		<field name="product_id_to_consume"
             			on_change="on_change_product_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />

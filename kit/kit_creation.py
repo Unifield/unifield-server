@@ -258,6 +258,9 @@ class kit_creation(osv.osv):
         '''
         confirm the kitting, assign the production to kits
         '''
+        # objects
+        item_obj = self.pool.get('composition.item')
+        
         for obj in self.browse(cr, uid, ids, context=context):
             # all products to consume must have been consumed
             
@@ -265,8 +268,21 @@ class kit_creation(osv.osv):
             
             # all moves with perishable/batch management products must have been assigned
             
-            # 
-            pass
+            # assign products to kits TODO modify to many2many to keep stock move traceability?? needed?
+            for kit in obj.kit_ids_kit_creation:
+                for item in obj.version_id_kit_creation.composition_item_ids:
+                    if not item.hidden_perishable_mandatory:
+                        item_values = {'item_module': item.item_module,
+                                       'item_product_id': item.item_product_id.id,
+                                       'item_qty': item.item_qty,
+                                       'item_uom_id': item.item_uom_id.id,
+                                       'item_lot': item.item_lot.name,
+                                       'item_exp': item.item_exp,
+                                       'item_kit_id': kit.id,
+                                       'item_description': 'kitting order',
+                                       }
+                        item_obj.create(cr, uid, item_values, context=context)
+        return True
     
     def force_assign(self, cr, uid, ids, context=None):
         '''
