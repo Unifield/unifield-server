@@ -34,6 +34,7 @@
     'update_xml': [
         "purchase_allocation_report_view.xml",
         "purchase_allocation_report_report.xml",
+        "security/ir.model.access.csv",
     ],
     'demo_xml': [
     ],
