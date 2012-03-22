@@ -834,6 +834,9 @@ class stock_move(osv.osv):
                 'hidden_prodlot_id': fields.related('prodlot_id', type='many2one', relation='stock.production.lot'),
                 }
     
+    def write(self, cr, uid, ids, vals, context=None):
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
+    
     def assign_to_kit(self, cr, uid, ids, context=None):
         '''
         open the assign to kit wizard
