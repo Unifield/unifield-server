@@ -34,6 +34,7 @@ class assign_to_kit(osv.osv_memory):
     '''
     _name = "assign.to.kit"
     
+    
     def do_assign_to_kit(self, cr, uid, ids, context=None):
         '''
         - for each kit, we look for the corresponding item (or create it)
@@ -45,6 +46,7 @@ class assign_to_kit(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
         loc_obj = self.pool.get('stock.location')
+        kit_obj = self.pool.get('composition.kit')
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
@@ -58,7 +60,11 @@ class assign_to_kit(osv.osv_memory):
             to_consume_ids = []
             # list of items to be deleted (the qty assigned has been set to 0.0)
             item_list = []
+            # all kits, we check if some kits were deleted in the wizard, if yes, the corresponding items are deleted
+            kit_list = kit_obj.search(cr, uid, [('composition_kit_creation_id', '=', obj.kit_creation_id_assign_to_kit.id)], context=context)
             for mem in obj.kit_ids_assign_to_kit:
+                # we pop the kit id from the list of all ids
+                kit_list.remove(mem.kit_id_assign_to_kit_line.id)
                 # does this stock move exist in the kit
                 # check product uom for integrity TODO
                 item_ids = item_obj.search(cr, uid, [('item_stock_move_id', 'in', stock_move_ids),('item_kit_id', '=', mem.kit_id_assign_to_kit_line.id)], context=context)
@@ -76,13 +82,17 @@ class assign_to_kit(osv.osv_memory):
                                    'item_product_id': obj.product_id_assign_to_kit.id,
                                    'item_qty': mem.assigned_qty_assign_to_kit_line,
                                    'item_uom_id': obj.uom_id_assign_to_kit.id,
-                                   'item_lot': obj.prodlot_id_assign_to_kit.id,
-                                   'item_exp': obj.expiry_date_assign_to_kit,
+                                   'item_lot': obj.prodlot_id_assign_to_kit and obj.prodlot_id_assign_to_kit.name or False,
+                                   'item_exp': obj.expiry_date_assign_to_kit or False,
                                    'item_kit_id': mem.kit_id_assign_to_kit_line.id,
                                    'item_description': 'Kitting Order',
                                    'item_stock_move_id': stock_move_ids[0],
                                    }
                     item_obj.create(cr, uid, item_values, context=context)
+            # if kit_list is not empty, the user deleted some lines and we therefore delete the items corresponding to the deleted kits
+            if kit_list:
+                item_ids = item_obj.search(cr, uid, [('item_stock_move_id', 'in', stock_move_ids), ('item_kit_id', 'in', kit_list)], context=context)
+                item_list.extend(item_ids)
             # delete empty items
             item_obj.unlink(cr, uid, item_list, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -105,20 +115,21 @@ class assign_to_kit(osv.osv_memory):
         result = []
         for obj in move_obj.browse(cr, uid, stock_move_ids, context=context):
             for kit in obj.kit_creation_id_stock_move.kit_ids_kit_creation:
-                # qty already assigned in kits for this stock move
-                # we therefore have a complete picture of assign state for this stock move
-                # because it could be assigned in multiple rounds
-                assigned_qty = 0.0
-                for item in kit.composition_item_ids:
-                    # if the item comes from this stock move, we take the qty into account
-                    if item.item_stock_move_id.id in stock_move_ids:
-                        assigned_qty += item.item_qty
-                # load the kit data
-                values = {'kit_creation_id_assign_to_kit_line': obj.kit_creation_id_stock_move.id,
-                          'kit_id_assign_to_kit_line': kit.id,
-                          'assigned_qty_assign_to_kit_line': assigned_qty,
-                          }
-                result.append(values)
+                if kit.state == 'in_production':
+                    # qty already assigned in kits for this stock move
+                    # we therefore have a complete picture of assign state for this stock move
+                    # because it could be assigned in multiple rounds
+                    assigned_qty = 0.0
+                    for item in kit.composition_item_ids:
+                        # if the item comes from this stock move, we take the qty into account
+                        if item.item_stock_move_id.id in stock_move_ids:
+                            assigned_qty += item.item_qty
+                    # load the kit data
+                    values = {'kit_creation_id_assign_to_kit_line': obj.kit_creation_id_stock_move.id,
+                              'kit_id_assign_to_kit_line': kit.id,
+                              'assigned_qty_assign_to_kit_line': assigned_qty,
+                              }
+                    result.append(values)
             # kit list
             if 'kit_ids_assign_to_kit' in fields:
                 res.update({'kit_ids_assign_to_kit': result})
@@ -137,10 +148,13 @@ class assign_to_kit(osv.osv_memory):
             # expiry date
             if 'expiry_date_assign_to_kit' in fields:
                 res.update({'expiry_date_assign_to_kit': obj.expired_date})
+            if 'kit_creation_id_assign_to_kit' in fields:
+                res.update({'kit_creation_id_assign_to_kit': obj.kit_creation_id_stock_move.id})
             
         return res
         
-    _columns = {'product_id_assign_to_kit': fields.many2one('product.product', string='Product', readonly=True),
+    _columns = {'kit_creation_id_assign_to_kit': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
+                'product_id_assign_to_kit': fields.many2one('product.product', string='Product', readonly=True),
                 'qty_assign_to_kit': fields.float(string='Total Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 'uom_id_assign_to_kit': fields.many2one('product.uom', string='UoM', readonly=True),
                 'prodlot_id_assign_to_kit': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),

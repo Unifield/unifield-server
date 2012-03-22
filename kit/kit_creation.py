@@ -260,14 +260,21 @@ class kit_creation(osv.osv):
         '''
         # objects
         item_obj = self.pool.get('composition.item')
+        move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.kit')
         
         for obj in self.browse(cr, uid, ids, context=context):
             # all products to consume must have been consumed
-            
+            if len(obj.to_consume_ids_kit_creation):
+                raise osv.except_osv(_('Warning !'), _('All products have not been consumed.'))
             # all moves must be done
-            
-            # all moves with perishable/batch management products must have been assigned
-            
+            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', obj.id),('state', '!=', 'done')], context=context)
+            if move_ids:
+                raise osv.except_osv(_('Warning !'), _('All products consumed are not done.'))
+            # all moves with perishable/batch management products must have been assigned totally
+            for move in obj.consumed_ids_kit_creation:
+                if move.product_id.perishable and move.assigned_qty_stock_move != move.product_qty:
+                    raise osv.except_osv(_('Warning !'), _('All Products with Batch Number must be assigned manually to Kits.'))
             # assign products to kits TODO modify to many2many to keep stock move traceability?? needed?
             for kit in obj.kit_ids_kit_creation:
                 for item in obj.version_id_kit_creation.composition_item_ids:
@@ -276,22 +283,31 @@ class kit_creation(osv.osv):
                                        'item_product_id': item.item_product_id.id,
                                        'item_qty': item.item_qty,
                                        'item_uom_id': item.item_uom_id.id,
-                                       'item_lot': item.item_lot.name,
-                                       'item_exp': item.item_exp,
+                                       'item_lot': False,
+                                       'item_exp': False,
                                        'item_kit_id': kit.id,
-                                       'item_description': 'kitting order',
+                                       'item_description': 'Kitting Order',
                                        }
                         item_obj.create(cr, uid, item_values, context=context)
+                # all kits are completed
+                kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
+            # state of kitting order is Done
+            self.write(cr, uid, [obj.id], {'state': 'done'}, context=context)
         return True
     
     def force_assign(self, cr, uid, ids, context=None):
         '''
         force assign moves in 'confirmed' (Not Available) state
+        
+        the force_assign function is not called correctly
         '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'in_production':
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
-            return obj.internal_picking_id_kit_creation.force_assign(cr, uid, ids, context)
+            return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id], context=context)
     
     def cancel_all_lines(self, cr, uid, ids, context=None):
         '''
@@ -829,9 +845,37 @@ class stock_move(osv.osv):
                  ('cancel', 'Cancelled'),
                  ]
     
+    def _vals_get_kit_creation(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        item_obj = self.pool.get('composition.item')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # assigned qty
+            assigned_qty = 0.0
+            item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', obj.id)], context=context)
+            if item_ids:
+                data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
+                for value in data:
+                    assigned_qty += value['item_qty']
+            result[obj.id].update({'assigned_qty_stock_move': assigned_qty})
+        return result
+    
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
+                # related
                 'hidden_state': fields.related('state', type='selection', selection=SELECTION),
                 'hidden_prodlot_id': fields.related('prodlot_id', type='many2one', relation='stock.production.lot'),
+                # functions
+                'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 }
     
     def write(self, cr, uid, ids, vals, context=None):

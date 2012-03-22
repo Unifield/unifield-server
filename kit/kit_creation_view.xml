@@ -22,6 +22,7 @@
 	                        <field name="version_id_kit_creation"
                         		domain="[('composition_product_id', '=', product_id_kit_creation), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]"
                         		attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        		context="{'composition_type': 'theoretical'}"
                         		colspan="4" />
                         	<group colspan="2" />
                         	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" colspan="2" invisible="True" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
@@ -48,6 +49,7 @@
                     				<field name="expired_date" />
                     				<field name="location_id" attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}" />
                     				<field name="state" />
+                    				<field name="assigned_qty_stock_move" />
                     				<field name="hidden_state" invisible="True" />
                     				<field name="hidden_prodlot_id" invisible="True" />
                     				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
