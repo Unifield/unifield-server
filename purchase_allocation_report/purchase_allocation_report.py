@@ -53,6 +53,7 @@ class purchase_order_line_allocation_report(osv.osv):
         'account_id': fields.many2one('account.analytic.account', string='Account'),
         'source_doc': fields.char(size=128, string='Source Doc.'),
         'partner_id': fields.many2one('res.partner', string='Partner'),
+        'partner_doc': fields.char(size=128, string='Partner Doc.'),
         'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, string='State'),
         'supplier': fields.many2one('res.partner', string='Supplier'),
         'creation_date': fields.date(string='Creation date'),
@@ -84,7 +85,8 @@ class purchase_order_line_allocation_report(osv.osv):
                     al.partner_id,
                     al.supplier,
                     al.state,
-                    al.creation_date
+                    al.creation_date,
+                    al.partner_doc
                 FROM
                 ((SELECT 
                     po.id AS order_id,
@@ -103,10 +105,11 @@ class purchase_order_line_allocation_report(osv.osv):
                     cc.id AS cost_center_id,
                     aaa.id AS account_id,
                     po.origin AS source_doc,
-                    aaa.partner_id AS partner_id,
+                    so.partner_id AS partner_id,
                     po.partner_id AS supplier,
                     po.state AS state,
-                    po.date_order AS creation_date
+                    po.date_order AS creation_date,
+                    so.client_order_ref AS partner_doc
                 FROM
                     purchase_order po
                   LEFT JOIN
@@ -125,6 +128,14 @@ class purchase_order_line_allocation_report(osv.osv):
                     account_analytic_account aaa
                     ON
                     cc.analytic_id = aaa.id
+                  LEFT JOIN
+                    sale_order_line sol
+                    ON
+                    sol.procurement_id = pol.procurement_id
+                  LEFT JOIN
+                    sale_order so
+                    ON
+                    sol.order_id = so.id
                 WHERE pol.analytic_distribution_id IS NOT NULL)
                 UNION
                 (SELECT 
@@ -144,10 +155,11 @@ class purchase_order_line_allocation_report(osv.osv):
                     cc.id AS cost_center_id,
                     aaa.id AS account_id,
                     po.origin AS source_doc,
-                    aaa.partner_id AS partner_id,
+                    so.partner_id AS partner_id,
                     po.partner_id AS supplier,
                     po.state AS state,
-                    po.date_order AS creation_date
+                    po.date_order AS creation_date,
+                    so.client_order_ref AS partner_doc
                 FROM
                     purchase_order po
                   LEFT JOIN
@@ -166,6 +178,14 @@ class purchase_order_line_allocation_report(osv.osv):
                     account_analytic_account aaa
                     ON
                     cc.analytic_id = aaa.id
+                  LEFT JOIN
+                    sale_order_line sol
+                    ON
+                    sol.procurement_id = pol.procurement_id
+                  LEFT JOIN
+                    sale_order so
+                    ON
+                    sol.order_id = so.id
                 WHERE 
                     pol.analytic_distribution_id IS NULL)) AS al
             );""")

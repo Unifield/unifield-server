@@ -223,10 +223,10 @@
                 <para style="Information">[[ line.source_doc ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.partner_id.id ]]</para>
+                <para style="Information">[[ line.partner_id.name ]]</para>
             </td>
             <td>
-                <para style="Information"> </para>
+                <para style="Information">[[ line.partner_doc ]]</para>
             </td>
         </tr>
    </blockTable>

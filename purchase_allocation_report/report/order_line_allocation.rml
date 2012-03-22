@@ -140,10 +140,10 @@
                 <para style="Information">[[ o.source_doc ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.partner_id.id ]]</para>
+                <para style="Information">[[ o.partner_id.name ]]</para>
             </td>
             <td>
-                <para style="Information"> </para>
+                <para style="Information">[[ o.partner_doc ]]</para>
             </td>
         </tr>
    </blockTable>
