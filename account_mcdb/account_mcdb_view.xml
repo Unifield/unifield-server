@@ -21,32 +21,34 @@
                     <field name="abs_id" colspan="2"/>
                     <label string="" colspan="2"/>
                     <group col="2" colspan="2">
-                        <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
-                        <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
+                        <group col="2" colspan="2">
+                            <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
+                            <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
+                        </group>
+                        <field name="rev_journal_ids" colspan="2"/>
+                        <field name="journal_ids" colspan="2" nolabel="1">
+                            <tree string="Journals" editable="top" noteditable="1">
+                                <field name="code"/>
+                                <field name="name" string="Name"/>
+                                <field name="type"/>
+                            </tree>
+                        </field>
                     </group>
                     <group col="2" colspan="2">
-                        <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
-                        <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
+                        <group col="2" colspan="2">
+                            <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
+                            <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
+                        </group>
+                        <field name="rev_period_ids" colspan="2"/>
+                        <field name="period_ids" colspan="2" nolabel="1">
+                            <tree string="Periods" editable="top" noteditable="1">
+                                <field name="name" string="Name"/>
+                                <field name="date_start" string="Start"/>
+                                <field name="date_stop" string="Stop"/>
+                                <field name="state"/>
+                            </tree>
+                        </field>
                     </group>
-                    <group colspan="4" col="4">
-                        <field name="rev_journal_ids"/>
-                        <field name="rev_period_ids"/>
-                    </group>
-                    <field name="journal_ids" colspan="2" nolabel="1">
-                        <tree string="Journals" editable="top" noteditable="1">
-                            <field name="code"/>
-                            <field name="name" string="Name"/>
-                            <field name="type"/>
-                        </tree>
-                    </field>
-                    <field name="period_ids" colspan="2" nolabel="1">
-                        <tree string="Periods" editable="top" noteditable="1">
-                            <field name="name" string="Name"/>
-                            <field name="date_start" string="Start"/>
-                            <field name="date_stop" string="Stop"/>
-                            <field name="state"/>
-                        </tree>
-                    </field>
                     &account;
                     <separator string="Reconciliation" colspan="4"/>
                     <field name="reconciled"/>

@@ -19,8 +19,8 @@
                             <button name="button_account_type_add" type="object" string="Add all Account Types" icon="gtk-add" colspan="1"/>
                         </group>
                         <field name="rev_account_type_ids"/>
-                        <field name="account_type_ids" colspan="2" nolabel="1" editable="top" noteditable="1">
-                            <tree string="Account types">
+                        <field name="account_type_ids" colspan="2" nolabel="1">
+                            <tree string="Account types" editable="top" noteditable="1">
                                 <field name="code"/>
                                 <field name="name"/>
                             </tree>
