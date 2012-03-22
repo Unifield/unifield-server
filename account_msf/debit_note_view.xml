@@ -21,6 +21,7 @@
                     <field name="origin"/>
                     <field name="currency_id"/>
                     <field name="residual"/>
+                    <field name="amount_total"/>
                     <field name="state"/>
                 </tree>
             </field>
