@@ -61,27 +61,42 @@
             <field name="view_mode">tree,form</field>
         </record>
         <menuitem action="action_labels_tree" id="menu_report_custo_labels" parent="menu_report_config" sequence="7"/>
-    	
-    	<record id="stock.action_picking_tree" model="ir.actions.act_window">
-            <field name="name">Delivery Orders</field>
-            <field name="res_model">stock.picking</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,calendar</field>
-            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'),]</field>
-            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
-            <field name="search_view_id" ref="stock.view_picking_out_search"/>
-            <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
+        
+        <record id="view_picking_out_search" model="ir.ui.view">
+            <field name="name">view.picking.out.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_out_search" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[@string='Group By...']/filter[@string='Partner']" position="before">
+                        <filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_picking_out_tree" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <field name="origin" position="after">
+                    	<field name="sale_id" invisible="True" />
+                    </field>
+                </data>
+            </field>
         </record>
     
-    
     	<record id="stock.action_picking_tree" model="ir.actions.act_window">
             <field name="name">Delivery Orders</field>
             <field name="res_model">stock.picking</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
-            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'),]</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
             <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
             <field name="search_view_id" ref="stock.view_picking_out_search"/>
             <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
@@ -144,8 +159,9 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="sale_id" invisible="True" />
-		    <field name="reason_type_id" />
+		    		<field name="reason_type_id" />
                     <field name="origin"/>
+                    <field name="overall_qty" invisible="True" />
                     <field name="date"/>
                     <field name="min_date" string="Expected Pick Date" />
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -190,7 +206,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl',))],}" />
+                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
                         </group>
@@ -201,7 +217,7 @@
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -213,7 +229,7 @@
                                     <field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" groups="product.group_uos"/>
-                                    <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
+                                    <field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
                                     <field name="expired_date" />
 									<field name="kc_dg" />
                                     <field name="location_id" string="Src. Loc" />
@@ -221,10 +237,12 @@
                                     <field name="virtual_available" />
                                     <field name="date" string="Actual Pick Date" />
                                     <field name="state"/>
-                                    <field name="kc_check" />
-			            			<field name="ssl_check" />
-			            			<field name="dg_check" />
-			            			<field name="np_check" />
+                                    <field name="lot_check" />
+				                   	<field name="exp_check" />
+				                   	<field name="kc_check" />
+				           			<field name="ssl_check" invisible="True" />
+				           			<field name="dg_check" />
+				           			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -241,8 +259,8 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]"
-                                        		context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False)]"
+                                        		context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -259,16 +277,18 @@
                                         <field name="prodlot_id" groups="base.group_extended"
 	                    					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 	                    			  			'search_default_real': True}"
-	                    					domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+	                    					domain="[('product_id','=?',product_id), ('check_type','=', True)]"
 	                    					on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-	                    					attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    					attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
 	                    				<field name="hidden_batch_management_mandatory" invisible="True" />
 					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_check" />
-				            			<field name="ssl_check" />
-				            			<field name="dg_check" />
-				            			<field name="np_check" />
+										<field name="lot_check" />
+					                   	<field name="exp_check" />
+					                   	<field name="kc_check" />
+					           			<field name="ssl_check" invisible="True" />
+					           			<field name="dg_check" />
+					           			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -315,25 +335,27 @@
             <field name="arch" type="xml">
                 <search string="Picking Tickets">
                     <group col="8" colspan="4">
-                    	<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" help="Draft Picking Ticket"/>
-                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Picking Ticket"/>
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Picking Ticket"/>
-                        <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+                    	<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <separator orientation="vertical"/>
                         <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-dolar" name="to_invoice" string="To Invoice" domain="[('invoice_state','=','2binvoiced')]" help="Delivery orders to invoice"/>
                         <separator orientation="vertical"/>
+                        <filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
+                        <filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
+                        <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
                         <field name="origin"/>
-			<field name="reason_type_id" widget="selection" />
-                        <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+						<field name="reason_type_id" widget="selection" />
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
-                    	<filter string="Sale Order" name="sale_id" icon="terp-partner" domain="[]" context="{'group_by':'sale_id'}"/>
+                    	<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
@@ -357,7 +379,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '=', 'draft')]</field>
-            <field name="context">{'contact_display':'partner_address', 'search_default_sale_id':1, 'group_by_no_leaf':0, 'group_by':'sale_id'}</field>
+            <field name="context">{'contact_display':'partner_address', 'search_default_sale_id':1, 'group_by_no_leaf':0, 'group_by':'origin'}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of draft picking tickets.</field>
         </record>
@@ -388,7 +410,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
-            <field name="context">{'picking_screen':True, 'test':True}</field>
+            <field name="context">{'picking_screen':True, 'test':True, 'search_default_not_empty':1}</field>
+            <!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
@@ -418,7 +441,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree hide_new_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
+                <tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
@@ -465,7 +488,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl',))],}" />
+                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
                             <field name="num_of_packs" />
@@ -478,7 +501,7 @@
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name='ppl_customize_label' required="True" />
                         </group>
                     </group>
@@ -491,7 +514,7 @@
                                     <field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" groups="product.group_uos"/>
-                                    <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
+                                    <field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
 									<field name="expired_date" />
 									<field name="kc_dg" />
                                     <field name="location_id" string="Src. Loc" />
@@ -501,10 +524,12 @@
                                     <field name="to_pack" />
                                     <field name="date" string="Actual Pack Date" />
                                     <field name="state"/>
-                                    <field name="kc_check" />
-			            			<field name="ssl_check" />
-			            			<field name="dg_check" />
-			            			<field name="np_check" />
+                                    <field name="lot_check" />
+				                   	<field name="exp_check" />
+				                   	<field name="kc_check" />
+				           			<field name="ssl_check" invisible="True" />
+				           			<field name="dg_check" />
+				           			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -521,8 +546,8 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" 
-                                       			context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False)]" 
+                                       			context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -539,16 +564,18 @@
                                         <field name="prodlot_id" groups="base.group_extended"
 					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 	                    			  			'search_default_real': True}"
-					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True)]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
 					                    <field name="hidden_batch_management_mandatory" invisible="True" />
 					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_check" />
-				            			<field name="ssl_check" />
-				            			<field name="dg_check" />
-				            			<field name="np_check" />
+										<field name="lot_check" />
+					                   	<field name="exp_check" />
+					                   	<field name="kc_check" />
+					           			<field name="ssl_check" invisible="True" />
+					           			<field name="dg_check" />
+					           			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -594,32 +621,25 @@
                 <search string="Pre-Packing List">
                     <group col="8" colspan="4">
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
-                        <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-dolar" name="to_invoice" string="To Invoice" domain="[('invoice_state','=','2binvoiced')]" help="Delivery orders to invoice"/>
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Delivery orders already processed"/>
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
-			<field name="reason_type_id" widget="selection" />
                         <field name="origin"/>
-                        <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+                        <field name="reason_type_id" widget="selection" />
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
+                    	<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
                         <separator orientation="vertical" />
-                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
-                        <separator orientation="vertical" />
                         <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
                         <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
                         <separator orientation="vertical" />
-                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                     </group>
                 </search>
             </field>
@@ -633,7 +653,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
-            <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True}</field>
+            <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'search_default_available':1}</field>
+            <!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
             <field name="search_view_id" ref="view_ppl_search"/>
             <field name="help">This is the list of all ppl that have been picked.</field>
         </record>
@@ -666,7 +687,7 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
-		    <field name="reason_type_id" />
+		    		<field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -720,7 +741,7 @@
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -732,7 +753,7 @@
                                     <field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" groups="product.group_uos"/>
-                                    <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
+                                    <field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
                                     <field name="expired_date" />
 									<field name="kc_dg" />
                                     <field name="location_id" string="Src. Loc" />
@@ -745,10 +766,12 @@
                                     <field name="currency_id" />
                                     <field name="date"/>
                                     <field name="state"/>
-                                    <field name="kc_check" />
-			            			<field name="ssl_check" />
-			            			<field name="dg_check" />
-			            			<field name="np_check" />
+                                    <field name="lot_check" />
+				                   	<field name="exp_check" />
+				                   	<field name="kc_check" />
+				           			<field name="ssl_check" invisible="True" />
+				           			<field name="dg_check" />
+				           			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -765,8 +788,8 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" 
-                                        		context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False)]" 
+                                        		context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -783,16 +806,18 @@
                                         <field name="prodlot_id" groups="base.group_extended"
 					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 	                    			  			'search_default_real': True}"
-					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True)]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
 					                    <field name="hidden_batch_management_mandatory" invisible="True" />
 					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_check" />
-				            			<field name="ssl_check" />
-				            			<field name="dg_check" />
-				            			<field name="np_check" />
+										<field name="lot_check" />
+					                   	<field name="exp_check" />
+					                   	<field name="kc_check" />
+					           			<field name="ssl_check" invisible="True" />
+					           			<field name="dg_check" />
+					           			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -840,7 +865,7 @@
                     <group col="8" colspan="4">
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
-                        <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Delivery orders already processed"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
                         <separator orientation="vertical"/>
@@ -901,14 +926,13 @@
         </record>
         <!-- <menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/> -->
         
-        
 		<!-- Shipment -->
 		<record id="view_shipment_tree" model="ir.ui.view">
             <field name="name">shipment.tree</field>
             <field name="model">shipment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Shipment">
+                <tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'];grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="address_id"/>
@@ -931,7 +955,7 @@
             <field name="model">shipment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Shipment">
+                <form string="Shipment" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
@@ -1004,6 +1028,7 @@
                                 <button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-redo" />
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo"/>
                                 <button name="validate" states="shipped" string="Validate" type="object" groups="base.group_extended" icon="gtk-apply" />
+                                <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}" />
                             </group>
                         </page>
                         <page string="Document Information">
@@ -1056,10 +1081,13 @@
             <field name="arch" type="xml">
                 <search string="Shipment">
                     <group col="8" colspan="4">
-                    	<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" help="Draft Delivery Orders"/>
-                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
-                        <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+                    	<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+                        <filter icon="terp-check" name="shipped" string="Shipped" domain="[('state','=','shipped')]" />
+                        <filter icon="terp-dialog-close" name="closed" string="Closed" domain="[('state','=','done')]" />
+                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state','=','delivered')]" />
+                        <separator orientation="vertical"/>
+                        <filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
+                        <filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
@@ -1082,7 +1110,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[]</field>
-            <field name="context">{}</field>
+            <field name="context">{'search_default_not_empty':1}</field>
             <field name="search_view_id" ref="view_shipment_search"/>
             <field name="help">This is the list of all packing lists that have been picked. The packing lists are regrouped by address.</field>
         </record>
@@ -1112,7 +1140,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
-            <field name="context">{'step':'create',}</field>
+            <field name="context">{'step':'create'}</field>
         </record>
         
         <menuitem action="action_create_shipment_wizard"

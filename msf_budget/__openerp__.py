@@ -22,7 +22,8 @@
     'name': 'MSF Budget Management',
     'version': '1.0',
     'category': 'Generic Modules/Accounting',
-    'author': 'MSF: Matthieu Dietrich',
+    'author': 'MSF, TeMPO Consulting',
+    'developer': 'Matthieu Dietrich',
     'depends': ['res_currency_tables'],
     'description': '''
         Budget view

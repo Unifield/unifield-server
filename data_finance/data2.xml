@@ -1,0 +1,1502 @@
+<openerp>
+    <data noupdate="1">
+        <!--model: account.analytic.account, id: 17-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba_17">
+            <field name="category">OC</field>
+            <field name="code">OCBA</field>
+            <field name="name">OCBA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_project"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 55-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 172 NIGER </field>
+            <field name="name">PRJ ESNE 172 NIGER Meningitis emergency 2009</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 73-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_172_niger_meni_73">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE 172-0000 NIGER</field>
+            <field name="name">WBS ESNE 172-0000 NIGER, Menintigis emergency 2009</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 54-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 160 NIGER</field>
+            <field name="name">PRJ ESNE 160 NIGER EPP</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 72-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_160_niger_epp__72">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE 160-0000 NIGER,</field>
+            <field name="name">WBS ESNE 160-0000 NIGER, EPP-General Activ</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 53-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 106 MADOUA</field>
+            <field name="name">PRJ ESNE 106 MADOUA MALARIA STUDY</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 71-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_71">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE 106-0000 MADOUA</field>
+            <field name="name">WBS ESNE 106-0000 MADOUA, Malaria Study</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 49-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 102 NIGER</field>
+            <field name="name">PRJ ESNE 102 NIGER CAPITAL</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 22-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_22">
+            <field name="category">OC</field>
+            <field name="code">WBS ESTH 102-0000</field>
+            <field name="name">WBS ESTH102-0000 HAITI CAPITAL</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 21-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESHT 107 HAITI</field>
+            <field name="name">HAITI JACMEL HOSPITAL</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 35-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___35">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0000</field>
+            <field name="name">WBS ESHT 107-0000 HAITI Jacmel Hospital</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 37-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___37">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0001</field>
+            <field name="name">WBS ESHT 107-0001 HAITI Primary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 38-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___38">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0002</field>
+            <field name="name">WBS ESHT 107-0002 HAITI Secondary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 39-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___39">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0015</field>
+            <field name="name">WBS ESHT 107-0015 HAITI Surgery</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 44-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___44">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0020</field>
+            <field name="name">WBS ESHT 107-0020 HAITI Mental Health</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 41-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___41">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0023</field>
+            <field name="name">WBS ESHT 107-0023 HAITI Reproductive Health</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 46-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___46">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0036</field>
+            <field name="name">WBS ESHT 107-0036 HAITI Internal Medecine (2010)</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 40-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___40">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0037</field>
+            <field name="name">WBS ESHT 107-0037 HAITI Paediatric</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 43-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___43">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0038</field>
+            <field name="name">WBS ESHT 107-0038 HAITI Emergency Room</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 45-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___45">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0039</field>
+            <field name="name">WBS ESHT 107-0039 HAITI watsan</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 42-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital___42">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT 107-0055 </field>
+            <field name="name">WBS ESHT 107-0055 HAITI Internal Medecine</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_21"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 20-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESHT 104 HAITI</field>
+            <field name="name">HAITI JACMEL HOSPITAL EMERGENCY</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 25-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_25">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0000</field>
+            <field name="name">WBS ESHT104-0000 HAITI Jacmel Hospital emergency</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 26-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_26">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0001</field>
+            <field name="name">WBS ESHT104-0001 HAITI Primary Support Activities</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 27-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_27">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0002</field>
+            <field name="name">WBS ESHT104-0002 HAITI Secondary Support Activities</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 28-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_28">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0015</field>
+            <field name="name">WBS ESHT104-0015 HAITI Surgery</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 33-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_33">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0020</field>
+            <field name="name">WBS ESHT104-0020 HAITI Mental Health</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 30-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_30">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0023</field>
+            <field name="name">WBS ESHT104-0023 HAITI Reproductive Health</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 31-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_31">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0036</field>
+            <field name="name">WBS ESHT104-0036 HAITI Internal Medecine</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 29-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_29">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0037</field>
+            <field name="name">WBS ESHT104-0037 HAITI Paedriatric</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 32-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_32">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0038</field>
+            <field name="name">WBS ESHT104-0038 HAITI Emergency Room</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 34-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_34">
+            <field name="category">OC</field>
+            <field name="code">WBS ESHT104-0039</field>
+            <field name="name">WBS ESHT104-0039 HAITI Watsan</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 19-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba____haiti_capital_cooridna_19">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESHT 102 HAITI</field>
+            <field name="name"> HAITI CAPITAL COORIDNATION</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 23-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba____haiti_capital_cooridna_23">
+            <field name="category">OC</field>
+            <field name="code">WBS ESTH102-0001</field>
+            <field name="name">WBS ESTH102-0001 HAITI Primary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba____haiti_capital_cooridna_19"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 24-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba____haiti_capital_cooridna_24">
+            <field name="category">OC</field>
+            <field name="code">WBS ESTH102-0002</field>
+            <field name="name">WBS ESTH102-0002 HAITI Secondary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba____haiti_capital_cooridna_19"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 18-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___haiti_capital_emergency_18">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESHT 101 HAITI</field>
+            <field name="name">HAITI CAPITAL EMERGENCY</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 50-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 103 MADOUA</field>
+            <field name="name">PRJ ESNE 103 MADOUA NUTRITION</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 51-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_104_bouza_nutr_51">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 104 BOUZA</field>
+            <field name="name">PRJ ESNE 104 BOUZA NUTRITION</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 52-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_52">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 105 AGADEZ</field>
+            <field name="name">PRJ ESNE 105 AGADEZ MATERNITY CARE</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 56-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_56">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 173 AGADEZ </field>
+            <field name="name">PRJ ESNE 173 AGADEZ FLOODS</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 57-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_174_madoua_men_57">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 174 MADOUA</field>
+            <field name="name">PRJ ESNE 174 MADOUA MENINGITIS EMERGENCY 2010</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 58-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_175_agadez__me_58">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 175 AGADEZ</field>
+            <field name="name">PRJ ESNE 175 AGADEZ, Meningitis vaccination</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 59-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 176 TAHOUA</field>
+            <field name="name">PRJ ESNE 176 TAHOUA DISTRIBUTION RUTF</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 60-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 177 TAHOUA </field>
+            <field name="name">PRJ ESNE 177 TAHOUA NUTRITIONAL EMERGENCY</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 61-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_61">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 178 TAHOUA</field>
+            <field name="name">PRJ ESNE 178 TAHOUA EMERGENCY MALARIA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 62-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_62">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 191 TAHOUA</field>
+            <field name="name">PRJ ESNE 191 TAHOUA EXPLO NUT</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 63-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_63">
+            <field name="category">OC</field>
+            <field name="code">PRJ ESNE 193 MADOUA </field>
+            <field name="name">PRJ ESNE 193 MADOUA EXPLO MALARIA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 67-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_67">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE103-0000 MADOUA</field>
+            <field name="name">WBS ESNE103-0000 MADOUA Nutrition General Activ.</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 75-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_75">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE106-0000 MADOUA</field>
+            <field name="name">WBS ESNE106-0000 MADOUA Malaria study</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 76-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_160_niger_epp__76">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE160-0000 NIGER</field>
+            <field name="name">WBS ESNE160-0000 NIGER EPP-General Activ</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 78-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_78">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE173-0000 Agadez</field>
+            <field name="name">WBS ESNE173-0000 Agadez Floods</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_56"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 79-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_174_madoua_men_79">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE174-0000 MADOUA</field>
+            <field name="name">WBS ESNE174-0000 MADOUA, Meningitis emergency 2010</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_174_madoua_men_57"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 82-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_82">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE176-0000 TAHOUA</field>
+            <field name="name">WBS ESNE176-0000 TAHOUA, Distribution RUTF</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 83-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_83">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE176-0001 TAHOUA,</field>
+            <field name="name">WBS ESNE176-0001 TAHOUA, Primary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 84-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_84">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE176-0002 TAHOUA</field>
+            <field name="name">WBS ESNE176-0002 TAHOUA, Secondary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 85-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_85">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE177-0000 TAHOUA</field>
+            <field name="name">WBS ESNE177-0000 TAHOUA, Nutritional Emergency</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 86-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_86">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE177-0002 TAHOUA</field>
+            <field name="name">WBS ESNE177-0002 TAHOUA, Secondary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 88-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_88">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE191-0000 TAHOUA</field>
+            <field name="name">WBS ESNE191-0000 TAHOUA , explo nut</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_62"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 89-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_89">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE193-0000 MADOUA</field>
+            <field name="name">WBS ESNE193-0000 MADOUA, explo malaria</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_63"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 87-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_87">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE178-00020TAHOUA</field>
+            <field name="name">WBS ESNE178-0000 TAHOUA, Emergency Malaria</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_61"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 66-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_66">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE102-0002 NIGER </field>
+            <field name="name">WBS ESNE102-0002 NIGER Secondary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 80-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_175_agadez__me_80">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE175-0000 AGADEZ</field>
+            <field name="name">WBS ESNE175-0000 AGADEZ, Meningitis vaccination</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_175_agadez__me_58"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 65-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_65">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE102-0001 NIGER </field>
+            <field name="name">WBS ESNE102-0001 NIGER primary support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 64-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_64">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE102-0000 NIGER</field>
+            <field name="name">WBS ESNE102-0000 NIGER capital</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 69-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_69">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE104-0000 BOUZA</field>
+            <field name="name">WBS ESNE104-0000 BOUZA Nutrition-General Activ.</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 68-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_68">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE103-0002 MADOUA</field>
+            <field name="name">WBS ESNE103-0002 MADOUA Secondary Support</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 70-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_70">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE105-0000 AGADEZ </field>
+            <field name="name">WBS ESNE105-0000 AGADEZ Maternity care</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_52"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 77-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba___prj_esne_172_niger_meni_77">
+            <field name="category">OC</field>
+            <field name="code">WBS ESNE172-0000 NIGER</field>
+            <field name="name">WBS ESNE172-0000 NIGER Meningitis emergency 2009</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 90-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___ies101-esne1_gobiern_90">
+            <field name="category">FUNDING</field>
+            <field name="code">IES101-ESNE1</field>
+            <field name="name">IES101-ESNE1 GOBIERNO ESPANOL-AECI</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53'),ref('account_analytic_account_oc___ocba___prj_esne_104_bouza_nutr_51'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_52'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_56'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_57'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_61'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_62'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_58'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_67'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_75'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp__76'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_78'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_79'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_82'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_83'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_84'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_85'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_86'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_88'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_89'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_63'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_87'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_66'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_80'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_65'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_64'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_69'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_68'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_70'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_77')])]"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61052'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.605013')])]"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 47-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___haiti_jacmel_la_caix_47">
+            <field name="category">FUNDING</field>
+            <field name="code">IES501-ESHT1</field>
+            <field name="name">HAITI JACMEL LA CAIXA 2012</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba____haiti_capital_cooridna_24'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_29'),ref('account_analytic_account_oc___ocba____haiti_capital_cooridna_19'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_21'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___39'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_30'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_31'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_32'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_26'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_27'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_25'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_28'),ref('account_analytic_account_oc___ocba____haiti_capital_cooridna_23'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_33'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_34'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___35'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___37'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___38'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___40'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___41'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___42'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___43'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___44'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___45'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___46'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_22')])]"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61052'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.605013')])]"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 48-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___haiti_jacmel_fundaci_48">
+            <field name="category">FUNDING</field>
+            <field name="code">IES705-ESHT1</field>
+            <field name="name">HAITI JACMEL FUNDACION BARCA 2012</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba____haiti_capital_cooridna_24'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_29'),ref('account_analytic_account_oc___ocba____haiti_capital_cooridna_19'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_21'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___39'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_30'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_31'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_32'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_26'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_27'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_25'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_28'),ref('account_analytic_account_oc___ocba____haiti_capital_cooridna_23'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_33'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_34'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___35'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___37'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___38'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___40'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___41'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___42'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___43'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___44'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___45'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___46'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_22')])]"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61052'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.605013')])]"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 92-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___ieu110-esne1-ue_echo_92">
+            <field name="category">FUNDING</field>
+            <field name="code">IEU110-ESNE1</field>
+            <field name="name">IEU110-ESNE1-UE/ECHO </field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53'),ref('account_analytic_account_oc___ocba___prj_esne_104_bouza_nutr_51'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_52'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_56'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_57'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_61'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_62'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_58'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_67'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_75'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp__76'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_78'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_79'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_82'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_83'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_84'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_85'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_86'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_88'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_89'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_63'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_87'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_66'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_80'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_65'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_64'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_69'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_68'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_70'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_77')])]"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61052'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.605013')])]"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 11-->
+        <record model="financing.contract.format" id="financing_contract_format_format_11">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">all</field>
+        </record>
+
+        <!--model: financing.contract.donor, id: 5-->
+        <record model="financing.contract.donor" id="financing_contract_donor_fundacion_barca_5">
+            <field name="active" eval="1"/>
+            <field name="code">IES705</field>
+            <field name="name">Fundacion Barca</field>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 12-->
+        <record model="financing.contract.format" id="financing_contract_format_format_12">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">all</field>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 126-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_costos_directes:_bns_i_serve_126">
+            <field name="code">01</field>
+            <field name="name">Costos directes: B&#233;ns i serveis distribu&#239;ts als beneficiaris</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 130-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_personal_expatriate_130">
+            <field name="code">01.1</field>
+            <field name="name">Personal Expatriate</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 131-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_per_diem__131">
+            <field name="code">01.1.1</field>
+            <field name="name">per diem </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_130"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6260')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 132-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_daily_tariff_132">
+            <field name="code">01.1.2</field>
+            <field name="name">daily tariff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_130"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 133-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_plane_tickets_133">
+            <field name="code">01.1.3</field>
+            <field name="name">plane tickets</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_130"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 134-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_housing__cleaning____134">
+            <field name="code">01.1.4</field>
+            <field name="name">other (housing, cleaning...)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_130"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 135-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_personal_local_135">
+            <field name="code">01.2</field>
+            <field name="name">Personal local</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 137-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_administrative_staff_137">
+            <field name="code">01.2.1</field>
+            <field name="name">administrative staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_135"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 138-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_staff_138">
+            <field name="code">01.2.2</field>
+            <field name="name">medical staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_135"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 139-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistic_staff_139">
+            <field name="code">01.2.3</field>
+            <field name="name">logistic staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_135"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 140-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_drivers__daily_workers_140">
+            <field name="code">01.2.4</field>
+            <field name="name">other (drivers, daily workers)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_135"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 141-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_productes_alimentaris_141">
+            <field name="code">01.3</field>
+            <field name="name">Productes alimentaris</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 142-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_food_for_patients__142">
+            <field name="code">01.3.1</field>
+            <field name="name">food for patients </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_productes_alimentaris_141"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 143-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_insumos_agrcoles_143">
+            <field name="code">01.4</field>
+            <field name="name">Insumos agr&#237;coles</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 146-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_equips_i_materials_mdics__146">
+            <field name="code">01.5</field>
+            <field name="name">Equips i materials m&#232;dics </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 147-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_drugs_and_medical_material_147">
+            <field name="code">01.5.1</field>
+            <field name="name">drugs and medical material</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_equips_i_materials_mdics__146"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 148-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_productes_de_primera_necessi_148">
+            <field name="code">01.6</field>
+            <field name="name">Productes de primera necessitat</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 149-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_recers_temporals__149">
+            <field name="code">01.7</field>
+            <field name="name">Recers temporals </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 150-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_aigua_i_sanejament_150">
+            <field name="code">01.8</field>
+            <field name="name">Aigua i sanejament</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 151-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_rehabilitaci_d'urgncia_151">
+            <field name="code">01.9</field>
+            <field name="name">Rehabilitaci&#243; d'urg&#232;ncia</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 152-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_rehabilitation_of_the_hospit_152">
+            <field name="code">01.9.1</field>
+            <field name="name">rehabilitation of the hospital</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_rehabilitaci_d'urgncia_151"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 153-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_despeses_de_distribuci_153">
+            <field name="code">01.10</field>
+            <field name="name">Despeses de distribuci&#243;</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 154-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_warehouse_154">
+            <field name="code">01.10.1</field>
+            <field name="name">Warehouse</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_despeses_de_distribuci_153"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 155-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport_155">
+            <field name="code">01.11</field>
+            <field name="name">Transport</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 156-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vehicle_rental_156">
+            <field name="code">01.11.1</field>
+            <field name="name">vehicle rental</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_155"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 157-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_fuel_157">
+            <field name="code">01.11.2</field>
+            <field name="name">fuel</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_155"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 158-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_international_freight_158">
+            <field name="code">01.11.3</field>
+            <field name="name">international freight</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_155"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 159-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_maintenance__taxes___159">
+            <field name="code">01.11.4</field>
+            <field name="name">other (maintenance, taxes..)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_155"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 160-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_seguretat_160">
+            <field name="code">01.12</field>
+            <field name="name">Seguretat</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 161-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_formaci_161">
+            <field name="code">01.13</field>
+            <field name="name">Formaci&#243;</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 162-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_altres_a_especificar_en_la_p_162">
+            <field name="code">01.14</field>
+            <field name="name">Altres (a especificar en la proposta)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 163-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_reserva_163">
+            <field name="code">01.15</field>
+            <field name="name">Reserva</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_126"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.donor, id: 6-->
+        <record model="financing.contract.donor" id="financing_contract_donor_fundacion_la_caixa_6">
+            <field name="active" eval="1"/>
+            <field name="code">IES501</field>
+            <field name="name">Fundacion La Caixa</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 18-->
+        <record model="financing.contract.format" id="financing_contract_format_format_18">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">all</field>
+        </record>
+
+        <!--model: financing.contract.donor, id: 7-->
+        <record model="financing.contract.donor" id="financing_contract_donor_gobierno_espanol-aeci_7">
+            <field name="active" eval="1"/>
+            <field name="code">IES101</field>
+            <field name="name">GOBIERNO ESPANOL-AECI</field>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 16-->
+        <record model="financing.contract.format" id="financing_contract_format_format_16">
+            <field name="eligibility_to_date">2010-12-10</field>
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date">2010-01-12</field>
+            <field name="reporting_type">all</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_29'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_20'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_21'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___39'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_30'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_31'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_32'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_26'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_27'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_25'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_28'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_33'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_34'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___35'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___37'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___38'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___40'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___41'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___42'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___43'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___44'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___45'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___46')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 15-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_15_15">
+            <field name="total_project" eval="1"/>
+            <field name="funded" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_16"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___haiti_jacmel_fundaci_48"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 6-->
+        <record model="financing.contract.contract" id="financing_contract_contract_haiti_jacmel_fundacion_barca__201_6">
+            <field name="code">574-M4-IES705</field>
+            <field name="name">HAITI_JACMEL_FUNDACION BARCA _2010</field>
+            <field name="donor_grant_reference">IES705</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">100000.0</field>
+            <field name="donor_id" ref="financing_contract_donor_fundacion_barca_5"/>
+            <field name="reporting_currency" ref="base.EUR"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 17-->
+        <record model="financing.contract.format" id="financing_contract_format_format_17">
+            <field name="eligibility_to_date">2011-07-11</field>
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date">2010-01-12</field>
+            <field name="reporting_type">all</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_29'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___39'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_30'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_31'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_32'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_26'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_27'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_25'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_28'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_33'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital_e_34'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___35'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___37'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___38'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___40'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___41'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___42'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___43'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___44'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___45'),ref('account_analytic_account_oc___ocba___haiti_jacmel_hospital___46')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 17-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_17_17">
+            <field name="total_project" eval="1"/>
+            <field name="funded" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_17"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___haiti_jacmel_la_caix_47"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 196-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_costos_directes:_bns_i_serve_196">
+            <field name="code">01</field>
+            <field name="name">Costos directes: B&#233;ns i serveis distribu&#239;ts als beneficiaris</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 197-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_personal_expatriate_197">
+            <field name="code">01.1</field>
+            <field name="name">Personal Expatriate</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 198-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_per_diem__198">
+            <field name="code">01.1.1</field>
+            <field name="name">per diem </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_197"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 199-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_daily_tariff_199">
+            <field name="code">01.1.2</field>
+            <field name="name">daily tariff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_197"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 200-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_plane_tickets_200">
+            <field name="code">01.1.3</field>
+            <field name="name">plane tickets</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_197"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 201-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_housing__cleaning____201">
+            <field name="code">01.1.4</field>
+            <field name="name">other (housing, cleaning...)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_expatriate_197"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 202-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_personal_local_202">
+            <field name="code">01.2</field>
+            <field name="name">Personal local</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 203-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_administrative_staff_203">
+            <field name="code">01.2.1</field>
+            <field name="name">administrative staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_202"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 204-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_staff_204">
+            <field name="code">01.2.2</field>
+            <field name="name">medical staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_202"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 205-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistic_staff_205">
+            <field name="code">01.2.3</field>
+            <field name="name">logistic staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_202"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 206-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_drivers__daily_workers_206">
+            <field name="code">01.2.4</field>
+            <field name="name">other (drivers, daily workers)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_personal_local_202"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 207-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_insumos_agrcoles_207">
+            <field name="code">01.4</field>
+            <field name="name">Insumos agr&#237;coles</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 208-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_equips_i_materials_mdics__208">
+            <field name="code">01.5</field>
+            <field name="name">Equips i materials m&#232;dics </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 209-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_drugs_and_medical_material_209">
+            <field name="code">01.5.1</field>
+            <field name="name">drugs and medical material</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_equips_i_materials_mdics__208"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 210-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_productes_de_primera_necessi_210">
+            <field name="code">01.6</field>
+            <field name="name">Productes de primera necessitat</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 211-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_recers_temporals__211">
+            <field name="code">01.7</field>
+            <field name="name">Recers temporals </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 212-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_aigua_i_sanejament_212">
+            <field name="code">01.8</field>
+            <field name="name">Aigua i sanejament</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 213-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_seguretat_213">
+            <field name="code">01.12</field>
+            <field name="name">Seguretat</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 214-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_formaci_214">
+            <field name="code">01.13</field>
+            <field name="name">Formaci&#243;</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 215-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_altres_a_especificar_en_la_p_215">
+            <field name="code">01.14</field>
+            <field name="name">Altres (a especificar en la proposta)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 216-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_reserva_216">
+            <field name="code">01.15</field>
+            <field name="name">Reserva</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="parent_id" ref="financing_contract_format_line_costos_directes:_bns_i_serve_196"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 217-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_productes_alimentaris_217">
+            <field name="code">01.3</field>
+            <field name="name">Productes alimentaris</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 218-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_food_for_patients__218">
+            <field name="code">01.3.1</field>
+            <field name="name">food for patients </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_productes_alimentaris_217"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 219-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_rehabilitaci_d'urgncia_219">
+            <field name="code">01.9</field>
+            <field name="name">Rehabilitaci&#243; d'urg&#232;ncia</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 220-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_rehabilitation_of_the_hospit_220">
+            <field name="code">01.9.1</field>
+            <field name="name">rehabilitation of the hospital</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_rehabilitaci_d'urgncia_219"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 221-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_despeses_de_distribuci_221">
+            <field name="code">01.10</field>
+            <field name="name">Despeses de distribuci&#243;</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 222-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_warehouse_222">
+            <field name="code">01.10.1</field>
+            <field name="name">Warehouse</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_despeses_de_distribuci_221"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 223-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport_223">
+            <field name="code">01.11</field>
+            <field name="name">Transport</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 224-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vehicle_rental_224">
+            <field name="code">01.11.1</field>
+            <field name="name">vehicle rental</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_223"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 225-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_fuel_225">
+            <field name="code">01.11.2</field>
+            <field name="name">fuel</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_223"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 226-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_international_freight_226">
+            <field name="code">01.11.3</field>
+            <field name="name">international freight</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_223"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 227-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_maintenance__taxes___227">
+            <field name="code">01.11.4</field>
+            <field name="name">other (maintenance, taxes..)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transport_223"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 7-->
+        <record model="financing.contract.contract" id="financing_contract_contract_haitia_jacmel_la_caixa_7">
+            <field name="code">571-M4-IES501</field>
+            <field name="name">Haitia_Jacmel_La Caixa</field>
+            <field name="donor_grant_reference">IES501</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">750000.0</field>
+            <field name="donor_id" ref="financing_contract_donor_fundacion_la_caixa_6"/>
+            <field name="reporting_currency" ref="base.EUR"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 19-->
+        <record model="financing.contract.format" id="financing_contract_format_format_19">
+            <field name="eligibility_to_date">2011-01-15</field>
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date">2010-07-01</field>
+            <field name="reporting_type">project</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53'),ref('account_analytic_account_oc___ocba___prj_esne_104_bouza_nutr_51'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_52'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_56'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_57'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_61'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_62'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_58'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_67'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_75'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp__76'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_78'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_79'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_82'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_83'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_84'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_85'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_86'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_88'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_89'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_63'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_87'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_66'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_80'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_65'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_64'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_69'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_68'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_70'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_77')])]"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 235-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriate_staff_235">
+            <field name="code">61</field>
+            <field name="name">EXPATRIATE STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 236-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_236">
+            <field name="code">62</field>
+            <field name="name">NATIONAL STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.62151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 237-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_running_costs_237">
+            <field name="code">63</field>
+            <field name="name">RUNNING COSTS</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.605013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 238-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_&amp;_nutrition_238">
+            <field name="code">64</field>
+            <field name="name">MEDICAL &amp; NUTRITION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 239-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistics__constr__&amp;_sanitat_239">
+            <field name="code">65</field>
+            <field name="name">LOGISTICS, CONSTR. &amp; SANITATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.6135')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 240-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_com__visibility_&amp;_informatio_240">
+            <field name="code">66</field>
+            <field name="name">COM. VISIBILITY &amp; INFORMATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6160')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 241-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport__freight__storage_241">
+            <field name="code">67</field>
+            <field name="name">TRANSPORT, FREIGHT, STORAGE</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.6140'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 8-->
+        <record model="financing.contract.contract" id="financing_contract_contract_niger_nutricion_emergencia_echo_2_8">
+            <field name="code">NE_NUT_ECHO_2010</field>
+            <field name="name">Niger_NUtricion_emergencia ECHO_2010</field>
+            <field name="donor_grant_reference">M3-IEU110-ESNE1</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">700000.0</field>
+            <field name="donor_id" ref="data_finance.financing_contract_donor_european_commission_humanitarian_aid_2"/>
+            <field name="reporting_currency" ref="base.EUR"/>
+            <field name="format_id" ref="financing_contract_format_format_19"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 20-->
+        <record model="financing.contract.format" id="financing_contract_format_format_20">
+            <field name="eligibility_to_date">2010-12-31</field>
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date">2010-01-15</field>
+            <field name="reporting_type">all</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_49'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_53'),ref('account_analytic_account_oc___ocba___prj_esne_104_bouza_nutr_51'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_50'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_52'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp_54'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_55'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_56'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_57'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_59'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_60'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_61'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_62'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_58'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_67'),ref('account_analytic_account_oc___ocba___prj_esne_106_madoua_mal_75'),ref('account_analytic_account_oc___ocba___prj_esne_160_niger_epp__76'),ref('account_analytic_account_oc___ocba___prj_esne_173_agadez_flo_78'),ref('account_analytic_account_oc___ocba___prj_esne_174_madoua_men_79'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_82'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_83'),ref('account_analytic_account_oc___ocba___prj_esne_176_tahoua_dis_84'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_85'),ref('account_analytic_account_oc___ocba___prj_esne_177_tahoua_nut_86'),ref('account_analytic_account_oc___ocba___prj_esne_191_tahoua_exp_88'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_89'),ref('account_analytic_account_oc___ocba___prj_esne_193_madoua_exp_63'),ref('account_analytic_account_oc___ocba___prj_esne_178_tahoua_eme_87'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_66'),ref('account_analytic_account_oc___ocba___prj_esne_175_agadez__me_80'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_65'),ref('account_analytic_account_oc___ocba___prj_esne_102_niger_capi_64'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_69'),ref('account_analytic_account_oc___ocba___prj_esne_103_madoua_nut_68'),ref('account_analytic_account_oc___ocba___prj_esne_105_agadez_mat_70'),ref('account_analytic_account_oc___ocba___prj_esne_172_niger_meni_77')])]"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 9-->
+        <record model="financing.contract.contract" id="financing_contract_contract_ne_aecid_conv_2010_9">
+            <field name="code">M3-IES101-ESNE1</field>
+            <field name="name">NE_AECID_CONV_2010</field>
+            <field name="donor_grant_reference">M3-IES101-ESNE1</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">600000.0</field>
+            <field name="donor_id" ref="financing_contract_donor_gobierno_espanol-aeci_7"/>
+            <field name="reporting_currency" ref="base.EUR"/>
+            <field name="format_id" ref="financing_contract_format_format_20"/>
+        </record>
+    </data>
+</openerp>

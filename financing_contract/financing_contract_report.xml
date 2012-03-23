@@ -31,7 +31,8 @@
         name="financing.contract"
         rml="financing_contract/report/financing_contract.rml"
         auto="False"
-        menu="True"/>
+        menu="True"
+        header="False"/>
 
     </data>
 </openerp>

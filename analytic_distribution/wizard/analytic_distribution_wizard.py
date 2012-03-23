@@ -182,8 +182,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     fp_id = 0
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
+                    # for accrual lines, only Private Funds must be available
+                    if context.get('from_accrual_line', False):
+                        field.set('domain', "[('id', '=', %s)]" % fp_id)
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
-                    if context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int):
+                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
@@ -245,13 +248,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             ana_acc = ana_obj.browse(cr, uid, vals.get('analytic_id'), context=context)
             if ana_acc and ana_acc.category and data[line_type] and data[line_type][0]:
                 if not ana_acc.category == data[line_type][0] and line_type != 'analytic.distribution.wizard.fp.lines':
-                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'." % (ana_acc.name, data[line_type][1])))
+                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'.") % (ana_acc.name, data[line_type][1]))
         # Verify cost_center_id if given
         if vals.get('cost_center_id', False):
             cc = ana_obj.browse(cr, uid, vals.get('cost_center_id'), context=context)
             if cc and cc.category:
                 if not cc.category == 'OC':
-                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category." % cc.name))
+                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category.") % (cc.name,))
         return True
 
     def create(self, cr, uid, vals, context={}):
@@ -370,6 +373,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify commitment line state
             if el.commitment_line_id and el.commitment_line_id.commit_id and el.commitment_line_id.commit_id.state in ['done']:
                 res[el.id] = False
+            # verify accrual line state
+            if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context={}):
@@ -415,6 +421,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
         'commitment_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'commitment_line_id': fields.many2one('account.commitment.line', string="Commitment Voucher Line"),
+        'model_line_id': fields.many2one('account.model.line', string="Account Model Line"),
+        'accrual_line_id': fields.many2one('msf.accrual.line', string="Accrual Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -567,6 +575,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             if not wiz.fp_line_ids and wiz.move_line_id:
                 raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
             if not wiz.fp_line_ids and (wiz.commitment_id or wiz.commitment_line_id):
+                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+            if not wiz.fp_line_ids and wiz.accrual_line_id:
                 raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
@@ -734,7 +744,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
                     ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
-                    ('commitment_line_id', 'account.commitment.line')]:
+                    ('commitment_line_id', 'account.commitment.line'), ('model_line_id', 'account.model.line'), ('accrual_line_id', 'msf.accrual.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)

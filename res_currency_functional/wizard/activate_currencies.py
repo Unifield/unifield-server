@@ -41,7 +41,7 @@ class activate_currencies(osv.osv_memory):
             currency_obj = self.pool.get('res.currency').browse(cr, uid, currency_id)
             # Don't activate currencies with no rates.
             if not currency_obj.rate_ids and data['active_status']:
-                raise osv.except_osv(_('Error'), _('No rate is set for currency %s !' % currency_obj.name))
+                raise osv.except_osv(_('Error'), _('No rate is set for currency %s !') % (currency_obj.name,))
                 break
             else:
                 cr.execute('update res_currency set active=%s where id=%s',(data['active_status'],currency_id))

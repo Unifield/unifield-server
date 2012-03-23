@@ -59,7 +59,6 @@
         "procurement_report",
         "msf_printed_documents",
         "procurement_request",
-        "msf_outgoing",
         "import_data",
         "sales_followup",
         "purchase_followup",
@@ -72,6 +71,7 @@
         "specific_locations",
         "reason_types_moves",
         "specific_rules",
+        "msf_outgoing", # doit être installé après specific_rules
         "tender_flow",
         "consumption_calculation",
         "threshold_value",
@@ -87,6 +87,8 @@
         "transport_mgmt",
         "documents_done",
         "msf_budget",
+        "account_subscription",
+        "msf_accrual",
     ],
     "update_xml": [
         "report.xml",

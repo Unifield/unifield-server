@@ -337,7 +337,7 @@ def common_requested_date_change(self, cr, uid, ids, part=False, date_order=Fals
         # if < supplier_lt, display warning
         if delta.days < partner.supplier_lt:
             res.setdefault('warning', {}).update({'title': _('Warning'),
-                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).'%(delta.days,partner.supplier_lt))})
+                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).')%(delta.days,partner.supplier_lt,)})
             
     return res
 
@@ -460,8 +460,8 @@ def common_create(self, cr, uid, data, type, context=None):
     if context is None:
         context = {}
     # if comes from automatic data - fill confirmed date
-    if context.get('update_mode') in ['init', 'update'] or data.get('from_yml_test'):
-        data['delivery_confirmed_date'] = '2011-12-06'
+    if (context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in data) or data.get('from_yml_test'):
+        data['delivery_confirmed_date'] = '2012-01-17'
         
     # fill partner_type data
     if data.get('partner_id', False):
@@ -597,12 +597,9 @@ class purchase_order(osv.osv):
         return move_values
     
     _columns = {
-                'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True, readonly=True,
-                                states={'draft': [('readonly', False)]}),
-                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
-                                    help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-                'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
-                                                  help='Commitment date = date on which delivery of product is to/can be made.'),
+                'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+                'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
                 'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
@@ -951,13 +948,10 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
-        'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True,
-                        states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
-                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
-                        help='Commitment date = date on which delivery of product is to/can be made.'),
+        'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created.", states={'draft': [('readonly', False)]}),
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True),
         'shipment_date': fields.date(string='Shipment Date', readonly=True, help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
@@ -1111,7 +1105,7 @@ class sale_order(osv.osv):
         '''
         for obj in self.browse(cr, uid, ids):
             # deactivated
-            if not obj.delivery_confirmed_date:
+            if not obj.delivery_confirmed_date and False:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             for line in obj.order_line:
@@ -1181,7 +1175,7 @@ class sale_order_line(osv.osv):
     _name= 'sale.order.line'
     _inherit = 'sale.order.line'
     
-    def _get_planned_date(self, cr, uid, context=None, *a):
+    def _get_planned_date(self, cr, uid, context=None):
         '''
             Returns planned_date
         '''
@@ -1190,17 +1184,13 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        so = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if so:
-            if so.partner_id.customer_lt:
-                res = (datetime.now() + relativedelta(days=so.partner_id.customer_lt)).strftime('%Y-%m-%d')
-            
-            else:
-                res = so.delivery_requested_date
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.delivery_requested_date
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context=None, *a):
+    def _get_confirmed_date(self, cr, uid, context=None):
         '''
             Returns confirmed date
         '''
@@ -1209,12 +1199,9 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        if 'delivery_confirmed_date' in context:
-            res = context['delivery_confirmed_date']
-            return res
-        so = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if so:
-            res = so.delivery_confirmed_date
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.delivery_confirmed_date    
         
         return res
     
@@ -1227,10 +1214,10 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context= {}
-        if context.get('purchase_id', False):
-            order_obj= self.pool.get('purchase.order')
-            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
-            return po.state
+        if context.get('sale_id', False):
+            order_obj= self.pool.get('sale.order')
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            return so.state
         
         return False
     
@@ -1376,7 +1363,7 @@ class stock_picking(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(picking.sale_id.name, today)))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
 
         return res
 
@@ -1408,7 +1395,7 @@ class stock_move(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(obj.picking_id.sale_id.name, today)))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
 
         return res
     

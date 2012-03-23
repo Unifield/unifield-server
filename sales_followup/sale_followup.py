@@ -342,7 +342,7 @@ class sale_order_line_followup(osv.osv_memory):
             if line.line_id.state == 'draft':
                 res[line.id]['sourced_ok'] = 'No'
             if line.line_id.state in ('confirmed', 'done'):
-                res[line.id]['sourced_ok'] = 'Done'
+                res[line.id]['sourced_ok'] = 'Closed'
             if line.line_id.state == 'cancel':
                 res[line.id]['sourced_ok'] = 'Cancelled'
             if line.line_id.state == 'exception':
@@ -356,7 +356,7 @@ class sale_order_line_followup(osv.osv_memory):
                              'partial': 'Partial',
                              'draft': 'Waiting',
                              'comparison': 'In Progress',
-                             'done': 'Done',
+                             'done': 'Closed',
                              'cancel': 'Cancelled'}
 
             if line.line_id.type == 'make_to_stock' or line.line_id.po_cft == 'po':
@@ -387,7 +387,7 @@ class sale_order_line_followup(osv.osv_memory):
                                'confirmed': 'Confirmed',
                                'wait': 'Confirmed',
                                'approved': 'Approved',
-                               'done': 'Done',
+                               'done': 'Closed',
                                'cancel': 'Cancelled',
                                'except_picking': 'Exception',
                                'except_invoice': 'Exception',}
@@ -419,7 +419,7 @@ class sale_order_line_followup(osv.osv_memory):
                                'draft': 'Waiting',
                                'confirmed': 'Waiting',
                                'assigned': 'Available',
-                               'done': 'Done',
+                               'done': 'Closed',
                                'cancel': 'Cancelled'}
 
             if line.line_id.type == 'make_to_stock':
@@ -447,7 +447,7 @@ class sale_order_line_followup(osv.osv_memory):
                           'draft': 'Waiting',
                           'confirmed': 'Waiting',
                           'assigned': 'Available',
-                          'done': 'Done',
+                          'done': 'Closed',
                           'picked': 'Picked',
                           'packed': 'Packed',
                           'shipped': 'Shipped',

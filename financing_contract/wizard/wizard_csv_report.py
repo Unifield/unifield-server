@@ -32,7 +32,7 @@ class wizard_csv_report(osv.osv_memory):
         if len(string) <= 3:
             return string
         else:
-            return _split_thousands(s[:-3], sep) + sep + s[-3:]
+            return _split_thousands(string[:-3]) + "," + string[-3:]
     
     def _get_contract_header(self, cr, uid, contract, context={}):
         if 'reporting_type' in context:
@@ -55,11 +55,16 @@ class wizard_csv_report(osv.osv_memory):
                 ['Hard-closed date:', contract.hard_closed_date and contract.hard_closed_date or None],
                 ['State:', contract_state_selection[contract.state]]]
         
+    def _enc(self, st):
+        if isinstance(st, unicode):
+            return st.encode('utf8')
+        return st
+
     def _create_csv(self, data):
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
-            writer.writerow(line)
+            writer.writerow(map(self._enc,line))
         out = buffer.getvalue()    
         buffer.close()
         return (out, 'csv')

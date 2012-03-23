@@ -85,13 +85,14 @@
             <group string="Priority" expand="0">
                     <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                     <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                    <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                    <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
             </group>
             <newline />
             <group string="Category" expand="0">
                 <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                 <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
                 <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
                 <filter icon="gtk-network" string="Other" domain="[('categ','=','other')]"/>
             </group>
             <newline />

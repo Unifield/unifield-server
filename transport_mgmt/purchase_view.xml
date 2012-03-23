@@ -16,16 +16,16 @@
                             <field name="display_intl_transport_ok" invisible="1" />
                             <field name="intl_supplier_ok" invisible="1" />
                             <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)],
+                                                                'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }"/>
                             <label colspan="15" />
                             <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
                                                                 'required': [('intl_supplier_ok', '=', True)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)],
+                                                                'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }" nolabel="1" />
                             <field name="transport_currency_id" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
                                                                  'required': [('intl_supplier_ok', '=', True)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)],
+                                                                'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }" nolabel="1" />
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}" />
                         </group>

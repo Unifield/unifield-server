@@ -27,27 +27,6 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for inv in self.browse(cr, uid, ids, context=context):
-            res[inv.id] = inv.analytic_distribution_id and inv.analytic_distribution_id.lines_count or 'None'
-        return res
-
-    _columns = {
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
-    }
-
     def _hook_fields_for_refund(self, cr, uid, *args):
         """
         Add these fields to result:
@@ -141,7 +120,7 @@ class account_invoice(osv.osv):
                 if inv.from_yml_test or invl.from_yml_test:
                     continue
                 if invl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"' % invl.name))
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
         # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
         # FIXME: what about analytic accountancy?
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
@@ -175,22 +154,6 @@ class account_invoice_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.invoice_id.analytic_distribution_id.id, line.account_id.id)
         return res
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for invl in self.browse(cr, uid, ids, context=context):
-            res[invl.id] = invl.analytic_distribution_id and invl.analytic_distribution_id.lines_count or ''
-        return res
-
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
         """
         If invoice have an analytic distribution, return False, else return True
@@ -208,8 +171,6 @@ class account_invoice_line(osv.osv):
         return res
 
     _columns = {
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),

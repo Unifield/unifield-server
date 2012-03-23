@@ -44,9 +44,9 @@
                     <xpath expr="/form/group[5]" position="after">
                         <group colspan="2" col="2" groups="base.group_extended">
                             <separator string="Order Traceability" />
-                            <field name="order_type" />
-                            <field name="order_category" />
-                            <field name="order_priority" />
+                            <field name="order_type" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_category" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_priority" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                         </group>
                     </xpath>
                 </data>
@@ -109,9 +109,9 @@
                     <xpath expr="/form/group[5]" position="after">
                         <group> 
                             <separator string="Order Traceability" />
-                            <field name="order_type" />
-                            <field name="order_category" />
-                            <field name="order_priority" />
+                            <field name="order_type" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_category" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_priority" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                         </group>
                     </xpath>
                 </data>

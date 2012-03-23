@@ -88,7 +88,7 @@
 					<field name="sale_order_id" />
 					<field name="priority" />
 					<field name="categ" />
-					<field name="sale_order_state" />
+					<field name="sale_order_state_search" />
 					<field name="product_id" />
 					<field name="type" />
 					<newline />

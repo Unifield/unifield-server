@@ -46,7 +46,7 @@ class product_list(osv.osv):
         vals['reviewer_id'] = uid
         vals['last_update_date'] = time.strftime('%Y-%m-%d')
         
-        return super(product_list, self).write(cr, uid, ids, vals=vals, context=context)
+        return super(product_list, self).write(cr, uid, ids, vals, context=context)
     
         
     def copy(self, cr, uid, id, defaults={}, context={}):
@@ -102,7 +102,29 @@ class product_list(osv.osv):
             res.update({'old_product_ids': old_products})
 
         return {'value': res}
-    
+
+    def call_add_products(self, cr, uid, ids, context={}):
+        '''
+        Call the add multiple products wizard
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for list in self.browse(cr, uid, ids, context=context):
+            wiz_id = self.pool.get('product.list.add.products').create(cr, uid, {'list_id': list.id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.list.add.products',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+
 product_list()
 
 
