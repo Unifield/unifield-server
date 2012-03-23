@@ -62,10 +62,10 @@
                     <field name="general_account_id"/>
                     <field name="account_id"/>
                     <field name="partner_txt"/>
-                    <field name="amount"/>
-                    <field name="functional_currency_id"/>
                     <field name="amount_currency"/>
                     <field name="currency_id"/>
+                    <field name="amount"/>
+                    <field name="functional_currency_id"/>
                     <field name="output_amount"/>
                     <field name="output_currency"/>
                     <field name="reversal_origin"/>
