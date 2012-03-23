@@ -97,6 +97,11 @@ function idSelector(nodeId) {
                 width: options.width,
                 height: options.height,
                 close:  options.close
+            })
+            .dialogExtend({
+                "dblclick" : "collapse",
+                "collapse": true,
+                "maximize": true,
             });
         $frame[0].set_title = function (title) {
             $frame.prev().find('.ui-dialog-title').text(title);
