@@ -57,6 +57,12 @@ class account_move_line(osv.osv):
             result = re.sub(pattern, replacement, text, 1)
         return result
 
+    def _get_move_lines(self, cr, uid, ids, context={}):
+        """
+        Return default behaviour
+        """
+        return super(account_move_line, self)._get_move_lines(cr, uid, ids, context=context)
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
@@ -70,7 +76,11 @@ class account_move_line(osv.osv):
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
         'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry."),
         'document_date': fields.date('Document Date', size=255, readonly=True),
-    }
+        'date': fields.related('move_id','date', string='Posting date', type='date', required=True, select=True,
+                store = {
+                    'account.move': (_get_move_lines, ['date'], 20)
+                }),
+            }
 
     def _accounting_balance(self, cr, uid, ids, context={}):
         """
