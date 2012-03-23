@@ -51,18 +51,24 @@
                 <tree string="Analytic Line" min_rows="100">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
-                    <field name="journal_id" string="Journal Code"/>
-                    <field name="date"/>
                     <field name="company_id" string="Proprietary Instance"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
+                    <field name="date"/>
+                    <field name="document_date"/>
+                    <field name="period_id"/>
+                    <field name="general_account_id"/>
+                    <field name="account_id"/>
+                    <field name="partner_txt"/>
                     <field name="amount"/>
+                    <field name="functional_currency_id"/>
                     <field name="amount_currency"/>
                     <field name="currency_id"/>
                     <field name="output_amount"/>
                     <field name="output_currency"/>
-                    <field name="account_id"/>
-                    <field name="general_account_id"/>
+                    <field name="reversal_origin"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
             </field>
@@ -90,6 +96,7 @@
                         <field name="move_id" select="1" string="Number (Move)"/>
                         <field name="date" select='1' string="Posting Date"/>
                         <field name="document_date"/>
+                        <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
                             <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
