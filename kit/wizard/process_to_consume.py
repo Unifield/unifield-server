@@ -60,19 +60,9 @@ class process_to_consume(osv.osv_memory):
                     qty = mem.to_consume_id_process_to_consume.qty_to_consume - mem.selected_qty_process_to_consume
                     mem.to_consume_id_process_to_consume.write({'qty_to_consume': qty}, context=context)
                 
-                # find the FEFO logic if the product is BATCH MANAGEMENT or EXPIRY DATE
-                consider_child_locations = mem.consider_child_locations_process_to_consume
-                # we check for the available qty (in:done, out: assigned, done)
-                # location
-                location_ids = [mem.location_src_id_process_to_consume.id]
-                # product
-                product_id = mem.product_id_process_to_consume.id
-                # uom
-                uom_id = mem.uom_id_process_to_consume.id
-                # find the corresponding LOTS if needed and create possibly many stock moves
-                res = loc_obj.compute_availability(cr, uid, location_ids, consider_child_locations, product_id, uom_id, context=context)
                 # create a corresponding stock move
                 values = {'kit_creation_id_stock_move': mem.kit_creation_id_process_to_consume.id,
+                          'to_consume_id_stock_move': mem.to_consume_id_process_to_consume.id,
                           'name': mem.product_id_process_to_consume.name,
                           'picking_id': mem.kit_creation_id_process_to_consume.internal_picking_id_kit_creation.id,
                           'product_uom': mem.uom_id_process_to_consume.id,

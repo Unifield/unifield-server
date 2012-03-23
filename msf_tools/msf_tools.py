@@ -180,3 +180,27 @@ class data_tools(osv.osv):
         return True
 
 data_tools()
+
+
+class sequence_tools(osv.osv):
+    '''
+    sequence tools
+    '''
+    _name = 'sequence.tools'
+    
+    def reset_next_number(self, cr, uid, seq_ids, value=1, context=None):
+        '''
+        reset the next number of the sequence to value, default value 1
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(seq_ids, (int, long)):
+            seq_ids = [seq_ids]
+            
+        # objects
+        seq_obj = self.pool.get('ir.sequence')
+        seq_obj.write(cr, uid, seq_ids, {'number_next': value}, context=context)
+        return True
+    
+sequence_tools()

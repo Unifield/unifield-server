@@ -17,9 +17,12 @@
             		</group>
                     <group col="4" colspan="4">
                         <field name="kit_ids_assign_to_kit" nolabel="True" mode="tree,form,graph">
-                        	<tree hide_new_button="True" string="Items from Kit to Stock" editable="top" colors="red:qty_available_process_to_consume&lt;qty_process_to_consume">
+                        	<tree hide_new_button="True" string="Kit Distribution" editable="top" colors="red:integrity_status!='empty'">
 	                			<field name="kit_id_assign_to_kit_line" />
 			            		<field name="assigned_qty_assign_to_kit_line" />
+			            		<field name="qty_assign_to_kit_by_product_uom" />
+			            		<field name="required_qty_assign_to_kit_line" />
+			            		<field name="integrity_status" />
                         	</tree>
                         </field>
                     </group>

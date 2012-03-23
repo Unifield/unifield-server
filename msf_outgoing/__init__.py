@@ -46,6 +46,9 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               # substitute kit
                               ('not_available', 'Not Available'),
                               ('must_be_greater_than_0', 'Quantity must be greater than 0.0.'),
+                              # assign kit
+                              ('greater_than_available', 'Assigned qty must be smaller or equal to available qty.'),
+                              ('greater_than_required', 'Assigned qty must be smaller or equal to required qty.'),
                               ]
 
 import msf_outgoing
