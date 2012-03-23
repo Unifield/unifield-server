@@ -145,7 +145,8 @@ class Search(Form):
             parent=pctx,
             context=parent_context,
             active_id=params.active_id or False,
-            active_ids=params.active_ids or []
+            active_ids=params.active_ids or [],
+            search_domain=params.search_domain or [],
         )
 
         if params.active_id and not params.active_ids:

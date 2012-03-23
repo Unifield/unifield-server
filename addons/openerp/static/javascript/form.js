@@ -768,7 +768,8 @@ function eval_domain_context_request(options){
         '_terp_context': options.context,
         '_terp_prefix': prefix.join('/'),
         '_terp_active_id': openobject.dom.get(prefix.concat('_terp_id').join('/')).value,
-        '_terp_active_ids': openobject.dom.get(prefix.concat('_terp_ids').join('/')).value
+        '_terp_active_ids': openobject.dom.get(prefix.concat('_terp_ids').join('/')).value,
+        '_terp_search_domain': '[]'
     });
 
     if (options.group_by_ctx && options.group_by_ctx.length > 0)
@@ -782,7 +783,10 @@ function eval_domain_context_request(options){
     }
 
     var parent_context = openobject.dom.get(prefix.concat('_terp_context').join('/'));
-
+    var search_domain = openobject.dom.get(prefix.concat('_terp_domain').join('/'));
+    if (search_domain) {
+        params['_terp_search_domain'] = search_domain.value;
+    }
     if (parent_context) {
         params['_terp_parent_context'] = parent_context.value;
     }
