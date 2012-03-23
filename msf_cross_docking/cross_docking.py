@@ -231,7 +231,29 @@ class stock_picking(osv.osv):
                 location_id = dico.get('location_id')
         if location_id:
             values.update({'location_id': location_id})
-
         return values
     
 stock_picking()
+
+class stock_move(osv.osv):
+    _inherit = 'stock.move'
+
+    def default_get(self, cr, uid, fields, context=None):
+        """ To get default values for the object:
+        If cross docking is checked on the purchase order, we set "cross docking" to the destination location
+        else we keep the default values i.e. "Input"
+        """
+        default_data = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        if context is None:
+            context = {}
+        purchase_id = context.get('purchase_id', [])
+        if not purchase_id:
+            return default_data
+        
+        obj_data = self.pool.get('ir.model.data')
+        purchase_browse = self.pool.get('purchase.order').browse(cr, uid, purchase_id, context=context)
+        # If the purchase order linked has the option cross docking then the new created stock move should have the destination location to cross docking
+        if purchase_browse.cross_docking_ok:
+            default_data.update({'location_dest_id' : obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1],})
+        return default_data
+stock_move()

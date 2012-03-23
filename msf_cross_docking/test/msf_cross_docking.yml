@@ -25,15 +25,7 @@
     price_unit: 1
     product_uom_qty: 10
     date_planned: '2011-04-13'
-    type: make_to_order
--
-  !record {model: sale.order.line, id: sol_I2}:
-    product_uom: product.product_uom_unit
-    product_id: product_B
-    order_id: so_I
-    price_unit: 1
-    product_uom_qty: 5
-    date_planned: '2011-04-13'
+    # because the type is "make to order", the option "cross docking" will be automatically checked
     type: make_to_order
 -
   We validate the sale order
@@ -55,7 +47,7 @@
   !python {model: procurement.order}: |
     self.run_scheduler(cr, uid)
 -
-  Validate the purchase order
+  Validate and confirm the purchase order
 -
   !python {model: purchase.order}: |
     proc_obj = self.pool.get('procurement.order')
@@ -65,9 +57,43 @@
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
+    # assert existing values    
+    obj = self.browse(cr, uid, po_id, context=context)
+    # the option "cross docking" is checked because the type "make to order" was selected on the sale order
+    assert obj.cross_docking_ok
     # change Invoicing control to From Picking
     self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
+-
+  Process the incoming shipment and check that the O2M lines of stock.move have the field "location_dest_id" to cross docking
+-
+  !python {model: stock.picking}: |
+    proc_obj = self.pool.get('procurement.order')
+    sol_obj = self.pool.get('sale.order.line')
+    # get the corresponding procurement order
+    data = sol_obj.read(cr, uid, [ref("sol_I1")], ['procurement_id'], context=context)[0]
+    proc_id = data['procurement_id'][0]
+    data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
+    po_id = data['purchase_id'][0]
+    # find the IN
+    in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
+    dic = self.action_process(cr, uid, in_ids, context=context)
+    obj_data = self.pool.get('ir.model.data')
+    # check destination location
+    for obj in self.browse(cr, uid, in_ids, context=context):
+      if not obj.purchase_id.cross_docking_ok:
+        for move in obj.move_lines:
+          assert move.location_dest_id.id != obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+      elif obj.purchase_id.cross_docking_ok:
+        for move in obj.move_lines:
+          assert move.location_dest_id.id == obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+
+    # create wizard objects
+    wizard_obj = self.pool.get('stock.partial.picking')
+    wizard_id = self.action_process(cr, uid, in_ids, context=context)['res_id']
+      
+    # validate the processing
+    wizard_obj.do_incoming_shipment(cr, uid, [wizard_id], context=context)
