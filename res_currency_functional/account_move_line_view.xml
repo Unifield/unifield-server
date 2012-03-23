@@ -15,7 +15,7 @@
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date" string="Posting Date"/>
+                    <field name="date"/>
                     <field name="document_date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id"/>
@@ -58,7 +58,7 @@
                         <field name="period_id"/>
                         <field name="instance" invisible="1"/>
                         <newline />
-                        <field name="date" string="Posting Date"/>
+                        <field name="date"/>
                         <field name="document_date"/>
                     </group>
                     
@@ -107,7 +107,7 @@
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date" string="Posting Date"/>
+                    <field name="date"/>
                     <field name="document_date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>

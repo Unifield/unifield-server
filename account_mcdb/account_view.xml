@@ -14,7 +14,7 @@
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date" string="Posting Date"/>
+                    <field name="date"/>
                     <field name="document_date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id"/>
@@ -94,7 +94,7 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
-                        <field name="date" select='1' string="Posting Date"/>
+                        <field name="date" select='1'/>
                         <field name="document_date"/>
                         <newline/>
                         <field name="account_id" select='1'/>

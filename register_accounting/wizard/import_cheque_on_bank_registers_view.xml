@@ -21,7 +21,7 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
-                        <field name="date" select='1' string="Posting Date"/>
+                        <field name="date" select='1'/>
                         <field name="document_date"/>
                         <newline/>
                         <field name="account_id" select='1'/>
@@ -69,7 +69,7 @@
                     <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
                     <field name="partner_id"/>
-                    <field name="date" string="Posting Date"/>
+                    <field name="date"/>
                     <field name="date_maturity"/>
                     <field name="amount_to_pay"/>
                     <field name="amount_currency"/>
@@ -106,7 +106,7 @@
                             <field name="supplier_ref"/>
                             <field name="account_id"/>
                             <field name="partner_id"/>
-                            <field name="date" string="Posting Date"/>
+                            <field name="date"/>
                             <field name="date_maturity"/>
                             <field name="amount_to_pay"/>
                             <field name="amount_currency"/>
