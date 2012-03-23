@@ -33,6 +33,18 @@ class purchase_order_line_allocation_report(osv.osv):
     _table = 'purchase_order_line_allocation_report'
     _auto = False
     
+    def _get_product_account(self, cr, uid, ids, field_name, args, context={}):
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.product_id:
+                res[line.id] = False
+                res[line.id] = line.product_id.product_tmpl_id.property_account_expense.id
+                if not res[line.id]:
+                    res[line.id] = line.product_id.categ_id.property_account_expense_categ.id
+                
+        return res
+    
     _columns = {
         'order_id': fields.many2one('purchase.order', string='PO'),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
@@ -49,8 +61,10 @@ class purchase_order_line_allocation_report(osv.osv):
         'percentage': fields.float(digits=(16,2), string='%'),
         'subtotal': fields.float(digits=(16,2), string='Subtotal'),
         'currency_id': fields.many2one('res.currency', string='Cur.'),
-        'cost_center_id': fields.many2one('cost.center.distribution.line', string='Cost center'),
-        'account_id': fields.many2one('account.analytic.account', string='Account'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost center'),
+        #'cost_center_id': fields.many2one('cost.center.distribution.line', string='Cost center'),
+        #'account_id': fields.many2one('account.account', string='Account'),
+        'account_id': fields.function(_get_product_account, method=True, string='Account', type='many2one', relation='account.account', store=False),
         'source_doc': fields.char(size=128, string='Source Doc.'),
         'partner_id': fields.many2one('res.partner', string='Partner'),
         'partner_doc': fields.char(size=128, string='Partner Doc.'),
@@ -80,7 +94,6 @@ class purchase_order_line_allocation_report(osv.osv):
                     (al.unit_price*al.product_qty*al.percentage)/100.00 as subtotal,
                     al.currency_id,
                     al.cost_center_id,
-                    al.account_id,
                     al.source_doc,
                     al.partner_id,
                     al.supplier,
@@ -102,9 +115,8 @@ class purchase_order_line_allocation_report(osv.osv):
                     cc.percentage AS percentage,
                     cc.amount AS subtotal,
                     cc.currency_id AS currency_id,
-                    cc.id AS cost_center_id,
-                    aaa.id AS account_id,
-                    po.origin AS source_doc,
+                    aaa.id AS cost_center_id,
+                    so.name AS source_doc,
                     so.partner_id AS partner_id,
                     po.partner_id AS supplier,
                     po.state AS state,
@@ -152,9 +164,8 @@ class purchase_order_line_allocation_report(osv.osv):
                     cc.percentage AS percentage,
                     cc.amount AS subtotal,
                     cc.currency_id AS currency_id,
-                    cc.id AS cost_center_id,
-                    aaa.id AS account_id,
-                    po.origin AS source_doc,
+                    aaa.id AS cost_center_id,
+                    so.name AS source_doc,
                     so.partner_id AS partner_id,
                     po.partner_id AS supplier,
                     po.state AS state,
