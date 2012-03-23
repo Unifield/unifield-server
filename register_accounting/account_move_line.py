@@ -179,11 +179,15 @@ class account_move_line(osv.osv):
                           'account.move.reconcile': (_get_reconciles, None, 10),
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
-        'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'partner_txt': fields.text(string="Third Party", help="Help user to display and sort Third Parties"),
+        'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
+        'transfer_currency': fields.many2one("res.currency", "Transfer Currency", readonly=True, required=False),
+        'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
     }
 
     _defaults = {
-        'partner_txt': lambda *a: '',
+        'partner_txt': lambda *a: '', # empty string
+        'is_transfer_with_change': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

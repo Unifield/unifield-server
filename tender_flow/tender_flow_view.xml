@@ -55,6 +55,10 @@
                         	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="RfQs">
                                     <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="notes" />
+                                    <field name="amount_total" />
+                                    <field name="currency_id" />
                                     <field name="state" />
                                 </tree>
                             </field>
@@ -123,7 +127,7 @@
                     <group string="Priority" expand="0">
                       <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                       <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                      <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
                     </group>
                     
                     <newline />
@@ -196,9 +200,6 @@
                     </xpath>
                     <xpath expr="/form//field[@name='categ']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="readonly">True</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='invoiced']" position="attributes">
                         <attribute name="readonly">True</attribute>
@@ -518,7 +519,7 @@
 	                    <group string="Priority" expand="0">
                             <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                             <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                            <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
 	                    </group>
 	                    <newline />
 	                    <group string="Category" expand="0">

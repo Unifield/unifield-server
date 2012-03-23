@@ -143,7 +143,7 @@ class stock_picking(osv.osv):
             vals['from_yml_test'] = True
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the picking to done
         '''
@@ -158,7 +158,7 @@ class stock_picking(osv.osv):
                     move_ids.append(move.id)
 
         #Set all stock moves to done
-        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         return True
     
@@ -345,18 +345,7 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
-    _STOCK_MOVE_STATE = [('draft', 'Draft'),
-                         ('waiting', 'Waiting'),
-                         ('confirmed', 'Not Available'),
-                         ('assigned', 'Available'),
-                         ('done', 'Closed'),
-                         ('cancel', 'Cancel'),]
-
-    _columns = {
-        'state': fields.selection(_STOCK_MOVE_STATE, string='State', readonly=True, select=True),
-    }
-
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the stock move to manually done
         '''

@@ -7,7 +7,6 @@
     name: Cash
     sign: 1
     report_type: asset
-
 -
   I create a X11003 Cash Account.
 -
@@ -31,7 +30,7 @@
   In order to check the Journal default value and register creation, we create a new cash journal.
 -
   !record {model: account.journal, id: account_journal_1}:
-    name: Cash Journal
+    name: Cash Journal EUR
     code: CEUR
     currency: base.EUR
     type: cash
@@ -51,7 +50,7 @@
   We check that the cash register was created
 -
   !assert {model: account.bank.statement, search: "[('journal_id', '=', ref('account_journal.account_journal_1'))]"}:
-    - name == 'REG1CEUR'
+    - name == 'Cash Journal EUR'
     - currency.id == ref("base.EUR")
 -
   In order to test engagement journal, I create an invoice with the global_distrib_1 (75% for gabon, 25% for Kenya)
