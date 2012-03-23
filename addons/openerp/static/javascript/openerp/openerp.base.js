@@ -177,7 +177,7 @@ function openAction(action_url, target, terp_id) {
                 'class': 'action-dialog'
             }, null, {
                 width: '90%',
-                height: '100%'
+                height: '95%'
             });
             break;
         case 'download':

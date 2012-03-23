@@ -603,7 +603,7 @@ ManyToOne.prototype.getOnclick = function(evt) {
             }, {
                 width: '90%',
                 max_width: 1200,
-                height: '100%'
+                height: '95%'
             });
     }
 

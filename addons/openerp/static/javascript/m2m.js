@@ -184,7 +184,7 @@ Many2Many.prototype = {
                 source_id: options.source || null
             }, {
                 width: '90%',
-                height: '100%'
+                height: '95%'
             });
     }
 
