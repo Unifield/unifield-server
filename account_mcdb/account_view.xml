@@ -9,13 +9,14 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100">
-                    <field name="journal_id" string="Journal Code"/>
-                    <field name="move_id" string="Entry Sequence"/>
                     <field name="instance"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
+                    <field name="document_date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
-                    <field name="name"/>
                     <field name="account_id"/>
                     <field name="account_type" invisible="1"/>
                     <field name="move_state" invisible="1"/>
@@ -25,17 +26,17 @@
                     <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
-                    <field name="debit_currency" string="Book. Debit"/>
-                    <field name="credit_currency" string="Book. Credit"/>
-                    <field name="currency_id" string="Book. Currency"/>
-                    <field name="debit" sum="Total Functional Debit" string="Func. Debit"/>
-                    <field name="credit" sum="Total Functional Credit" string="Func. Credit"/>
-                    <field name="functional_currency_id" string="Func. Currency"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Functional Debit"/>
+                    <field name="credit" sum="Total Functional Credit"/>
+                    <field name="functional_currency_id"/>
                     <field name="output_amount_debit"/>
                     <field name="output_amount_credit"/>
                     <field name="output_currency"/>
-                    <field name="state"/>
                     <field name="reconcile_total_partial_id" />
+                    <field name="state"/>
                     <field name="statement_id" invisible="1"/>
                 </tree>
             </field>
@@ -87,7 +88,8 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
-                        <field name="date" select='1'/>
+                        <field name="date" select='1' string="Posting Date"/>
+                        <field name="document_date"/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
                             <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>

@@ -69,7 +69,7 @@ class account_move_line(osv.osv):
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Func. Credit', digits_compute=dp.get_precision('Account')),
         'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry."),
-        'document_date': fields.char('Document Date', size=255, readonly=True),
+        'document_date': fields.date('Document Date', size=255, readonly=True),
     }
 
     def _accounting_balance(self, cr, uid, ids, context={}):
