@@ -116,7 +116,7 @@ class msf_budget_line(osv.osv):
                                                             cost_center_id))
                     if cr.rowcount:
                         # A budget was found; get its lines and their amounts
-                        child_budget_id = cr.fetchall()[0]
+                        child_budget_id = cr.fetchall()[0][0]
                         child_line_ids = self.search(cr,
                                                      uid,
                                                      [('budget_id', '=', child_budget_id)],

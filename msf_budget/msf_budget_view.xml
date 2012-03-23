@@ -78,7 +78,7 @@
                             </group>
                         </form>
                     </field>
-                    <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>/>
+                    <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <group col="4" colspan="2">
                         <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}"/>
                         <button string="Done" name="done" type="workflow" icon="gtk-jump-to" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'valid')]}"/>
@@ -183,6 +183,37 @@
         <menuitem parent="next_id_31"
             action="action_wizard_budget_import"
             id="menu_action_wizard_budget_import"  sequence="2"/>
+            
+        <record id="view_msf_budget_summary_tree" model="ir.ui.view">
+            <field name="name">msf.budget.summary.tree</field>
+            <field name="model">msf.budget.summary</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Budget Status">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="budget_amount"/>
+                    <field name="actual_amount"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_wizard_budget_summary_tree" model="ir.actions.server">
+            <field name="name">Budget Status</field>
+            <field name="model_id" ref="model_msf_budget"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.budget_summary_open_window(context=context)</field>
+        </record>
+
+        <record id="ir_action_wizard_budget_summary_tree" model="ir.values">
+            <field eval="'client_action_multi'" name="key2"/>
+            <field eval="'msf.budget'" name="model"/>
+            <field name="name">Budget Status</field>
+            <field eval="'ir.actions.server,%d'%action_wizard_budget_summary_tree" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
     </data>
 </openerp>

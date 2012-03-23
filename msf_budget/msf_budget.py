@@ -22,6 +22,8 @@
 from osv import fields, osv
 from lxml import etree
 
+import datetime
+
 class msf_budget(osv.osv):
     _name = "msf.budget"
     
@@ -87,6 +89,41 @@ class msf_budget(osv.osv):
         for budget_id in ids:
             self.write(cr, uid, [budget_id], {'display_type': display_types[budget_id] == 'all' and 'view' or 'all'}, context=context)
         return True
-
+    
+    
+    def budget_summary_open_window(self, cr, uid, ids, context=None):
+        parent_line_id = False
+        fiscalyear_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<=', datetime.date.today()),
+                                                                              ('date_stop', '>=', datetime.date.today())], context=context)
+        if len(fiscalyear_ids) == 0:
+            raise osv.except_osv(_('Warning !'), _("The fiscal year for the current date is not defined!"))
+        else:
+            fiscalyear_id = fiscalyear_ids[0]
+            cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),('parent_id','=',False)], context=context)                       
+            if len(cost_center_ids) != 0:
+                cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
+                                                        AND cost_center_id = %s \
+                                                        AND state != 'draft' \
+                                                        ORDER BY version DESC LIMIT 1",
+                                                        (fiscalyear_id,
+                                                         cost_center_ids[0]))
+                if cr.rowcount:
+                    # A budget was found
+                    budget_id = cr.fetchall()[0][0]
+                    parent_line_id = self.pool.get('msf.budget.summary').create(cr,
+                                                                                uid,
+                                                                                {'budget_id': budget_id},
+                                                                                context=context)
+        
+        return {
+               'type': 'ir.actions.act_window',
+               'res_model': 'msf.budget.summary',
+               'view_type': 'tree',
+               'view_mode': 'tree',
+               'target': 'current',
+               'domain': [('id', '=', parent_line_id)],
+               'context': context
+        }
+        
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
