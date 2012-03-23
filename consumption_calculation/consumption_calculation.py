@@ -951,8 +951,6 @@ class product_product(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        line_obj = self.pool.get('real.average.consumption.line')
-        rac_obj = self.pool.get('real.average.consumption')
         uom_obj = self.pool.get('product.uom')
         
         rac_domain = [('created_ok', '=', True)]
@@ -978,21 +976,22 @@ class product_product(osv.osv):
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
             else:
                 location_ids = context.get('location_id', [])
-            
-            # Update the domain of research
-            rac_domain.append(('cons_location_id', 'in', location_ids))
-        rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
        
         for id in ids:
             res[id] = 0.00
-            line_ids = line_obj.search(cr, uid, [('rac_id', 'in', rac_ids), ('product_id', '=', id)], context=context)
+            if from_date and to_date:
+                rcr_domain = ['&', '&', ('product_id', 'in', ids), ('rac_id.cons_location_id', 'in', location_ids),
+                              # All lines with a report started out the period and finished in the period 
+                              '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
+                              # All lines with a report started in the period and finished out the period 
+                              '|', '&', ('rac_id.period_from', '<=', to_date), ('rac_id.period_from', '>=', from_date),
+                              # All lines with a report started before the period  and finished after the period
+                              '&', ('rac_id.period_from', '<=', from_date), ('rac_id.period_to', '>=', to_date)]
             
-            for line in line_obj.browse(cr, uid, line_ids, context=context):
-                res[id] += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.consumed_qty, line.product_id.uom_id.id)
-                if not context.get('from_date') and (not from_date or line.rac_id.period_to < from_date):
-                    from_date = line.rac_id.period_to
-                if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
-                    to_date = line.rac_id.period_to
+                rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, rcr_domain, context=context)
+                for line in self.pool.get('real.average.consumption.line').browse(cr, uid, rcr_line_ids, context=context):
+                    cons = self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
+                    res[id] += uom_obj._compute_qty(cr, uid, line.uom_id.id, cons, line.product_id.uom_id.id)
 
                 # We want the average for the entire period
                 if to_date < from_date:
