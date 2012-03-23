@@ -128,7 +128,7 @@ class purchase_order_followup(osv.osv_memory):
                     elif move.date_expected == line.confirmed_delivery_date:
                         move_ids3.append(move)
                     else:
-                        move_ids4.append(move_id)
+                        move_ids4.append(move)
                 for move_ids in [move_ids1, move_ids2, move_ids3, move_ids4, move_ids5]:
                     for move in move_ids:
                         line_shipped_rate = "no-progressbar"
@@ -146,7 +146,7 @@ class purchase_order_followup(osv.osv_memory):
                                      'line_confirmed_date': first_move and line.confirmed_delivery_date or False,
                                      'line_shipped_rate': line_shipped_rate,
                                      'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
-                                     'move_product_qty': line.product_qty != move.product_qty and '%.2f' % move.product_qty or '',
+                                     'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
                                      'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
                                      'move_delivery_date': line.confirmed_delivery_date != move.date_expected[:10] and move.date_expected or False,
                                      'return_move': move.type == 'out',
