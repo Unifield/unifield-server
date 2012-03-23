@@ -184,6 +184,7 @@
             action="action_wizard_budget_import"
             id="menu_action_wizard_budget_import"  sequence="2"/>
 
+
         <record id="view_account_analytic_account_budget_tree" model="ir.ui.view">
             <field name="name">account.analytic.account.budget.tree</field>
             <field name="model">account.analytic.account</field>
@@ -210,6 +211,7 @@
             <field name="name">Analytic Accounts</field>
             <field name="res_model">account.analytic.account</field>
             <field name="view_id" ref="view_account_analytic_account_budget_tree"/>
+            <field name="domain">[('category','=','OC')]</field>
             <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
         </record>
 

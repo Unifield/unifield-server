@@ -271,7 +271,6 @@
 	            <field name="name">account.analytic.account.donor.tree</field>
 	            <field name="model">account.analytic.account</field>
 	            <field name="type">tree</field>
-	            <field name="domain">[('category','=','FUNDING')]</field>
 	            <field name="field_parent">child_complete_ids</field>
 	            <field name="arch" type="xml">
 	                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts" 
@@ -293,6 +292,7 @@
 	            <field name="name">Analytic Accounts</field>
 	            <field name="res_model">account.analytic.account</field>
 	            <field name="view_type">form</field>
+	            <field name="domain">[('category','=','FUNDING')]</field>
 	            <field name="view_id" ref="view_account_analytic_account_donor_tree"/>
 	            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
 	        </record>
