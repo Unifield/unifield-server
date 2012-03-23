@@ -80,7 +80,7 @@
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
 
                     <group colspan="4" col="4" >
-                        <separator colspan="4" string="Exception products (not to be included in current policy)" />
+                        <separator colspan="4" string="Products that will be included in the current policy" />
                         <!-- <field name="product_ids" nolabel="1" colspan="4" domain="[('fnct_categ_id', '=', category_id)]"/>
                          -->
                         <field name="product_ids" nolabel="1" colspan="4" 
