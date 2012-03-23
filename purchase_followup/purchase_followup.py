@@ -217,8 +217,8 @@ class purchase_order_followup_from_menu(osv.osv_memory):
     _description = 'Purchase order followup menu entry'
 
     _columns = {
-        'order_id': fields.many2one('purchase.order', string='Internal reference', required=True),
-        'cust_order_id': fields.many2one('purchase.order', string='Purchase reference', required=True),
+        'order_id': fields.many2one('purchase.order', string='PO reference', required=True),
+        'cust_order_id': fields.many2one('purchase.order', string='Supplier reference', required=True),
         'incoming_id': fields.many2one('stock.picking', string='Incoming shipment', required=True),
     }
 
