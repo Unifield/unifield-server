@@ -121,6 +121,35 @@ class sale_order(osv.osv):
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
         return res
     
+    def _picked_rate(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+        res = {}
+        for id in ids:
+            res[id] = [0.0, 0.0]
+        cr.execute('''SELECT
+                p.sale_id, sum(m.product_qty*l.price_unit), m.state as mp_state
+            FROM
+                stock_move m
+            LEFT JOIN
+                stock_picking p on (p.id=m.picking_id)
+            LEFT JOIN
+                sale_order_line l on (m.sale_line_id = l.id)
+            WHERE
+                p.sale_id IN %s GROUP BY m.state, p.sale_id''', (tuple(ids),))
+        for oid, nbr, mp_state in cr.fetchall():
+            if mp_state == 'done':
+                res[oid][0] += nbr or 0.0
+                res[oid][1] += nbr or 0.0
+            else:
+                res[oid][1] += nbr or 0.0
+        for r in res:
+            if not res[r][1]:
+                res[r] = 0.0
+            else:
+                res[r] = 100.0 * res[r][0] / res[r][1]
+        return res
+    
     _columns = {
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
@@ -137,6 +166,7 @@ class sale_order(osv.osv):
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'company_id2': fields.many2one('res.company','Company',select=1),
+        'picked_rate': fields.function(_picked_rate, method=True, string='Picked', type='float'),
     }
     
     _defaults = {

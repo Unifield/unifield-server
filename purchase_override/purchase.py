@@ -79,6 +79,34 @@ class purchase_order(osv.osv):
         return res
     # @@@end
     
+    def _shipped_rate(self, cr, uid, ids, name, arg, context=None):
+        if not ids: return {}
+        res = {}
+        for id in ids:
+            res[id] = [0.0,0.0]
+        cr.execute('''SELECT
+                p.purchase_id,sum(m.product_qty*l.price_unit), m.state
+            FROM
+                stock_move m
+            LEFT JOIN
+                stock_picking p on (p.id=m.picking_id)
+            LEFT JOIN
+                purchase_order_line l on (m.purchase_line_id=l.id)
+            WHERE
+                p.purchase_id IN %s GROUP BY m.state, p.purchase_id''',(tuple(ids),))
+        for oid,nbr,state in cr.fetchall():
+            if state=='done':
+                res[oid][0] += nbr or 0.0
+                res[oid][1] += nbr or 0.0
+            else:
+                res[oid][1] += nbr or 0.0
+        for r in res:
+            if not res[r][1]:
+                res[r] = 0.0
+            else:
+                res[r] = 100.0 * res[r][0] / res[r][1]
+        return res
+    
     _columns = {
         'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
@@ -102,6 +130,7 @@ class purchase_order(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
             states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
+        'shipped_rate': fields.function(_shipped_rate, method=True, string='Received', type='float'),
     }
     
     _defaults = {
