@@ -21,6 +21,8 @@
                             icon="terp-stock_symbol-selection" attrs="{'invisible': [('analytic_distribution_available', '=', False)]}"/>
                         <field name="have_analytic_distribution_from_header"/>
                     </xpath>
+                    <xpath expr="//field[@name='project_id']" position="replace">
+                    </xpath>
                 </data>
             </field>
         </record>
