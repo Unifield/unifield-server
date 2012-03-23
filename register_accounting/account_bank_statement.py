@@ -423,6 +423,20 @@ class account_bank_statement(osv.osv):
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
+    def button_confirm_closing_bank_balance(self, cr, uid, ids, context={}):
+        """
+        Verify bank register balance before closing it.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for reg in self.browse(cr, uid, ids):
+            # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
+            if reg.balance_end_real != reg.balance_end:
+                raise osv.except_osv(_('Warning'), _('Bank register balance is not equal to Calculated balance.'))
+        return self.button_confirm_closing_balance(cr, uid, ids, context=context)
+
     def button_open_advances(self, cr, uid, ids, context={}):
         """
         Open a list of open advances
