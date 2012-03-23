@@ -64,19 +64,12 @@ class procurement_order(osv.osv):
             else:
                 location_id = auto_sup.location_id.id
                
-            if auto_sup.product_id:
-                proc_id = self.create_proc_order(cr, uid, auto_sup, auto_sup.product_id, auto_sup.product_uom_id.id, 
-                             auto_sup.product_qty, location_id, cache=cache, context=context)
+            for line in auto_sup.line_ids:
+                proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
+                                                 line.product_uom_id.id, line.product_qty,
+                                                 location_id, cache=cache, context=context)
                 if proc_id:
                     created_proc.append(proc_id)
-            
-            else:
-                for line in auto_sup.line_ids:
-                    proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
-                                                     line.product_uom_id.id, line.product_qty,
-                                                     location_id, cache=cache, context=context)
-                    if proc_id:
-                        created_proc.append(proc_id)
             
             if auto_sup.frequence_id:
                 freq_obj.write(cr, uid, auto_sup.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
