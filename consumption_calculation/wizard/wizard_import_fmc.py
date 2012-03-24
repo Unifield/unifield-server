@@ -42,7 +42,7 @@ class wizard_import_fmc(osv.osv_memory):
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
         
-        The file should be in CSV format (with ';' character as delimiter).
+        The file should be in CSV format (with ',' character as delimiter).
         The columns should be in this order :
           * Product code
           * Product name
@@ -83,7 +83,7 @@ class wizard_import_fmc(osv.osv_memory):
         # now we determine the file format
         fileobj.seek(0)
 
-        reader = csv.reader(fileobj, quotechar='\'', delimiter=';')
+        reader = csv.reader(fileobj, quotechar='"', delimiter=',')
 
         error = ''
 

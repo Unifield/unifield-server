@@ -92,20 +92,6 @@
                   parent="menu_configuration_inventory" />
                   
                   
-    <!-- Overrirde Stock Inventory Lines -->
-        <record id="stock_inventory_line_tree_type_id" model="ir.ui.view">
-            <field name="name">stock.inventory.line.tree.type.id</field>
-            <field name="model">stock.inventory.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="stock.stock_inventory_line_tree" />
-            <field name="arch" type="xml">
-                <xpath expr="/tree/field[@name='product_uom']" position="after">
-                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
-                    <field name="comment" />
-                </xpath>
-            </field>
-        </record>
-
         <record id="stock_inventory_line_form_type_id" model="ir.ui.view">
             <field name="name">stock.inventory.line.form.type.id</field>
             <field name="model">stock.inventory.line</field>
@@ -187,6 +173,9 @@
             <field name="inherit_id" ref="stock.view_picking_in_search" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                        <attribute name="string">Closed</attribute>
+                    </xpath>
                     <xpath expr="/search/group/field[@name='name']" position="before">
                         <field name="reason_type_id" widget="selection" />
                     </xpath>
@@ -204,8 +193,11 @@
             <field name="inherit_id" ref="stock.view_picking_out_search" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group/field[@name='name']" position="before">
+                    <xpath expr="/search/group/field[@name='stock_journal_id']" position="replace">
                         <field name="reason_type_id" widget="selection" />
+                    </xpath>
+                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                        <attribute name="string">Closed</attribute>
                     </xpath>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
                         <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
@@ -221,6 +213,10 @@
             <field name="inherit_id" ref="stock.view_stock_picking_filter" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                        <attribute name="string">Closed</attribute>
+                    </xpath>
+
                     <xpath expr="/search/group/field[@name='name']" position="before">
                         <field name="reason_type_id" widget="selection" />
                     </xpath>

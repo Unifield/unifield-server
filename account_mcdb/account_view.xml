@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Account Move Line search tree view -->
+        <record model="ir.ui.view" id="account_move_line_mcdb_search_result">
+            <field name="name">account.move.line.mcdb.search.result</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account Entries" min_rows="100">
+                    <field name="journal_id" string="Journal Code"/>
+                    <field name="move_id" string="Entry Sequence"/>
+                    <field name="instance"/>
+                    <field name="ref"/>
+                    <field name="date" string="Posting Date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="name"/>
+                    <field name="account_id"/>
+                    <field name="account_type" invisible="1"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="register_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
+                    <field name="debit_currency" string="Book. Debit"/>
+                    <field name="credit_currency" string="Book. Credit"/>
+                    <field name="currency_id" string="Book. Currency"/>
+                    <field name="debit" sum="Total Functional Debit" string="Func. Debit"/>
+                    <field name="credit" sum="Total Functional Credit" string="Func. Credit"/>
+                    <field name="functional_currency_id" string="Func. Currency"/>
+                    <field name="output_amount_debit"/>
+                    <field name="output_amount_credit"/>
+                    <field name="output_currency"/>
+                    <field name="state"/>
+                    <field name="reconcile_total_partial_id" />
+                    <field name="statement_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Account Analytic Line search tree view -->
+        <record model="ir.ui.view" id="account_analytic_line_mcdb_search_result">
+            <field name="name">account.analytic.line.mcdb.search.result</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Analytic Line" min_rows="100">
+                    <field name="is_reallocated" invisible="1"/>
+                    <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
+                    <field name="journal_id" string="Journal Code"/>
+                    <field name="date"/>
+                    <field name="company_id" string="Proprietary Instance"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="amount"/>
+                    <field name="amount_currency"/>
+                    <field name="currency_id"/>
+                    <field name="output_amount"/>
+                    <field name="output_currency"/>
+                    <field name="account_id"/>
+                    <field name="general_account_id"/>
+                    <field name="user_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Account move line search view -->
+        <record id="mcdb_view_account_move_line_filter" model="ir.ui.view">
+            <field name="name">Journal Items</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Journal Items">
+                    <group col='10' colspan='4'>
+                        <filter icon="terp-document-new" string="Unbalanced" domain="[('state','=','draft')]" help="Unbalanced Journal Items"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
+                        <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
+                        <separator orientation="vertical"/>
+                        <filter
+                            icon="terp-dolar_ok!"
+                            string="Unreconciled"
+                            domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                            name="unreconciled"/>
+                        <separator orientation="vertical"/>
+                        <field name="move_id" select="1" string="Number (Move)"/>
+                        <field name="date" select='1'/>
+                        <field name="account_id" select='1'/>
+                        <field name="partner_id" select='1'>
+                            <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
+                        </field>
+                    </group>
+                    <newline/>
+                    <group col="10" colspan="4">
+                        <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Extended Filters...">
+                        <field name="ref" select="1" string="Reference"/>
+                        <field name="name" select="1"/>
+                        <field name="narration" select="1"/>
+                        <field name="balance" string="Debit/Credit" select='1'/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="12" col="10">
+                        <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                        <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <filter string="Account Type"  icon="terp-folder-green" context="{'group_by':'account_type'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+    <!-- Account analytic line search view -->
+        <record id="mcdb_view_account_analytic_line_filter" model="ir.ui.view">
+            <field name="name">mcdb.account.analytic.line.select</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="/search/group[3]/filter[@string='Product']" position='after'>
+                    <separator orientation="vertical"/>
+                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'company_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Account Analytic Account Action -->
+        <record id="action_analytic_account_mass_reallocation_search" model="ir.actions.server">
+            <field name="name">Search for Mass Reallocation</field>
+            <field name="model_id" ref="model_mass_reallocation_search"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_filled_mcdb(context=context)</field>
+        </record>
+
+        <record id="ir_open_mcdb_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.account</field>
+            <field name="name">Search for Mass Reallocation</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+    </data>
+</openerp>

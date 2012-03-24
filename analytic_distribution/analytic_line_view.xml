@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Add icon ahead analytic line to inform if this line have been reallocated or not -->
+        <record id="inherit2_view_account_analytic_line_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='date']" position='before'>
+                        <field name="is_reallocated" invisible="1"/>
+                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- Add a filter to search engagement journal lines -->
+        <record id="inherit2_view_account_analytic_line_filter" model="ir.ui.view">
+            <field name="name">inherit.account.analytic.line.select</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[1]/field[@name='user_id']" position='after'>
+                        <field name="is_reallocated"/>
+                    </xpath>
+                    <xpath expr="/search/group[1]/field[@name='name']" position='after'>
+                        <field name="ref"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

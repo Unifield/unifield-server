@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE TESTS [
+    <!ENTITY general SYSTEM "mcdb_view_general.xml">
+    <!ENTITY account SYSTEM "mcdb_view_account.xml">
+    <!ENTITY currency SYSTEM "mcdb_view_currency.xml">
+    <!ENTITY end SYSTEM "mcdb_view_end.xml">
+]>
+
+<openerp>
+    <data>
+
+        <!-- Account Multi-Criteria Data Browser Form -->
+        <record model="ir.ui.view" id="account_mcdb_form">
+            <field name="name">account.mcdb.form</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Journal Items MCDB" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    &general;
+                    <field name="abs_id" colspan="2"/>
+                    <label string="" colspan="2"/>
+                    <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="2"/>
+                    <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
+                    <group colspan="4" col="4">
+                        <field name="rev_journal_ids"/>
+                        <field name="rev_period_ids"/>
+                    </group>
+                    <field name="journal_ids" colspan="2" nolabel="1">
+                        <tree string="Journals">
+                            <field name="code"/>
+                            <field name="name" string="Name"/>
+                            <field name="type"/>
+                        </tree>
+                    </field>
+                    <field name="period_ids" colspan="2" nolabel="1">
+                        <tree string="Periods">
+                            <field name="name" string="Name"/>
+                            <field name="date_start" string="Start"/>
+                            <field name="date_stop" string="Stop"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                    &account;
+                    <separator string="Reconciliation" colspan="4"/>
+                    <field name="reconciled"/>
+                    <field name="reconcile_id"/>
+                    &currency;
+                    <group colspan="4" col="6">
+                        <separator string="Third Party" colspan="6"/>
+                        <field name="partner_id" colspan="2"/>
+                        <field name="employee_id" colspan="2"/>
+                        <field name="transfer_journal_id" colspan="2"/>
+                    </group>
+                    &end;
+                </form>
+            </field>
+        </record>
+
+        <!-- Analytic Multi-Criteria Data Browser Form -->
+        <record model="ir.ui.view" id="account_mcdb_analytic_form">
+            <field name="name">account.mcdb.analytic.form</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Journal Items MCDB" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    &general;
+                    <group colspan="2" col="2">
+                        <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_analytic_journal_ids" colspan="2"/>
+                        <field name="analytic_journal_ids" colspan="2" nolabel="1">
+                            <tree string="Analytic Journals">
+                                <field name="code"/>
+                                <field name="name" string="Name"/>
+                                <field name="type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
+                    </group>
+                    &account;
+                    <separator string="Reallocation" colspan="4"/>
+                    <field name="reallocated" colspan="2"/>
+                    <field name="reversed" colspan="2"/>
+                    <separator string="Analytic Account" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                        <field name="rev_analytic_account_fp_ids"/>
+                        <field name="analytic_account_fp_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
+                            <tree string="Funding Pool">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                        <field name="rev_analytic_account_cc_ids"/>
+                        <field name="analytic_account_cc_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                            <tree string="Cost Center">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_analytic_account_f1_ids"/>
+                        <field name="analytic_account_f1_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
+                            <tree string="Free 1">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_analytic_account_f2_ids"/>
+                        <field name="analytic_account_f2_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
+                            <tree string="Free 2">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    &currency;
+                    &end;
+                </form>
+            </field>
+        </record>
+
+    <!-- Actions -->
+        <record id="action_account_mcdb_form" model="ir.actions.act_window">
+            <field name="name">Journal Items MCDB</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_mcdb_form"/>
+        </record>
+
+        <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items MCDB</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_mcdb_analytic_form"/>
+            <field name="context">{'from': 'account.analytic.line'}</field>
+        </record>
+
+    <!-- Menu -->
+        <menuitem id="menu_finance_mcdb" name="Multi-Criteria Data Browser" parent="account.menu_finance" sequence="12"/>
+        <menuitem string="Journal Items MCDB" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
+        <menuitem string="Analytic Journal Items MCDB" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="2"/>
+
+    </data>
+</openerp>

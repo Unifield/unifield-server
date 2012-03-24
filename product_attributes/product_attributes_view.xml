@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    
+
+        <record model="ir.ui.view" id="product_account_no_sales_tax">
+            <field name="name">product.normal.form</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="account.product_normal_form_view" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<data>            
+            		<xpath expr="//page[@string='Accounting']//group[2]" position="replace" >
+						<group colspan="2">
+	                        <separator string="Purchase Taxes" colspan="4"/>
+	                        <field name="supplier_taxes_id" nolabel="1" colspan="4" attrs="{'readonly':[('purchase_ok','=',0)]}"/>
+	                    </group>
+            		</xpath>
+            	</data>
+            </field>
+        </record>
+
         <record id="product.product_normal_form_view" model="ir.ui.view">
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>
@@ -87,8 +104,14 @@
                         </page>
                         <page string="Miscellaneous">
                             <group colspan="2" col="2">
-                                <separator string="List" colspan="2"/>
-                                <field name="sublist" colspan="2"/>
+                                <separator string="Lists/Sublists" colspan="2"/>
+	                            <field name="list_ids" colspan="2" nolabel="1" mode="tree">
+	                                <tree string="Lists/Sublists">
+	                                    <field name="type" />
+	                                    <field name="name" />
+	                                    <field name="ref" />
+	                                </tree>
+	                            </field>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Information" colspan="2"/>
@@ -114,13 +137,6 @@
                             <field name="library" colspan="2"/>
                             <separator string="Associated Products" colspan="4"/>
                             <field name="options_ids" colspan="4" nolabel="1"/>
-                            <separator string="Lists/Sublists" colspan="4"/>
-                            <field name="list_ids" colspan="4" nolabel="1" mode="tree">
-                                <tree string="Lists/Sublists">
-                                    <field name="type" />
-                                    <field name="name" />
-                                </tree>
-                            </field>
                         </page>
                         <page string="Suppliers">
                             <field colspan="4" name="seller_ids" nolabel="1"/>
@@ -161,8 +177,8 @@
                         <page string="Procurement &amp; Locations">
                             <group colspan="2" col="2" name="delay">
                                 <separator string="Delays" colspan="2"/>
-                                <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}"/>
-                                <field name="produce_delay"/>
+                                <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}" invisible="True" />
+                                <field name="produce_delay" invisible="True" />
                             </group>
                             <group colspan="2" col="2" name="store">
                                 <separator string="Storage Localisation" colspan="2"/>
@@ -172,6 +188,7 @@
                         </page>
                     </notebook>
                 </form>
+                
             </field>
         </record>
         
@@ -227,9 +244,6 @@
             <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="sequence" position="replace">
-                        <field name="sequence" string="Ranking"/>
-                     </field>
                     <field name="company_id" position="replace"/>
                 </data>
             </field>
@@ -241,7 +255,7 @@
             <field name="inherit_id" ref="product.product_normal_form_view" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <data/>
+            	<data/>
             </field>
         </record>
 
@@ -345,6 +359,15 @@
                 </search>
             </field>
         </record>
+
+        <menuitem id="menu_main_product" name="Products" sequence="1" 
+                  web_icon_hover="images/products.png"
+                  web_icon="images/products-hover.png" 
+                  action="product.product_normal_action"
+                />
+        <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" />
+        <menuitem groups="base.group_extended" id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
+        <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
         
     </data>
 </openerp>

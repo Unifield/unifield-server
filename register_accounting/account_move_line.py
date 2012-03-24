@@ -155,13 +155,14 @@ class account_move_line(osv.osv):
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal'),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
@@ -179,10 +180,14 @@ class account_move_line(osv.osv):
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
         'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
+        'transfer_currency': fields.many2one("res.currency", "Transfer Currency", readonly=True, required=False),
+        'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
     }
 
     _defaults = {
-        'partner_txt': lambda *a: '',
+        'partner_txt': lambda *a: '', # empty string
+        'is_transfer_with_change': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -242,29 +247,22 @@ class account_move_line(osv.osv):
         third_type = [('res.partner', 'Partner')]
         third_required = False
         third_selection = 'res.partner,0'
-        domain = {'partner_type': []}
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
             account = acc_obj.browse(cr, uid, [account_id])[0]
             acc_type = account.type_for_register
-            # if the account is a payable account, then we change the domain
-            if acc_type == 'partner':
-                if account.type == "payable":
-                    domain = {'partner_type': [('property_account_payable', '=', account_id)]}
-                elif account.type == "receivable":
-                    domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
-
-            if acc_type == 'transfer':
-                third_type = [('account.bank.statement', 'Register')]
+            if acc_type  in ['transfer', 'transfer_same']:
+                # UF-428: transfer type shows only Journals instead of Registers as before
+                third_type = [('account.journal', 'Journal')]
                 third_required = True
-                third_selection = 'account.bank.statement,0'
-                domain = {'partner_type': [('state', '=', 'open')]}
+                third_selection = 'account.journal,0'
+
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
         val.update({'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}})
-        return {'value': val, 'domain': domain}
+        return {'value': val}
 
     def onchange_partner_type(self, cr, uid, ids, partner_type=None, credit=None, debit=None, context={}):
         """

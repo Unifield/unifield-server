@@ -12,6 +12,10 @@
                     <field name="ref" />
                     <field name="type" />
                     <field name="nb_products" />
+                    <field name="parent_id" invisible="1" />
+                    <field name="creation_date" invisible="1" />
+                    <field name="warehouse_id" invisible="1" />
+                    <field name="location_id" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -70,14 +74,28 @@
                     <newline />
                     <field name="warehouse_id" attrs="{'required': [('type', '=', 'sublist'), ('location_id', '=', False)]}" />
                     <field name="location_id" attrs="{'required': [('type', '=', 'sublist'), ('warehouse_id', '=', False)]}" />
-                    <separator colspan="4" string="Products" />
-                    <field name="product_ids" mode="tree" colspan="4" nolabel="1">
-                        <tree string="Products" editable="top">
-                            <field name="ref" />
-                            <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
-                            <field name="comment" />
-                        </tree>
-                    </field>
+                    <notebook colspan="4">
+                        <page string='Products'>
+                            <separator colspan="4" string="Products" />
+                            <button name="%(action_add_product_in_list)d" type="action" string="Add multiple products" colspan="4" />
+                            <field name="product_ids" mode="tree" colspan="4" nolabel="1" on_change="change_product_line()">
+                                <tree string="Products" editable="top">
+                                    <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
+                                    <field name="comment" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string='Old Products'>
+                            <separator colspan="4" string="Old Products" />
+                            <field name="old_product_ids" mode="tree" colspan="4" nolabel="1" readonly="1">
+                                <tree string="Old Products">
+                                    <field name="removal_date" />
+                                    <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
+                                    <field name="comment" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </form>
             </field>
         </record>
@@ -91,16 +109,9 @@
         </record>
         
         <menuitem id="menu_sale_product_list"
+                  sequence="2"
                   action="action_product_list"
                   parent="base.menu_product" />
                   
-        <menuitem id="menu_purchase_product_list"
-                  action="action_product_list"
-                  parent="purchase.menu_procurement_management_product" />
-                  
-        <menuitem id="menu_stock_product_list"
-                  action="action_product_list"
-                  parent="stock.menu_stock_product" />
-    
     </data>
 </openerp>

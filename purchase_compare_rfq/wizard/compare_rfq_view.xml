@@ -30,8 +30,8 @@
     				<field name="line_ids" colspan="4" nolabel="1" readonly="1" />
     				<separator colspan="4" />
     				<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-    				<button name="create_po" string="Create PO" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '!=', False),],}" colspan="1" />
-    				<button name="update_tender" string="Update Tender" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '=', False),],}" colspan="1" />  
+    				<button name="create_po" string="Create PO" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '!=', False)]}" colspan="1" />
+    				<button name="update_tender" string="Update Tender" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '=', False)]}" colspan="1" />  
     			</form>
     		</field>
     	</record>
@@ -58,8 +58,21 @@
     			<form string="Choose a supplier">
     				<field name="product_id" readonly="1" />
     				<field name="supplier_id" readonly="1" />
-    				<separator colspan="4" string="Quotation Lines" />
-    				<field name="line_ids" colspan="4" nolabel="1" />
+    				<notebook colspan="4">
+	    				<page string="Prices">
+		    				<separator colspan="4" string="Quotation Lines" />
+		    				<field name="line_ids" colspan="4" nolabel="1" readonly="1" />
+		    			</page>
+		    			<page string="Notes">
+		    				<field name="line_notes_ids" colspan="4" nolabel="1" readonly="1">
+		    					<tree string="Test">
+		    						<field name="supplier_id" readonly="1" />
+					    			<field name="notes" readonly="1" />
+				    				<button name="choose_supplier" string="Choose this supplier" icon="terp-camera_test" type="object" />
+		    					</tree>
+		    				</field>
+		    			</page>
+    				</notebook>
     				<separator colspan="4" />
     				<button name="return_view" string="Cancel" icon="gtk-cancel" type="object" />
        			</form>
@@ -74,7 +87,7 @@
     	    	<tree string="Lines">
     				<field name="supplier_id" readonly="1" />
 	    			<field name="price_unit" readonly="1" />
-    				<field name="qty" />
+    				<field name="qty" readonly="1" />
     				<field name="price_total" readonly="1" />
     				<button name="choose_supplier" string="Choose this supplier" icon="terp-camera_test" type="object" />
     			</tree>
@@ -89,7 +102,7 @@
                 <form string="Line">
                     <field name="supplier_id" readonly="1" />
                     <field name="price_unit" readonly="1" />
-                    <field name="qty" />
+                    <field name="qty" readonly="1"/>
                 </form>
             </field>
         </record>

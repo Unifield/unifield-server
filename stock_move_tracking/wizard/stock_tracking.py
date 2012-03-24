@@ -49,8 +49,7 @@ class stock_move_tracking(osv.osv_memory):
             domain = []
             if track.expired_date:
                 # Add two lines in domain because we cannot compare equality between date and datetime
-                domain.append(('expired_date', '>=', track.expired_date))
-                domain.append(('expired_date', '<=', track.expired_date))
+                domain.append(('prodlot_id.life_date', '=', track.expired_date))
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
@@ -76,7 +75,7 @@ class stock_move_tracking(osv.osv_memory):
             if track.product_id:
                 product_name = track.product_id and track.product_id.name or False
                 product_code = track.product_id and track.product_id.default_code or False
-            prodlot_id = track.prodlot_id
+            prodlot_id = track.prodlot_id.id
             expired_date = track.expired_date
         
         data = {
@@ -86,7 +85,7 @@ class stock_move_tracking(osv.osv_memory):
                 'expired_date': expired_date}
        
         move_ids = self.get_ids(cr, uid, ids, context=context)
-        if not move_ids:
+        if not move_ids[0]:
             raise osv.except_osv(_('Warning !'), _('Your search did not match with any moves'))
         datas = {'ids': move_ids[0],
                  'model': 'stock.move',
@@ -110,6 +109,7 @@ class stock_move_tracking(osv.osv_memory):
         
         res_ids = self.get_ids(cr, uid, ids, context=context)
         result['domain'] = [('id', 'in', res_ids[0])]
+        result['target'] = 'crush'
         
         if res_ids[1]:
             result['context'] = {'search_default_group_product': 1}

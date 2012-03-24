@@ -8,7 +8,7 @@
         <field name="model">sale.report</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-		    <tree string="Sales Analysis">
+		    <tree string="Field Orders Analysis">
 			<field name="date" invisible="1"/>
 			<field name="user_id" invisible="1"/>
 			<field name="year" invisible="1"/>
@@ -39,29 +39,29 @@
         <field name="model">sale.report</field>
         <field name="type">search</field>
          <field name="arch" type="xml">
-            <search string="Sales Analysis">
+            <search string="Field Orders Analysis">
                 <group>
                     <filter icon="terp-dolar_ok!" string="To Invoice"
                         domain="[('invoiced','=', False)]" />
                     <separator orientation="vertical"/>
                     <filter icon="terp-go-year" string="  Year  "
                         domain="[('date','&lt;=', time.strftime('%%Y-%%m-%%d')),('date','&gt;=',time.strftime('%%Y-01-01'))]"
-                        help="Sales order created in current year"/>
+                        help="Field order created in current year"/>
                     <filter icon="terp-go-month" string="   Month   "
                         name="month"
                         domain="[('date','&lt;=',(datetime.date.today()+relativedelta(day=31)).strftime('%%Y-%%m-%%d')),('date','&gt;=',(datetime.date.today()-relativedelta(day=1)).strftime('%%Y-%%m-%%d'))]"
-                        help="Sales order created in current month"/>
+                        help="Field order created in current month"/>
                     <filter icon="terp-go-month"
                          string="    Month-1    "
                          separator="1"
                          domain="[('date','&lt;=', (datetime.date.today() - relativedelta(day=31, months=1)).strftime('%%Y-%%m-%%d')),('date','&gt;=',(datetime.date.today() - relativedelta(day=1,months=1)).strftime('%%Y-%%m-%%d'))]"
-                         help="Sales order created in last month"/>
+                         help="Field order created in last month"/>
                     <separator orientation="vertical"/>
                     <filter icon="terp-document-new"
                         string="Quotations"
                         domain="[('state','=','draft')]"/>
                     <filter icon="terp-check"
-                        string="Sales"
+                        string="Field Orders"
                         domain="[('state','not in',('draft','done','cancel'))]"/>
                     <separator orientation="vertical"/>
                     <filter icon="terp-accessories-archiver"
@@ -73,8 +73,8 @@
                     <field name="product_id"/>
                     <field name="user_id">
                         <filter icon="terp-personal"
-                            string="My Sales"
-                            help="My Sales"
+                            string="My Field Orders"
+                            help="My Field Orders"
                             domain="[('user_id','=',uid)]"/>
                     </field>
                 </group>
@@ -89,16 +89,14 @@
                 <group string="Priority" expand="0">
                         <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                         <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                        <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                        <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
                 </group>
                 <newline />
                 <group string="Category" expand="0">
                     <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                     <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
-                    <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
                     <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
-                    <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
-                    <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
+                    <filter icon="gtk-network" string="Other" domain="[('categ','=','other')]"/>
                 </group>
                 <newline />
                 <group expand="0" string="Extended Filters..." groups="base.group_extended">

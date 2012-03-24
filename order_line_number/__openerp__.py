@@ -23,7 +23,8 @@
 {
     "name" : "Order Line Number",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase"],
     "init_xml" : [],
@@ -31,11 +32,8 @@
     "description": """
     Add numbering to order lines
     """,
-    'test': [
-             #'test/sourcing.yml',
-             ],
+    'test': [],
     'update_xml': [
-        #'security/ir.model.access.csv',
         'order_line_number_view.xml',
     ],
     'installable': True,

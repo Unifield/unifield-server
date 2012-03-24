@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <record id="documents_done_list_view" model="ir.ui.view">
+            <field name="name">documents.done.list.view</field>
+            <field name="model">documents.done.wizard</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Documents 'In Progress'">
+                    <field name="name" />
+                    <field name="creation_date" />
+                    <field name="partner_id" />
+                    <field name="model" />
+                    <field name="display_state" />
+                    <button type="object" name="go_to_problems" string="Close" icon="terp-gtk-stop" />
+                    <field name="problem" string="Associated Doc." />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="documents_done_search_view" model="ir.ui.view">
+            <field name="name">documents.done.search.view</field>
+            <field name="model">documents.done.wizard</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Documents 'In Progress'">
+                    <group colspan="4">
+                        <field name="creation_date" />
+                        <field name="expected_date" />
+                        <field name="model" />
+                        <field name="partner_id" />
+                        <field name="name" />
+                        <field name="display_state" />
+                        <field name="requestor" />
+                    </group>
+                    <newline />
+<!--                    <group string="Group by..." expand="1" colspan="1">
+                        <filter name="group_name" string="Name" domain="[]" context="{'group_by': 'name'}" icon="" />
+                        <filter name="group_creation_date" string="Creation date" domain="[]" context="{'group_by': 'creation_date'}" icon="" />
+                        <filter name="group_partner" string="Partner" domain="[]" context="{'group_by': 'partner_id'}" icon="" />
+                        <filter name="group_model" string="Type" domain="[]" context="{'group_by': 'model'}" icon="" />
+                        <filter name="group_state" string="State" domain="[]" context="{'group_by': 'state'}" icon="" />
+                    </group>-->
+                </search>
+            </field>
+        </record>
+        
+        <record id="action_documents_done_view" model="ir.actions.act_window">
+            <field name="name">Documents 'In Progress'</field>
+            <field name="res_model">documents.done.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="context">{'search_default_requestor': uid}</field>
+        </record>
+        
+        <menuitem id="menu_documents_done"
+                  action="action_documents_done_view"
+                  parent="object_query.menu_preferences" />
+
+        <record id="documents_done_problem_form_view" model="ir.ui.view">
+            <field name="name">documents.done.problem.form.view</field>
+            <field name="model">documents.done.problem</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Associated documents">
+                    <field name="doc_name" colspan="4" readonly="1" />
+                    <field name="errors" invisible="1" />
+                    <field name="pb_lines" mode="tree" colspan="4" nolabel="1" readonly="1">
+                        <tree string="Documents">
+                            <field name="doc_name" />
+                            <field name="doc_type" />
+                            <field name="doc_state_str" />
+                            <button name="go_to_doc" type="object" icon="terp-stock_zoom" string="Go to document" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <group colspan="3" col="3">
+                        <button name="cancel_document" string="Cancel associated documents and close the document" type="object" colspan="3" icon="terp-check" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

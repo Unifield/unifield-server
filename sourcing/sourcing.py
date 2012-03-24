@@ -30,6 +30,7 @@ import pooler
 import time
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from sale_override import SALE_ORDER_STATE_SELECTION
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
@@ -101,21 +102,117 @@ class sourcing_line(osv.osv):
     
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
+    
+    def _get_sourcing_vals(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        returns the value from the sale.order
+        '''
+        if isinstance(fields, str):
+            fields = [fields]
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f: False,})
+            # gather procurement_request boolean
+            result[obj.id]['procurement_request'] = obj.sale_order_id and obj.sale_order_id.procurement_request or False
+            # gather sale order line state
+            result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
+            # display confirm button - display if state == draft and not proc or state == progress and proc
+            result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and obj.sale_order_id.state == 'validated')
+        
+        return result
+    
+    def _get_sale_order_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sale.order
+        ids represents the ids of sale.order objects for which procurement_request has changed
+        
+        return the list of ids of sourcing.line object which need to get their procurement_request field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # list of sourcing lines having sale_order_id within ids
+        result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_id', 'in', ids)], context=context)
+        return result
+    
+    def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sale.order.line
+        ids represents the ids of sale.order.line objects for which state has changed
+        
+        return the list of ids of sourcing.line object which need to get their state field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # list of sourcing lines having sale_order_line_id within ids
+        result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_line_id', 'in', ids)], context=context)
+        return result
+    
+    def _get_souring_lines_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sourcing.line
+        ids represents the ids of sourcing.line objects for which a field has changed
+        
+        return the list of ids of sourcing.line object which need to get their field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        result = ids
+        return result
+    
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
+
+    def _search_need_sourcing(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+        return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
+
+    def _search_sale_order_state(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        newargs = []
+
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+            if arg[2] == 'progress':
+                newargs.append(('sale_order_state', 'in', ['progress', 'manual']))
+            else:
+                newargs.append(('sale_order_state', arg[1], arg[2]))
+        return newargs
+
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
         'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
-        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False), 
+#        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False),
+        'state': fields.function(_get_sourcing_vals, method=True, type='selection', selection=_SELECTION_SALE_ORDER_LINE_STATE, string='State', multi='get_vals_sourcing',
+                                  store={'sale.order.line': (_get_sale_order_line_ids, ['state'], 10),
+                                         'sourcing.line': (_get_souring_lines_ids, ['sale_order_line_id'], 10)}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
         'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
+        'sale_order_state_search': fields.function(_get_fake, string="Order State", type='selection', method=True, selection=[x for x in SALE_ORDER_STATE_SELECTION if x[0] != 'manual'], fnct_search=_search_sale_order_state),
         'line_number': fields.integer(string='Line', readonly=True),
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
-        'rts': fields.related('sale_order_id', 'delivery_requested_date', type='date', string='RTS', readonly=True),
+        'rts': fields.related('sale_order_id', 'ready_to_ship_date', type='date', string='RTS', readonly=True),
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
@@ -124,10 +221,17 @@ class sourcing_line(osv.osv):
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'company_id': fields.many2one('res.company','Company',select=1),
+        'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
+                                               store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
+                                                      'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
+        'display_confirm_button': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Display Button', multi='get_vals_sourcing',),
+        'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
+             'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def check_supplierinfo(self, cr, uid, ids, partner_id, context=None):
@@ -179,7 +283,8 @@ class sourcing_line(osv.osv):
                 else:
                     # if make to stock, reset anyway to False
                     pocft = False
-                    vals.update({'po_cft': pocft})
+                    values.update({'po_cft': pocft, 'supplier': False})
+                    vals.update({'po_cft': pocft, 'supplier': False})
                 
                 # partner_id
                 if 'supplier' in values:
@@ -283,6 +388,11 @@ class sourcing_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
+            # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
+            
+            if sl.type == 'make_to_order' and sl.po_cft == 'po' and not sl.supplier:
+                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before confirming the line"))
+            
             # set the corresponding sale order line to 'confirmed'
             result.append((sl.id, sl.sale_order_line_id.write({'state':'confirmed'}, context)))
             # check if all order lines have been confirmed
@@ -290,9 +400,14 @@ class sourcing_line(osv.osv):
             for ol in sl.sale_order_id.order_line:
                 if ol.state != 'confirmed':
                     linesConfirmed = False
+                    break
+                
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
-                wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                if sl.sale_order_id.procurement_request:
+                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
+                else:
+                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
                 
         return result
     
@@ -394,15 +509,37 @@ class sale_order(osv.osv):
         return super(sale_order, self).unlink(cr, uid, ids, context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
         result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # new field representing selected partner from sourcing tool
+        proc_data = kwargs['proc_data']
         line = kwargs['line']
+        
+        # new field representing selected partner from sourcing tool
         result['supplier'] = line.supplier and line.supplier.id or False
         # uf-583 - the location defined for the procurementis input instead of stock
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
-        
+
         return result
+
+    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to customize the execution condition
+        '''
+        line = kwargs['line']
+        
+        if line.type == 'make_to_stock' and line.order_id.procurement_request:
+            return False
+
+        return True
 
 sale_order()
 
@@ -511,7 +648,9 @@ class sale_order_line(osv.osv):
                   'sale_order_state': orderState,
                   }
         
-        self.pool.get('sourcing.line').create(cr, uid, values, context=context)
+        sourcing_line_id = self.pool.get('sourcing.line').create(cr, uid, values, context=context)
+        # update sourcing line - trigger update of fields.function values -- OPENERP BUG ? with empty values
+        self.pool.get('sourcing.line').write(cr, uid, [sourcing_line_id], {}, context=context)
             
         return result
     
@@ -564,7 +703,9 @@ class sale_order_line(osv.osv):
                 values.update({'type': vals['type']})
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
+                    vals.update({'po_cft': False})
                     values.update({'supplier': False})
+                    vals.update({'supplier': False})
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
                 
@@ -644,6 +785,43 @@ class procurement_order(osv.osv):
         'supplier': fields.many2one('res.partner', 'Supplier'),
     }
     
+    def action_check_finished(self, cr, uid, ids):
+        res = super(procurement_order, self).action_check_finished(cr, uid, ids)
+        
+        # If the procurement has been generated from an internal request, close the order
+        for order in self.browse(cr, uid, ids):
+            line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', order.id)])
+            for line in self.pool.get('sale.order.line').browse(cr, uid, line_ids):
+                if line.order_id.procurement_request:
+                    return True
+        
+        return res
+
+    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        if a purchase order for the same supplier and the same requested date,
+        don't create a new one
+        '''
+        po_obj = self.pool.get('purchase.order')
+        procurement = kwargs['procurement']
+        values = kwargs['values']
+
+        partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
+
+        purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
+                                               ('delivery_requested_date', '=', values.get('delivery_requested_date'))], context=context)
+        if purchase_ids:
+            line_values = values['order_line'][0][2]
+            line_values.update({'order_id': purchase_ids[0]})
+            purchase = po_obj.browse(cr, uid, purchase_ids[0], context=context)
+            if not purchase.origin_tender_id or not purchase.origin_tender_id.sale_order_id or purchase.origin_tender_id.sale_order_id.name != procurement.origin:
+                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': '%s/%s' % (purchase.origin, procurement.origin)}, context=context)
+            self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
+            return purchase_ids[0]
+        else:
+            purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
+            return purchase_id
+    
     def write(self, cr, uid, ids, vals, context=None):
         '''
         override for workflow modification
@@ -678,6 +856,9 @@ class procurement_order(osv.osv):
         procurement = kwargs['procurement']
         # the specified supplier in sourcing tool has priority over suppinfo
         partner = procurement.supplier or super(procurement_order, self)._partner_get_hook(cr, uid, ids, context=context, *args, **kwargs)
+        if partner.id == self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id:
+            cr.execute('update procurement_order set message=%s where id=%s',
+                           (_('Impossible to make a Purchase Order to your own company !'), procurement.id))
         return partner
     
     def get_delay_qty(self, cr, uid, ids, partner, product, context=None):

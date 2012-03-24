@@ -9,9 +9,9 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <!-- <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
-                        <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_supplier':1}" />
-                    </xpath> -->
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                    </xpath>
                     
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
@@ -28,71 +28,96 @@
             </field>
         </record>
         
-        <record id="purchase_order_type_tree_view" model="ir.ui.view">
+        <record id="purchase.purchase_order_tree" model="ir.ui.view">
             <field name="name">purchase.order.type.tree.view</field>
             <field name="model">purchase.order</field>
             <field name="type">tree</field>
-            <field name="inherit_id" ref="purchase.purchase_order_tree" />
             <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='date_order']" position="before">
-                        <field name="order_type" />
-                    </xpath>
-                </data>
+                <tree string="Purchase Orders"
+                      colors="grey:state=='cancel';blue:state in ('wait','confirmed');red:state in ('except_invoice','except_picking')">
+                      <field name="name" string="Reference" />
+                      <field name="order_type" />
+                      <field name="priority" />
+                      <field name="categ" />
+                      <field name="date_order" />
+                      <field name="partner_id" string="Supplier" />
+                      <field name="delivery_requested_date" />
+                      <field name="origin" />
+                      <field name="shipped_rate" widget="progressbar" />
+                      <field name="invoiced_rate" widget="progressbar" />
+                      <field name="amount_total" sum="Total amount" />
+                      <field name="state" />
+                </tree>
             </field>
         </record>
         
-        <record id="purchase_order_type_search_view" model="ir.ui.view">
-            <field name="name">purchase.order.type.search.view</field>
+        <record id="purchase.view_purchase_order_filter" model="ir.ui.view">
+            <field name="name">purchase.view.purchase.order.filter</field>
             <field name="model">purchase.order</field>
             <field name="type">search</field>
-            <field name="inherit_id" ref="purchase.view_purchase_order_filter" />
             <field name="arch" type="xml">
-                <data>
-                    <field name="product_id" position="after">
-                        <field name="origin" />
-                    </field>
-                    <filter name="draft" position="replace">
-                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ('draft',))]" separator="1" help="Purchase order which are in draft state"/>
-                    </filter>
-                    <xpath expr="/search/group/field[@name='create_uid']" position="after">
+                <search string="Search Purchase Orders">
+                    <group col="8" colspan="4">
+                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
+                      <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
+                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
+                      <separator orientation="vertical" />
+                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state." />
+                      <separator orientation="vertical" />
+                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking'])]" separator="1" help="Purchase orders which are in the exception state." />
+                      <separator orientation="vertical" />
+                      <field name="name" select="1" string="Reference" />
+                      <field name="partner_id" select="1" string="Supplier" />
+                    </group>
+                    <newline />
+                    <group>
+                      <field name="product_id" />
+                      <field name="origin" />
+                      <field name="create_uid" />
+                      <field name="date_order" />
+                    </group>
                     <newline />
                     <group string="Type" expand="0">
-	                        <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
-	                        <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
-	                        <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
-	                        <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
-	                        <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
-	                        <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
-	                        <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
-	                    </group>
-	                    <newline />
-	                    <group string="Priority" expand="0">
-                            <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
-                            <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
-	                    </group>
-	                    <newline />
-	                    <group string="Category" expand="0">
-                            <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
-                            <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
-                            <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
-                            <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
-                            <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
-                            <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
-                            <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
-	                    </group>
-                        <newline />
-                    </xpath>
-                    <xpath expr="/search/group[2]/filter[@string='Supplier']" position="before">
-                        <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
-                        <separator orientation="vertical"/>
-                    </xpath>
-                </data>
+	                  <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
+	                  <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
+	                  <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
+	                  <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
+	                  <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
+	                  <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
+	                  <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
+	                </group>
+	                <newline />
+	                <group string="Priority" expand="0">
+                      <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                      <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
+	                </group>
+	                <newline />
+	                <group string="Category" expand="0">
+                      <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                      <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                      <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
+                      <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
+	                </group>
+                    <newline />
+                    <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                      <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
+                      <separator orientation="vertical" />
+                      <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
+                      <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                      <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'delivery_requested_date'}" />
+                    </group>
+                </search>
             </field>
         </record>
         
@@ -102,10 +127,58 @@
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
-            <field name="domain">[('tender_id', '=', False),]</field>
+            <field name="domain">[('tender_id', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
+
+        <!-- REWORK THE PURCHASE MENU − SEE UF-657 - ERGONOMIC REQUIREMENTS -->
+        <!-- Purchase Management -->
+        <menuitem id="purchase.menu_purchase_form_action" 
+                  action="purchase.purchase_form_action"
+                  sequence="1" 
+                  parent="purchase.menu_procurement_management" />
+
+        <menuitem id="purchase.menu_purchase_rfq" 
+                  action="purchase.purchase_rfq"
+                  sequence="2" 
+                  parent="purchase.menu_procurement_management" />
+
+        <menuitem id="base.menu_procurement_management_supplier_name"
+                  action="base.action_partner_supplier_form"
+                  sequence="4"
+                  parent="purchase.menu_procurement_management" />
+
+        <menuitem id="base.menu_purchase_root" sequence="2" />
+
+        <!-- Address Book -->
+        <menuitem id="base.menu_procurement_management_supplier"
+                  name="Address Book"
+                  parent="purchase.menu_purchase_config_purchase" />
+
+        <record id="action_supplier_address_form" model="ir.actions.act_window">
+            <field name="name">Addresses</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner.address</field>
+            <field name="view_type">form</field>
+            <field name="context">{"search_default_supplier":1}</field>
+            <field name="search_view_id" ref="base.view_res_partner_address_filter" />
+            <field name="help">Suppliers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued.</field>
+        </record>
+
+        <menuitem action="action_supplier_address_form"
+                  id="menu_supplier_address_form"
+                  parent="base.menu_procurement_management_supplier" />
+        
+        <!-- Invoice control -->
+        <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
+        <delete id="purchase.menu_procurement_management_pending_invoice" model="ir.ui.menu" />
+        <delete id="purchase.menu_purchase_line_order_draft" model="ir.ui.menu" />
+
+        <!-- Products -->
+        <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
+        <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
+        <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
     
     </data>
 </openerp>

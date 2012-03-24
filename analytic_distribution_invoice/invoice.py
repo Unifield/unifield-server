@@ -19,35 +19,18 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
+from osv import fields
+from tools.translate import _
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
-    def _have_analytic_distribution(self, cr, uid, ids, name, arg, context={}):
-        """
-        If invoice have an analytic distribution, return True, else return False
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for inv in self.browse(cr, uid, ids, context=context):
-            res[inv.id] = False
-            if inv.analytic_distribution_id:
-                res[inv.id] = True
-        return res
-
-    _columns = {
-        'have_analytic_distribution': fields.function(_have_analytic_distribution, method=True, type='boolean', string='Have an analytic distribution?'),
-    }
-
     def _hook_fields_for_refund(self, cr, uid, *args):
         """
-        Add analytic_distribution_id field to result.
+        Add these fields to result:
+         - analytic_distribution_id
         """
         res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
@@ -55,7 +38,8 @@ class account_invoice(osv.osv):
 
     def _hook_fields_m2o_for_refund(self, cr, uid, *args):
         """
-        Add analytic_distribution_id field to result.
+        Add these fields to result:
+         - analytic_distribution_id
         """
         res = super(account_invoice, self)._hook_fields_m2o_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
@@ -63,12 +47,15 @@ class account_invoice(osv.osv):
 
     def _hook_refund_data(self, cr, uid, data, *args):
         """
-        Delete analytic distribution for refund invoice
+        Copy analytic distribution for refund invoice
         """
         if not data:
             return False
         if 'analytic_distribution_id' in data:
-            data['analytic_distribution_id'] = False
+            if data.get('analytic_distribution_id', False):
+                data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, data.get('analytic_distribution_id'), {}) or False
+            else:
+                data['analytic_distribution_id'] = False
         return data
 
     def _refund_cleanup_lines(self, cr, uid, lines):
@@ -80,17 +67,23 @@ class account_invoice(osv.osv):
             if el[2]:
                 # Give analytic distribution on line
                 if 'analytic_distribution_id' in el[2]:
-                    el[2]['new_distribution_id'] = el[2].get('analytic_distribution_id') and el[2].get('analytic_distribution_id')[0]
-                    # default value
-                    el[2]['analytic_distribution_id'] = False
+                    if el[2].get('analytic_distribution_id', False) and el[2].get('analytic_distribution_id')[0]:
+                        distrib_id = el[2].get('analytic_distribution_id')[0]
+                        el[2]['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {}) or False
+                    else:
+                        # default value
+                        el[2]['analytic_distribution_id'] = False
                 # Give false analytic lines for 'line' in order not to give an error
                 if 'analytic_line_ids' in el[2]:
                     el[2]['analytic_line_ids'] = False
+                # Give false order_line_id in order not to give an error
+                if 'order_line_id' in el[2]:
+                    el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
         return res
 
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
         """
-        Reverse lines for given invoice (that are not from an engagement journal)
+        Reverse lines for given invoice
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -112,5 +105,103 @@ class account_invoice(osv.osv):
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
+    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+        """
+        Add verification on all lines for analytic_distribution_id to be present and valid !
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse invoice and all invoice lines to detect a non-valid line
+        for inv in self.browse(cr, uid, ids, context=context):
+            for invl in inv.invoice_line:
+                if inv.from_yml_test or invl.from_yml_test:
+                    continue
+                if invl.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
+        # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
+        # FIXME: what about analytic accountancy?
+        return super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
+
 account_invoice()
+
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context={}):
+        """
+        Get state of distribution:
+         - if compatible with the invoice line, then "valid"
+         - if no distribution, take a tour of invoice distribution, if compatible, then "valid"
+         - if no distribution on invoice line and invoice, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.from_yml_test:
+                res[line.id] = 'valid'
+            else:
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.invoice_id.analytic_distribution_id.id, line.account_id.id)
+        return res
+
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
+        """
+        If invoice have an analytic distribution, return False, else return True
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for inv in self.browse(cr, uid, ids, context=context):
+            res[inv.id] = True
+            if inv.analytic_distribution_id:
+                res[inv.id] = False
+        return res
+
+    _columns = {
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+            string='Header Distrib.?'),
+        'newline': fields.boolean('New line'),
+    }
+    
+    _defaults = {
+        'newline': lambda *a: True,
+        'have_analytic_distribution_from_header': lambda *a: True,
+    }
+
+    def create(self, cr, uid, vals, context={}):
+        vals['newline'] = False
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
+
+    def copy_data(self, cr, uid, id, default={}, context={}):
+        """
+        Copy global distribution and give it to new invoice line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Copy analytic distribution
+        invl = self.browse(cr, uid, [id], context=context)[0]
+        if invl.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, invl.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
+        return super(account_invoice_line, self).copy_data(cr, uid, id, default, context)
+
+account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

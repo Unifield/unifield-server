@@ -42,7 +42,7 @@ class product_history_consumption(osv.osv_memory):
     }
 
     _defaults = {
-        'date_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
     }
 
     def open_history_consumption(self, cr, uid, ids, context={}):
@@ -63,12 +63,19 @@ class product_history_consumption(osv.osv_memory):
         '''
         if not context:
             context = {}
-        res = {}
+        res = {'value': {}}
         month_obj = self.pool.get('product.history.consumption.month')
+        
+        if date_from:
+            date_from = (DateFrom(date_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            res['value'].update({'date_from': date_from})
+        if date_to:
+            date_to = (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            res['value'].update({'date_to': date_to})
 
         # If a period is defined
         if date_from and date_to:
-            res['value'] = {'month_ids': []}
+            res['value'].update({'month_ids': []})
             current_date = DateFrom(date_from) + RelativeDateTime(day=1)
             # For all months in the period
             while current_date <= (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)):
@@ -275,7 +282,8 @@ class product_product(osv.osv):
         '''
         Set value for each month
         '''
-
+        if context is None:
+            context = {}
         if context.get('history_cons', False):
             res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 

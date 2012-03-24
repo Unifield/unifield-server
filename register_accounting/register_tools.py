@@ -37,6 +37,10 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
             res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 
                 'selection': 'account.bank.statement,%s' % st_line.register_id.id}
+        elif st_line.transfer_journal_id:
+            res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
+            res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')], 
+                'selection': 'account.journal,%s' % st_line.transfer_journal_id.id}
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
@@ -48,9 +52,9 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                 third_type = [('res.partner', 'Partner')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
-                if acc_type == 'transfer':
-                    third_type = [('account.bank.statement', 'Register')]
-                    third_selection = 'account.bank.statement,'
+                if acc_type in ['transfer', 'transfer_same']:
+                    third_type = [('account.journal', 'Journal')]
+                    third_selection = 'account.journal,'
                 elif acc_type == 'advance':
                     third_type = [('hr.employee', 'Employee')]
                     third_selection = 'hr.employee,'
@@ -72,6 +76,8 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             obj = 'register_id'
         elif element == 'res.partner':
             obj = 'partner_id'
+        elif element == 'account.journal':
+            obj = 'transfer_journal_id'
         if obj:
             sql += "%s = %s " % (obj, fields[1])
             sql += "WHERE id = %s" % id
@@ -111,6 +117,9 @@ def _get_third_parties_name(self, cr, uid, vals, context={}):
     if 'register_id' in vals and vals.get('register_id', False):
         register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
         res = register and register[0] and register[0].name or ''
+    if 'transfer_journal_id' in vals and vals.get('transfer_journal_id', False):
+        journal = self.pool.get('account.journal').browse(cr, uid, [vals['transfer_journal_id']], context=context)
+        res = journal and journal[0] and journal[0].code or ''
     return res
 
 def open_register_view(self, cr, uid, register_id, context={}): 
@@ -174,17 +183,17 @@ def previous_period_id(self, cr, uid, period_id, context={}):
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
     first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
-    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], 
-        order='date_start desc', limit=1, context=context)
+    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<=', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id), 
+        ('id', '!=', period_id), ('number', '<=', 12.0)], order='number desc', context=context)
     if period_id == first_period_id: 
         # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
         previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)], 
-            limit=1, order="date_start desc", context=context)
+            order="date_start desc", context=context)
         if not previous_fiscalyear:
             raise osv.except_osv(_('Error'), 
                 _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
-        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
-            limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
+        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0]), ('id', '!=', period_id), ('number', '<=', 12.0)], 
+            order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
             # and "Period 15"
     if previous_period_ids:
         return previous_period_ids[0]

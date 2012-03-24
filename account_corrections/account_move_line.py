@@ -38,6 +38,7 @@ class account_move_line(osv.osv):
          - The account is not payable or receivable
          - Item have not been corrected
          - Item have not been reversed
+         - Item come from a reconciliation that have set 'is_addendum_line' to True
          - The account is not the default credit/debit account of the attached statement (register)
          - All items attached to the entry have no reconcile_id on reconciliable account
         """
@@ -50,11 +51,17 @@ class account_move_line(osv.osv):
             # False if account is payable or receivable
             if ml.account_id.type in ['payable', 'receivable']:
                 res[ml.id] = False
+            # False if account is tax
+            if ml.account_id.user_type.code in ['tax']:
+                res[ml.id] = False
             # False if line have been corrected
             if ml.corrected:
                 res[ml.id] = False
             # False if line is a reversal
             if ml.reversal:
+                res[ml.id] = False
+            # False if this line is an addendum line
+            if ml.is_addendum_line:
                 res[ml.id] = False
             # False if line account and statement default debit/credit account are similar
             if ml.statement_id:
@@ -65,7 +72,7 @@ class account_move_line(osv.osv):
                     res[ml.id] = False
             # False if one of move line account is reconciliable and reconciled
             for aml in ml.move_id.line_id:
-                if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
+                if aml.account_id.reconcile and (aml.reconcile_id or aml.reconcile_partial_id):
                     res[aml.id] = False
         return res
 
@@ -204,6 +211,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verification
         if not context:
             context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Retrieve some values
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
         # Create wizard
@@ -365,6 +374,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Delete double and sort it
         move_ids = sorted(list(set(tmp_move_ids)))
         # Browse moves
+        success_move_ids = []
         for m in move_obj.browse(cr, uid, move_ids, context=context):
             # Verify this move could be reversed
             corrigible = True
@@ -439,7 +449,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     success_move_line_ids.append(ml.id)
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
-        return success_move_line_ids
+            success_move_ids.append(new_move_id)
+        return success_move_line_ids, success_move_ids
 
     def update_account_on_st_line(self, cr, uid, ids, account_id=None, context={}):
         """
@@ -481,7 +492,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not date:
-            date = strftime('%Y-%d-%m')
+            date = strftime('%Y-%m-%d')
         if not new_account_id:
             raise osv.except_osv(_('Error'), _('No new account_id given!'))
         # Prepare some values

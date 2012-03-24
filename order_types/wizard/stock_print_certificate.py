@@ -93,7 +93,7 @@ class stock_certificate_valuation(osv.osv_memory):
         'move_id': fields.many2one('stock.move', string='Move'),
         'product_id': fields.many2one('product.product', string='Product'),
         'qty': fields.float(digits=(16,2), string='Qty'),
-        'prodlot_id': fields.many2one('stock.production.lot', string='Lot'),
+        'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
         'unit_price': fields.float(digits=(16,2), string='Unit Price'),
     }
     

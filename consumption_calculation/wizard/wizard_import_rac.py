@@ -42,13 +42,9 @@ class wizard_import_rac(osv.osv_memory):
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
         
-        The file should be in CSV format (with ';' character as delimiter).
+        The file should be in CSV format (with ',' character as delimiter).
         The columns should be in this order :
-          * Product code
-          * Product name
-          * UoM
-          * Consumed quantity
-          * Remark
+           Product code ; Product name ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
         """
     }
     
@@ -70,6 +66,7 @@ class wizard_import_rac(osv.osv_memory):
         Import file
         '''
         product_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('real.average.consumption.line')
            
@@ -85,7 +82,7 @@ class wizard_import_rac(osv.osv_memory):
         # now we determine the file format
         fileobj.seek(0)
 
-        reader = csv.reader(fileobj, quotechar='\'', delimiter=';')
+        reader = csv.reader(fileobj, quotechar='"', delimiter=',')
 
         error = ''
 
@@ -95,9 +92,10 @@ class wizard_import_rac(osv.osv_memory):
 
         for line in reader:
             line_num += 1
-            if len(line) < 4:
+            if len(line) < 6:
                 error += 'Line %s is not valid !' % (line_num)
                 error += '\n'
+                ignore_lines += 1
                 continue
             
             # Get the product
@@ -106,8 +104,9 @@ class wizard_import_rac(osv.osv_memory):
                 product_ids = product_obj.search(cr, uid, [('name', '=', line[1])], context=context)
             
             if not product_ids:
-                error += 'Product [%s] %s not found !' % (line[0], line[1])
+                error += 'Line %s Product [%s] %s not found !' % (line_num, line[0], line[1])
                 error += '\n'
+                ignore_lines += 1
                 continue
 
             product_id = product_ids[0]
@@ -115,30 +114,63 @@ class wizard_import_rac(osv.osv_memory):
             # Get the UoM
             uom_ids = uom_obj.search(cr, uid, [('name', '=', line[2])], context=context)
             if not uom_ids:
-                error += 'UoM %s not found !' % (line[2])
+                error += 'Line %s UoM %s not found !' % (line_num, line[2])
                 error += '\n'
+                ignore_lines += 1
                 continue
+
+            prod = product_obj.browse(cr, uid, product_id)
+            if not prod.batch_management and not prod.perishable:
+                batch = False
+                expiry_date = False
+            else:
+                if prod.batch_management and not line[3]:
+                    error += "Line %s : batch number required\n" % (line_num, )
+                    ignore_lines += 1
+                    continue
+                if line[3]:
+                    lot = prodlot_obj.search(cr, uid, [('name', '=', line[3])])
+                    if not lot:
+                        error += "Line %s : batch number %s not found.\n" % (line[3], )
+                        ignore_lines += 1
+                        continue
+                    batch = lot[0]
+                else:
+                    if not line[4]:
+                        error += "Line %s : expiry date required\n" % (line_num, )
+                        ignore_lines += 1
+                        continue
+                    try:
+                        expiry_date = time.strftime('%Y-%m-%d', time.strptime(line[4], '%d/%m/%Y'))
+                    except:
+                        error += "Line %s : expiry date %s wrong formt\n" % (line_num, line[4])
+                        ignore_lines += 1
+                        continue
+
             
             line_data = {'product_id': product_id,
                          'uom_id': uom_ids[0],
-                         'consumed_qty': line[3].replace(',', '.'),
+                         'prodlot_id': batch,
+                         'expiry_date': expiry_date,
+                         'consumed_qty': line[5].replace(',', '.'),
                          'rac_id': rac_id,}
             
-            if len(line) == 5:
-                line_data.update({'remark': line[4]})
+            if len(line) == 7:
+                line_data.update({'remark': line[6]})
             
             try:    
-                line_obj.create(cr, uid, line_data, context=context)
+                line_obj.create(cr, uid, line_data)
                 complete_lines += 1
-            except:
-                ignore_lines += 1
-                
+            except osv.except_osv:
+                error += "Line %s : warning not enough qty in stock\n"%(line_num, )
+
+        self.pool.get('real.average.consumption').button_update_stock(cr, uid, rac_id)
         self.write(cr, uid, ids, {'message': '''Importation completed !
                                                 # of imported lines : %s
                                                 # of ignored lines : %s
                                                 
                                                 Reported errors :
-                                                %s
+%s
                                              ''' % (complete_lines, ignore_lines, error or 'No error !')}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
@@ -158,12 +190,7 @@ class wizard_import_rac(osv.osv_memory):
         '''
         res_id = self.browse(cr, uid, ids[0], context=context).rac_id.id
         
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'real.average.consumption',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': res_id}    
+        return {'type': 'ir.actions.act_window_close'}
     
 wizard_import_rac()
 

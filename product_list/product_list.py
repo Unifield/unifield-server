@@ -46,7 +46,7 @@ class product_list(osv.osv):
         vals['reviewer_id'] = uid
         vals['last_update_date'] = time.strftime('%Y-%m-%d')
         
-        return super(product_list, self).write(cr, uid, ids, vals=vals, context=context)
+        return super(product_list, self).write(cr, uid, ids, vals, context=context)
     
         
     def copy(self, cr, uid, id, defaults={}, context={}):
@@ -55,8 +55,11 @@ class product_list(osv.osv):
         '''
         if not context:
             context = {}
+
+        name = self.browse(cr, uid, id, context=context).name + ' (copy)'
             
         return super(product_list, self).copy(cr, uid, id, {'last_update_date': False,
+                                                            'name': name,
                                                             'reviewer_id': False}, context=context)
     
     _columns = {
@@ -73,6 +76,7 @@ class product_list(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'location_id': fields.many2one('stock.location', string='Stock Location'),
         'product_ids': fields.one2many('product.list.line', 'list_id', string='Products'),
+        'old_product_ids': fields.one2many('old.product.list.line', 'list_id', string='Old Products'),
         'nb_products': fields.function(_get_nb_products, method=True, type='integer', string='# of products'),
         
     }
@@ -80,7 +84,47 @@ class product_list(osv.osv):
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
-    
+
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
+    ]
+
+    def change_product_line(self, cr, uid, ids, context={}):
+        '''
+        Refresh the old product list
+        '''
+        res = {}
+        old_products = []
+        for list in self.browse(cr, uid, ids, context=context):
+            for old_line in list.old_product_ids:
+                old_products.append(old_line.id)
+
+            res.update({'old_product_ids': old_products})
+
+        return {'value': res}
+
+    def call_add_products(self, cr, uid, ids, context={}):
+        '''
+        Call the add multiple products wizard
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for list in self.browse(cr, uid, ids, context=context):
+            wiz_id = self.pool.get('product.list.add.products').create(cr, uid, {'list_id': list.id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.list.add.products',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+
 product_list()
 
 
@@ -95,7 +139,43 @@ class product_list_line(osv.osv):
         'comment': fields.char(size=256, string='Comment'),
     }
 
+    def unlink(self, cr, uid, ids, context={}):
+        '''
+        Create old product list line on product list line deletion
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        if not context.get('import_error', False):
+            for line in self.read(cr, uid, ids, context=context):
+                self.pool.get('old.product.list.line').create(cr, uid, {'removal_date': time.strftime('%Y-%m-%d'),
+                                                                        'comment': 'comment' in line and line['comment'] or '',
+                                                                        'name': line['name'][0],
+                                                                        'list_id': line['list_id'][0]}, context=context)
+
+        return super(product_list_line, self).unlink(cr, uid, ids, context=context)
+
+
 product_list_line()
+
+
+class old_product_list_line(osv.osv):
+    _name = 'old.product.list.line'
+    _inherit = 'product.list.line'
+    _order = 'removal_date'
+
+    _columns = {
+        'removal_date': fields.date(string='Removal date', readonly=True),
+    }
+
+    _defaults = {
+        'removal_date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+
+old_product_list_line()
 
 
 class product_product(osv.osv):

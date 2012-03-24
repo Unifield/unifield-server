@@ -23,9 +23,10 @@
 {
     "name" : "Specific Locations",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock",],
+    "depends" : ["sale", "purchase", "stock", "purchase_override",],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
