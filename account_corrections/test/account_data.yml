@@ -40,7 +40,6 @@
 -
   !record {model: analytic.distribution, id: global_distrib_1}:
     name: GLOB DISTR 1
-    global_distribution: True
 -
   I create a cost center distribution line for gabon
 -

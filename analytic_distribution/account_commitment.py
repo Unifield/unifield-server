@@ -52,22 +52,6 @@ class account_commitment(osv.osv):
                 res[co.id] += line.amount
         return res
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for co in self.browse(cr, uid, ids, context=context):
-            res[co.id] = co.analytic_distribution_id and co.analytic_distribution_id.lines_count or 'None'
-        return res
-
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
@@ -79,10 +63,9 @@ class account_commitment(osv.osv):
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Automatic - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'notes': fields.text(string="Comment"),
     }
 
     _defaults = {
@@ -161,6 +144,25 @@ class account_commitment(osv.osv):
             if new_distrib_id:
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
+
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Only delete "done" state commitments
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        new_ids = []
+        # Check that elements are in done state
+        for co in self.browse(cr, uid, ids):
+            if co.state == 'done':
+                new_ids.append(co.id)
+        # Give user a message if no done commitments found
+        if not new_ids:
+            raise osv.except_osv(_('Warning'), _('You can only delete done commitments!'))
+        return super(account_commitment, self).unlink(cr, uid, new_ids, context)
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
@@ -288,7 +290,7 @@ class account_commitment(osv.osv):
                 al_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 if not al_ids:
                     # Create engagement journal lines
-                    self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', c.date, 
+                    self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
                         cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
                         c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         return True
@@ -359,22 +361,6 @@ class account_commitment_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.commit_id.analytic_distribution_id.id, line.account_id.id) 
         return res
 
-    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
-        """
-        Return analytic distribution line count (given by analytic distribution)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse given invoices
-        for col in self.browse(cr, uid, ids, context=context):
-            res[col.id] = col.analytic_distribution_id and col.analytic_distribution_id.lines_count or ''
-        return res
-
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
         """
         If Commitment have an analytic distribution, return False, else return True
@@ -395,10 +381,8 @@ class account_commitment_line(osv.osv):
         'account_id': fields.many2one('account.account', string="Account", required=True),
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
         'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
-        'commit_id': fields.many2one('account.commitment', string="Commitment Voucher"),
+        'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),

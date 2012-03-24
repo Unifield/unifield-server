@@ -35,13 +35,19 @@ class purchase_order(osv.osv):
 
         for order in self.browse(cr, uid, ids, context=context):
             cur_obj = self.pool.get('res.currency')
-            transport_cost = order.transport_cost + order.amount_total
+            transport_cost = order.transport_cost
+            if order.transport_currency_id.id != order.pricelist_id.currency_id.id:
+                transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
+                        order.pricelist_id.currency_id.id, order.transport_cost, round=True)
+            
+            total_cost = order.amount_total + transport_cost
+            
             try:
-                func_transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
-                        order.functional_currency_id.id, transport_cost, round=True)
+                func_transport_cost = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id,
+                        order.functional_currency_id.id, total_cost, round=True)
             except:
-                func_transport_cost = transport_cost
-            res[order.id] = {'total_price_include_transport': transport_cost,
+                func_transport_cost = total_cost
+            res[order.id] = {'total_price_include_transport': total_cost,
                              'func_total_price_include_transport': func_transport_cost,}
 
         return res

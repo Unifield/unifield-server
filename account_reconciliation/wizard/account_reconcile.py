@@ -31,7 +31,8 @@ class account_move_line_reconcile(osv.osv_memory):
     _name = 'account.move.line.reconcile'
 
     _columns = {
-        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation')], string="State", 
+        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'), 
+            ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
             required=True, readonly=True),
     }
 
@@ -61,6 +62,7 @@ class account_move_line_reconcile(osv.osv_memory):
         - take debit_currency and credit_currency instead of debit and credit (this is to pay attention to Booking Currency)
         - add some values:
           - state: if write off is 0.0, then 'total' else 'partial'
+        - verify that lines come from a transfer account or not
         """
         # Some verifications
         if not context:
@@ -69,7 +71,7 @@ class account_move_line_reconcile(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         account_move_line_obj = self.pool.get('account.move.line')
-        credit = debit = 0
+        credit = debit = fcredit = fdebit = 0
         state = 'partial'
         account_id = False
         count = 0
@@ -77,19 +79,31 @@ class account_move_line_reconcile(osv.osv_memory):
         prev_acc_id = None
         prev_third_party = None
         transfer = False
+        transfer_with_change = False
         # Transfer verification
         operator = 'in'
         if len(context['active_ids']) == 1:
             operator = '='
-        search_ids = account_move_line_obj.search(cr, uid, [('account_id.type_for_register', '=', 'transfer_same'), ('id', operator, context['active_ids'])], context=context)
+        search_ids = account_move_line_obj.search(cr, uid, [('account_id.type_for_register', 'in', ['transfer_same', 'transfer']), 
+            ('id', operator, context['active_ids'])], context=context)
         if len(context['active_ids']) == len(search_ids):
             if len(context['active_ids']) == 2:
                 elements = account_move_line_obj.browse(cr, uid, context['active_ids'], context)
                 first_line = elements[0]
                 second_line = elements[1]
                 if first_line.journal_id and first_line.transfer_journal_id and second_line.journal_id and second_line.transfer_journal_id:
+                    # Cross check on third parties
                     if first_line.journal_id.id == second_line.transfer_journal_id.id and second_line.journal_id.id == first_line.transfer_journal_id.id:
                         transfer = True
+                    # Cross check on amounts for transfer_with_change verification
+                    if first_line.is_transfer_with_change and second_line.is_transfer_with_change:
+                        if abs(first_line.transfer_amount) == abs(second_line.amount_currency) and abs(first_line.amount_currency) == abs(second_line.transfer_amount):
+                            transfer_with_change = True
+                        else:
+                            raise osv.except_osv(_('Warning'), _("Cannot reconcile entries : Cross check between initial and converted amount fails."))
+        if transfer_with_change:
+            # For transfer with change, we need to do a total reconciliation!
+            state = 'total_change'
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
             # prepare some values
             account_id = line.account_id.id
@@ -112,17 +126,23 @@ class account_move_line_reconcile(osv.osv_memory):
                 if not prev_third_party:
                     prev_third_party = third_party
                 if prev_third_party != third_party:
-                    raise osv.except_osv(_('Error'), _('A third party is different from others: %s') % (line.partner_txt,))
+                    raise osv.except_osv(_('Error'), _('Cannot reconcile entries : Cross check between Journal Code and Third Party failed.'))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
                 credit += line.credit_currency
                 debit += line.debit_currency
-            # FIXME: Do currency verification and change wizard state regarding currency: In case of transfer with change then state is 
-            #+ 'total_change' or 'partial_change'
+                if transfer_with_change:
+                    fcredit += line.credit
+                    fdebit += line.debit
         # Adapt state value
         if (debit - credit) == 0.0:
             state = 'total'
+        if transfer_with_change:
+            debit = fdebit
+            credit = fcredit
+            if (fdebit - fcredit) == 0.0:
+                state = 'total_change'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
 
     def total_reconcile(self, cr, uid, ids, context={}):
