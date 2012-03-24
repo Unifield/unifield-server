@@ -141,8 +141,9 @@ class supplier_catalogue(osv.osv):
         
         supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
         
-        for catalogue in self.browse(cr, uid, ids, context=context):
+        for catalogue in self.browse(cr, uid, ids, context=context):            
             pricelist_ids = []
+            
             for line in catalogue.line_ids:
                 pricelist_ids.append(line.partner_info_id.id)
             
@@ -239,6 +240,7 @@ class supplier_catalogue(osv.osv):
         'comment': fields.text(string='Comment'),
         'line_ids': fields.one2many('supplier.catalogue.line', 'catalogue_id', string='Lines'),
         'supplierinfo_ids': fields.one2many('product.supplierinfo', 'catalogue_id', string='Supplier Info.'),
+        'active': fields.boolean(string='Active'),
         'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
     }
@@ -248,6 +250,7 @@ class supplier_catalogue(osv.osv):
         'currency_id': lambda obj, cr, uid, ctx: obj.pool.get('res.users').browse(cr, uid, uid, context=ctx).company_id.currency_id.id,
         'partner_id': lambda obj, cr, uid, ctx: ctx.get('partner_id', False),
         'period_from': lambda *a: time.strftime('%Y-%m-%d'),
+        'active': lambda *a: True,
     }
     
     def _check_period(self, cr, uid, ids):

@@ -13,7 +13,7 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Supplier catalogues">
-					<filter name="active" domain="[('current', '=', True)]" string="Active" icon="" />
+					<filter name="active" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
 					<field name="partner_id" />
 					<field name="name" />
 					<field name="period_from" />
@@ -35,6 +35,7 @@
 					<field name="period_to" />
 					<field name="currency_id" />
 					<field name="partner_id" readonly="1" />
+					<field name="active" />
 					<button name="catalogue_import_lines" type="object" string="Update/Import lines" icon="gtk-go-down" colspan="4" />
 					<notebook colspan="4">
 						<page string="Products">
@@ -60,7 +61,6 @@
 					<field name="period_to" />
 					<field name="currency_id" />
 					<field name="partner_id" />
-					<field name="current" />
 				</tree>
 			</field>
 		</record>
@@ -220,9 +220,9 @@
 		-->
 		
 		<!-- Menu in Purchases / Configuration -->
-		<!-- <menuitem id="menu_supplier_catalogue"
+		<menuitem id="menu_supplier_catalogue"
 				  action="action_supplier_catalogue_list"
-				  parent="purchase.menu_purchase_config_purchase" /> -->
+				  parent="purchase.menu_purchase_config_purchase" />
 		
 		<!-- Menu in Purchases / Configuration -->		  
 		<!-- <menuitem id="menu_supplier_catalogue_line"

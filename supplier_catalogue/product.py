@@ -49,6 +49,21 @@ class product_supplierinfo(osv.osv):
         
         return super(product_supplierinfo, self).unlink(cr, uid, info_ids, context=context)
     
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if not context:
+            context = {}
+            
+        res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+        
+        new_res = []
+        
+        for r in self.browse(cr, uid, res, context=context):
+            if not r.catalogue_id or r.catalogue_id.active:
+                new_res.append(r.id)
+        
+        return new_res
+    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
@@ -99,6 +114,21 @@ class pricelist_partnerinfo(osv.osv):
                                                'supplier catalogue line to remove this supplier information.'))
         
         return super(pricelist_partnerinfo, self).unlink(cr, uid, info_id, context=context)
+    
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if not context:
+            context = {}
+            
+        res = super(pricelist_partnerinfo, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+        
+        new_res = []
+        
+        for r in self.browse(cr, uid, res, context=context):
+            if not r.suppinfo_id or not r.suppinfo_id.catalogue_id or r.suppinfo_id.catalogue_id.active:
+                new_res.append(r.id)
+        
+        return new_res
     
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
