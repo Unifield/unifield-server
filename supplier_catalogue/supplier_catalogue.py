@@ -125,10 +125,11 @@ class supplier_catalogue(osv.osv):
         '''
         # Check if other catalogues need to be updated because they finished
         # after the starting date of the new catalogue.
-        self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
-                                                    vals.get('currency_id', False),
-                                                    vals.get('partner_id', context.get('partner_id', False)),
-                                                    vals.get('period_to', False), context=context)
+        if vals.get('active', True):
+            self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
+                                                        vals.get('currency_id', False),
+                                                        vals.get('partner_id', context.get('partner_id', False)),
+                                                        vals.get('period_to', False), context=context)
         return super(supplier_catalogue, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context={}):
@@ -141,7 +142,7 @@ class supplier_catalogue(osv.osv):
         
         supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
         
-        for catalogue in self.browse(cr, uid, ids, context=context):            
+        for catalogue in self.browse(cr, uid, ids, context=context):                            
             pricelist_ids = []
             
             for line in catalogue.line_ids:
@@ -149,10 +150,11 @@ class supplier_catalogue(osv.osv):
             
             # Check if other catalogues need to be updated because they finished
             # after the starting date of the updated catalogue.
-            self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
-                                                                vals.get('currency_id', False),
-                                                                vals.get('partner_id', False),
-                                                                vals.get('period_to', catalogue.period_to), context=context)
+            if vals.get('active', catalogue.active):
+                self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
+                                                                    vals.get('currency_id', catalogue.currency_id.id),
+                                                                    vals.get('partner_id', catalogue.partner_id.id),
+                                                                    vals.get('period_to', catalogue.period_to), context=context)
         
             new_supinfo_vals = {}            
             # Change the partner of all supplier info instances
