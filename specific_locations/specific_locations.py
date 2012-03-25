@@ -121,6 +121,7 @@ class stock_location(osv.osv):
                 'location_category': fields.selection([('stock', 'Stock'),
                                                        ('consumption_unit', 'Consumption Unit'),
                                                        ('transition', 'Transition'),
+                                                       ('eprep', 'EPrep'),
                                                        ('other', 'Other'),], string='Location Category', required=True),
                 # could be used after discussion with Magali
                 #'check_quarantine': fields.function(_get_false, fnct_search=search_check_quarantine, string='Check Quarantine', type="boolean", readonly=True, method=True),

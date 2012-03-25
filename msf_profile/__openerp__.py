@@ -74,6 +74,8 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
+        "msf_config_locations",
+#        "analytic_distribution_purchase",
         "service_purchasing",
         "account_reconciliation",
         "vat_management",
@@ -86,6 +88,7 @@
         "documents_done",
         "msf_budget",
         "account_subscription",
+        "msf_accrual",
     ],
     "update_xml": [
         "report.xml",

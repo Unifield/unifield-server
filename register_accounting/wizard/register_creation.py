@@ -188,6 +188,7 @@ class register_creation(osv.osv_memory):
                 reg_vals.update({
                     'journal_id': new_reg.prev_reg_id.journal_id.id,
                     'prev_reg_id': new_reg.prev_reg_id.id,
+                    'name': new_reg.prev_reg_id.name,
                 })
                 # FIXME: search old caracteristics from previous register
             # Create the register

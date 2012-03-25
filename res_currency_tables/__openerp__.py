@@ -33,6 +33,7 @@
     'update_xml': [
         'security/ir.model.access.csv',
         'res_currency_view.xml',
+        'res_currency_table_workflow.xml',
     ],
     'test': [
     ],

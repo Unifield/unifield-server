@@ -1,0 +1,22 @@
+                    <separator string="Account" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="2"/>
+                        <field name="rev_account_ids"/>
+                        <field name="account_ids" colspan="2" nolabel="1">
+                            <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
+                                <field name="code"/>
+                                <field name="name"/>
+                                <field name="type" string="Type"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>                        
+                        <field name="rev_account_type_ids"/>
+                        <field name="account_type_ids" colspan="2" nolabel="1">
+                            <tree string="Account types">
+                                <field name="code"/>
+                                <field name="name"/>
+                            </tree>
+                        </field>
+                    </group>
