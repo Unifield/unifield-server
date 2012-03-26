@@ -217,7 +217,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             if decede and decede[0] and decede[0] == 'Y':
                 vals.update({'active': False})
             # If employee have a expired date, so desactivate it
-            if dateexpiration and dateexpiration[0] and dateexpiration <= current_date:
+            if dateexpiration and dateexpiration[0] and dateexpiration[0] <= current_date:
                 vals.update({'active': False})
             # Add an analytic distribution
             try:
