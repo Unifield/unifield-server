@@ -58,10 +58,12 @@
 	                   				<field name="hidden_exp_check" invisible="True" />
                     				<field name="hidden_state" invisible="True" />
                     				<field name="hidden_prodlot_id" invisible="True" />
+                    				<field name="hidden_creation_state" invisible="True" />
                     				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
                     				<button name="cancel_assign" type="object" string="Cancel Availability" icon="gtk-undo" attrs="{'invisible': [('hidden_state', '!=', 'assigned')]}" />
                     				<button name="validate_assign" type="object" string="Validate" icon="gtk-go-forward" attrs="{'invisible': [('hidden_state', '!=', 'assigned')]}" />
-                    				<button name="assign_to_kit" type="object" string="Assign to Kits" icon="gtk-indent" attrs="{'invisible': ['|', ('hidden_prodlot_id', '=', False), ('hidden_state', '!=', 'done')]}" />
+                    				<button name="assign_to_kit" type="object" string="Assign to Kits" icon="gtk-indent"
+                    					attrs="{'invisible': ['|', ('hidden_creation_state', '!=', 'in_production'), '|', ('hidden_prodlot_id', '=', False), ('hidden_state', '!=', 'done')]}" />
                     			</tree>
                     		</field>
                     		<group col="4" colspan="4">

@@ -186,6 +186,8 @@ class kit_creation(osv.osv):
         data = self.read(cr, uid, ids, ['name'], context=context)[0]
         kitting_order_name = data['name']
         name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+        data = name.split('/')
+        name = data[0] + '/' + 'KIT' + data[1]
         pick_values = {'name': name,
                        'origin': kitting_order_name,
                        'type': 'internal',
@@ -199,7 +201,7 @@ class kit_creation(osv.osv):
                        }
         pick_id = pick_obj.create(cr, uid, pick_values, context=context)
         # log picking creation
-        pick_obj.log(cr, uid, pick_id, _('The new internal Picking %s has been created.'%name))
+        pick_obj.log(cr, uid, pick_id, _('The new internal Picking %s has been created.')%name)
         return pick_id
     
     def _create_kit(self, cr, uid, ids, obj, context=None):
@@ -221,7 +223,7 @@ class kit_creation(osv.osv):
                     'life_date': default_date, # default value, the kit does not exist yet
                     }
             new_lot_id = lot_obj.create(cr, uid, vals, context=context)
-            lot_obj.log(cr, uid, new_lot_id, _('Batch Number %s has been created.'%lot_ref_name))
+            lot_obj.log(cr, uid, new_lot_id, _('Batch Number %s has been created.')%lot_ref_name)
         
         values = {'composition_type': 'real',
                   'composition_product_id': obj.product_id_kit_creation.id,
@@ -235,7 +237,7 @@ class kit_creation(osv.osv):
                   }
         new_kit_id = kit_obj.create(cr, uid, values, context=context)
         # log kit creation
-        kit_obj.log(cr, uid, new_kit_id, _('The new empty Kit Composition List %s has been created.'%lot_ref_name))
+        kit_obj.log(cr, uid, new_kit_id, _('The new empty Kit Composition List %s has been created.')%lot_ref_name)
         return new_kit_id
     
     def start_production(self, cr, uid, ids, context=None):
@@ -303,7 +305,7 @@ class kit_creation(osv.osv):
                                        }
                         item_obj.create(cr, uid, item_values, context=context)
                 # create a stock move for the kit, from kitting to location_dest_id_kit_creation
-                move_values = {'kit_creation_id_stock_move': obj.id,
+                move_values = {'kit_creation_id_stock_move': False,
                                'to_consume_id_stock_move': False,
                                'name': kit.composition_product_id.name,
                                'picking_id': obj.internal_picking_id_kit_creation.id,
@@ -331,8 +333,9 @@ class kit_creation(osv.osv):
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
             # state of kitting order is Done
             self.write(cr, uid, [obj.id], {'state': 'done'}, context=context)
+            self.log(cr, uid, obj.id, _('The Kitting Order %s has been confirmed.')%obj.name)
             # validate the internal picking ticket
-            self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
+            self._validate_internal_picking(cr, uid, ids, obj.internal_picking_id_kit_creation.id, context=context)
         return True
     
     def force_assign(self, cr, uid, ids, context=None):
@@ -1013,15 +1016,17 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
             # hidden_exp_check
             result[obj.id].update({'hidden_exp_check': obj.exp_check})
+            # hidden_creation_state
+            result[obj.id].update({'hidden_creation_state': obj.kit_creation_id_stock_move.state})
         return result
     
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
                 'to_consume_id_stock_move': fields.many2one('kit.creation.to.consume', string='To Consume Line', readonly=True),# link to to consume line - is not deleted anymore ! but colored
-                # related
+                # functions
                 'hidden_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=SELECTION, string='Hidden State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_prodlot_id': fields.function(_vals_get_kit_creation, method=True, type='many2one', relation='stock.production.lot', string='Hidden Prodlot', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_exp_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Expiry Check', multi='get_vals_kit_creation', store=False, readonly=True),
-                # functions
+                'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 }
     

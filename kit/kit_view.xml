@@ -297,7 +297,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('composition_type', '=', 'theoretical')]</field>
-			<field name="context">{'composition_type':'theoretical'}</field>
+			<field name="context">{'search_default_completed': True, 'composition_type':'theoretical'}</field>
 			<field name="search_view_id" ref="view_composition_kit_theoretical_filter" />
 		</record>
 		
@@ -317,7 +317,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('composition_type', '=', 'real')]</field>
-			<field name="context">{'composition_type':'real'}</field>
+			<field name="context">{'search_default_completed': True, 'composition_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_filter" />
 		</record>
 		

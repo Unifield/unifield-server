@@ -168,7 +168,10 @@ class substitute(osv.osv_memory):
         elif context.get('step', False) == 'de_kitting':
             text = 'De-Kitting'
         # we create the internal picking object
-        pick_values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
+        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+        data = name.split('/')
+        name = data[0] + '/' + 'KIT' + data[1]
+        pick_values = {'name': name,
                        'origin': text + ': ' + obj.kit_id.composition_product_id.name + ' - ' + kit_obj.name_get(cr, uid, [obj.kit_id.id], context=context)[0][1],
                        'type': 'internal',
                        'state': 'draft',
@@ -457,7 +460,7 @@ class substitute(osv.osv_memory):
                             'product_uos': obj.kit_id.composition_product_id.uom_id.id,
                             'product_packaging': False,
                             'address_id': False,
-                            'location_id': obj.destination_location_id.id,
+                            'location_id': obj.source_location_id.id,
                             'location_dest_id': kitting_id,
                             'sale_line_id': False,
                             'tracking_id': False,
@@ -508,7 +511,7 @@ class substitute(osv.osv_memory):
         # display depends on step
         if view_type == 'form' and context.get('step', False) == 'substitute':
             # fields to be modified
-            list = ['<button name="do_de_kitting"']
+            list = ['<button name="do_de_kitting"', '<field name="source_location_id"']
             replace_text = result['arch']
             replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
             result['arch'] = replace_text
@@ -529,24 +532,15 @@ class substitute(osv.osv_memory):
         
     _columns = {'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
                 'wizard_id': fields.integer(string='Wizard Id', readonly=True),
-                'destination_location_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'internal')], required=True),
+                'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')], required=True),
+                'source_location_id': fields.many2one('stock.location', string='Source Location of Kit', domain=[('usage', '=', 'internal')], required=True),
                 'composition_item_ids': fields.many2many('substitute.item.mirror', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
                 'replacement_item_ids': fields.one2many('substitute.item', 'wizard_id', string='Replacement items'),
                 }
     
-    def _get_default_location(self, cr, uid, context=None):
-        '''
-        get the default location (stock of first warehouse)
-        '''
-        # objects
-        wh_obj = self.pool.get('stock.warehouse')
-        ids = wh_obj.search(cr, uid, [], context=context)
-        if ids:
-            return wh_obj.browse(cr, uid, ids[0], context=context).lot_stock_id.id
-        return False
-    
     _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
-                 'destination_location_id': _get_default_location,
+                 'destination_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  }
 
 substitute()
