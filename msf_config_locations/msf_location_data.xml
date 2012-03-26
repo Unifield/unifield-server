@@ -60,10 +60,10 @@
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
         <field name="location_id" ref="stock.stock_location_company" />
-        <field name="chained_location_type">fixed</field>
+       <!--  <field name="chained_location_type">fixed</field>
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
-       <field name="chained_picking_type">internal</field>
+       <field name="chained_picking_type">internal</field> -->
        <field name="posz">1</field>
     </record>
 
@@ -72,9 +72,9 @@
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
         <field name="location_id" ref="stock.stock_location_company" />
-        <field name="chained_location_type">nomenclature</field>
+       <!--  <field name="chained_location_type">nomenclature</field>
         <field name="chained_auto_packing">transparent</field>
-        <field name="chained_picking_type">internal</field>
+        <field name="chained_picking_type">internal</field> -->
         <field name="posz">2</field>
     </record>
 
@@ -98,24 +98,24 @@
         <field name="chained_picking_type">internal</field>
     </record>
 
-    <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
+    <!-- <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
         <field name="location_id" ref="stock.stock_location_stock" />
         <field name="nomen_id" ref="nomen_med" />
         <field name="dest_location_id" ref="stock_location_medical" />
-    </record>
+    </record> -->
 
+    <!-- <record id="stock_location_stock_chained_option_log" model="stock.location.chained.options">
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="nomen_id" ref="nomen_log" />
+        <field name="dest_location_id" ref="stock_location_logistic" />
+    </record> -->
+    
     <record id="stock.stock_location_cross_docking" model="stock.location">
         <field name="name">Cross docking</field>
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="usage">internal</field>
         <field name="location_category">transition</field>
         <field name="posz">3</field>
-    </record>
-
-    <record id="stock_location_stock_chained_option_log" model="stock.location.chained.options">
-        <field name="location_id" ref="stock.stock_location_stock" />
-        <field name="nomen_id" ref="nomen_log" />
-        <field name="dest_location_id" ref="stock_location_logistic" />
     </record>
 
     <record id="stock.stock_location_output" model="stock.location">
@@ -177,10 +177,10 @@
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
         <field name="location_id" ref="stock_location_quarantine_view" />
-        <field name="chained_location_type">fixed</field>
+        <!-- <field name="chained_location_type">fixed</field>
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
-        <field name="chained_picking_type">internal</field>
+        <field name="chained_picking_type">internal</field> -->
         <field name="quarantine_location">True</field>
     </record>
 
