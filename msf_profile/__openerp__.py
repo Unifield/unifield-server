@@ -90,6 +90,7 @@
         "msf_budget",
         "account_subscription",
         "msf_accrual",
+        "purchase_allocation_report",
     ],
     "update_xml": [
         "report.xml",
