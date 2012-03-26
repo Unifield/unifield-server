@@ -43,6 +43,8 @@ class purchase_order(osv.osv):
         @param cross_docking_ok: Changed value of cross_docking_ok.
         @return: Dictionary of values.
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         if cross_docking_ok:
             l = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
@@ -51,6 +53,8 @@ class purchase_order(osv.osv):
         return {'value': {'location_id': l}}
 
     def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1],})
@@ -71,6 +75,8 @@ class purchase_order(osv.osv):
         """
         Check that if you select cross docking, you do not have an other location than cross docking
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
         obj_data = self.pool.get('ir.model.data')
@@ -98,6 +104,8 @@ class procurement_order(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         sol_obj = self.pool.get('sale.order.line')
         obj_data = self.pool.get('ir.model.data')
         procurement = kwargs['procurement']
@@ -116,7 +124,89 @@ class stock_picking(osv.osv):
     for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
     '''
     _inherit = 'stock.picking'
+
+    _columns = {
+        'cross_docking_ok': fields.boolean('Cross docking'),
+    }
     
+    '''
+    do_partial(=function which is originally called from delivery_mechanism) modification 
+    for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
+    '''
+    _inherit = 'stock.picking'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Here we check if all stock move are in stock or in cross docking
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+        for pick in pick_obj.browse(cr,uid,ids,context=context):
+            move_lines = pick.move_lines
+            if len(move_lines) >= 1 :
+                for move in move_lines:
+                    move_ids = move.id
+                    for move in move_obj.browse(cr,uid,[move_ids],context=context):
+                        move_cross_docking_ok_value = move_obj.read(cr, uid, [move_ids], ['move_cross_docking_ok'], context=context)
+                        if move.move_cross_docking_ok == True:
+                            vals.update({'cross_docking_ok': True,})
+                        elif move.move_cross_docking_ok == False:
+                            vals.update({'cross_docking_ok': False,})
+        return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+
+    def button_cross_docking_all (self, cr, uid, ids, context=None):
+        """
+        set all stock moves with the source location to 'cross docking'
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+        for pick in pick_obj.browse(cr,uid,ids,context=context):
+            move_lines = pick.move_lines
+            if len(move_lines) >= 1 :
+                for move in move_lines:
+                    move_ids = move.id
+                    for move in move_obj.browse(cr,uid,[move_ids],context=context):
+                        move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+                self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
+            else :
+                raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
+
+    def button_stock_all (self, cr, uid, ids, context=None):
+        """
+        set all stock move with the source location to 'stock'
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        obj_data = self.pool.get('ir.model.data')
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+        for pick in pick_obj.browse(cr,uid,ids,context=context):
+            move_lines = pick.move_lines
+            if len(move_lines) >= 1 :
+                for move in move_lines:
+                    move_ids = move.id
+                    for move in move_obj.browse(cr,uid,[move_ids],context=context):
+                        move_obj.write(cr, uid, [move_ids], {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+                self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
+            else :
+                raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
+
     def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         This hook refers to delivery_mechanism>delivery_mechanism.py>_do_incoming_shipment.
@@ -129,6 +219,8 @@ class stock_picking(osv.osv):
 
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
         
         # take ids of the wizard from the context. 
@@ -177,6 +269,8 @@ class stock_picking(osv.osv):
         osv_memory object used for the wizard of deliveries.
         For outgoing shipment 
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # variable parameters
         move = kwargs.get('move')
         assert move, 'missing move'
@@ -196,6 +290,8 @@ class stock_picking(osv.osv):
         '''
         hook to update values data. Originally: to complete msf_cross_docking module
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         partial_datas = kwargs.get('partial_datas')
         assert partial_datas, 'missing partial_datas'
         # calling super method
@@ -217,6 +313,8 @@ class stock_picking(osv.osv):
         '''
         hook to update values data. Originally: to complete msf_cross_docking module
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         partial_datas = kwargs.get('partial_datas')
         assert partial_datas, 'missing partial_datas'
         # calling super method
@@ -237,7 +335,15 @@ stock_picking()
 
 class stock_move(osv.osv):
     _inherit = 'stock.move'
-
+    """
+    The field below 'move_cross_docking_ok' is used solely for the view using attrs. I has been named especially 
+    'MOVE_cross_docking_ok' for not being in conflict with the other 'cross_docking_ok' in the stock.picking object 
+    which also uses attrs according to the value of cross_docking_ok'.
+    """
+    _columns = {
+        'move_cross_docking_ok': fields.boolean('Cross docking'),
+    }
+    
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object:
         If cross docking is checked on the purchase order, we set "cross docking" to the destination location
@@ -256,4 +362,29 @@ class stock_move(osv.osv):
         if purchase_browse.cross_docking_ok:
             default_data.update({'location_dest_id' : obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1],})
         return default_data
+    
+    def button_cross_docking (self, cr, uid, ids, context=None):
+        """
+        for each stock move we enable to change the source location to cross docking
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+        self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+
+    def button_stock (self, cr, uid, ids, context=None):
+        """
+        for each stock move we enable to change the source location to stock
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+        self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+    
 stock_move()
