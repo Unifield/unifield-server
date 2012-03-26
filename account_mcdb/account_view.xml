@@ -142,7 +142,20 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
-                <xpath expr="/search/group[3]/filter[@string='Product']" position='after'>
+                <xpath expr="/search/group[1]/field[@name='date']" position='after'>
+                    <field name="document_date" select="1"/>
+                    <newline/>
+                </xpath>
+                <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[2]/field[@name='product_id']" position="replace">
+                    <field name="amount_currency"/>
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='User']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Product']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='after'>
                     <separator orientation="vertical"/>
                     <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'company_id'}"/>
                 </xpath>
