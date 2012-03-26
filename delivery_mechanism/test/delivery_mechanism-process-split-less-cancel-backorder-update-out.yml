@@ -198,8 +198,11 @@
     data = self.read(cr, uid, back_ids, ['state', 'purchase_id'], context=context)[0]
     assert data['state'] == 'cancel', 'the incoming shipment is not Canceled - cancel - %s'%data['state']
     # check the corresponding purchase state - the state has been automaticly manually corrected because the cancelation of incoming is definitive (out updated)
-    data = po_obj.read(cr, uid, [data['purchase_id'][0]], ['state'], context=context)[0]
-    assert data['state'] == 'approved', 'the corresponding po is not in Approved state - approved - %s'%data['state']
+    data = po_obj.read(cr, uid, [data['purchase_id'][0]], ['state', 'invoice_method'], context=context)[0]
+    if data['invoice_method'] == 'picking':
+      assert data['state'] == 'approved', 'the corresponding po is not in Done state - done - %s'%data['state']
+    else:
+      assert data['state'] == 'approved', 'the corresponding po is not in Confirmed state - approved - %s'%data['state']
     # check the moves in OUT - back order contained 3 A and 1 B, should have been decreased in OUT
     a_qty = [0.0]
     b_qty = [0.0]
