@@ -39,9 +39,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="11" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
+<Table ss:ExpandedColumnCount="18" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
 x:FullRows="1">
-% for x in range(0,11):
+% for x in range(0,18):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
@@ -61,7 +61,7 @@ x:FullRows="1">
         <Data ss:Type="String">${o.move_id and o.move_id.move_id and o.move_id.move_id.name or ''}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.name or ''}</Data>
+        <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${o.ref or ''}</Data>
@@ -75,7 +75,7 @@ x:FullRows="1">
         <Data ss:Type="String">  </Data>
 </Cell>
 % endif
-% if o.document_date:
+% if o.document_date and o.document_date != 'False':
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
 </Cell>
@@ -120,7 +120,7 @@ x:FullRows="1">
 </Row>
 % endfor
 </Table>
-<AutoFilter x:Range="R1C1:R1C11" xmlns="urn:schemas-microsoft-com:office:excel">
+<AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
 </Workbook>
