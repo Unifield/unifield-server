@@ -36,14 +36,20 @@ class wizard_budget_import(osv.osv_memory):
     def split_budgets(self, import_data):
         result = []
         current_budget = []
-        for line in import_data:
-            if line[0] == '':
-                # split must be done
-                result.append(current_budget)
-                current_budget = []
+        for i in range(len(import_data)):
+            # Conditions for appending a new budget:
+            # - line is empty
+            # - next line has some data
+            # - line is not at the end of file (at least 1 line must exist below)
+            if (len(import_data[i]) == 0 or import_data[i][0] == ''):
+                if i < (len(import_data) - 1) \
+                and len(import_data[i+1]) != 0 and import_data[i+1][0] != '':
+                    # split must be done
+                    result.append(current_budget)
+                    current_budget = []
             else:
                 # append line to current budget
-                current_budget.append(line)
+                current_budget.append(import_data[i])
         # last append
         result.append(current_budget)
         return result
