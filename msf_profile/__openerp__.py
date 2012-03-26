@@ -86,6 +86,7 @@
         "documents_done",
         "msf_budget",
         "account_subscription",
+        "msf_cross_docking",
     ],
     "update_xml": [
         "report.xml",
