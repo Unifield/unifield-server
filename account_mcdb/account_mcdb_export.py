@@ -206,7 +206,7 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(amount or 0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
-            csv_line.append(al.reversal_origin and al.reversal_origin.move_id and al.reversal_origin.move_id.name and al.reversal_origin.move_id.name.encode('utf-8') or '')
+            csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
             # Write Line
             writer.writerow(csv_line)
         return True
