@@ -52,21 +52,21 @@ x:FullRows="1">
 % for o in objects:
 <Row>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.company_id and o.company_id.name or ''}</Data>
+        <Data ss:Type="String">${(o.company_id and o.company_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.journal_id and o.journal_id.code or ''}</Data>
+        <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.move_id and o.move_id.move_id and o.move_id.move_id.name or ''}</Data>
+        <Data ss:Type="String">${(o.move_id and o.move_id.move_id and o.move_id.move_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.ref or ''}</Data>
+        <Data ss:Type="String">${(o.ref or '')|x}</Data>
 </Cell>
-% if o.date:
+% if o.date and o.date != 'False':
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
 </Cell>
@@ -85,37 +85,37 @@ x:FullRows="1">
 </Cell>
 % endif
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.period_id and o.period_id.name or ''}</Data>
+        <Data ss:Type="String">${(o.period_id and o.period_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.general_account_id and o.general_account_id.code or ''}</Data>
+        <Data ss:Type="String">${(o.general_account_id and o.general_account_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.account_id and o.account_id.name or ''}</Data>
+        <Data ss:Type="String">${(o.account_id and o.account_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.partner_txt or ''}</Data>
+        <Data ss:Type="String">${(o.partner_txt or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="Number">${o.amount or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.company_id and o.company_id.currency_id and o.company_id.currency_id.name or ''}</Data>
+        <Data ss:Type="String">${(o.company_id and o.company_id.currency_id and o.company_id.currency_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="Number">${o.amount_currency or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.currency_id and o.currency_id.name or ''}</Data>
+        <Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="Number">${o.output_amount or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.output_currency and o.output_currency.name or ''}</Data>
+        <Data ss:Type="String">${(o.output_currency and o.output_currency.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.reversal_origin and o.reversal_origin.name or ''}</Data>
+        <Data ss:Type="String">${(o.reversal_origin and o.reversal_origin.name or '')|x}</Data>
 </Cell>
 </Row>
 % endfor
