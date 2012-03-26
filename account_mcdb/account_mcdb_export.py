@@ -56,31 +56,33 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = ['Journal Code', 'Sequence', 'Instance', 'Reference', 'Posting date', 'Period', 'Name', 'Account Code', 'Account Description', 'Third party', 
+        head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 'Period', 'Account Code', 'Account Description', 'Third party', 
             'Book. Debit', 'Book. Credit', 'Book. currency']
         if not currency_id:
-            head += ['Func. Debit', 'Func. Credit', 'Func. currency']
+            head += ['Func. Debit', 'Func. Credit', 'Func. Currency']
         else:
-            head += ['Output debit', 'Output credit', 'Output currency']
-        head += ['State', 'Reconcile']
+            head += ['Output Debit', 'Output Credit', 'Output Currency']
+        head += ['Reconcile', 'State']
         writer.writerow(head)
         # Then write lines
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             csv_line = []
+            #instance (Proprietary Instance)
+            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
             # journal_id
             csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
-            #move_id
+            #move_id (Entry Sequence)
             csv_line.append(ml.move_id and ml.move_id.name and ml.move_id.name.encode('utf-8') or '')
-            #instance
-            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
+            #name
+            csv_line.append(ml.name and ml.name.encode('utf-8') or '')
             #ref
             csv_line.append(ml.ref and ml.ref.encode('utf-8') or '')
             #date
             csv_line.append(ml.date or '')
+            #document_date
+            csv_line.append(ml.document_date or '')
             #period_id
             csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
-            #name
-            csv_line.append(ml.name and ml.name.encode('utf-8') or '')
             #account_id code
             csv_line.append(ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or '')
             #account_id name
@@ -111,10 +113,10 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
-            #state
-            csv_line.append(ml.state.encode('utf-8') or '')
             #reconcile_total_partial_id
             csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
+            #state
+            csv_line.append(ml.state.encode('utf-8') or '')
             # Write line
             writer.writerow(csv_line)
             
