@@ -176,6 +176,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'work_phone': tel_bureau and tel_bureau[0] or False,
                 'private_phone': tel_prive and tel_prive[0] or False,
             }
+            # Update Birthday if equal to 0000-00-00
+            if datenaissance and datenaissance[0] and datenaissance[0] == '0000-00-00':
+                vals.update({'birthday': False,})
             # Update Nationality
             if nation and nation[0]:
                 n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation[0]))])
