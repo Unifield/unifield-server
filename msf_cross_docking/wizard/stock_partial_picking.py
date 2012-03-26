@@ -35,7 +35,7 @@ class stock_partial_picking(osv.osv_memory):
         'dest_type': fields.selection([
             ('to_cross_docking', 'To Cross Docking'),
             ('to_stock', 'To Stock'),
-            ('default', 'Default'),], string="Destination Type", readonly=False, help="The default value is the one set on each stock move line."),
+            ('default', 'Other Types'),], string="Destination Type", readonly=False, help="The default value is the one set on each stock move line."),
         'source_type': fields.selection([
             ('from_cross_docking', 'From Cross Docking'),
             ('from_stock', 'From stock'),
@@ -123,7 +123,7 @@ class stock_partial_picking(osv.osv_memory):
                 # replace line '<group col="2" colspan="2">' for 'delivery orders' only to select the 'stock location' source
                 res['arch'] = res['arch'].replace(
                 '<group col="2" colspan="2">',
-                '<group col="4" colspan="4"><field name="source_type" invisible="0" required="0"/>')
+                '<group col="4" colspan="4"><field name="source_type" invisible="1" required="0"/>')
         return res
     
     def do_partial_hook(self, cr, uid, context=None, *args, **kwargs):
