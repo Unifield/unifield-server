@@ -234,6 +234,13 @@ class sourcing_line(osv.osv):
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
+
+    def open_split_wizard(self, cr, uid, ids, context={}):
+        '''
+        Open the split line wizard
+        '''
+        line = self.browse(cr, uid, ids[0], context=context)
+        return self.pool.get('sale.order.line').open_split_wizard(cr, uid, [line.sale_order_line_id.id], context=context)
     
     def check_supplierinfo(self, cr, uid, ids, partner_id, context=None):
         '''
