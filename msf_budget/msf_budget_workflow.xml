@@ -20,7 +20,7 @@
         <field name="wkf_id" ref="wkf_msf_budget" />
         <field name="name">validate</field>
         <field name="kind">function</field>
-        <field name="action">write({'state':'validate'})</field>
+        <field name="action">write({'state':'valid'})</field>
     </record>
 
     <record model="workflow.activity" id="act_done">

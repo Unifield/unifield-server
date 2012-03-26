@@ -7,7 +7,7 @@
             <field name="model">msf.budget</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-               <tree colors="blue:state in ('draft');gray:state in ('done','cancel');black:state in ('confirm','validate')" string="Budget">
+               <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('valid')" string="Budget">
                     <field name="name" colspan="1"/>
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
@@ -26,7 +26,7 @@
                <search string="Budget">
                    <group col="20" colspan="4">
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
-                       <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','validate')]" help="Validated Budgets" />
+                       <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
                        <separator orientation="vertical"/>
                        <field name="name" select="1"/>
                        <field name="code" select="1" />
@@ -51,8 +51,13 @@
                     <field name="code" readonly="1"/>
                     <field name="fiscalyear_id" readonly="1"/>
                     <field name="cost_center_id" readonly="1"/>
-                    <field name="decision_moment" readonly="1"/>
-                    <field name="version" readonly="1"/>
+                    <field name="decision_moment" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <field name="type" readonly="1" invisible="1"/>
+                    <group col="4" colspan="2">
+                        <button name="button_display_type" string="Change display type" type="object" icon="terp-stock_zoom" context="context" colspan="1"/>
+                        <field name="display_type" readonly="1" nolabel="1"/>
+                    </group>
                     <field name="currency_id" readonly="1"/>
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
@@ -73,10 +78,10 @@
                             </group>
                         </form>
                     </field>
-                    <field name="state" select="1" readonly="1"/>
+                    <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <group col="4" colspan="2">
-                        <button string="Approve" name="validate" states="draft" type="workflow" icon="gtk-ok"/>
-                        <button string="Done" name="done" states="validate" type="workflow" icon="gtk-jump-to" />
+                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}"/>
+                        <button string="Done" name="done" type="workflow" icon="gtk-jump-to" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'valid')]}"/>
                     </group>
                 </form>
             </field>
@@ -183,6 +188,37 @@
         <menuitem parent="next_id_31"
             action="action_wizard_budget_import"
             id="menu_action_wizard_budget_import"  sequence="2"/>
+            
+        <record id="view_msf_budget_summary_tree" model="ir.ui.view">
+            <field name="name">msf.budget.summary.tree</field>
+            <field name="model">msf.budget.summary</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Budget Status">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="budget_amount"/>
+                    <field name="actual_amount"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_wizard_budget_summary_tree" model="ir.actions.server">
+            <field name="name">Budget Status</field>
+            <field name="model_id" ref="model_msf_budget"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.budget_summary_open_window(context=context)</field>
+        </record>
+
+        <record id="ir_action_wizard_budget_summary_tree" model="ir.values">
+            <field eval="'client_action_multi'" name="key2"/>
+            <field eval="'msf.budget'" name="model"/>
+            <field name="name">Budget Status</field>
+            <field eval="'ir.actions.server,%d'%action_wizard_budget_summary_tree" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
 
         <record id="view_account_analytic_account_budget_tree" model="ir.ui.view">
