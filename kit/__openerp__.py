@@ -43,7 +43,8 @@
     ],
     "demo_xml": [],
     'test': ['test/kit_data.yml',
-             'test/kit.yml',
+#             'test/kit.yml',
+             'test/kitting.yml',
              ],
     'installable': True,
 }

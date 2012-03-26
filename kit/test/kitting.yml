@@ -1,0 +1,33 @@
+-
+  I create a new kitting order for kit_product_A with kit_compo_01 as version
+-
+  !record {model: kit.creation, id: kit_creation_01}:
+    product_id_kit_creation: kit_product_A
+    qty_kit_creation: 3
+    uom_id_kit_creation: product.product_uom_unit
+    version_id_kit_creation: kit_compo_01
+-
+  I check the display items from version function
+-
+  !python {model: kit.creation}: |
+    self.do_reset_to_version(cr, uid, [ref("kit_creation_01")], context=context)
+-
+  I check the good number of lines to consume are created
+-
+  !python {model: kit.creation.to.consume}: |
+    ids_to_consume = self.search(cr, uid, [('kit_creation_id_to_consume', '=', ref("kit_creation_01"))], context=context)
+    assert len(ids_to_consume) == 2, 'kitting: the number of created lines to consume is wrong - 2 - %s'%len(ids_to_consume)
+-
+  I start production
+-
+  !python {model: kit.creation}: |
+    self.start_production(cr, uid, [ref("kit_creation_01")], context=context)
+-
+  END OF FILE
+-
+  !python {model: stock.picking}: |
+    print 'EOF'
+    pass
+    import sys
+    sys.exit()
+    
