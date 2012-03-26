@@ -91,6 +91,12 @@ class wizard_budget_import(osv.osv_memory):
         return result
     
     def fill_budget_line_data(self, cr, uid, import_data, context={}):
+        # Create a "tracker" for lines to create
+        created_lines = {}
+        expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
+                                                                                ('type', '!=', 'view')], context=context)
+        for expense_account_id in expense_account_ids:
+            created_lines[expense_account_id] = False
         result = []
         # Check that the account exists
         for import_line in import_data[6:]:
@@ -108,6 +114,9 @@ class wizard_budget_import(osv.osv_memory):
                     account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
                     if account.user_type_code != 'expense':
                         raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!" % import_line[0]))
+                    elif account_ids[0] in created_lines and created_lines[account_ids[0]]:
+                        # Line already created in the file, return a warning
+                        raise osv.except_osv(_('Warning !'), _("Account %s is twice in the file!" % import_line[0]))
                     elif account.type != 'view':
                         # Only create "normal" budget lines (view accounts are just discarded)
                         budget_line_vals.update({'account_id': account_ids[0]})
@@ -126,9 +135,17 @@ class wizard_budget_import(osv.osv_memory):
                         if len(budget_values) != 12:
                             budget_values += [0]*(12-len(budget_values))
                         budget_line_vals.update({'budget_values': str(budget_values)})
-                        
+                        # Update created lines dictionary
+                        created_lines[account_ids[0]] = True
                         result.append(budget_line_vals)
-            
+        # If expense accounts are not in the file, create those
+        missing_lines = [x for x in created_lines if created_lines[x] == False]
+        budget_values = str([0]*12)
+        for expense_account_id in missing_lines:
+            result.append({'account_id': expense_account_id,
+                           'budget_values': budget_values})
+        # sort them by name
+        result = sorted(result)
         return result
 
     def import_csv_budget(self, cr, uid, ids, context=None):
