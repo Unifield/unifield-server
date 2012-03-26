@@ -45,12 +45,17 @@
                     				<field name="line_number" invisible="True" />
                     				<field name="product_id" readonly="True" />
                     				<field name="product_qty" readonly="True" />
+                    				<field name="assigned_qty_stock_move" />
                     				<field name="product_uom" readonly="True" />
-                    				<field name="prodlot_id" domain="[('product_id', '=', product_id),('check_type','=', True)]" attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}" />
+                    				<field name="prodlot_id"
+                    					domain="[('product_id', '=', product_id),('check_type','=', True)]"
+                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)]}" />
                     				<field name="expired_date" />
                     				<field name="location_id" attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}" />
                     				<field name="state" />
-                    				<field name="assigned_qty_stock_move" />
+                    				<field name="lot_check" />
+	                   				<field name="exp_check" />
+	                   				<field name="hidden_exp_check" invisible="True" />
                     				<field name="hidden_state" invisible="True" />
                     				<field name="hidden_prodlot_id" invisible="True" />
                     				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
@@ -67,7 +72,10 @@
                     		</group>
                     	</page>
                     	<page string="Kits">
-                    		<field name="kit_ids_kit_creation" nolabel="True" readonly="True" />
+                    		<field name="location_dest_id_kit_creation" />
+                    		<group col="4" colspan="4">
+                    			<field name="kit_ids_kit_creation" nolabel="True" readonly="True" colspan="4" />
+                   			</group>
                     	</page>
                     	<page string="Notes">
                     		<field name="notes_kit_creation" nolabel="True" />

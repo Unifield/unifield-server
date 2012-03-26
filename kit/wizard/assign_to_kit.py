@@ -146,7 +146,7 @@ class assign_to_kit(osv.osv_memory):
         result = []
         for obj in move_obj.browse(cr, uid, stock_move_ids, context=context):
             # qty from version for each kit from to_consume line - total qty from line
-            required_qty = obj.to_consume_id_stock_move.total_qty_to_consume
+            required_qty = obj.to_consume_id_stock_move.qty_to_consume
             for kit in obj.kit_creation_id_stock_move.kit_ids_kit_creation:
                 if kit.state == 'in_production':
                     # qty already assigned in kits for this stock move
@@ -245,10 +245,10 @@ class assign_to_kit_line(osv.osv_memory):
                 'kit_id_assign_to_kit_line': fields.many2one('composition.kit', string="Kit Composition List", readonly=True, required=True),
                 'wizard_id_assign_to_kit_line': fields.many2one('assign.to.kit', string='Assign wizard'),
                 # data
-                'assigned_qty_assign_to_kit_line': fields.float(string='Assigned Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
-                'required_qty_assign_to_kit_line': fields.float(string='Required Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+                'assigned_qty_assign_to_kit_line': fields.float(string='Qty Assigned for Batch Number', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'required_qty_assign_to_kit_line': fields.float(string='Qty Required for Product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 # functions
-                'qty_assign_to_kit_by_product_uom': fields.function(_vals_get, method=True, type='float', digits_compute=dp.get_precision('Product UoM'), string='Total Qty Assigned', multi='get_vals', store=False, readonly=True),
+                'qty_assign_to_kit_by_product_uom': fields.function(_vals_get, method=True, type='float', digits_compute=dp.get_precision('Product UoM'), string='Qty Assigned for Product', multi='get_vals', store=False, readonly=True),
                 #'qty_assign_to_kit_by_product_uom': fields.float(string='Total Qty Assigned', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 }
     

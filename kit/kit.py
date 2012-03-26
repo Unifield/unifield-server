@@ -221,7 +221,17 @@ class composition_kit(osv.osv):
                           'item_description': item_v.item_description,
                           }
                 item_obj.create(cr, uid, values, context=context)
-        return True
+            # we display the composition list view form
+            return {'name':_("Kit Composition List"),
+                    'view_mode': 'form,tree',
+                    'view_type': 'form',
+                    'res_model': 'composition.kit',
+                    'res_id': obj.id,
+                    'type': 'ir.actions.act_window',
+                    'target': 'current',
+                    'domain': [('composition_type', '=', 'real')],
+                    'context': {'composition_type':'real'},
+                    }
     
     def _generate_item_mirror_objects(self, cr, uid, ids, wizard_data, context=None):
         """

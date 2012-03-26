@@ -271,11 +271,15 @@ class kit_creation(osv.osv):
         item_obj = self.pool.get('composition.item')
         move_obj = self.pool.get('stock.move')
         kit_obj = self.pool.get('composition.kit')
+        data_tools_obj = self.pool.get('data.tools')
+        # load data into the context
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
             # all products to consume must have been consumed
-            if len(obj.to_consume_ids_kit_creation):
-                raise osv.except_osv(_('Warning !'), _('All products have not been consumed.'))
+            for to_consume in obj.to_consume_ids_kit_creation:
+                if not to_consume.consumed_to_consume:
+                    raise osv.except_osv(_('Warning !'), _('All products have not been consumed.'))
             # all moves must be done
             move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', obj.id),('state', '!=', 'done')], context=context)
             if move_ids:
@@ -298,10 +302,37 @@ class kit_creation(osv.osv):
                                        'item_description': 'Kitting Order',
                                        }
                         item_obj.create(cr, uid, item_values, context=context)
+                # create a stock move for the kit, from kitting to location_dest_id_kit_creation
+                move_values = {'kit_creation_id_stock_move': obj.id,
+                               'to_consume_id_stock_move': False,
+                               'name': kit.composition_product_id.name,
+                               'picking_id': obj.internal_picking_id_kit_creation.id,
+                               'product_id': kit.composition_product_id.id,
+                               'date': context['common']['date'],
+                               'date_expected': context['common']['date'],
+                               'product_qty': 1.0,
+                               'product_uom': obj.uom_id_kit_creation.id,
+                               'product_uos_qty': 1.0,
+                               'product_uos': obj.uom_id_kit_creation.id,
+                               'product_packaging': False,
+                               'address_id': False,
+                               'location_id': context['common']['kitting_id'],
+                               'location_dest_id': obj.location_dest_id_kit_creation.id,
+                               'sale_line_id': False,
+                               'tracking_id': False,
+                               'state': 'done',
+                               'note': 'Kitting Order - New Kit',
+                               'company_id': context['common']['company_id'],
+                               'reason_type_id': context['common']['reason_type_id'],
+                               'prodlot_id': kit.composition_lot_id.id,
+                               }
+                new_move_id = move_obj.create(cr, uid, move_values, context=context)
                 # all kits are completed
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
             # state of kitting order is Done
             self.write(cr, uid, [obj.id], {'state': 'done'}, context=context)
+            # validate the internal picking ticket
+            self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
         return True
     
     def force_assign(self, cr, uid, ids, context=None):
@@ -511,21 +542,30 @@ class kit_creation(osv.osv):
             for to_consume in to_consume_list:
                 if not to_consume.consumed_to_consume:
                     # create a corresponding stock move
-                    values = {'kit_creation_id_stock_move': obj.id,
-                              'to_consume_id_stock_move': to_consume.id,
-                              'name': to_consume.product_id_to_consume.name,
-                              'picking_id': obj.internal_picking_id_kit_creation.id,
-                              'product_uom': to_consume.uom_id_to_consume.id,
-                              'product_id': to_consume.product_id_to_consume.id,
-                              'date_expected': context['common']['date'],
-                              'date': context['common']['date'],
-                              'product_qty': to_consume.total_qty_to_consume,
-                              'prodlot_id': False,
-                              'location_id': to_consume.location_src_id_to_consume.id,
-                              'location_dest_id': context['common']['kitting_id'],
-                              'state': 'confirmed',
-                              'reason_type_id': context['common']['reason_type_id']}
-                    move_id = move_obj.create(cr, uid, values, context=context)
+                    move_values = {'kit_creation_id_stock_move': obj.id,
+                                   'to_consume_id_stock_move': to_consume.id,
+                                   'name': to_consume.product_id_to_consume.name,
+                                   'picking_id': obj.internal_picking_id_kit_creation.id,
+                                   'product_id': to_consume.product_id_to_consume.id,
+                                   'date': context['common']['date'],
+                                   'date_expected': context['common']['date'],
+                                   'product_qty': to_consume.total_qty_to_consume,
+                                   'product_uom': to_consume.uom_id_to_consume.id,
+                                   'product_uos_qty': to_consume.total_qty_to_consume,
+                                   'product_uos': to_consume.uom_id_to_consume.id,
+                                   'product_packaging': False,
+                                   'address_id': False,
+                                   'location_id': to_consume.location_src_id_to_consume.id,
+                                   'location_dest_id': context['common']['kitting_id'],
+                                   'sale_line_id': False,
+                                   'tracking_id': False,
+                                   'state': 'confirmed',
+                                   'note': 'Kitting Order - Consume Move',
+                                   'company_id': context['common']['company_id'],
+                                   'reason_type_id': context['common']['reason_type_id'],
+                                   'prodlot_id': False,
+                                   }
+                    move_id = move_obj.create(cr, uid, move_values, context=context)
                 
             # to_consume lines are consumed
             to_consume_obj.write(cr, uid, [x.id for x in to_consume_list], {'consumed_to_consume': True}, context=context)
@@ -581,6 +621,7 @@ class kit_creation(osv.osv):
                 'to_consume_ids_kit_creation': fields.one2many('kit.creation.to.consume', 'kit_creation_id_to_consume', string='To Consume'),
                 'consumed_ids_kit_creation': fields.one2many('stock.move', 'kit_creation_id_stock_move', string='Stock Moves'),
                 'kit_ids_kit_creation': fields.one2many('composition.kit', 'composition_kit_creation_id', string='Stock Moves'),
+                'location_dest_id_kit_creation': fields.many2one('stock.location', string='Destination Location', required=True, domain=[('usage', '=', 'internal')], help='The Kitting Order needs to be saved in order this option to be taken into account.'),
                 # related
                 'batch_check_kit_creation': fields.related('product_id_kit_creation', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
@@ -591,6 +632,7 @@ class kit_creation(osv.osv):
                  'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'kit.creation'),
                  'creation_date_kit_creation': lambda *a: time.strftime('%Y-%m-%d'),
                  'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+                 'location_dest_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'consider_child_locations_kit_creation': True,
                  'qty_kit_creation': 1,
                  }
@@ -969,6 +1011,8 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_state': obj.state})
             # hidden_prodlot_id
             result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
+            # hidden_exp_check
+            result[obj.id].update({'hidden_exp_check': obj.exp_check})
         return result
     
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
@@ -976,9 +1020,13 @@ class stock_move(osv.osv):
                 # related
                 'hidden_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=SELECTION, string='Hidden State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_prodlot_id': fields.function(_vals_get_kit_creation, method=True, type='many2one', relation='stock.production.lot', string='Hidden Prodlot', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_exp_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Expiry Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 # functions
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 }
+    
+    _defaults = {'to_consume_id_stock_move': False,
+                 }
     
     def write(self, cr, uid, ids, vals, context=None):
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
