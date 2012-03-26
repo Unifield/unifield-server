@@ -41,6 +41,7 @@ class account_move_line(osv.osv):
          - Item come from a reconciliation that have set 'is_addendum_line' to True
          - The account is not the default credit/debit account of the attached statement (register)
          - All items attached to the entry have no reconcile_id on reconciliable account
+         - The line doesn't come from a write-off
         """
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
@@ -74,6 +75,9 @@ class account_move_line(osv.osv):
             for aml in ml.move_id.line_id:
                 if aml.account_id.reconcile and (aml.reconcile_id or aml.reconcile_partial_id):
                     res[aml.id] = False
+            # False if this line come from a write-off
+            if ml.is_write_off:
+                res[ml.id] = False
         return res
 
     _columns = {
