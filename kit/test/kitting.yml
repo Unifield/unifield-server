@@ -1,11 +1,43 @@
 -
-  I create a new kitting order for kit_product_A with kit_compo_01 as version
+  I create empty theoretical composition list 06, kit_product_A, OOO, 2010-01-20
+-
+  !record {model: composition.kit, id: kit_compo_06}:
+    composition_type: 'theoretical'
+    composition_product_id: kit_product_A
+    composition_version_txt: 'OOO'
+    composition_creation_date: '2010-01-20'
+-
+  I then create Items for the compo 06 - prodC B
+-
+  !record {model: composition.item, id: item_06_01}:
+    item_kit_id: kit_compo_06
+    item_product_id: kit_product_C
+    item_qty: 10
+    item_uom_id: product.product_uom_unit
+-
+  !record {model: composition.item, id: item_06_02}:
+    item_kit_id: kit_compo_06
+    item_product_id: kit_product_B
+    item_qty: 20
+    item_uom_id: product.product_uom_unit
+-
+  I set the theoretical kit 06 as complete and check corresponding states
+-
+  !python {model: composition.kit}: |
+    self.mark_as_completed(cr, uid, [ref("kit_compo_06")], context=context)
+    kit = self.browse(cr, uid, ref("kit_compo_06"), context=context)
+    assert kit.state == 'completed', 'kit_compo_06: the field state is wrong, should be completed - %s'%kit.state
+    
+    for item in kit.composition_item_ids:
+      assert item.state == 'completed', 'kit_compo_06: the field state of corresponding item is wrong, should be completed - %s'%item.state
+-
+  I create a new kitting order for kit_product_A with kit_compo_06 as version
 -
   !record {model: kit.creation, id: kit_creation_01}:
     product_id_kit_creation: kit_product_A
     qty_kit_creation: 3
     uom_id_kit_creation: product.product_uom_unit
-    version_id_kit_creation: kit_compo_01
+    version_id_kit_creation: kit_compo_06
 -
   I check the display items from version function
 -
@@ -16,12 +48,33 @@
 -
   !python {model: kit.creation.to.consume}: |
     ids_to_consume = self.search(cr, uid, [('kit_creation_id_to_consume', '=', ref("kit_creation_01"))], context=context)
-    assert len(ids_to_consume) == 2, 'kitting: the number of created lines to consume is wrong - 2 - %s'%len(ids_to_consume)
+    assert len(ids_to_consume) == 3, 'kitting: the number of created lines to consume is wrong - 3 - %s'%len(ids_to_consume)
 -
   I start production
 -
   !python {model: kit.creation}: |
     self.start_production(cr, uid, [ref("kit_creation_01")], context=context)
+-
+  I check the internal picking is created
+-
+  !python {model: kit.creation}: |
+    creation = self.browse(cr, uid, ref("kit_creation_01"), context=context)
+    assert creation.internal_picking_id_kit_creation.id, 'the internal picking for production is missing - %s'%creation.internal_picking_id_kit_creation.id
+-
+  I check 3 kits and corresponding batch number have been created
+-
+  !python {model: composition.kit}: |
+    kit_ids = self.search(cr, uid, [('composition_kit_creation_id', '=', ref("kit_creation_01"))], context=context)
+    assert len(kit_ids) == 2, 'the number of produced kit is wrong - 2 - %s'%len(kit_ids)
+    for kit in self.browse(cr, uid, kit_ids, context=context):
+      assert kit.composition_lot_id.id, 'lot is missing for created kit - %s'%kit.composition_lot_id.id
+-
+  I process with line button to consume kit_product_C (which needs LOT)
+-
+  !python {model: kit.creation.to.consume}: |
+    to_consume_ids = self.search(cr, uid, [('kit_creation_id_to_consume', '=', ref("kit_creation_01")),('product_id_to_consume', '=', ref("kit_product_C"))], context=context)
+    assert len(to_consume_ids) != 1, 'the number of correponding to_consume lines is wrong - 1 - %s'%len(to_consume_ids)
+    self.do_process_to_consume(cr, uid, to_consume_ids, context=context) 
 -
   END OF FILE
 -
@@ -30,4 +83,3 @@
     pass
     import sys
     sys.exit()
-    
