@@ -64,6 +64,8 @@ class account_line_csv_export(osv.osv_memory):
             head += ['Output Debit', 'Output Credit', 'Output Currency']
         head += ['Reconcile', 'State']
         writer.writerow(head)
+        # Sort items
+        ids.sort()
         # Then write lines
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             csv_line = []
@@ -163,6 +165,8 @@ class account_line_csv_export(osv.osv_memory):
             head += ['Output amount', 'Output currency']
         head+= ['Reversal Origin']
         writer.writerow(head)
+        # Sort items
+        ids.sort()
         # Then write lines
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             csv_line = []
