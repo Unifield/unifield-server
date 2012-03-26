@@ -53,12 +53,12 @@
                     <field name="cost_center_id" readonly="1"/>
                     <field name="decision_moment" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
-                    <field name="currency_id" readonly="1"/>
                     <field name="type" readonly="1" invisible="1"/>
                     <group col="4" colspan="2">
-                        <field name="display_type" readonly="1"/>
-                        <button name="button_display_type" string="Apply display type" type="object" icon="terp-stock_zoom" context="context" colspan="2"/>
+                        <button name="button_display_type" string="Change display type" type="object" icon="terp-stock_zoom" context="context" colspan="1"/>
+                        <field name="display_type" readonly="1" nolabel="1"/>
                     </group>
+                    <field name="currency_id" readonly="1"/>
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="account_id" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
