@@ -609,6 +609,8 @@ class stock_location(osv.osv):
                             amount = prod.virtual_available * prod.standard_price
                             amount = currency_obj.round(cr, uid, currency, amount)
                             result[loc_id][f] += amount
+                            
+        return result
 
     _columns = {
         'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],

@@ -109,6 +109,7 @@
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="usage">internal</field>
         <field name="location_category">transition</field>
+        <field name="posz">3</field>
     </record>
 
     <record id="stock_location_stock_chained_option_log" model="stock.location.chained.options">
@@ -125,8 +126,8 @@
         <field name="chained_location_type">customer</field>
         <field name="chained_auto_packing">transparent</field>
         <field name="chained_picking_type">out</field>
-	<field name="chained_journal_id" eval="False" />
-        <field name="posz">3</field>
+		<field name="chained_journal_id" eval="False" />
+        <field name="posz">4</field>
     </record>
 
     <record id="msf_outgoing.stock_location_packing" model="stock.location">

@@ -1387,6 +1387,7 @@ class product_product(osv.osv):
             prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
             name = "%s: [%s] %s"%(name, prod['code'], prod['name'])
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'view_location_tree_tree')[1] 
+
         return {
             'name': name,
             'type': 'ir.actions.act_window',
