@@ -39,7 +39,7 @@
                  "purchase",
                  "sale",
                  "product_asset",
-#                 "kit",
+                 "kit",
                  "order_line_number",
                  "reason_types_moves",
                  "specific_rules",
