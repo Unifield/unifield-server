@@ -157,40 +157,52 @@ class account_line_csv_export(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
         # Prepare csv head
-        head = ['Journal Code', 'Date', 'Instance', 'Description', 'Reference', 'Amount', 'Company currency', 'Amount currency', 'Currency']
+        head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 
+            'Period', 'General Account', 'Analytic Account', 'Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency']
         if currency_id:
             head += ['Output amount', 'Output currency']
-        head += ['Analytic Account']
+        head+= ['Reversal Origin']
         writer.writerow(head)
         # Then write lines
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             csv_line = []
-            # journal_id
-            csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
-            #date
-            csv_line.append(al.date or '')
             #instance
             csv_line.append(al.company_id and al.company_id.name and al.company_id.name.encode('utf-8') or '')
-            #name
+            # journal_id
+            csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
+            #sequence
+            csv_line.append(al.move_id and al.move_id.move_id and al.move_id.move_id.name and al.move_id.move_id.name.encode('utf-8') or '')
+            #name (description)
             csv_line.append(al.name and al.name.encode('utf-8') or '')
             #ref
             csv_line.append(al.ref and al.ref.encode('utf-8') or '')
-            #amount
-            csv_line.append(al.amount or 0.0)
-            #company currency
-            csv_line.append(company_currency.encode('utf-8') or '')
+            #date
+            csv_line.append(al.date or '')
+            #document_date
+            csv_line.append(al.document_date or '')
+            #period
+            csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
+            #general_account_id (general account)
+            csv_line.append(al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or '')
+            #account_id name (analytic_account)
+            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
+            #third party
+            csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
             #amount_currency
             csv_line.append(al.amount_currency or 0.0)
             #currency_id
             csv_line.append(al.currency_id and al.currency_id.name and al.currency_id.name.encode('utf-8') or '')
+            #amount
+            csv_line.append(al.amount or 0.0)
+            #company currency
+            csv_line.append(company_currency.encode('utf-8') or '')
             if currency_id:
                 #output amount
                 amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
                 csv_line.append(amount or 0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
-            #account_id name
-            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
+            csv_line.append(al.reversal_origin and al.reversal_origin.move_id and al.reversal_origin.move_id.name and al.reversal_origin.move_id.name.encode('utf-8') or '')
             # Write Line
             writer.writerow(csv_line)
         return True
