@@ -37,34 +37,34 @@ class create_picking(osv.osv_memory):
             ('default', 'Default'),], string="Source Type", readonly=False, help="Change the delivery process. At the end, it will simply change the source location of the delivery. \"Default\" do not change anything"),
     }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        '''
-        generates the xml view by adding the cross docking option
-        '''
-        res = super(create_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
-        # integrity check
-        assert context, 'No context defined'
-        # call super
-        result = super(create_picking, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        # working objects
-        pick_obj = self.pool.get('stock.picking')
-        picking_ids = context.get('active_ids', False)
-        assert 'step' in context, 'No step defined in context'
-        step = context['step']
-
-        if not picking_ids:
-            # not called through an action (e.g. buildbot), return the default.
-            return result
-        
-        # get picking subtype
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            picking_subtype = pick.subtype
-        if picking_subtype == 'picking':
-            if step in ['create', 'validate', 'returnproducts']:
-                res['arch'] = res['arch'].replace(
-                    '<group col="4" colspan="2">',
-                    '<group col="6" colspan="4"><field name="source_type" invisible="0" required="0"/>')
-                return res
+#    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+#        '''
+#        generates the xml view by adding the cross docking option
+#        '''
+#        res = super(create_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
+#        # integrity check
+#        assert context, 'No context defined'
+#        # call super
+#        result = super(create_picking, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+#        # working objects
+#        pick_obj = self.pool.get('stock.picking')
+#        picking_ids = context.get('active_ids', False)
+#        assert 'step' in context, 'No step defined in context'
+#        step = context['step']
+#
+#        if not picking_ids:
+#            # not called through an action (e.g. buildbot), return the default.
+#            return result
+#        
+#        # get picking subtype
+#        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+#            picking_subtype = pick.subtype
+#        if picking_subtype == 'picking':
+#            if step in ['create', 'validate', 'returnproducts']:
+#                res['arch'] = res['arch'].replace(
+#                    '<group col="4" colspan="2">',
+#                    '<group col="6" colspan="4"><field name="source_type" invisible="0" required="0"/>')
+#                return res
 
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
