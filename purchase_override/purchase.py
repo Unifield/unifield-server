@@ -36,7 +36,10 @@ class purchase_order(osv.osv):
         '''
         Remove loan_id field on new purchase.order
         '''
-        return super(purchase_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
+        if not default:
+            default = {}
+        default.update({'loan_id': False})
+        return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
     def _invoiced(self, cursor, user, ids, name, arg, context=None):

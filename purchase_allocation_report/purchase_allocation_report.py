@@ -208,9 +208,11 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
     
-    def copy(self, cr, uid, ids, defaults={}, context={}):
-        defaults.update({'allocation_report_lines': []})
-        return super(self, purchase_order).copy(cr, uid, ids, defaults, context=context)
+    def copy(self, cr, uid, ids, default=None, context=None):
+        if default is None:
+            default = {}
+        default.update({'allocation_report_lines': []})
+        return super(purchase_order, self).copy(cr, uid, ids, default, context=context)
     
     _columns = {
         'allocation_report_lines': fields.one2many('purchase.order.line.allocation.report', 'order_id', string='Allocation lines'),
