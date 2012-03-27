@@ -420,19 +420,6 @@ class account_move_line_compute_currency(osv.osv):
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
         return res
 
-    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
-            if line['reconcile_id']:
-                ret[line['id']] = line['reconcile_id']
-            elif line['reconcile_partial_id']:
-                ret[line['id']] = line['reconcile_partial_id']
-            else:
-                ret[line['id']] = False
-        return ret
-
     def _get_instance_type(self, cr, uid, ids, field_name=None, arg=None, context={}):
         if isinstance(ids, (long, int)):
             ids = [ids]
