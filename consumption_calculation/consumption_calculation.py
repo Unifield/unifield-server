@@ -958,6 +958,8 @@ class product_product(osv.osv):
         
         from_date = False
         to_date = False
+
+        location_ids = []
         
         # Read if a interval is defined
         if context.get('from_date', False):
@@ -1010,7 +1012,7 @@ class product_product(osv.osv):
                 nb_months = self._get_date_diff(from_date_str, to_date_str)
                 
                 if not nb_months: nb_months = 1
-                
+
                 uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
                 res[id] = res[id]/nb_months
                 res[id] = round(self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id), 2)
