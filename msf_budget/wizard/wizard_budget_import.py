@@ -86,7 +86,7 @@ class wizard_budget_import(osv.osv_memory):
             else:
                 cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cc_ids[0], context=context)
                 if cost_center.type == 'view':
-                    raise osv.except_osv(_('Warning !'), _("The cost center %s is not an allocable cost center! The budget for it will be created automatically." % import_data[3][1]))
+                    raise osv.except_osv(_('Warning !'), _("The cost center %s is not an allocable cost center! The budget for it will be created automatically.") % (import_data[3][1],))
                 else:
                     result.update({'cost_center_id': cc_ids[0]})
         # decision moment
