@@ -80,7 +80,6 @@ class account_move_line(osv.osv):
                 store = {
                     'account.move': (_get_move_lines, ['date'], 20)
                 }),
-            }
         'is_write_off': fields.boolean('Is a write-off line?', readonly=True, 
             help="This inform that no correction is possible for a line that come from a write-off!"),
     }
