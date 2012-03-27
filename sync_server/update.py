@@ -37,7 +37,7 @@ class update(osv.osv):
     _rec_name = 'source'
 
     _columns = {
-        'source': fields.many2one('sync.server.entity', string="Source Entity"), 
+        'source': fields.many2one('sync.server.entity', string="Source Instance"), 
         'model': fields.char('Model', size=128, readonly=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence'),

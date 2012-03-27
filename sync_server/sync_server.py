@@ -54,7 +54,7 @@ class group_type(osv.osv):
     """ OpenERP type of group of entities """
     
     _name = "sync.server.group_type"
-    _description = "Synchronization Entity Group Type"
+    _description = "Synchronization Instance Group Type"
 
     _columns = {
         'name': fields.char('Type Name', size = 64, required = True),
@@ -68,11 +68,11 @@ class entity_group(osv.osv):
     """ OpenERP group of entities """
     
     _name = "sync.server.entity_group"
-    _description = "Synchronization Entity Group"
+    _description = "Synchronization Instance Group"
 
     _columns = {
         'name': fields.char('Group Name', size = 64, required=True),
-        'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Entities"),
+        'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Instances"),
         'type_id': fields.many2one('sync.server.group_type', 'Group Type', ondelete="set null", required=True),
     }
     
@@ -94,19 +94,19 @@ entity_group()
 class entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.server.entity"
-    _description = "Synchronization Entity"
+    _description = "Synchronization Instance"
 
     _columns = {
-        'name':fields.char('Entity Name', size=64, required=True),
+        'name':fields.char('Instance Name', size=64, required=True),
         'identifier':fields.char('Identifier', size=64, readonly=True),
-        'parent_id':fields.many2one('sync.server.entity', 'Parent Entity', ondelete='set null', ),
+        'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='set null', ),
         'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
         'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Updated')], 'State'),
         'email':fields.char('Contact Email', size=512),
         'user_id': fields.many2one('res.users', 'User', ondelete='restrict', required=True),
         
         #just in case, since the many2one exist it has no cost in database
-        'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Entities'),
+        'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Instances'),
         'update_token' : fields.char('Update security token', size=256)
     }
     
@@ -205,7 +205,7 @@ class entity(osv.osv):
         if not ids:
             return (False, 'Ack not valid')
         self.write(cr, 1, ids, {'state' : 'validated'}, context=context)
-        return (True, "Entity Validated")
+        return (True, "Instance Validated")
     
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
@@ -335,7 +335,7 @@ class entity(osv.osv):
         tools.email_send(
                 email_from,
                 email_to,
-                "Entity %s register, need your validation" % data.get('name'),
+                "Instance %s register, need your validation" % data.get('name'),
                 """
                     Name : %s
                     Identifier : %s

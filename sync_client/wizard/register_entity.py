@@ -28,12 +28,12 @@ class client_entity_group(osv.osv_memory):
     """ OpenERP group of entities """
     
     _name = "sync.client.entity_group"
-    _description = "Synchronization Entity Group"
+    _description = "Synchronization Instance Group"
 
     _columns = {
         'name':fields.char('Group Name', size=64, required=True, readonly=True),
         'type':fields.char('Group Type', size=64, readonly=True),
-        'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Entities"),         
+        'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Instances"),         
     }
     
     def set_group(self, cr, uid, data_list, context=None):
@@ -51,7 +51,7 @@ class register_entity(osv.osv_memory):
     """ OpenERP entity name and unique identifier """
     
     _name = "sync.client.register_entity"
-    _description = "Synchronization Entity"
+    _description = "Synchronization Instance"
 
     def _get_identifier(self, cr, uid, context=None):
         return self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
@@ -66,10 +66,10 @@ class register_entity(osv.osv_memory):
         return self.pool.get('sync.client.entity').get_entity(cr, uid, context).email
     
     _columns = {
-        'name':fields.char('Entity Name', size=64, required=True),
+        'name':fields.char('Instance Name', size=64, required=True),
         'message' : fields.text('Message'),
         'max_size' : fields.integer("Max Packet Size"),
-        'parent':fields.char('Parent Entity', size=64),
+        'parent':fields.char('Parent Instance', size=64),
         'email' : fields.char('Contact Email', size=256, required=True),
         'identifier':fields.char('Identifier', size=64, readonly=True), 
         'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
@@ -176,7 +176,7 @@ class activate_entity(osv.osv_memory):
     _name = "sync.client.activate_entity"
     
     _columns = {
-        'name' : fields.char("Entity Name", size=64, required=True)      
+        'name' : fields.char("Instance Name", size=64, required=True)      
     }
     
     def activate(self, cr, uid, ids, context=None):
@@ -186,7 +186,7 @@ class activate_entity(osv.osv_memory):
         current = self.browse(cr, uid, ids, context=context)[0]
         name = current.name
         if not name:
-            raise osv.except_osv(_('Error !'), _('Entity name cannot be empty'))
+            raise osv.except_osv(_('Error !'), _('Instance name cannot be empty'))
         
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.activate_entity(name, uuid, context)

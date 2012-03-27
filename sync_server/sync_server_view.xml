@@ -8,7 +8,7 @@
             <field name="model">sync.server.entity</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Entity Tree">
+                <tree string="Instance Tree">
                     <field name="name"/>
                     <field name="identifier"/>
                     <field name="parent_id"/>
@@ -21,7 +21,7 @@
             <field name="model">sync.server.entity</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Form">
+                <form string="Instance Form">
                     <field name="name"/>
                     <field name="identifier" />
                     <field name="email" />
@@ -46,7 +46,7 @@
             <field name="model">sync.server.entity_group</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Entity Groups">
+                <tree string="Instance Groups">
                     <field name="name"/>
                     <field name="type_id"/>
                 </tree>
@@ -58,7 +58,7 @@
             <field name="model">sync.server.entity_group</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Group">
+                <form string="Instance Group">
                     <field name="name"/>
                     <field name="type_id"/>
                     <field name="entity_ids" nolabel="1" colspan="4"/>
@@ -69,7 +69,7 @@
 <!-- =========================MENUS and ACTIONS=============================== -->
 
 		<record model="ir.actions.act_window" id="entity_action">
-            <field name="name">Entities</field>
+            <field name="name">Instances</field>
             <field name="res_model">sync.server.entity</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -103,9 +103,9 @@
         
 
 		<menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration"/>  	
-		<menuitem id="group_menu" name="Groups of Entities" parent="sync_menu"
+		<menuitem id="group_menu" name="Groups of Instances" parent="sync_menu"
 		        action="group_action" />  
-		<menuitem id="entity_menu" name="Entity" parent="sync_menu"
+		<menuitem id="entity_menu" name="Instance" parent="sync_menu"
 		        action="entity_action" />   
 		        
 		<menuitem id="update_menu_id" name="Update" parent="sync_menu"

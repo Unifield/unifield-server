@@ -10,7 +10,7 @@
             <field name="model">sync.client.sync_server_connection</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Entity Tree">
+                <tree string="Instance Tree">
                     <field name="host"/>
                     <field name="database"/>
                     <field name="login"/>
@@ -23,7 +23,7 @@
             <field name="model">sync.client.sync_server_connection</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Form">
+                <form string="Instance Form">
                 	<separator string="Connection information" colspan="4"/>
                     <field name="host"/>
                     <field name="port"/>
@@ -49,7 +49,7 @@
             <field name="model">sync.client.update_received</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="red:run == False" string="Entity Tree">
+                <tree colors="red:run == False" string="Instance Tree">
                     <field name="source"/>
                     <field name="model"/>
                     <field name="sequence"/>
@@ -65,7 +65,7 @@
             <field name="model">sync.client.update_received</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Form">
+                <form string="Instance Form">
                 	<group col="10" colspan="4">
                     	<field name="source"/>
                     	<field name="model"/>
@@ -130,7 +130,7 @@
             <field name="model">sync.client.message_received</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="red:run == False" string="Entity Tree">
+                <tree colors="red:run == False" string="Instance Tree">
                 	<field name="identifier" />
                     <field name="source"/>
                     <field name="remote_call"/>
@@ -145,7 +145,7 @@
             <field name="model">sync.client.message_received</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Form">
+                <form string="Instance Form">
                 	<group col="10" colspan="4">
                 		<field name="identifier" />
                     	<field name="source"/>
@@ -226,7 +226,7 @@
             <field name="model">sync.client.update_to_send</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Form">
+                <form string="Instance Form">
                 	<group col="8" colspan="4">
                     	<field name="model"/>
                     	<field name="rule_id"/>

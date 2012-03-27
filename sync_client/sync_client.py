@@ -37,7 +37,7 @@ import pooler
 class entity(osv.osv, Thread):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
-    _description = "Synchronization Entity"
+    _description = "Synchronization Instance"
 
     def _auto_init(self,cr,context=None):
         res = super(entity,self)._auto_init(cr,context=context)
@@ -84,9 +84,9 @@ class entity(osv.osv, Thread):
         return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
     
     _columns = {
-        'name':fields.char('Entity Name', size=64, readonly=True),
+        'name':fields.char('Instance Name', size=64, readonly=True),
         'identifier':fields.char('Identifier', size=64, readonly=True), 
-        'parent':fields.char('Parent Entity', size=64, readonly=True),
+        'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),

@@ -51,7 +51,7 @@
 	        </field>
 	    </record> 
 	    
-	   <!-- =====================  Manage Entity ================= -->
+	   <!-- =====================  Manage Instance ================= -->
 	    <record model="ir.ui.view" id="manage_entity_wizard_view">
 	        <field name="name">sync.client.entity_manager_wiz</field>
 	        <field name="model">sync.client.entity_manager</field>
@@ -87,7 +87,7 @@
 	   		</field>
 	   </record> 
 	   
-	   <!-- =====================  Entity Info Management ================= -->
+	   <!-- =====================  Instance Info Management ================= -->
 	   
 	      <record model="ir.ui.view" id="activate_entity_wizard_view">
 	        <field name="name">sync.client.activate_entity_wiz</field>
@@ -114,7 +114,7 @@
 	   </record>
 	   
 	   <record model="ir.actions.act_window" id="activate_wizard_action">
-            <field name="name">Activate Entity</field>
+            <field name="name">Activate Instance</field>
             <field name="res_model">sync.client.activate_entity</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -122,18 +122,18 @@
         </record>
         
        <record model="ir.actions.act_window" id="update_wizard_action">
-            <field name="name">Update Entity</field>
+            <field name="name">Update Instance</field>
             <field name="res_model">sync.client.update_entity</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
         </record>
         
-        <menuitem name="Activate Entity" parent="reg_menu"
+        <menuitem name="Activate Instance" parent="reg_menu"
             id="activate_wiz_menu"
             action="activate_wizard_action"/>   
             
-		<menuitem name="Update Entity" parent="reg_menu"
+		<menuitem name="Update Instance" parent="reg_menu"
             id="update_wiz_menu"
             action="update_wizard_action"/> 
 	   

@@ -29,7 +29,7 @@ class entity_manager(osv.osv_memory):
     _description = "Wizard to manage children entity, validate, invalidate and more"
     
     _columns = {
-        'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Entities'),
+        'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),
         'state' : fields.selection([('data_needed','Need Data'),('ready','Ready')], 'State', required=True)
     }
     
@@ -59,12 +59,12 @@ class child_entity(osv.osv_memory):
     
     
     _columns = {
-        'name': fields.char('Entity Name', size=64, readonly=True, required=True),
+        'name': fields.char('Instance Name', size=64, readonly=True, required=True),
         'identifier': fields.char('Identifier', size=64, readonly=True, required=True), 
-        'parent': fields.char('Parent Entity', size=64, readonly=True),
+        'parent': fields.char('Parent Instance', size=64, readonly=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
         'state' : fields.selection([('pending','Pending'),('validated','Validated'), ('updated', 'Updated'), ('invalidated','Invalidated')], 'State', required=True),
-        'manage_id' : fields.many2one('sync.client.entity_manager','Entity Manager'), 
+        'manage_id' : fields.many2one('sync.client.entity_manager','Instance Manager'), 
         'group': fields.text('Group Name', size=512, readonly=True),     
     
     }
