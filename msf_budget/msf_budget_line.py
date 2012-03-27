@@ -179,7 +179,7 @@ class msf_budget_line(osv.osv):
             
             # Analytic domain is now done; lines are retrieved and added
             analytic_line_obj = self.pool.get('account.analytic.line')
-            analytic_lines = analytic_line_obj.search(cr, uid, actual_domain ,context=context)
+            analytic_lines = analytic_line_obj.search(cr, uid, actual_domain, context=context)
             # use currency_table_id
             currency_table = None
             if 'currency_table_id' in context:
@@ -304,7 +304,7 @@ class msf_budget_line(osv.osv):
             
         return res
     
-    _columns={
+    _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
@@ -316,7 +316,6 @@ class msf_budget_line(osv.osv):
         'child_ids': fields.one2many('msf.budget.line', 'parent_id', 'Child Lines'),
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal')], 'Line type', required=True),
-        
     }
     
     _defaults = {
@@ -392,7 +391,7 @@ class msf_budget(osv.osv):
     _name = "msf.budget"
     _inherit = "msf.budget"
     
-    _columns={
+    _columns = {
         'budget_line_ids': one2many_budget_lines('msf.budget.line', 'budget_id', 'Budget Lines'),
     }
     

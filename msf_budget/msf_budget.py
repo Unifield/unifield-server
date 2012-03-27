@@ -20,14 +20,14 @@
 ##############################################################################
 
 from osv import fields, osv
-from lxml import etree
+from tools.translate import _
 
 import datetime
 
 class msf_budget(osv.osv):
     _name = "msf.budget"
     
-    _columns={
+    _columns = {
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=64, required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal Year', required=True),
@@ -49,7 +49,6 @@ class msf_budget(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         res = super(msf_budget, self).create(cr, uid, vals, context=context)
-        analytic_obj = self.pool.get('account.analytic.account')
         # If the "parent" budget does not exist, create it.
         budget = self.browse(cr, uid, res, context=context)
         if budget.cost_center_id and budget.cost_center_id.parent_id:
@@ -99,7 +98,7 @@ class msf_budget(osv.osv):
             raise osv.except_osv(_('Warning !'), _("The fiscal year for the current date is not defined!"))
         else:
             fiscalyear_id = fiscalyear_ids[0]
-            cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),('parent_id','=',False)], context=context)                       
+            cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', False)], context=context)                       
             if len(cost_center_ids) != 0:
                 cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                         AND cost_center_id = %s \
