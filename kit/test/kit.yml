@@ -488,7 +488,7 @@
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
 -
-  I open the replacement wizard
+  I open the replacement wizard but before check the state of purchase order line
 -
   !python {model: purchase.order}: |
     po_id = context['yml_kit']['po']
@@ -496,6 +496,7 @@
     for obj in self.browse(cr, uid, [po_id], context=context):
       assert len(obj.order_line) == 1, 'the number of purchase order line is wrong - 1 - %s'%len(obj.order_line)
       for line in obj.order_line:
+        assert line.po_state_stored == 'confirmed', 'po state stored is wrong - confirmed - %s'%line.po_state_stored
         assert line.product_id.id == ref("kit_product_B"), 'the product from the purchase order line is wrong - %s - %s'%(ref("kit_product_B"),line.product_id.id)
         res = pol_obj.de_kitting(cr, uid, [line.id], context=context)
         model = res['res_model']
