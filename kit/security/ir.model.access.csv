@@ -1,0 +1,5 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_composition_kit","composition.kit","model_composition_kit","",1,1,1,1
+"access_composition_item","composition.item","model_composition_item","",1,1,1,1
+"access_kit_creation","kit.creation","model_kit_creation","",1,1,1,1
+"access_kit_creation_to_consume","kit.creation.to.consume","model_kit_creation_to_consume","",1,1,1,1
