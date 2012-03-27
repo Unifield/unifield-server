@@ -598,7 +598,7 @@ class account_bank_statement_line(osv.osv):
         result = []
         # Test how many arguments we have
         if not len(args):
-            return res
+            return []
         # We just support "=" case
         if args[0][1] not in ['=', 'in']:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
