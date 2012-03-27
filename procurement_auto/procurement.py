@@ -98,7 +98,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if context is None
+        if context is None:
             context = {}
             
         frequence_id = False
