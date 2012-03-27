@@ -104,6 +104,14 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('The accounting code \'%s\' doesn\'t exist!') % (ustr(accounting_code[0]),))
         if len(account_ids) > 1:
             raise osv.except_osv(_('Warning'), _('There is more than one account that have \'%s\' code!') % (ustr(accounting_code[0]),))
+        # Fetch DEBIT/CREDIT
+        debit = 0.0
+        credit = 0.0
+        if expense and expense[0]:
+            debit = float(expense[0])
+        if receipt and receipt[0]:
+            credit = float(receipt[0])
+        amount = round(debit - credit, 2)
         # Verify account type
         # if view type, raise an error
         account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
@@ -115,9 +123,10 @@ class hr_payroll_import(osv.osv_memory):
             if second_description and second_description[0] and ustr(second_description[0]) != 'Payroll rounding':
                 # fetch employee ID
                 employee_identification_id = ustr(second_description[0]).split(' ')[-1]
+                employee_name = second_description[0].replace(employee_identification_id, '')
                 employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
                 if not employee_ids:
-                    raise osv.except_osv(_('Error'), _('No employee found for this code: %s.') % (employee_identification_id,))
+                    raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
                 if len(employee_ids) > 1:
                     raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                 employee_id = employee_ids[0]
@@ -131,13 +140,6 @@ class hr_payroll_import(osv.osv_memory):
             name = description and description[0] and ustr(description[0]) or ''
         if ustr(second_description[0]) == 'Payroll rounding':
                 name = 'Payroll rounding'
-        debit = 0.0
-        credit = 0.0
-        if expense and expense[0]:
-            debit = float(expense[0])
-        if receipt and receipt[0]:
-            credit = float(receipt[0])
-        amount = round(debit - credit, 2)
         # Check if currency exists
         if not currency and not currency[0]:
             raise osv.except_osv(_('Warning'), _('One currency is missing!'))
