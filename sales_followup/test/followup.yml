@@ -15,7 +15,7 @@
     order_type: regular
     order_line:
       - name: P1
-        price_unit: 5000
+        price_unit: 6000
         product_uom: product.product_uom_unit
         product_uom_qty: 5.0
         state: draft
@@ -25,7 +25,7 @@
         th_weight: 0.0
         type: make_to_order
       - name: P4
-        price_unit: 5000
+        price_unit: 6000
         product_uom: product.product_uom_unit
         product_uom_qty: 2.0
         state: draft
@@ -242,6 +242,8 @@
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (3/P1)"
               
               for quotation in line.purchase_ids:
+                for o_line in quotation.order_line:
+                  self.pool.get('purchase.order.line').write(cr, uid, o_line.id, {'price_unit': 6000})
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_confirm', cr)
             
@@ -284,6 +286,8 @@
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (3/P4)"
               
               for quotation in line.purchase_ids:
+                for o_line in quotation.order_line:
+                  self.pool.get('purchase.order.line').write(cr, uid, o_line.id, {'price_unit': 6000})
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_confirm', cr)
         
@@ -313,7 +317,7 @@
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P1)"
               assert line.tender_status == 'N/A (0)', "Tender status is different than 'N/A (0)' (4/P1)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (4/P1)"
-              assert line.purchase_status == 'Approved (1)', "The purchase status is different than 'Approved (1)' (4/P1)"
+              assert line.purchase_status == 'Confirmed (1)', "The purchase status is different than 'Confirmed (1)' (4/P1)"
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (4/P1)"
               assert line.incoming_status == 'No shipment (0)', "The incoming status is different than 'No shipment (0)' (4/P1)"
               assert line.product_available == 'Waiting (0.0)', "The product availability is not 'Waiting (0.0)' (4/P1)"
@@ -393,7 +397,7 @@
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P1)"
               assert line.tender_status == 'N/A (0)', "Tender status is different than 'N/A (0)' (5/P1)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (5/P1)"
-              assert line.purchase_status == 'Confirmed (1)', "The purchase status is different than 'Confirmed (1)' (5/P1)"
+              assert line.purchase_status == 'Approved (1)', "The purchase status is different than 'Approved (1)' (5/P1)"
               assert len(line.incoming_ids) == 1, "Number of Incoming shipment is different than 1 (5/P1)"
               assert line.incoming_status == 'Available (1)', "The incoming status is different than 'Available (1)' (5/P1)"
               assert line.product_available == 'Waiting (0.0)', "The product availability is not 'Waiting (0.0)' (5/P1)"
