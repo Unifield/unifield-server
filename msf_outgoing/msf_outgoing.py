@@ -967,7 +967,7 @@ class shipment2(osv.osv):
     '''
     _inherit = 'shipment'
     
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context={}):
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
         Change the delivery address when the partner change.
         '''

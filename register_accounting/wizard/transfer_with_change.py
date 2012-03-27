@@ -47,7 +47,7 @@ class wizard_transfer_with_change(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Compute amount from register line currency to journal currency
         """
@@ -84,7 +84,7 @@ class wizard_transfer_with_change(osv.osv_memory):
         # Default behaviour
         return super(wizard_transfer_with_change, self).create(cr, uid, vals, context=context)
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Write on register line some values:
          - amount

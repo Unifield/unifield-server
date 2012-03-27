@@ -58,7 +58,7 @@ class account_analytic_line(osv.osv):
         'is_reallocated': lambda *a: False,
     }
 
-    def reverse(self, cr, uid, ids, context={}):
+    def reverse(self, cr, uid, ids, context=None):
         """
         Reverse an analytic line
         """

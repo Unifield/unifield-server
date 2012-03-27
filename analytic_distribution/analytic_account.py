@@ -48,16 +48,16 @@ class analytic_account(osv.osv):
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
     }
-    def _check_unicity(self, cr, uid, ids, context={}):
+    def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
-            context={}
+            context = {}
         for account in self.browse(cr, uid, ids, context=context):
             bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
 
-    def _check_gain_loss_account_unicity(self, cr, uid, ids, context={}):
+    def _check_gain_loss_account_unicity(self, cr, uid, ids, context=None):
         """
         Check that no more account is "for_fx_gain_loss" available.
         """
@@ -68,7 +68,7 @@ class analytic_account(osv.osv):
             return False
         return True
 
-    def _check_gain_loss_account_type(self, cr, uid, ids, context={}):
+    def _check_gain_loss_account_type(self, cr, uid, ids, context=None):
         """
         Check account type for fx_gain_loss_account: should be Normal type and Cost Center category
         """
@@ -85,7 +85,7 @@ class analytic_account(osv.osv):
         (_check_gain_loss_account_type, 'You have to use a Normal account type and Cost Center category for FX gain/loss!', ['for_fx_gain_loss']),
     ]
 
-    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, id, context=context)
         if not default:
             default = {}
@@ -172,7 +172,7 @@ class analytic_account(osv.osv):
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
     
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         """
         Delete the dummy analytic account is forbidden!
         """

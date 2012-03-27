@@ -31,7 +31,7 @@ class expiry_quantity_report(osv.osv_memory):
     _name = 'expiry.quantity.report'
     _description = 'Products Expired'
     
-    def _get_date_to(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_date_to(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Compute the end date for the calculation
         '''
@@ -53,7 +53,7 @@ class expiry_quantity_report(osv.osv_memory):
         'line_ids': fields.one2many('expiry.quantity.report.line', 'report_id', string='Products', readonly=True),
     }
     
-    def process_lines(self, cr, uid, ids, context={}):
+    def process_lines(self, cr, uid, ids, context=None):
         '''
         Creates all lines of expired products
         '''
@@ -185,7 +185,7 @@ class product_likely_expire_report(osv.osv_memory):
         'msf_instance': lambda *a: 'MSF Instance',
     }
 
-    def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context={}):
+    def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
         '''
         Get the first or last day of month
         '''
@@ -200,7 +200,7 @@ class product_likely_expire_report(osv.osv_memory):
         return {'value': res}
             
     
-    def _get_average_consumption(self, cr, uid, product_id, consumption_type, date_from, date_to, context={}):
+    def _get_average_consumption(self, cr, uid, product_id, consumption_type, date_from, date_to, context=None):
         '''
         Return the average consumption for all locations
         '''
@@ -224,7 +224,7 @@ class product_likely_expire_report(osv.osv_memory):
         
         return res
             
-    def process_lines(self, cr, uid, ids, context={}):
+    def process_lines(self, cr, uid, ids, context=None):
         '''
         Creates all moves with expiry quantities for all
         lot life date
@@ -421,7 +421,7 @@ class product_likely_expire_report(osv.osv_memory):
                 'target': 'dummy'}
         
         
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
             context = {}
             
@@ -468,7 +468,7 @@ class product_likely_expire_report_line(osv.osv_memory):
         else:
             return super(product_likely_expire_report_line, self).__getattr__(name, *args, **kwargs)
     
-    def fields_get(self, cr, uid, fields=None, context={}):
+    def fields_get(self, cr, uid, fields=None, context=None):
         if not context:
             context = {}
             
@@ -483,7 +483,7 @@ class product_likely_expire_report_line(osv.osv_memory):
             
         return res
     
-    def go_to_item(self, cr, uid, ids, context={}):
+    def go_to_item(self, cr, uid, ids, context=None):
         if not context:
             context = {}
             
@@ -504,7 +504,7 @@ class product_likely_expire_report_line(osv.osv_memory):
                 'target': 'new'}
         
             
-    def read(self, cr, uid, ids, vals, context={}, load='_classic_read'):
+    def read(self, cr, uid, ids, vals, context=None, load='_classic_read'):
         '''
         Set values for all dates
         '''
@@ -565,10 +565,12 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
-    def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, context={}):
+    def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, context=None):
         '''
         Get the expired quantity of product
         '''
+        if context is None:
+            context = {}
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
         product_obj = self.pool.get('product.product')

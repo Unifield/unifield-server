@@ -898,7 +898,7 @@ class stock_production_lot(osv.osv):
                     ['Type', 'Product']),
                 ]
 
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
         '''

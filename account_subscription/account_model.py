@@ -34,7 +34,7 @@ class account_model_line(osv.osv):
         'account_user_type_code': fields.related('account_id', 'user_type_code', type="char", string="Account User Type Code", store=False)
     }
     
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice line
         """

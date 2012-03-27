@@ -35,7 +35,7 @@ class procurement_batch_cron(osv.osv):
         'name': lambda *a: 'Standard configuration',
     }
     
-    def update_cron_tasks(self, cr, uid, ids, context={}):
+    def update_cron_tasks(self, cr, uid, ids, context=None):
         '''
         Update all scheduler cron tasks
         '''

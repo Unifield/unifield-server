@@ -29,13 +29,14 @@ class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
     
-    def search_in_product(self, cr, uid, obj, name, args, context={}):
+    def search_in_product(self, cr, uid, obj, name, args, context=None):
         '''
         Search function of related field 'in_product'
         '''
         if not len(args):
             return []
-        
+        if context is None:
+            context = {}
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             return []
 
@@ -60,10 +61,12 @@ class res_partner(osv.osv):
         return [('id', 'in', [x[0] for x in res])]
         
     
-    def _set_in_product(self, cr, uid, ids, field_name, arg, context={}):
+    def _set_in_product(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns according to the context if the partner is in product form
         '''
+        if context is None:
+            context = {}
         res = {}
         
         product_obj = self.pool.get('product.product')
@@ -113,11 +116,15 @@ class res_partner(osv.osv):
         
         return {'value': r}
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
         '''
         supinfo_obj = self.pool.get('product.supplierinfo')
+        if context is None:
+            context = {}
+        if args is None:
+            args = []
         
         # Get all supplier
         tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)

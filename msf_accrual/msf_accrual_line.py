@@ -104,7 +104,7 @@ class msf_accrual_line(osv.osv):
             vals['date'] = period.date_stop
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
     
-    def button_duplicate(self, cr, uid, ids, context={}):
+    def button_duplicate(self, cr, uid, ids, context=None):
         """
         Copy given lines and delete all links
         """
@@ -126,7 +126,7 @@ class msf_accrual_line(osv.osv):
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
     
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice line
         """

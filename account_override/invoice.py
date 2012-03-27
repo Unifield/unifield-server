@@ -40,7 +40,7 @@ class account_invoice(osv.osv):
         'from_yml_test': lambda *a: False,
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
         """
@@ -51,7 +51,7 @@ class account_invoice(osv.osv):
             vals['from_yml_test'] = True
         return super(account_invoice, self).create(cr, uid, vals, context)
 
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+    def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Give function to use when changing invoice to open state
         """
@@ -65,7 +65,7 @@ class account_invoice(osv.osv):
             return False
         return True
 
-    def _hook_period_id(self, cr, uid, inv, context={}):
+    def _hook_period_id(self, cr, uid, inv, context=None):
         """
         Give matches period that are not draft and not HQ-closed from given date
         """
@@ -94,7 +94,7 @@ class account_invoice_line(osv.osv):
         'from_yml_test': lambda *a: False,
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
         """

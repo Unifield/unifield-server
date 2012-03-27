@@ -48,7 +48,7 @@ class wizard_import_rac(osv.osv_memory):
         """
     }
     
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         '''
         Set rac_id with the active_id value in context
         '''
@@ -61,10 +61,12 @@ class wizard_import_rac(osv.osv_memory):
             
         return res
     
-    def import_file(self, cr, uid, ids, context={}):
+    def import_file(self, cr, uid, ids, context=None):
         '''
         Import file
         '''
+        if context is None:
+            context = {}
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
@@ -184,7 +186,7 @@ class wizard_import_rac(osv.osv_memory):
                 'view_id': [view_id],
                 }
         
-    def close_import(self, cr, uid, ids, context={}):
+    def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''

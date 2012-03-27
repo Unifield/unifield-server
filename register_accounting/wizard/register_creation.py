@@ -33,12 +33,12 @@ class register_creation_lines(osv.osv_memory):
     _name = 'wizard.register.creation.lines'
     _description = 'Registers to be created'
 
-    def _get_previous_register_id(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_previous_register_id(self, cr, uid, ids, field_name, arg, context=None):
         """
         Give the previous register for each element
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
@@ -74,12 +74,12 @@ class register_creation(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
-    def button_clear(self, cr, uid, ids, context={}):
+    def button_clear(self, cr, uid, ids, context=None):
         """
         Clear the list of registers to create
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         lines_obj = self.pool.get('wizard.register.creation.lines')
@@ -97,7 +97,7 @@ class register_creation(osv.osv_memory):
          'target': 'new',
         }
 
-    def button_confirm_period(self, cr, uid, ids, context={}):
+    def button_confirm_period(self, cr, uid, ids, context=None):
         """
         Update new_register_ids field by put in all register that could be created soon.
         """
@@ -162,14 +162,14 @@ class register_creation(osv.osv_memory):
          'target': 'new',
         }
 
-    def button_create_registers(self, cr, uid, ids, context={}):
+    def button_create_registers(self, cr, uid, ids, context=None):
         """
         Create all selected registers.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not context:
-            context={}
+            context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.new_register_ids:
             raise osv.except_osv(_('Error'), _('There is no lines to create! Please choose another period.'))

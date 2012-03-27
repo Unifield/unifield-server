@@ -30,7 +30,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
     _description = 'Mass Reallocation Verification Wizard'
 
-    def _get_total(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_total(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get total of lines for given field_name
         """
@@ -56,7 +56,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
     }
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation on "process_ids".
         """
@@ -102,10 +102,12 @@ class mass_reallocation_wizard(osv.osv_memory):
         'state': lambda *a: 'normal',
     }
 
-    def default_get(self, cr, uid, fields=[], context={}):
+    def default_get(self, cr, uid, fields=None, context=None):
         """
         Fetch context active_ids to populate line_ids wizard field
         """
+        if fields is None:
+            fields = []
         # Some verifications
         if not context:
             context = {}
@@ -119,7 +121,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['line_ids'] = context.get('active_ids')
         return res
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation process
         """

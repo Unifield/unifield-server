@@ -31,7 +31,7 @@ class report_budget_criteria(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
     
-    def _get_budget_header(self, cr, uid, budget, parameters, context={}):
+    def _get_budget_header(self, cr, uid, budget, parameters, context=None):
         pool = pooler.get_pool(cr.dbname)
         # Dictionary for selection
         wizard_obj = pool.get('wizard.budget.criteria.export')
@@ -60,7 +60,9 @@ class report_budget_criteria(report_sxw.report_sxw):
             result.append(['Year-to-date:', period.name])
         return result
     
-    def _get_budget_lines(self, cr, uid, budget_line_ids, parameters, context={}):
+    def _get_budget_lines(self, cr, uid, budget_line_ids, parameters, context=None):
+        if context is None:
+            context = {}
         pool = pooler.get_pool(cr.dbname)
         result = []
         # Column header

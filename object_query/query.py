@@ -41,7 +41,7 @@ class object_query(osv.osv):
     _name = 'object.query'
     _description = 'Object query'
     
-    def _get_model_ids(self, cr, uid, ids, field, arg, context={}):
+    def _get_model_ids(self, cr, uid, ids, field, arg, context=None):
         res = {}
         model_obj = self.pool.get('ir.model')
         for query in self.browse(cr, uid, ids, context=context):
@@ -89,7 +89,7 @@ class object_query(osv.osv):
     def dummy(self, cr, uid, ids, context):
         return True
 
-    def reset_search_values(self, cr, uid, ids, context={}):
+    def reset_search_values(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         sel_date = self.pool.get('object.query.selection_data')
@@ -98,7 +98,7 @@ class object_query(osv.osv):
             sel_date.unlink(cr, uid, r1)
         return True
 
-    def change_object(self, cr, uid, ids, context={}):
+    def change_object(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = self.pool.get('object.query.result.fields')
@@ -135,7 +135,7 @@ class object_query(osv.osv):
         return res
     
     
-    def create_view(self, cr, uid, ids, context={}):
+    def create_view(self, cr, uid, ids, context=None):
         '''
         Construct the view according to the user choices
         '''
@@ -268,7 +268,7 @@ class object_query(osv.osv):
         
         return {'type': 'ir.actions.act_window_close'}
 
-    def populate_result(self, cr, uid, ids, context={}):
+    def populate_result(self, cr, uid, ids, context=None):
         for obj in self.browse(cr, uid, ids):
             existing = {}
             for field in obj.result_simple_ids:
@@ -281,7 +281,7 @@ class object_query(osv.osv):
                 self.write(cr, uid, obj.id, {'result_simple_ids': to_create })
         return True
 
-    def set_sequence(self, cr, uid, ids, context={}):
+    def set_sequence(self, cr, uid, ids, context=None):
         for obj in self.browse(cr, uid, ids):
             existing = {}
             max_seq = 0
@@ -305,7 +305,7 @@ class object_query(osv.osv):
                 self.write(cr, uid, [obj.id], {'result_ids':values})
         return True
 
-    def open_wizard(self, cr, uid, ids, context={}):
+    def open_wizard(self, cr, uid, ids, context=None):
         return {
                 'name': 'Search Values',
                 'type': 'ir.actions.act_window',
@@ -317,7 +317,7 @@ class object_query(osv.osv):
                 'context': {'disable_cache': time.time(), 'query_id': ids[0]}
                 }
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
 
@@ -331,7 +331,7 @@ class object_query(osv.osv):
             self.pool.get('ir.ui.view').unlink(cr, uid, todel, context=context)
         return super(object_query, self).unlink(cr, uid, ids, context)
 
-    def _coherence_search_value(self, cr, uid, ids, context={}):
+    def _coherence_search_value(self, cr, uid, ids, context=None):
         if isinstance(id, (int, long)):
             ids = [ids]
         for obj in self.browse(cr, uid, ids):
@@ -358,7 +358,7 @@ class object_query_selection_data(osv.osv):
     _description = 'Search Values'
     _rec_name = 'field_id'
 
-    def _get_text(self, cr, uid, ids, field, arg, context={}):
+    def _get_text(self, cr, uid, ids, field, arg, context=None):
         if context is None:
             context = {}
         ret = {}
@@ -421,7 +421,7 @@ class object_query_result_fields(osv.osv):
     _rec_name = 'field_id'
     _order = 'sequence'
 
-    def _get_model_ids(self, cr, uid, ids, field, arg, context={}):
+    def _get_model_ids(self, cr, uid, ids, field, arg, context=None):
         res = {}
         
         for result in self.browse(cr, uid, ids, context=context):
@@ -443,7 +443,7 @@ class ir_fields(osv.osv):
     _name = 'ir.model.fields'
     _inherit = 'ir.model.fields'
     
-    def _get_model_search(self, cr, uid, ids, field_name, args, context={}):
+    def _get_model_search(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return the attached module
         '''
@@ -454,7 +454,7 @@ class ir_fields(osv.osv):
             
         return res
     
-    def _search_model_search(self, cr, uid, obj, name, args, context={}):
+    def _search_model_search(self, cr, uid, obj, name, args, context=None):
         '''
         Return the domain according to the filter
         '''
@@ -475,7 +475,7 @@ class ir_fields(osv.osv):
         
         return [('id', 'in', res_ids)]
     
-    def _is_function(self, cr, uid, ids, field_name, args, context={}):
+    def _is_function(self, cr, uid, ids, field_name, args, context=None):
         '''
         Determines if the field is a function or not
         '''
@@ -489,13 +489,14 @@ class ir_fields(osv.osv):
         return res
                 
         
-    def _search_function(self, cr, uid, obj, name, args, context={}):
+    def _search_function(self, cr, uid, obj, name, args, context=None):
         '''
         Return all fields which are a function field
         '''
         if not args:
             return []
-        
+        if context is None:
+            context = {}
         for a in args:
             if a[0] in ['is_function', 'is_unsearchable']:
                 field_ids = []
@@ -522,7 +523,7 @@ class ir_fields(osv.osv):
         
         return []
     
-    def _get_help(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_help(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -552,10 +553,12 @@ class ir_fields(osv.osv):
                                        type='boolean', string='Is searchable ?'),
     }
     
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Call the view on context if there is.
         '''
+        if context is None:
+            context = {}
         if view_type == 'tree' and context and 'special_tree_id' in context:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'object_query', context.get('special_tree_id'))[1]
         if view_type == 'search' and context and 'special_search_id' in context:

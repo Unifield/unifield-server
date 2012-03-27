@@ -36,10 +36,12 @@ class cashbox_write_off(osv.osv_memory):
         'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
     }
 
-    def default_get(self, cr, uid, fields=None, context={}):
+    def default_get(self, cr, uid, fields=None, context=None):
         """
         Return the difference between balance_end and balance_end_cash from the cashbox and diplay it in the wizard.
         """
+        if context is None:
+            context = {}
         res = super(cashbox_write_off, self).default_get(cr, uid, fields, context=context)
         # Have we got any cashbox id ?
         if 'active_id' in context:
@@ -66,12 +68,14 @@ class cashbox_write_off(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _("Please use 'Close CashBox' button before."))
         return res
 
-    def action_confirm_choice(self, cr, uid, ids, context={}):
+    def action_confirm_choice(self, cr, uid, ids, context=None):
         """
         Do what the user wants, but not coffee ! Just this : 
         - re-open the cashbox
         - do a write-off
         """
+        if context is None:
+            context = {}
         id = context.get('active_id', False)
         if not id:
             raise osv.except_osv(_('Warning'), _('You cannot decide about Cash Discrepancy without selecting any CashBox!'))

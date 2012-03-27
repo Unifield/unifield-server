@@ -54,7 +54,7 @@ class wizard_budget_import(osv.osv_memory):
         result.append(current_budget)
         return result
     
-    def fill_header_data(self, cr, uid, import_data, context={}):
+    def fill_header_data(self, cr, uid, import_data, context=None):
         result = {}
         # name
         if import_data[0][1] == "":
@@ -96,7 +96,7 @@ class wizard_budget_import(osv.osv_memory):
             result.update({'decision_moment': import_data[4][1]})
         return result
     
-    def fill_budget_line_data(self, cr, uid, import_data, context={}):
+    def fill_budget_line_data(self, cr, uid, import_data, context=None):
         # Create a "tracker" for lines to create
         created_lines = {}
         expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),

@@ -32,7 +32,7 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
-    def copy(self, cr, uid, id, default, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         '''
         Remove loan_id field on new purchase.order
         '''
@@ -114,7 +114,7 @@ class purchase_order(osv.osv):
         'invoice_method': lambda *a: 'picking',
     }
 
-    def _check_user_company(self, cr, uid, company_id, context={}):
+    def _check_user_company(self, cr, uid, company_id, context=None):
         '''
         Remove the possibility to make a PO to user's company
         '''
@@ -124,7 +124,7 @@ class purchase_order(osv.osv):
 
         return True
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Check if the partner is correct
         '''
@@ -201,7 +201,7 @@ class purchase_order(osv.osv):
         
         return res
     
-    def on_change_dest_partner_id(self, cr, uid, ids, dest_partner_id, context={}):
+    def on_change_dest_partner_id(self, cr, uid, ids, dest_partner_id, context=None):
         '''
         Fill automatically the destination address according to the destination partner
         '''
@@ -222,10 +222,12 @@ class purchase_order(osv.osv):
         
         return {'value': v, 'domain': d}
 
-    def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
+    def _hook_confirm_order_message(self, cr, uid, context=None, *args, **kwargs):
         '''
         Change the logged message
         '''
+        if context is None:
+            context = {}
         if 'po' in kwargs:
             po = kwargs['po']
             return _("Purchase order '%s' is validated.") % (po.name,)
@@ -377,7 +379,7 @@ class purchase_order(osv.osv):
         return move_values
     
     # @@@override@purchase.purchase.order.action_picking_create
-    def action_picking_create(self,cr, uid, ids, context={}, *args):
+    def action_picking_create(self,cr, uid, ids, context=None, *args):
         picking_id = False
         for order in self.browse(cr, uid, ids):
             loc_id = order.partner_id.property_stock_supplier.id
@@ -461,7 +463,7 @@ class purchase_order(osv.osv):
         return picking_id
         # @@@end
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
         """
@@ -478,7 +480,7 @@ class purchase_order(osv.osv):
             
         return super(purchase_order, self).create(cr, uid, vals, context)
 
-    def action_cancel(self, cr, uid, ids, context={}):
+    def action_cancel(self, cr, uid, ids, context=None):
         """
         Cancel activity in workflow.
         """
@@ -489,7 +491,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
-    def action_done(self, cr, uid, ids, context={}):
+    def action_done(self, cr, uid, ids, context=None):
         """
         Done activity in workflow.
         """
@@ -500,12 +502,14 @@ class purchase_order(osv.osv):
             ids = [ids]
         return self.write(cr, uid, ids, {'state':'done'}, context=context)
 
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the PO to done state
         '''
         wf_service = netsvc.LocalService("workflow")
 
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 

@@ -40,7 +40,7 @@ class account_move_line_reconcile(osv.osv_memory):
         'state': lambda *a: 'total',
     }
 
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         """
         Add state field in res
         """
@@ -56,7 +56,7 @@ class account_move_line_reconcile(osv.osv_memory):
             res.update({'state': data['state']})
         return res
 
-    def trans_rec_get(self, cr, uid, ids, context={}):
+    def trans_rec_get(self, cr, uid, ids, context=None):
         """
         Change default method:
         - take debit_currency and credit_currency instead of debit and credit (this is to pay attention to Booking Currency)
@@ -145,7 +145,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 state = 'total_change'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
 
-    def total_reconcile(self, cr, uid, ids, context={}):
+    def total_reconcile(self, cr, uid, ids, context=None):
         """
         Do a total reconciliation for given active_ids in context.
         Add another line to reconcile if some gain/loss of rate recalculation.
@@ -160,7 +160,7 @@ class account_move_line_reconcile(osv.osv_memory):
         self.pool.get('account.move.line').reconcile(cr, uid, to_reconcile, 'manual', False, False, False, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-    def partial_reconcile(self, cr, uid, ids, context={}):
+    def partial_reconcile(self, cr, uid, ids, context=None):
         """
         Do a partial reconciliation
         """

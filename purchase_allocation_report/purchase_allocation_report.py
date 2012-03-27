@@ -218,7 +218,9 @@ class purchase_order(osv.osv):
         'allocation_report_lines': fields.one2many('purchase.order.line.allocation.report', 'order_id', string='Allocation lines'),
     }
     
-    def open_allocation_report(self, cr, uid, ids, context={}):
+    def open_allocation_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if not 'active_id' in context:
             raise osv.except_osv(_('Error'), _('No active purchase order found !'))
         

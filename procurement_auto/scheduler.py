@@ -33,7 +33,7 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_automatic_supply(self, cr, uid, use_new_cursor=False, context={}):
+    def run_automatic_supply(self, cr, uid, use_new_cursor=False, context=None):
         '''
         Create procurement on fixed date
         '''
@@ -114,7 +114,7 @@ class procurement_order(osv.osv):
             
         return {}
     
-    def create_proc_order(self, cr, uid, auto_sup, product_id, product_uom, qty, location_id, cache={}, context={}):
+    def create_proc_order(self, cr, uid, auto_sup, product_id, product_uom, qty, location_id, cache=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -123,6 +123,8 @@ class procurement_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         report = []
         proc_id = False
+        if cache is None:
+            cache = {}
         
         # Enter the stock location in cache to know which products has been already replenish for this location
         if not cache.get(location_id, False):

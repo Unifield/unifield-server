@@ -34,7 +34,7 @@ class account_commitment(osv.osv):
     _description = "Account Commitment Voucher"
     _order = "id desc"
 
-    def _get_total(self, cr, uid, ids, name, args, context={}):
+    def _get_total(self, cr, uid, ids, name, args, context=None):
         """
         Give total of given commitments
         """
@@ -77,7 +77,7 @@ class account_commitment(osv.osv):
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], limit=1, context=c)[0]
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Update period_id regarding date.
         """
@@ -89,7 +89,7 @@ class account_commitment(osv.osv):
             vals.update({'period_id': period_ids and period_ids[0]})
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         """
         Update analytic lines date if date in vals for validated commitment voucher.
         """
@@ -122,13 +122,15 @@ class account_commitment(osv.osv):
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
         return res
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy analytic_distribution
         """
         # Some verifications
         if not context:
             context = {}
+        if not default:
+            default = {}
         # Update default values
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
@@ -145,7 +147,7 @@ class account_commitment(osv.osv):
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         """
         Only delete "done" state commitments
         """
@@ -164,7 +166,7 @@ class account_commitment(osv.osv):
             raise osv.except_osv(_('Warning'), _('You can only delete done commitments!'))
         return super(account_commitment, self).unlink(cr, uid, new_ids, context)
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a commitment
         """
@@ -209,14 +211,14 @@ class account_commitment(osv.osv):
                 'context': context,
         }
 
-    def button_compute(self, cr, uid, ids, context={}):
+    def button_compute(self, cr, uid, ids, context=None):
         """
         Compute commitment voucher total.
         """
         # trick to refresh view and update total amount
         return self.write(cr, uid, ids, [], context=context)
 
-    def get_engagement_lines(self, cr, uid, ids, context={}):
+    def get_engagement_lines(self, cr, uid, ids, context=None):
         """
         Return all engagement lines from given commitments
         """
@@ -247,7 +249,7 @@ class account_commitment(osv.osv):
             'target': 'current',
         }
 
-    def onchange_date(self, cr, uid, ids, date, period_id=False, context={}):
+    def onchange_date(self, cr, uid, ids, date, period_id=False, context=None):
         """
         Update period regarding given date
         """
@@ -263,7 +265,7 @@ class account_commitment(osv.osv):
             vals['period_id'] = periods[0]
         return {'value': vals}
 
-    def create_analytic_lines(self, cr, uid, ids, context={}):
+    def create_analytic_lines(self, cr, uid, ids, context=None):
         """
         Create analytic line for given commitment voucher.
         """
@@ -295,7 +297,7 @@ class account_commitment(osv.osv):
                         c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         return True
 
-    def action_commitment_open(self, cr, uid, ids, context={}):
+    def action_commitment_open(self, cr, uid, ids, context=None):
         """
         To do when we validate a commitment.
         """
@@ -309,7 +311,7 @@ class account_commitment(osv.osv):
         # Validate commitment voucher
         return self.write(cr, uid, ids, {'state': 'open'}, context=context)
 
-    def action_commitment_done(self, cr, uid, ids, context={}):
+    def action_commitment_done(self, cr, uid, ids, context=None):
         """
         To do when a commitment is done.
         """
@@ -338,7 +340,7 @@ class account_commitment_line(osv.osv):
     _description = "Account Commitment Voucher Line"
     _order = "id desc"
 
-    def _get_distribution_state(self, cr, uid, ids, name, args, context={}):
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
         Get state of distribution:
          - if compatible with the commitment voucher line, then "valid"
@@ -361,7 +363,7 @@ class account_commitment_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.commit_id.analytic_distribution_id.id, line.account_id.id) 
         return res
 
-    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
         """
         If Commitment have an analytic distribution, return False, else return True
         """
@@ -411,7 +413,7 @@ class account_commitment_line(osv.osv):
             res['value'] = {'amount': amount}
         return res
 
-    def update_analytic_lines(self, cr, uid, ids, amount, account_id=False, context={}):
+    def update_analytic_lines(self, cr, uid, ids, amount, account_id=False, context=None):
         """
         Update analytic lines from given commitment lines with an ugly method: delete all analytic lines and recreate them…
         """
@@ -436,7 +438,7 @@ class account_commitment_line(osv.osv):
                     commitment_line_id=cl.id, context=context)
         return True
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Verify that given account_id (in vals) is not 'view'.
         Update initial amount with those given by 'amount' field.
@@ -470,7 +472,7 @@ class account_commitment_line(osv.osv):
                     self.update_analytic_lines(cr, uid, [cl.id], vals.get('amount'), context=context)
         return res
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         """
         Verify that given account_id is not 'view'.
         Update initial_amount if amount in vals and type is 'manual' and state is 'draft'.
@@ -526,7 +528,7 @@ class account_commitment_line(osv.osv):
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), account_id, context=context)
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a commitment voucher line
         """

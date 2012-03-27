@@ -53,7 +53,7 @@ class one2many_budget_lines(fields.one2many):
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
     
-    def _create_view_line_amounts(self, cr, uid, account_id, actual_amounts, context={}):
+    def _create_view_line_amounts(self, cr, uid, account_id, actual_amounts, context=None):
         if account_id not in actual_amounts:
             account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
             result = [0] * 12
@@ -211,8 +211,10 @@ class msf_budget_line(osv.osv):
             
         return res
     
-    def _compute_total_amounts(self, cr, uid, budget_amount_list, actual_amount_list, context={}):
+    def _compute_total_amounts(self, cr, uid, budget_amount_list, actual_amount_list, context=None):
         # period_id
+        if context is None:
+            context = {}
         budget_amount = 0
         actual_amount = 0
         month_stop = 0
@@ -322,7 +324,7 @@ class msf_budget_line(osv.osv):
         'line_type': 'normal',
     }
     
-    def get_parent_line(self, cr, uid, vals, context={}):
+    def get_parent_line(self, cr, uid, vals, context=None):
         # Method to check if the used account has a parent,
         # and retrieve or create the corresponding parent line.
         # It also adds budget values to parent lines

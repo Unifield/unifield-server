@@ -121,10 +121,12 @@ class account_bank_statement(osv.osv):
                     newstore.append(fct)
             self.pool._store_function[self._name] = newstore
 
-    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance
         """
+        if context is None:
+            context = {}
         st_line_obj = self.pool.get("account.bank.statement.line")
         res = {}
 
@@ -137,7 +139,7 @@ class account_bank_statement(osv.osv):
                 res[statement.id] += st_line.amount or 0.0
         return res
 
-    def _get_register_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_register_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get current register id
         """
@@ -179,7 +181,7 @@ class account_bank_statement(osv.osv):
         Check the balance for Registers
         """
         if not context:
-            context={}
+            context = {}
         # Disrupt cheque verification
         if journal_type == 'cheque':
             return True
@@ -194,25 +196,25 @@ class account_bank_statement(osv.osv):
                     _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
         return True
 
-    def write(self, cr, uid, ids, values, context={}):
+    def write(self, cr, uid, ids, values, context=None):
         """
         Bypass disgusting default account_bank_statement write function
         """
         return super(osv.osv, self).write(cr, uid, ids, values, context=context)
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         """
         Delete a bank statement is forbidden!
         """
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
 
-    def button_open_bank(self, cr, uid, ids, context={}):
+    def button_open_bank(self, cr, uid, ids, context=None):
         """
         when pressing 'Open Bank' button
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Verify that a first register (register that doesn't have a prev_reg_id) has a starting balance not null
@@ -313,10 +315,13 @@ class account_bank_statement(osv.osv):
         }
         # @@@end
 
-    def button_create_invoice(self, cr, uid, ids, context={}):
+    def button_create_invoice(self, cr, uid, ids, context=None):
         """
         Create a direct invoice
         """
+        if context is None:
+            context = {}
+
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
         if isinstance(currency, tuple):
@@ -342,7 +347,7 @@ class account_bank_statement(osv.osv):
             }
         }
 
-    def button_wiz_import_invoices(self, cr, uid, ids, context={}):
+    def button_wiz_import_invoices(self, cr, uid, ids, context=None):
         """
         When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
         """
@@ -370,7 +375,7 @@ class account_bank_statement(osv.osv):
             }
         }
 
-    def button_wiz_import_cheques(self, cr, uid, ids, context={}):
+    def button_wiz_import_cheques(self, cr, uid, ids, context=None):
         """
         When pressing 'Import Cheques' button then opening a wizard to select some cheques from a register and add them into the present register 
         in a temp post state.
@@ -396,7 +401,7 @@ class account_bank_statement(osv.osv):
             }
         }
 
-    def button_confirm_closing_balance(self, cr, uid, ids, context={}):
+    def button_confirm_closing_balance(self, cr, uid, ids, context=None):
         """
         Confirm that the closing balance could not be editable.
         """
@@ -423,7 +428,7 @@ class account_bank_statement(osv.osv):
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
-    def button_open_advances(self, cr, uid, ids, context={}):
+    def button_open_advances(self, cr, uid, ids, context=None):
         """
         Open a list of open advances
         """
@@ -473,7 +478,7 @@ class account_bank_statement_line(osv.osv):
 
     _order = 'date desc, id desc'
 
-    def _get_state(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Return account_bank_statement_line state in order to know if the bank statement line is in :
         - draft
@@ -498,7 +503,7 @@ class account_bank_statement_line(osv.osv):
                 res[absl.id] = 'unknown'
         return res
 
-    def _get_amount(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get the amount from amount_in and amount_on
         """
@@ -518,7 +523,7 @@ class account_bank_statement_line(osv.osv):
                 res[absl.id] = default_amount
         return res
 
-    def _search_state(self, cr, uid, obj, name, args, context={}):
+    def _search_state(self, cr, uid, obj, name, args, context=None):
         """
         Search elements by state :
         - draft
@@ -570,7 +575,7 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         return [('id', 'in', ids)]
 
-    def _get_reconciled_state(self, cr, uid, ids, field_name=None, args=None, context={}):
+    def _get_reconciled_state(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
         Give the state of reconciliation for the account bank statement line
         """
@@ -591,7 +596,7 @@ class account_bank_statement_line(osv.osv):
                 res[absl.id] = False
         return res
 
-    def _search_reconciled(self, cr, uid, obj, name, args, context={}):
+    def _search_reconciled(self, cr, uid, obj, name, args, context=None):
         """
         Search all lines that are reconciled or not
         """
@@ -626,13 +631,13 @@ class account_bank_statement_line(osv.osv):
         cr.execute(sql_posted_moves)
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
     
-    def _get_number_imported_invoice(self, cr, uid, ids, field_name=None, args=None, context={}):
+    def _get_number_imported_invoice(self, cr, uid, ids, field_name=None, args=None, context=None):
         ret = {}
         for i in self.read(cr, uid, ids, ['imported_invoice_line_ids']):
             ret[i['id']] = len(i['imported_invoice_line_ids'])
         return ret
 
-    def _get_transfer_with_change_state(self, cr, uid, ids, field_name=None, args=None, context={}):
+    def _get_transfer_with_change_state(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
         If account is a transfer with change, then True. Otherwise False.
         """
@@ -845,7 +850,7 @@ class account_bank_statement_line(osv.osv):
             res.update({'amount': amount})
         return res
 
-    def _verify_dates(self, cr, uid, ids, context={}):
+    def _verify_dates(self, cr, uid, ids, context=None):
         """
         Verify that the given parameter contains date. Then validate date with regarding register period.
         """
@@ -886,12 +891,15 @@ class account_bank_statement_line(osv.osv):
         (_verify_dates, "Date is not correct. Verify that it's in the register's period. ", ['date']),
     ]
 
-    def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context={}):
+    def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context=None):
         """
         Update move lines from given statement lines
         """
         if not st_line_id or not values:
             return False
+
+        if context is None:
+            context = {}
 
         # Prepare some values
         move_line_values = dict(values)
@@ -986,10 +994,12 @@ class account_bank_statement_line(osv.osv):
             self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type, 'name': name}, context=context)
         return True
 
-    def do_direct_expense(self, cr, uid, ids, context={}):
+    def do_direct_expense(self, cr, uid, ids, context=None):
         """
         Do a direct expense when the line is hard posted and content a supplier
         """
+        if context is None:
+            context = {}
         for st_line in self.browse(cr, uid, ids, context=context):
             # Do the treatment only if the line is hard posted and have a partner who is a supplier
             if st_line.state == "hard" and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
@@ -1050,7 +1060,7 @@ class account_bank_statement_line(osv.osv):
                 self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
-    def do_import_invoices_reconciliation(self, cr, uid, st_lines=None, context={}):
+    def do_import_invoices_reconciliation(self, cr, uid, st_lines=None, context=None):
         """
         Reconcile line that come from an import invoices wizard in 3 steps :
          - split line into the move
@@ -1059,7 +1069,7 @@ class account_bank_statement_line(osv.osv):
         """
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if not st_lines or isinstance(st_lines, (int, long)):
             st_lines = []
 
@@ -1137,13 +1147,13 @@ class account_bank_statement_line(osv.osv):
                     move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id], context=context)
         return True
 
-    def do_import_cheque_reconciliation(self, cr, uid, st_lines=None, context={}):
+    def do_import_cheque_reconciliation(self, cr, uid, st_lines=None, context=None):
         """
         Do a reconciliation of an imported cheque and the current register line
         """
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if not st_lines or isinstance(st_lines, (int, long)):
             st_lines = []
         # Prepare some values
@@ -1162,7 +1172,7 @@ class account_bank_statement_line(osv.osv):
             move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
 
-    def analytic_distribution_is_mandatory(self, cr, uid, id, context={}):
+    def analytic_distribution_is_mandatory(self, cr, uid, id, context=None):
         """
         Verify that no analytic distribution is mandatory. It's not until one of test is true
         """
@@ -1179,7 +1189,7 @@ class account_bank_statement_line(osv.osv):
             return True
         return False
 
-    def create(self, cr, uid, values, context={}):
+    def create(self, cr, uid, values, context=None):
         """
         Create a new account bank statement line with values
         """
@@ -1188,12 +1198,14 @@ class account_bank_statement_line(osv.osv):
         # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
-    def write(self, cr, uid, ids, values, context={}):
+    def write(self, cr, uid, ids, values, context=None):
         """
         Write some existing account bank statement lines with 'values'.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
@@ -1219,7 +1231,7 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Create a copy of given line
         """
@@ -1248,7 +1260,7 @@ class account_bank_statement_line(osv.osv):
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
-    def posting(self, cr, uid, ids, postype, context={}):
+    def posting(self, cr, uid, ids, postype, context=None):
         """
         Write some statement line into some account move lines with a state that depends on postype.
         """
@@ -1288,19 +1300,19 @@ class account_bank_statement_line(osv.osv):
                     self.do_direct_expense(cr, uid, [absl.id], context=context)
         return True
 
-    def button_hard_posting(self, cr, uid, ids, context={}):
+    def button_hard_posting(self, cr, uid, ids, context=None):
         """
         Write some statement line into some account move lines in posted state.
         """
         return self.posting(cr, uid, ids, 'hard', context=context)
 
-    def button_temp_posting(self, cr, uid, ids, context={}):
+    def button_temp_posting(self, cr, uid, ids, context=None):
         """
         Write some statement lines into some account move lines in draft state.
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         """
         Permit to delete some account_bank_statement_line. But do some treatments on temp posting lines and do nothing for hard posting lines.
         """
@@ -1320,10 +1332,12 @@ class account_bank_statement_line(osv.osv):
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
-    def button_advance(self, cr, uid, ids, context={}):
+    def button_advance(self, cr, uid, ids, context=None):
         """
         Launch a wizard when you press "Advance return" button on a bank statement line in a Cash Register
         """
+        if context is None:
+            context = {}
         # Some verifications
         if len(ids) > 1:
             raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
@@ -1371,7 +1385,7 @@ class account_bank_statement_line(osv.osv):
         else:
             return False
 
-    def button_open_invoices(self, cr, uid, ids, context={}):
+    def button_open_invoices(self, cr, uid, ids, context=None):
         l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
         if not l['imported_invoice_line_ids']:
             raise osv.except_osv(_('Error'), _("No related invoice line"))
@@ -1386,7 +1400,7 @@ class account_bank_statement_line(osv.osv):
         }
         
 
-    def button_open_invoice(self, cr, uid, ids, context={}):
+    def button_open_invoice(self, cr, uid, ids, context=None):
         """
         Open the attached invoice
         """
@@ -1419,7 +1433,7 @@ class account_bank_statement_line(osv.osv):
             }
         }
 
-    def button_duplicate(self, cr, uid, ids, context={}):
+    def button_duplicate(self, cr, uid, ids, context=None):
         """
         Copy given lines and delete all links
         """
@@ -1439,7 +1453,7 @@ class account_bank_statement_line(osv.osv):
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
 
-    def button_transfer(self, cr, uid, ids, context={}):
+    def button_transfer(self, cr, uid, ids, context=None):
         """
         Open Transfer with change wizard
         """
@@ -1489,7 +1503,7 @@ class account_bank_statement_line(osv.osv):
             'context': context,
         }
 
-    def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context={}):
+    def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context=None):
         """
         Update Third Party type regarding account type_for_register field.
         """
@@ -1513,7 +1527,7 @@ class account_bank_statement_line(osv.osv):
                 third_selection = 'hr.employee,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
 
-    def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context={}):
+    def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context=None):
         """
         Update account_id field if partner_type change
         NB:
@@ -1560,7 +1574,7 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)

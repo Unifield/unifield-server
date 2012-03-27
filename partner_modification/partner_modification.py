@@ -37,7 +37,7 @@ NUMBER_OF_CHOICE = 3
 class product_template(osv.osv):
     _inherit = 'product.template'
 
-    def _get_delay_for_supplier(self, cr, uid, ids, fields, arg, context={}):
+    def _get_delay_for_supplier(self, cr, uid, ids, fields, arg, context=None):
         if not context:
             context = {}
         ret = {}

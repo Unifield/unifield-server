@@ -187,7 +187,7 @@ def check_dates(self, cr, uid, data, context=None):
     
     return True
 
-def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
     '''
     Common function when type of order is changing
     
@@ -626,7 +626,7 @@ class purchase_order(osv.osv):
         'confirmed_date_by_synchro': False,
     }
     
-    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
         

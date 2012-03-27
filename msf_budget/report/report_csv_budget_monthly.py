@@ -41,7 +41,7 @@ class report_csv_budget_monthly(report_sxw.report_sxw):
                    ['Account','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']]
         return result
     
-    def _get_budget_lines(self, cr, uid, budget, context={}):
+    def _get_budget_lines(self, cr, uid, budget, context=None):
         pool = pooler.get_pool(cr.dbname)
         result = []
         # Parse each budget line

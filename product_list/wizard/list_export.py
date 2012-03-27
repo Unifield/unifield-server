@@ -39,11 +39,13 @@ class product_list_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
     
-    def export_to_csv(self, cr, uid, ids, context={}):
+    def export_to_csv(self, cr, uid, ids, context=None):
         '''
         Builds and returns a file containing products list content
         '''
-        if not context or len(context.get('active_ids', [])) == 0:
+        if context is None:
+            context = {}
+        if len(context.get('active_ids', [])) == 0:
             raise osv.except_osv(_('Error'), _('You should choose one Product list to export !'))
         if len(context.get('active_ids', [])) > 1:
             raise osv.except_osv(_('Error'), _('You should choose only one Product list to export !'))

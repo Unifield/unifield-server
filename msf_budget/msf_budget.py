@@ -77,7 +77,7 @@ class msf_budget(osv.osv):
         return res
     
     # Methods for display view lines (warning, dirty, but it works)
-    def button_display_type(self, cr, uid, ids, context={}, *args, **kwargs):
+    def button_display_type(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         Change display type
         """

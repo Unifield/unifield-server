@@ -37,7 +37,7 @@ class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
     _description = 'Real Average Consumption'
     
-    def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
+    def _get_nb_lines(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the # of lines on the real average consumption
         '''
@@ -49,7 +49,7 @@ class real_average_consumption(osv.osv):
         return res
 
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Display a message to the user if the report has been confirmed
         and stock moves has been generated
@@ -65,20 +65,24 @@ class real_average_consumption(osv.osv):
 
         return super(real_average_consumption, self).unlink(cr, uid, ids, context=context)
 
-    def copy(self, cr, uid, ids, defaults={}, context={}):
+    def copy(self, cr, uid, ids, default=None, context=None):
         '''
         Unvalidate all lines of the duplicate report
         '''
         # Change default values
-        if not 'picking_id' in defaults:
-            defaults['picking_id'] = False
-        if not 'valid_ok' in defaults:
-            defaults['valid_ok'] = False
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        if not 'picking_id' in default:
+            default['picking_id'] = False
+        if not 'valid_ok' in default:
+            default['valid_ok'] = False
 
-        defaults['name'] = self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')
+        default['name'] = self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')
 
         # Copy the report
-        res = super(real_average_consumption, self).copy(cr, uid, ids, defaults, context=context)
+        res = super(real_average_consumption, self).copy(cr, uid, ids, default, context=context)
 
         # Unvalidate all lines of the report
         for report in self.browse(cr, uid, [res], context=context):
@@ -125,7 +129,7 @@ class real_average_consumption(osv.osv):
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
     ]
 
-    def button_update_stock(self, cr, uid, ids, context={}):
+    def button_update_stock(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         to_update = []
@@ -138,7 +142,7 @@ class real_average_consumption(osv.osv):
             self.pool.get('real.average.consumption.line')._check_qty(cr, uid, to_update, {'noraise': True})
         return True
     
-    def save_and_process(self, cr, uid, ids, context={}):
+    def save_and_process(self, cr, uid, ids, context=None):
         '''
         Returns the wizard to confirm the process of all lines
         '''
@@ -153,12 +157,14 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
-    def process_moves(self, cr, uid, ids, context={}):
+    def process_moves(self, cr, uid, ids, context=None):
         '''
         Creates all stock moves according to the report lines
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         
         move_obj = self.pool.get('stock.move')
         line_obj = self.pool.get('real.average.consumption.line')
@@ -233,10 +239,12 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
-    def import_rac(self, cr, uid, ids, context={}):
+    def import_rac(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
         '''
+        if context is None:
+            context = {}
         context.update({'active_id': ids[0]})
         
         return {'type': 'ir.actions.act_window',
@@ -247,10 +255,12 @@ class real_average_consumption(osv.osv):
                 'context': context,
                 }
         
-    def export_rac(self, cr, uid, ids, context={}):
+    def export_rac(self, cr, uid, ids, context=None):
         '''
         Creates a CSV file and launches the wizard to save it
         '''
+        if context is None:
+            context = {}
         rac = self.browse(cr, uid, ids[0], context=context)
         
         outfile = TemporaryFile('w+')
@@ -275,10 +285,12 @@ class real_average_consumption(osv.osv):
                 'target': 'new',
                 }
         
-    def fill_lines(self, cr, uid, ids, context={}):
+    def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
+        if context is None:
+            context = {}
         self.write(cr, uid, ids, {'created_ok': True})    
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
@@ -371,7 +383,7 @@ class real_average_consumption_line(osv.osv):
             
         return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_available'], context=context)['stock_available']
 
-    def _check_qty(self, cr, uid, ids, context={}):
+    def _check_qty(self, cr, uid, ids, context=None):
        
         if context is None:
             context = {}
@@ -440,10 +452,12 @@ class real_average_consumption_line(osv.osv):
     ]
 
 
-    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, context={}):
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, context=None):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
+        if context is None:
+            context = {}
         prodlot_obj = self.pool.get('stock.production.lot')
         result = {'value':{}}
         context.update({'location': location_id})
@@ -475,7 +489,9 @@ class real_average_consumption_line(osv.osv):
         
         return result
 
-    def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, uom, context={}):
+    def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, uom, context=None):
+        if context is None:
+            context = {}
         result = {}
         stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location, uom)
         warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
@@ -494,10 +510,12 @@ class real_average_consumption_line(osv.osv):
             return {'warning': warn_msg}
         return {}
 
-    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, context={}):
+    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, context=None):
         '''
         Set the expiry date according to the prodlot
         '''
+        if context is None:
+            context = {}
         res = {'value': {}}
         context.update({'location': location_id, 'uom': uom})
         if prodlot_id and not expiry_date:
@@ -515,7 +533,9 @@ class real_average_consumption_line(osv.osv):
 
         return res
    
-    def uom_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context={}):
+    def uom_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
+        if context is None:
+            context = {}
         qty_available = 0
         d = {}
         if uom and product_id:
@@ -527,10 +547,12 @@ class real_average_consumption_line(osv.osv):
 
         return {'value': {'product_qty': qty_available}, 'domain': d}
 
-    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
         '''
         Set the product uom when the product change
         '''
+        if context is None:
+            context = {}
         v = {'batch_mandatory': False, 'date_mandatory': False}
         d = {'uom_id': []} 
         if product_id:
@@ -564,7 +586,7 @@ class monthly_review_consumption(osv.osv):
     _description = 'Monthly review consumption'
     _rec_name = 'creation_date'
     
-    def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
+    def _get_nb_lines(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the # of lines on the monthly review consumption
         '''
@@ -592,7 +614,7 @@ class monthly_review_consumption(osv.osv):
         'cons_location_id': lambda *a: 'MSF Instance',
     }
 
-    def period_change(self, cr, uid, ids, period_from, period_to, context={}):
+    def period_change(self, cr, uid, ids, period_from, period_to, context=None):
         '''
         Get the first day of month and the last day
         '''
@@ -605,10 +627,12 @@ class monthly_review_consumption(osv.osv):
 
         return {'value': res}
     
-    def import_fmc(self, cr, uid, ids, context={}):
+    def import_fmc(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
         '''
+        if context is None:
+            context = {}
         context.update({'active_id': ids[0]})
         
         return {'type': 'ir.actions.act_window',
@@ -619,10 +643,12 @@ class monthly_review_consumption(osv.osv):
                 'context': context,
                 }
         
-    def export_fmc(self, cr, uid, ids, context={}):
+    def export_fmc(self, cr, uid, ids, context=None):
         '''
         Creates a CSV file and launches the wizard to save it
         '''
+        if context is None:
+            context = {}
         fmc = self.browse(cr, uid, ids[0], context=context)
         
         outfile = TemporaryFile('w+')
@@ -647,10 +673,12 @@ class monthly_review_consumption(osv.osv):
                 'target': 'new',
                 }
         
-    def fill_lines(self, cr, uid, ids, context={}):
+    def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
+        if context is None:
+            context = {}
         line_obj = self.pool.get('monthly.review.consumption.line')
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
@@ -721,10 +749,12 @@ class monthly_review_consumption(osv.osv):
                 'context': context}
 
 
-    def valid_multiple_lines(self, cr, uid, ids, context={}):
+    def valid_multiple_lines(self, cr, uid, ids, context=None):
         '''
         Validate multiple lines
         '''
+        if context is None:
+            context = {}
         for report in self.browse(cr, uid, ids, context=context):
             for line in report.line_ids:
                 if not line.valid_ok:
@@ -745,10 +775,12 @@ class monthly_review_consumption_line(osv.osv):
     _name = 'monthly.review.consumption.line'
     _description = 'Monthly review consumption line'
     
-    def _get_amc(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_amc(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Calculate the product AMC for the period
         '''
+        if context is None:
+            context = {}
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
@@ -765,10 +797,12 @@ class monthly_review_consumption_line(osv.osv):
             
         return res
     
-    def _get_last_fmc(self, cr, uid, ids, field_name, args, context={}):
+    def _get_last_fmc(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the last fmc date
         '''
+        if context is None:
+            context = {}
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
@@ -776,7 +810,9 @@ class monthly_review_consumption_line(osv.osv):
             
         return res
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         if 'fmc2' in vals:
             vals.update({'fmc': vals.get('fmc2')})
         if 'last_reviewed2' in vals:
@@ -788,7 +824,9 @@ class monthly_review_consumption_line(osv.osv):
 
         return super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if 'fmc2' in vals:
             vals.update({'fmc': vals.get('fmc2')})
         if 'last_reviewed2' in vals:
@@ -814,7 +852,7 @@ class monthly_review_consumption_line(osv.osv):
         'mrc_creation_date': fields.related('mrc_id', 'creation_date', type='date', store=True),
     }
     
-    def valid_line(self, cr, uid, ids, context={}):
+    def valid_line(self, cr, uid, ids, context=None):
         '''
         Valid the line and enter data in product form
         '''
@@ -834,16 +872,18 @@ class monthly_review_consumption_line(osv.osv):
             
         return
     
-    def display_graph(self, cr, uid, ids, context={}):
+    def display_graph(self, cr, uid, ids, context=None):
         '''
         Display the graph view of the line
         '''
         raise osv.except_osv('Error !', 'Not implemented yet !')
 
-    def fmc_change(self, cr, uid, ids, amc, fmc, product_id, context={}):
+    def fmc_change(self, cr, uid, ids, amc, fmc, product_id, context=None):
         '''
         Valid the line if the FMC is manually changed
         '''
+        if context is None:
+            context = {}
         res = {}
 
         if fmc != amc:
@@ -861,7 +901,7 @@ class monthly_review_consumption_line(osv.osv):
 
         return {'value': res}
     
-    def product_onchange(self, cr, uid, ids, product_id, mrc_id=False, from_date=False, to_date=False, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, mrc_id=False, from_date=False, to_date=False, context=None):
         '''
         Fill data in the line
         '''
@@ -921,7 +961,7 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
-    def _compute_fmc(self, cr, uid, ids, field_name, args, context={}):
+    def _compute_fmc(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the last value of the FMC
         '''
@@ -949,12 +989,14 @@ class product_product(osv.osv):
         
         return res
     
-    def compute_mac(self, cr, uid, ids, field_name, args, context={}):
+    def compute_mac(self, cr, uid, ids, field_name, args, context=None):
         '''
         Compute the Real Average Consumption
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         
         line_obj = self.pool.get('real.average.consumption.line')
         rac_obj = self.pool.get('real.average.consumption')
@@ -1025,7 +1067,7 @@ class product_product(osv.osv):
             
         return res
     
-    def compute_amc(self, cr, uid, ids, context={}):
+    def compute_amc(self, cr, uid, ids, context=None):
         '''
         Compute the Average Monthly Consumption with this formula :
             AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
@@ -1188,7 +1230,9 @@ class product_product(osv.osv):
                      
             
 
-    def _compute_product_amc(self, cr, uid, ids, field_name, args, context={}):
+    def _compute_product_amc(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
         res = {}
         from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
         to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
@@ -1207,11 +1251,13 @@ class product_product(osv.osv):
 
         return res
     
-    def _get_period_consumption(self, cr, uid, line, from_date, to_date, context={}):
+    def _get_period_consumption(self, cr, uid, line, from_date, to_date, context=None):
         '''
         Returns the average quantity of product in the period
         '''        
         # Compute the # of days in the report period
+        if context is None:
+            context = {}
         from datetime import datetime
         report_from = datetime.strptime(line.rac_id.period_from, '%Y-%m-%d')
         report_to = datetime.strptime(line.rac_id.period_to, '%Y-%m-%d')

@@ -59,7 +59,9 @@ class analytic_distribution1(osv.osv):
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
-    def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
+    def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context=None):
+        if context is None:
+            context = {}
         if not id:
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
@@ -142,7 +144,7 @@ class analytic_distribution(osv.osv):
         'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
     }
 
-    def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
+    def update_distribution_line_amount(self, cr, uid, ids, amount=False, context=None):
         """
         Update amount on distribution lines for given distribution (ids)
         """
@@ -165,7 +167,7 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
         return True
 
-    def update_distribution_line_account(self, cr, uid, ids, old_account_id, account_id, context={}):
+    def update_distribution_line_account(self, cr, uid, ids, old_account_id, account_id, context=None):
         """
         Update account on distribution line
         """
@@ -196,7 +198,7 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], {'analytic_id': account_id,}, context=context)
         return True
 
-    def create_funding_pool_lines(self, cr, uid, ids, context={}):
+    def create_funding_pool_lines(self, cr, uid, ids, context=None):
         """
         Create funding pool lines regarding cost_center_lines from analytic distribution.
         If funding_pool_lines exists, then nothing appends.
@@ -237,7 +239,7 @@ class analytic_distribution(osv.osv):
         return res
 
     def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, ref=False, source_date=False, general_account_id=False, \
-        move_id=False, invoice_line_id=False, commitment_line_id=False, context={}):
+        move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date

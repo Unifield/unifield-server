@@ -29,7 +29,7 @@ class stock_warehouse_automatic_supply(osv.osv):
     _description = 'Automatic Supply'
     _order = 'sequence, id'
     
-    def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context={}):
+    def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context=None):
         '''
         Returns the next date of the frequency
         '''
@@ -43,7 +43,7 @@ class stock_warehouse_automatic_supply(osv.osv):
                 
         return res
     
-    def _get_frequence_change(self, cr, uid, ids, context={}):
+    def _get_frequence_change(self, cr, uid, ids, context=None):
         '''
         Returns Auto. Sup. ids when frequence change
         '''
@@ -54,7 +54,7 @@ class stock_warehouse_automatic_supply(osv.osv):
                 
         return result.keys()
     
-    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the name_get value of the frequence
         '''
@@ -80,7 +80,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
         'procurement_id': fields.many2one('procurement.order', string='Last procurement', readonly=True),
         'next_date': fields.function(_get_next_date_from_frequence, method=True, string='Next scheduled date', type='date', 
-                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c={}: ids, ['frequence_id'],20),
+                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c=None: ids, ['frequence_id'],20),
                                             'stock.frequence': (_get_frequence_change, None, 20)}),
     }
     
@@ -91,13 +91,15 @@ class stock_warehouse_automatic_supply(osv.osv):
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=c)
     }
     
-    def choose_change_frequence(self, cr, uid, ids, context={}):
+    def choose_change_frequence(self, cr, uid, ids, context=None):
         '''
         Open a wizard to define a frequency for the automatic supply
         or open a wizard to modify the frequency if frequency already exists
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None
+            context = {}
             
         frequence_id = False
         res_id = False
@@ -177,7 +179,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         })
         return super(stock_warehouse_automatic_supply, self).copy(cr, uid, id, default, context=context)
  
-    def _check_frequency(self, cr, uid, ids, context={}):
+    def _check_frequency(self, cr, uid, ids, context=None):
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -191,12 +193,12 @@ class stock_warehouse_automatic_supply(osv.osv):
                 raise osv.except_osv(_('Error !'), _('Frequence is mandatory, please add one by clicking on the "Change/Choose Frequency" button.'))
         return True
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         id = super(stock_warehouse_automatic_supply, self).create(cr, uid, vals, context=context)
         self._check_frequency(cr, uid, [id], context)
         return id
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         ret = super(stock_warehouse_automatic_supply, self).write(cr, uid, ids, vals, context=context)
         self._check_frequency(cr, uid, ids, context)
         return ret
@@ -244,12 +246,14 @@ class stock_frequence(osv.osv):
         'auto_sup_ids': fields.one2many('stock.warehouse.automatic.supply', 'frequence_id', string='Auto. Sup.'),
     }
     
-    def choose_frequency(self, cr, uid, ids, context={}):
+    def choose_frequency(self, cr, uid, ids, context=None):
         '''
         Adds the support of automatic supply on choose frequency method
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
             
         if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
             context.get('active_model') == 'stock.warehouse.automatic.supply':
