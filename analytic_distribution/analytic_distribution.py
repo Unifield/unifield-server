@@ -24,7 +24,7 @@ import decimal_precision as dp
 from tools.misc import flatten
 from time import strftime
 
-class analytic_distribution(osv.osv):
+class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
 
     _columns = {
@@ -42,11 +42,13 @@ class analytic_distribution(osv.osv):
         'name': lambda *a: 'Distribution',
     }
 
-    def copy(self, cr, uid, id, defaults={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy an analytic distribution without the one2many links
         """
-        defaults.update({
+        if default is None:
+            default = {}
+        default.update({
             'analytic_lines': False,
             'invoice_ids': False,
             'invoice_line_ids': False,
@@ -55,7 +57,7 @@ class analytic_distribution(osv.osv):
             'commitment_ids': False,
             'commitment_line_ids': False,
         })
-        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
     def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
         if not id:
@@ -79,8 +81,7 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
         return 'valid'
 
-
-analytic_distribution()
+analytic_distribution1()
 
 class distribution_line(osv.osv):
     _name = "distribution.line"
