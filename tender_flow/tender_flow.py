@@ -62,25 +62,6 @@ class tender(osv.osv):
             result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
             
         return result
-
-    
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        return function values
-        '''
-        result = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {'rfq_name_list': '',
-                              }
-            
-            rfq_names = []
-            for rfq in obj.rfq_ids:
-                rfq_names.append(rfq.name)
-            # generate string
-            rfq_names.sort()
-            result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
-            
-        return result
     
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
@@ -525,7 +506,7 @@ class tender_line(osv.osv):
 tender_line()
 
 
-class tender(osv.osv):
+class tender2(osv.osv):
     '''
     tender class
     '''
@@ -547,7 +528,7 @@ class tender(osv.osv):
                        rfq_ids=[],
                        sale_order_line_id=False,)
             
-        result = super(tender, self).copy(cr, uid, id, default, context)
+        result = super(tender2, self).copy(cr, uid, id, default, context)
         
         return result
     
@@ -562,7 +543,7 @@ class tender(osv.osv):
                            purchase_order_line_id=False,)
         return result
 
-tender()
+tender2()
 
 
 class procurement_order(osv.osv):

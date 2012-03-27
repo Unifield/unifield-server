@@ -962,7 +962,7 @@ class pack_family_memory(osv.osv_memory):
 pack_family_memory()
 
 
-class shipment(osv.osv):
+class shipment2(osv.osv):
     '''
     add pack_family_ids
     '''
@@ -1021,7 +1021,7 @@ class shipment(osv.osv):
     _columns = {'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 }
 
-shipment()
+shipment2()
 
 
 class ppl_customize_label(osv.osv):
