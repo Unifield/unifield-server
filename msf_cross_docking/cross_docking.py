@@ -195,7 +195,7 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
@@ -384,7 +384,7 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
     
 stock_move()
