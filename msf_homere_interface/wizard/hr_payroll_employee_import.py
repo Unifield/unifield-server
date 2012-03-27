@@ -216,9 +216,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             # In case of death, desactivate employee
             if decede and decede[0] and decede[0] == 'Y':
                 vals.update({'active': False})
-            # If employee have a expired date, so desactivate it
-            if dateexpiration and dateexpiration[0] and dateexpiration[0] <= current_date:
-                vals.update({'active': False})
+#            # If employee have a expired date, so desactivate it
+#            if dateexpiration and dateexpiration[0] and dateexpiration[0] <= current_date:
+#                vals.update({'active': False})
             # Add an analytic distribution
             try:
                 cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
@@ -273,7 +273,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
             # Unactivate all local employees
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
-            self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
+            self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False,}, {'from': 'import'})
             res = True
             for employee_data in reader:
                 processed += 1
