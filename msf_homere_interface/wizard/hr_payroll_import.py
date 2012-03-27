@@ -117,13 +117,16 @@ class hr_payroll_import(osv.osv_memory):
         account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
         if account.type == 'view':
             raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % (ustr(accounting_code[0]),))
+        # Check if it's a payroll rounding line
+        is_payroll_rounding = False
+        if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE':
+            is_payroll_rounding = True
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
-            # Check second description (if not equal to 'Payroll rounding')
-            if second_description and second_description[0] and ustr(second_description[0]) != 'Payroll rounding':
+            if second_description and second_description[0] and not is_payroll_rounding:
                 # fetch employee ID
                 employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-                employee_name = second_description[0].replace(employee_identification_id, '')
+                employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
                 employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
                 if not employee_ids:
                     raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
@@ -138,7 +141,7 @@ class hr_payroll_import(osv.osv_memory):
         # Fetch description
         if not name:
             name = description and description[0] and ustr(description[0]) or ''
-        if ustr(second_description[0]) == 'Payroll rounding':
+        if is_payroll_rounding:
                 name = 'Payroll rounding'
         # Check if currency exists
         if not currency and not currency[0]:
