@@ -402,19 +402,19 @@
 		<menuitem id="connection_manager_menu" name="Connection Manager" parent="reg_menu"
 		        action="connection_manager_action" />   
 		         
-		<menuitem id="update_received_menu" name="Update received Monitor" parent="mon_menu"
+		<menuitem id="update_received_menu" name="Received Synchronization Monitor" parent="mon_menu"
 		        action="update_received_action" />    
 		        
-		<menuitem id="Message_received_menu" name="Message received Monitor" parent="mon_menu"
+		<menuitem id="Message_received_menu" name="Received Message Monitor" parent="mon_menu"
 		        action="message_received_action" />  
 		        
-		<menuitem id="update_sent_menu" name="Update Sent Monitor" parent="mon_menu"
+		<menuitem id="update_sent_menu" name="Sent Synchronizations" parent="mon_menu"
 		        action="update_sent_action" />    
 		        
-		<menuitem id="Message_received_menu" name="Message received Monitor" parent="mon_menu"
+		<menuitem id="Message_received_menu" name="Message Received Monitor" parent="mon_menu"
 		        action="message_received_action" />  
 		        
-		<menuitem id="message_sent_menu" name="Message Sent Monitor" parent="mon_menu"
+		<menuitem id="message_sent_menu" name="Sent Messages" parent="mon_menu"
 		        action="message_sent_action" /> 
 		        
 		       
