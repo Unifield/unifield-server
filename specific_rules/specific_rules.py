@@ -840,7 +840,7 @@ class stock_production_lot(osv.osv):
             
         return result
 
-    def _check_batch_type_integrity(self, cr, uid, ids, context={}):
+    def _check_batch_type_integrity(self, cr, uid, ids, context=None):
         '''
         Check if the type of the batch is consistent with the product attributes
         '''
@@ -850,7 +850,7 @@ class stock_production_lot(osv.osv):
 
         return True
 
-    def _check_perishable_type_integrity(self, cr, uid, ids, context={}):
+    def _check_perishable_type_integrity(self, cr, uid, ids, context=None):
         '''
         Check if the type of the batch is consistent with the product attributes
         '''
@@ -1379,7 +1379,7 @@ report_stock_inventory()
 
 class product_product(osv.osv):
     _inherit = 'product.product'
-    def open_stock_by_location(self, cr, uid, ids, context={}):
+    def open_stock_by_location(self, cr, uid, ids, context=None):
         name = 'Stock by Location'
         if context is None:
             context = {}

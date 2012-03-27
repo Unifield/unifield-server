@@ -46,13 +46,13 @@ class sourcing_line(osv.osv):
     (overriding of create method of sale_order)
     '''
     
-    def get_sale_order_states(self, cr, uid, context={}):
+    def get_sale_order_states(self, cr, uid, context=None):
         '''
         Returns all states values for a sale.order object
         '''
         return self.pool.get('sale.order')._columns['state'].selection
     
-    def get_sale_order_line_states(self, cr, uid, context={}):
+    def get_sale_order_line_states(self, cr, uid, context=None):
         '''
         Returns all states values for a sale.order.line object
         '''
@@ -171,7 +171,7 @@ class sourcing_line(osv.osv):
             result[id] = False
         return result
 
-    def _search_need_sourcing(self, cr, uid, obj, name, args, context={}):
+    def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
 
@@ -180,7 +180,7 @@ class sourcing_line(osv.osv):
 
         return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
 
-    def _search_sale_order_state(self, cr, uid, obj, name, args, context={}):
+    def _search_sale_order_state(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         newargs = []

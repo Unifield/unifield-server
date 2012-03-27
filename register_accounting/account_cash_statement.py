@@ -35,7 +35,7 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
         """
@@ -76,13 +76,13 @@ class account_cash_statement(osv.osv):
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
-    def button_open_cash(self, cr, uid, ids, context={}):
+    def button_open_cash(self, cr, uid, ids, context=None):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
@@ -119,7 +119,7 @@ class account_cash_statement(osv.osv):
         else:
             return False
 
-    def button_confirm_cash(self, cr, uid, ids, context={}):
+    def button_confirm_cash(self, cr, uid, ids, context=None):
         """
         when you're attempting to close a CashBox via 'Close CashBox'
         """
@@ -150,7 +150,7 @@ class account_cash_statement(osv.osv):
                 }
         }
 
-    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance: call super, then add the Open Advance Amount to the end balance
         """
@@ -184,7 +184,7 @@ class account_cash_statement(osv.osv):
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }
 
-    def button_wiz_temp_posting(self, cr, uid, ids, context={}):
+    def button_wiz_temp_posting(self, cr, uid, ids, context=None):
         """
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
@@ -211,7 +211,7 @@ class account_cash_statement(osv.osv):
             'target': 'crush', # use any word to crush the actual tab
         }
 
-    def button_wiz_hard_posting(self, cr, uid, ids, context={}):
+    def button_wiz_hard_posting(self, cr, uid, ids, context=None):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """

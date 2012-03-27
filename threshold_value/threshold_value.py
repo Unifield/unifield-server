@@ -46,13 +46,13 @@ class threshold_value(osv.osv):
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context={}: obj.pool.get('ir.sequence').get(cr, uid, 'threshold.value') or '',
+        'name': lambda obj, cr, uid, context=None: obj.pool.get('ir.sequence').get(cr, uid, 'threshold.value') or '',
         'active': lambda *a: True,
         'threshold_manual_ok': lambda *a: False,
         'qty_order_manual_ok': lambda *a: False,
     }
     
-    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, context={}):
+    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, context=None):
         '''
         Computes the threshold value and quantity to order according to parameters
         
@@ -76,7 +76,8 @@ class threshold_value(osv.osv):
         '''
         v = {}
         m = {}
-        
+        if context is None:
+            context = {}
         if location_id:
             context.update({'location_id': location_id})
         
@@ -110,7 +111,7 @@ class threshold_value(osv.osv):
         
         return {'value': v,}
     
-    def product_on_change(self, cr, uid, ids, product_id=False, context={}):
+    def product_on_change(self, cr, uid, ids, product_id=False, context=None):
         '''
         Update the UoM when the product change
         
@@ -131,7 +132,7 @@ class threshold_value(osv.osv):
             
         return {'value': v}
     
-    def category_on_change(self, cr, uid, ids, category_id=False, context={}):
+    def category_on_change(self, cr, uid, ids, category_id=False, context=None):
         '''
         If a category is selected, remove values for product and uom on the form
         '''

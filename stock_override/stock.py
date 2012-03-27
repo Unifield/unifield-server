@@ -158,7 +158,7 @@ class stock_picking(osv.osv):
             
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the partner or the address according to the other
         '''
@@ -179,7 +179,7 @@ class stock_picking(osv.osv):
         
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
     
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context={}):
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
         Change the delivery address when the partner change.
         '''
@@ -208,7 +208,7 @@ class stock_picking(osv.osv):
         return {'value': v,
                 'domain': d}
     
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the picking to done
         '''
@@ -410,7 +410,7 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the stock move to manually done
         '''
@@ -424,7 +424,7 @@ class stock_move(osv.osv):
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
     }
     
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Update the partner or the address according to the other
         '''
@@ -443,7 +443,7 @@ class stock_move(osv.osv):
         
         return super(stock_move, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the partner or the address according to the other
         '''
@@ -464,7 +464,7 @@ class stock_move(osv.osv):
         
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
     
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context={}):
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
         Change the delivery address when the partner change.
         '''

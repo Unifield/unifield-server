@@ -33,7 +33,7 @@ class purchase_order_line_allocation_report(osv.osv):
     _table = 'purchase_order_line_allocation_report'
     _auto = False
     
-    def _get_product_account(self, cr, uid, ids, field_name, args, context={}):
+    def _get_product_account(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):

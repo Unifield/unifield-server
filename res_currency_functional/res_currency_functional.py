@@ -31,7 +31,7 @@ class res_currency_functional(osv.osv):
         # UF-886: Do not use the symbol provided by OpenERP, currency is only shown as abbr: USD and not USD($))
         return super(osv.osv, self).name_get(cr, uid, ids, context)
     
-    def _verify_rate(self, cr, uid, ids, context={}):
+    def _verify_rate(self, cr, uid, ids, context=None):
         """
         Verify that a currency set to active has a non-zero rate.
         """

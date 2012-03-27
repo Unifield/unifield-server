@@ -33,10 +33,14 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_threshold_value(self, cr, uid, use_new_cursor=False, context={}):
+    def run_threshold_value(self, cr, uid, use_new_cursor=False, context=None):
         '''
         Creates procurement for products where real stock is under threshold value
         '''
+
+        if context is None:
+            context = {}
+
         if use_new_cursor:
             cr = pooler.get_db(use_new_cursor).cursor()
             

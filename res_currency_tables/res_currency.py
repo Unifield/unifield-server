@@ -54,9 +54,11 @@ class res_currency(osv.osv):
             # already ok
             return currency_id
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         # add argument to discard table currencies by default
         table_in_args = False
+        if args is None:
+            args = []
         for a in args:
             if a[0] == 'currency_table_id':
                 table_in_args = True

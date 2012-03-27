@@ -39,7 +39,7 @@ class res_currency_table(osv.osv):
         'state': 'draft',
     }
     
-    def validate(self, cr, uid, ids, context={}):
+    def validate(self, cr, uid, ids, context=None):
         if not context:
             context = {}
         # just get one table
@@ -52,7 +52,7 @@ class res_currency_table(osv.osv):
         
         return self.write(cr, uid, ids, {'state': 'valid'}, context=context)
 
-    def _check_unicity(self, cr, uid, ids, context={}):
+    def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
             context={}
         for table in self.browse(cr, uid, ids, context=context):

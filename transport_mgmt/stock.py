@@ -30,7 +30,7 @@ class stock_incoterms(osv.osv):
         'name': fields.char('Name', size=128, required=True, help="Incoterms are series of sales terms.They are used to divide transaction costs and responsibilities between buyer and seller and reflect state-of-the-art transportation practices."),
     }
 
-    def name_get(self, cr, uid, ids, context={}):
+    def name_get(self, cr, uid, ids, context=None):
         '''
         Returns the name of the Incoterm like CODE − Name
         '''

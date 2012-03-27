@@ -29,7 +29,7 @@ class res_partner(osv.osv):
     _name = "res.partner"
     _inherit = "res.partner"
 
-    def _search_property_account(self, cr, uid, obj, name, args, context={}):
+    def _search_property_account(self, cr, uid, obj, name, args, context=None):
         """
         Search account that are used
         NB: 

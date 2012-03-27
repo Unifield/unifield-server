@@ -39,7 +39,7 @@ class import_currencies(osv.osv_memory):
         'rate_date': lambda *a: datetime.datetime.today().strftime('%Y-%m-%d')
     }
     
-    def _check_periods(self, cr, uid, rate_date, context={}):
+    def _check_periods(self, cr, uid, rate_date, context=None):
         period_obj = self.pool.get('account.period')
         period_ids = period_obj.search(cr, uid, [('date_start','<=',rate_date),('date_stop','>=',rate_date)])
         if not period_ids:

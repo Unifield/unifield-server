@@ -124,7 +124,7 @@ class stock_frequence(osv.osv):
         default['last_run'] = False
         return super(stock_frequence, self).copy(cr, uid, id, default, context)
 
-    def create(self, cr, uid, data, context={}):
+    def create(self, cr, uid, data, context=None):
         '''
         Check if all required data aren't empty
         '''
@@ -132,7 +132,7 @@ class stock_frequence(osv.osv):
         
         return super(stock_frequence, self).create(cr, uid, data, context=context)
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Check if all required data aren't empty
         '''
@@ -149,7 +149,7 @@ class stock_frequence(osv.osv):
         
         return super(stock_frequence, self).write(cr, uid, ids, data, context=context)
     
-    def _compute_end_date(self, cr, uid, ids, field, arg, context={}):
+    def _compute_end_date(self, cr, uid, ids, field, arg, context=None):
         '''
         Compute the end date of the frequence according to the field of the object
         '''
@@ -336,7 +336,7 @@ class stock_frequence(osv.osv):
 
         return False
         
-    def _compute_next_date(self, cr, uid, ids, field, arg, context={}):
+    def _compute_next_date(self, cr, uid, ids, field, arg, context=None):
         '''
         Compute the next date matching with the parameter of the frequency
         '''
@@ -367,13 +367,13 @@ class stock_frequence(osv.osv):
         
         return res
     
-    def choose_frequency(self, cr, uid, ids, context={}):
+    def choose_frequency(self, cr, uid, ids, context=None):
         '''
         Empty method. Override this method to implement your own features
         '''
         return {'type': 'ir.actions.act_window_close'}
     
-    def name_get(self, cr, uid, ids, context={}):
+    def name_get(self, cr, uid, ids, context=None):
         '''
         Returns a description of the frequence
         '''

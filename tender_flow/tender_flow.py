@@ -39,7 +39,7 @@ class tender(osv.osv):
     _name = 'tender'
     _description = 'Tender'
 
-    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         if not default:
             default = {}
         default['internal_state'] = 'draft' # UF-733: Reset the internal_state
@@ -404,7 +404,7 @@ class tender(osv.osv):
                 
         return True
 
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the tender and all related documents to done state
         '''
@@ -723,7 +723,7 @@ class purchase_order(osv.osv):
                 result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
-    def rfq_sent(self, cr, uid, ids, context={}):
+    def rfq_sent(self, cr, uid, ids, context=None):
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
@@ -734,7 +734,7 @@ class purchase_order(osv.osv):
                 'report_name': 'purchase.quotation',
                 'datas': datas}
 
-    def check_rfq_updated(self, cr, uid, ids, context={}):
+    def check_rfq_updated(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
