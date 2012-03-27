@@ -132,7 +132,7 @@ class account_invoice(osv.osv):
                     if not a:
                         a = pol.product_id.categ_id.property_account_expense_categ.id
                     if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
                 else:
                     a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 invoice_lines[a].append(invl)

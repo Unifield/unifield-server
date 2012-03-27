@@ -131,7 +131,7 @@ class wizard_import_rac(osv.osv_memory):
                 if line[3]:
                     lot = prodlot_obj.search(cr, uid, [('name', '=', line[3])])
                     if not lot:
-                        error += "Line %s : batch number %s not found.\n" % (line[3], )
+                        error += "Line %s : batch number %s not found.\n" % (line_num, line[3])
                         ignore_lines += 1
                         continue
                     batch = lot[0]
