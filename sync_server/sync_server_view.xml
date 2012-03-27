@@ -108,10 +108,10 @@
 		<menuitem id="entity_menu" name="Instance" parent="sync_menu"
 		        action="entity_action" />   
 		        
-		<menuitem id="update_menu_id" name="Update" parent="sync_menu"
+		<menuitem id="update_menu_id" name="Synchronization Monitor" parent="sync_menu"
 		        action="update_action" />   
 		        
-		<menuitem id="message_menu_id" name="Message" parent="sync_menu"
+		<menuitem id="message_menu_id" name="Message Monitor" parent="sync_menu"
 		        action="message_action" />  
 		        
 		        
