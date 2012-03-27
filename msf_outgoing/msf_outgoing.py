@@ -26,7 +26,6 @@ from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
-import netsvc
 import logging
 import tools
 import time
