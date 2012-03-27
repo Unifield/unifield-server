@@ -30,37 +30,6 @@ import time
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
 
-    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
-        """
-        Informs for each move line if a reconciliation or a partial reconciliation have been made. Else return False.
-        """
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
-            if line['reconcile_id']:
-                ret[line['id']] = line['reconcile_id']
-            elif line['reconcile_partial_id']:
-                ret[line['id']] = line['reconcile_partial_id']
-            else:
-                ret[line['id']] = False
-        return ret
-
-    _columns = {
-        'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
-        'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
-        # Those fields are for UF-173: Accounting Journals.
-        # Since they are used in the move line view, they are added in Multi-Currency.
-        'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
-        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
-    }
-
-    _defaults = {
-        'debit_currency': 0.0,
-        'credit_currency': 0.0,
-    }
-
     def create_addendum_line(self, cr, uid, lines, total, context={}):
         """
         Create an addendum line
@@ -459,9 +428,9 @@ class account_move_line_compute_currency(osv.osv):
         return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
 
     _columns = {
-        'debit_currency': fields.float('Booking Debit', digits_compute=dp.get_precision('Account')),
-        'credit_currency': fields.float('Booking Credit', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
+        'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'instance': fields.function(_get_instance_type, type='char', string='Proprietary instance', size=64, method=True,

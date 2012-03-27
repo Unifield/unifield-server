@@ -40,7 +40,7 @@ class wizard_import_cheque_lines(osv.osv_memory):
         'supplier_ref': fields.char('Supplier Inv. Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date_maturity': fields.date('Due Date', readonly=True),
-        'date': fields.date('Effective Date', readonly=False, required=True),
+        'date': fields.date('Posting Date', readonly=False, required=True),
         'amount_to_pay': fields.integer('Amount to pay', readonly=True),
         'amount_currency': fields.integer('Amount currency', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),

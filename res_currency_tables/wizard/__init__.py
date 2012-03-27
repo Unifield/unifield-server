@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,23 +19,9 @@
 #
 ##############################################################################
 
-{
-    "name" : "Account override",
-    "version" : "1.0",
-    "author" : "MSF, TeMPO Consulting",
-    "description" : """
-    Add hook to account class, workflow, etc.
-    """,
-    "website": "http://unifield.msf.org",
-    "depends" : ["account", "analytic"],
-    "category" : "Generic Modules/Accounting",
-    "init_xml" : [],
-    "demo_xml" : [],
-    "update_xml" : [
-        'account_invoice_workflow.xml',
-        'account_analytic_line_view.xml',
-    ],
-    'test': [],
-    'installable': True,
-    'active': False,
-}
+import import_currencies
+import warning_import_currencies
+import confirm_import_currencies
+import import_table_currencies
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

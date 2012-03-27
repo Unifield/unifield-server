@@ -37,7 +37,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         'account_id': fields.many2one('account.account', string="Account", required=True),
         'move_id': fields.many2one('account.move', string="Entry sequence", readonly=True),
         'ref': fields.char(string="Reference", size=254, readonly=True),
-        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
+        'journal_id': fields.many2one('account.journal', string="Journal Code", readonly=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'date': fields.date('Posting date', readonly=True),
         # Third Parties Fields - BEGIN
@@ -52,8 +52,8 @@ class journal_items_corrections_lines(osv.osv_memory):
 #            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
 #            help="To use for python code when registering", multi="third_parties_key"),
         # Third Parties fields - END
-        'debit_currency': fields.float('Book. Out', readonly=True),
-        'credit_currency': fields.float('Book. In', readonly=True),
+        'debit_currency': fields.float('Book. Debit', readonly=True),
+        'credit_currency': fields.float('Book. Credit', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
     }
