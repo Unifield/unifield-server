@@ -163,7 +163,7 @@ class account_bank_statement(osv.osv):
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
-            help="Closing balance"),
+            help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank register is equal to that amount."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
@@ -427,6 +427,20 @@ class account_bank_statement(osv.osv):
                 if st_prev_ids:
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
+
+    def button_confirm_closing_bank_balance(self, cr, uid, ids, context=None):
+        """
+        Verify bank register balance before closing it.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for reg in self.browse(cr, uid, ids):
+            # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
+            if reg.balance_end_real != reg.balance_end:
+                raise osv.except_osv(_('Warning'), _('Bank register balance is not equal to Calculated balance.'))
+        return self.button_confirm_closing_balance(cr, uid, ids, context=context)
 
     def button_open_advances(self, cr, uid, ids, context=None):
         """

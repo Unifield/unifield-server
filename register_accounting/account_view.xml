@@ -27,7 +27,7 @@
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank register balance"/>
-                                <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
+                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply" 
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
                                     confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
                             </group>
@@ -141,7 +141,7 @@
                             <field name="state" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
                             <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
-                            <button name="button_confirm_bank" states="open" string="Confirm" type="object" icon="terp-camera_test"/>
+                            <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                         </group>
                     </form>
                 </xpath>
@@ -294,7 +294,7 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                    <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
+                                    <button name="button_confirm_closing_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply" 
                                         colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
                                         confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
                                 </group>
@@ -327,7 +327,7 @@
                         </group>
                         <button name="button_open_cash" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
                         <group name="open_state" colspan="4">
-                            <button name="button_confirm_cash" states="open" string="Close CashBox" icon="gtk-ok" type="object" colspan="2" />
+                            <button name="button_confirm_cash" states="open" string="Close Register" icon="gtk-ok" type="object" colspan="2" />
                         </group>
                     </form>
                 </xpath>
@@ -439,7 +439,7 @@
                     <field name="balance_end_real"/>
                     <field name="state"/>
                     <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
-                    <button name="button_confirm_bank" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
+                    <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                 </tree>
             </field>
         </record>
@@ -461,7 +461,7 @@
                     <field name="balance_end_real"/>
                     <field name="state"/>
                     <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
-                    <button type="object" string="Confirm" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
+                    <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
                 </tree>
             </field>
         </record>
@@ -680,7 +680,7 @@
                         <field name="state" readonly="1"/>
                         <field name="balance_end" readonly="1"/>
                         <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
-                        <button name="button_confirm_cheque" states="open" string="Confirm" type="object" icon="terp-camera_test"/>
+                        <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                     </group>
                 </form>
             </field>
@@ -701,7 +701,7 @@
                     <field name="balance_end" />
                     <field name="state"/>
                     <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
-                    <button name="button_confirm_cheque" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
+                    <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>
         </record>
