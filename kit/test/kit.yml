@@ -480,6 +480,13 @@
     assert len(ids) == 1, 'the number of created purchase order is wrong - 1 - %s'%len(ids)
     context.setdefault('yml_kit', {}).update(po=ids[0])
 -
+  I update the price_unit value of po lines with big values to force trigger the double_validation step
+  the zero value for the threshold is set after the unit tests
+-
+  !python {model: purchase.order.line}: |
+    pol_ids = self.search(cr, uid, [('order_id', '=', context['yml_kit']['po'])], context=context)
+    self.write(cr, uid, pol_ids, {'price_unit': 100000}, context=context)
+-
   I validate the purchase order (1 step only because the replacement function is only available for Validated State (='confirmed'))
 -
   !python {model: purchase.order}: |
