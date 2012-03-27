@@ -97,7 +97,7 @@
           assert line.line_uom_id.id == ref('product.product_uom_unit'), "The UoM of the line is different than the UoM of the PO line"
           # TODO: 
           #assert line.line_confirmed_date == 1, ""
-          assert line.line_shipped_rate == 'no-progressbar', "Shipped rate on the followup is different than the shipped rate of the PO"
+          assert line.line_shipped_rate == 0.00, "Shipped rate on the followup is different than the shipped rate of the PO"
           assert not line.move_product_id, "Product of the move is displayed"
           assert not line.move_product_qty, "Product of the move is displayed"
           assert not line.move_uom_id, "Product of the move is displayed"
