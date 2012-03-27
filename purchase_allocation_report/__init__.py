@@ -19,31 +19,7 @@
 #
 ##############################################################################
 
-{
-    "name": "Procurement Report",
-    "version": "1.0",
-    "depends": ["base", "product", "procurement", "stock", "procurement_auto", "procurement_cycle", "stock_schedule",],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Warehouse/Reporting",
-    "description": """
-    This modoule adds a report to give a qucik and easy overview of the user on the split
-    of the replenishment rules within categories and products, to identify easily the item
-    without any replenishment rules...
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'procurement_report_view.xml',
-        'procurement_batch_data.xml',
-        'procurement_batch_view.xml',
-        'security/ir.model.access.csv',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import purchase_allocation_report
+import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -63,6 +63,9 @@ class account_move_line(osv.osv):
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
                             line_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                        # Update value if we come from a write-off
+                        if obj_line.is_write_off:
+                            line_vals.update({'from_write_off': True,})
                         # Add source_date value for account_move_line that are a correction of another account_move_line
                         if obj_line.corrected_line_id and obj_line.source_date:
                             line_vals.update({'source_date': obj_line.source_date})

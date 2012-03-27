@@ -33,6 +33,7 @@
     "depends" : [
         "base",
         "product",
+        "partner_modification",
     ],
     "update_xml": [
         "partner_view.xml",

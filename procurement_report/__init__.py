@@ -20,5 +20,6 @@
 ##############################################################################
 
 import procurement_report
+import procurement_batch
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

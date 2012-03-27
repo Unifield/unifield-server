@@ -20,26 +20,25 @@
 ##############################################################################
 
 {
-    "name": "Procurement Report",
+    "name": "Purchase order allocation report",
     "version": "1.0",
-    "depends": ["base", "product", "procurement", "stock", "procurement_auto", "procurement_cycle", "stock_schedule",],
+    "depends": ["base", "purchase", "analytic_distribution_supply", "purchase_override", "delivery_mechanism"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
-    "category": "Warehouse/Reporting",
+    "category": "Tools",
     "description": """
-    This modoule adds a report to give a qucik and easy overview of the user on the split
-    of the replenishment rules within categories and products, to identify easily the item
-    without any replenishment rules...
+    This module aims to add a purchase order allocation report.
     """,
     "init_xml": [
     ],
     'update_xml': [
-        'procurement_report_view.xml',
-        'procurement_batch_data.xml',
-        'procurement_batch_view.xml',
-        'security/ir.model.access.csv',
+        "purchase_allocation_report_view.xml",
+        "purchase_allocation_report_report.xml",
+        "security/ir.model.access.csv",
     ],
     'demo_xml': [
+    ],
+    'test': [
     ],
     'installable': True,
     'active': False,

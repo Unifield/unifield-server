@@ -102,6 +102,17 @@ class res_partner(osv.osv):
         'partner_type': lambda *a: 'external',
     }
     
+    def on_change_partner_type(self, cr, uid, ids, partner_type):
+        '''
+        Change the procurement method according to the partner type
+        '''
+        r = {'po_by_project': 'project'}
+        
+        if not partner_type or partner_type in ('external', 'internal'):
+            r.update({'po_by_project': 'all'})
+        
+        return {'value': r}
+    
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list

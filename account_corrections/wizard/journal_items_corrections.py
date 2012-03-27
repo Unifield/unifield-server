@@ -73,44 +73,46 @@ class journal_items_corrections_lines(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0], context=context).wizard_id
         context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': wiz.id or False})
         # Get distribution
+        distrib_id = False
         if wiz and wiz.move_line_id and wiz.move_line_id.analytic_distribution_id:
             distrib_id = wiz.move_line_id.analytic_distribution_id.id or False
-        if distrib_id:
-            # Prepare values
-            company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-            currency = wiz.move_line_id.currency_id and wiz.move_line_id.currency_id.id or company_currency
-            amount = wiz.move_line_id.amount_currency and wiz.move_line_id.amount_currency or 0.0
-            vals = {
-                'total_amount': amount,
-                'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
-                'currency_id': currency or False,
-                'state': 'dispatch',
-                'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
-                'distribution_id': distrib_id,
-                'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
-                'date': wiz.date or strftime('%Y-%m-%d'),
-            }
-            # Create the wizard
-            wiz_obj = self.pool.get('analytic.distribution.wizard')
-            wiz_id = wiz_obj.create(cr, uid, vals, context=context)
-            # Change wizard state to 'correction' in order to display mandatory fields
-            wiz_obj.write(cr, uid, [wiz_id], {'state': 'correction'}, context=context)
-            # Update some context values
-            context.update({
-                'active_id': ids[0],
-                'active_ids': ids,
-            })
-            # Open it!
-            return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'analytic.distribution.wizard',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'res_id': [wiz_id],
-                    'context': context,
-            }
-        return False
+        if not distrib_id:
+            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+            self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': distrib_id})
+        # Prepare values
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = wiz.move_line_id.currency_id and wiz.move_line_id.currency_id.id or company_currency
+        amount = wiz.move_line_id.amount_currency and wiz.move_line_id.amount_currency or 0.0
+        vals = {
+            'total_amount': amount,
+            'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+            'distribution_id': distrib_id,
+            'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
+            'date': wiz.date or strftime('%Y-%m-%d'),
+        }
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Change wizard state to 'correction' in order to display mandatory fields
+        wiz_obj.write(cr, uid, [wiz_id], {'state': 'correction'}, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
 
 journal_items_corrections_lines()
 

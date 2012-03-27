@@ -32,6 +32,7 @@ class order(report_sxw.rml_parse):
             'get_line_tax': self._get_line_tax,
             'get_tax': self._get_tax,
             'get_product_code': self._get_product_code,
+            'get_company_addr': self._get_company_address,
         })
     def _get_line_tax(self, line_obj):
         self.cr.execute("SELECT tax_id FROM purchase_order_taxe WHERE order_line_id=%s", (line_obj.id))
@@ -76,6 +77,10 @@ class order(report_sxw.rml_parse):
     def _get_product_code(self, product_id, partner_id):
         product_obj=pooler.get_pool(self.cr.dbname).get('product.product')
         return product_obj._product_code(self.cr, self.uid, [product_id], name=None, arg=None, context={'partner_id': partner_id})[product_id]
+    
+    def _get_company_address(self, partner_id):
+        addr = self.pool.get('res.partner').address_get(self.cr, self.uid, partner_id, ['default'])['default']
+        return self.pool.get('res.partner.address').browse(self.cr, self.uid, addr)
 
 report_sxw.report_sxw('report.purchase.msf.order','purchase.order','addons/purchase_msf/report/order.rml',parser=order)
 
