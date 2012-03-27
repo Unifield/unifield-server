@@ -28,7 +28,7 @@
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group[1]/field[@name='user_id']" position='after'>
+                    <xpath expr="/search/group[1]/field[@name='account_id']" position='after'>
                         <field name="is_reallocated"/>
                     </xpath>
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
@@ -49,7 +49,7 @@
                 <data>
                     <xpath expr="/tree/field[@name='account_id']" position='replace'>
                         <field name="account_id" string="Funding Pool"/>
-                        <field name="cost_center_id" string="Cost Center"/>
+                        <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     </xpath>
                 </data>
             </field>
@@ -63,6 +63,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_account_analytic_line_tree"/>
             <field name="domain">[('cost_center_id', '!=', False)]</field>
+            <field name="context">{'display_fp': True}</field>
         </record>
 
     <!-- Action for Analytic Journal Items (COST CENTER) -->
@@ -72,7 +73,27 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('cost_center_id', '=', False)]</field>
+            <field name="domain">[('cost_center_id', '=', False), ('account_id.category', '=', 'OC')]</field>
+        </record>
+
+    <!-- Action for Analytic Journal Items (FREE 1) -->
+        <record id="action_account_analytic_free_1_line" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items (F1)</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
+            <field name="domain">[('cost_center_id', '=', False), ('account_id.category', '=', 'FREE1')]</field>
+        </record>
+
+    <!-- Action for Analytic Journal Items (FREE 2) -->
+        <record id="action_account_analytic_free_2_line" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items (F2)</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
+            <field name="domain">[('cost_center_id', '=', False), ('account_id.category', '=', 'FREE2')]</field>
         </record>
 
     <!-- Menu for Analytic Journal Items -->
@@ -80,6 +101,10 @@
             id="account.account_analytic_journal_entries" parent="account.menu_finance_entries"/>
         <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_cost_center_line" 
             id="account_analytic_journal_cost_center_entries" parent="account.menu_finance_entries"/>
+        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_1_line" 
+            id="account.account_analytic_journal_free_1_entries" parent="account.menu_finance_entries"/>
+        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_2_line" 
+            id="account_analytic_journal_free_2_entries" parent="account.menu_finance_entries"/>
 
     </data>
 </openerp>
