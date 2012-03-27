@@ -24,6 +24,8 @@
 from osv import osv
 from osv import fields
 import time
+from tools.translate import _
+
 
 class wizard_costcenter_distribution(osv.osv_memory):
     _inherit = 'wizard.costcenter.distribution'

@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from mx.DateTime import *
 from lxml import etree
+from tools.translate import _
 
 import time
 

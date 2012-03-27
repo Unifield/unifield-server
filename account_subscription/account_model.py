@@ -23,6 +23,7 @@ from osv import fields, osv
 import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from tools.translate import _
 
 class account_model_line(osv.osv):
     _name = "account.model.line"
