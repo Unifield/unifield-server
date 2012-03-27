@@ -34,6 +34,11 @@ class analytic_line(osv.osv):
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
+        'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
+    }
+
+    _defaults = {
+        'from_write_off': lambda *a: False,
     }
 
     def _check_date(self, cr, uid, vals, context={}):

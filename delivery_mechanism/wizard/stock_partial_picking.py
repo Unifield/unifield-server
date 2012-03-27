@@ -105,15 +105,21 @@ class stock_partial_picking(osv.osv_memory):
                                 # should not be reached thanks to UI checks
                                 raise osv.except_osv(_('Error !'), _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...'))
                 # fill partial data
-                partial_datas[pick.id].setdefault(move.move_id.id, []).append({'name': move.product_id.partner_ref,
-                                                                               'product_id': move.product_id.id,
-                                                                               'product_qty': move.quantity,
-                                                                               'product_uom': move.product_uom.id,
-                                                                               'prodlot_id': prodlot_id,
-                                                                               'asset_id': move.asset_id.id,
-                                                                               'force_complete': move.force_complete,
-                                                                               'change_reason': move.change_reason,
-                                                                               })
+                values = {'name': move.product_id.partner_ref,
+			  'product_id': move.product_id.id,
+                          'product_qty': move.quantity,
+                          'product_uom': move.product_uom.id,
+                          'prodlot_id': prodlot_id,
+                          'asset_id': move.asset_id.id,
+                          'force_complete': move.force_complete,
+                          'change_reason': move.change_reason,
+                          }
+                # average computation from original openerp
+                if (picking_type == 'in') and (move.product_id.cost_method == 'average'):
+                    values.update({'product_price' : move.cost,
+                                   'product_currency': move.currency.id,
+                                   })
+                partial_datas[pick.id].setdefault(move.move_id.id, []).append(values)
             # treated moves
             move_ids = partial_datas[pick.id].keys()
             # all moves
@@ -122,15 +128,21 @@ class stock_partial_picking(osv.osv_memory):
             missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             # missing moves (deleted memory moves) are replaced by a corresponding partial with qty 0
             for missing_move in move_obj.browse(cr, uid, missing_move_ids, context=context):
-                partial_datas[pick.id].setdefault(missing_move.id, []).append({'name': move.product_id.partner_ref,
-                                                                               'product_id': missing_move.product_id.id,
-                                                                               'product_qty': 0,
-                                                                               'product_uom': missing_move.product_uom.id,
-                                                                               'prodlot_id': False,
-                                                                               'asset_id': False,
-                                                                               'force_complete': False,
-                                                                               'change_reason': False,
-                                                                               })
+                values = {'name': move.product_id.partner_ref,
+			  'product_id': missing_move.product_id.id,
+                          'product_qty': 0,
+                          'product_uom': missing_move.product_uom.id,
+                          'prodlot_id': False,
+                          'asset_id': False,
+                          'force_complete': False,
+                          'change_reason': False,
+                          }
+                # average computation from original openerp
+                if (picking_type == 'in') and (missing_move.product_id.cost_method == 'average'):
+                    values.update({'product_price' : missing_move.product_id.standard_price,
+                                   'product_currency': missing_move.product_id.company_id and missing_move.product_id.company_id.currency_id and missing_move.product_id.company_id.currency_id.id or False,
+                                   })
+                partial_datas[pick.id].setdefault(missing_move.id, []).append(values)
             
         # integrity check on wizard data
         if not self.integrity_check_do_incoming_shipment(cr, uid, ids, partial_datas, context=context):

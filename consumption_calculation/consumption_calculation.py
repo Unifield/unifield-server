@@ -179,11 +179,16 @@ class real_average_consumption(osv.osv):
                 return {'type': 'ir.actions.close_window'}
             line_obj._check_qty(cr, uid, [x.id for x in rac.line_ids])
 
+        partner_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+        addresses = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
+        address_id = addresses.get('delivery') or addresses.get('default')
 
         for rac in self.browse(cr, uid, ids, context=context):
             date = '%s %s'%(rac.period_to, time.strftime('%H:%M:%S'))
             picking_id = self.pool.get('stock.picking').create(cr, uid, {'name': 'OUT-%s' % rac.name,
                                                                          'origin': rac.name,
+                                                                         'partner_id': partner_id,
+                                                                         'address_id': address_id,
                                                                          'type': 'out',
                                                                          'subtype': 'standard',
                                                                          'state': 'auto',

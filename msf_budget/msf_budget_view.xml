@@ -175,9 +175,47 @@
             <field name="target">new</field>
         </record>
 
+
+		<!-- Menu Item: Analytic Accounts which displays only Cost Center, and not allow: delete, new, edit
+		hide_new_button="1" hide_delete_button="1"
+		 -->
+        
         <menuitem parent="next_id_31"
             action="action_wizard_budget_import"
             id="menu_action_wizard_budget_import"  sequence="2"/>
+
+
+        <record id="view_account_analytic_account_budget_tree" model="ir.ui.view">
+            <field name="name">account.analytic.account.budget.tree</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="domain">[('category','=','OC')]</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="arch" type="xml">
+                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts" 
+                 toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="description"/>
+                    <field name="category"/>
+                    <field name="type" />
+                    <field name="date_start"/>
+                    <field name="date"/>
+                    <field name="parent_id" invisible="1"/>
+                    <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" context="context"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_account_analytic_account_budget_form" model="ir.actions.act_window">
+            <field name="name">Analytic Accounts</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="view_id" ref="view_account_analytic_account_budget_tree"/>
+            <field name="domain">[('category','=','OC')]</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
+        </record>
+
+        <menuitem action="action_account_analytic_account_budget_form" id="menu_action_account_analytic_account_budget_form" parent="next_id_31" />
 
     </data>
 </openerp>

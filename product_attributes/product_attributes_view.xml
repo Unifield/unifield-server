@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    
+
+        <record model="ir.ui.view" id="product_account_no_sales_tax">
+            <field name="name">product.normal.form</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="account.product_normal_form_view" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<data>            
+            		<xpath expr="//page[@string='Accounting']//group[2]" position="replace" >
+						<group colspan="2">
+	                        <separator string="Purchase Taxes" colspan="4"/>
+	                        <field name="supplier_taxes_id" nolabel="1" colspan="4" attrs="{'readonly':[('purchase_ok','=',0)]}"/>
+	                    </group>
+            		</xpath>
+            	</data>
+            </field>
+        </record>
+
         <record id="product.product_normal_form_view" model="ir.ui.view">
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>
@@ -171,6 +188,7 @@
                         </page>
                     </notebook>
                 </form>
+                
             </field>
         </record>
         
@@ -237,7 +255,7 @@
             <field name="inherit_id" ref="product.product_normal_form_view" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <data/>
+            	<data/>
             </field>
         </record>
 
