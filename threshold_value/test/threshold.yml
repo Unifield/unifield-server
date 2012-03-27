@@ -4,50 +4,62 @@
   the scheduler and check if a procurement order is created or
   not
 -
-  I create a threshold rule for product1
+  I create a threshold rule for product1/2/5/8/9/11
 -
   !record {model: threshold.value, id: threshold1}:
     name: Threshold1
-    product_id: product1
-    uom_id: product.product_uom_unit
     location_id: stock.stock_location_stock
-    threshold_value: 0.00
-    threshold_manual_ok: False
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
+    compute_method: computed
+    consumption_method: amc
     frequency: 3.00
     safety_month: 1.00
     lead_time: 1.50
     supplier_lt: False
+    line_ids:
+      - product_id: product1
+        product_uom_id: product.product_uom_unit
+      - product_id: product2
+        product_uom_id: product.product_uom_unit
+      - product_id: product5
+        product_uom_id: product.product_uom_unit
+      - product_id: product8
+        product_uom_id: product.product_uom_unit
+      - product_id: product9
+        product_uom_id: product.product_uom_unit
+      - product_id: product11
+        product_uom_id: product.product_uom_unit
 -
-  I run the scheduler
+  Update the period of consumption
 -
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
-- 
-  I check if a procurement order was created
+  !python {model: threshold.value}: |
+    import datetime
+    from dateutil.relativedelta import relativedelta
+    self.write(cr, uid, [ref('threshold1')], {'consumption_period_from': (datetime.datetime.today() + relativedelta(day=1, months=-2)).strftime('%Y-%m-%d'), 
+                                              'consumption_period_to': (datetime.datetime.today() + relativedelta(day=1, days=-1, months=1)).strftime('%Y-%m-%d')})
 -
-  !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1')], context=context)
-    assert res_ids, "No procurement created for product 1"
-    res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 1"
--
-  I create a threshold rule for product2
+  I create a threshold rule for product3/4/6/7
 -
   !record {model: threshold.value, id: threshold2}:
     name: Threshold2
-    product_id: product2
-    uom_id: product.product_uom_unit
     location_id: stock.stock_location_stock
-    threshold_value: 0.00
-    threshold_manual_ok: False
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
+    compute_method: fixed
+    line_ids:
+      - product_id: product3
+        product_uom_id: product.product_uom_unit
+        fixed_threshold_value: 250
+        fixed_product_qty: 500
+      - product_id: product4
+        product_uom_id: product.product_uom_unit
+        fixed_threshold_value: 250
+        fixed_product_qty: 75
+      - product_id: product6
+        product_uom_id: product.product_uom_unit
+        fixed_threshold_value: 250
+        fixed_product_qty: 150
+      - product_id: product7
+        product_uom_id: product.product_uom_unit
+        fixed_threshold_value: 250
+        fixed_product_qty: 150
 -
   I run the scheduler
 -
@@ -57,233 +69,75 @@
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold2')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1'), ('product_id', '=', ref('product1'))], context=context)
+    assert res_ids, "No procurement created for product 1"
+    res = self.browse(cr, uid, res_ids[0], context=context)
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Product 1 (Expected 175.00 :: %s)" % res.product_qty
+- 
+  I check if a procurement order was created
+-
+  !python {model: procurement.order}: |
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1'), ('product_id', '=', ref('product2'))], context=context)
     assert not res_ids, "Procurement created for product 2"
--
-  I create a threshold rule for product3
--
-  !record {model: threshold.value, id: threshold3}:
-    name: Threshold3
-    product_id: product3
-    uom_id: product.product_uom_unit
-    location_id: stock.stock_location_stock
-    threshold_value: 250.0
-    threshold_manual_ok: True
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold3')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold2'), ('product_id', '=', ref('product3'))], context=context)
     assert not res_ids, "Procurement created for product 3"
--
-  I create a threshold rule for product4
--
-  !record {model: threshold.value, id: threshold4}:
-    name: Threshold4
-    product_id: product4
-    uom_id: product.product_uom_unit
-    location_id: stock.stock_location_stock
-    threshold_value: 250.00
-    threshold_manual_ok: True
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold4')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold2'), ('product_id', '=', ref('product4'))], context=context)
     assert res_ids, "No procurement created for product 4"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 75.00, "Bad quantity on procurement order for Threshold 4"
--
-  I create a threshold rule for product5
--
-  !record {model: threshold.value, id: threshold5}:
-    name: Threshold5
-    product_id: product5
-    uom_id: product.product_uom_unit
-    location_id: stock.stock_location_stock
-    threshold_value: 0.00
-    threshold_manual_ok: False
-    qty_to_order: 150.00
-    qty_order_manual_ok: True
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
+    assert res.product_qty == 75.00, "Bad quantity on procurement order for Product 4 (Expected 75.00 :: %s)" % res.product_qty
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold5')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1'), ('product_id', '=', ref('product5'))], context=context)
     assert res_ids, "No procurement created for product 5"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 5"
--
-  I create a threshold rule for product6
--
-  !record {model: threshold.value, id: threshold6}:
-    name: Threshold6
-    product_id: product6
-    uom_id: product.product_uom_unit
-    location_id: stock.stock_location_stock
-    threshold_value: 250.00
-    threshold_manual_ok: True
-    qty_to_order: 150.00
-    qty_order_manual_ok: True
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Product 5 (Expected 175.00 :: %s)" % res.product_qty
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold6')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold2'), ('product_id', '=', ref('product6'))], context=context)
     assert res_ids, "No procurement created for product 6"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 6"
--
-  I create a threshold rule for product7
--
-  !record {model: threshold.value, id: threshold7}:
-    name: Threshold7
-    product_id: product7
-    uom_id: product.product_uom_unit
-    location_id: stock.stock_location_stock
-    threshold_value: 250.00
-    threshold_manual_ok: True
-    qty_to_order: 150.00
-    qty_order_manual_ok: True
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
+    assert res.product_qty == 150.00, "Bad quantity on procurement order for Product 6 (Expected 150.00 :: %s)" % res.product_qty
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold7')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold2'), ('product_id', '=', ref('product7'))], context=context)
     assert not res_ids, "Procurement created for product 7"
--
-  I create a threshold rule for product8
--
-  !record {model: threshold.value, id: threshold8}:
-    name: Threshold8
-    product_id: product8
-    uom_id: product.product_uom_unit
-    location_id: stock.stock_location_stock
-    threshold_value: 0.00
-    threshold_manual_ok: False
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: True
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold8')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1'), ('product_id', '=', ref('product8'))], context=context)
     assert res_ids, "No procurement created for product 8"
     res = self.browse(cr, uid, res_ids[0], context=context)
-    assert res.product_qty == 150.00, "Bad quantity on procurement order for Threshold 8"
--
-  I create a threshold rule for product9
--
-  !record {model: threshold.value, id: threshold9}:
-    name: Threshold9
-    category_id: cat1
-    location_id: stock.stock_location_stock
-    threshold_value: 250.00
-    threshold_manual_ok: True
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Product 8 (Expected 175.00 :: %s)" % res.product_qty
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold9')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1'), ('product_id', '=', ref('product9'))], context=context)
     assert len(res_ids) == 1, "Too procurement created for threshold 9"
     res = self.browse(cr, uid, res_ids[0], context=context)
     assert res.product_id.id == ref('product9'), "No procurement created for product 9"
-    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 9"
--
-  I create a threshold rule for product11
--
-  !record {model: threshold.value, id: threshold11}:
-    name: Threshold11
-    category_id: cat2
-    location_id: stock.stock_location_stock
-    threshold_value: 0.00
-    threshold_manual_ok: False
-    qty_to_order: 0.00
-    qty_order_manual_ok: False
-    frequency: 3.00
-    safety_month: 1.00
-    lead_time: 1.50
-    supplier_lt: False
--
-  I run the scheduler
--
-  !python {model: procurement.order}: |
-    self.run_threshold_value(cr, uid, False, context={})
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Product 9 (Expected 175.00 :: %s)" % res.product_qty
 - 
   I check if a procurement order was created
 -
   !python {model: procurement.order}: |
-    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold11')], context=context)
+    res_ids = self.search(cr, uid, [('name', '=', 'Threshold value: Threshold1'), ('product_id', '=', ref('product11'))], context=context)
     assert len(res_ids) == 1, "Too procurement created for threshold 11"
     res = self.browse(cr, uid, res_ids[0], context=context)
     assert res.product_id.id == ref('product11'), "Bad product on procurement order for Threshold 11"
-    assert res.product_qty == 175.00, "Bad quantity on procurement order for Threshold 1"
+    assert res.product_qty == 175.00, "Bad quantity on procurement order for Product 11 (Expected 175.00 :: %s)" % res.product_qty
