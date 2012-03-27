@@ -27,9 +27,9 @@
     past_consumption: 0
     reviewed_consumption: 1
     manual_consumption: 0.00
-    category_id: product_cat1
     product_ids: 
-      - product3
+      - product1
+      - product2
 -
   We create a new rule for P3 in Sloc2
 -
@@ -45,8 +45,8 @@
     past_consumption: 0
     reviewed_consumption: 1
     manual_consumption: 70.00
-    category_id: product_cat1
-    product_id: product3
+    product_ids: 
+      - product3
 -
   We create a new rule for Categ2 on Sloc2
 -
@@ -61,7 +61,8 @@
     safety_stock: 0
     past_consumption: 1
     reviewed_consumption: 0
-    category_id: product_cat2
+    product_ids:
+      - product4
 -
   We create a new rule for Categ 1 on Sloc1
 -
@@ -77,7 +78,10 @@
     past_consumption: 0
     reviewed_consumption: 1
     manual_consumption: 0.00
-    category_id: product_cat1
+    product_ids:
+      - product1
+      - product2
+      - product3
 -
   We run the scheduler
 -
