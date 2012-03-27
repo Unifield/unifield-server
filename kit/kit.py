@@ -1324,7 +1324,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
         # data
-        name = _("Theoretical Kit Selection")
+        name = _("Replacement Items Selection")
         model = 'kit.selection'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
@@ -1355,12 +1355,13 @@ class purchase_order_line(osv.osv):
             result[obj.id] = {'kit_pol_check': False}
             # we want the possibility to explose the kit within the purchase order
             # - the product is a kit AND
-            # - at least one theoretical kit exists for this product
+            # - at least one theoretical kit exists for this product - is displayed anyway, because the user can now add products not from the theoretical template
             product = obj.product_id
             if product.type == 'product' and product.subtype == 'kit':
-                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
-                if kit_ids:
-                    result[obj.id].update({'kit_pol_check': True})
+                result[obj.id].update({'kit_pol_check': True})
+#                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
+#                if kit_ids:
+#                    result[obj.id].update({'kit_pol_check': True})
         return result
     
     _columns = {'kit_pol_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals'),

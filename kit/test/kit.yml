@@ -511,10 +511,11 @@
         c = res['context']
         context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
-  I select the theoretical kit - kit_compo_03 and validate the decomposition
+  I select the theoretical kit - kit_compo_03, import the items and validate the decomposition
 -
   !python {model: kit.selection}: |
     self.write(cr, uid, context['wizard']['ids'], {'kit_id': ref("kit_compo_03")}, context=context)
+    self.import_items(cr, uid, context['wizard']['ids'], context=context)
     self.do_de_kitting(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
 -
   I check the purchase order line after replacement - 100 kit_product_C at arrival

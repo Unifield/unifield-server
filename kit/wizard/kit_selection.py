@@ -28,16 +28,38 @@ import netsvc
 
 class kit_selection(osv.osv_memory):
     '''
-    wizard called to confirm an action
+    kit selection
     '''
     _name = "kit.selection"
     _columns = {'product_id': fields.many2one('product.product', string='Kit Product', readonly=True),
-                'kit_id': fields.many2one('composition.kit', string='Theoretical Kit', required=True),
-                'question': fields.text(string='Question', readonly=True),
+                'kit_id': fields.many2one('composition.kit', string='Theoretical Kit'),
+                'order_line_id_kit_selection': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+                'product_ids_kit_selection': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_line', string='Replacement Products'),
                 }
     
     _defaults = {'product_id': lambda s, cr, uid, c: c.get('product_id', False),
-                 'question': lambda s, cr, uid, c: c.get('question', False)}
+                 'order_line_id_kit_selection': lambda s, cr, uid, c: c.get('active_ids') and c.get('active_ids')[0] or False,
+                 }
+    
+    def import_items(self, cr, uid, ids, context=None):
+        '''
+        import lines into product_ids_kit_selection
+        '''
+        # objects
+        line_obj = self.pool.get('kit.selection.line')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not obj.kit_id:
+                raise osv.except_osv(_('Warning !'), _('A theoretical version should be selected.'))
+            for item in obj.kit_id.composition_item_ids:
+                values = {'order_line_id_kit_selection_line': obj.order_line_id_kit_selection.id,
+                          'wizard_id_kit_selection_line': obj.id,
+                          'product_id_kit_selection_line': item.item_product_id.id,
+                          'qty_kit_selection_line': item.item_qty,
+                          'uom_id_kit_selection_line': item.item_uom_id.id,
+                          }
+                line_obj.create(cr, uid, values, context=context)
+        return True
 
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
@@ -53,10 +75,16 @@ class kit_selection(osv.osv_memory):
         pol_id = context['active_ids'][0]
         pol = pol_obj.browse(cr, uid, pol_id, context=context)
         for obj in self.browse(cr, uid, ids, context=context):
-            if not obj.kit_id:
-                raise osv.except_osv(_('Warning !'), _('A theoretical version should be selected.'))
-            # for each item from the theoretical kit
-            for item_v in obj.kit_id.composition_item_ids:
+            if not len(obj.product_ids_kit_selection):
+                raise osv.except_osv(_('Warning !'), _('Replacement Items must be selected.'))
+            # for each item from the product_ids_kit_selection
+            for item_v in obj.product_ids_kit_selection:
+                # selected product_id
+                product_id = item_v.product_id_kit_selection_line.id
+                # selected qty
+                qty = item_v.qty_kit_selection_line
+                # selected uom
+                uom_id = item_v.uom_id_kit_selection_line.id
                 # pricelist from purchase order
                 pricelist_id = pol.order_id.pricelist_id.id
                 # partner_id from purchase order
@@ -68,15 +96,16 @@ class kit_selection(osv.osv_memory):
                 # date_planned from purchase order line
                 date_planned = pol.date_planned
                 # gather default values
-                data = pol_obj.product_id_change(cr, uid, ids, pricelist=pricelist_id, product=item_v.item_product_id.id, qty=item_v.item_qty, uom=item_v.item_uom_id.id,
+                data = pol_obj.product_id_change(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
                                                  partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
                                                  name=False, price_unit=0.0, notes=False)
-                # copy original purchase order line
-                data['value'].update({'product_id': item_v.item_product_id.id, 'product_qty': pol.product_qty*item_v.item_qty})
-                p_values = {'product_id': item_v.item_product_id.id,
-                            'product_qty': pol.product_qty*item_v.item_qty,
+                # copy original purchase order line # deprecated
+                data['value'].update({'product_id': product_id, 'product_qty': pol.product_qty*qty})
+                # create a new pol
+                p_values = {'product_id': product_id,
+                            'product_qty': pol.product_qty*qty,
                             'price_unit': data['value']['price_unit'],
-                            'product_uom': item_v.item_uom_id.id,
+                            'product_uom': uom_id,
                             'default_code': data['value']['default_code'],
                             'name': data['value']['name'],
                             'date_planned': pol.date_planned,
@@ -94,3 +123,35 @@ class kit_selection(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
     
 kit_selection()
+
+
+class kit_selection_line(osv.osv_memory):
+    '''
+    substitute items
+    '''
+    _name = 'kit.selection.line'
+    
+    def on_change_product_id(self, cr, uid, ids, product_id, context=None):
+        '''
+        on change
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        # default value
+        result = {'value': {'qty_kit_selection_line': 0.0, 'uom_id_kit_selection_line': False}}
+        if product_id:
+            uom_id = prod_obj.browse(cr, uid, product_id, context=context).uom_id.id
+            result['value'].update({'uom_id_kit_selection_line': uom_id})
+        return result
+    
+    _columns = {'order_line_id_kit_selection_line': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+                'wizard_id_kit_selection_line': fields.many2one('kit.selection', string='Kit Selection wizard'),
+                # data
+                'product_id_kit_selection_line': fields.many2one('product.product', string='Product', required=True),
+                'qty_kit_selection_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'uom_id_kit_selection_line': fields.many2one('product.uom', string='UoM', required=True),
+                }
+    
+kit_selection_line()
+
+

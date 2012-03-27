@@ -51,7 +51,10 @@
                     					domain="[('product_id', '=', product_id),('check_type','=', True)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)]}" />
                     				<field name="expired_date" />
-                    				<field name="location_id" attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}" />
+                    				<field name="location_id"
+                    					attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}"
+                    					context="{'product_id':product_id, 'prodlot_id': prodlot_id, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}"
+                    					domain="[('usage', '=', 'internal')]" />
                     				<field name="state" />
                     				<field name="lot_check" />
 	                   				<field name="exp_check" />
@@ -126,7 +129,9 @@
             		<field name="total_qty_to_consume" />
             		<field name="uom_id_to_consume"
             			on_change="on_change_uom_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_to_consume, location_src_id_to_consume, context)" />
-            		<field name="location_src_id_to_consume" attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('state', '!=', 'in_production')]}" />
+            		<field name="location_src_id_to_consume"
+            			attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('state', '!=', 'in_production')]}"
+            			context="{'product_id':product_id_to_consume, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}" />
             		<field name="qty_available_to_consume" />
             		<field name="availability_to_consume" invisible="True" />
             		<field name="state" invisible="True" />
