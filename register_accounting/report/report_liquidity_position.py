@@ -61,9 +61,9 @@ class report_liquidity_position(report_sxw.report_sxw):
                                                                      context=date_context)
             register_values = [[register.journal_id.code,
                                 register.journal_id.name,
-                                register.balance_end,
+                                int(round(register.balance_end)),
                                 register.journal_id.currency.name,
-                                converted_end_balance,
+                                int(round(converted_end_balance)),
                                 functional_currency.name]]
             data += register_values
         

@@ -33,11 +33,11 @@ class report_cheque_inventory(report_sxw.report_sxw):
 
     def create(self, cr, uid, ids, data, context=None):
         # Create the header
-        header = [['Register Code', 'Register Name', 'Register Period', 'Register State', 'Posting Date', 'Document Date', 'Cheque Number', 'Sequence', 'Description', 'Reference', 'Account', 'Third Parties', 'Amount Out', 'Currency']]
+        header = [['Register Name', 'Register Period', 'Register State', 'Posting Date', 'Document Date', 'Cheque Number', 'Sequence', 'Description', 'Reference', 'Account', 'Third Parties', 'Amount Out', 'Currency']]
         
         # retrieve a big sql query with all information
         sql_posted_moves = """
-            SELECT DISTINCT abs.code, abs.name, ap.name, abs.state,
+            SELECT DISTINCT abs.name, ap.name, abs.state,
                    st.date, st.document_date, st.cheque_number,
                    st.sequence_for_reference, st.name, st.ref,
                    ac.code || ' ' || ac.name as account_name,

@@ -160,7 +160,7 @@
           <para style="P13">Register name: [[ o.name ]]</para>
         </td>11
         <td>
-          <para style="P13">Register code: [[ o.code ]]</para>
+          <para style="P13"> </para>
         </td>
         <td>
           <para style="P13">Journal code: [[ o.journal_id and o.journal_id.code or '' ]]</para>
