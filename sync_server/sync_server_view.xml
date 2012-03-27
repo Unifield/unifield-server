@@ -3,6 +3,21 @@
     <data>
 <!-- =========================UPDATE=============================== -->
 
+        <record model="ir.ui.view" id="update_search_view">
+            <field name="name">update.search</field>
+            <field name="model">sync.server.update</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Synchronization Monitor">
+                    <field name="create_date"/>
+                    <field name="sequence"/>
+                    <newline/>
+                    <field name="rule_id"/>
+                    <field name="model"/>
+                </search>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="update_tree_view">
             <field name="name">update.tree</field>
             <field name="model">sync.server.update</field>
@@ -15,6 +30,37 @@
                     <field name="rule_id"/>
                     <field name="model"/>
                 </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="update_form_view">
+            <field name="name">update.form</field>
+            <field name="model">sync.server.update</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Synchronization Monitor">
+                    <group colspan="4" col="6">
+                        <field name="rule_id"/>
+                        <field name="source"/>
+                        <field name="model"/>
+                        <field name="sequence"/>
+                        <field name="create_date"/>
+                        <field name="version"/>
+                        <field name="session_id"/>
+                    </group>
+                    <group colspan="2" col="1">
+                        <separator string="Pulled by"/>
+                        <field name="puller_ids" nolabel="1"/>
+                    </group>
+                    <group colspan="2" col="1">
+                        <separator string="Fields"/>
+                        <field name="fields" nolabel="1"/>
+                    </group>
+                    <group colspan="4" col="1">
+                        <separator string="Values"/>
+                        <field name="values" nolabel="1"/>
+                    </group>
+                </form>
             </field>
         </record>
 
@@ -135,3 +181,7 @@
         
     </data>
 </openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+-->
+
