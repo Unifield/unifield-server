@@ -58,7 +58,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
     }
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Open an analytic distribution wizard
         """
@@ -130,7 +130,7 @@ class journal_items_corrections(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
-    def onchange_date(self, cr, uid, ids, date, context={}):
+    def onchange_date(self, cr, uid, ids, date, context=None):
         """
         Write date on this wizard.
         NB: this is essentially for analytic distribution correction wizard
@@ -144,7 +144,7 @@ class journal_items_corrections(osv.osv_memory):
             return False
         return self.write(cr, uid, ids, {'date': date}, context=context)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Fill in all elements in our wizard with given move_line_id field
         """
@@ -178,7 +178,7 @@ class journal_items_corrections(osv.osv_memory):
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
         return res
 
-    def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context={}):
+    def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context=None):
         """
         Compare an account move line to a wizard journal items corrections lines regarding 3 fields:
          - account_id (1)
@@ -212,7 +212,7 @@ class journal_items_corrections(osv.osv_memory):
             res += 4
         return res
 
-    def action_reverse(self, cr, uid, ids, context={}):
+    def action_reverse(self, cr, uid, ids, context=None):
         """
         Do a reverse from the lines attached to this wizard
         NB: The reverse is done on the first correction journal found (type = 'correction')
@@ -234,7 +234,7 @@ class journal_items_corrections(osv.osv_memory):
         res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
-    def action_confirm(self, cr, uid, ids, context={}):
+    def action_confirm(self, cr, uid, ids, context=None):
         """
         Do a correction from the given line
         """

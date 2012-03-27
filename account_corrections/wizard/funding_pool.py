@@ -40,7 +40,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def button_cancel(self, cr, uid, ids, context={}):
+    def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
         """
@@ -61,7 +61,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
             }
         return super(wizard_costcenter_distribution, self).button_cancel(cr, uid, ids, context=context)
 
-    def button_next_step(self, cr, uid, ids, context={}):
+    def button_next_step(self, cr, uid, ids, context=None):
         """
         Add date to next wizard then launch it
         """
@@ -101,7 +101,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
+    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context=None):
         """
         Return a wizard which name is wiz_name and id is wiz_id
         """
@@ -120,7 +120,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
             'context': context,
         }
 
-    def button_cancel(self, cr, uid, ids, context={}):
+    def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
         """
@@ -136,7 +136,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
         # else, return normal behaviour
         return super(wizard_fundingpool_distribution, self).button_cancel(cr, uid, ids, context=context)
 
-    def button_next_step(self, cr, uid, ids, context={}):
+    def button_next_step(self, cr, uid, ids, context=None):
         """
         Add date to next wizard then launch it
         """
@@ -161,7 +161,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                         }
         return res
 
-    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context={}):
+    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context=None):
         """
         Give source date to the initial method
         """
@@ -189,7 +189,7 @@ class wizard_free1_distribution(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
+    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context=None):
         """
         Return a wizard which name is wiz_name and id is wiz_id
         """
@@ -208,7 +208,7 @@ class wizard_free1_distribution(osv.osv_memory):
             'context': context,
         }
 
-    def button_cancel(self, cr, uid, ids, context={}):
+    def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
         """
@@ -224,7 +224,7 @@ class wizard_free1_distribution(osv.osv_memory):
         # else, return normal behaviour
         return super(wizard_free1_distribution, self).button_cancel(cr, uid, ids, context=context)
 
-    def button_next_step(self, cr, uid, ids, context={}):
+    def button_next_step(self, cr, uid, ids, context=None):
         """
         Add date to next wizard then launch it
         """
@@ -249,7 +249,7 @@ class wizard_free1_distribution(osv.osv_memory):
                         }
         return res
 
-    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context={}):
+    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context=None):
         """
         Give source date to the initial method
         """
@@ -277,7 +277,7 @@ class wizard_free2_distribution(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
+    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context=None):
         """
         Return a wizard which name is wiz_name and id is wiz_id
         """
@@ -296,7 +296,7 @@ class wizard_free2_distribution(osv.osv_memory):
             'context': context,
         }
 
-    def button_cancel(self, cr, uid, ids, context={}):
+    def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
         """
@@ -317,7 +317,7 @@ class wizard_free2_distribution(osv.osv_memory):
             }
         return super(wizard_free2_distribution, self).button_cancel(cr, uid, ids, context=context)
 
-    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context={}):
+    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context=None):
         """
         Give source date to the initial method
         """

@@ -31,7 +31,7 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
-    def _is_corrigible(self, cr, uid, ids, name, args, context={}):
+    def _is_corrigible(self, cr, uid, ids, name, args, context=None):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is posted
@@ -43,6 +43,8 @@ class account_move_line(osv.osv):
          - All items attached to the entry have no reconcile_id on reconciliable account
          - The line doesn't come from a write-off
         """
+        if context is None:
+            context = {}
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = True
@@ -106,23 +108,25 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'is_corrigible': lambda *a: True,
     }
 
-    def copy(self, cr, uid, id, defaults={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy a move line with draft state. Do not create a new analytic_distribution from line if we come from a correction.
         """
+        if default is None:
+            default = {}
         if 'omit_analytic_distribution' in context and context.get('omit_analytic_distribution') is True:
-            defaults.update({
+            default.update({
                 'analytic_distribution_id': False,
             })
-        defaults.update({
+        default.update({
             'state': 'draft',
             'have_an_historic': False,
             'corrected': False,
             'reversal': False,
         })
-        return super(account_move_line, self).copy(cr, uid, id, defaults, context=context)
+        return super(account_move_line, self).copy(cr, uid, id, default, context=context)
 
-    def get_corrections_history(self, cr, uid, ids, context={}):
+    def get_corrections_history(self, cr, uid, ids, context=None):
         """
         Give for each line their history by using "corrected_line_id" field to browse lines
         Return something like that: 
@@ -175,7 +179,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             res[str(ml.id)] = list(set(flatten(upstream_line_ids) + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
         return res
 
-    def get_first_corrected_line(self, cr, uid, ids, context={}):
+    def get_first_corrected_line(self, cr, uid, ids, context=None):
         """
         For each move line, give the first line from which all corrections have been done.
         Example:
@@ -208,7 +212,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 res[str(ml.id)] = line.id
         return res
 
-    def button_do_accounting_corrections(self, cr, uid, ids, context={}):
+    def button_do_accounting_corrections(self, cr, uid, ids, context=None):
         """
         Launch accounting correction wizard to do reverse or correction on selected move line.
         """
@@ -238,7 +242,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             }
         }
 
-    def button_open_corrections(self, cr, uid, ids, context={}):
+    def button_open_corrections(self, cr, uid, ids, context=None):
         """
         Open all corrections linked to the given one
         """
@@ -277,7 +281,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         }
         return True
 
-    def reverse(self, cr, uid, ids, date=None, context={}):
+    def reverse(self, cr, uid, ids, date=None, context=None):
         """
         Reverse given lines by creating a new Journal Entry (account_move) and write in the reversal line.
         Reversal lines have some information:
@@ -348,7 +352,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             success_move_line_ids.append(ml.id)
         return success_move_line_ids
 
-    def reverse_move(self, cr, uid, ids, date=None, context={}):
+    def reverse_move(self, cr, uid, ids, date=None, context=None):
         """
         Reverse the move from lines
         Return succeeded move lines (not complementary move lines)
@@ -456,7 +460,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
 
-    def update_account_on_st_line(self, cr, uid, ids, account_id=None, context={}):
+    def update_account_on_st_line(self, cr, uid, ids, account_id=None, context=None):
         """
         Update the account from the statement line attached if different
         """
@@ -486,7 +490,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
+    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context=None):
         """
         Correct given account_move_line by only changing account
         """
@@ -582,7 +586,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             success_move_line_ids.append(ml.id)
         return success_move_line_ids
 
-    def correct_partner_id(self, cr, uid, ids, date=None, partner_id=None, context={}):
+    def correct_partner_id(self, cr, uid, ids, date=None, partner_id=None, context=None):
         """
         Correct given entries in order to change its partner_id:
          - do a reverse line for partner line

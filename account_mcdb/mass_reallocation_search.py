@@ -28,7 +28,7 @@ class mass_reallocation_search(osv.osv_memory):
     _name = 'mass.reallocation.search'
     _description = 'Mass Reallocation Search'
 
-    def get_filled_mcdb(self, cr, uid, ids, context={}):
+    def get_filled_mcdb(self, cr, uid, ids, context=None):
         """
         Give a pre-populated MCDB search form
         """

@@ -89,7 +89,7 @@ class account_mcdb(osv.osv_memory):
         'currency_choice': lambda *a: 'booking',
     }
 
-    def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context={}):
+    def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
         Permit to give default company currency if 'functional' has been choosen.
         Delete all currency and amount fields (to not disturb normal mechanism)
@@ -118,7 +118,7 @@ class account_mcdb(osv.osv_memory):
             vals.update(update_to.get('value'))
         return {'value': vals}
 
-    def onchange_currency(self, cr, uid, ids, choice, currency, context={}):
+    def onchange_currency(self, cr, uid, ids, choice, currency, context=None):
         """
         Fill in right field regarding choice and currency
         """
@@ -134,7 +134,7 @@ class account_mcdb(osv.osv_memory):
             vals['booking_currency_id'] = currency
         return {'value': vals}
 
-    def onchange_amount(self, cr, uid, ids, choice, amount, amount_type=None, context={}):
+    def onchange_amount(self, cr, uid, ids, choice, amount, amount_type=None, context=None):
         """
         Fill in right amount field regarding choice
         """
@@ -157,7 +157,7 @@ class account_mcdb(osv.osv_memory):
                 vals['amount_book_to'] = amount
         return {'value': vals}
 
-    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):
+    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
         """
         Update output currency domain in order to show right currencies attached to given fx table
         """
@@ -169,7 +169,7 @@ class account_mcdb(osv.osv_memory):
             res.update({'value': {'display_in_output_currency' : False}})
         return res
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Validate current forms and give result
         """
@@ -354,7 +354,7 @@ class account_mcdb(osv.osv_memory):
             }
         return False
 
-    def button_clear(self, cr, uid, ids, field=False, context={}):
+    def button_clear(self, cr, uid, ids, field=False, context=None):
         """
         Delete all fields from this object
         """
@@ -396,7 +396,7 @@ class account_mcdb(osv.osv_memory):
             'target': 'crush',
         }
 
-    def button_journal_clear(self, cr, uid, ids, context={}):
+    def button_journal_clear(self, cr, uid, ids, context=None):
         """
         Delete journal_ids field content
         """
@@ -408,7 +408,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'journal_ids' field
         return self.button_clear(cr, uid, ids, field='journal_ids', context=context)
 
-    def button_period_clear(self, cr, uid, ids, context={}):
+    def button_period_clear(self, cr, uid, ids, context=None):
         """
         Delete period_ids field content
         """
@@ -420,7 +420,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'period_ids' field
         return self.button_clear(cr, uid, ids, field='period_ids', context=context)
 
-    def button_analytic_journal_clear(self, cr, uid, ids, context={}):
+    def button_analytic_journal_clear(self, cr, uid, ids, context=None):
         """
         Delete analytic_journal_ids field content
         """
@@ -432,7 +432,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'analytic_journal_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_journal_ids', context=context)
 
-    def button_account_clear(self, cr, uid, ids, context={}):
+    def button_account_clear(self, cr, uid, ids, context=None):
         """
         Delete account_ids field content
         """
@@ -444,7 +444,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'account_ids' field
         return self.button_clear(cr, uid, ids, field='account_ids', context=context)
 
-    def button_account_type_clear(self, cr, uid, ids, context={}):
+    def button_account_type_clear(self, cr, uid, ids, context=None):
         """
         Delete account_type_ids field content
         """
@@ -456,7 +456,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'account_type_ids' field
         return self.button_clear(cr, uid, ids, field='account_type_ids', context=context)
 
-    def button_funding_pool_clear(self, cr, uid, ids, context={}):
+    def button_funding_pool_clear(self, cr, uid, ids, context=None):
         """
         Delete analytic_account_fp_ids field content
         """
@@ -468,7 +468,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'analytic_account_fp_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_fp_ids', context=context)
 
-    def button_cost_center_clear(self, cr, uid, ids, context={}):
+    def button_cost_center_clear(self, cr, uid, ids, context=None):
         """
         Delete analytic_account_cc_ids field content
         """
@@ -480,7 +480,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'analytic_account_cc_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_cc_ids', context=context)
 
-    def button_free_1_clear(self, cr, uid, ids, context={}):
+    def button_free_1_clear(self, cr, uid, ids, context=None):
         """
         Delete analytic_account_f1_ids field content
         """
@@ -492,7 +492,7 @@ class account_mcdb(osv.osv_memory):
         # Return default behaviour with 'analytic_account_f1_ids' field
         return self.button_clear(cr, uid, ids, field='analytic_account_f1_ids', context=context)
 
-    def button_free_2_clear(self, cr, uid, ids, context={}):
+    def button_free_2_clear(self, cr, uid, ids, context=None):
         """
         Delete analytic_account_f2_ids field content
         """

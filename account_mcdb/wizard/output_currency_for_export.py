@@ -43,7 +43,7 @@ class output_currency_for_export(osv.osv_memory):
         'export_selected': lambda *a: True,
     }
 
-    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):
+    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
         """
         Update output currency domain in order to show right currencies attached to given fx table
         """
@@ -55,7 +55,7 @@ class output_currency_for_export(osv.osv_memory):
             res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
         return res
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Launch export wizard
         """
