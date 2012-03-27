@@ -45,7 +45,10 @@ class update(osv.osv):
         'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null"),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
+        'create_date': fields.datetime('Synchro Date/Time', readonly=True),
     }
+
+    _order = 'sequence, create_date desc'
     
     def unfold_package(self, cr, uid, entity, packet, context=None):
         data = {
@@ -178,4 +181,6 @@ class update(osv.osv):
     _order = 'sequence asc, id asc'
     
 update()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
