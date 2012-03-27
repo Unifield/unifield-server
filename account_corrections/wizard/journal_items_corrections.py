@@ -87,7 +87,6 @@ class journal_items_corrections_lines(osv.osv_memory):
             'total_amount': amount,
             'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
             'currency_id': currency or False,
-            'state': 'dispatch',
             'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
             'distribution_id': distrib_id,
             'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
