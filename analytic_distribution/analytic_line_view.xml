@@ -27,7 +27,7 @@
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group[1]/field[@name='user_id']" position='after'>
+                    <xpath expr="/search/group[1]/field[@name='account_id']" position='after'>
                         <field name="is_reallocated"/>
                     </xpath>
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
