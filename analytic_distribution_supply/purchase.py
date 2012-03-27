@@ -320,6 +320,22 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
+    def create(self, cr, uid, vals, context={}):
+        if (not 'price_unit' in vals or vals['price_unit'] == 0.00) and 'order_id' in vals and self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context).from_yml_test:
+            vals['price_unit'] = 1.00
+
+        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line = self.browse(cr, uid, ids, context=context)[0]
+        if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
+            vals['price_unit'] = 1.00
+
+        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
     def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
         """
         Return analytic distribution line count (given by analytic distribution)

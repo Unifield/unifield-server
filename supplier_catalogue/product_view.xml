@@ -23,9 +23,9 @@
             	<xpath expr="//field[@name='product_uom']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
-            	<xpath expr="//field[@name='min_qty']" position="attributes">
+            	<!--<xpath expr="//field[@name='min_qty']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
-            	</xpath>
+            	</xpath>-->
             	<xpath expr="//field[@name='manufacturer_id']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
