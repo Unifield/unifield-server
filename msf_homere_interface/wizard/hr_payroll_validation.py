@@ -59,10 +59,13 @@ class hr_payroll_validation(osv.osv):
             raise osv.except_osv(_('Warning'), _('No HR journal found!'))
         journal_id = journal_ids[0]
         current_date = strftime('%Y-%m-%d')
-        one_line_data = self.pool.get('hr.payroll.msf').read(cr, uid, line_ids[0], ['period_id'])
+        one_line_data = self.pool.get('hr.payroll.msf').read(cr, uid, line_ids[0], ['period_id', 'field'])
         period_id = one_line_data.get('period_id', False) and one_line_data.get('period_id')[0] or False
+        field = one_line_data.get('field', False) and one_line_data.get('field') or False
         if not period_id:
-            raise osv.except_osv(_('Error'), _('Unknown period'))
+            raise osv.except_osv(_('Error'), _('Unknown period!'))
+        if not field:
+            raise osv.except_osv(_('Error'), _('No field found!'))
         # Search if this period have already been validated
         period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id)])
         if period_validated_ids:
@@ -143,7 +146,7 @@ class hr_payroll_validation(osv.osv):
         # Update payroll lines status
         self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, {'state': 'valid'})
         # Update Payroll import period table
-        self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id})
+        self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id, 'field': field,})
         # Display a confirmation wizard
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         context.update({'message': _('Payroll entries validation is successful for this period: %s') % (period.name,)})

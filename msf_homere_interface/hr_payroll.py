@@ -115,6 +115,7 @@ class hr_payroll(osv.osv):
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
             selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')]),
+        'field': fields.char(string='Field', readonly=True, size=255, help="Field this line come from in Homère."),
     }
 
     _order = 'employee_id, date desc'

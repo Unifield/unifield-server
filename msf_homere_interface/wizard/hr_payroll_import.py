@@ -37,11 +37,12 @@ class hr_payroll_import_period(osv.osv):
     _description = 'Payroll Import Periods'
 
     _columns = {
+        'field': fields.char('Field', size=255, readonly=True, required=True),
         'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
     }
 
     _sql_constraints = [
-        ('period_uniq', 'unique (period_id)', 'This period have already been validated!'),
+        ('period_uniq', 'unique (period_id, field)', 'This period have already been validated!'),
     ]
 
 hr_payroll_import_period()
@@ -54,7 +55,7 @@ class hr_payroll_import(osv.osv_memory):
         'file': fields.binary(string="File", filters="*.zip", required=True),
     }
 
-    def update_payroll_entries(self, cr, uid, data='', context={}):
+    def update_payroll_entries(self, cr, uid, data='', field='', context={}):
         """
         Import payroll entries regarding 
         """
@@ -69,6 +70,8 @@ class hr_payroll_import(osv.osv_memory):
         # verify that some data exists
         if not data:
             return False, res_amount, created
+        if not field:
+            raise osv.except_osv(_('Error'), _('No field given for payroll import!'))
         # Prepare some values
         vals = {}
         employee_id = False
@@ -92,7 +95,7 @@ class hr_payroll_import(osv.osv_memory):
         period_id = period_ids[0]
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that period have not been inserted in database yet
-        period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id)])
+        period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id), ('field', '=', field)])
         if period_validated_ids:
             raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % (period.name,))
         period = self.pool.get('account.period').browse(cr, uid, period_id)
@@ -163,6 +166,7 @@ class hr_payroll_import(osv.osv_memory):
             'amount': amount,
             'currency_id': currency_id,
             'state': 'draft',
+            'field': field,
         }
         # Retrieve analytic distribution from employee
         if employee_id:
@@ -231,6 +235,20 @@ class hr_payroll_import(osv.osv_memory):
                 for name in namelist:
                     if name.split(file_ext_separator) and name.split(file_ext_separator)[-1] == file_ext:
                       csvfile = name
+                if not 'envoi.ini' in namelist:
+                    raise osv.except_osv(_('Warning'), _('No envoi.ini file found in given ZIP file!'))
+                # Read information from 'envoi.ini' file
+                field = False
+                try:
+                    import ConfigParser
+                    Config = ConfigParser.SafeConfigParser()
+                    Config.readfp(zipobj.open('envoi.ini', 'r', xyargv))
+                    field = Config.get('DEFAUT', 'PAYS')
+                except Exception, e:
+                    raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
+                if not field:
+                    raise osv.except_osv(_('Warning'), _('Field not found in envoi.ini file.'))
+                # Read CSV file
                 if csvfile:
                     try:
                         reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
@@ -243,7 +261,7 @@ class hr_payroll_import(osv.osv_memory):
                     amount = 0.0
                     for line in reader:
                         processed += 1
-                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line)
+                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line, field)
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
