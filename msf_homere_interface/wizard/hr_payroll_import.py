@@ -97,7 +97,7 @@ class hr_payroll_import(osv.osv_memory):
         # Check that period have not been inserted in database yet
         period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id), ('field', '=', field)])
         if period_validated_ids:
-            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % (period.name,))
+            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for: %s in this period: "%s"!') % (field, period.name,))
         period = self.pool.get('account.period').browse(cr, uid, period_id)
         # Check that account exists in OpenERP
         if not accounting_code or not accounting_code[0]:

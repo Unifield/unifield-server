@@ -67,10 +67,10 @@ class hr_payroll_validation(osv.osv):
         if not field:
             raise osv.except_osv(_('Error'), _('No field found!'))
         # Search if this period have already been validated
-        period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id)])
+        period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id), ('field', '=', field)])
         if period_validated_ids:
             period_validated = self.pool.get('hr.payroll.import.period').browse(cr, uid, period_validated_ids[0])
-            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for period "%s"!') % period_validated.period_id.name)
+            raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for: %s in this period: "%s"!') % (field, period_validated.period_id.name,))
         # Fetch default funding pool: MSF Private Fund
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
@@ -81,7 +81,7 @@ class hr_payroll_validation(osv.osv):
             'journal_id': journal_id,
             'period_id': period_id,
             'date': self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id) or False,
-            'name': 'Salaries',
+            'name': 'Salaries' + ' ' + field,
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
         # Create lines into this move
@@ -149,7 +149,7 @@ class hr_payroll_validation(osv.osv):
         self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id, 'field': field,})
         # Display a confirmation wizard
         period = self.pool.get('account.period').browse(cr, uid, period_id)
-        context.update({'message': _('Payroll entries validation is successful for this period: %s') % (period.name,)})
+        context.update({'message': _('Payroll entries validation is successful for this period: %s and for that field: %s') % (period.name, field,)})
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
         
