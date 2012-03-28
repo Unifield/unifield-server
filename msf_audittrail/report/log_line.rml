@@ -108,10 +108,10 @@
           <para style="P4left">[[ line.field_description ]]</para>
         </td>
         <td>
-          <para style="P4">[[ line.old_value ]]</para>
+          <para style="P4">[[ line.old_value_fct ]]</para>
         </td>
         <td>
-          <para style="P4">[[ line.new_value ]]</para>
+          <para style="P4">[[ line.new_value_fct ]]</para>
         </td>
         <td>
           <para style="P4">[[ line.user_id.name ]]</para>
