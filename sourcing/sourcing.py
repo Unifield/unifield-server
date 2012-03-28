@@ -194,6 +194,23 @@ class sourcing_line(osv.osv):
             else:
                 newargs.append(('sale_order_state', arg[1], arg[2]))
         return newargs
+    
+    def _get_date(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'estimated_delivery_date': False,
+                            'rts': False}
+            if line.supplier:
+                delay = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
+                res[line.id]['estimated_delivery_date'] = line.cf_estimated_delivery_date and line.state in ('done', 'confirmed') and line.cf_estimated_delivery_date or delay
+            
+            tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
+            ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
+            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
+            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
+        
+        return res
 
     _columns = {
         # sequence number
@@ -214,7 +231,8 @@ class sourcing_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
-        'rts': fields.related('sale_order_id', 'ready_to_ship_date', type='date', string='RTS', readonly=True),
+        #'rts': fields.related('sale_order_id', 'ready_to_ship_date', type='date', string='RTS', readonly=True),
+        'rts': fields.function(_get_date, type='date', method=True, string='RTS', readonly=True, store=False, multi='dates'),
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
@@ -222,7 +240,8 @@ class sourcing_line(osv.osv):
         'available_stock': fields.float('Available Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
-        'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'estimated_delivery_date': fields.function(_get_date, type='date', method=True, store=False, string='Estimated DD', readonly=True, multi='dates'),
         'company_id': fields.many2one('res.company','Company',select=1),
         'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
                                                store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
@@ -264,6 +283,11 @@ class sourcing_line(osv.osv):
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # Remove the saved estimated DD on cancellation of the FO line
+        if 'state' in values and values['state'] == 'cancel':
+            self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
+            
         if 'fromOrderLine' not in context and 'fromOrder' not in context:
             context['fromSourcingLine'] = True
             for sourcingLine in self.browse(cr, uid, ids, context=context):
@@ -311,6 +335,7 @@ class sourcing_line(osv.osv):
                     else:
                         # no partner is selected, erase the date
                         values.update({'estimated_delivery_date': False})
+                    
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
         
@@ -410,6 +435,8 @@ class sourcing_line(osv.osv):
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
                 else:
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+            
+            self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
                 
         return result
     
@@ -631,7 +658,7 @@ class sale_order_line(osv.osv):
         if deliveryDate:
             daysToAdd = deliveryDate
             estDeliveryDate = date.today()
-            estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+            estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
             estDeliveryDate = estDeliveryDate.strftime('%Y-%m-%d')
         
         # order state
@@ -704,6 +731,8 @@ class sale_order_line(osv.osv):
         if 'fromSourcingLine' not in context:
             context['fromOrderLine'] = True
             values = {}
+            if 'state' in vals:
+                values.update({'state': vals['state']})
             if 'supplier' in vals:
                 values.update({'supplier': vals['supplier']})
             if 'po_cft' in vals:
