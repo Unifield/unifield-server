@@ -131,7 +131,7 @@
             <field name="model">stock.move.memory.shipment.returnpacks</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />
