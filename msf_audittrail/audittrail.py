@@ -678,7 +678,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
         res_ids = []
         res = True
         if args:
-            if type(args[2]) in (long, int):
+            if isinstance(args[2]), (long, int)):
                 res_ids = [args[2]]
             else:
                 res_ids = list(args[2])
