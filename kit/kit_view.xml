@@ -137,7 +137,7 @@
 					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
-	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version_txt'}" />
+	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
 	                    <separator orientation="vertical"/>
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'composition_creation_date'}"/>
@@ -185,7 +185,7 @@
 					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
-	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version_id'}" />
+	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
 	                    <separator orientation="vertical"/>
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'composition_creation_date'}"/>
