@@ -219,6 +219,7 @@ class update_received(osv.osv):
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'fallback_values':fields.text('Fallback values', readonly=True),
+        'create_date':fields.text('Synchro date/time', readonly=True),
     }
     
     def unfold_package(self, cr, uid, packet, context=None):
@@ -233,6 +234,8 @@ class update_received(osv.osv):
             'fields' : packet['fields'],
             'sequence' : packet['sequence'],
             'fallback_values' : packet['fallback_values'],
+            # Retrieve synchro date/time from the packet and store it
+            #'create_date' : packet['create_date'],
         }
         for load_item in packet['load']:
             data.update({

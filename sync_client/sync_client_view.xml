@@ -52,7 +52,7 @@
                 <tree colors="red:run == False" string="Entity Tree">
                     <field name="source"/>
                     <field name="model"/>
-                    <field name="sequence"/>
+                    <field name="create_date"/>
                 	<field name="version"/>
                     <field name="run"/>
                 </tree>
