@@ -344,7 +344,9 @@
                 <tree string="Register Lines">
                     <button name="button_advance" states="hard" string="Advance return" type="object" icon="terp-stock_effects-object-colorize" context="context"/>
                     <field name="date"/>
+                    <field name="sequence"/>
                     <field name="name" string="Description"/>
+                    <field name="ref"/>
                     <field name="account_id"/>
                     <field name="partner_type"/>
                     <field name="partner_id" invisible="1"/>
@@ -375,16 +377,23 @@
                         <filter string="Temp" domain="[('state','=','temp')]" icon="terp-camera_test"/>
                         <separator orientation="vertical"/>
                         <field name="date" select='1'/>
-                        <field name="name" select='1'/>
+                        <field name="sequence" select='1'/>
+                        <newline/>
+                        <field name="name" select='1' string="Description"/>
+                        <field name="ref" select='1'/>
                         <field name="account_id" select='1'/>
-                        <field name="employee_id" select='1'/>
                         <field name="amount" select='1'/>
+                        <newline/>
+                        <field name="partner_id" select='1'/>
+                        <field name="transfer_journal_id" select='1'/>
+                        <field name="employee_id" select='1'/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
                         <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                         <filter string="3rd party Register" icon="terp-dolar" domain="[]" context="{'group_by': 'register_id'}"/>
+                        <separator orientation="vertical"/>
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
