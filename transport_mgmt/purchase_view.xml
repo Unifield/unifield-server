@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-        <menuitem name="Transport costs" id="menu_transport_cost_reports" parent="base.next_id_73"/>
+        <menuitem name="Transport costs" id="menu_transport_cost_reports" parent="base.next_id_73" sequence="2" />
 
         <record id="purchase_form_view_transport_mgmt_line" model="ir.ui.view">
             <field name="name">purchase.form.view.transport.mgmt.line</field>

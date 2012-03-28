@@ -283,7 +283,6 @@ class sale_order_followup(osv.osv_memory):
         Returns a list of outgoing deliveries related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
-        move_obj = self.pool.get('stock.move')
                 
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
@@ -328,8 +327,6 @@ class sale_order_line_followup(osv.osv_memory):
         '''
         Get all status about the line
         '''
-        move_obj = self.pool.get('stock.move')
-        
         res = {}
         if context is None:
             context = {}
@@ -855,7 +852,7 @@ class stock_move(osv.osv):
             module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))
             try:
                 return obj_data.get_object_reference(cr, uid, module, view)[1], pick.id
-            except ValueError, e:
+            except ValueError:
                 pass
         
         module, view = view_list.get(pick.type,('stock', 'view_picking_form'))
