@@ -32,7 +32,7 @@ class threshold_value(osv.osv):
         'name': fields.char(size=128, string='Name', required=True),
         'active': fields.boolean(string='Active'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
-        'location_id': fields.many2one('stock.location', string='Location', required=True),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
         'compute_method': fields.selection([('fixed', 'Fixed values'), ('computed', 'Computed values')],
                                            string='Method of computation', required=True,
                                            help="""If 'Fixed values', the scheduler will compare stock of product with the threshold value of the line. \n

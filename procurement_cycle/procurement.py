@@ -87,7 +87,7 @@ class stock_warehouse_order_cycle(osv.osv):
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
         'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products"),

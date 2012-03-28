@@ -194,6 +194,10 @@ class stock_warehouse_orderpoint(osv.osv):
     add message
     '''
     _inherit = 'stock.warehouse.orderpoint'
+
+    _columns = {
+         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+    }
     
     def create(self, cr, uid, vals, context=None):
         '''
