@@ -38,7 +38,7 @@ class procurement_rules_report(osv.osv):
             ret[id] = value
         return ret
     
-    def _search_nomen_s(self, cr, uid, obj, name, args, context={}):
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
 
         if not args:
             return []

@@ -157,7 +157,6 @@ class stock_warehouse_order_cycle(osv.osv):
                     product_ids.append(line.name.id)
 
             # Check if the product is not already on the report
-            l = [(6,0,x) for x in product_ids]
             self.write(cr, uid, [report.id], {'product_ids': [(6,0,product_ids)]}, context=context)
         
         return True
@@ -239,7 +238,7 @@ class stock_warehouse_order_cycle(osv.osv):
             return {'value': v}
         return {}
     
-    def unlink(self, cr, uid, ids, context):
+    def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         freq_ids = []

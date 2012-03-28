@@ -38,7 +38,7 @@ class order_cycle_rules_report(osv.osv):
             ret[id] = value
         return ret
     
-    def _search_nomen_s(self, cr, uid, obj, name, args, context={}):
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
 
         if not args:
             return []
@@ -53,7 +53,7 @@ class order_cycle_rules_report(osv.osv):
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
     
-    def _get_nomen_name(self, cr, uid, ids, field_name, args, context={}):
+    def _get_nomen_name(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns a string with all nomenclature levels separated by '/'
         '''
@@ -64,10 +64,12 @@ class order_cycle_rules_report(osv.osv):
             
         return res
     
-    def _get_stock(self, cr, uid, ids, field_name, args, context={}):
+    def _get_stock(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns stock value of a product
         '''
+        if context is None:
+            context = {}
         res = {}
         
         ir_data = self.pool.get('ir.model.data')
