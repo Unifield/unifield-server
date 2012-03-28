@@ -773,7 +773,7 @@ class sale_order_line(osv.osv):
         idsToDelete = []
         for orderLine in self.browse(cr, uid, ids, context):
             for sourcingLine in orderLine.sourcing_line_ids:
-                    idsToDelete.append(sourcingLine.id)
+                idsToDelete.append(sourcingLine.id)
         # delete sourcing lines
         self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
         
@@ -1050,11 +1050,11 @@ class product_supplierinfo(osv.osv):
         return false for each id
         '''
         if isinstance(ids,(long, int)):
-           ids = [ids]
+            ids = [ids]
         
         result = {}
         for id in ids:
-          result[id] = False
+            result[id] = False
         return result
     
     def _get_product_ids(self, cr, uid, obj, name, args, context=None):
