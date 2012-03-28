@@ -150,7 +150,7 @@ class stock_partial_picking(osv.osv_memory):
 
  # ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
+        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
  # ----------------------------------------------------------------------------------------------------------------
 

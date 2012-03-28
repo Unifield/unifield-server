@@ -31,6 +31,7 @@
     'init_xml': [],
     'update_xml': [
         'cross_docking_view.xml',
+        'data/msf_cross_docking_data.xml',
     ],
     'test': [
         'test/data.yml',
