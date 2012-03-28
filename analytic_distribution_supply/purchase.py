@@ -327,7 +327,7 @@ class purchase_order_line(osv.osv):
             else:
                 res[line['id']] = True
         return res
-
+    
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),

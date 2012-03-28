@@ -41,6 +41,11 @@
       - sequence: 10
         min_qty: 0.00
         name: partner200
+        pricelist_ids:
+          - min_quantity: 1.00
+            price: 1.00
+            currency_id: base.EUR
+            uom_id: product.product_uom_categ_unit
 -
   Create a Sale Order
 -

@@ -15,7 +15,7 @@
     order_type: regular
     order_line:
       - name: P1
-        price_unit: 5000
+        price_unit: 6000
         product_uom: product.product_uom_unit
         product_uom_qty: 5.0
         state: draft
@@ -25,7 +25,7 @@
         th_weight: 0.0
         type: make_to_order
       - name: P4
-        price_unit: 5000
+        price_unit: 6000
         product_uom: product.product_uom_unit
         product_uom_qty: 2.0
         state: draft

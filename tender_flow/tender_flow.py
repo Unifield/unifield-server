@@ -764,6 +764,7 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
+                'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 }
     
 purchase_order_line()
@@ -785,7 +786,7 @@ class pricelist_partnerinfo(osv.osv):
     add new information from specifications
     '''
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency',),
+    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
                 'valid_till': fields.date(string="Valid Till",),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),

@@ -436,18 +436,31 @@
             <field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="inherit_id" ref="supplier_catalogue.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
             			<field name="currency_id" />
+            		</xpath>
+            		
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='min_order_qty']" position="after">
             			<field name="valid_till" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />
             			<field name="purchase_order_line_id" />
             		</xpath>
+                 </data>
+            </field>
+        </record>
             		
+        <record id="product_supplierinfo_form_view2" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<data>	
             		<xpath expr="//form/field[@name='price']" position="after">
             			<field name="currency_id" />
             			<field name="valid_till" />

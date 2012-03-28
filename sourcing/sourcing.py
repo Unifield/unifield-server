@@ -28,6 +28,7 @@ import decimal_precision as dp
 import netsvc
 import pooler
 import time
+import re
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from sale_override import SALE_ORDER_STATE_SELECTION
@@ -254,6 +255,13 @@ class sourcing_line(osv.osv):
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
+
+    def open_split_wizard(self, cr, uid, ids, context=None):
+        '''
+        Open the split line wizard
+        '''
+        line = self.browse(cr, uid, ids[0], context=context)
+        return self.pool.get('sale.order.line').open_split_wizard(cr, uid, [line.sale_order_line_id.id], context=context)
     
     def check_supplierinfo(self, cr, uid, ids, partner_id, context=None):
         '''
@@ -280,7 +288,7 @@ class sourcing_line(osv.osv):
         to sale order line
         '''
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
             
@@ -509,7 +517,7 @@ class sale_order(osv.osv):
         dont copy sourcing lines, they are generated at sale order lines creation
         '''
         if not default:
-            default={}
+            default = {}
             
         default['sourcing_line_ids']=[]
         
@@ -723,7 +731,7 @@ class sale_order_line(osv.osv):
          - product_id
         ''' 
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -866,11 +874,10 @@ class procurement_order(osv.osv):
             
         if purchase_ids:
             line_values = values['order_line'][0][2]
-            line_values.update({'order_id': purchase_ids[0]})
-            purchase = po_obj.browse(cr, uid, purchase_ids[0], context=context)
-            if not purchase.origin_tender_id or not purchase.origin_tender_id.sale_order_id or purchase.origin_tender_id.sale_order_id.name != procurement.origin:
-                origin = procurement.origin in purchase.origin and purchase.origin or '%s/%s' % (purchase.origin, procurement.origin)
-                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': origin}, context=context)
+            line_values.update({'order_id': purchase_ids[0],'origin': procurement.origin})
+            po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
+            if not re.search(procurement.origin, po.origin):
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s/%s' % (po.origin, procurement.origin)}, context=context)
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
