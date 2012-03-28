@@ -109,7 +109,7 @@ class assign_to_kit(osv.osv_memory):
                         item_obj.write(cr, uid, item_ids, {'item_qty': mem.assigned_qty_assign_to_kit_line}, context=context)
                 elif mem.assigned_qty_assign_to_kit_line > 0.0:
                     # we create the corresponding item
-                    item_values = {'item_module': False,
+                    item_values = {'item_module': obj.module_assign_to_kit,
                                    'item_product_id': obj.product_id_assign_to_kit.id,
                                    'item_qty': mem.assigned_qty_assign_to_kit_line,
                                    'item_uom_id': obj.uom_id_assign_to_kit.id,
@@ -172,6 +172,9 @@ class assign_to_kit(osv.osv_memory):
             # kit list
             if 'kit_ids_assign_to_kit' in fields:
                 res.update({'kit_ids_assign_to_kit': result})
+            # module
+            if 'module_assign_to_kit' in fields:
+                res.update({'module_assign_to_kit': obj.to_consume_id_stock_move.module_to_consume})
             # product
             if 'product_id_assign_to_kit' in fields:
                 res.update({'product_id_assign_to_kit': obj.product_id.id})
@@ -193,6 +196,7 @@ class assign_to_kit(osv.osv_memory):
         return res
         
     _columns = {'kit_creation_id_assign_to_kit': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
+                'module_assign_to_kit': fields.char(string='Module', size=1024),
                 'product_id_assign_to_kit': fields.many2one('product.product', string='Product', readonly=True),
                 'qty_assign_to_kit': fields.float(string='Qty Available', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 'uom_id_assign_to_kit': fields.many2one('product.uom', string='UoM', readonly=True),
