@@ -1263,10 +1263,10 @@ class product_product(osv.osv):
         to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
 
         if context.get('from_date', False):
-            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
+            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
                                                
         if context.get('to_date', False):
-            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
+            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
 
         context.update({'from_date': from_date})
         context.update({'to_date': to_date})
