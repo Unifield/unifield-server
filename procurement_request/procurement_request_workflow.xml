@@ -59,6 +59,11 @@
             <field name="condition">procurement_request==True</field>
             <field name="signal">procurement_confirm</field>
         </record>
+        <record id="trans_validate_cancel" model="workflow.transition">
+            <field name="act_from" ref="act_proc_validate"/>
+            <field name="act_to" ref="act_proc_cancel"/>
+            <field name="signal">procurement_cancel</field>
+        </record>
         <record id="trans_procurement_cancel" model="workflow.transition">
             <field name="act_from" ref="act_procurement"/>
             <field name="act_to" ref="act_proc_cancel"/>

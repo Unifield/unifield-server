@@ -194,6 +194,9 @@ class procurement_request(osv.osv):
         '''
         Validate the request
         '''
+        for req in self.browse(cr, uid, ids, context=context):
+            if len(req) <= 0:
+                raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
