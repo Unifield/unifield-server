@@ -70,17 +70,17 @@ class procurement_request(osv.osv):
     #@@@end override
     
     _columns = {
-        'requestor': fields.char(size=128, string='Requestor'),
+        'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
-        'requested_date': fields.date(string='Requested date'),
-        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
-        'origin': fields.char(size=64, string='Origin'),
+        'requested_date': fields.date(string='Requested date', states={'draft': [('readonly', False)]}, readonly=True),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
+        'origin': fields.char(size=64, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
         'notes': fields.text(string='Notes'),
         'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
