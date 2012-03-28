@@ -19,23 +19,30 @@
 #
 ##############################################################################
 
+from osv import osv
+from osv import fields
 
-{
-    "name" : "Partner Modification",
-    "version" : "0.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "msf_partner"],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Modification of patner with new lead times
-    """,
-    'test': ['test/partner_modification.yml'],
-    'update_xml': [
-        'partner_modification_view.xml',
-    ],
-    'installable': True,
-}
+
+class catalogue_export_lines(osv.osv_memory):
+    _name = 'catalogue.export.lines'
+    _description = 'Supplier catalogue export lines'
+    
+    _columns = {
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
+        'file_to_export': fields.binary(string='File to export'),
+    }
+    
+    def export_file(self, cr, uid, ids, context=None):
+        '''
+        Export lines to file
+        '''
+        if not context:
+            context = {}
+        
+        for wiz in self.browse(cr, uid, ids, context=context):
+            pass
+            # TODO: Export file            
+        
+        return {'type': 'ir.actions.act_window_close'}
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

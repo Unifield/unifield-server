@@ -91,6 +91,7 @@
         "account_subscription",
         "msf_accrual",
         "purchase_allocation_report",
+        "supplier_catalogue",
     ],
     "update_xml": [
         "report.xml",

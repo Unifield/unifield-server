@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="product_supplierinfo_tree_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.tree.view</field>
+			<field name="model">product.supplierinfo</field>
+			<field name="type">tree</field>
+			<field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_tree_view" />
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='min_qty']" position="replace">
+					<field name="catalogue_id" />
+				</xpath>
+			</field>
+		</record>
+        
+		<record id="manufacturer_supplierinfo_form_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<xpath expr="//field[@name='product_uom']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+           	<xpath expr="//field[@name='min_qty']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='manufacturer_id']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            </field>
+		</record>
+		
+		<record id="product_supplierinfo_form_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+				<xpath expr="//field[@name='name']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='product_name']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='product_code']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            </field>
+		</record>
+		
+		<record id="product_supplierinfo_form_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="partner_modification.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<xpath expr="/form/field[@name='name']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+				<xpath expr="//field[@name='delay']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='pricelist_ids']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	
+            	<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="before">
+        			<field name="uom_id" />
+        		</xpath>
+        		
+        		<xpath expr="//tree[@string='Pricelist']/field[@name='currency_id']" position="after">
+        			<field name="rounding" />
+        			<field name="min_order_qty" />
+        		</xpath>
+            	
+            	<xpath expr="//field[@name='min_qty']" position="replace">
+            		<field name="catalogue_id" readonly="1" invisible="0" />
+            	</xpath>
+            	
+            </field>
+        </record>
+		
+	</data>
+</openerp>

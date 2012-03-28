@@ -19,23 +19,33 @@
 #
 ##############################################################################
 
+from osv import osv
+from osv import fields
 
-{
-    "name" : "Partner Modification",
-    "version" : "0.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "msf_partner"],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Modification of patner with new lead times
-    """,
-    'test': ['test/partner_modification.yml'],
-    'update_xml': [
-        'partner_modification_view.xml',
-    ],
-    'installable': True,
-}
+
+class catalogue_import_lines(osv.osv_memory):
+    _name = 'catalogue.import.lines'
+    _description = 'Supplier catalogue import lines'
+    
+    _columns = {
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
+        'file_to_import': fields.binary(string='File to import'),
+    }
+    
+    def import_file(self, cr, uid, ids, context=None):
+        '''
+        Import lines from file
+        '''
+        if not context:
+            context = {}
+        
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if not wiz.file_to_import:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
+            
+            file = wiz.file_to_import
+            # TODO: Import file            
+        
+        return {'type': 'ir.actions.act_window_close'}
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -94,11 +94,11 @@
             <field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_form_view" />
             <field name="arch" type="xml">
                 <data>
-                	<field name="name" position="replace">
-                		<field name="name" on_change="onchange_supplier_id(name)" />
+                	<field name="name" position="attributes">
+                		<attribute name="on_change">onchange_supplier_id(name)</attribute>
                 	</field>
                 </data>
             </field>

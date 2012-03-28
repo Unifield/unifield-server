@@ -59,7 +59,7 @@ class product_template(osv.osv):
 
     
     _columns = {
-        'delay_for_supplier': fields.function(_get_delay_for_supplier, type='interger', string='Default delay for a supplier', method=True) 
+        'delay_for_supplier': fields.function(_get_delay_for_supplier, type='integer', string='Default delay for a supplier', method=True) 
     }
     
 product_template()

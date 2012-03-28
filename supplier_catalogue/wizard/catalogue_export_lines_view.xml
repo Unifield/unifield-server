@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="catalogue_export_lines_form_view" model="ir.ui.view">
+			<field name="name">catalogue.export.lines.form.view</field>
+			<field name="model">catalogue.export.lines</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Export lines from a catalogue">
+					<separator colspan="4" string="Data" />
+					<field name="catalogue_id" readonly="1" colspan="4" />
+					<field name="file_to_export" colspan="4" />
+					<separator colspan="4" string="Actions" />
+					<label colspan="2" />
+					<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+				</form>
+			</field>
+		</record>
+		
+	</data>
+</openerp>

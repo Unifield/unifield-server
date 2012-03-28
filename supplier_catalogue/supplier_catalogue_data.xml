@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data noupdate="1">
+		
+		<record id="purchase.item0" model="product.pricelist.item">
+            <field name="base" eval="-2"/>
+        </record>
+		
+	</data>
+</openerp>

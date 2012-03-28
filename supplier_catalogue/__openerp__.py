@@ -19,23 +19,36 @@
 #
 ##############################################################################
 
-
 {
-    "name" : "Partner Modification",
-    "version" : "0.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "msf_partner"],
+    "name" : "Supplier Catalogue",
+    "version" : "1.0",
+    "author" : "TeMPO Consulting,MSF",
+    "description" : """
+    Add management of supplier catalogue
+    """,
+    "website": "http://unifield.msf.org",
+    "depends" : ["product", "purchase", 
+                 "product_nomenclature",
+                 "partner_modification",
+                 "msf_partner",],
+    "category" : "Generic Modules/Supplier Catalogue",
     "init_xml" : [],
     "demo_xml" : [],
-    "description": """
-    Modification of patner with new lead times
-    """,
-    'test': ['test/partner_modification.yml'],
-    'update_xml': [
-        'partner_modification_view.xml',
+    "update_xml" : [
+        "supplier_catalogue_view.xml",
+        "product_view.xml",
+        "partner_view.xml",
+        "supplier_catalogue_data.xml",
+        "wizard/catalogue_import_lines_view.xml",
+        "wizard/catalogue_export_lines_view.xml",
+        "security/ir.model.access.csv",
+    ],
+    'test': [
+        "test/data.yml",
+        "test/catalogue.yml",
     ],
     'installable': True,
+    'active': False,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

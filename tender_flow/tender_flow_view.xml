@@ -343,34 +343,6 @@
             </field>
         </record>
        	
-       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
-            <field name="name">product.supplierinfo.form.view</field>
-            <field name="model">product.supplierinfo</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            		
-            		<xpath expr="//form/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            	
-            	</data>
-            </field>
-       	</record>
-       	
         <record id="rfq_form" model="ir.ui.view">
             <field name="name">rfq.form</field>
             <field name="model">purchase.order</field>

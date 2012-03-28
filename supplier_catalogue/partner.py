@@ -19,23 +19,20 @@
 #
 ##############################################################################
 
+from osv import osv
+from osv import fields
 
-{
-    "name" : "Partner Modification",
-    "version" : "0.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "msf_partner"],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Modification of patner with new lead times
-    """,
-    'test': ['test/partner_modification.yml'],
-    'update_xml': [
-        'partner_modification_view.xml',
-    ],
-    'installable': True,
-}
+from tools.translate import _
+
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+    
+    _columns = {
+        'catalogue_ids': fields.one2many('supplier.catalogue', 'partner_id', string='Catalogues', readonly=True),
+    }
+    
+res_partner()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

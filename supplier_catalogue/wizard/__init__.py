@@ -19,23 +19,7 @@
 #
 ##############################################################################
 
+import catalogue_import_lines
+import catalogue_export_lines
 
-{
-    "name" : "Partner Modification",
-    "version" : "0.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "msf_partner"],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Modification of patner with new lead times
-    """,
-    'test': ['test/partner_modification.yml'],
-    'update_xml': [
-        'partner_modification_view.xml',
-    ],
-    'installable': True,
-}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
