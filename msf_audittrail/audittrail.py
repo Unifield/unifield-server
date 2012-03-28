@@ -547,7 +547,7 @@ def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
     return res
 
 
-def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):
+def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):
     """
     Logging function: This function is performs logging oprations according to method
     @param db: the current database
@@ -622,17 +622,16 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         return res_id
 
     elif method in ('unlink'):
-        res_ids = args[2]
-        if isinstance(res_ids, (int, long)):
-            res_ids = [res_ids]
+        res_ids = []
+        if isinstance(args[2], (int, long)):
+            res_ids = [args[2]]
+        else:
+            res_ids = list(args[2])
         model_name = model.name
         model_id = model.id
         old_values = {}
         fields_to_read = [name_get_field, 'name']
         fields_to_read.extend(_get_domain_fields(self, domain))
-        
-        if parent_field_id and not resource_pool.read(cr, uid, res_id, [parent_field.name])[parent_field.name]:
-            return fct_src(self, *args, **kwargs)
         
         if parent_field_id:
             parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
@@ -679,13 +678,14 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
         res_ids = []
         res = True
         if args:
-            res_ids = args[2]
+            if type(args[2]) in (long, int):
+                res_ids = [args[2]]
+            else:
+                res_ids = list(args[2])
             old_values = {}
             fields = []
             if len(args)>3 and type(args[3]) == dict:
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
-            if type(res_ids) in (long, int):
-                res_ids = [res_ids]
                 
         model_id = model.id
         if parent_field_id:
