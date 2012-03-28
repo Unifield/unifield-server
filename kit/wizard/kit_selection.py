@@ -114,6 +114,10 @@ class kit_selection(osv.osv_memory):
                             'order_id': pol.order_id.id,
                             'notes': pol.notes,
                             'comment': pol.comment,
+                            'procurement_id': pol.procurement_id.id,
+                            'partner_id': pol.partner_id.id,
+                            'company_id': pol.company_id.id,
+                            'state': pol.state,
                             }
                 new_id = pol_obj.create(cr, uid, p_values, context=context)
                 
