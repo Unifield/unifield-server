@@ -667,6 +667,31 @@ class purchase_order_line(osv.osv):
             default = {}
         default.update({'state':'draft', 'move_ids':[],'invoiced':0,'invoice_lines':[]})
         return super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
+    
+    def _hook_product_id_change(self, cr, uid, *args, **kwargs):
+        '''
+        Override the computation of product qty to order
+        '''
+        prod = kwargs['product']
+        partner_id = kwargs['partner_id']
+        qty = kwargs['product_qty']
+        
+        product_uom_pool = self.pool.get('product.uom')
+        
+        res = {}
+        for s in prod.seller_ids:
+            if s.name.id == partner_id:
+                seller_delay = s.delay
+                if s.product_uom:
+                    temp_qty = product_uom_pool._compute_qty(cr, uid, s.product_uom.id, s.min_qty, to_uom_id=prod.uom_id.id)
+                    uom = s.product_uom.id #prod_uom_po
+                temp_qty = s.min_qty # supplier _qty assigned to temp
+                if qty < temp_qty: # If the supplier quantity is greater than entered from user, set minimal.
+                    qty = temp_qty
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal quantity set to %s, you cannot purchase less.') % qty}})
+        qty_in_product_uom = product_uom_pool._compute_qty(cr, uid, uom, qty, to_uom_id=prod.uom_id.id)
+        return res, qty_in_product_uom, seller_delay
+        
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
@@ -698,18 +723,11 @@ class purchase_order_line(osv.osv):
         seller_delay = 0
 
         prod_name = self.pool.get('product.product').name_get(cr, uid, [prod.id], context=context)[0][1]
-        res = {}
-        for s in prod.seller_ids:
-            if s.name.id == partner_id:
-                seller_delay = s.delay
-                if s.product_uom:
-                    temp_qty = product_uom_pool._compute_qty(cr, uid, s.product_uom.id, s.min_qty, to_uom_id=prod.uom_id.id)
-                    uom = s.product_uom.id #prod_uom_po
-                temp_qty = s.min_qty # supplier _qty assigned to temp
-                if qty < temp_qty: # If the supplier quantity is greater than entered from user, set minimal.
-                    qty = temp_qty
-                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal quantity set to %s, you cannot purchase less.') % qty}})
-        qty_in_product_uom = product_uom_pool._compute_qty(cr, uid, uom, qty, to_uom_id=prod.uom_id.id)
+        
+        res, qty_in_product_uom, qty, seller_delay = self._hook_product_id_change(cr, uid, product=prod, partner_id=partner_id,
+                                                                                  product_qty=qty, pricelist=pricelist, order_date=date_order, uom_id=uom, 
+                                                                                  seller_delay=seller_delay, res=res, context=context)
+        
         price = self.pool.get('product.pricelist').price_get(cr,uid,[pricelist],
                     product, qty_in_product_uom or 1.0, partner_id, {
                         'uom': uom,
