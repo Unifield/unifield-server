@@ -25,6 +25,7 @@ from tools.translate import _
 from tools.misc import flatten
 from collections import defaultdict
 from time import strftime
+from lxml import etree
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -40,6 +41,26 @@ class analytic_line(osv.osv):
     _defaults = {
         'from_write_off': lambda *a: False,
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change account_id field name to "Funding Pool if we come from a funding pool
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        is_funding_pool_view = False
+        if context.get('display_fp', False) and context.get('display_fp') is True:
+            is_funding_pool_view = True
+        view = super(analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree' and is_funding_pool_view:
+            tree = etree.fromstring(view['arch'])
+            # Change OC field
+            fields = tree.xpath('/tree/field[@name="account_id"]')
+            for field in fields:
+                field.set('string', _("Funding Pool"))
+            view['arch'] = etree.tostring(tree)
+        return view
 
     def _check_date(self, cr, uid, vals, context={}):
         """
