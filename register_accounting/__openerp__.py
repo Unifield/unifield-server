@@ -61,6 +61,7 @@
         'wizard/wizard_confirm_bank.xml',
         'wizard/invoice_date.xml',
         'wizard/transfer_with_change.xml',
+        'account_wizard.xml',
     ],
     "demo_xml" : [],
     "test": [

@@ -470,6 +470,30 @@ class account_bank_statement(osv.osv):
             'target': 'current',
         }
 
+    def get_register_lines(self, cr, uid, ids, context=None):
+        """
+        Return all register lines from first given register
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        domain = [('statement_id', '=', ids[0])]
+        # Search valid ids
+        reg = self.browse(cr, uid, ids[0])
+        return {
+            'name': reg and reg.name or 'Register Lines',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):
