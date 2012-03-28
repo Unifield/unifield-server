@@ -1,5 +1,6 @@
 - 
-  I create empty theoretical composition list 01
+  I create empty theoretical composition list 01 - this test file is not used, was an attempt to test
+  exceptions integrity, but does not work because of rollback of data OEB-107
 - 
   !record {model: composition.kit, id: kit_compo_01}:
     composition_type: 'theoretical'

@@ -265,7 +265,6 @@ class substitute(osv.osv_memory):
             else:
                 # no internal lot for the specified date, create a new one
                 name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
-                print name
                 lot_values = {'product_id': item.product_id_substitute_item.id,
                               'life_date': item.exp_substitute_item,
                               'name': name,
