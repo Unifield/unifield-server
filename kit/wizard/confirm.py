@@ -51,8 +51,8 @@ class confirm(osv.osv_memory):
         # kwargs
         kwargs = context['callback']['kwargs']
         # callback
-        getattr(obj, func)(cr, uid, *args, context=context, **kwargs)
-                
-        return {'type': 'ir.actions.act_window_close'}
+        res = getattr(obj, func)(cr, uid, *args, context=context, **kwargs)
+        # return result from callback function
+        return res
     
 confirm()
