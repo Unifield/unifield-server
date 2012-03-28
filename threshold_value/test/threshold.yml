@@ -35,7 +35,7 @@
     import datetime
     from dateutil.relativedelta import relativedelta
     self.write(cr, uid, [ref('threshold1')], {'consumption_period_from': (datetime.datetime.today() + relativedelta(day=1, months=-2)).strftime('%Y-%m-%d'), 
-                                              'consumption_period_to': (datetime.datetime.today() + relativedelta(day=1, days=-1, months=1)).strftime('%Y-%m-%d')})
+                                              'consumption_period_to': (datetime.datetime.today() + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
 -
   I create a threshold rule for product3/4/6/7
 -

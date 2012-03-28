@@ -248,6 +248,9 @@ class threshold_value_line(osv.osv):
         '''
         Return the threshold value and ordered qty of a product line
         '''
+        if not context:
+            context = {}
+        
         cons = 0.00
         threshold_value = 0.00
         qty_to_order = 0.00
