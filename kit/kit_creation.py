@@ -872,7 +872,7 @@ class kit_creation_to_consume(osv.osv):
         return result
     
     _columns = {'kit_creation_id_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True, on_delete='cascade'),
-                'module_to_consume': fields.char(string='Module', size=1024),
+                'module_to_consume': fields.char(string='Module', size=1024, readonly=True),
                 'product_id_to_consume': fields.many2one('product.product', string='Product', readonly=True),
                 'qty_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', readonly=True),
