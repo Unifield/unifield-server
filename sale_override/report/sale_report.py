@@ -29,7 +29,7 @@ class sale_report(osv.osv):
     _auto = False
     _rec_name = 'date'
 
-    def _invoiced(self, cr, uid, ids, name, arg, context={}):
+    def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
         Return True is the sale order is an uninvoiced order
         '''

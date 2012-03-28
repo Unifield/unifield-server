@@ -28,7 +28,6 @@
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["product", "stock", "purchase"],
     "init_xml" : [],
-    "demo_xml" : [],
     "description": """
     Add nomenclature abilities to products.
     """,

@@ -22,7 +22,16 @@
                         <field name="details" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="replace">
-                        <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                        <field name="invoice_method" invisible="1" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
+                        <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
+                        	on_change="on_change_dest_partner_id(dest_partner_id)" />
+                        <field name="dest_address_id" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
+                    	<field name="invoice_address_id" domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
+                    		attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
                     </xpath>
                 </data>
             </field>

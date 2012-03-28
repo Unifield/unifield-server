@@ -85,7 +85,21 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]" 
-                            context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1"/>
+                          context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1">
+                          <tree string="Account Entry Lines" editable="top" noteditable="True">
+                              <field name="partner_id"/>
+                              <field name="ref"/>
+                              <field name="invoice"/>
+                              <field name="supplier_invoice_ref"/>
+                              <field name="account_id"/>
+                              <field name="date_maturity"/>
+                              <field name="date"/>
+                              <field name="amount_residual_import_inv" />
+                              <field name="amount_currency"/>
+                              <field name="currency_id"/>
+                              <field name="reconcile_total_partial_id" />
+                          </tree>
+                        </field>
                         <group colspan="4" col="6">
                             <button name="group_import" type="object" string="Import Group By partner" icon="gtk-add"/>
                             <button name="single_import" type="object" string="Single Import" icon="gtk-add"/>
@@ -127,7 +141,21 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]" 
-                            context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1"/>
+                          context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1">
+                          <tree string="Account Entry Lines" editable="top" noteditable="True">
+                              <field name="partner_id"/>
+                              <field name="ref"/>
+                              <field name="invoice"/>
+                              <field name="supplier_invoice_ref"/>
+                              <field name="account_id"/>
+                              <field name="date_maturity"/>
+                              <field name="date"/>
+                              <field name="amount_residual_import_inv" />
+                              <field name="amount_currency"/>
+                              <field name="currency_id"/>
+                              <field name="reconcile_total_partial_id" />
+                          </tree>
+                        </field>
                         <group colspan="4" col="6">
                             <button name="group_import" type="object" string="Import Group By partner" icon="gtk-add"/>
                             <button name="single_import" type="object" string="Single Import" icon="gtk-add"/>

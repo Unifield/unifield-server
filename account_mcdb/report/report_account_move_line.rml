@@ -26,6 +26,13 @@
       <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="14,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
+    <blockTableStyle id="Tableau4">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="14,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="14,-1" thickness="0.5"/>
+    </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
@@ -102,9 +109,11 @@
           <para style="P3">Reconcile</para>
         </td>
       </tr>
+    </blockTable>
+    <blockTable colWidths="47.0,47.0,47.0,47.0,47.0,47.0,92.0,92.0,92.0,49.0,49.0,36.0,53.0,37.0,31.0" style="Tableau4">
+      [[ repeatIn(objects, 'o', 'blockTable') ]]
       <tr>
         <td>
-          <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
         </td>
         <td>

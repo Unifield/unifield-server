@@ -34,7 +34,7 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_automatic_cycle(self, cr, uid, use_new_cursor=False, context={}):
+    def run_automatic_cycle(self, cr, uid, use_new_cursor=False, context=None):
         '''
         Create procurement on fixed date
         '''
@@ -131,7 +131,7 @@ class procurement_order(osv.osv):
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values={}, cache={}, context={}):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, cache=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -141,7 +141,14 @@ class procurement_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         report = []
         proc_id = False
-        
+       
+        if context is None:
+            context = {}
+        if d_values is None:
+            d_values = {}
+        if cache is None:
+            cache = {}
+
         if isinstance(product_id, (int, long)):
             product_id = [product_id]
         
@@ -194,13 +201,15 @@ class procurement_order(osv.osv):
         
         return proc_id
     
-    def _compute_quantity(self, cr, uid, cycle_id, product_id, location_id, d_values={}, context={}):
+    def _compute_quantity(self, cr, uid, cycle_id, product_id, location_id, d_values=None, context=None):
         '''
         Compute the quantity of product to order like thid :
             [Delivery lead time (from supplier tab of the product or by default or manually overwritten) x Monthly Consumption]
             + Order coverage (number of months : 3 by default, manually overwritten) x Monthly consumption
             - Projected available quantity
         '''
+        if d_values is None:
+            d_values = {}
         product_obj = self.pool.get('product.product')
         supplier_info_obj = self.pool.get('product.supplierinfo')
         location_obj = self.pool.get('stock.location')
@@ -247,7 +256,7 @@ class procurement_order(osv.osv):
         return round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
         
         
-    def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
+    def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values=None, context=None):
         '''
         Compute the projected available quantity like this :
             Available stock (real stock - picked reservation)
@@ -257,6 +266,10 @@ class procurement_order(osv.osv):
                         manually overwritten for a product or at product level)]
             - Expiry quantities.
         '''
+        if context is None:
+            context = {}
+        if d_values is None:
+            d_values = {}
         product_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
         move_obj = self.pool.get('stock.move')

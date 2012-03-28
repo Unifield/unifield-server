@@ -126,7 +126,8 @@ class stock_picking(osv.osv):
                  "* Closed: has been processed, can't be modified or cancelled anymore\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
-
+        'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=True, domain="[('partner_id', '=', partner_id)]"),
+        'partner_id2': fields.many2one('res.partner', 'Partner', required=True),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -141,9 +142,73 @@ class stock_picking(osv.osv):
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
             vals['from_yml_test'] = True
+            
+        if not vals.get('partner_id2') and vals.get('address_id'):
+            addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+            vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+        elif not vals.get('partner_id2'):
+            vals['partner_id2'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+            
+        if not vals.get('address_id') and vals.get('partner_id2'):
+            addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+            if not addr.get('delivery'):
+                vals['address_id'] = addr.get('default')
+            else:
+                vals['address_id'] = addr.get('delivery')
+            
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Update the partner or the address according to the other
+        '''
+        if not vals.get('address_id') and vals.get('partner_id2'):
+            for pick in self.browse(cr, uid, ids, context=context):
+                if pick.partner_id.id != vals.get('partner_id2'):
+                    addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+                    if not addr.get('delivery'):
+                        vals['address_id'] = addr.get('default')
+                    else:
+                        vals['address_id'] = addr.get('delivery')
+                        
+        if not vals.get('partner_id2') and vals.get('address_id'):
+            for pick in self.browse(cr, uid, ids, context=context):
+                if pick.address_id.id != vals.get('address_id'):
+                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+                    vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+        
+        return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+    
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
+        '''
+        Change the delivery address when the partner change.
+        '''
+        v = {}
+        d = {}
+        
+        if not partner_id:
+            v.update({'address_id': False})
+        else:
+            d.update({'address_id': [('partner_id2', '=', partner_id)]})
+            
+
+        if address_id:
+            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
+        
+        if not address_id or addr.partner_id.id != partner_id:
+            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
+            if not addr.get('delivery'):
+                addr = addr.get('default')
+            else:
+                addr = addr.get('delivery')
+                
+            v.update({'address_id': addr})
+            
+        
+        return {'value': v,
+                'domain': d}
+    
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the picking to done
         '''
@@ -345,18 +410,7 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
-    _STOCK_MOVE_STATE = [('draft', 'Draft'),
-                         ('waiting', 'Waiting'),
-                         ('confirmed', 'Not Available'),
-                         ('assigned', 'Available'),
-                         ('done', 'Closed'),
-                         ('cancel', 'Cancel'),]
-
-    _columns = {
-        'state': fields.selection(_STOCK_MOVE_STATE, string='State', readonly=True, select=True),
-    }
-
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the stock move to manually done
         '''
@@ -366,7 +420,78 @@ class stock_move(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
+        'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=True, domain="[('partner_id', '=', partner_id)]"),
+        'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
     }
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Update the partner or the address according to the other
+        '''
+        if not vals.get('partner_id2') and vals.get('address_id'):
+            addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+            vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+        elif not vals.get('partner_id2'):
+            vals['partner_id2'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+            
+        if not vals.get('address_id') and vals.get('partner_id2'):
+            addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+            if not addr.get('delivery'):
+                vals['address_id'] = addr.get('default')
+            else:
+                vals['address_id'] = addr.get('delivery')
+        
+        return super(stock_move, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Update the partner or the address according to the other
+        '''
+        if not vals.get('address_id') and vals.get('partner_id2'):
+            for move in self.browse(cr, uid, ids, context=context):
+                if move.partner_id.id != vals.get('partner_id'):
+                    addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+                    if not addr.get('delivery'):
+                        vals['address_id'] = addr.get('default')
+                    else:
+                        vals['address_id'] = addr.get('delivery')
+                        
+        if not vals.get('partner_id2') and vals.get('address_id'):
+            for move in self.browse(cr, uid, ids, context=context):
+                if move.address_id.id != vals.get('address_id'):
+                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+                    vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+        
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
+    
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
+        '''
+        Change the delivery address when the partner change.
+        '''
+        v = {}
+        d = {}
+        
+        if not partner_id:
+            v.update({'address_id': False})
+        else:
+            d.update({'address_id': [('partner_id', '=', partner_id)]})
+            
+
+        if address_id:
+            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
+        
+        if not address_id or addr.partner_id.id != partner_id:
+            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
+            if not addr.get('delivery'):
+                addr = addr.get('default')
+            else:
+                addr = addr.get('delivery')
+                
+            v.update({'address_id': addr})
+            
+        
+        return {'value': v,
+                'domain': d}
     
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):

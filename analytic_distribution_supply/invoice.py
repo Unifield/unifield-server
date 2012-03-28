@@ -46,7 +46,7 @@ class account_invoice(osv.osv):
             help="Purchase Order from which invoice have been generated"),
     }
 
-    def fetch_analytic_distribution(self, cr, uid, ids, context={}):
+    def fetch_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Recover distribution from purchase order. If a commitment is attached to purchase order, then retrieve analytic distribution from commitment voucher.
         NB: This method only works because there is a link between purchase and invoice.
@@ -95,7 +95,7 @@ class account_invoice(osv.osv):
                             invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
         return True
 
-    def update_commitments(self, cr, uid, ids, context={}):
+    def update_commitments(self, cr, uid, ids, context=None):
         """
         Update engagement lines for given invoice.
         NB: We use COMMITMENT VOUCHER ANALYTIC DISTRIBUTION for updating!
@@ -132,7 +132,7 @@ class account_invoice(osv.osv):
                     if not a:
                         a = pol.product_id.categ_id.property_account_expense_categ.id
                     if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
                 else:
                     a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 invoice_lines[a].append(invl)
@@ -219,7 +219,7 @@ class account_invoice(osv.osv):
                 self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
         return True
 
-    def action_open_invoice(self, cr, uid, ids, context={}):
+    def action_open_invoice(self, cr, uid, ids, context=None):
         """
         Launch engagement lines updating if a commitment is attached to PO that generate this invoice.
         """

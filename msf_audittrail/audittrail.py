@@ -209,7 +209,7 @@ class audittrail_log_line(osv.osv):
     _description = "Log Line"
     _order = 'timestamp asc'
 
-    def _get_name_line(self, cr, uid, ids, field_name, args, context={}):
+    def _get_name_line(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return the value of the field set in the rule
         '''
@@ -232,7 +232,7 @@ class audittrail_log_line(osv.osv):
     ####
     # TODO : To validate
     ####
-    def _search_name_line(self, cr, uid, obj, name, args, context={}):
+    def _search_name_line(self, cr, uid, obj, name, args, context=None):
         '''
         Returns all lines corresponding to the args
         '''
@@ -558,6 +558,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
     @return: Returns result as per method of Object proxy
     """
+    if not fields_to_trace:
+        fields_to_trace = []
     uid_orig = uid
     uid = 1
     pool = pooler.get_pool(cr.dbname)

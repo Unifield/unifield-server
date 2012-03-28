@@ -15,7 +15,7 @@ class res_partner_category(osv.osv):
         return dict(res)
         # @@@end
 
-    def _search_complete_name(self, cr, uid, obj, name, args, context={}):
+    def _search_complete_name(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         if args[0][1] != "=":

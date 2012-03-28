@@ -55,10 +55,12 @@ class wizard_import_list(osv.osv_memory):
         """
     }
 
-    def close_window(self, cr, uid, ids, context={}):
+    def close_window(self, cr, uid, ids, context=None):
         '''
         Simply close the wizard
         '''
+        if context is None:
+            context = {}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order',
                 'view_type': 'form',
@@ -66,11 +68,13 @@ class wizard_import_list(osv.osv_memory):
                 'res_id': context.get('list_id'),
                 'target': 'crush'}
 
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         '''
         Check if the Procurement List is saved and 
         set the error message
         '''
+        if context is None:
+            context = {}
         res = super(wizard_import_list, self).default_get(cr, uid, fields, context=context)
 
         # If we are after the importation
@@ -92,11 +96,13 @@ class wizard_import_list(osv.osv_memory):
         return res
 
 
-    def import_file(self, cr, uid, ids, context={}):
+    def import_file(self, cr, uid, ids, context=None):
         '''
         Import the file passed on the wizard in the
         Procurement List
         '''
+        if context is None:
+            context = {}
         list_line_obj = self.pool.get('sale.order.line')
         list_obj = self.pool.get('sale.order')
         product_obj = self.pool.get('product.product')

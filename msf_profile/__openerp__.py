@@ -38,6 +38,9 @@
         "analytic_distribution",
         "account_period_closing_level",
         "account_activable",
+        "purchase_override",
+        "sale_override",
+        "stock_override",
         "msf_order_date",
         "purchase_compare_rfq",
         "purchase_msf",
@@ -86,6 +89,8 @@
         "documents_done",
         "msf_budget",
         "account_subscription",
+        "msf_accrual",
+        "purchase_allocation_report",
     ],
     "update_xml": [
         "report.xml",

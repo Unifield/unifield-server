@@ -29,19 +29,23 @@ class stock_warehouse_order_cycle(osv.osv):
     _description = 'Order Cycle'
     _order = 'sequence, id'
 
-    def create(self, cr, uid, data, context={}):
+    def create(self, cr, uid, data, context=None):
         '''
         Checks if a frequence was choosen for the cycle
         '''
+        if context is None:
+            context = {}
         if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
             raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !'))
         
         return super(stock_warehouse_order_cycle, self).create(cr, uid, data, context=context)
         
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Checks if a frequence was choosen for the cycle
         '''
+        if context is None:
+            context = {}
         if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
             for proc in self.browse(cr, uid, ids):
                 if not proc.frequence_id:
@@ -50,7 +54,7 @@ class stock_warehouse_order_cycle(osv.osv):
         return super(stock_warehouse_order_cycle, self).write(cr, uid, ids, data, context=context)
         
     
-    def _get_frequence_change(self, cr, uid, ids, context={}):
+    def _get_frequence_change(self, cr, uid, ids, context=None):
         '''
         Returns ids when the frequence change
         '''
@@ -61,7 +65,7 @@ class stock_warehouse_order_cycle(osv.osv):
         
         return res.keys()
     
-    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the name_get value of the frequence
         '''
@@ -92,7 +96,7 @@ class stock_warehouse_order_cycle(osv.osv):
         'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption'),
         'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
-                                    store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context={}: ids, ['frequence_id'], 20),
+                                    store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context=None: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
     }
     
@@ -125,13 +129,15 @@ class stock_warehouse_order_cycle(osv.osv):
             
         return {'value': v}
     
-    def choose_change_frequence(self, cr, uid, ids, context={}):
+    def choose_change_frequence(self, cr, uid, ids, context=None):
         '''
         Open a wizard to define a frequency for the order cycle
         or open a wizard to modify the frequency if frequency already exists
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
             
         frequence_id = False
         res_id = False
@@ -205,13 +211,14 @@ class stock_frequence(osv.osv):
         default['order_cycle_ids'] = False
         return super(stock_frequence, self).copy(cr, uid, id, default, context)
 
-    def choose_frequency(self, cr, uid, ids, context={}):
+    def choose_frequency(self, cr, uid, ids, context=None):
         '''
         Adds the support of order cycles on choose frequency method
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        if context is None:
+            context = {}
         if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
             context.get('active_model') == 'stock.warehouse.order.cycle':
             self.pool.get('stock.warehouse.order.cycle').write(cr, uid, [context.get('active_id')], {'frequence_id': ids[0]})

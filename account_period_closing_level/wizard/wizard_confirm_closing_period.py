@@ -28,13 +28,13 @@ class wizard_confirm_closing_period(osv.osv_memory):
     _name = 'wizard.confirm.closing.period'
     _description = 'Closing period confirmation wizard'
 
-    def button_confirm(self, cr, uid, ids, context={}):
+    def button_confirm(self, cr, uid, ids, context=None):
         """
         Confirm that we close the period
         """
         # Some verification
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not 'period_id' in context:

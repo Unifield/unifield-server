@@ -13,7 +13,7 @@
             view_type="form"
             target="new"
             view_id="output_currency_for_export_form_view"
-            context="{'from': 'account.move.line'}"/>
+            context="{'from': 'account.move.line', 'search_domain': search_domain}"/>
 
         <!-- Account Analytic Line -->
         <act_window id="action_analytic_output_currency_for_export"
@@ -25,7 +25,7 @@
             view_type="form"
             target="new"
             view_id="output_currency_for_export_form_view"
-            context="{'from': 'account.analytic.line'}"/>
+            context="{'from': 'account.analytic.line', 'search_domain': search_domain}"/>
 
     <!-- CSV Export view -->
         <!-- Account move lines -->

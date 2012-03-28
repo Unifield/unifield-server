@@ -38,7 +38,7 @@ class documents_done_wizard(osv.osv):
     _description = 'Documents not \'Done\''
     _auto = False
 
-    def _get_selection(self, cr, uid, context={}):
+    def _get_selection(self, cr, uid, context=None):
         states = []
         if not context:
             context = {}
@@ -57,7 +57,7 @@ class documents_done_wizard(osv.osv):
 
         return states
 
-    def _get_model_from_state(self, cr, uid, state, context={}):
+    def _get_model_from_state(self, cr, uid, state, context=None):
         '''
         Returns the model which have the value of state in the selection field 'state'.
         '''
@@ -76,11 +76,13 @@ class documents_done_wizard(osv.osv):
 
         return models, states
 
-    def _get_state(self, cr, uid, ids, field_name, args, context={}):
+    def _get_state(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the good value according to the doc type
         '''
         res = {}
+        if not context:
+            context = {}
 
         for doc in self.browse(cr, uid, ids, context=context):
             context.update({'models': [doc.real_model], 'db_value': True})
@@ -90,7 +92,7 @@ class documents_done_wizard(osv.osv):
 
         return res
     
-    def _search_state(self, cr, uid, obj, name, args, context={}):
+    def _search_state(self, cr, uid, obj, name, args, context=None):
         '''
         Returns all documents according to state
         '''
@@ -103,7 +105,7 @@ class documents_done_wizard(osv.osv):
 
         return [('id', 'in', ids)]
 
-    def _get_related_stock_moves(self, cr, uid, order, field, context={}):
+    def _get_related_stock_moves(self, cr, uid, order, field, context=None):
         '''
         Returns all stock moves related to an order (sale.order/purchase.order)
         '''
@@ -112,11 +114,13 @@ class documents_done_wizard(osv.osv):
             line_ids.append(line.id)
         return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
 
-    def _get_problem_sale_order(self, cr, uid, order, context={}):
+    def _get_problem_sale_order(self, cr, uid, order, context=None):
         '''
         Check if all stock moves, all procurement orders, all purchase orders
         and all stock picking generated from the sale order is closed or canceled
         '''
+        if not context:
+            context = {}
         move_ids = self._get_related_stock_moves(cr, uid, order, 'sale_line_id', context=context)
         proc_ids = []
         po_ids = []
@@ -153,11 +157,13 @@ class documents_done_wizard(osv.osv):
         else:
             return move_ids, proc_ids, po_ids, tender_ids, invoice_ids
 
-    def _get_problem_purchase_order(self, cr, uid, order, context={}):
+    def _get_problem_purchase_order(self, cr, uid, order, context=None):
         '''
         Check if all stock moves, all invoices
         and all stock picking generated from the purchase order is closed or canceled
         '''
+        if not context:
+            context = {}
         move_ids = self._get_related_stock_moves(cr, uid, order, 'purchase_line_id', context=context)
         so_ids = []
         invoice_ids = []
@@ -174,21 +180,25 @@ class documents_done_wizard(osv.osv):
         else:
             return move_ids, so_ids, invoice_ids
 
-    def _get_problem_tender(self, cr, uid, order, context={}):
+    def _get_problem_tender(self, cr, uid, order, context=None):
         '''
         Check if all request for quotations and all purchase orders
         generated from the tender is closed or canceled
         '''
+        if not context:
+            context = {}
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('state', 'not in', ['cancel', 'done']), ('tender_id', '=', order.id)], context=context)
         if context.get('count', False):
             return po_ids or False
         else:
             return po_ids
 
-    def _get_problem(self, cr, uid, ids, field_name, args, context={}):
+    def _get_problem(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns True if at least one doc stop the manually done processe
         '''
+        if not context:
+            context = {}
         res = {}
         c = context.copy()
         c.update({'count': True})
@@ -231,10 +241,12 @@ class documents_done_wizard(osv.osv):
             
         return 'Undefined'
 
-    def _add_stock_move_pb(self, cr, uid, problem_id, moves, context={}):
+    def _add_stock_move_pb(self, cr, uid, problem_id, moves, context=None):
         '''
         Add a line for each moves
         '''
+        if not context:
+            context = {}
         line_obj = self.pool.get('documents.done.problem.line')
         picking_ids = []
         for move in self.pool.get('stock.move').browse(cr, uid, moves, context=context):
@@ -260,10 +272,12 @@ class documents_done_wizard(osv.osv):
                                           'doc_type': 'Stock move'})
         return
 
-    def _add_purchase_order(self, cr, uid, problem_id, po_ids, context={}):
+    def _add_purchase_order(self, cr, uid, problem_id, po_ids, context=None):
         '''
         Add line for each PO/RfQ
         '''
+        if not context:
+            context = {}
         line_obj = self.pool.get('documents.done.problem.line')
         for order in self.pool.get('purchase.order').browse(cr, uid, po_ids, context=context):
             line_obj.create(cr, uid, {'problem_id': problem_id,
@@ -274,10 +288,12 @@ class documents_done_wizard(osv.osv):
                                       'doc_type': order.rfq_ok and 'Request for Quotation' or 'Purchase Order'})
         return
 
-    def go_to_problems(self, cr, uid, ids, context={}):
+    def go_to_problems(self, cr, uid, ids, context=None):
         '''
         Returns a wizard with all documents posing a problem
         '''
+        if not context:
+            context = {}
         pb_obj = self.pool.get('documents.done.problem')
         pb_line_obj = self.pool.get('documents.done.problem.line')
         move_obj = self.pool.get('stock.move')
@@ -350,7 +366,7 @@ class documents_done_wizard(osv.osv):
                 'target': 'popup'}
                         
 
-    def cancel_line(self, cr, uid, ids, all_doc=True, context={}):
+    def cancel_line(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the document to done state
         '''
@@ -475,10 +491,12 @@ documents_done_wizard()
 class documents_done_problem(osv.osv_memory):
     _name = 'documents.done.problem'
 
-    def _get_errors(self, cr, uid, ids, field_name, args, context={}):
+    def _get_errors(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns True if at least one problem is found
         '''
+        if not context:
+            context = {}
         res = {}
 
         for doc in self.browse(cr, uid, ids, context=context):
@@ -495,11 +513,13 @@ class documents_done_problem(osv.osv_memory):
         'pb_lines': fields.one2many('documents.done.problem.line', 'problem_id', string='Lines'),
     }
 
-    def done_all_documents(self, cr, uid, ids, all_doc=True, context={}):
+    def done_all_documents(self, cr, uid, ids, all_doc=True, context=None):
         '''
         For all documents, check the state of the doc and send the signal
         of 'manually_done' if needed
         '''
+        if not context:
+            context = {}
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.pb_lines:
@@ -522,10 +542,12 @@ class documents_done_problem(osv.osv_memory):
                 'view_mode': 'tree',
                 'target': 'crush'}
 
-    def cancel_document(self, cr, uid, ids, context={}):
+    def cancel_document(self, cr, uid, ids, context=None):
         '''
         Cancel the document
         '''
+        if not context:
+            context = {}
         for wiz in self.browse(cr, uid, ids, context=context):
             return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], all_doc=True, context=context)
 
@@ -536,7 +558,7 @@ documents_done_problem()
 class documents_done_problem_line(osv.osv_memory):
     _name = 'documents.done.problem.line'
 
-    def _get_state(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_state(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return the state of the related doc
         '''
@@ -570,10 +592,12 @@ class documents_done_problem_line(osv.osv_memory):
         'doc_id': fields.integer(string='Doc. Id'),
     }
 
-    def go_to_doc(self, cr, uid, ids, context={}):
+    def go_to_doc(self, cr, uid, ids, context=None):
         '''
         Open the form of the related doc
         '''
+        if not context:
+            context = {}
         for item in self.browse(cr, uid, ids, context=context):
             return {'type': 'ir.actions.act_window',
                     'res_model': item.doc_model,

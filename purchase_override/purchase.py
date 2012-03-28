@@ -31,23 +31,15 @@ import logging
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-    
-    def create(self, cr, uid, vals, context=None):
-        '''
-        create method for filling flag from yml tests
-        '''
-        if context is None:
-            context = {}
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PO: set from yml test to True')
-            vals['from_yml_test'] = True
-        return super(purchase_order, self).create(cr, uid, vals, context=context)
 
-    def copy(self, cr, uid, id, default, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         '''
         Remove loan_id field on new purchase.order
         '''
-        return super(purchase_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
+        if not default:
+            default = {}
+        default.update({'loan_id': False})
+        return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
     def _invoiced(self, cursor, user, ids, name, arg, context=None):
@@ -80,7 +72,6 @@ class purchase_order(osv.osv):
     # @@@end
     
     _columns = {
-        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
@@ -99,9 +90,18 @@ class purchase_order(osv.osv):
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'confirmed': [('readonly',False)]}),
-        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True),
+        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
             states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
+        'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
+        'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True, 
+                                              help="The address where the invoice will be sent."),
+        'invoice_method': fields.selection([('manual','Manual'),('order','From Order'),('picking','From Picking')], 'Invoicing Control', required=True, readonly=True,
+            help="From Order: a draft invoice will be pre-generated based on the purchase order. The accountant " \
+                "will just have to validate this invoice for control.\n" \
+                "From Picking: a draft invoice will be pre-generated based on validated receptions.\n" \
+                "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
+        ),
     }
     
     _defaults = {
@@ -110,9 +110,11 @@ class purchase_order(osv.osv):
         'categ': lambda *a: 'other',
         'loan_duration': 2,
         'from_yml_test': lambda *a: False,
+        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
+        'invoice_method': lambda *a: 'picking',
     }
 
-    def _check_user_company(self, cr, uid, company_id, context={}):
+    def _check_user_company(self, cr, uid, company_id, context=None):
         '''
         Remove the possibility to make a PO to user's company
         '''
@@ -122,16 +124,7 @@ class purchase_order(osv.osv):
 
         return True
 
-    def create(self, cr, uid, vals, context={}):
-        '''
-        Check if the partner is correct
-        '''
-        if 'partner_id' in vals:
-            self._check_user_company(cr, uid, vals['partner_id'], context=context)
-    
-        return super(purchase_order, self).create(cr, uid, vals, context=context)
-
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Check if the partner is correct
         '''
@@ -148,6 +141,8 @@ class purchase_order(osv.osv):
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
+        d = {'partner_id': []}
+        w = {}
         local_market = None
         
         # Search the local market partner id
@@ -158,11 +153,19 @@ class purchase_order(osv.osv):
         
         if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
             v['invoice_method'] = 'manual'
+        elif order_type == 'direct':
+            v['invoice_method'] = 'order'
+            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
             if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
+            elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
+                v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False})
+                d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+                w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
+                          'title': 'An error has occured !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
             v['partner_id'] = None
             v['dest_address_id'] = None
@@ -179,7 +182,7 @@ class purchase_order(osv.osv):
                 if partner.property_product_pricelist_purchase:
                     v['pricelist_id'] = partner.property_product_pricelist_purchase.id
         
-        return {'value': v}
+        return {'value': v, 'domain': d, 'warning': w}
     
     def onchange_partner_id(self, cr, uid, ids, part, *a, **b):
         '''
@@ -197,11 +200,34 @@ class purchase_order(osv.osv):
                 res['value']['invoice_method'] = 'manual'
         
         return res
+    
+    def on_change_dest_partner_id(self, cr, uid, ids, dest_partner_id, context=None):
+        '''
+        Fill automatically the destination address according to the destination partner
+        '''
+        v = {}
+        d = {}
+        
+        if not context:
+            context = {}
+        
+        if not dest_partner_id:
+            v.update({'dest_address_id': False})
+            d.update({'dest_address_id': []})
+        
+        d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+        
+        delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
+        v.update({'dest_address_id': delivery_addr['delivery']})
+        
+        return {'value': v, 'domain': d}
 
-    def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
+    def _hook_confirm_order_message(self, cr, uid, context=None, *args, **kwargs):
         '''
         Change the logged message
         '''
+        if context is None:
+            context = {}
         if 'po' in kwargs:
             po = kwargs['po']
             return _("Purchase order '%s' is validated.") % (po.name,)
@@ -212,11 +238,18 @@ class purchase_order(osv.osv):
         '''
         Checks if the invoice should be create from the purchase order
         or not
+        If the PO is a DPO, set all related OUT stock move to 'done' state
         '''
         line_obj = self.pool.get('purchase.order.line')
+        move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
+        
         if isinstance(ids, (int, long)):
             ids = [ids]
             
+        todo = []
+        todo2 = []
+        todo3 = []
         for order in self.browse(cr, uid, ids):
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
@@ -225,6 +258,24 @@ class purchase_order(osv.osv):
 
             message = _("Purchase order '%s' is confirmed.") % (order.name,)
             self.log(cr, uid, order.id, message)
+            
+            if order.order_type == 'direct':
+                self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
+                for line in order.order_line:
+                    if line.procurement_id: todo.append(line.procurement_id.id)
+                    
+        if todo:
+            todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
+        
+        if todo2:
+            sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
+            move_obj.write(cr, uid, sm_ids, {'state': 'done'}, context=context)
+            for move in move_obj.browse(cr, uid, sm_ids, context=context):
+                if move.picking_id: todo3.append(move.picking_id.id)
+                
+        if todo3:
+            for pick_id in todo3:
+                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
@@ -328,7 +379,7 @@ class purchase_order(osv.osv):
         return move_values
     
     # @@@override@purchase.purchase.order.action_picking_create
-    def action_picking_create(self,cr, uid, ids, context={}, *args):
+    def action_picking_create(self,cr, uid, ids, context=None, *args):
         picking_id = False
         for order in self.browse(cr, uid, ids):
             loc_id = order.partner_id.property_stock_supplier.id
@@ -342,7 +393,8 @@ class purchase_order(osv.osv):
                 'name': pick_name,
                 'origin': order.name+((order.origin and (':'+order.origin)) or ''),
                 'type': 'in',
-                'address_id': order.dest_address_id.id or order.partner_address_id.id,
+                'partner_id2': order.company_id.id,
+                'address_id': order.dest_address_id.id or False,
                 'invoice_state': istate,
                 'purchase_id': order.id,
                 'company_id': order.company_id.id,
@@ -411,7 +463,7 @@ class purchase_order(osv.osv):
         return picking_id
         # @@@end
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
         """
@@ -420,9 +472,15 @@ class purchase_order(osv.osv):
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True
+            
+        if 'partner_id' in vals:
+            self._check_user_company(cr, uid, vals['partner_id'], context=context)
+    
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
+            
         return super(purchase_order, self).create(cr, uid, vals, context)
 
-    def action_cancel(self, cr, uid, ids, context={}):
+    def action_cancel(self, cr, uid, ids, context=None):
         """
         Cancel activity in workflow.
         """
@@ -433,7 +491,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
-    def action_done(self, cr, uid, ids, context={}):
+    def action_done(self, cr, uid, ids, context=None):
         """
         Done activity in workflow.
         """
@@ -444,12 +502,14 @@ class purchase_order(osv.osv):
             ids = [ids]
         return self.write(cr, uid, ids, {'state':'done'}, context=context)
 
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the PO to done state
         '''
         wf_service = netsvc.LocalService("workflow")
 
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
