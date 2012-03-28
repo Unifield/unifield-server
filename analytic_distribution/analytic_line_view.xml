@@ -47,7 +47,7 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/tree/field[@name='account_id']" position='after'>
+                    <xpath expr="/tree/field[@name='account_id']" position='before'>
                         <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     </xpath>
                 </data>
