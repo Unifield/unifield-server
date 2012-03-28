@@ -1,3 +1,4 @@
 "id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
 "access_report_procurement_policies_all","report.procurement.policies all","model_report_procurement_policies",,1,1,1,1
 "access_procurement_batch_cron_all","procurement.batch.cron","model_procurement_batch_cron",,1,1,1,1
+"access_procurement_rules_report_all","procurement.rules.report all","model_procurement_rules_report",,1,1,1,1

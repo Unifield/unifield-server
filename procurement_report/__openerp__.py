@@ -37,6 +37,10 @@
         'procurement_report_view.xml',
         'procurement_batch_data.xml',
         'procurement_batch_view.xml',
+        'min_max_report_view.xml',
+        'auto_supply_report_view.xml',
+        'order_cycle_report_view.xml',
+        'threshold_value_report_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [

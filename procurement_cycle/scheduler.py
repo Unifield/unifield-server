@@ -81,7 +81,6 @@ class procurement_order(osv.osv):
                 product_ids = []
                 for p in cycle.product_ids:
                     product_ids.append(p.id)
-                    
                 for product in product_obj.browse(cr, uid, product_ids):
                     proc_id = self.create_proc_cycle(cr, uid, cycle, product.id, location_id, d_values, cache=cache)
                     

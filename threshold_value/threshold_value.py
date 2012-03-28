@@ -242,6 +242,14 @@ class threshold_value_line(osv.osv):
         'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
     
+    _defaults = {
+        'product_qty': lambda *a: 1.00,
+    }
+    
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
+    ]
+    
     def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
                                 consumption_period_from, consumption_period_to, frequency,
                                 safety_month, lead_time, supplier_lt, uom_id, context=None):
@@ -289,7 +297,6 @@ class threshold_value_line(osv.osv):
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v = {'product_uom_id': prod.uom_id.id}
-            
             return {'value': v}
         return {}
     

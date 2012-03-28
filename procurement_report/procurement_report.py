@@ -23,98 +23,152 @@ import tools
 from osv import fields,osv
 from decimal_precision import decimal_precision as dp
 
-
-class report_procurement_policies(osv.osv):
-    _name = 'report.procurement.policies'
-    _description = "Procurement Statistics"
+class procurement_rules_report(osv.osv):
+    _name = 'procurement.rules.report'
     _auto = False
+    _order = 'product_reference, product_name, product_id, location_id'
+    
+    def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
+        value = {}
+        for f in fields:
+            value[f] = False
+
+        ret = {}
+        for id in ids:
+            ret[id] = value
+        return ret
+    
+    def _search_nomen_s(self, cr, uid, obj, name, args, context={}):
+
+        if not args:
+            return []
+        narg = []
+        for arg in args:
+            el = arg[0].split('_')
+            el.pop()
+            narg=[('_'.join(el), arg[1], arg[2])]
+        
+        return narg
+    
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
     
     _columns = {
-        'location_id': fields.many2one('stock.location', string='S. Location'),
-        'categ_id': fields.many2one('product.category', string='Category'),
-        'product_id': fields.many2one('product.product', string='Product'),
-        'automatic_supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Auto. Supply'),
-        'order_cycle_id': fields.many2one('stock.warehouse.order.cycle', string='Order Cycle'),
-        'mini_rule_id': fields.many2one('stock.warehouse.orderpoint', string='Mini. Stock'),
+        'product_id': fields.many2one('product.product', string='Product', readonly=True),
+        'location_id': fields.many2one('stock.location', string='Location', readonly=True),
+        'product_reference': fields.char(size=64, string='Reference', type='char'),
+        'product_name': fields.char(size=128, string='Name', type='char'),
+        'auto_supply_ok': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Auto Supply', readonly=True),
+        'order_cycle_ok': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Order Cycle', readonly=True),
+        'min_max_ok': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Min/Max', readonly=True),
+        'threshold_ok': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Threshold value', readonly=True),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True, select=1),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True, select=1),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1),
+        'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
     }
-
     
     def init(self, cr):
         '''
         Creates the SQL view on database
         '''
-        tools.drop_view_if_exists(cr, 'report_procurement_policies')
+        tools.drop_view_if_exists(cr, 'procurement_rules_report')
         cr.execute("""
-            CREATE OR REPLACE view report_procurement_policies AS (
-                SELECT row_number() OVER(ORDER BY product_id) AS id,
-                       al.location_id AS location_id,
-                       al.product_id AS product_id,
-                       al.categ_id AS categ_id,
-                       al.automatic_supply_id AS automatic_supply_id,
-                       al.order_cycle_id AS order_cycle_id,
-                       al.mini_rule_id AS mini_rule_id
-                FROM(SELECT 
-                       sloc.id AS location_id,
-                       p.id AS product_id,
-                       t.categ_id AS categ_id,
-                       swas.id AS automatic_supply_id,
-                       swoc.id AS order_cycle_id,
-                       swo.id AS mini_rule_id
+            CREATE OR REPLACE view procurement_rules_report AS (
+                SELECT 
+                    row_number() OVER(ORDER BY product_id) AS id,
+                    al.product_id AS product_id,
+                    al.location_id AS location_id,
+                    CASE WHEN sum(al.swas_ok) > 0 THEN 'yes' ELSE 'no' END auto_supply_ok,
+                    CASE WHEN sum(al.swoc_ok) > 0 THEN 'yes' ELSE 'no' END order_cycle_ok,
+                    CASE WHEN sum(al.swop_ok) > 0 THEN 'yes' ELSE 'no' END min_max_ok,
+                    CASE WHEN sum(al.swtv_ok) > 0 THEN 'yes' ELSE 'no' END threshold_ok,
+                    prod.default_code AS product_reference,
+                    temp.name AS product_name,
+                    temp.nomen_manda_0 AS nomen_manda_0,
+                    temp.nomen_manda_1 AS nomen_manda_1,
+                    temp.nomen_manda_2 AS nomen_manda_2,
+                    temp.nomen_manda_3 AS nomen_manda_3
+                FROM (
+                ((((SELECT
+                    1 AS swas_ok,
+                    0 AS swoc_ok,
+                    0 AS swop_ok,
+                    0 AS swtv_ok,
+                    swasl.product_id AS product_id,
+                    swas.location_id AS location_id
                 FROM
-                    stock_location sloc
-                    JOIN product_product p
-                        ON True
-                    JOIN product_template t
-                        ON p.product_tmpl_id = t.id
-                    LEFT JOIN stock_warehouse_automatic_supply swas
-                        ON swas.location_id = sloc.id AND (swas.product_id = p.id OR
-                                                            (swas.category_id = t.categ_id AND
-                                                             p.id IN (SELECT swasl.product_id FROM stock_warehouse_automatic_supply_line swasl
-                                                                      WHERE swasl.supply_id = swas.id)))
-                    LEFT JOIN stock_warehouse_order_cycle swoc
-                        ON swoc.location_id = sloc.id AND (swoc.product_id = p.id OR
-                                                            (swoc.category_id = t.categ_id AND
-                                                             p.id NOT IN (SELECT ocpr.product_id FROM order_cycle_product_rel ocpr
-                                                                          WHERE ocpr.order_cycle_id = swoc.id)))
-                    LEFT JOIN stock_warehouse_orderpoint swo
-                        ON swo.location_id = sloc.id AND swo.product_id = p.id
-                WHERE p.active = TRUE AND (swas.id IS NOT NULL OR swoc.id IS NOT NULL OR swo.id IS NOT NULL)
- UNION SELECT 
-                       NULL AS location_id,
-                       p.id AS product_id,
-                       t.categ_id AS categ_id,
-                       NULL AS automatic_supply_id,
-                       NULL AS order_cycle_id,
-                       NULL AS mini_rule_id
+                    stock_warehouse_automatic_supply_line swasl
+                    LEFT JOIN
+                        stock_warehouse_automatic_supply swas
+                    ON swasl.supply_id = swas.id)
+                UNION
+                (SELECT
+                    0 AS swas_ok,
+                    1 AS swoc_ok,
+                    0 AS swop_ok,
+                    0 AS swtv_ok,
+                    ocpr.product_id AS product_id,
+                    swoc.location_id AS location_id
                 FROM
-                    product_product p
-                    JOIN product_template t
-                        ON p.product_tmpl_id = t.id
-                WHERE p.active = TRUE 
-              AND p.id NOT IN (SELECT 
-                       p.id AS product_id
+                    order_cycle_product_rel ocpr
+                    LEFT JOIN
+                    stock_warehouse_order_cycle swoc
+                    ON ocpr.order_cycle_id = swoc.id))
+                UNION
+                (SELECT
+                    0 AS swas_ok,
+                    0 AS swoc_ok,
+                    1 AS swop_ok,
+                    0 AS swtv_ok,
+                    swop.product_id AS product_id,
+                    swop.location_id AS location_id
                 FROM
-                    product_product p
-                    JOIN product_template t
-                        ON p.product_tmpl_id = t.id
-                    LEFT JOIN stock_warehouse_automatic_supply swas
-                        ON (swas.product_id = p.id OR
-                                                            (swas.category_id = t.categ_id AND
-                                                             p.id IN (SELECT swasl.product_id FROM stock_warehouse_automatic_supply_line swasl
-                                                                      WHERE swasl.supply_id = swas.id)))
-                    LEFT JOIN stock_warehouse_order_cycle swoc
-                        ON (swoc.product_id = p.id OR
-                                                            (swoc.category_id = t.categ_id AND
-                                                             p.id NOT IN (SELECT ocpr.product_id FROM order_cycle_product_rel ocpr
-                                                                          WHERE ocpr.order_cycle_id = swoc.id)))
-                    LEFT JOIN stock_warehouse_orderpoint swo
-                        ON swo.product_id = p.id
-                WHERE p.active = TRUE AND (swas.id IS NOT NULL OR swoc.id IS NOT NULL OR swo.id IS NOT NULL))
-        GROUP BY p.id, t.categ_id
-                ) AS al
+                    stock_warehouse_orderpoint swop))
+                UNION
+                (SELECT
+                    0 AS swas_ok,
+                    0 AS swoc_ok,
+                    0 AS swop_ok,
+                    1 AS swtv_ok,
+                    swtvl.product_id AS product_id,
+                    swtv.location_id AS location_id
+                 FROM
+                    threshold_value_line swtvl
+                    LEFT JOIN
+                    threshold_value swtv
+                    ON swtvl.threshold_value_id = swtv.id))
+                UNION
+                    (SELECT 
+                        0 AS swas_ok,
+                        0 AS swoc_ok,
+                        0 AS swop_ok,
+                        0 AS swtv_ok,
+                        product.id AS product_id,
+                        null AS location_id
+                    FROM product_product product
+                    WHERE product.id NOT IN 
+                        (((SELECT product_id FROM stock_warehouse_automatic_supply_line)
+                        UNION
+                        (SELECT product_id FROM order_cycle_product_rel))
+                        UNION
+                        (SELECT product_id FROM stock_warehouse_orderpoint))
+                )) AS al
+                LEFT JOIN
+                    product_product prod
+                    ON al.product_id = prod.id
+                LEFT JOIN
+                    product_template temp
+                    ON prod.product_tmpl_id = temp.id
+                GROUP BY al.product_id, al.location_id, prod.default_code, temp.name, temp.nomen_manda_0, temp.nomen_manda_1, temp.nomen_manda_2, temp.nomen_manda_3
+                ORDER BY prod.default_code, temp.name, al.product_id, al.location_id
             )
-        """)
-        
-report_procurement_policies()
+            """)
+    
+procurement_rules_report()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
