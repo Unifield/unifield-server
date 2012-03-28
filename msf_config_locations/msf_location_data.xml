@@ -64,7 +64,7 @@
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
        <field name="chained_picking_type">internal</field> -->
-       <field name="posz">1</field>
+       <field name="posz">2</field>
     </record>
 
     <record id="stock.stock_location_stock" model="stock.location">
@@ -75,7 +75,7 @@
        <!--  <field name="chained_location_type">nomenclature</field>
         <field name="chained_auto_packing">transparent</field>
         <field name="chained_picking_type">internal</field> -->
-        <field name="posz">2</field>
+        <field name="posz">1</field>
     </record>
 
     <record id="stock_location_medical" model="stock.location">
