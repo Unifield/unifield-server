@@ -436,8 +436,12 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values:
                 date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
-                res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
-                res = datetime.strftime(res, date_format)
+                try:
+                    res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S.%f')
+                finally:
+                    res = datetime.strftime(res, date_format)
             return res
         elif field['ttype'] == 'selection':
             res = False
