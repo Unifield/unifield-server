@@ -13,7 +13,7 @@
             <field name="delivery_requested_date">2012-02-21</field>
             <field name="invoice_method">order</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'ZEDCO RADIATOR LTD'), ('partner_id.ref', '=', 'ZRL')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'ZEDCO RADIATOR LTD'), ('ref', '=', 'ZRL')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -31,7 +31,7 @@
             <field name="delivery_requested_date">2012-01-30</field>
             <field name="invoice_method">picking</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'AFRO INDUSTRIES AGENCIES'), ('partner_id.ref', '=', 'AIA')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -47,7 +47,7 @@
             <field name="delivery_requested_date">2012-02-02</field>
             <field name="invoice_method">picking</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'TNT EXPRESS'), ('partner_id.ref', '=', 'TNTE')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'TNT EXPRESS'), ('ref', '=', 'TNTE')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -63,7 +63,7 @@
             <field name="delivery_requested_date">2012-03-03</field>
             <field name="invoice_method">picking</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'METRO Pharmaceuticals Ltd'), ('partner_id.ref', '=', 'MPL')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'METRO Pharmaceuticals Ltd'), ('ref', '=', 'MPL')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -207,7 +207,7 @@
             <field name="supplier_ids" search="['|', '&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA'), '&amp;', ('name', '=', 'BLUE CHIP TECHNOLOGIES LTD'), ('ref', '=', 'BCTL')]"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
             <field name="requested_date">2012-02-15</field>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_input"/>
         </record>
 
         <!--model: tender.line, id: 1-->
@@ -431,7 +431,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0005_5"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 2-->
@@ -446,7 +446,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0004_4"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 3-->
@@ -461,7 +461,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0003_3"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 4-->
@@ -476,7 +476,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0002_2"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 5-->
@@ -491,7 +491,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0001_1"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 6-->
@@ -504,7 +504,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 7-->
@@ -517,7 +517,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 8-->
@@ -530,7 +530,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 9-->
@@ -543,7 +543,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 10-->
@@ -556,7 +556,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
         </record>
 
         <!--model: stock.picking, id: 2-->
@@ -576,7 +576,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000002_7"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
@@ -591,7 +591,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000003_8"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
@@ -606,7 +606,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000004_9"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
@@ -621,7 +621,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000005_10"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAASPB1TC'), ('name', '=', 'ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y coblister')]"/>
@@ -645,7 +645,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000001_6"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_input"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00001_1" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>

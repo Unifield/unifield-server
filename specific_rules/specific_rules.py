@@ -1390,12 +1390,16 @@ class product_product(osv.osv):
         if ids:
             prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
             name = "%s: [%s] %s"%(name, prod['code'], prod['name'])
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'view_location_tree_tree')[1] 
+
         return {
             'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'stock.location',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_type': 'tree',
+            'view_id': [view_id],
+            'domain': [('location_id','=',False)],
+            'view_mode': 'tree',
             'context': {'product_id': context.get('active_id') , 'compute_child': False},
             'target': 'current',
         }
