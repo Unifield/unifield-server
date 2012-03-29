@@ -58,7 +58,8 @@ class product_supplierinfo(osv.osv):
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
         
-        new_res = []
+        if isinstance(res, (int, long)):
+            res = [res]
         
         for r in self.browse(cr, uid, res, context=context):
             if not r.catalogue_id or r.catalogue_id.active:
@@ -66,12 +67,38 @@ class product_supplierinfo(osv.osv):
         
         return new_res
     
+    def _get_editable(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if no catalogue associated
+        '''
+        res = {}
+        
+        for x in self.browse(cr, uid, ids, context=context):
+            res[x.id] = True
+            if x.catalogue_id:
+                res[x.id] = False
+        
+        return res
+    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
+        'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
                                       help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
     }
+    
+    def edit_line(self, cr, uid, ids, context=None):
+        '''
+        Open the edit form
+        '''
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.supplierinfo',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                'res_id': ids[0],
+                'context': context}
     
     # Override the original method
     def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
