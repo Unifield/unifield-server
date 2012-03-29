@@ -224,14 +224,14 @@
   We check the state of the procurement request
 -
   !assert {model: sale.order, id: pr_cancel}:
-    - state == 'cancel', "Bad state for the procurement request (cancel :: %s)" % state
+    - state == 'cancel', "Bad state for the procurement request"
 -
   We check the state of the procurement request line
 -
   !assert {model: sale.order.line, id: pr_cancel_l1}:
-    - state == 'cancel', "Bad state for the procurement request (cancel :: %s)" % state
+    - state == 'cancel', "Bad state for the procurement request line"
 -
   We check the state of the procurement request
 -
   !assert {model: sale.order.line, id: pr_cancel_l2}:
-    - state == 'cancel', "Bad state for the procurement request (cancel :: %s)" % state
+    - state == 'cancel', "Bad state for the procurement request line"
