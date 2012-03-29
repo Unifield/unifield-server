@@ -37,7 +37,7 @@ class stock_batch_recall(osv.osv_memory):
         'expired_date': fields.date(string='Expired Date')
     }
     
-    def get_ids(self, cr, uid, ids, context={}):
+    def get_ids(self, cr, uid, ids, context=None):
         '''
         Returns all stock moves according to parameters
         '''
@@ -57,10 +57,12 @@ class stock_batch_recall(osv.osv_memory):
                 domain.append(('prodlot_id', '=', track.prodlot_id.id))
         return domain
     
-    def return_view(self, cr, uid, ids, context={}):
+    def return_view(self, cr, uid, ids, context=None):
         '''
         Print the report on Web client (search view)
         '''
+        if context is None:
+            context = {}
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         
@@ -226,7 +228,7 @@ class report_batch_recall(osv.osv):
               addr.partner_id
         );""")
         
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
 
 report_batch_recall()

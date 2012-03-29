@@ -39,7 +39,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         'new_line_qty': lambda *a: 0.00,
     }
 
-    def split_line(self, cr, uid, ids, context={}):
+    def split_line(self, cr, uid, ids, context=None):
         '''
         Create a new order line and change the quantity of the old line
         '''
@@ -71,7 +71,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context={}):
+    def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
         '''
         Update the old line qty according to the new line qty
         '''

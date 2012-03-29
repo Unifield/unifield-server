@@ -30,7 +30,7 @@ class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
     
-    def unlink(self, cr, uid, info_ids, context={}):
+    def unlink(self, cr, uid, info_ids, context=None):
         '''
         Disallow the possibility to remove a supplier info if 
         it's linked to a catalogue
@@ -38,6 +38,8 @@ class product_supplierinfo(osv.osv):
         because it says that the unlink method is called by the write method
         of supplier.catalogue.line and that the product of the line has changed.
         '''
+        if context is None:
+            context = {}
         if isinstance(info_ids, (int, long)):
             info_ids = [info_ids]
             
@@ -48,6 +50,21 @@ class product_supplierinfo(osv.osv):
                                                    'supplier catalogue line to remove this supplier information.'))
         
         return super(product_supplierinfo, self).unlink(cr, uid, info_ids, context=context)
+    
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if not context:
+            context = {}
+            
+        res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+        
+        new_res = []
+        
+        for r in self.browse(cr, uid, res, context=context):
+            if not r.catalogue_id or r.catalogue_id.active:
+                new_res.append(r.id)
+        
+        return new_res
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
@@ -84,7 +101,7 @@ class pricelist_partnerinfo(osv.osv):
     _name = 'pricelist.partnerinfo'
     _inherit = 'pricelist.partnerinfo'
     
-    def unlink(self, cr, uid, info_id, context={}):
+    def unlink(self, cr, uid, info_id, context=None):
         '''
         Disallow the possibility to remove a supplier pricelist 
         if it's linked to a catalogue line.
@@ -92,6 +109,8 @@ class pricelist_partnerinfo(osv.osv):
         because the product on catalogue line has changed and the current line
         should be removed.
         '''
+        if context is None:
+            context = {}
         info = self.browse(cr, uid, info_id, context=context)
         if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
             raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked' \
@@ -99,6 +118,21 @@ class pricelist_partnerinfo(osv.osv):
                                                'supplier catalogue line to remove this supplier information.'))
         
         return super(pricelist_partnerinfo, self).unlink(cr, uid, info_id, context=context)
+    
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if not context:
+            context = {}
+            
+        res = super(pricelist_partnerinfo, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+        
+        new_res = []
+        
+        for r in self.browse(cr, uid, res, context=context):
+            if not r.suppinfo_id or not r.suppinfo_id.catalogue_id or r.suppinfo_id.catalogue_id.active:
+                new_res.append(r.id)
+        
+        return new_res
     
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
@@ -115,7 +149,7 @@ class product_product(osv.osv):
     _inherit = 'product.product'
     
     def _get_partner_price(self, cr, uid, product_ids, partner_id, product_qty, currency_id,
-                                          order_date, product_uom_id, context={}):
+                                          order_date, product_uom_id, context=None):
         '''
         Search the good partner price line for products
         '''

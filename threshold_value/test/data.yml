@@ -332,7 +332,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -352,7 +352,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -372,7 +372,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -392,7 +392,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -412,7 +412,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -432,7 +432,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -452,7 +452,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -472,7 +472,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -492,7 +492,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -512,7 +512,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -532,7 +532,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner
@@ -552,7 +552,7 @@
     product_uom: product.product_uom_unit
     date_expected: !eval time.strftime('%Y-%m-%d %H:%M:%S')
     date: !eval time.strftime('%Y-%m-%d %H:%M:%S')
-    product_qty: 50.00
+    product_qty: 150.00
     location_id: stock.stock_location_stock
     location_dest_id: stock.stock_location_customers
     reason_type_id: reason_types_moves.reason_type_deliver_partner

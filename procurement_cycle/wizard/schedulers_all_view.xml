@@ -5,22 +5,22 @@
         <!--  Compute Schedulers -->
 
 		<record id="view_compute_schedulers_wizard" model="ir.ui.view">
-            <field name="name">Compute Schedulers Supply</field>
+            <field name="name">POs Creation (Order Cycle)</field>
             <field name="model">procurement.cycle.compute.all</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Scheduler Cycle Parameters">
+                <form string="POs Creation Cycle Parameters">
 				    <group col="2" colspan="4">
                 		<button icon='gtk-cancel' special="cancel"
                 			string="Cancel" />
-                		<button name="procure_calculation_cycle" string="Compute Schedulers"
+                		<button name="procure_calculation_cycle" string="Compute POs Creation"
                 			colspan="1" type="object" icon="gtk-ok" />
                 	</group>
                 </form>
             </field>
         </record>
 
-         <act_window name="Compute Schedulers Cycle"
+         <act_window name="POs Creation (Order Cycle)"
 		    res_model="procurement.cycle.compute.all"
 		    src_model="procurement.order"
 		    view_mode="form"

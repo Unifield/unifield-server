@@ -38,7 +38,7 @@ class account_move_line(osv.osv):
             amount = obj_line.debit_currency - obj_line.credit_currency
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
                 if not obj_line.journal_id.analytic_journal_id:
-                    raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
+                    raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
                 # create lines
                 for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
@@ -63,6 +63,9 @@ class account_move_line(osv.osv):
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
                             line_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                        # Update value if we come from a write-off
+                        if obj_line.is_write_off:
+                            line_vals.update({'from_write_off': True,})
                         # Add source_date value for account_move_line that are a correction of another account_move_line
                         if obj_line.corrected_line_id and obj_line.source_date:
                             line_vals.update({'source_date': obj_line.source_date})

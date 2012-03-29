@@ -30,7 +30,7 @@ import time
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
 
-    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Informs for each move line if a reconciliation or a partial reconciliation have been made. Else return False.
         """
@@ -61,7 +61,7 @@ class account_move_line_compute_currency(osv.osv):
         'credit_currency': 0.0,
     }
 
-    def create_addendum_line(self, cr, uid, lines, total, context={}):
+    def create_addendum_line(self, cr, uid, lines, total, context=None):
         """
         Create an addendum line
         """
@@ -178,7 +178,7 @@ class account_move_line_compute_currency(osv.osv):
 
             return partner_line_id
 
-    def reconciliation_update(self, cr, uid, ids, context={}):
+    def reconciliation_update(self, cr, uid, ids, context=None):
         """
         Update addendum line for reconciled lines
         """
@@ -391,7 +391,7 @@ class account_move_line_compute_currency(osv.osv):
             newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
-    def write(self, cr, uid, ids, vals, context={}, check=True, update_check=True):
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
         Update line values regarding date, source_date and currency rate
         """
@@ -420,20 +420,7 @@ class account_move_line_compute_currency(osv.osv):
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
         return res
 
-    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
-            if line['reconcile_id']:
-                ret[line['id']] = line['reconcile_id']
-            elif line['reconcile_partial_id']:
-                ret[line['id']] = line['reconcile_partial_id']
-            else:
-                ret[line['id']] = False
-        return ret
-
-    def _get_instance_type(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_instance_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
         ret = {}
@@ -444,7 +431,7 @@ class account_move_line_compute_currency(osv.osv):
     def _get_journal_move_line(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
     
-    def _get_line_account_type(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_line_account_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
         ret = {}
@@ -466,13 +453,13 @@ class account_move_line_compute_currency(osv.osv):
         # Since they are used in the move line view, they are added in Multi-Currency.
         'instance': fields.function(_get_instance_type, type='char', string='Proprietary instance', size=64, method=True,
                 store = {
-                    'account.move.line': (lambda self, cr, uid, ids, c={}: ids, ['journal_id'], 10),
+                    'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['journal_id'], 10),
                     'account.journal': (_get_journal_move_line, ['instance_id'], 10),
                 }
             ),
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
                 store = {
-                    'account.move.line': (lambda self, cr, uid, ids, c={}: ids, ['account_id'], 10),
+                    'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),
                     'account.account': (_store_journal_account, ['user_type'], 10),
                     'account.account.type': (_store_journal_account_type, ['name'], 10),
                 }

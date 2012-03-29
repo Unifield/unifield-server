@@ -32,7 +32,7 @@ class catalogue_export_lines(osv.osv_memory):
         'file_to_export': fields.binary(string='File to export'),
     }
     
-    def export_file(self, cr, uid, ids, context={}):
+    def export_file(self, cr, uid, ids, context=None):
         '''
         Export lines to file
         '''

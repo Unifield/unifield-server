@@ -260,17 +260,15 @@
     name: "Test"
     code: "TEST"
 -
-  Change test currency's rate for this table
+  Import table currency rates
 -
-  !python {model: res.currency.rate}: |
+  !python {model: import.table.currencies}: |
     import datetime
-    rate_ids = self.pool.get("res.currency").search(cr, uid, [("reference_currency_id", "=", ref("base.EUR")),
-                                                              ("currency_table_id", "=", ref("test_table"))])
-                                                              
-    assert len(rate_ids) == 1, "Something wrong with the currency table creation"
-    self.create(cr, uid, {"name": "%s-03-01" %(datetime.datetime.now().year+1),
-                          "rate": 10.0,
-                          "currency_id": rate_ids[0]})
+    import base64
+    import_file = '"Currency Code","Rate"\n"EUR","10.0"\n"CHF","1.0"'
+    wizard = self.create(cr, uid, {'rate_date':  "%s-03-01" %(datetime.datetime.now().year+1),
+                                   'import_file': base64.encodestring(import_file)})
+    self.import_table_rates(cr, uid, [wizard], context={'active_id': ref("test_table")})
 -
   Assert that total retrieved for funded with currency table is 21210 EUR
 -

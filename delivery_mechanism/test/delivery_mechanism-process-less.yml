@@ -77,16 +77,18 @@
     po_id = data['purchase_id'][0]
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
+    pick = self.browse(cr, uid, in_ids[0], context=context)
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
     dic = self.action_process(cr, uid, in_ids, context=context)
     # reduce quantities - in out memory moves
     wiz_obj = self.pool.get(dic['res_model'])
     for obj in wiz_obj.browse(cr, uid, [dic['res_id']], context=context):
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         if out.product_id.id == ref("product_A"):
           out.write({'quantity': 7})
         if out.product_id.id == ref("product_B"):
           out.write({'quantity': 1})
-      
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     # openERP swap IN -> backorder
     data = self.read(cr, uid, in_ids, ['backorder_id'], context=context)[0]

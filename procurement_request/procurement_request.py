@@ -83,19 +83,19 @@ class procurement_request(osv.osv):
         'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The amount without tax."),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
             store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The tax amount."),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
             store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The total amount."),
@@ -109,7 +109,7 @@ class procurement_request(osv.osv):
         'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
@@ -133,7 +133,7 @@ class procurement_request(osv.osv):
 
         return super(procurement_request, self).create(cr, uid, vals, context)
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Changes the state of the order to allow the deletion
         '''
@@ -155,11 +155,15 @@ class procurement_request(osv.osv):
                 
         return super(procurement_request, self).unlink(cr, uid, normal_ids, context=context)
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Adds automatically a domain to search only True sale orders if no procurement_request in context
         '''
         test = True
+        if args is None:
+            args = []
+        if context is None:
+            context = {}
         for a in args:
             if a[0] == 'procurement_request':
                 test = False
@@ -216,21 +220,26 @@ class procurement_request(osv.osv):
 
         return True
     
-    def confirm_procurement(self, cr, uid, ids, context={}):
+    def confirm_procurement(self, cr, uid, ids, context=None):
         '''
         Confirmed the request
         '''
+        if context is None:
+            context = {}
+
         self.write(cr, uid, ids, {'state': 'progress'}, context=context)
 
         for request in self.browse(cr, uid, ids, context=context):
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
-            self.log(cr, uid, request.id, message)
+            proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
+            context.update({'view_id': proc_view and proc_view[1] or False})
+            self.log(cr, uid, request.id, message, context=context)
         
         self.action_ship_create(cr, uid, ids, context=context)
         
         return True
     
-    def procurement_done(self, cr, uid, ids, context={}):
+    def procurement_done(self, cr, uid, ids, context=None):
         '''
         Creates all procurement orders according to lines
         '''
@@ -244,7 +253,7 @@ class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
     _inherit= 'sale.order.line'
     
-    def _amount_line(self, cr, uid, ids, field_name, arg, context={}):
+    def _amount_line(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Override the method to return 0.0 if the line is a procurement request line
         '''
@@ -260,7 +269,7 @@ class procurement_request_line(osv.osv):
         
         return res
     
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Adds the date_planned value
         '''
@@ -284,7 +293,7 @@ class procurement_request_line(osv.osv):
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
     }
     
-    def _get_planned_date(self, cr, uid, c={}):
+    def _get_planned_date(self, cr, uid, c=None):
         if c is None:
             c = {}
         if 'procurement_request' in c:
@@ -298,11 +307,13 @@ class procurement_request_line(osv.osv):
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
-    def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):
+    def requested_product_id_change(self, cr, uid, ids, product_id, type, context=None):
         '''
         Fills automatically the product_uom_id field on the line when the 
         product was changed.
         '''
+        if context is None:
+            context = {}
         product_obj = self.pool.get('product.product')
 
         v = {}

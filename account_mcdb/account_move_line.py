@@ -30,7 +30,7 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
-    def _get_output(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_output(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get an amount regarding currency in context (from 'output' and 'output_currency_id' values).
         NB: Pay attention to 'currency_table_id' field in context. It compute amounts regarding another rates.
@@ -40,6 +40,8 @@ class account_move_line(osv.osv):
         # Some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Return nothing if no 'output_currency_id' in context
         if not context or not context.get('output_currency_id', False):
             for id in ids:
@@ -79,11 +81,13 @@ class account_move_line(osv.osv):
             multi="output_currency"),
     }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Remove output_amount and output_currency field if context doesn't have 'output_currency_id'
         """
         # Some verifications
+        if context is None:
+            context = {}
         view = super(account_move_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type == 'tree' and (not context or not context.get('output_currency_id', False)):
             tree = etree.fromstring(view['arch'])

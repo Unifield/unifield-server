@@ -32,7 +32,7 @@ class catalogue_import_lines(osv.osv_memory):
         'file_to_import': fields.binary(string='File to import'),
     }
     
-    def import_file(self, cr, uid, ids, context={}):
+    def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines from file
         '''

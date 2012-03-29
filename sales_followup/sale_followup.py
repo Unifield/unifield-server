@@ -27,7 +27,7 @@ class sale_order_followup_test(osv.osv_memory):
     
     _columns = {'name': fields.char(size=64, string='Name')}
     
-    def create_test(self, cr, uid, ids, context={}):
+    def create_test(self, cr, uid, ids, context=None):
         self.pool.get('product.category').create(cr, uid, {'name': 'test category'}, context=context)
         return True
     
@@ -49,7 +49,7 @@ class sale_order_followup(osv.osv_memory):
         else:
             return res
     
-    def _get_order_state(self, cr, uid, ids, field_name, args, context={}):
+    def _get_order_state(self, cr, uid, ids, field_name, args, context=None):
         if not context:
             context = {}
             
@@ -78,7 +78,7 @@ class sale_order_followup(osv.osv_memory):
         'choose_type': lambda *a: 'progress',
     }
     
-    def go_to_view(self, cr, uid, ids, context={}):
+    def go_to_view(self, cr, uid, ids, context=None):
         '''
         Launches the correct view according to the user's choice
         '''
@@ -96,7 +96,7 @@ class sale_order_followup(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'dummy'}
         
-#    def switch_documents(self, cr, uid, ids, context={}):
+#    def switch_documents(self, cr, uid, ids, context=None):
 #        '''
 #        Switch to documents view
 #        '''
@@ -104,7 +104,7 @@ class sale_order_followup(osv.osv_memory):
 #        
 #        return self.go_to_view(cr, uid, ids, context=context)
     
-    def switch_progress(self, cr, uid, ids, context={}):
+    def switch_progress(self, cr, uid, ids, context=None):
         '''
         Switch to progress view
         '''
@@ -112,10 +112,12 @@ class sale_order_followup(osv.osv_memory):
         
         return self.go_to_view(cr, uid, ids, context=context)
     
-    def update_followup(self, cr, uid, ids, context={}):
+    def update_followup(self, cr, uid, ids, context=None):
         '''
         Updates data in followup view
         '''
+        if context is None:
+            context = {}
         new_context = context.copy()
         
         # Get information of the old followup before deletion
@@ -137,13 +139,16 @@ class sale_order_followup(osv.osv_memory):
         #else:
         return self.switch_progress(cr, uid, [result], context=new_context)
     
-    def start_order_followup(self, cr, uid, ids, context={}):
+    def start_order_followup(self, cr, uid, ids, context=None):
         '''
         Creates and display a followup object
         '''
         order_obj = self.pool.get('sale.order')
         line_obj = self.pool.get('sale.order.line.followup')
         
+        if context is None:
+            context = {}
+
         # openERP BUG ?
         ids = context.get('active_ids',[])
         
@@ -185,7 +190,7 @@ class sale_order_followup(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',}
         
-    def get_purchase_ids(self, cr, uid, line_id, context={}):
+    def get_purchase_ids(self, cr, uid, line_id, context=None):
         '''
         Returns a list of purchase orders related to the sale order line
         '''
@@ -207,7 +212,7 @@ class sale_order_followup(osv.osv_memory):
 
         return purchase_ids
 
-    def get_purchase_line_ids(self, cr, uid, line_id, purchase_ids, context={}):
+    def get_purchase_line_ids(self, cr, uid, line_id, purchase_ids, context=None):
         '''
         Returns a list of purchase order lines related to the sale order line
         '''
@@ -226,7 +231,7 @@ class sale_order_followup(osv.osv_memory):
 
         return po_line_ids
     
-    def get_quotation_ids(self, cr, uid, line_id, context={}):
+    def get_quotation_ids(self, cr, uid, line_id, context=None):
         '''
         Returns a list of request for quotation related to the sale order line
         '''
@@ -249,7 +254,7 @@ class sale_order_followup(osv.osv_memory):
         
         return quotation_ids
         
-    def get_incoming_ids(self, cr, uid, line_id, purchase_ids, context={}):
+    def get_incoming_ids(self, cr, uid, line_id, purchase_ids, context=None):
         '''
         Returns a list of incoming shipments related to the sale order line
         '''
@@ -273,12 +278,11 @@ class sale_order_followup(osv.osv_memory):
         
         return incoming_ids
         
-    def get_outgoing_ids(self, cr, uid, line_id, non_zero=False, context={}):
+    def get_outgoing_ids(self, cr, uid, line_id, non_zero=False, context=None):
         '''
         Returns a list of outgoing deliveries related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
-        move_obj = self.pool.get('stock.move')
                 
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
@@ -295,7 +299,7 @@ class sale_order_followup(osv.osv_memory):
 
         return outgoing_ids
     
-    def get_tender_ids(self, cr, uid, line_id, context={}):
+    def get_tender_ids(self, cr, uid, line_id, context=None):
         '''
         Returns a list of call for tender related to the sale order line
         '''
@@ -319,13 +323,13 @@ class sale_order_line_followup(osv.osv_memory):
     _name = 'sale.order.line.followup'
     _description = 'Sales Order Lines Followup'
     
-    def _get_status(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_status(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Get all status about the line
         '''
-        move_obj = self.pool.get('stock.move')
-        
         res = {}
+        if context is None:
+            context = {}
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'sourced_ok': 'No',
@@ -717,7 +721,10 @@ class sale_order_followup_from_menu(osv.osv_memory):
         'cust_order_id': fields.many2one('sale.order', string='Customer reference', required=True),
     }
     
-    def go_to_followup(self, cr, uid, ids, context={}):
+    def go_to_followup(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
         new_context = context.copy()
         new_ids = []
         for menu in self.browse(cr, uid, ids, context=context):
@@ -745,7 +752,7 @@ class tender_line(osv.osv):
     _name = 'tender.line'
     _inherit = 'tender.line'
     
-    def go_to_tender_info(self, cr, uid, ids, context={}):
+    def go_to_tender_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
         '''
@@ -765,7 +772,7 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
     
-    def go_to_po_info(self, cr, uid, ids, context={}):
+    def go_to_po_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
         '''
@@ -785,7 +792,7 @@ class request_for_quotation(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
     
-    def go_to_rfq_info(self, cr, uid, ids, context={}):
+    def go_to_rfq_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
         '''
@@ -804,7 +811,7 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
 
-    def _get_parent_doc(self, cr, uid, ids, field_name, args, context={}):
+    def _get_parent_doc(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the shipment id if exist or the picking id
         '''
@@ -823,7 +830,7 @@ class stock_move(osv.osv):
         'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
     }
 
-    def _get_view_id(self, cr, uid, ids, context={}):
+    def _get_view_id(self, cr, uid, ids, context=None):
         '''
         Returns the good view id
         '''
@@ -845,14 +852,14 @@ class stock_move(osv.osv):
             module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))
             try:
                 return obj_data.get_object_reference(cr, uid, module, view)[1], pick.id
-            except ValueError, e:
+            except ValueError:
                 pass
         
         module, view = view_list.get(pick.type,('stock', 'view_picking_form'))
 
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view)[1], pick.id
     
-    def go_to_incoming_info(self, cr, uid, ids, context={}):
+    def go_to_incoming_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
         '''
@@ -864,7 +871,7 @@ class stock_move(osv.osv):
                 'view_id': [view_id[0]],
                 'res_id': view_id[1],}
         
-    def go_to_outgoing_info(self, cr, uid, ids, context={}):
+    def go_to_outgoing_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
         '''
@@ -906,7 +913,7 @@ class purchase_order_line(osv.osv):
         'po_state': fields.related('order_id', 'state', type='selection', selection=STATE_SELECTION, readonly=True),
     }
 
-    def go_to_po_info(self, cr, uid, ids, context={}):
+    def go_to_po_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
         '''
@@ -928,10 +935,12 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    def name_search(self, cr, uid, name='', args=None, operator='ilike', context={}, limit=80):
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=80):
         '''
         Search all SO by internal or customer reference
         '''
+        if context is None:
+            context = {}
         if context.get('from_followup'):
             ids = []
             if name and len(name) > 1:
@@ -941,10 +950,12 @@ class sale_order(osv.osv):
         else:
             return super(sale_order, self).name_search(cr, uid, name, args, operator, context, limit)
 
-    def name_get(self, cr, uid, ids, context={}):
+    def name_get(self, cr, uid, ids, context=None):
         '''
         If the method is called from followup wizard, set the customer ref in brackets
         '''
+        if context is None:
+            context = {}
         if context.get('from_followup'):
             res = []
             for r in self.browse(cr, uid, ids, context=context):

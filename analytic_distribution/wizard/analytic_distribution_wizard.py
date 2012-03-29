@@ -32,7 +32,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.lines'
     _description = 'analytic.distribution.wizard.lines'
 
-    def _get_amount(self, cr, uid, ids, name, args, context={}):
+    def _get_amount(self, cr, uid, ids, name, args, context=None):
         """
         Give amount regarding percentage and wizard's total_amount
         """
@@ -63,7 +63,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             #+ to construct object research !
     }
 
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         """
         Verify that percentage or amount are correctly set
         """
@@ -86,11 +86,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 res['percentage'] = (amount / total_amount) * 100.0
         return res
 
-    def _get_remaining_allocation(self, cr, uid, context={}):
+    def _get_remaining_allocation(self, cr, uid, context=None):
         """
         Get remaining allocation for this object
         """
         # Some verifications
+        if context is None:
+            context = {}
         id = None
         mode = None
         if context and context.get('parent_id', False):
@@ -224,7 +226,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             view['arch'] = etree.tostring(tree)
         return view
 
-    def verify_analytic_account(self, cr, uid, vals, line_type=None, context={}):
+    def verify_analytic_account(self, cr, uid, vals, line_type=None, context=None):
         """
         Verify that analytic account match with line_type
         """
@@ -257,7 +259,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category.") % (cc.name,))
         return True
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Calculate amount and percentage regarding context content
         """
@@ -278,7 +280,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             self.pool.get('analytic.distribution.wizard').validate(cr, uid, vals.get('wizard_id'), context=context)
         return res
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         """
         Calculate amount and percentage regarding context content
         """
@@ -346,10 +348,12 @@ class analytic_distribution_wizard(osv.osv_memory):
     _name = 'analytic.distribution.wizard'
     _description = 'analytic.distribution.wizard'
 
-    def _is_writable(self, cr, uid, ids, name, args, context={}):
+    def _is_writable(self, cr, uid, ids, name, args, context=None):
         """
         Give possibility to write or not on this wizard
         """
+        if context is None:
+            context = {}
         # Prepare some values
         res = {}
         # Browse all given wizard
@@ -378,7 +382,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[el.id] = False
         return res
 
-    def _have_header(self, cr, uid, ids, name, args, context={}):
+    def _have_header(self, cr, uid, ids, name, args, context=None):
         """
         Return true if this wizard is on a line and if the parent has a distrib
         """
@@ -439,10 +443,12 @@ class analytic_distribution_wizard(osv.osv_memory):
         'entry_mode': lambda *a: 'percentage',
     }
 
-    def dummy(self, cr, uid, ids, context={}, *args, **kwargs):
+    def dummy(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         Change entry mode
         """
+        if context is None:
+            context = {}
         mode = self.read(cr, uid, ids, ['entry_mode'])[0]['entry_mode']
         self.write(cr, uid, [ids[0]], {'entry_mode': mode=='percentage' and 'amount' or 'percentage'})
         return {
@@ -455,7 +461,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'context': context,
         }
 
-    def _get_lines_from_distribution(self, cr, uid, ids, distrib_id=None, context={}):
+    def _get_lines_from_distribution(self, cr, uid, ids, distrib_id=None, context=None):
         """
         Get lines from a distribution and copy them to the wizard
         """
@@ -516,7 +522,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Add distribution lines to the wizard
         """
@@ -531,7 +537,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self._get_lines_from_distribution(cr, uid, [wiz.id], wiz.distribution_id.id, context=context)
         return res
 
-    def wizard_verifications(self, cr, uid, ids, context={}):
+    def wizard_verifications(self, cr, uid, ids, context=None):
         """
         Do some verifications on wizard:
          - Raise an exception if we come from a purchase order that have been approved
@@ -595,7 +601,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('Allocation is not fully done for %s') % type_name)
             return True
 
-    def update_cost_center_lines(self, cr, uid, wizard_id, context={}):
+    def update_cost_center_lines(self, cr, uid, wizard_id, context=None):
         """
         Update cost_center_lines from wizard regarding funding pool lines
         """
@@ -641,7 +647,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 cc_obj.unlink(cr, uid, [line_id], context=context)
         return True
 
-    def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context={}):
+    def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context=None):
         """
         Compare wizard lines to database lines and write modifications done
         """
@@ -719,7 +725,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 line_obj.unlink(cr, uid, id, context=context)
         return True
 
-    def button_confirm(self, cr, uid, ids, context={}):
+    def button_confirm(self, cr, uid, ids, context=None):
         """
         Calculate total of lines and verify that it's equal to total_amount
         """
@@ -826,7 +832,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 context={'skip_validation': True})
         return True
 
-    def button_get_header_distribution(self, cr, uid, ids, context={}):
+    def button_get_header_distribution(self, cr, uid, ids, context=None):
         """
         Get distribution from invoice or purchase
         """
@@ -869,7 +875,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'context': context,
         }
 
-    def button_cancel(self, cr, uid, ids, context={}):
+    def button_cancel(self, cr, uid, ids, context=None):
         """
         Close the wizard or return on Direct Invoice wizard if we come from this one.
         """
@@ -906,7 +912,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 }
         return {'type' : 'ir.actions.act_window_close'}
 
-    def update_analytic_lines(self, cr, uid, ids, context={}):
+    def update_analytic_lines(self, cr, uid, ids, context=None):
         """
         Update analytic lines with an ugly method: delete old lines and create new ones
         """

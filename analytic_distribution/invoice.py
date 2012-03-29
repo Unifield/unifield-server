@@ -35,7 +35,7 @@ class account_invoice(osv.osv):
         res['analytic_distribution_id'] = x.get('analytic_distribution_id', False)
         return res
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice
         """
@@ -92,7 +92,7 @@ class account_invoice_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice line
         """
@@ -147,7 +147,7 @@ class account_invoice_line(osv.osv):
                 'context': context,
         }
 
-    def move_line_get_item(self, cr, uid, line, context={}):
+    def move_line_get_item(self, cr, uid, line, context=None):
         """
         Give right analytic distribution when creating move lines
         """

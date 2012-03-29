@@ -38,7 +38,7 @@ class wizard_invoice_date(osv.osv_memory):
         'state': fields.selection([('both','Both'), ('amount', 'amount'), ('date','date')], 'State'),
     }
 
-    def validate(self, cr, uid, ids, context={}):
+    def validate(self, cr, uid, ids, context=None):
         inv_obj = self.pool.get('account.invoice')
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids):

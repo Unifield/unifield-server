@@ -46,7 +46,7 @@ class account_period(osv.osv):
         
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -155,7 +155,7 @@ class account_period(osv.osv):
 
     _order = 'date_start, number'
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
@@ -170,13 +170,13 @@ class account_period(osv.osv):
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
     }
 
-    def button_overdue_invoice(self, cr, uid, ids, context={}):
+    def button_overdue_invoice(self, cr, uid, ids, context=None):
         """
         Open a view that display overdue invoices for this period
         """
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         

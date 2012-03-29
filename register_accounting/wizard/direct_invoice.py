@@ -57,7 +57,7 @@ class wizard_account_invoice(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    def compute_wizard(self, cr, uid, ids, context={}):
+    def compute_wizard(self, cr, uid, ids, context=None):
         """
         Check invoice lines and compute the total invoice amount
         """
@@ -68,7 +68,7 @@ class wizard_account_invoice(osv.osv):
             self.write(cr, uid, [wiz_inv.id], {'amount_total': amount})
         return True
 
-    def invoice_reset_wizard(self, cr, uid, ids, context={}):
+    def invoice_reset_wizard(self, cr, uid, ids, context=None):
         """
         Reset the invoice by reseting some fields
         """
@@ -76,14 +76,14 @@ class wizard_account_invoice(osv.osv):
             'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False})
         return True
 
-    def invoice_cancel_wizard(self, cr, uid, ids, context={}):
+    def invoice_cancel_wizard(self, cr, uid, ids, context=None):
         """
         Delete the wizard from database
         """
         self.unlink(cr, uid, ids)
         return {}
 
-    def invoice_create_wizard(self, cr, uid, ids, context={}):
+    def invoice_create_wizard(self, cr, uid, ids, context=None):
         """
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
@@ -164,7 +164,7 @@ class wizard_account_invoice(osv.osv):
 
         return open_register_view(self, cr, uid,inv['register_id'][0])
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a direct invoice
         """
@@ -221,7 +221,7 @@ class wizard_account_invoice_line(osv.osv):
         'invoice_id': fields.many2one('wizard.account.invoice', 'Invoice Reference', select=True),
     }
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a direct invoice line
         """

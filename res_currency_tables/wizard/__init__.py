@@ -18,26 +18,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    'name': 'MSF Budget Management',
-    'version': '1.0',
-    'category': 'Generic Modules/Accounting',
-    'author': 'MSF, TeMPO Consulting',
-    'developer': 'Matthieu Dietrich',
-    'depends': ['account', 'account_budget', 'analytic_distribution'],
-    'description': '''
-        Budget view
-    ''',
-    'init_xml': [],
-    'update_xml': [
-        'account_budget_definition_view.xml',
-        'account_budget_definition_workflow.xml',
-    ],
-    'test': [
-        'test/account_budget_definition.yml',
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import import_currencies
+import warning_import_currencies
+import confirm_import_currencies
+import import_table_currencies
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

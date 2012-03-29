@@ -92,12 +92,14 @@ class account_invoice(osv.osv):
             self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
         return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new invoice
         """
         if not context:
             context = {}
+        if not default:
+            default = {}
         inv = self.browse(cr, uid, [id], context=context)[0]
         if inv.analytic_distribution_id:
             new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)
@@ -105,7 +107,7 @@ class account_invoice(osv.osv):
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+    def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Add verification on all lines for analytic_distribution_id to be present and valid !
         """
@@ -131,7 +133,7 @@ class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
 
-    def _get_distribution_state(self, cr, uid, ids, name, args, context={}):
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
         Get state of distribution:
          - if compatible with the invoice line, then "valid"
@@ -154,7 +156,7 @@ class account_invoice_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.invoice_id.analytic_distribution_id.id, line.account_id.id)
         return res
 
-    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
         """
         If invoice have an analytic distribution, return False, else return True
         """
@@ -184,17 +186,19 @@ class account_invoice_line(osv.osv):
         'have_analytic_distribution_from_header': lambda *a: True,
     }
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         vals['newline'] = False
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
-    def copy_data(self, cr, uid, id, default={}, context={}):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new invoice line
         """
         # Some verifications
         if not context:
             context = {}
+        if not default:
+            default = {}
         # Copy analytic distribution
         invl = self.browse(cr, uid, [id], context=context)[0]
         if invl.analytic_distribution_id:
