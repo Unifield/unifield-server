@@ -22,7 +22,9 @@
 			<field name="arch" type="xml">
 				<data>
 					<xpath expr="/tree" position="attributes">
-<!--						<attribute name="editable">top</attribute>-->
+						<!-- TODO: Voir avec JF pour ne pas être obligé d'avoir editable=top pour
+							   avoir un noteditable
+						<attribute name="editable">top</attribute>-->
 						<attribute name="noteditable">editable==False</attribute>
 					</xpath>
 					
