@@ -7,13 +7,11 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest0}:
-    code: TEST0
     name: nomenclature test 0
 -
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest01}:
-    code: TEST-2
     level: 1
     name: nomenclature test 2
     parent_id: product_nomenclature_nomenclaturetest0
@@ -21,7 +19,6 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest02}:
-    code: TEST-3
     level: 2
     name: nomenclature test 3
     parent_id: product_nomenclature_nomenclaturetest01
@@ -29,7 +26,6 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest03}:
-    code: TEST-4
     level: 3
     name: nomenclature test 4
     parent_id: product_nomenclature_nomenclaturetest02
@@ -37,13 +33,11 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest1}:
-    code: TEST1
     name: nomenclature test 0
 -
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest11}:
-    code: TEST-2
     level: 1
     name: nomenclature test 2
     parent_id: product_nomenclature_nomenclaturetest1
@@ -51,7 +45,6 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest12}:
-    code: TEST-3
     level: 2
     name: nomenclature test 3
     parent_id: product_nomenclature_nomenclaturetest11
@@ -59,7 +52,6 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest13}:
-    code: TEST-4
     level: 3
     name: nomenclature test 4
     parent_id: product_nomenclature_nomenclaturetest12
