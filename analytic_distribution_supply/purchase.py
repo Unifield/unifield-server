@@ -175,7 +175,8 @@ class purchase_order(osv.osv):
                 new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
                 # Update this distribution not to have a link with purchase but with new commitment
                 if new_distrib_id:
-                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], 
+                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
                     # Create funding pool lines if needed
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
                     # Update commitment with new analytic distribution
@@ -188,7 +189,8 @@ class purchase_order(osv.osv):
                     if not a:
                         a = pol.product_id.categ_id.property_account_expense_categ.id
                     if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
+                        raise osv.except_osv(_('Error !'), 
+                            _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id))
                 else:
                     a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 fpos = po.fiscal_position or False
@@ -202,7 +204,12 @@ class purchase_order(osv.osv):
                 for line in po_lines[account_id]:
                     total_amount += line.price_subtotal
                 # Create commitment lines
-                line_id = self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total_amount, 'initial_amount': total_amount, 'account_id': account_id, 'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]}, context=context)
+                line_id = self.pool.get('account.commitment.line').create(cr, uid, {
+                    'commit_id': commit_id,
+                    'amount': total_amount,
+                    'initial_amount': total_amount, 'account_id': account_id,
+                    'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]
+                }, context=context)
                 created_commitment_lines.append(line_id)
             # Create analytic distribution on this commitment line
             self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, created_commitment_lines, context=context)
@@ -232,8 +239,10 @@ class purchase_order(osv.osv):
             if not po.analytic_distribution_id:
                 for line in po.order_line:
                     if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                            'analytic_account_project_dummy')
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
+                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
                         break
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
@@ -340,7 +349,7 @@ class purchase_order_line(osv.osv):
     }
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
-        Launch analytic distribution wizard on a purchase order
+        Launch analytic distribution wizard on a purchase order line.
         """
         # Some verifications
         if not context:
