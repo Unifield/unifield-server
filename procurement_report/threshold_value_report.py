@@ -175,7 +175,7 @@ class threshold_value_rules_report(osv.osv):
                     CASE WHEN min.compute_method = 'fixed' THEN line.fixed_product_qty ELSE 0.00 END manual_qty,
                     CASE WHEN min.compute_method = 'fixed' THEN line.fixed_threshold_value ELSE 0.00 END threshold_value,
                     prod.default_code AS product_reference,
-                    prod.name AS product_name,
+                    temp.name AS product_name,
                     temp.nomen_manda_0 AS nomen_manda_0,
                     temp.nomen_manda_1 AS nomen_manda_1,
                     temp.nomen_manda_2 AS nomen_manda_2,
