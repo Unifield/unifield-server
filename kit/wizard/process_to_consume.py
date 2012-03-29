@@ -198,7 +198,7 @@ class process_to_consume_line(osv.osv_memory):
                 'selected_qty_process_to_consume': fields.float(string='Selected Qty per Kit', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_process_to_consume': fields.many2one('product.uom', string='UoM', readonly=True, required=True),
                 'location_src_id_process_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
-                'consider_child_locations_process_to_consume': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check.'),
+                #'consider_child_locations_process_to_consume': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check.'),
                 # function
                 'total_selected_qty_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Selected Qty', multi='get_vals', store=False, readonly=True),
                 'qty_available_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),

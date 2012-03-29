@@ -74,6 +74,5 @@ class modify_expiry_date(osv.osv_memory):
                 'res_id': kit_ids[0],
                 'target': 'crunch',
                 'context': context}
-        return {'type': 'ir.actions.act_window_close'}
     
 modify_expiry_date()
