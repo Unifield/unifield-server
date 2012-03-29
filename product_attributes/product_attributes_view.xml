@@ -365,7 +365,7 @@
                   web_icon="images/products-hover.png" 
                   action="product.product_normal_action"
                 />
-        <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" />
+        <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" sequence="20" />
         <menuitem groups="base.group_extended" id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
         <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
         

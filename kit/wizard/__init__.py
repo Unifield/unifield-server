@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,24 +19,11 @@
 #
 ##############################################################################
 
-{
-    "name": "MSF Tools",
-    "version": "1.0",
-    "depends": ["base",
-                ],
-    "author": "MSF, TeMPO Consulting",
-    "website": "",
-    "category": "Specific Modules",
-    "description": """
-        Interface for Msf Tools
-    """,
-    "init_xml": [
-    ],
-    'update_xml': ['security/ir.model.access.csv',],
-    'demo_xml': [
-    ],
-    'test': [# tests should be performed in base classes to avoid cyclic dependencies
-    ],
-    'installable': True,
-    'active': False,
-}
+import substitute
+import stock_partial_move
+import stock_partial_picking
+import confirm
+import kit_selection
+import modify_expiry_date
+import process_to_consume
+import assign_to_kit

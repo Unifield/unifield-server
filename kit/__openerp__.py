@@ -18,44 +18,34 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
 {
-    "name": "MSF Order dates",
-    "version": "3.0",
-    "depends": ["base",
-                "sale",
-                "purchase",
-                "account",
-                "stock_override",
-                "sale_override",
-                "purchase_override",
-                "partner_modification",
-                "msf_tools",
-                ],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Specific Modules",
+    "name" : "Kit",
+    "version" : "0.1",
+    "author" : "MSF pam",
+    "category" : "Kit capabilities",
     "description": """
-        This module aims at defining the dates of orders (purchase and sales orders).
-    """,
-    "init_xml": [
-    ],
+        Add Kit management capabilities. Composition List, theorical composition, kitting, de-kitting.
+        """,
+    'website': 'http://www.unifield.org',
+    'init_xml': [],
+    "depends" : ["stock", "sale", "purchase", "product_nomenclature", "purchase_double_validation"],
     'update_xml': [
-        'security/msf_order_date_groups.xml',
+        'kit_view.xml',
+        'kit_creation_view.xml',
+        'kit_sequence.xml',
+        'wizard/substitute_view.xml',
+        'wizard/stock_partial_move_view.xml',
+        'wizard/confirm_view.xml',
+        'wizard/kit_selection_view.xml',
+        'wizard/modify_expiry_date_view.xml',
+        'wizard/process_to_consume_view.xml',
+        'wizard/assign_to_kit_view.xml',
         'security/ir.model.access.csv',
-        'order_dates_view.xml',
-        'wizard/update_lines_view.xml',
     ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/create_data.yml',
-        'test/purchase_dates.yml',
-        'test/sale_dates.yml',
-        'test/lang_format.yml',
-        'test/order_date.yml',
-        'test/order_date_full_process.yml',
-    ],
+    "demo_xml": [],
+    'test': ['test/kit_data.yml',
+             'test/kit.yml',
+             'test/kitting.yml',
+             ],
     'installable': True,
-    'active': False,
 }

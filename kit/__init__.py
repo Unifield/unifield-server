@@ -18,25 +18,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-{
-    "name": "MSF Tools",
-    "version": "1.0",
-    "depends": ["base",
-                ],
-    "author": "MSF, TeMPO Consulting",
-    "website": "",
-    "category": "Specific Modules",
-    "description": """
-        Interface for Msf Tools
-    """,
-    "init_xml": [
-    ],
-    'update_xml': ['security/ir.model.access.csv',],
-    'demo_xml': [
-    ],
-    'test': [# tests should be performed in base classes to avoid cyclic dependencies
-    ],
-    'installable': True,
-    'active': False,
-}
+import kit
+import wizard
+import kit_creation

@@ -74,6 +74,26 @@ class stock_partial_move_memory_out(osv.osv_memory):
                                                                class_name=self._name,
                                                                product_id=product_id,
                                                                uom_id=uom_id))
+        
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        change the function name to do_incoming_shipment
+        '''
+        res = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree':
+            picking_obj = self.pool.get('stock.picking')
+            picking_id = context.get('active_ids')
+            if picking_id:
+                picking_id = picking_id[0]
+                picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
+                if picking_type == 'in':
+                    # remove the kit column for memory moves
+                    # the creation of composition list (if needed) is performed after the processing wizard
+                    list = ['<field name="composition_list_id"']
+                    replace_text = res['arch']
+                    replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
+                    res['arch'] = replace_text
+        return res
     
 #    update code to allow delete lines (or not but must be consistent in all wizards)
 #    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
