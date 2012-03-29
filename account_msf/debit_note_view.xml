@@ -17,7 +17,6 @@
                     <field name="number"/>
                     <field name="partner_id"/>
                     <field name="name"/>
-                    <field name="user_id"/>
                     <field name="date_due"/>
                     <field name="origin"/>
                     <field name="currency_id"/>
