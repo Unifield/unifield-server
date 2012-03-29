@@ -162,7 +162,7 @@ class order_cycle_rules_report(osv.osv):
                     min.safety_stock AS safety_stock,
                     CASE WHEN min.past_consumption = 't' THEN 'AMC' ELSE 'FMC' END consumption,
                     prod.default_code AS product_reference,
-                    prod.name AS product_name,
+                    temp.name AS product_name,
                     temp.nomen_manda_0 AS nomen_manda_0,
                     temp.nomen_manda_1 AS nomen_manda_1,
                     temp.nomen_manda_2 AS nomen_manda_2,
