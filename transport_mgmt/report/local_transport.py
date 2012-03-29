@@ -38,7 +38,7 @@ class local_transport_cost_report(osv.osv):
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'order_id': fields.many2one('purchase.order', string='PO Reference'),
-        'order_state': fields.selection([('approved', 'Confirmed'), ('done', 'Done')], string='Order state'),
+        'order_state': fields.selection([('approved', 'Confirmed'), ('done', 'Closed')], string='Order state'),
         'date_order': fields.date(string='Creation date'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'partner_id': fields.many2one('res.partner', string='Supplier'),

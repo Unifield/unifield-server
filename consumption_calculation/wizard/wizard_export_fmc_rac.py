@@ -33,7 +33,7 @@ class wizard_export_fmc(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
     
-    def close_window(self, cr, uid, ids, context={}):
+    def close_window(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''
@@ -59,7 +59,7 @@ class wizard_export_rac(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
     
-    def close_window(self, cr, uid, ids, context={}):
+    def close_window(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''

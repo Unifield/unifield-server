@@ -56,13 +56,13 @@ class wizard_import_invoice_lines(osv.osv_memory):
         'wizard_id': fields.many2one('wizard.import.invoice', string='wizard'),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=False, required=False),
     }
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
         if 'amount' in vals:
             for l in self.read(cr, uid, ids, ['amount_to_pay']):
                 if vals['amount'] > l['amount_to_pay']:
-                    raise osv.except_osv(_('Warning'), _("Amount %s can't be greatest than 'Amount to pay': %s"%(vals['amount'], l['amount_to_pay'])))
+                    raise osv.except_osv(_('Warning'), _("Amount %s can't be greatest than 'Amount to pay': %s")%(vals['amount'], l['amount_to_pay']))
 
         return super(wizard_import_invoice_lines, self).write(cr, uid, ids, vals, context)
 
@@ -104,10 +104,10 @@ class wizard_import_invoice(osv.osv_memory):
         result = super(wizard_import_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return result
 
-    def single_import(self, cr, uid, ids, context={}):
+    def single_import(self, cr, uid, ids, context=None):
         return self.group_import(cr, uid, ids, context, group=False)
 
-    def group_import(self, cr, uid, ids, context={}, group=True):
+    def group_import(self, cr, uid, ids, context=None, group=True):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Warning'), _('Please add invoice lines'))
@@ -120,7 +120,7 @@ class wizard_import_invoice(osv.osv_memory):
         ordered_lines = {}
         for line in wizard.line_ids:
             if line.id in already:
-                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.'%(line.name, line.amount_currency)))
+                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
                 key = "%s-%s-%s"%(line.amount_currency < 0 and "-" or "+", line.partner_id.id, line.account_id.id)
             else:
@@ -165,7 +165,7 @@ class wizard_import_invoice(osv.osv_memory):
          'target': 'new',
         }
 
-    def action_confirm(self, cr, uid, ids, context={}):
+    def action_confirm(self, cr, uid, ids, context=None):
         """
         Take all given lines and do Journal Entries (account_move) for each partner_id
         """

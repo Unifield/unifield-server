@@ -43,12 +43,12 @@ class res_currency_rate_functional(osv.osv):
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
 
-    def refresh_analytic_lines(self, cr, uid, ids, date=None, currency=None, context={}):
+    def refresh_analytic_lines(self, cr, uid, ids, date=None, currency=None, context=None):
         """
         Refresh analytic lines that don't come from a move
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Engagement lines object

@@ -35,7 +35,7 @@ class account_invoice(osv.osv):
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', required=True, ondelete='cascade',
-            help="This field contains the in formation related to the numbering of the lines of this order."),
+            help="This field contains the information related to the numbering of the lines of this order."),
     }
 
     _defaults = {
@@ -66,7 +66,7 @@ class account_invoice(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
         """
@@ -79,7 +79,7 @@ class account_invoice(osv.osv):
         vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+    def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Give function to use when changing invoice to open state
         """
@@ -93,7 +93,7 @@ class account_invoice(osv.osv):
             return False
         return True
 
-    def _hook_period_id(self, cr, uid, inv, context={}):
+    def _hook_period_id(self, cr, uid, inv, context=None):
         """
         Give matches period that are not draft and not HQ-closed from given date
         """
@@ -125,7 +125,7 @@ class account_invoice_line(osv.osv):
 
     _order = 'line_number'
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
         """

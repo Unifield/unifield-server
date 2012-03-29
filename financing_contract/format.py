@@ -83,7 +83,7 @@ class account_account(osv.osv):
             res[id] = id in exclude
         return res
 
-    def _search_used(self, cr, uid, obj, name, args, context={}):
+    def _search_used(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         if context is None:

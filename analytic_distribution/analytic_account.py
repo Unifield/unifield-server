@@ -30,6 +30,9 @@ class analytic_account(osv.osv):
     _inherit = "account.analytic.account"
     
     _columns = {
+        'name': fields.char('Name', size=128, required=True),
+        'code': fields.char('Code', size=24),
+        'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
         'date_start': fields.date('Active from', required=True),
         'date': fields.date('Inactive from', select=True),
         'category': fields.selection([('OC','Cost Center'),
@@ -38,25 +41,51 @@ class analytic_account(osv.osv):
             ('FREE2','Free 2')], 'Category', select=1),
         'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers'),
         'account_ids': fields.many2many('account.account', 'funding_pool_associated_accounts', 'funding_pool_id', 'account_id', string='Accounts'),
+        'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
     }
     
     _defaults ={
-        'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
+        'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        'for_fx_gain_loss': lambda *a: False,
     }
-    def _check_unicity(self, cr, uid, ids, context={}):
+    def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
-            context={}
+            context = {}
         for account in self.browse(cr, uid, ids, context=context):
             bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
 
+    def _check_gain_loss_account_unicity(self, cr, uid, ids, context=None):
+        """
+        Check that no more account is "for_fx_gain_loss" available.
+        """
+        if not context:
+            context = {}
+        search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)])
+        if search_ids and len(search_ids) > 1:
+            return False
+        return True
+
+    def _check_gain_loss_account_type(self, cr, uid, ids, context=None):
+        """
+        Check account type for fx_gain_loss_account: should be Normal type and Cost Center category
+        """
+        if not context:
+            context = {}
+        for account in self.browse(cr, uid, ids, context=context):
+            if account.for_fx_gain_loss == True and (account.type != 'normal' or account.category != 'OC'):
+                return False
+        return True
+
     _constraints = [
         (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
+        (_check_gain_loss_account_unicity, 'You can only have one account used for FX gain/loss!', ['for_fx_gain_loss']),
+        (_check_gain_loss_account_type, 'You have to use a Normal account type and Cost Center category for FX gain/loss!', ['for_fx_gain_loss']),
     ]
 
-    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, id, context=context)
         if not default:
             default = {}
@@ -73,7 +102,7 @@ class analytic_account(osv.osv):
             # for all accounts except the parent one
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
-    
+
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
             if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
@@ -82,13 +111,19 @@ class analytic_account(osv.osv):
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-    
+
     def create(self, cr, uid, vals, context=None):
+        """
+        Some verifications before analytic account creation
+        """
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
+        """
+        Some verifications before analytic account write
+        """
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
@@ -134,10 +169,10 @@ class analytic_account(osv.osv):
         res = {'value': {}, 'domain': {}}
         parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
         res['value']['parent_id'] = parent
-        res['domain']['parent_id'] = [('category', '=', category)]
+        res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
     
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         """
         Delete the dummy analytic account is forbidden!
         """

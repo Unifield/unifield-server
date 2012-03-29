@@ -29,10 +29,12 @@ from ..register_tools import open_register_view
 class wizard_temp_posting(osv.osv_memory):
     _name = "wizard.temp.posting"
 
-    def action_confirm_temp_posting(self, cr, uid, ids, context={}):
+    def action_confirm_temp_posting(self, cr, uid, ids, context=None):
         """
         Temp post some statement lines
         """
+        if context is None:
+            context = {}
         if 'active_ids' in context:
             # Retrieve statement line ids
             st_line_ids = context.get('active_ids')

@@ -76,10 +76,7 @@ class stock_frequence(osv.osv):
         '''
         Check if all required data aren't empty
         '''
-        if data['name'] == 'daily':
-            if  not data.get('daily_frequency_ok', False):
-                raise osv.except_osv(_('Error'), _('You should make a choice for the Daily configuration'))
-        elif data['name'] == 'weekly':
+        if data['name'] == 'weekly':
             if (not 'weekly_sunday_ok' in data or not data.get('weekly_sunday_ok', False)) and \
                (not 'weekly_monday_ok' in data or not data.get('weekly_monday_ok', False)) and \
                (not 'weekly_tuesday_ok' in data or not data.get('weekly_tuesday_ok', False)) and \
@@ -124,7 +121,7 @@ class stock_frequence(osv.osv):
         default['last_run'] = False
         return super(stock_frequence, self).copy(cr, uid, id, default, context)
 
-    def create(self, cr, uid, data, context={}):
+    def create(self, cr, uid, data, context=None):
         '''
         Check if all required data aren't empty
         '''
@@ -132,7 +129,7 @@ class stock_frequence(osv.osv):
         
         return super(stock_frequence, self).create(cr, uid, data, context=context)
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Check if all required data aren't empty
         '''
@@ -149,7 +146,7 @@ class stock_frequence(osv.osv):
         
         return super(stock_frequence, self).write(cr, uid, ids, data, context=context)
     
-    def _compute_end_date(self, cr, uid, ids, field, arg, context={}):
+    def _compute_end_date(self, cr, uid, ids, field, arg, context=None):
         '''
         Compute the end date of the frequence according to the field of the object
         '''
@@ -336,7 +333,7 @@ class stock_frequence(osv.osv):
 
         return False
         
-    def _compute_next_date(self, cr, uid, ids, field, arg, context={}):
+    def _compute_next_date(self, cr, uid, ids, field, arg, context=None):
         '''
         Compute the next date matching with the parameter of the frequency
         '''
@@ -367,13 +364,13 @@ class stock_frequence(osv.osv):
         
         return res
     
-    def choose_frequency(self, cr, uid, ids, context={}):
+    def choose_frequency(self, cr, uid, ids, context=None):
         '''
         Empty method. Override this method to implement your own features
         '''
         return {'type': 'ir.actions.act_window_close'}
     
-    def name_get(self, cr, uid, ids, context={}):
+    def name_get(self, cr, uid, ids, context=None):
         '''
         Returns a description of the frequence
         '''
@@ -385,7 +382,7 @@ class stock_frequence(osv.osv):
         for freq in self.browse(cr, uid, ids):
             if freq.name == 'daily':
                 if freq.daily_frequency_ok:
-                    title = _('Every %d day(s)' %freq.daily_frequency)
+                    title = _('Every %d day(s)') % (freq.daily_frequency,)
             if freq.name == 'weekly':
                 sunday = monday = tuesday = wednesday = thursday = friday = saturday = ''
                 if freq.weekly_sunday_ok:
@@ -402,14 +399,14 @@ class stock_frequence(osv.osv):
                     friday = 'friday '
                 if freq.weekly_saturday_ok:
                     saturday = 'saturday '
-                title = _('Every %d week(s) on %s%s%s%s%s%s%s' %(freq.weekly_frequency, sunday, monday, tuesday, \
+                title = _('Every %d week(s) on %s%s%s%s%s%s%s') %(freq.weekly_frequency, sunday, monday, tuesday, \
                                                                  wednesday, thursday, \
-                                                                 friday, saturday))
+                                                                 friday, saturday)
             if freq.name == 'monthly':
                 if freq.monthly_one_day:
                     choose_freq = self.get_selection(cr, uid, freq, 'monthly_choose_freq')
                     choose_day = self.get_selection(cr, uid, freq, 'monthly_choose_day')
-                    title = _('%s %s - Every %s month(s)' % (choose_freq, choose_day, freq.monthly_frequency))
+                    title = _('%s %s - Every %s month(s)') % (choose_freq, choose_day, freq.monthly_frequency)
                 elif freq.monthly_repeating_ok:
                     title = _('On ')
                     i = 1
@@ -428,7 +425,7 @@ class stock_frequence(osv.osv):
                         i += 1
                     # Remove the last comma
                     title = title[:-2]
-                    title += _(' - Every %s month(s)' % freq.monthly_frequency)
+                    title += _(' - Every %s month(s)') % (freq.monthly_frequency,)
             if freq.name == 'yearly':
                 if freq.yearly_day_ok:
                     month = self.get_selection(cr, uid, freq, 'yearly_choose_month')
@@ -439,13 +436,13 @@ class stock_frequence(osv.osv):
                         day_f = 'nd'
                     elif freq.yearly_day in (3, 23):
                         day_f = 'rd'
-                    title = _('All %s, the %s%s' %(month, freq.yearly_day, day_f))
+                    title = _('All %s, the %s%s') %(month, freq.yearly_day, day_f)
                 elif freq.yearly_date_ok:
                     frequence = self.get_selection(cr, uid, freq, 'yearly_choose_freq')
                     day = self.get_selection(cr, uid, freq, 'yearly_choose_day')
                     month = self.get_selection(cr, uid, freq, 'yearly_choose_month_freq')
-                    title = _('All %s %s in %s' % (frequence, day, month))
-                title += _(' - Every %s year(s)' %(freq.yearly_frequency))
+                    title = _('All %s %s in %s') % (frequence, day, month)
+                title += _(' - Every %s year(s)') %(freq.yearly_frequency)
                 
             res.append((freq.id, title))
         

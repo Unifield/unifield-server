@@ -25,7 +25,6 @@ import netsvc
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
-import netsvc
 import logging
 import tools
 from os import path
@@ -41,7 +40,7 @@ class stock_picking(osv.osv):
         ('auto', 'Waiting'),
         ('confirmed', 'Confirmed'),
         ('assigned', 'Available'),
-        ('done', 'Done'),
+        ('done', 'Closed'),
         ('delivered', 'Delivered'),
         ('cancel', 'Cancelled'),
     ]

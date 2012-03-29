@@ -5,22 +5,22 @@
         <!--  Compute Schedulers -->
 
 		<record id="view_compute_schedulers_wizard" model="ir.ui.view">
-            <field name="name">Compute Threshold</field>
+            <field name="name">POs Creation (Threshold)</field>
             <field name="model">threshold.value.compute.all</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Scheduler Threshold Parameters">
+                <form string="POs Creation Threshold Parameters">
 				    <group col="2" colspan="4">
                 		<button icon='gtk-cancel' special="cancel"
                 			string="Cancel" />
-                		<button name="procure_calculation_threshold" string="Compute Schedulers"
+                		<button name="procure_calculation_threshold" string="Compute POs Creation"
                 			colspan="1" type="object" icon="gtk-ok" />
                 	</group>
                 </form>
             </field>
         </record>
 
-         <act_window name="Compute Threshold"
+         <act_window name="POs Creation (Threshold)"
 		    res_model="threshold.value.compute.all"
 		    src_model="procurement.order"
 		    view_mode="form"

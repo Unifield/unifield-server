@@ -33,14 +33,14 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    def copy(self, cr, uid, id, default, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
         '''
         return super(sale_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
     
     #@@@override sale.sale_order._invoiced
-    def _invoiced(self, cr, uid, ids, name, arg, context={}):
+    def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
         Return True is the sale order is an uninvoiced order
         '''
@@ -65,7 +65,7 @@ class sale_order(osv.osv):
     #@@@end
     
     #@@@override sale.sale_order._invoiced_search
-    def _invoiced_search(self, cursor, user, obj, name, args, context={}):
+    def _invoiced_search(self, cursor, user, obj, name, args, context=None):
         if not len(args):
             return []
         clause = ''
@@ -115,7 +115,7 @@ class sale_order(osv.osv):
         return res
     #@@@end
     
-    def _get_noinvoice(self, cr, uid, ids, name, arg, context={}):
+    def _get_noinvoice(self, cr, uid, ids, name, arg, context=None):
         res = {}
         for sale in self.browse(cr, uid, ids):
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
@@ -148,7 +148,7 @@ class sale_order(osv.osv):
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
 
-    def _check_own_company(self, cr, uid, company_id, context={}):
+    def _check_own_company(self, cr, uid, company_id, context=None):
         '''
         Remove the possibility to make a SO to user's company
         '''
@@ -171,12 +171,14 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).create(cr, uid, vals, context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Remove the possibility to make a SO to user's company
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
@@ -185,10 +187,18 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
-    def wkf_validated(self, cr, uid, ids, context={}):
+    def wkf_validated(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        for order in self.browse(cr, uid, ids, context=context):
+            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
 
         return True
+    
+    def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
+        '''
+        Hook the message displayed on sale order confirmation
+        '''
+        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
@@ -313,7 +323,7 @@ class sale_order(osv.osv):
         return True
         #@@@end
 
-    def _get_reason_type(self, cr, uid, order, context={}):
+    def _get_reason_type(self, cr, uid, order, context=None):
         r_types = {
             'regular': 'reason_type_deliver_partner', 
             'loan': 'reason_type_loan',
@@ -381,7 +391,7 @@ class sale_order(osv.osv):
         return result
 
 
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the sale order and all related documents to done state
         '''
@@ -390,27 +400,29 @@ class sale_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
         order_lines = []
         for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                order_lines.append(line.id)
-                if line.procurement_id:
-                    # Done procurement
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
- 
-
             # Done picking
             for pick in order.picking_ids:
                 if pick.state not in ('cancel', 'done'):
                     wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
 
-            # Done loan counterpart
+            for line in order.order_line:
+                order_lines.append(line.id)
+                if line.procurement_id:
+                    # Closed procurement
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+
+            # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
-                self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
+                self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
-            # Done invoices
+            # Closed invoices
             invoice_error_ids = []
             for invoice in order.invoice_ids:
                 if invoice.state == 'draft':
@@ -423,20 +435,53 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
                             'Invoices references : %s') % invoices_ref)            
 
-        # Done stock moves
+        # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
-        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
-        # Detach the PO from his workflow and set the state to done
-        for order_id in ids:
-            wf_service.trg_delete(uid, 'sale.order', order_id, cr)
-            # Search the method called when the workflow enter in last activity
-            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
-            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-            res = _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
+        if all_doc:
+            # Detach the PO from his workflow and set the state to done
+            for order_id in ids:
+                wf_service.trg_delete(uid, 'sale.order', order_id, cr)
+                # Search the method called when the workflow enter in last activity
+                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
+                activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+                res = _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
 
         return True
 
 sale_order()
+
+
+class sale_order_line(osv.osv):
+    _name = 'sale.order.line'
+    _inherit = 'sale.order.line'
+
+    _columns = {
+        'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+    }
+
+    def open_split_wizard(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to split the line
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            data = {'sale_line_id': line.id, 'original_qty': line.product_uom_qty, 'old_line_qty': line.product_uom_qty}
+            wiz_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'split.sale.order.line.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+sale_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

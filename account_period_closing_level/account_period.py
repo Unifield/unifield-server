@@ -46,7 +46,7 @@ class account_period(osv.osv):
         
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -71,11 +71,11 @@ class account_period(osv.osv):
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
                     if register.state not in ['confirm']:
-                        raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period" % register.name))
+                        raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
                 # check if subscriptions lines were not created for this period
                 sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
                 if len(sub_ids) > 0:
-                    raise osv.except_osv(_('Warning'), _("Recurring entries were not created for period '%s'. Please create them before closing period" % period.name))
+                    raise osv.except_osv(_('Warning'), _("Recurring entries were not created for period '%s'. Please create them before closing period") % (period.name,))
                 # then verify that all currencies have a fx rate in this period
                 # retrieve currencies for this period (in account_move_lines)
                 sql = """SELECT DISTINCT currency_id
@@ -155,7 +155,7 @@ class account_period(osv.osv):
 
     _order = 'date_start, number'
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
@@ -170,13 +170,13 @@ class account_period(osv.osv):
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
     }
 
-    def button_overdue_invoice(self, cr, uid, ids, context={}):
+    def button_overdue_invoice(self, cr, uid, ids, context=None):
         """
         Open a view that display overdue invoices for this period
         """
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         

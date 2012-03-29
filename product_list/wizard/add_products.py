@@ -35,7 +35,7 @@ class product_list_add_products(osv.osv_memory):
                                         'wiz_list_id', 'product_id', string='Products'),
     }
 
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         '''
         To get default values for the object.
         '''
@@ -51,7 +51,7 @@ class product_list_add_products(osv.osv_memory):
 
         return res
 
-    def fill_list(self, cr, uid, ids, context={}):
+    def fill_list(self, cr, uid, ids, context=None):
         '''
         Fill the list with the selected products
         '''

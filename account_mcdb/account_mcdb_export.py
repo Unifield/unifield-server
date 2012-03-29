@@ -39,7 +39,7 @@ class account_line_csv_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
 
-    def _account_move_line_to_csv(self, cr, uid, ids, writer, currency_id, context={}):
+    def _account_move_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):
         """
         Take account_move_line and return a csv string
         """
@@ -136,7 +136,7 @@ class account_line_csv_export(osv.osv_memory):
             #############################
         return True
 
-    def _account_analytic_line_to_csv(self, cr, uid, ids, writer, currency_id, context={}):
+    def _account_analytic_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):
         """
         Take account_analytic_line and return a csv string
         """
@@ -193,7 +193,7 @@ class account_line_csv_export(osv.osv_memory):
             writer.writerow(csv_line)
         return True
 
-    def export_to_csv(self, cr, uid, ids, currency_id, model, context={}):
+    def export_to_csv(self, cr, uid, ids, currency_id, model, context=None):
         """
         Return a CSV file containing all given line
         """

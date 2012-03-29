@@ -34,7 +34,7 @@ class stock_move_tracking(osv.osv_memory):
         'expired_date': fields.date('Expired date'),
     }
     
-    def get_ids(self, cr, uid, ids, context={}):
+    def get_ids(self, cr, uid, ids, context=None):
         '''
         Returns all stock moves according to parameters
         '''
@@ -62,7 +62,7 @@ class stock_move_tracking(osv.osv_memory):
             
         return res, lot_ids
     
-    def print_report(self, cr, uid, ids, context={}):
+    def print_report(self, cr, uid, ids, context=None):
         '''
         Print the report as PDF file
         '''
@@ -95,7 +95,7 @@ class stock_move_tracking(osv.osv_memory):
                 'report_name': 'tracking.move.report',
                 'datas': datas}
     
-    def print_view(self, cr, uid, ids, context={}):
+    def print_view(self, cr, uid, ids, context=None):
         '''
         Print the report on Web client (search view)
         '''

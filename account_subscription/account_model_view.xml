@@ -1,6 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
+    
+        <record id="view_model_purchase_form" model="ir.ui.view">
+            <field name="name">account.model.form</field>
+            <field name="model">account.model</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_model_form"/>
+            <field name="arch" type="xml">
+                 <field name="journal_id" position="replace">
+                 	<field name="journal_id" domain="[('type','=','purchase')]"/>
+                 </field>
+            </field>
+        </record>
+    
+        <record id="view_model_purchase_search" model="ir.ui.view">
+            <field name="name">account.model.search</field>
+            <field name="model">account.model</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_model_search"/>
+            <field name="arch" type="xml">
+            	<data>
+            		<xpath expr="//filter[@string='Sale']" position="replace"/>
+            		<xpath expr="//filter[@string='Purchase']" position="replace"/>
+            	</data>
+            </field>
+        </record>
+
+        <record id="view_account_journal_purchase_search" model="ir.ui.view">
+            <field name="name">account.journal.search</field>
+            <field name="model">account.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_journal_search"/>
+            <field name="arch" type="xml">
+            	<data>
+            		<xpath expr="//filter[@string='Sale']" position="replace"/>
+            		<xpath expr="//filter[@string='Purchase']" position="replace"/>
+            		<xpath expr="//filter[@string='Liquidity']" position="replace"/>
+            		<xpath expr="//filter[@string='Others']" position="replace"/>
+            		<xpath expr="//group[2]" position="replace"/>
+            	</data>
+            </field>
+        </record>
+    
         <record id="view_model_line_distrib_tree" model="ir.ui.view">
             <field name="name">account.model.line.distrib.tree</field>
             <field name="model">account.model.line</field>
@@ -13,5 +55,6 @@
                 </field>
             </field>
         </record>
+        
     </data>
 </openerp>

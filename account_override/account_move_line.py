@@ -39,8 +39,11 @@ class account_move_line(osv.osv):
         give:
             mystring2 - mysupertext
 
+        NB: for 'REV' string, do nothing about incrementation
         """
         result = ''.join([string, '1 - ', text])
+        if string == 'REV':
+            result = ''.join([string, ' - ', text])
         if text == '' or string == '':
             return result
         pattern = re.compile('\%s([0-9]*) - ' % string)
@@ -48,6 +51,8 @@ class account_move_line(osv.osv):
         if m and m.groups():
             number = m.groups() and m.groups()[0]
             replacement = string + str(int(number) + 1) + ' - '
+            if string == 'REV':
+                replacement = string + ' - '
             result = re.sub(pattern, replacement, text, 1)
         return result
 
@@ -55,12 +60,19 @@ class account_move_line(osv.osv):
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
             help="This indicates the state of the Journal Entry."),
-        'is_addendum_line': fields.boolean('Is an addendum line?', 
+        'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True),
+        'is_write_off': fields.boolean('Is a write-off line?', readonly=True, 
+            help="This inform that no correction is possible for a line that come from a write-off!"),
     }
 
-    def _accounting_balance(self, cr, uid, ids, context={}):
+    _defaults = {
+        'is_addendum_line': lambda *a: False,
+        'is_write_off': lambda *a: False,
+    }
+
+    def _accounting_balance(self, cr, uid, ids, context=None):
         """
         Get the accounting balance of given lines
         """

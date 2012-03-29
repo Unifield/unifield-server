@@ -29,7 +29,7 @@ class report_stock_move(osv.osv):
     _description = "Moves Statistics"
     _auto = False
 
-    def _get_order_information(self, cr, uid, ids, fields_name, arg, context={}):
+    def _get_order_information(self, cr, uid, ids, fields_name, arg, context=None):
         '''
         Returns information about the order linked to the stock move
         '''
