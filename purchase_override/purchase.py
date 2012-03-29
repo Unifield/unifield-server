@@ -719,7 +719,7 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
         
-        if 'product_id' in vals:
+        if vals.get('product_id'):
             order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
             if order_id.from_yml_test: vals.update({'change_price_manually': True})
             other_lines = self.search(cr, uid, [('order_id', '=', vals['order_id']), ('product_id', '=', vals['product_id']), ('product_uom', '=', vals['product_uom'])], context=context)
