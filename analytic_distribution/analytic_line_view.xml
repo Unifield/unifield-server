@@ -11,7 +11,7 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/tree/field[@name='date']" position='before'>
+                    <xpath expr="/tree/field[@name='company_id']" position='before'>
                         <field name="is_reallocated" invisible="1"/>
                         <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     </xpath>
@@ -27,7 +27,7 @@
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group[1]/field[@name='user_id']" position='after'>
+                    <xpath expr="/search/group[1]/field[@name='account_id']" position='after'>
                         <field name="is_reallocated"/>
                     </xpath>
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
