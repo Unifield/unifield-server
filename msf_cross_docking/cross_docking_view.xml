@@ -55,7 +55,7 @@
                         attrs="{'invisible':['|', ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}" />
                         <field name="move_cross_docking_ok" invisible='1'/>
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state_hidden']" position="after" >
+                    <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state']" position="after" >
                         <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"  
                         attrs="{'invisible':['|', ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}" />
                         <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"  

@@ -22,6 +22,9 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+import logging
+import tools
+from os import path
 
 class purchase_order(osv.osv):
     '''
@@ -124,6 +127,19 @@ class stock_picking(osv.osv):
     for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
     '''
     _inherit = 'stock.picking'
+
+    def init(self, cr):
+        """
+        Load msf_cross_docking_data.xml before self
+        """
+        if hasattr(super(stock_picking, self), 'init'):
+            super(stock_picking, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        logging.getLogger('init').info('HOOK: module msf_cross_docking: loading data/msf_msf_cross_docking_data.xml')
+        pathname = path.join('msf_cross_docking', 'data/msf_cross_docking_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'msf_cross_docking', file, {}, mode='init', noupdate=False)
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),

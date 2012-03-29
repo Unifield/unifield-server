@@ -1,31 +1,163 @@
--
-  Create a Sale Order
--
-  !record {model: sale.order, id: so_I}:
+- 
+  Creating a res.partner record
+- 
+  !record {model: res.partner, id: res_partner_partnertest0}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: partner test
+    supplier: true
+
+
+- 
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: res_partner_address_0}:
+    partner_id: res_partner_partnertest0
+    street: street test  
+
+
+- 
+  Creating a product.nomenclature record
+- 
+  !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest0}:
+    name: nomenclature test 1
+
+
+- 
+  Creating a product.nomenclature record
+- 
+  !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest1}:
+    level: 1
+    name: nomenclature test 2
+    parent_id: product_nomenclature_nomenclaturetest0
+
+
+- 
+  Creating a product.nomenclature record
+- 
+  !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest2}:
+    level: 2
+    name: nomenclature test 3
+    parent_id: product_nomenclature_nomenclaturetest1
+
+
+- 
+  Creating a product.nomenclature record
+- 
+  !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest3}:
+    level: 3
+    name: nomenclature test 4
+    parent_id: product_nomenclature_nomenclaturetest2
+
+
+- 
+  Creating a product.category record
+- 
+  !record {model: product.category, id: product_category_allproducts0}:
+    name: All products
+    sequence: 0.0
+
+
+- 
+  Creating a product.product record
+- 
+  !record {model: product.product, id: product_product_producttest0}:
+    categ_id: product_category_allproducts0
+    cost_method: standard
+    mes_type: fixed
+    name: product test
+    name_template: product test
+    nomen_manda_0: product_nomenclature_nomenclaturetest0
+    nomen_manda_1: product_nomenclature_nomenclaturetest1
+    nomen_manda_2: product_nomenclature_nomenclaturetest2
+    nomen_manda_3: product_nomenclature_nomenclaturetest3
+    procure_method: make_to_stock
+    seller_delay: '1'
+    seller_qty: 0.0
+    standard_price: 1.0
+    supply_method: buy
+    type: consu
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    valuation: manual_periodic
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    
+    
+- 
+  Creating a purchase.order record with the option cross_docking and check that the stock location is changing
+- 
+  !record {model: purchase.order, id: purchase_order_po0}:
+    amount_tax: 0.0
+    amount_total: 0.0
+    amount_untaxed: 0.0
     company_id: base.main_company
-    date_order: '2011-04-13'
+    date_order: !eval time.strftime('%Y-%m-%d')
+    invoice_method: order
+    cross_docking_ok: True
+    location_id: stock.stock_location_stock
+    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
+    partner_address_id: res_partner_address_0
+    partner_id: res_partner_partnertest0
+    pricelist_id: purchase.list0
+    
+    
+- 
+  Creating a purchase.order.line record
+- 
+  !record {model: purchase.order.line, id: purchase_order_line_nomenclaturepo0}:
+    company_id: base.main_company
+    date_planned: !eval time.strftime('%Y-%m-%d')
+    name: nomenclature PO
+    nomenclature_description: nomenclature test 1 / nomenclature test 2 / nomenclature
+      test 3 / nomenclature test 4
+    order_id: purchase_order_po0
+    partner_id: res_partner_partnertest0
+    price_unit: 0.0
+    product_qty: 1.0
+    product_uom: product.product_uom_unit
+    state: draft
+    
+-
+  Creating a sale.order record
+- 
+  !record {model: sale.order, id: sale_order_so0}:
+    amount_tax: 0.0
+    amount_total: 0.0
+    amount_untaxed: 0.0
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_quantity: order
     order_policy: manual
-    partner_id: partner_A
-    partner_invoice_id: address_A
-    partner_order_id: address_A
-    partner_shipping_id: address_A
+    partner_id: res_partner_partnertest0
+    partner_invoice_id: res_partner_address_0
+    partner_order_id: res_partner_address_0
+    partner_shipping_id: res_partner_address_0
     picking_policy: direct
     pricelist_id: product.list0
     shop_id: sale.shop
-    priority: normal
-    categ: medical
--
+    
+    
+- 
   Create a Sale Order Line by specifying the type to "make_to_order" in order to create later a purchase order from the sale order
--
-  !record {model: sale.order.line, id: sol_I1}:
+- 
+  !record {model: sale.order.line, id: sale_order_line_nomenclatureso0}:
+    product_id: product_product_producttest0
+    company_id: base.main_company
+    delay: 0.0
+    name: nomenclature SO
+    nomenclature_description: nomenclature test 1 / nomenclature test 2 / nomenclature
+      test 3 / nomenclature test 4
+    order_id: sale_order_so0
+    order_partner_id: res_partner_partnertest0
+    price_unit: 0.0
     product_uom: product.product_uom_unit
-    product_id: product_A
-    order_id: so_I
-    price_unit: 1
-    product_uom_qty: 10
-    date_planned: '2011-04-13'
-    # because the type is "make to order", the option "cross docking" will be automatically checked
+    product_uom_qty: 1.0
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
     type: make_to_order
 -
   We validate the sale order
@@ -33,67 +165,16 @@
   !python {model: sale.order}: |
     import netsvc
     wf_service = netsvc.LocalService("workflow")
-    wf_service.trg_validate(uid, 'sale.order', ref("so_I"), 'order_validated', cr)
+    wf_service.trg_validate(uid, 'sale.order', ref("sale_order_so0"), 'order_validated', cr)
 -
   We confirm the sale order
 -
   !python {model: sale.order}: |
     import netsvc
     wf_service = netsvc.LocalService("workflow")
-    wf_service.trg_validate(uid, 'sale.order', ref("so_I"), 'order_confirm', cr)
+    wf_service.trg_validate(uid, 'sale.order', ref("sale_order_so0"), 'order_confirm', cr)
 -
   Run the scheduler
 -
   !python {model: procurement.order}: |
     self.run_scheduler(cr, uid)
--
-  Validate and confirm the purchase order
--
-  !python {model: purchase.order}: |
-    proc_obj = self.pool.get('procurement.order')
-    sol_obj = self.pool.get('sale.order.line')
-    # get the corresponding procurement order
-    data = sol_obj.read(cr, uid, [ref("sol_I1")], ['procurement_id'], context=context)[0]
-    proc_id = data['procurement_id'][0]
-    data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
-    po_id = data['purchase_id'][0]
-    # assert existing values    
-    obj = self.browse(cr, uid, po_id, context=context)
-    # the option "cross docking" is checked because the type "make to order" was selected on the sale order
-    assert obj.cross_docking_ok
-    # change Invoicing control to From Picking
-    self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
-    import netsvc
-    wf_service = netsvc.LocalService("workflow")
-    wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-    wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
--
-  Process the incoming shipment and check that the O2M lines of stock.move have the field "location_dest_id" to cross docking
--
-  !python {model: stock.picking}: |
-    proc_obj = self.pool.get('procurement.order')
-    sol_obj = self.pool.get('sale.order.line')
-    # get the corresponding procurement order
-    data = sol_obj.read(cr, uid, [ref("sol_I1")], ['procurement_id'], context=context)[0]
-    proc_id = data['procurement_id'][0]
-    data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
-    po_id = data['purchase_id'][0]
-    # find the IN
-    in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
-    dic = self.action_process(cr, uid, in_ids, context=context)
-    obj_data = self.pool.get('ir.model.data')
-    # check destination location
-    for obj in self.browse(cr, uid, in_ids, context=context):
-      if not obj.purchase_id.cross_docking_ok:
-        for move in obj.move_lines:
-          assert move.location_dest_id.id != obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
-      elif obj.purchase_id.cross_docking_ok:
-        for move in obj.move_lines:
-          assert move.location_dest_id.id == obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
-
-    # create wizard objects
-    wizard_obj = self.pool.get('stock.partial.picking')
-    wizard_id = self.action_process(cr, uid, in_ids, context=context)['res_id']
-      
-    # validate the processing
-    wizard_obj.do_incoming_shipment(cr, uid, [wizard_id], context=context)
