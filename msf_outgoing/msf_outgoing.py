@@ -804,10 +804,10 @@ class shipment(osv.osv):
                 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
                 if treat_draft:
-                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
-                    for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
-                        if linked_packing.state not in ('done','cancel'):
-                            treat_draft = False
+                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id),
+                                                                   ('state', 'not in', ['done', 'cancel'])], context=context)
+                    if linked_packing_ids:
+                        treat_draft = False
                 
                 if treat_draft:
                     # trigger the workflow for draft_picking
