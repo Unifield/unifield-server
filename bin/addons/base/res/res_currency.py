@@ -100,12 +100,12 @@ class res_currency(osv.osv):
         if from_currency['rate'] == 0 or to_currency['rate'] == 0:
             date = context.get('date', time.strftime('%Y-%m-%d'))
             if from_currency['rate'] == 0:
-                currency_symbol = from_currency.symbol
+                currency_name = from_currency.name
             else:
-                currency_symbol = to_currency.symbol
+                currency_name = to_currency.name
             raise osv.except_osv(_('Error'), _('No rate found \n' \
                     'for the currency: %s \n' \
-                    'at the date: %s') % (currency_symbol, date))
+                    'at the date: %s') % (currency_name, date))
         return to_currency.rate/from_currency.rate
 
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
