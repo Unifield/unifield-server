@@ -54,7 +54,8 @@ class product_supplierinfo(osv.osv):
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if not context:
             context = {}
-            
+        
+        new_res = [] 
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
         
