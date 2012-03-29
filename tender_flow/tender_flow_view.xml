@@ -52,7 +52,8 @@
                             </field>
                         </page>
                         <page string="RfQs">
-                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
+                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        		context="{'rfq_ok': True}" >
                                 <tree string="RfQs">
                                     <field name="name" />
                                     <field name="partner_id" />
