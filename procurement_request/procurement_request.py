@@ -190,6 +190,21 @@ class procurement_request(osv.osv):
         
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
+    def wkf_action_cancel(self, cr, uid, ids, context={}):
+        '''
+        Cancel the procurement request and all lines
+        '''
+        line_ids = []
+        for req in self.browse(cr, uid, ids, context=context):
+            for line in req.order_line:
+                if line.id not in line_ids:
+                    line_ids.append(line.id)
+
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        self.pool.get('sale.order.line').write(cr, uid, line_ids, {'state': 'cancel'}, context=context)
+
+        return True
+
     def validate_procurement(self, cr, uid, ids, context={}):
         '''
         Validate the request
