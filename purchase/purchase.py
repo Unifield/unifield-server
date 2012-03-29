@@ -690,7 +690,7 @@ class purchase_order_line(osv.osv):
                     qty = temp_qty
                     res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal quantity set to %s, you cannot purchase less.') % qty}})
         qty_in_product_uom = product_uom_pool._compute_qty(cr, uid, uom, qty, to_uom_id=prod.uom_id.id)
-        return res, qty_in_product_uom, seller_delay
+        return res, qty_in_product_uom, qty, seller_delay
         
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
