@@ -94,20 +94,6 @@ class account_bank_statement(osv.osv):
 
 account_bank_statement()
 
-class msf_budget(osv.osv):
-    _name = 'msf.budget'
-    _inherit = 'msf.budget'
-    _trace = True
-
-msf_budget()
-
-class financing_contract_contract(osv.osv):
-    _name = 'financing.contract.contract'
-    _inherit = 'financing.contract.contract'
-    _trace = True
-
-financing_contract_contract()
-
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = 'account.analytic.account'
@@ -828,7 +814,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
 #                                                                       #
 #########################################################################
 
-_old_create = osv.osv.create
+_old_create = orm.orm.create
 _old_write = orm.orm.write
 _old_unlink = osv.osv.unlink
 
@@ -886,7 +872,7 @@ def _audittrail_unlink(self, *args, **kwargs):
     """ Wrapper to trace the osv.unlink method """
     return _audittrail_osv_method(self, _old_unlink, 'unlink', args[0], *args, **kwargs)
 
-osv.osv.create = _audittrail_create
+orm.orm.create = _audittrail_create
 orm.orm.write = _audittrail_write
 osv.osv.unlink = _audittrail_unlink
 

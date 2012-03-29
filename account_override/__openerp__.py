@@ -27,7 +27,7 @@
     Add hook to account class, workflow, etc.
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["account", "analytic"],
+    "depends" : ["account", "analytic", "msf_audittrail",],
     "category" : "Generic Modules/Accounting",
     "init_xml" : [],
     "demo_xml" : [],
