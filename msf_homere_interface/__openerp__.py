@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,18 +22,19 @@
 ##############################################################################
 
 {
-    "name" : "Account reconciliation wizard",
+    "name" : "Homere Interface",
     "version" : "0.1",
-    "description" : "Default reconciliation wizard adaptation for MSF",
-    "author" : "MSF, TeMPO Consulting",
-    "category" : "Accounting",
-    "depends" : ["base", "account_override", "res_currency_functional", "register_accounting", "msf_homere_interface"], # register_accounting for third parties and partner_txt field in account_move_line
-    #+ res_currency_functional for credit_currency and debit_currency fields (and to redefine some functions)
-    #+ account_override module add 'is_addendum_line' attribute that permits to avoid corrections on this kind of line.
-    "init_xml" : [
-    ],
+    "description" : "Homere interface with OpenERP",
+    "author" : "MSF - TeMPO Consulting",
+    "category" : "Human Resources",
+    "depends" : ["base", "account_override", "hr", "analytic_distribution"],
+    "init_xml" : [],
     "update_xml" : [
-        "wizard/account_reconcile_view.xml",
+        'security/ir.model.access.csv',
+        'res_company_view.xml',
+        'hr_view.xml',
+        'hr_payroll_wizard.xml',
+        'hr_payroll_view.xml',
     ],
     "demo_xml" : [],
     "test": [],

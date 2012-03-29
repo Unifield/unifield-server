@@ -310,9 +310,9 @@ class account_move_line_compute_currency(osv.osv):
     def check_date(self, cr, uid, vals):
         # check that date is in period
         if 'period_id' in vals and 'date' in vals:
-            period = self.pool.get('account.period').browse(cr, uid, vals['period_id'])
-            if vals['date'] < period.date_start or vals['date'] > period.date_stop:
-                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % period.name or '')
+            period = self.pool.get('account.period').read(cr, uid, vals['period_id'], ['date_start', 'date_stop'])
+            if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
+                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % (period.name or '',))
 
     def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
         newvals = {}
@@ -363,27 +363,22 @@ class account_move_line_compute_currency(osv.osv):
             traceback.print_stack()
         if not context:
             context = {}
-        # Prepare some values
-        move_obj = self.pool.get('account.move')
-        journal_obj = self.pool.get('account.journal')
-        account_obj = self.pool.get('account.account')
         
         ctx = context.copy()
         data = {}
         if 'journal_id' in vals:
             ctx['journal_id'] = vals['journal_id']
         if ('journal_id' not in ctx) and vals.get('move_id'):
-            m = move_obj.browse(cr, uid, vals['move_id'])
-            ctx['journal_id'] = m.journal_id.id
-        journal = journal_obj.browse(cr, uid, ctx['journal_id'])
+            m = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['journal_id'])
+            ctx['journal_id'] = m.get('journal_id', False) and m.get('journal_id')[0] or False
         
-        account = account_obj.browse(cr, uid, vals['account_id'], context=context)
+        account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
         curr_fun = account.company_id.currency_id.id
         
         newvals = vals.copy()
         if not newvals.get('currency_id'):
             if account.currency_id:
-                newvals['currency_id'] = account.currency_id.id
+                newvals['currency_id'] = account.currency_id and account.currency_id.id or False
             else:
                 newvals['currency_id'] = curr_fun
         # Don't update values for addendum lines that come from a reconciliation
