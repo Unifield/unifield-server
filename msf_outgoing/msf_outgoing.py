@@ -1231,11 +1231,8 @@ class stock_picking(osv.osv):
                 # then all child picking must be fully completed, meaning:
                 # - all picking must be 'completed'
                 # completed means, we recursively check that next_step link object is cancel or done
-                for picking in draft_picking.backorder_ids:
-                    # take care, is_completed returns a dictionary
-                    if not picking.is_completed()[picking.id]:
-                        treat_draft = False
-                        break
+                if self.has_picking_ticket_in_progress(cr, uid, [draft_picking.id], context=context)[draft_picking.id]:
+                    treat_draft = False
             
             if treat_draft:
                 # - all picking are completed (means ppl completed and all shipment validated)
