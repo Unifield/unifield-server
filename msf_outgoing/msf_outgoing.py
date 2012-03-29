@@ -2424,11 +2424,10 @@ class stock_picking(osv.osv):
         
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
-            # if draft and all qty are still there, we can cancel it without further checks
+            # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
-                for move in picking.move_lines:
-                    if move.product_qty != move.sale_line_id.product_uom_qty:
-                        raise osv.except_osv(_('Warning !'), _('The shipment process has already started! Return products to stock from ppl and shipment and try to cancel again.'))
+                if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
                 return super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
             # if not draft or qty does not match, the shipping is already in progress
             if picking.subtype == 'picking' and picking.state in ('done',):
