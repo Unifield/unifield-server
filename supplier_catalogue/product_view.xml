@@ -13,6 +13,27 @@
 				</xpath>
 			</field>
 		</record>
+		
+		<record id="product_supplierinfo_tree_view2" model="ir.ui.view">
+			<field name="name">product.supplierinfo.tree.view2</field>
+			<field name="model">product.supplierinfo</field>
+			<field name="type">tree</field>
+			<field name="inherit_id" ref="product.product_supplierinfo_tree_view" />
+			<field name="arch" type="xml">
+				<data>
+					<xpath expr="/tree" position="attributes">
+						<!-- TODO: Voir avec JF pour ne pas être obligé d'avoir editable=top pour
+							   avoir un noteditable
+						<attribute name="editable">top</attribute>-->
+						<attribute name="noteditable">editable==False</attribute>
+					</xpath>
+					
+					<xpath expr="//field[@name='sequence']" position="before">
+						<field name="editable" invisible="1" />
+					</xpath>
+				</data>
+			</field>
+		</record>
         
 		<record id="manufacturer_supplierinfo_form_view" model="ir.ui.view">
 			<field name="name">product.supplierinfo.form.view</field>
@@ -23,9 +44,6 @@
             	<xpath expr="//field[@name='product_uom']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
-<!--             	<xpath expr="//field[@name='min_qty']" position="attributes">
-            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
-            	</xpath> -->
             	<xpath expr="//field[@name='manufacturer_id']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
