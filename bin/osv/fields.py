@@ -663,7 +663,8 @@ class many2many(_column):
             if act[0] == 0:
                 raise _('Not Implemented')
             elif act[0] == 1:
-                raise _('Not Implemented')
+                obj = obj.pool.get(self._obj)
+                obj.write(cr, user, [act[1]], act[2], context=context)
             elif act[0] == 2:
                 raise _('Not Implemented')
             elif act[0] == 3:
