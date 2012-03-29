@@ -190,7 +190,7 @@ class procurement_request(osv.osv):
         
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
-    def wkf_action_cancel(self, cr, uid, ids, context={}):
+    def wkf_action_cancel(self, cr, uid, ids, context=None):
         '''
         Cancel the procurement request and all lines
         '''
@@ -205,7 +205,7 @@ class procurement_request(osv.osv):
 
         return True
 
-    def validate_procurement(self, cr, uid, ids, context={}):
+    def validate_procurement(self, cr, uid, ids, context=None):
         '''
         Validate the request
         '''
