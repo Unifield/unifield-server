@@ -22,13 +22,12 @@
 			<field name="arch" type="xml">
 				<data>
 					<xpath expr="/tree" position="attributes">
-						<attribute name="editable">top</attribute>
-						<attribute name="noteditable">1</attribute>
+<!--						<attribute name="editable">top</attribute>-->
+						<attribute name="noteditable">editable==False</attribute>
 					</xpath>
 					
 					<xpath expr="//field[@name='sequence']" position="before">
 						<field name="editable" invisible="1" />
-						<button name="edit_line" type="object" string="Edit" icon="gtk-edit" attrs="{'invisible': [('editable', '=', False)]}" />
 					</xpath>
 				</data>
 			</field>

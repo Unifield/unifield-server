@@ -89,18 +89,6 @@ class product_supplierinfo(osv.osv):
                                       help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
     }
     
-    def edit_line(self, cr, uid, ids, context=None):
-        '''
-        Open the edit form
-        '''
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'product.supplierinfo',
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                'res_id': ids[0],
-                'context': context}
-    
     # Override the original method
     def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
         """
