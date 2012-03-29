@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+    <!-- Add the analytic distribution button on Sale Order -->
+        <record id="analytic_view_order_form" model="ir.ui.view">
+            <field name="name">analytic.sale.order.form</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook" position="before">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': ['|', ('analytic_distribution_id', '=', False), ('partner_type', '!=', 'section')]}"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': ['|', ('analytic_distribution_id', '!=', False), ('partner_type', '!=', 'section')]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <group colspan="3"/>
+                    </xpath>
+                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="before">
+                        <button name="button_analytic_distribution" string="Analytical distribution" type="object" 
+                            icon="terp-stock_symbol-selection" attrs="{'invisible': [('analytic_distribution_available', '=', False)]}"/>
+                        <field name="have_analytic_distribution_from_header"/>
+                    </xpath>
+                    <xpath expr="//field[@name='project_id']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

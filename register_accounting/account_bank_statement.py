@@ -72,6 +72,7 @@ class res_partner(osv.osv):
            if t['type'] == 'receivable':
                 return [('property_account_receivable', '=', args[0][2])]
         return []
+
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
     }
@@ -1524,7 +1525,7 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         acc_obj = self.pool.get('account.account')
-        third_type = [('res.partner', 'Partner')]
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
         third_required = False
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required

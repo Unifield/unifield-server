@@ -2,6 +2,32 @@
 <openerp>
     <data>
 
+	<record id="stock_location_chained_nomen_form_view" model="ir.ui.view">
+            <field name="name">stock.location.chained.nomen.form.view</field>
+            <field name="model">stock.location</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_location_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='chained_location_type']" position="attributes">
+                        <attribute name="on_change">on_change_location_type(chained_location_type)</attribute>
+                    </xpath>
+
+                    <xpath expr="/form/group[3]" position="after" >
+                        <group colspan="2" col="2" attrs="{'invisible': [('chained_location_type', '!=', 'nomenclature')]}">
+                            <separator colspan="2" string="Chaining options" />
+                            <field name="chained_options_ids" colspan="2" nolabel="1">
+                                <tree string="Chaining options" editable="top">
+                                    <field name="nomen_id" domain= "[('level', '=', 0)]" />
+                                    <field name="dest_location_id" domain="[('usage', '=', 'internal')]" />
+                                </tree>
+                            </field>
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
         <record id="view_picking_form_inherit_sale" model="ir.ui.view">
             <field name="name">view.picking.form.inherit.sale</field>
             <field name="model">stock.picking</field>
@@ -325,6 +351,21 @@
                 <xpath expr="/tree" position="attributes">
                     <attribute name="string">Batch inventory</attribute>
                 </xpath>
+            </field>
+        </record>
+        
+        <record id="view_location_tree_tree" model="ir.ui.view">
+            <field name="name">stock.location.tree.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
+                    <field name="complete_name"/>
+                    <field name="usage"/>
+                    <field name="stock_real" />
+                    <field name="stock_virtual" />
+                </tree>
             </field>
         </record>
 

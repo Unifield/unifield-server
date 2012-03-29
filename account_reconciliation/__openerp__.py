@@ -27,7 +27,7 @@
     "description" : "Default reconciliation wizard adaptation for MSF",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Accounting",
-    "depends" : ["base", "account_override", "res_currency_functional", "register_accounting"], # register_accounting for third parties and partner_txt field in account_move_line
+    "depends" : ["base", "account_override", "res_currency_functional", "register_accounting", "msf_homere_interface"], # register_accounting for third parties and partner_txt field in account_move_line
     #+ res_currency_functional for credit_currency and debit_currency fields (and to redefine some functions)
     #+ account_override module add 'is_addendum_line' attribute that permits to avoid corrections on this kind of line.
     "init_xml" : [

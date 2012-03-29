@@ -217,8 +217,21 @@ class wizard_account_invoice_line(osv.osv):
     _name = 'wizard.account.invoice.line'
     _table = 'wizard_account_invoice_line'
     _inherit = 'account.invoice.line'
+
+    def _get_product_code(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Give product code for each invoice line
+        """
+        res = {}
+        for inv_line in self.browse(cr, uid, ids, context=context):
+            res[inv_line.id] = False
+            if inv_line.product_id:
+                res[inv_line.id] = inv_line.product_id.default_code
+        return res
+
     _columns  = {
         'invoice_id': fields.many2one('wizard.account.invoice', 'Invoice Reference', select=True),
+        'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
