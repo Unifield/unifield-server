@@ -33,14 +33,14 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    def copy(self, cr, uid, id, default, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
         '''
         return super(sale_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
     
     #@@@override sale.sale_order._invoiced
-    def _invoiced(self, cr, uid, ids, name, arg, context={}):
+    def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
         Return True is the sale order is an uninvoiced order
         '''
@@ -65,7 +65,7 @@ class sale_order(osv.osv):
     #@@@end
     
     #@@@override sale.sale_order._invoiced_search
-    def _invoiced_search(self, cursor, user, obj, name, args, context={}):
+    def _invoiced_search(self, cursor, user, obj, name, args, context=None):
         if not len(args):
             return []
         clause = ''
@@ -115,7 +115,7 @@ class sale_order(osv.osv):
         return res
     #@@@end
     
-    def _get_noinvoice(self, cr, uid, ids, name, arg, context={}):
+    def _get_noinvoice(self, cr, uid, ids, name, arg, context=None):
         res = {}
         for sale in self.browse(cr, uid, ids):
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
@@ -137,6 +137,17 @@ class sale_order(osv.osv):
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'company_id2': fields.many2one('res.company','Company',select=1),
+        'order_policy': fields.selection([
+            ('prepaid', 'Payment Before Delivery'),
+            ('manual', 'Shipping & Manual Invoice'),
+            ('postpaid', 'Invoice On Order After Delivery'),
+            ('picking', 'Invoice From The Picking'),
+        ], 'Shipping Policy', required=True, readonly=True, states={'draft': [('readonly', False)]},
+            help="""The Shipping Policy is used to synchronise invoice and delivery operations.
+  - The 'Pay Before delivery' choice will first generate the invoice and then generate the picking order after the payment of this invoice.
+  - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
+  - The 'Invoice On Order After Delivery' choice will generate the draft invoice based on sales order after all picking lists have been finished.
+  - The 'Invoice From The Picking' choice is used to create an invoice during the picking process."""),
     }
     
     _defaults = {
@@ -146,9 +157,10 @@ class sale_order(osv.osv):
         'loan_duration': lambda *a: 2,
         'from_yml_test': lambda *a: False,
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'order_policy': lambda *a: 'picking',
     }
 
-    def _check_own_company(self, cr, uid, company_id, context={}):
+    def _check_own_company(self, cr, uid, company_id, context=None):
         '''
         Remove the possibility to make a SO to user's company
         '''
@@ -171,12 +183,14 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).create(cr, uid, vals, context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Remove the possibility to make a SO to user's company
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
@@ -185,7 +199,7 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
-    def wkf_validated(self, cr, uid, ids, context={}):
+    def wkf_validated(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
             self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
@@ -217,8 +231,9 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
-            elif not order.from_yml_test:
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+# COMMENTED because of SP4 WM 12: Invoice Control
+#            elif not order.from_yml_test:
+#                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
     
         if lines:
             line_obj.write(cr, uid, lines, {'invoiced': 1})
@@ -321,7 +336,7 @@ class sale_order(osv.osv):
         return True
         #@@@end
 
-    def _get_reason_type(self, cr, uid, order, context={}):
+    def _get_reason_type(self, cr, uid, order, context=None):
         r_types = {
             'regular': 'reason_type_deliver_partner', 
             'loan': 'reason_type_loan',
@@ -389,7 +404,7 @@ class sale_order(osv.osv):
         return result
 
 
-    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the sale order and all related documents to done state
         '''
@@ -398,6 +413,8 @@ class sale_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
         order_lines = []
         for order in self.browse(cr, uid, ids, context=context):
             # Done picking
@@ -448,4 +465,49 @@ class sale_order(osv.osv):
 
 sale_order()
 
+
+class sale_order_line(osv.osv):
+    _name = 'sale.order.line'
+    _inherit = 'sale.order.line'
+
+    _columns = {
+        'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+    }
+
+    def open_split_wizard(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to split the line
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            data = {'sale_line_id': line.id, 'original_qty': line.product_uom_qty, 'old_line_qty': line.product_uom_qty}
+            wiz_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'split.sale.order.line.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+sale_order_line()
+
+
+class sale_config_picking_policy(osv.osv_memory):
+    """
+    Set order_policy to picking
+    """
+    _name = 'sale.config.picking_policy'
+    _inherit = 'sale.config.picking_policy'
+
+    _defaults = {
+        'order_policy': 'picking',
+    }
+
+sale_config_picking_policy()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

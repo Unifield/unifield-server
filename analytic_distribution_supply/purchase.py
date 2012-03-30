@@ -64,7 +64,7 @@ class purchase_order(osv.osv):
             self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [x.id for x in po.invoice_ids])
         return res
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a purchase order
         """
@@ -109,7 +109,7 @@ class purchase_order(osv.osv):
                 'context': context,
         }
 
-    def copy_data(self, cr, uid, id, default={}, context={}):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new purchase.
         Delete commitment_ids link.
@@ -117,6 +117,8 @@ class purchase_order(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        if not default:
+            default = {}
         # Update default
         default.update({'commitment_ids': False,})
         # Default method
@@ -130,7 +132,7 @@ class purchase_order(osv.osv):
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
 
-    def action_create_commitment(self, cr, uid, ids, type=False, context={}):
+    def action_create_commitment(self, cr, uid, ids, type=False, context=None):
         """
         Create commitment from given PO, but only for external and esc partner_types
         """
@@ -173,7 +175,8 @@ class purchase_order(osv.osv):
                 new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
                 # Update this distribution not to have a link with purchase but with new commitment
                 if new_distrib_id:
-                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], 
+                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
                     # Create funding pool lines if needed
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
                     # Update commitment with new analytic distribution
@@ -186,7 +189,8 @@ class purchase_order(osv.osv):
                     if not a:
                         a = pol.product_id.categ_id.property_account_expense_categ.id
                     if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+                        raise osv.except_osv(_('Error !'), 
+                            _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id))
                 else:
                     a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 fpos = po.fiscal_position or False
@@ -200,7 +204,12 @@ class purchase_order(osv.osv):
                 for line in po_lines[account_id]:
                     total_amount += line.price_subtotal
                 # Create commitment lines
-                line_id = self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total_amount, 'initial_amount': total_amount, 'account_id': account_id, 'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]}, context=context)
+                line_id = self.pool.get('account.commitment.line').create(cr, uid, {
+                    'commit_id': commit_id,
+                    'amount': total_amount,
+                    'initial_amount': total_amount, 'account_id': account_id,
+                    'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]
+                }, context=context)
                 created_commitment_lines.append(line_id)
             # Create analytic distribution on this commitment line
             self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, created_commitment_lines, context=context)
@@ -213,7 +222,7 @@ class purchase_order(osv.osv):
             self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_id})
         return True
 
-    def wkf_approve_order(self, cr, uid, ids, context={}):
+    def wkf_approve_order(self, cr, uid, ids, context=None):
         """
         Checks:
         1/ if all purchase line could take an analytic distribution
@@ -230,8 +239,10 @@ class purchase_order(osv.osv):
             if not po.analytic_distribution_id:
                 for line in po.order_line:
                     if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                            'analytic_account_project_dummy')
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
+                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
                         break
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
@@ -241,7 +252,7 @@ class purchase_order(osv.osv):
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         return res
 
-    def _finish_commitment(self, cr, uid, ids, context={}):
+    def _finish_commitment(self, cr, uid, ids, context=None):
         """
         Change commitment(s) to Done state from given Purchase Order.
         """
@@ -257,7 +268,7 @@ class purchase_order(osv.osv):
                 self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
         return True
 
-    def action_cancel(self, cr, uid, ids, context={}):
+    def action_cancel(self, cr, uid, ids, context=None):
         """
         Delete commitment from purchase before 'cancel' state.
         """
@@ -270,7 +281,7 @@ class purchase_order(osv.osv):
         self._finish_commitment(cr, uid, ids, context=context)
         return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
 
-    def action_done(self, cr, uid, ids, context={}):
+    def action_done(self, cr, uid, ids, context=None):
         """
         Delete commitment from purchase before 'done' state.
         """
@@ -299,7 +310,23 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
+    def create(self, cr, uid, vals, context=None):
+        if (not 'price_unit' in vals or vals['price_unit'] == 0.00) and 'order_id' in vals and self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context).from_yml_test:
+            vals['price_unit'] = 1.00
+
+        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line = self.browse(cr, uid, ids, context=context)[0]
+        if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
+            vals['price_unit'] = 1.00
+
+        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
@@ -309,7 +336,7 @@ class purchase_order_line(osv.osv):
             else:
                 res[line['id']] = True
         return res
-
+    
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
@@ -320,9 +347,9 @@ class purchase_order_line(osv.osv):
     _defaults = {
         'have_analytic_distribution_from_header': lambda *a: True,
     }
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
-        Launch analytic distribution wizard on a purchase order
+        Launch analytic distribution wizard on a purchase order line.
         """
         # Some verifications
         if not context:
@@ -365,7 +392,7 @@ class purchase_order_line(osv.osv):
                 'context': context,
         }
 
-    def copy_data(self, cr, uid, id, default={}, context={}):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new purchase line
         Copy global distribution and give it to new purchase line.
@@ -373,6 +400,8 @@ class purchase_order_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        if not default:
+            default = {}
         # Update default
         default.update({'commitment_line_ids': [(6, 0, [])],})
         # Copy analytic distribution

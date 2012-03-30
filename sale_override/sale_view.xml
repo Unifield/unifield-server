@@ -9,10 +9,10 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
-                	<xpath expr="/form//field[@name='partner_id']" position="replace">
-                		<field name="company_id2" invisible="1" />
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>
-                	</xpath>
+                    <xpath expr="/form//field[@name='partner_id']" position="replace">
+                        <field name="company_id2" invisible="1" />
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>
+                    </xpath>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
                         <field name="order_type" />
@@ -24,10 +24,7 @@
                         <field name="noinvoice" invisible="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
-                        <field name="order_policy" on_change="shipping_policy_change(order_policy)" invisible="1"/>
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='invoice_quantity']" position="replace">
-                        <field name="invoice_quantity"  invisible="1"/>
+                        <field name="order_policy" on_change="shipping_policy_change(order_policy)"/>
                     </xpath>
                     <button name="%(sale.action_view_sale_advance_payment_inv)d" position="replace">
                         <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
@@ -50,6 +47,12 @@
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
+                    <xpath expr="/form/notebook//tree/field[@name='price_subtotal']" position="after">
+			<field name="state" invisible="1" />
+                        <button string="Split line" icon="terp-stock_effects-object-colorize" 
+				name="open_split_wizard" type="object" 
+				attrs="{'invisible': [('state', 'in', ('confirmed', 'done', 'cancel', 'exception'))]}" />
+                    </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
@@ -62,6 +65,7 @@
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='payment_term']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                        <attribute name="invisible">1</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
@@ -99,11 +103,11 @@
                     <xpath expr="/search//filter[@string='Quotations']" position="after">
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                     </xpath>
-		    <xpath expr="/search/field[@name='name']" position="after">
-			<field name="client_order_ref" />
-		    </xpath>
+            <xpath expr="/search/field[@name='name']" position="after">
+            <field name="client_order_ref" />
+            </xpath>
                     <xpath expr="/search/field[@name='user_id']" position="after">
-                    	<newline />
+                        <newline />
                         <group string="Type" expand="0">
                             <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]"/>
                             <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>

@@ -30,7 +30,7 @@ class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         donor_line_obj = self.pool.get('financing.contract.donor.reporting.line')
         if context is None:
             context = {}

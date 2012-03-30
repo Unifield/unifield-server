@@ -211,6 +211,7 @@
     code: '5815-bank-and-cash-transfer-test'
     type: liquidity
     user_type: account_account_type_transfer_0
+    type_for_register: transfer
     company_id: base.main_company
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
@@ -225,6 +226,7 @@
     type: payable
     user_type: account_account_type_receivable0
     reconcile: 1
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a 6101 Expense Account.
@@ -236,6 +238,7 @@
     name: Expense Account
     type: other
     user_type: account_account_type_expense0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X2110 Expense Account.
@@ -247,6 +250,7 @@
     name: Expense (test)
     type: other
     user_type: account_account_type_expense0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create Cash Advance 4204 Account.
@@ -258,6 +262,7 @@
     name: Cash Advance Account
     type: other
     user_type: account_account_type_expense0
+    type_for_register: advance
     reconcile: 1
     activation_date: !eval time.strftime('%Y-01-01')
 -
@@ -271,6 +276,7 @@
     type: receivable
     reconcile: 1
     user_type : account_account_type_receivable0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11003 Cash Account.
@@ -283,6 +289,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11003-CHF Cash CHF Account.
@@ -295,6 +302,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11003-USD Cash USD Account.
@@ -307,6 +315,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11004 Bank Account.
@@ -319,6 +328,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11004-US Bank USD Account.
@@ -331,6 +341,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11005 Cheque Account
@@ -341,8 +352,8 @@
     currency_mode: current
     name: Cheque (test)
     type: liquidity
-    reconcile: False
     user_type : account_account_type_cash_0
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     reconcile: True
 -
@@ -354,11 +365,23 @@
     currency_mode: current
     name: Cheque in USD (test)
     type: liquidity
-    reconcile: False
     user_type : account_account_type_cash_0
-    type_for_register: 'transfer'
+    type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     reconcile: True
+-
+  I create an adjustement account
+-
+  !record {model: account.account, id: account_account_adjustement0}:
+    code: 'adjustement-6308-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Exchange rate differences
+    type: other
+    reconcile: False
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a Journal View with some columns
 -
@@ -466,6 +489,7 @@
     company_id: base.main_company
     name: Bank Journal in USD (test)
     type: bank
+    currency: base.USD
     view_id: account_journal_view0
     default_debit_account_id: account_account_bank1
     default_credit_account_id: account_account_bank1
@@ -506,6 +530,25 @@
     default_debit_account_id: account_account_expense1
     default_credit_account_id: account_account_expense1
     allow_date: 0
+-
+  I create an analytic Adjustement Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_journal_adjustement_0}:
+    code: MT
+    name: Analytic Adjustement Journal
+    type: cur_adj
+-
+  I create an Adjustement Journal.
+-
+  !record {model: account.journal, id: account_journal_adjustement_0}:
+    code: MT
+    company_id: base.main_company
+    name: Adjustement Journal
+    type: cur_adj
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_adjustement0
+    allow_date: 0
+    analytic_journal_id: account_analytic_journal_adjustement_0
 -
   I create a Partner Category named "Customers".
 -

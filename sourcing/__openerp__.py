@@ -35,6 +35,7 @@
     'test': [
              'test/sourcing.yml',
              'test/2lines_supplier.yml',
+             'test/grouped_po.yml',
              ],
     'update_xml': [
         'security/ir.model.access.csv',

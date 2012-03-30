@@ -76,6 +76,7 @@
                         <field name="currency_id" />
                         <field name="functional_subtotal" />
                         <field name="functional_currency_id" />
+                        <field name="origin" />
 					</field>
 				</data>
 			</field>

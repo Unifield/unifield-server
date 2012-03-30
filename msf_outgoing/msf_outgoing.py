@@ -26,7 +26,6 @@ from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
-import netsvc
 import logging
 import tools
 import time
@@ -252,6 +251,7 @@ class shipment(osv.osv):
                 'consignee_signature': fields.char(string='Signature', size=1024),
                 # functions
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+                'partner_id2': fields.many2one('res.partner', string='Customer', required=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
@@ -314,12 +314,13 @@ class shipment(osv.osv):
         for draft_shipment in self.browse(cr, uid, partial_datas_shipment.keys(), context=context):
             # for each shipment create a new shipment which will be used by the group of new packing objects
             address_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['address_id'], context=context)[0]['address_id'][0]
+            partner_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['partner_id'], context=context)[0]['partner_id'][0]
             sequence = draft_shipment.sequence_id
             shipment_number = sequence.get_id(test='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
             # 
-            values = {'name': shipment_name, 'address_id': address_id, 'shipment_expected_date': draft_shipment.shipment_expected_date, 'shipment_actual_date': draft_shipment.shipment_actual_date, 'parent_id': draft_shipment.id}
+            values = {'name': shipment_name, 'address_id': address_id, 'partner_id': partner_id, 'partner_id2': partner_id, 'shipment_expected_date': draft_shipment.shipment_expected_date, 'shipment_actual_date': draft_shipment.shipment_actual_date, 'parent_id': draft_shipment.id}
             shipment_id = shipment_obj.create(cr, uid, values, context=context)
             context['shipment_id'] = shipment_id
             for draft_packing in pick_obj.browse(cr, uid, partial_datas_shipment[draft_shipment.id].keys(), context=context):
@@ -960,11 +961,40 @@ class pack_family_memory(osv.osv_memory):
 pack_family_memory()
 
 
-class shipment(osv.osv):
+class shipment2(osv.osv):
     '''
     add pack_family_ids
     '''
     _inherit = 'shipment'
+    
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
+        '''
+        Change the delivery address when the partner change.
+        '''
+        v = {}
+        d = {}
+        
+        if not partner_id:
+            v.update({'address_id': False})
+        else:
+            d.update({'address_id': [('partner_id', '=', partner_id)]})
+            
+
+        if address_id:
+            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
+        
+        if not address_id or addr.partner_id.id != partner_id:
+            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
+            if not addr.get('delivery'):
+                addr = addr.get('default')
+            else:
+                addr = addr.get('delivery')
+                
+            v.update({'address_id': addr})
+            
+        
+        return {'value': v,
+                'domain': d}
     
     def _vals_get_2(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -990,7 +1020,7 @@ class shipment(osv.osv):
     _columns = {'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 }
 
-shipment()
+shipment2()
 
 
 class ppl_customize_label(osv.osv):
@@ -1189,7 +1219,7 @@ class stock_picking(osv.osv):
             #check the qty of all stock moves
             treat_draft = True
             for move in draft_picking.move_lines:
-                if move.product_qty:
+                if move.product_qty != 0.0 and move.state != 'done':
                     treat_draft = False
             
             if treat_draft:
@@ -1814,8 +1844,11 @@ class stock_picking(osv.osv):
                 if not len(shipment_ids):
                     # no shipment, create one - no need to specify the state, it's a function
                     name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
+                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
+                    partner_id = addr.partner_id and addr.partner_id.id or False
                     values = {'name': name,
                               'address_id': vals['address_id'],
+                              'partner_id2': partner_id,
                               'shipment_expected_date': rts,
                               'shipment_actual_date': rts,
                               'sequence_id': self.create_sequence(cr, uid, {'name':name,

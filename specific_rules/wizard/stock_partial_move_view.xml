@@ -13,7 +13,7 @@
 					<field name="prodlot_id" position="replace">
                     	<field name="prodlot_id" string="Batch Number"
                     		domain="[('product_id', '=', product_id), ('check_type','=', True)]"
-                    		context="{'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
+                    		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
                     		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
                     		on_change="change_lot(prodlot_id)" />
                     		
@@ -29,6 +29,7 @@
 	           			<field name="dg_check" />
 	           			<field name="np_check" />
             			<field name="integrity_status" invisible="False" />
+            			<field name="location_id" invisible="1" />
                     </field>
                     
 				</data>
@@ -46,7 +47,7 @@
 					<field name="prodlot_id" position="replace">
                     	<field name="prodlot_id" string="Batch Number"
                     		domain="[('product_id', '=', product_id), ('check_type','=', True)]"
-                    		context="{'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
+                    		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
                     		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
                     		on_change="change_lot(prodlot_id)" />
                     		
@@ -62,6 +63,7 @@
 	           			<field name="dg_check" />
 	           			<field name="np_check" />
             			<field name="integrity_status" invisible="False" />
+            			<field name="location_id" invisible="1" />
                     </field>
                     
 				</data>

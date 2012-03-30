@@ -194,6 +194,10 @@ class stock_warehouse_orderpoint(osv.osv):
     add message
     '''
     _inherit = 'stock.warehouse.orderpoint'
+
+    _columns = {
+         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+    }
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -840,7 +844,7 @@ class stock_production_lot(osv.osv):
             
         return result
 
-    def _check_batch_type_integrity(self, cr, uid, ids, context={}):
+    def _check_batch_type_integrity(self, cr, uid, ids, context=None):
         '''
         Check if the type of the batch is consistent with the product attributes
         '''
@@ -850,7 +854,7 @@ class stock_production_lot(osv.osv):
 
         return True
 
-    def _check_perishable_type_integrity(self, cr, uid, ids, context={}):
+    def _check_perishable_type_integrity(self, cr, uid, ids, context=None):
         '''
         Check if the type of the batch is consistent with the product attributes
         '''
@@ -898,7 +902,7 @@ class stock_production_lot(osv.osv):
                     ['Type', 'Product']),
                 ]
 
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
         '''
@@ -1379,19 +1383,23 @@ report_stock_inventory()
 
 class product_product(osv.osv):
     _inherit = 'product.product'
-    def open_stock_by_location(self, cr, uid, ids, context={}):
+    def open_stock_by_location(self, cr, uid, ids, context=None):
         name = 'Stock by Location'
         if context is None:
             context = {}
         if ids:
             prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
             name = "%s: [%s] %s"%(name, prod['code'], prod['name'])
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'view_location_tree_tree')[1] 
+
         return {
             'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'stock.location',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_type': 'tree',
+            'view_id': [view_id],
+            'domain': [('location_id','=',False)],
+            'view_mode': 'tree',
             'context': {'product_id': context.get('active_id') , 'compute_child': False},
             'target': 'current',
         }

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(842.0,595.0)" title="Test" author="Martin Simon" allowSplitting="20">
+  <template pageSize="(1191.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="14.0" y1="14.0" width="814" height="567"/>
+      <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -22,8 +22,8 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
-      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="14,-1"/>
-      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="14,-1" thickness="0.5"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="16,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="16,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <initialize>
@@ -33,6 +33,7 @@
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -44,7 +45,7 @@
     <images/>
   </stylesheet>
   <story>
-    <blockTable colWidths="814.0" style="Tableau1">
+    <blockTable colWidths="1162.0" style="Tableau1">
       <tr>
         <td>
           <para style="P1">Journal Items</para>
@@ -54,28 +55,31 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="47.0,47.0,47.0,47.0,47.0,47.0,92.0,92.0,92.0,49.0,49.0,36.0,53.0,37.0,31.0" style="Tableau3">
+    <blockTable colWidths="48.0,46.0,52.0,113.0,113.0,63.0,63.0,39.0,120.0,152.0,61.0,61.0,44.0,66.0,41.0,43.0,38.0" style="Tableau3">
       <tr>
         <td>
-          <para style="P3">Journ.</para>
+          <para style="P3">Proprietary Instance</para>
         </td>
         <td>
-          <para style="P3">Seq.</para>
+          <para style="P3">Journal Code</para>
         </td>
         <td>
-          <para style="P3">Instance</para>
+          <para style="P3">Entry Sequence</para>
         </td>
         <td>
-          <para style="P3">Ref.</para>
+          <para style="P3">Description</para>
         </td>
         <td>
-          <para style="P3">Date</para>
+          <para style="P3">Reference</para>
+        </td>
+        <td>
+          <para style="P3">Posting Date</para>
+        </td>
+        <td>
+          <para style="P3">Document Date</para>
         </td>
         <td>
           <para style="P3">Period</para>
-        </td>
-        <td>
-          <para style="P3">Name</para>
         </td>
         <td>
           <para style="P3">Account</para>
@@ -101,17 +105,23 @@
         <td>
           <para style="P3">Reconcile</para>
         </td>
+        <td>
+          <para style="P3">State</para>
+        </td>
       </tr>
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
+          <para style="P3">[[ o.instance or '' ]]</para>
+        </td>
+        <td>
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.move_id and o.move_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.instance or '' ]]</para>
+          <para style="P3">[[ o.name or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.ref or '' ]]</para>
@@ -120,10 +130,10 @@
           <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
         </td>
         <td>
-          <para style="P3">[[ o.name or '' ]]</para>
+          <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.account_id and o.account_id.code or '' ]] [[ o.account_id and o.account_id.name or '']]</para>
@@ -148,6 +158,9 @@
         </td>
         <td>
           <para style="P3">[[ o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '' ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[o.state or '']]</para>
         </td>
       </tr>
     </blockTable>

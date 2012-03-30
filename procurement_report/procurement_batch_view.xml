@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+	
+		<record id="procurement_batch_form_view" model="ir.ui.view">
+			<field name="name">procurement.batch.form.view</field>
+			<field name="model">procurement.batch.cron</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Auto POs creation batch configuration">
+					<separator colspan="4" string="Parameters" />
+					<field name="interval_number" />
+					<field name="interval_type" />
+					<field name="nextcall" />
+					<field name="active" />
+					<separator colspan="4" string="Actions" />
+					<button special="cancel" string="Cancel" icon="gtk-cancel" />
+					<button name="update_cron_tasks" string="Update" icon="terp-gtk-jump-to-ltr" colspan="3" type="object" /> 
+				</form>
+			</field>
+		</record>
+		
+		<record id="action_procurement_batch_form" model="ir.actions.act_window">
+			<field name="name">POs Creation (Batch configuration)</field>
+			<field name="res_model">procurement.batch.cron</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+			<field name="res_id" ref="procurement_report.procurement_batch_configuration" />
+		</record>
+		
+		<menuitem id="menu_procurement_batch"
+				  action="action_procurement_batch_form"
+				  sequence="99"
+				  parent="procurement.menu_stock_sched" />
+				  
+	</data>
+</openerp>

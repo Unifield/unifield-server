@@ -27,7 +27,7 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
-    def _get_include_transport(self, cr, uid, ids, field_name, args, context={}):
+    def _get_include_transport(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns for all entries, the total cost included transport cost
         '''
@@ -35,18 +35,24 @@ class purchase_order(osv.osv):
 
         for order in self.browse(cr, uid, ids, context=context):
             cur_obj = self.pool.get('res.currency')
-            transport_cost = order.transport_cost + order.amount_total
+            transport_cost = order.transport_cost
+            if order.transport_currency_id.id != order.pricelist_id.currency_id.id:
+                transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
+                        order.pricelist_id.currency_id.id, order.transport_cost, round=True)
+            
+            total_cost = order.amount_total + transport_cost
+            
             try:
-                func_transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
-                        order.functional_currency_id.id, transport_cost, round=True)
+                func_transport_cost = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id,
+                        order.functional_currency_id.id, total_cost, round=True)
             except:
-                func_transport_cost = transport_cost
-            res[order.id] = {'total_price_include_transport': transport_cost,
+                func_transport_cost = total_cost
+            res[order.id] = {'total_price_include_transport': total_cost,
                              'func_total_price_include_transport': func_transport_cost,}
 
         return res
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         If the partner is international, set 'display_intl_transport_ok' to True
         '''
@@ -57,7 +63,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         If the partner is international, set 'display_intl_transport_ok' to True
         '''
@@ -68,14 +74,16 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
-    def copy(self, cr, uid, ids, defaults={}, context=None):
+    def copy(self, cr, uid, ids, default=None, context=None):
         '''
         Remove the linked documents on copy
         '''
-        defaults.update({'transport_order_id': False,
+        if default is None:
+            default = {}
+        default.update({'transport_order_id': False,
                          'shipment_transport_ids': []})
 
-        return super(purchase_order, self).copy(cr, uid, ids, defaults, context=context)
+        return super(purchase_order, self).copy(cr, uid, ids, default, context=context)
 
     _columns = {
         'display_intl_transport_ok': fields.boolean(string='Displayed intl transport'),
@@ -98,7 +106,7 @@ class purchase_order(osv.osv):
         'intl_supplier_ok': lambda *a: False,
     }
 
-    def display_transport_line(self, cr, uid, ids, context={}):
+    def display_transport_line(self, cr, uid, ids, context=None):
         '''
         Set the visibility of the transport line to True
         '''

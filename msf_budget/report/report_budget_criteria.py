@@ -22,6 +22,8 @@ from report import report_sxw
 import csv
 import StringIO
 import pooler
+import locale
+import datetime
 
 class report_budget_criteria(report_sxw.report_sxw):
     _name = 'report.budget.criteria'
@@ -29,7 +31,7 @@ class report_budget_criteria(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
     
-    def _get_budget_header(self, cr, uid, budget, parameters, context={}):
+    def _get_budget_header(self, cr, uid, budget, parameters, context=None):
         pool = pooler.get_pool(cr.dbname)
         # Dictionary for selection
         wizard_obj = pool.get('wizard.budget.criteria.export')
@@ -58,7 +60,9 @@ class report_budget_criteria(report_sxw.report_sxw):
             result.append(['Year-to-date:', period.name])
         return result
     
-    def _get_budget_lines(self, cr, uid, budget_line_ids, parameters, context={}):
+    def _get_budget_lines(self, cr, uid, budget_line_ids, parameters, context=None):
+        if context is None:
+            context = {}
         pool = pooler.get_pool(cr.dbname)
         result = []
         # Column header
@@ -78,11 +82,22 @@ class report_budget_criteria(report_sxw.report_sxw):
         # Update context
         context.update(parameters)
         # Retrieve lines
-        result += pool.get('msf.budget.line')._get_monthly_amounts(cr,
-                                                                   uid,
-                                                                   budget_line_ids,
-                                                                   context=context)
+        formatted_monthly_amounts = []
+        monthly_amounts = pool.get('msf.budget.line')._get_monthly_amounts(cr,
+                                                                           uid,
+                                                                           budget_line_ids,
+                                                                           context=context)
+        for amount_line in monthly_amounts:
+            formatted_amount_line = [amount_line[0]]
+            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
+            formatted_monthly_amounts.append(formatted_amount_line)
+        result += formatted_monthly_amounts
         return result
+    
+    def _enc(self, st):
+        if isinstance(st, unicode):
+            return st.encode('utf8')
+        return st
     
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
@@ -95,7 +110,7 @@ class report_budget_criteria(report_sxw.report_sxw):
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
-            writer.writerow(line)
+            writer.writerow(map(self._enc,line))
         out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')

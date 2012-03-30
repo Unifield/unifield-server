@@ -187,7 +187,7 @@ def check_dates(self, cr, uid, data, context=None):
     
     return True
 
-def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
     '''
     Common function when type of order is changing
     
@@ -626,7 +626,7 @@ class purchase_order(osv.osv):
         'confirmed_date_by_synchro': False,
     }
     
-    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
         
@@ -891,6 +891,12 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            # Fill partner type
+            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id', order.partner_id.id), context=context)
+            # partner type - always set
+            data.update({'partner_type': partner.partner_type,})
         
         if not 'date_order' in data:
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})

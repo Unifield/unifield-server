@@ -32,8 +32,13 @@ class stock_picking(osv.osv):
         Create a link between invoice_line and purchase_order_line. This piece of information is available on move_line.order_line_id
         """
         if invoice_line_id and move_line:
-            self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], 
-                {'order_line_id': move_line.purchase_line_id and move_line.purchase_line_id.id or False})
+            vals = {}
+            if move_line.purchase_line_id:
+                vals.update({'order_line_id': move_line.purchase_line_id.id})
+            if move_line.sale_line_id:
+                vals.update({'sale_order_line_id': move_line.sale_line_id.id})
+            if vals:
+                self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], vals)
         return super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
 
     def _invoice_hook(self, cr, uid, picking, invoice_id):
@@ -49,13 +54,29 @@ class stock_picking(osv.osv):
             self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [invoice_id])
         return super(stock_picking, self)._invoice_hook(cr, uid, picking, invoice_id)
 
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
+        """
+        Add analytic distribution from SO to invoice
+        """
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        for pi in self.browse(cr, uid, [x for x in res]):
+            if pi.sale_id and pi.sale_id.analytic_distribution_id:
+                distrib_id = pi.sale_id.analytic_distribution_id.id or False
+                if distrib_id:
+                    new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {})
+                    # create default funding pool lines
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id])
+                    if new_distrib_id:
+                        self.pool.get('account.invoice').write(cr, uid, res[pi.id], {'analytic_distribution_id': new_distrib_id})
+        return res
+
 stock_picking()
 
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
 
-    def action_cancel(self, cr, uid, ids, context={}):
+    def action_cancel(self, cr, uid, ids, context=None):
         """
         Update commitment voucher line for the given moves
         """

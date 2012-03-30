@@ -161,11 +161,13 @@ class account_move_line(osv.osv):
         # @@@end
         return r_id
 
-    def _remove_move_reconcile(self, cr, uid, move_ids=[], context={}):
+    def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
         """
         Delete reconciliation object from given move lines ids (move_ids) and reverse gain/loss lines.
         """
         # Some verifications
+        if move_ids is None:
+            move_ids = []
         if not context:
             context = {}
         if isinstance(move_ids, (int, long)):
