@@ -22,7 +22,6 @@
 
 from osv import fields, osv
 from tools.translate import _
-import time
 
 class stock_partial_picking(osv.osv_memory):
     """
@@ -68,7 +67,7 @@ class stock_partial_picking(osv.osv_memory):
             if 'dest_type' in fields:
                 for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
                     if pick.purchase_id.cross_docking_ok == True:
-                       res.update({'dest_type':'to_cross_docking'})
+                        res.update({'dest_type':'to_cross_docking'})
                     elif pick.purchase_id.cross_docking_ok == False:
                         res.update({'dest_type':'to_stock'})
                     else:
@@ -143,16 +142,17 @@ class stock_partial_picking(osv.osv_memory):
             context = {}
         picking_ids = context.get('active_ids', False)
         wiz_ids = context.get('wizard_ids')
+        res = {}
         if not wiz_ids:
             return res
         partial_picking_obj = self.pool.get('stock.partial.picking')
         pick_obj = self.pool.get('stock.picking')
 
- # ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
+# ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
- # ----------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
         for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
             if var.source_type == 'from_cross_docking' :

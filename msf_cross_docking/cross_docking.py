@@ -52,7 +52,7 @@ class purchase_order(osv.osv):
         if cross_docking_ok:
             l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         elif cross_docking_ok == False:
-            l = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
+            l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         return {'value': {'location_id': l}}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -62,7 +62,7 @@ class purchase_order(osv.osv):
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
         elif vals.get('cross_docking_ok') == False:
-            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1], })
+            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1], })
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context={}):
@@ -70,9 +70,8 @@ class purchase_order(osv.osv):
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
         elif vals.get('cross_docking_ok') == False:
-            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1], })
-        id = super(purchase_order, self).create(cr, uid, vals, context=context)
-        return id
+            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1], })
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def _check_cross_docking(self, cr, uid, ids, context=None):
         """
@@ -198,6 +197,7 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
+        return False
 
     def button_stock_all (self, cr, uid, ids, context=None):
         """
@@ -207,7 +207,6 @@ class stock_picking(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        res = {}
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
@@ -222,6 +221,7 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
+        return False
 
     def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -248,11 +248,11 @@ class stock_picking(osv.osv):
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
 
- # ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
+# ------ referring to locations 'cross docking' and 'stock'-------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
- # ----------------------------------------------------------------------------------------------------------------
+        stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+# ----------------------------------------------------------------------------------------------------------------
         move_obj = self.pool.get('stock.move')
         partial_picking_obj = self.pool.get('stock.partial.picking')
         stock_picking_obj = self.pool.get('stock.picking')
@@ -301,51 +301,6 @@ class stock_picking(osv.osv):
             defaults.update({'location_id': location_id})
         
         return defaults
-
-    def do_create_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
-        '''
-        hook to update values data. Originally: to complete msf_cross_docking module
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        partial_datas = kwargs.get('partial_datas')
-        assert partial_datas, 'missing partial_datas'
-        # calling super method
-        values = super(stock_picking, self).do_create_picking_first_hook(cr, uid, ids, context, *args, **kwargs)
-        # location_id is equivalent to the source location: does it exist when we go through the "_do_partial_hook" in the msf_cross_docking> stock_partial_piking> "do_partial_hook"
-        move = kwargs.get('move')
-        picking_ids = context.get('active_ids', False)
-        pick_obj = self.pool.get('stock.picking')
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            move_list = partial_datas[pick.id][move.id]
-            for dico in move_list:
-                location_id = dico.get('location_id')
-        if location_id:
-            values.update({'location_id': location_id})
-
-        return values
-
-    def do_validate_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
-        '''
-        hook to update values data. Originally: to complete msf_cross_docking module
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        partial_datas = kwargs.get('partial_datas')
-        assert partial_datas, 'missing partial_datas'
-        # calling super method
-        values = super(stock_picking, self).do_validate_picking_first_hook(cr, uid, ids, context, *args, **kwargs)
-        # location_id is equivalent to the source location: does it exist when we go through the "_do_partial_hook" in the msf_cross_docking> stock_partial_piking> "do_partial_hook"
-        move = kwargs.get('move')
-        picking_ids = context.get('active_ids', False)
-        pick_obj = self.pool.get('stock.picking')
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            move_list = partial_datas[pick.id][move.id]
-            for dico in move_list:
-                location_id = dico.get('location_id')
-        if location_id:
-            values.update({'location_id': location_id})
-        return values
     
 stock_picking()
 
@@ -389,7 +344,7 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+        return self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
 
     def button_stock (self, cr, uid, ids, context=None):
         """
@@ -401,6 +356,6 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-        self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+        return self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
     
 stock_move()
