@@ -331,11 +331,11 @@ class account_mcdb(osv.osv_memory):
             # Return result in a search view
             view = 'account_move_line_mcdb_search_result'
             search_view = 'mcdb_view_account_move_line_filter'
-            name = _('Journal Items MCDB result')
+            name = _('Selector - G/L')
             if res_model == 'account.analytic.line':
                 view = 'account_analytic_line_mcdb_search_result'
                 search_view = 'mcdb_view_account_analytic_line_filter'
-                name = _('Analytic Journal Items MCDB result')
+                name = _('Selector - Analytic')
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
