@@ -258,7 +258,10 @@ class account_mcdb(osv.osv_memory):
                     domain.append((ll[1], 'ilike', '%%%s%%' % getattr(wiz, ll[0])))
             # DOCUMENT DATE fields
             if wiz.document_code and wiz.document_code != '':
-                domain.append(('move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+                document_code_field = 'move_id.name'
+                if res_model == 'account.analytic.line':
+                    document_code_field = 'move_id.move_id.name'
+                domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
@@ -347,6 +350,7 @@ class account_mcdb(osv.osv_memory):
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
             search_view_id = search_view_id and search_view_id[1] or False
+            
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',
