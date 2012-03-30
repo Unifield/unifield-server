@@ -122,14 +122,15 @@ class account_invoice_line(osv.osv):
 
     _defaults = {
         'from_yml_test': lambda *a: False,
-        'line_number': lambda *a: 0,
     }
 
     _order = 'line_number'
 
     def create(self, cr, uid, vals, context=None):
         """
-        Filled in 'from_yml_test' to True if we come from tests
+        Filled in 'from_yml_test' to True if we come from tests.
+        Give a line_number to invoice line.
+        NB: This appends only for account invoice line and not other object (for an example direct invoice line)
         """
         if not context:
             context = {}
@@ -137,26 +138,29 @@ class account_invoice_line(osv.osv):
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
         # Create new number with invoice sequence
-        if vals.get('invoice_id'):
+        if vals.get('invoice_id') and self._name in ['account.invoice.line']:
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
-            print vals.get('invoice_id'), invoice
-            sequence = invoice.sequence_id
-            line = sequence.get_id(test='id', context=context)
-            vals.update({'line_number': line})
+            if invoice and invoice.sequence_id:
+                sequence = invoice.sequence_id
+                line = sequence.get_id(test='id', context=context)
+                vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
+        Give a line_number in invoice_id in vals
+        NB: This appends only for account invoice line and not other object (for an example direct invoice line)
         """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for il in self.browse(cr, uid, ids):
-            if vals.get('invoice_id') and not il.line_number:
-                sequence = il.invoice_id.sequence_id
-                il_number = sequence.get_id(test='id', context=context)
-                vals.update({'line_number': il_number})
+        if vals.get('invoice_id') and self._name in ['account.invoice.line']:
+            for il in self.browse(cr, uid, ids):
+                if not il.line_number and il.invoice_id.sequence_id:
+                    sequence = il.invoice_id.sequence_id
+                    il_number = sequence.get_id(test='id', context=context)
+                    vals.update({'line_number': il_number})
         return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 
 account_invoice_line()
