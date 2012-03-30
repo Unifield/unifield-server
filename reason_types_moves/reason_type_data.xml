@@ -93,6 +93,11 @@
             <field name="code">13</field>
             <field name="inventory_ok" eval="1" />
         </record>
+        
+        <record id="reason_type_kit" model="stock.reason.type">
+            <field name="name">Kit</field>
+            <field name="code">14</field>
+        </record>
     
     </data>
 </openerp>

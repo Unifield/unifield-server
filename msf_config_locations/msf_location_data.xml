@@ -110,7 +110,7 @@
         <field name="dest_location_id" ref="stock_location_logistic" />
     </record> -->
     
-    <record id="stock.stock_location_cross_docking" model="stock.location">
+    <record id="msf_cross_docking.stock_location_cross_docking" model="stock.location">
         <field name="name">Cross docking</field>
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="usage">internal</field>

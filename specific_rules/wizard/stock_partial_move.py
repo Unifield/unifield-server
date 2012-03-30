@@ -143,7 +143,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'location_id': fields.related('move_id', 'location_id', type='many2one', relation='stock.location', string='Source Location', readonly=True),
     }
