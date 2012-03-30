@@ -48,7 +48,10 @@
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
                     <xpath expr="/form/notebook//tree/field[@name='price_subtotal']" position="after">
-                        <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" />
+			<field name="state" invisible="1" />
+                        <button string="Split line" icon="terp-stock_effects-object-colorize" 
+				name="open_split_wizard" type="object" 
+				attrs="{'invisible': [('state', 'in', ('confirmed', 'done', 'cancel', 'exception'))]}" />
                     </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">

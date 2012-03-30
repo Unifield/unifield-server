@@ -22,6 +22,8 @@
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
                         <field name="date" select='1'/>
+                        <field name="document_date"/>
+                        <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
                             <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" 
@@ -61,16 +63,16 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Account Entry Lines" editable="top" noteditable="True" hide_new_button="1">
-                    <field name="partner_id"/>
-                    <field name="ref"/>
                     <field name="invoice"/>
+                    <field name="ref"/>
                     <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
-                    <field name="date_maturity"/>
+                    <field name="partner_id" string="3rd Party"/>
                     <field name="date"/>
+                    <field name="date_maturity"/>
                     <field name="amount_residual_import_inv" />
-                    <field name="amount_currency"/>
-                    <field name="currency_id"/>
+                    <field name="amount_currency" string="Book. Amount"/>
+                    <field name="currency_id" string="Book. Currency"/>
                     <field name="reconcile_total_partial_id" />
                 </tree>
             </field>
@@ -86,18 +88,18 @@
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]" 
                           context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1">
-                          <tree string="Account Entry Lines" editable="top" noteditable="True">
-                              <field name="partner_id"/>
-                              <field name="ref"/>
-                              <field name="invoice"/>
-                              <field name="supplier_invoice_ref"/>
-                              <field name="account_id"/>
-                              <field name="date_maturity"/>
-                              <field name="date"/>
-                              <field name="amount_residual_import_inv" />
-                              <field name="amount_currency"/>
-                              <field name="currency_id"/>
-                              <field name="reconcile_total_partial_id" />
+                            <tree string="Account Entry Lines" editable="top" noteditable="True">
+                                <field name="invoice"/>
+                                <field name="ref"/>
+                                <field name="supplier_invoice_ref"/>
+                                <field name="account_id"/>
+                                <field name="partner_id" string="3rd Party"/>
+                                <field name="date"/>
+                                <field name="date_maturity"/>
+                                <field name="amount_residual_import_inv" />
+                                <field name="amount_currency" string="Book. Amount"/>
+                                <field name="currency_id" string="Book. Currency"/>
+                                <field name="reconcile_total_partial_id" />
                           </tree>
                         </field>
                         <group colspan="4" col="6">
@@ -109,15 +111,15 @@
                         <newline/>
                         <field name="invoice_lines_ids" colspan="4" nolabel="1" attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
                             <tree editable="bottom" hide_new_button="1">
-                                <field name="partner_id"/>
                                 <field name="number_invoices" />
                                 <field name="ref"/>
                                 <field name="account_id"/>
+                                <field name="partner_id"/>
                                 <field name="date"/>
-                                <field name="amount"/>
+                                <field name="amount" sum="Total"/>
                                 <field name="amount_to_pay"/>
-                                <field name="amount_currency"/>
-                                <field name="currency_id"/>
+                                <field name="amount_currency" string="Book. Amount"/>
+                                <field name="currency_id" string="Book. Currency"/>
                             </tree>
                         </field>
                     </group>
@@ -142,19 +144,19 @@
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]" 
                           context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1">
-                          <tree string="Account Entry Lines" editable="top" noteditable="True">
-                              <field name="partner_id"/>
-                              <field name="ref"/>
-                              <field name="invoice"/>
-                              <field name="supplier_invoice_ref"/>
-                              <field name="account_id"/>
-                              <field name="date_maturity"/>
-                              <field name="date"/>
-                              <field name="amount_residual_import_inv" />
-                              <field name="amount_currency"/>
-                              <field name="currency_id"/>
-                              <field name="reconcile_total_partial_id" />
-                          </tree>
+                            <tree string="Account Entry Lines" editable="top" noteditable="True">
+                                <field name="invoice"/>
+                                <field name="ref"/>
+                                <field name="supplier_invoice_ref"/>
+                                <field name="account_id"/>
+                                <field name="partner_id" string="3rd Party"/>
+                                <field name="date"/>
+                                <field name="date_maturity"/>
+                                <field name="amount_residual_import_inv" />
+                                <field name="amount_currency" string="Book. Amount"/>
+                                <field name="currency_id" string="Book. Currency"/>
+                                <field name="reconcile_total_partial_id" />
+                            </tree>
                         </field>
                         <group colspan="4" col="6">
                             <button name="group_import" type="object" string="Import Group By partner" icon="gtk-add"/>
@@ -164,16 +166,16 @@
                         <separator string="" colspan="4"/>
                         <field name="invoice_lines_ids" colspan="4" nolabel="1" attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
                             <tree editable="bottom" colors="red:cheque_number==False" hide_new_button="1">
-                                <field name="partner_id"/>
                                 <field name="number_invoices" />
                                 <field name="ref"/>
                                 <field name="cheque_number" required="1"/>
                                 <field name="account_id"/>
+                                <field name="partner_id"/>
                                 <field name="date"/>
-                                <field name="amount"/>
+                                <field name="amount" sum="Total"/>
                                 <field name="amount_to_pay"/>
-                                <field name="amount_currency"/>
-                                <field name="currency_id"/>
+                                <field name="amount_currency" string="Book. Amount"/>
+                                <field name="currency_id" string="Book. Currency"/>
                             </tree>
                         </field>
                     </group>

@@ -441,9 +441,9 @@ class account_move_line_compute_currency(osv.osv):
         return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
 
     _columns = {
-        'debit_currency': fields.float('Booking Debit', digits_compute=dp.get_precision('Account')),
-        'credit_currency': fields.float('Booking Credit', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
+        'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'instance': fields.function(_get_instance_type, type='char', string='Proprietary instance', size=64, method=True,

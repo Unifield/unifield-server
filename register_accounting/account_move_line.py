@@ -181,7 +181,7 @@ class account_move_line(osv.osv):
                           'account.move.reconcile': (_get_reconciles, None, 10),
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
-        'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'partner_txt': fields.text(string="Third Party", help="Help user to display and sort Third Parties"),
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
         'transfer_currency': fields.many2one("res.currency", "Transfer Currency", readonly=True, required=False),
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),

@@ -105,6 +105,7 @@ class create_picking(osv.osv_memory):
                 'line_number': move.line_number,
                 'product_id' : move.product_id.id,
                 'asset_id': move.asset_id.id, 
+                'composition_list_id': move.composition_list_id.id,
                 'quantity' : move.product_qty,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
@@ -335,6 +336,7 @@ class create_picking(osv.osv_memory):
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
+                                                             'composition_list_id': move.composition_list_id.id,
                                                              'move_id': move.move_id.id,
                                                              'qty_per_pack': move.qty_per_pack,
                                                              'from_pack': move.from_pack,
@@ -491,7 +493,16 @@ class create_picking(osv.osv_memory):
         if missing_lot or lot_not_needed or wrong_lot_type:
             return False
         return True
+
+    def do_create_picking_first_hook(self, cr, uid, context, *args, **kwargs):
+        '''
+        add hook to do_create_picking: This hook's first aim was to complete the module msf_cross_docking
+        '''
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'partial_datas missing'
         
+        return partial_datas
+
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
@@ -529,7 +540,10 @@ class create_picking(osv.osv_memory):
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
                                                                                    'asset_id': move.asset_id.id,
+                                                                                   'composition_list_id': move.composition_list_id.id,
                                                                                    })
+                    # override : add hook call
+                    partial_datas = self.do_create_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
@@ -570,7 +584,16 @@ class create_picking(osv.osv_memory):
         
         # ppl2
         self.do_ppl2(cr, uid, [wizard_ppl2], context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
+
+    def do_validate_picking_first_hook(self, cr, uid, context, *args, **kwargs):
+        '''
+        add hook to do_validate_picking: This hook's first aim was to complete the module msf_cross_docking
+        '''
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'partial_datas missing'
         
+        return partial_datas
+
     def do_validate_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
@@ -608,7 +631,10 @@ class create_picking(osv.osv_memory):
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'asset_id': move.asset_id.id,
+                                                                               'composition_list_id': move.composition_list_id.id,
                                                                                })
+                # override : add hook call
+                partial_datas = self.do_validate_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
@@ -692,6 +718,7 @@ class create_picking(osv.osv_memory):
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,
+                                                               'composition_list_id': move.composition_list_id.id,
                                                                'qty_to_return': move.qty_to_return,
                                                                }
                     

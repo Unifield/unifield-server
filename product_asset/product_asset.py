@@ -370,11 +370,30 @@ class product_product(osv.osv):
     _inherit = "product.product"
     _description = "Product"
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        if a product is not of type product, it is set to single subtype
+        '''
+        # fetch the product
+        if 'type' in vals and vals['type'] != 'product':
+            vals.update(subtype='single')
+            
+        # save the data to db
+        return super(product_product, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        if a product is not of type product, it is set to single subtype
+        '''
+        # fetch the product
+        if 'type' in vals and vals['type'] != 'product':
+            vals.update(subtype='single')
+            
+        # save the data to db
+        return super(product_product, self).write(cr, uid, ids, vals, context=context)
+    
     _columns = {
         'asset_ids': fields.one2many('product.asset', 'product_id', 'Assets')
-    }
-
-    _defaults = {
     }
 
 product_product()
