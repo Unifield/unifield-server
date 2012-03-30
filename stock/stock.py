@@ -767,7 +767,7 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state == 'confirmed']
+            move_ids = [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
@@ -1968,6 +1968,12 @@ class stock_move(osv.osv):
 
         self.create_chained_picking(cr, uid, moves, context)
         return []
+    
+    def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
+        '''
+        Always return True
+        '''
+        return True
 
     def action_assign(self, cr, uid, ids, *args):
         """ Changes state to confirmed or waiting.
@@ -1975,6 +1981,7 @@ class stock_move(osv.osv):
         """
         todo = []
         for move in self.browse(cr, uid, ids):
+            self._hook_confirmed_move(cr, uid, move=move)
             if move.state in ('confirmed', 'waiting'):
                 todo.append(move.id)
         res = self.check_assign(cr, uid, todo)
@@ -2052,6 +2059,12 @@ class stock_move(osv.osv):
                 last_track = last_track[-1]
             self.write(cr, uid, ids, {'tracking_id': last_track})
         return True
+    
+    def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
+        '''
+        Change the state of the chained move
+        '''
+        return {'state': 'confirmed'}, kwargs['context']
 
     #
     # Cancel move => cancel others move and pickings
@@ -2071,7 +2084,9 @@ class stock_move(osv.osv):
                 if move.picking_id:
                     pickings[move.picking_id.id] = True
             if move.move_dest_id and move.move_dest_id.state == 'waiting':
-                self.write(cr, uid, [move.move_dest_id.id], {'state': 'confirmed'})
+                state, c = self._hook_move_cancel_state(cr, uid, context=context)
+                context.update(c)
+                self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
