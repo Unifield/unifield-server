@@ -34,7 +34,7 @@ class account_invoice(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
-        'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', required=True, ondelete='cascade',
+        'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
             help="This field contains the information related to the numbering of the lines of this order."),
     }
 
@@ -76,7 +76,8 @@ class account_invoice(osv.osv):
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
         # Create a sequence for this new invoice
-        vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        res_seq = self.create_sequence(cr, uid, vals, context)
+        vals.update({'sequence_id': res_seq,})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
@@ -116,11 +117,12 @@ class account_invoice_line(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
-        'line_number': fields.integer(string='Line', required=True),
+        'line_number': fields.integer(string='Line Number'),
     }
 
     _defaults = {
         'from_yml_test': lambda *a: False,
+        'line_number': lambda *a: 0,
     }
 
     _order = 'line_number'
@@ -135,11 +137,27 @@ class account_invoice_line(osv.osv):
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
         # Create new number with invoice sequence
-        invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'], context)
-        sequence = invoice.sequence_id
-        line = sequence.get_id(test='id', context=context)
-        vals.update({'line_number': line})
+        if vals.get('invoice_id'):
+            invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
+            print vals.get('invoice_id'), invoice
+            sequence = invoice.sequence_id
+            line = sequence.get_id(test='id', context=context)
+            vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for il in self.browse(cr, uid, ids):
+            if vals.get('invoice_id') and not il.line_number:
+                sequence = il.invoice_id.sequence_id
+                il_number = sequence.get_id(test='id', context=context)
+                vals.update({'line_number': il_number})
+        return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
