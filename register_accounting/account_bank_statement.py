@@ -1296,6 +1296,8 @@ class account_bank_statement_line(osv.osv):
 
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
+                absl = self.browse(cr, uid, absl.id, context=context)
 
             if postype == "hard":
                 # some verifications
