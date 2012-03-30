@@ -121,6 +121,8 @@ class financing_contract_contract(osv.osv):
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
+        # Define for _inherits
+        'format_id': fields.many2one('financing.contract.format', 'Format'),
     }
     
     _defaults = {
