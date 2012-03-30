@@ -855,7 +855,7 @@ def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
                 fields_to_trace.append(field.name)
             if getattr(thisrule, 'log_' + method_name):
                 return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, thisrule.domain_filter, *args, **kwargs)
-            return old_method(*args, **kwargs)
+            return old_method(self, *args, **kwargs)
     res = my_fct(cr, uid_orig, model, method_name, *args, **kwargs)
     return res
 
