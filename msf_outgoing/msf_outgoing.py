@@ -1084,6 +1084,16 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink test for draft
+        '''
+        data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
+        if [x for x in data.values() if x]:
+            raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
+        
+        return super(stock_picking, self).unlink(cr, uid, ids, context=context)
    
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
@@ -1908,8 +1918,10 @@ class stock_picking(osv.osv):
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.backorder_ids:
-                raise osv.except_osv(_('Warning !'), _('You cannot convert a picking which has already been started.'))
+            # the convert function should only be called on draft picking ticket
+            assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
+            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
             
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
@@ -2718,7 +2730,10 @@ class sale_order(osv.osv):
         # first go to packing location
         packing_id = order.shop_id.warehouse_id.lot_packing_id.id
         move_data['location_dest_id'] = packing_id
-        move_data['state'] = 'confirmed'
+#        move_data['state'] = 'confirmed' # state is left to default (draft)
+        # was previously set to confirmed, otherwise, when we confirme the stock picking,
+        # using action_confirm, the moves were not treated because not in draft
+        # and the corresponding chain location on location_dest_id was not computed 
         return move_data
     
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -2762,3 +2777,26 @@ class sale_order(osv.osv):
         return cond
 
 sale_order()
+
+
+class procurement_order(osv.osv):
+    '''
+    procurement order workflow
+    '''
+    _inherit = 'procurement.order'
+    
+    def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
+        
+        - allow to modify the message written back to procurement order
+        '''
+        message = super(procurement_order, self)._hook_check_mts_on_message(cr, uid, context=context, *args, **kwargs)
+        procurement = kwargs['procurement']
+        if procurement.move_id.picking_id.state == 'draft' and procurement.move_id.picking_id.subtype == 'picking':
+            message = _("Shipment Process in Progress.")
+        return message
+    
+procurement_order()
+
