@@ -65,7 +65,7 @@ class purchase_order(osv.osv):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1], })
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         obj_data = self.pool.get('ir.model.data')
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
