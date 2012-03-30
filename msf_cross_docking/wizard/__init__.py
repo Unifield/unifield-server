@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,33 +19,4 @@
 #
 ##############################################################################
 
-{
-    "name" : "MSF Locations configuration",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting/MSF",
-    "description" : """
-    Allow users with specific rights to configure
-    optionnal stock locations
-    """,
-    "website": "http://unifield.msf.org",
-    "category" : "Generic Modules/Warehouse",
-    "depends" : [
-        'stock',
-        'product_nomenclature',
-        'msf_outgoing',
-        'stock_override',
-        'cross_docking',
-    ],
-    "init_xml" : [
-    ],
-    "update_xml" : [
-        'stock_configuration_view.xml',
-        'msf_location_data.xml',
-    ],
-    "demo_xml" : [
-    ],
-    'test': [
-    ],
-    'installable': True,
-    'active': False,
-}
+import stock_partial_picking

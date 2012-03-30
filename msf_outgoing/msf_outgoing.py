@@ -1963,7 +1963,16 @@ class stock_picking(osv.osv):
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+
+    def do_create_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update new_move data. Originally: to complete msf_cross_docking module
+        '''
+        values = kwargs.get('values')
+        assert values is not None, 'missing defaults'
         
+        return values
+
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
@@ -1999,12 +2008,16 @@ class stock_picking(osv.osv):
                     # the quantity
                     count = count + partial['product_qty']
                     # copy the stock move and set the quantity
-                    new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_pick_id,
-                                                                'product_qty': partial['product_qty'],
-                                                                'prodlot_id': partial['prodlot_id'],
-                                                                'asset_id': partial['asset_id'],
-                                                                'composition_list_id': partial['composition_list_id'],
-                                                                'backmove_id': move.id}, context=context)
+                    values = {'picking_id': new_pick_id,
+                              'product_qty': partial['product_qty'],
+                              'prodlot_id': partial['prodlot_id'],
+                              'asset_id': partial['asset_id'],
+                              'composition_list_id': partial['composition_list_id'],
+                              'backmove_id': move.id}
+                    #add hook
+                    values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
+                    new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                    
                 # decrement the initial move, cannot be less than zero
                 initial_qty = max(initial_qty - count, 0)
                 move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty}, context=context)
@@ -2046,7 +2059,16 @@ class stock_picking(osv.osv):
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+
+    def do_validate_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update new_move data. Originally: to complete msf_cross_docking module
+        '''
+        values = kwargs.get('values')
+        assert values is not None, 'missing defaults'
         
+        return values
+
     def do_validate_picking(self, cr, uid, ids, context=None):
         '''
         validate the picking ticket from selected stock moves
@@ -2087,18 +2109,22 @@ class stock_picking(osv.osv):
                     if first:
                         first = False
                         # update existing move
-                        move_obj.write(cr, uid, [move.id], {'product_qty': partial['product_qty'],
-                                                            'prodlot_id': partial['prodlot_id'],
-                                                            'asset_id': partial['asset_id'],
-                                                            'composition_list_id': partial['composition_list_id']}, context=context)
+                        values = {'product_qty': partial['product_qty'],
+                                  'prodlot_id': partial['prodlot_id'],
+                                  'composition_list_id': partial['composition_list_id'],
+                                  'asset_id': partial['asset_id']}
+                        values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
+                        move_obj.write(cr, uid, [move.id], values, context=context)
                     else:
                         # split happend during the validation
                         # copy the stock move and set the quantity
-                        new_move = move_obj.copy(cr, uid, move.id, {'state': 'assigned',
-                                                                    'product_qty': partial['product_qty'],
-                                                                    'prodlot_id': partial['prodlot_id'],
-                                                                    'asset_id': partial['asset_id'],
-                                                                    'composition_list_id': partial['composition_list_id']}, context=context)
+                        values = {'state': 'assigned',
+                                  'product_qty': partial['product_qty'],
+                                  'prodlot_id': partial['prodlot_id'],
+                                  'composition_list_id': partial['composition_list_id'],
+                                  'asset_id': partial['asset_id']}
+                        values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
+                        new_move = move_obj.copy(cr, uid, move.id, values, context=context)
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the validation does not correspond to the picking ticket quantity
