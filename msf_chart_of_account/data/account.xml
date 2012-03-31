@@ -1047,7 +1047,7 @@
             <field name="name">VAT payable</field>
             <field name="parent_id" ref="msf_chart_of_account.303" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_payable" />
+            <field name="user_type" ref="vat_management.account_type_tax" /> 
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3031">
