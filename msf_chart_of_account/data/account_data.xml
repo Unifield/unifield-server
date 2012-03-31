@@ -36,8 +36,8 @@
             <field name="description">1</field>
             <field name="amount" eval="0.042"/>
             <field name="type">percent</field>
-            <field name="account_collected_id" ref="vat_management.3030"/>
-            <field name="account_paid_id" ref="vat_management.3030"/>
+            <field name="account_collected_id" ref="msf_chart_of_account.3030"/>
+            <field name="account_paid_id" ref="msf_chart_of_account.3030"/>
         </record>
 -->
     </data>
