@@ -238,7 +238,7 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             if not po.analytic_distribution_id:
                 for line in po.order_line:
-                    if po.from_yml_test or line.from_yml_test:
+                    if po.from_yml_test:
                         continue
                     if not line.analytic_distribution_id:
                         try:
