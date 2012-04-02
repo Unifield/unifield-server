@@ -238,9 +238,14 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             if not po.analytic_distribution_id:
                 for line in po.order_line:
+                    if po.from_yml_test or line.from_yml_test:
+                        continue
                     if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                            'analytic_account_project_dummy')
+                        try:
+                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                                'analytic_account_project_dummy')
+                        except ValueError:
+                            dummy_cc = 0
                         ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
                             'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
                         break
@@ -248,7 +253,7 @@ class purchase_order(osv.osv):
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order']:
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         return res
 
