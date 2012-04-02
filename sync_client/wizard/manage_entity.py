@@ -60,7 +60,7 @@ class child_entity(osv.osv_memory):
     
     _columns = {
         'name': fields.char('Entity Name', size=64, readonly=True, required=True),
-        'identifier': fields.char('Identifier', size=64, readonly=True, required=True), 
+        'identifier': fields.char('Identifier', size=64, readonly=True), 
         'parent': fields.char('Parent Entity', size=64, readonly=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
         'state' : fields.selection([('pending','Pending'),('validated','Validated'), ('updated', 'Updated'), ('invalidated','Invalidated')], 'State', required=True),
