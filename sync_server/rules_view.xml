@@ -115,10 +115,12 @@
             <field name="view_mode">tree,form</field>
         </record>             
         
-        <menuitem id="sync_rule_menu" name="Synchronization Rules" parent="sync_menu"
+        <menuitem id="rules_menu" name="Rules" parent="sync_menu" sequence="20"/>
+
+        <menuitem id="sync_rule_menu" name="Data Synchronization Rules" parent="rules_menu"
                 action="sync_rule_action" />   
                 
-        <menuitem id="message_rule_menu" name="Messages Rules" parent="sync_menu"
+        <menuitem id="message_rule_menu" name="Messages Rules" parent="rules_menu"
                 action="message_rule_action" /> 
         
     </data>
