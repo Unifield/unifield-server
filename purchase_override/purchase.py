@@ -701,12 +701,16 @@ class purchase_order_line(osv.osv):
                 
         # If it's a new line
         elif not line_id:
-            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=context)
+            c = context.copy()
+            c.update({'manual_change': vals.get('change_price_manually', False)})
+            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=c)
         # If the line is removed
         elif not vals:
             line = self.browse(cr, uid, line_id, context=context)
             # Remove the qty from the merged line
             if line.merged_id:
+                if line.change_price_manually:
+                    context.update({'manual_change': True})
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, [line.id], {'merged_id': False}, context=context)
