@@ -74,7 +74,7 @@
 	        <field name="model">sync.client.child_entity</field>
 	        <field name="type">tree</field>
 	        <field name="arch" type="xml">  
-	        	<tree string="children entities" colors="red:validate==False" >
+	        	<tree string="children entities" colors="red:state=='pending'" >
 	        		<field name="name"/>
 	        		<field name="identifier"/>
 	        		<field name="email" />
