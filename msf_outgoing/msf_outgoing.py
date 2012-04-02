@@ -1934,7 +1934,12 @@ class stock_picking(osv.osv):
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
             # if corresponding sale order, date and date_expected are updated to rts + shipment lt
             for move in obj.move_lines:
-                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,}
+                # was previously set to confirmed/assigned, otherwise, when we confirm the stock picking,
+                # using draft_force_assign, the moves are not treated because not in draft
+                # and the corresponding chain location on location_dest_id was not computed
+                # we therefore set them back in draft state before treatment
+                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,
+                        'state': 'draft'}
                 if obj.sale_id:
                     # compute date
                     shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -1943,6 +1948,7 @@ class stock_picking(osv.osv):
                     rts = rts.strftime(db_date_format)
                     vals.update({'date': rts, 'date_expected': rts})
                 move.write(vals, context=context)
+
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])
         
@@ -2760,10 +2766,7 @@ class sale_order(osv.osv):
         # first go to packing location
         packing_id = order.shop_id.warehouse_id.lot_packing_id.id
         move_data['location_dest_id'] = packing_id
-        move_data['state'] = 'confirmed' # state is left to default (draft)
-        # was previously set to confirmed, otherwise, when we confirme the stock picking,
-        # using action_confirm, the moves were not treated because not in draft
-        # and the corresponding chain location on location_dest_id was not computed 
+        move_data['state'] = 'confirmed'
         return move_data
     
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
