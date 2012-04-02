@@ -106,6 +106,7 @@
         	<field name="arch" type="xml">
         		<tree string="Threshold value">
         			<field name="name" />
+        			<field name="product_id" invisible="1" />
         			<field name="location_id" />
                     <field name="sublist_id" invisible="1" />
                     <field name="nomen_manda_0" invisible="1" />
