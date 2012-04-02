@@ -2760,7 +2760,7 @@ class sale_order(osv.osv):
         # first go to packing location
         packing_id = order.shop_id.warehouse_id.lot_packing_id.id
         move_data['location_dest_id'] = packing_id
-#        move_data['state'] = 'confirmed' # state is left to default (draft)
+        move_data['state'] = 'confirmed' # state is left to default (draft)
         # was previously set to confirmed, otherwise, when we confirme the stock picking,
         # using action_confirm, the moves were not treated because not in draft
         # and the corresponding chain location on location_dest_id was not computed 
