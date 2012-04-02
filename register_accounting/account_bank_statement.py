@@ -674,22 +674,22 @@ class account_bank_statement_line(osv.osv):
         return res
 
     def _get_transfer_with_change_state(self, cr, uid, ids, field_name=None, args=None, context=None):
-      """
-      If account is a transfer with change, then True. Otherwise False.
-      """
-      # Some verifications
-      if not context:
-          context = {}
-      if isinstance(ids, (int, long)):
-          ids = [ids]
-      # Prepare some values
-      res = {}
-      # Browse elements
-      for line in self.browse(cr, uid, ids, context=context):
-          res[line.id] = False
-              if line.account_id and line.account_id.type_for_register and line.account_id.type_for_register == 'transfer':
-                  res[line.id] = True
-      return res
+        """
+        If account is a transfer with change, then True. Otherwise False.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse elements
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.account_id and line.account_id.type_for_register and line.account_id.type_for_register == 'transfer':
+                res[line.id] = True
+        return res
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -727,6 +727,7 @@ class account_bank_statement_line(osv.osv):
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
         'transfer_currency': fields.many2one('res.currency', string="Currency", help="Currency used for Transfers"),
+    }
 
     _defaults = {
         'from_cash_return': lambda *a: 0,

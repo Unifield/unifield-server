@@ -41,7 +41,7 @@ class wizard_down_payment(osv.osv_memory):
         'state': lambda *a: 'closed',
     }
 
-    def check_register_line_and_po(self, cr, uid, absl_id, po_id, context={}):
+    def check_register_line_and_po(self, cr, uid, absl_id, po_id, context=None):
         """
         Verify that register line amount is not superior to (PO total_amount - all down payments).
         """
@@ -72,7 +72,7 @@ class wizard_down_payment(osv.osv_memory):
                 _('Register line amount is superior to (PO total amount - down payments). Maximum amount should be: %s') % (total))
         return True
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Validate the wizard to remember which PO have been selected from this register line.
         """

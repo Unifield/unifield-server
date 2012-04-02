@@ -83,7 +83,7 @@ class account_invoice(osv.osv):
                 ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
 
-    def create_down_payments(self, cr, uid, ids, amount, context={}):
+    def create_down_payments(self, cr, uid, ids, amount, context=None):
         """
         Create down payments for given invoices
         """
@@ -180,7 +180,7 @@ class account_invoice(osv.osv):
                 res.append(dp_counterpart_id)
         return res
 
-    def check_down_payments(self, cr, uid, ids, context={}):
+    def check_down_payments(self, cr, uid, ids, context=None):
         """
         Verify that PO have down payments. If yes, launch down payment creation and attach it to invoice
         """
@@ -206,7 +206,7 @@ class account_invoice(osv.osv):
                 self.create_down_payments(cr, uid, inv.id, inv.amount_total)
         return True
 
-    def invoice_open(self, cr, uid, ids, context={}):
+    def invoice_open(self, cr, uid, ids, context=None):
         """
         No longer fills the date automatically, but requires it to be set
         """
@@ -234,11 +234,13 @@ class account_invoice(osv.osv):
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         return True
 
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+    def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Add down payment check after others verifications
         """
         # Some verifications
+        if not context:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context)
