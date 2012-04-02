@@ -1080,6 +1080,7 @@ class account_bank_statement_line(osv.osv):
                         'statement_id': st_line.statement_id.id,
                         'currency_id': st_line.statement_id.currency.id,
                         'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
+                        'date': st_line.date,
                     }
                     process_invoice_move_line_ids.append(invoice_move_line.id)
                     move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)

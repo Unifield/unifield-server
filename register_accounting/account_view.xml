@@ -501,7 +501,7 @@
         <act_window
            id="act_account_journal_2_account_bank_statement"
            name="Bank registers"
-           context="{'search_default_journal_id':active_id,}"
+           context="{'search_default_journal_id':active_id}"
            res_model="account.bank.statement"
            src_model="account.journal"/>
 

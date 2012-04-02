@@ -13,12 +13,12 @@
                     <field name="quantity" />
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" string="Batch Number"
-                    		domain="[('product_id', '=', product_id), ('check_type','=', True),]"
-                    		context="{'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
-                    		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False),], }"
+                    		domain="[('product_id', '=', product_id), ('check_type','=', True)]"
+                    		context="{'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
+                    		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
                     		on_change="change_lot(prodlot_id)" />
                     		
-                   	<field name="expiry_date" attrs="{'readonly': ['|', '&amp;', ('batch_number_check', '=', False), ('expiry_date_check', '=', False), '&amp;', ('batch_number_check', '=', True), ('expiry_date_check', '=', True), ], }"
+                   	<field name="expiry_date" attrs="{'readonly': ['|', '&amp;', ('batch_number_check', '=', False), ('expiry_date_check', '=', False), '&amp;', ('batch_number_check', '=', True), ('expiry_date_check', '=', True)]}"
                    		on_change="change_expiry(expiry_date, product_id, type_check)" />
                    	<field name="batch_number_check" invisible="True" />
                    	<field name="expiry_date_check" invisible="True" />

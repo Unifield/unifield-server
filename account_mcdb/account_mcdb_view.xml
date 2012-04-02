@@ -21,6 +21,8 @@
                     <group col="4" colspan="6">
                         <field name="abs_id" colspan="2" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                            <field name="rev_journal_ids" colspan="2"/>
+                            <field name="rev_period_ids" colspan="2"/>
                             <field name="journal_ids" colspan="2" nolabel="1">
                                 <tree string="Journal">
                                     <field name="code"/>
@@ -38,6 +40,8 @@
                             </field>
                         </group>
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <field name="rev_analytic_journal_ids" colspan="2"/>
+                            <label string="" colspan="2"/>
                             <field name="analytic_journal_ids" colspan="2" nolabel="1">
                                 <tree string="Analytic Journal">
                                     <field name="code"/>
@@ -50,51 +54,51 @@
                     </group>
                     <separator string="Account"/>
                     <group col="4" colspan="6">
-                        <field name="rev_account_ids"/>
-                        <newline/>
-                        <group col="4" colspan="6">
-                            <field name="account_ids" colspan="2" nolabel="1">
-                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
-                                    <field name="code"/>
-                                    <field name="name"/>
-                                    <field name="type" string="Type"/>
-                                </tree>
-                            </field>
-                            <field name="account_type_ids" colspan="2" nolabel="1">
-                                <tree string="Account type">
-                                    <field name="code"/>
-                                    <field name="name"/>
-                                </tree>
-                            </field>
-                            <newline/>
-                            <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                            <newline/>
-                            <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                                <tree string="Analytic Accounts">
-                                    <field name="code" string="Ana. Code"/>
-                                    <field name="name" string="Ana. Name"/>
-                                    <field name="type" string="Ana. Type"/>
-                                </tree>
-                            </field>
-                        </group>
-                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
-                            <separator string="Reconciliation"/>
-                            <field name="reconciled"/><field name="reconcile_id"/>
-                        </group>
-                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                            <separator string="Reallocation"/>
-                            <field name="reallocated"/><field name="reversed"/>
-                        </group>
+                        <field name="rev_account_ids" colspan="2"/>
+                        <field name="rev_account_type_ids" colspan="2"/>
+                        <field name="account_ids" colspan="2" nolabel="1">
+                            <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
+                                <field name="code"/>
+                                <field name="name"/>
+                                <field name="type" string="Type"/>
+                            </tree>
+                        </field>
+                        <field name="account_type_ids" colspan="2" nolabel="1">
+                            <tree string="Account type">
+                                <field name="code"/>
+                                <field name="name"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="6">
+                        <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
+                        <label string="" colspan="2"/>
+                        <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <tree string="Analytic Accounts">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                        <label string="" colspan="2"/>
+                    </group>
+                    <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                        <separator string="Reconciliation"/>
+                        <field name="reconciled"/><field name="reconcile_id"/>
+                    </group>
+                    <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                        <separator string="Reallocation"/>
+                        <field name="reallocated"/><field name="reversed"/>
                     </group>
                     <separator string="Amount &amp; Currency"/>
                     <group col="8" colspan="6">
                         <field name="currency_choice" colspan="2" on_change="onchange_currency_choice(currency_choice, functional_currency_id, amount_from, amount_to)"/>
                         <field name="currency_id" attrs="{'readonly': [('currency_choice', '=', 'functional')]}" widget="selection" colspan="2" on_change="onchange_currency(currency_choice, currency_id)" domain="[('currency_table_id', '=', False)]"/>
-                        <field name="amount_from" string="Amount" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
-                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
-                        <newline/>
                         <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
                         <field name="display_in_output_currency" colspan="2" domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"/>
+                        <newline/>
+                        <field name="amount_from" string="Amount from" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
+                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
                     </group>
                     <group col="6" colspan="6">
                         <field name="functional_currency_id" colspan="2" invisible="1"/>

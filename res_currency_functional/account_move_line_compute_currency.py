@@ -22,6 +22,8 @@
 from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
+import netsvc
+import traceback
 
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
@@ -196,14 +198,14 @@ class account_move_line_compute_currency(osv.osv):
             newvals['debit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('debit') or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
         elif vals.get('amount_currency'):
-                if vals['amount_currency'] < 0:
-                    newvals['credit_currency'] = -vals['amount_currency']
-                    newvals['debit_currency'] = 0
-                else:
-                    newvals['debit_currency'] = vals['amount_currency']
-                    newvals['credit_currency'] = 0
-                newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
-                newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+            if vals['amount_currency'] < 0:
+                newvals['credit_currency'] = -vals['amount_currency']
+                newvals['debit_currency'] = 0
+            else:
+                newvals['debit_currency'] = vals['amount_currency']
+                newvals['credit_currency'] = 0
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
         elif (vals.get('date') or vals.get('source_date')) and (credit_currency or debit_currency):
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
@@ -214,9 +216,18 @@ class account_move_line_compute_currency(osv.osv):
         return newvals
 
     def create(self, cr, uid, vals, context=None, check=True):
+        """
+        Account move line creation that update debit/credit values for booking and functional currency.
+        """
+        # Some verifications
         self.check_date(cr, uid, vals)
+        if not 'date' in vals:
+            logger = netsvc.Logger()
+            logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
+            traceback.print_stack()
         if not context:
             context = {}
+        # Prepare some values
         move_obj = self.pool.get('account.move')
         journal_obj = self.pool.get('account.journal')
         account_obj = self.pool.get('account.account')

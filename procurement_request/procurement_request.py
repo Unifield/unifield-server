@@ -106,6 +106,7 @@ class procurement_request(osv.osv):
         'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
+        'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
     }
 
     def create(self, cr, uid, vals, context={}):
@@ -207,13 +208,14 @@ class procurement_request(osv.osv):
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             self.log(cr, uid, request.id, message)
         
+        self.action_ship_create(cr, uid, ids, context=context)
+        
         return True
     
     def procurement_done(self, cr, uid, ids, context={}):
         '''
         Creates all procurement orders according to lines
         '''
-        self.action_ship_create(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'done'})
         
         return True

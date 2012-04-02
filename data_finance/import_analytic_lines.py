@@ -73,7 +73,7 @@ class import_analytic_lines(osv.osv_memory):
                 max_date = date
 
         if obj['relative']:
-            max_date = max_date+DateTime.RelativeDateTime(months=DateTime.now().month)
+            max_date = max_date+DateTime.RelativeDateTime(months=DateTime.now().month-1)
 
         if max_date.year != DateTime.now().year:
             create_period_obj = self.pool.get('account.period.create')
@@ -169,7 +169,7 @@ class import_analytic_lines(osv.osv_memory):
             except ValueError:
                 continue
             if obj['relative']:
-                date += DateTime.RelativeDateTime(months=DateTime.now().month)
+                date += DateTime.RelativeDateTime(months=DateTime.now().month-1)
             key_reg = '%s-%s'%(row[1], date.strftime('%m-%Y'))
             if key_reg not in register_id:
                 p_ids = period_obj.search(cr, uid, [('date_start', '=', date.strftime('%Y-%m-01'))])

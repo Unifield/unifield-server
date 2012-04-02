@@ -372,13 +372,26 @@ class account_commitment_line(osv.osv):
             string='Header Distrib.?'),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
+        'first': fields.boolean(string="Is not created?", help="Useful for onchange method for views. Should be False after line creation.", 
+            readonly=True),
     }
 
     _defaults = {
         'initial_amount': lambda *a: 0.0,
         'amount': lambda *a: 0.0,
         'from_yml_test': lambda *a: False,
+        'first': lambda *a: True,
     }
+
+    def onchange_initial_amount(self, cr, uid, ids, first, amount):
+        """
+        """
+        # Prepare some values
+        res = {}
+        # Some verification
+        if first and amount:
+            res['value'] = {'amount': amount}
+        return res
 
     def update_analytic_lines(self, cr, uid, ids, amount, account_id=False, context={}):
         """
@@ -414,6 +427,11 @@ class account_commitment_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        # Change 'first' value to False (In order view correctly displayed)
+        if not 'first' in vals:
+            vals.update({'first': False})
+        # Copy initial_amount to amount
+        vals.update({'amount': vals.get('initial_amount', 0.0)})
         if 'account_id' in vals:
             account_id = vals.get('account_id')
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]

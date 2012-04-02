@@ -22,7 +22,7 @@
 {
     "name": "Internal Request",
     "version": "1.0",
-    "depends": ["base", "sale", "sale_override", "stock_override", "msf_order_date"],
+    "depends": ["base", "sale", "sale_override", "stock_override", "msf_order_date", "stock"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchases",
