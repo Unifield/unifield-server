@@ -44,7 +44,7 @@ class account_commitment_line(osv.osv):
             string="Purchase Order Lines", readonly=True),
     }
 
-    def create_distribution_from_order_line(self, cr, uid, ids, context={}):
+    def create_distribution_from_order_line(self, cr, uid, ids, context=None):
         """
         Create an analytic distribution regarding those from attached PO lines (if exists).
         """

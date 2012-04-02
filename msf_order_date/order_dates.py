@@ -187,7 +187,7 @@ def check_dates(self, cr, uid, data, context=None):
     
     return True
 
-def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
     '''
     Common function when type of order is changing
     
@@ -337,7 +337,7 @@ def common_requested_date_change(self, cr, uid, ids, part=False, date_order=Fals
         # if < supplier_lt, display warning
         if delta.days < partner.supplier_lt:
             res.setdefault('warning', {}).update({'title': _('Warning'),
-                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).'%(delta.days,partner.supplier_lt))})
+                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).')%(delta.days,partner.supplier_lt,)})
             
     return res
 
@@ -626,7 +626,7 @@ class purchase_order(osv.osv):
         'confirmed_date_by_synchro': False,
     }
     
-    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
         
@@ -891,6 +891,12 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            # Fill partner type
+            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id', order.partner_id.id), context=context)
+            # partner type - always set
+            data.update({'partner_type': partner.partner_type,})
         
         if not 'date_order' in data:
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
@@ -1175,7 +1181,7 @@ class sale_order_line(osv.osv):
     _name= 'sale.order.line'
     _inherit = 'sale.order.line'
     
-    def _get_planned_date(self, cr, uid, context=None, *a):
+    def _get_planned_date(self, cr, uid, context=None):
         '''
             Returns planned_date
         '''
@@ -1184,17 +1190,13 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        so = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if so:
-            if so.partner_id.customer_lt:
-                res = (datetime.now() + relativedelta(days=so.partner_id.customer_lt)).strftime('%Y-%m-%d')
-            
-            else:
-                res = so.delivery_requested_date
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.delivery_requested_date
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context=None, *a):
+    def _get_confirmed_date(self, cr, uid, context=None):
         '''
             Returns confirmed date
         '''
@@ -1203,12 +1205,9 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        if 'delivery_confirmed_date' in context:
-            res = context['delivery_confirmed_date']
-            return res
-        so = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if so:
-            res = so.delivery_confirmed_date
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.delivery_confirmed_date    
         
         return res
     
@@ -1370,7 +1369,7 @@ class stock_picking(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(picking.sale_id.name, today)))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
 
         return res
 
@@ -1402,49 +1401,11 @@ class stock_move(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(obj.picking_id.sale_id.name, today)))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
 
         return res
     
 stock_move()
-
-
-class lang(osv.osv):
-    '''
-    define getter for date / time / datetime formats
-    '''
-    _inherit = 'res.lang'
-    
-    def _get_format(self, cr, uid, type, context=None):
-        '''
-        generic function
-        '''
-        if context is None:
-            context = {}
-        type = type + '_format'
-        assert type in self._columns, 'Specified format field does not exist'
-        user_obj = self.pool.get('res.users')
-        # get user context lang
-        user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
-        # get coresponding id
-        lang_id = self.search(cr, uid, [('code','=',user_lang)])
-        # return format value or from default function if not exists
-        format = lang_id and self.read(cr, uid, lang_id[0], [type], context=context)[type] or getattr(self, '_get_default_%s'%type)(cr, uid, context=context)
-        return format
-    
-    def _get_db_format(self, cr, uid, type, context=None):
-        '''
-        generic function - for now constant values
-        '''
-        if context is None:
-            context = {}
-        if type == 'date':
-            return '%Y-%m-%d'
-        if type == 'time':
-            return '%H:%M:%S'
-        # default value
-        return '%Y-%m-%d'
-lang()
 
 
 class res_company(osv.osv):

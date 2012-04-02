@@ -30,7 +30,7 @@ class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
 
-    def _get_output(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_output(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get an amount regarding currency in context (from 'output' and 'output_currency_id' values)
         """
@@ -78,7 +78,7 @@ class account_analytic_line(osv.osv):
             multi="analytic_output_currency"),
     }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Remove output_amount and output_currency field if context doesn't have 'output_currency_id'
         """
@@ -93,15 +93,16 @@ class account_analytic_line(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
-    def copy(self, cr, uid, id, defaults={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         """
-        defaults.update({
+        if default is None:
+            default = {}
+        default.update({
             'output_currency': False,
             'output_amount': 0.0,
         })
-        res = super(account_analytic_line, self).copy(cr, uid, id, defaults, context=context)
-        return res
+        return super(account_analytic_line, self).copy(cr, uid, id, default, context=context)
 
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

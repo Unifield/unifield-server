@@ -31,7 +31,7 @@ class search_values(osv.osv_memory):
                 forced = True
                 if value and value2 and value > value2:
                     field_name = self.pool.get('ir.model.fields').read(cr, uid, int(field_info), ['field_description'])
-                    raise osv.except_osv(_('Error'), _('Field %s : the first value must be less than or equal to the second.' %(field_name['field_description'], )))
+                    raise osv.except_osv(_('Error'), _('Field %s : the first value must be less than or equal to the second.') %(field_name['field_description'],))
             else:
                 field_info = v
                 value = data[v]
@@ -41,10 +41,14 @@ class search_values(osv.osv_memory):
                 line_obj.create(cr, uid, {'query_id': datas['query_id'], 'field_id': field_info, 'value1': value, 'value2': value2, 'forced': forced})
         return { 'type': 'ir.actions.act_window_close'}
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         return super(search_values, self).create(cr, uid, {'b_data': vals, 'query_id': context.get('query_id')}, {'no_missing': True})
     
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         return super(search_values, self).write(cr, uid, ids, {'b_data': vals, 'query_id': context.get('query_id')}, {'no_missing': True})
 
     def default_get(self, cr, uid, fields_list, context=None):
@@ -75,7 +79,7 @@ class search_values(osv.osv_memory):
                     values['%s'%v.field_id.id] = v.value1
         return values
 
-    def fields_get(self, cr, uid, fields=None, context={}):
+    def fields_get(self, cr, uid, fields=None, context=None):
         if context is None:
             context = {}
         if not context.get('query_id'):
@@ -117,7 +121,7 @@ class search_values(osv.osv_memory):
                     quest_fields[field_name].update({'type': 'char', 'size':1024})
         return quest_fields
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if context is None:
             context = {}
         ret = {}

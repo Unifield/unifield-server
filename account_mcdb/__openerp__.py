@@ -25,9 +25,9 @@
     "name" : "Multi-Criteria Data Browser",
     "version" : "0.1",
     "description" : "Ease data searching in Analytic Journal Items and Journal Items",
-    "author" : "MSF - TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     "category" : "Accounting",
-    "depends" : ["base", "account", "register_accounting", "res_currency_tables", "analytic_distribution"],
+    "depends" : ["account", "register_accounting", "res_currency_tables", "analytic_distribution", "report_webkit"],
     "init_xml" : [],
     "update_xml" : [
         'wizard/output_currency_for_export_view.xml',

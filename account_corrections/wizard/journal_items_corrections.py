@@ -37,7 +37,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         'account_id': fields.many2one('account.account', string="Account", required=True),
         'move_id': fields.many2one('account.move', string="Entry sequence", readonly=True),
         'ref': fields.char(string="Reference", size=254, readonly=True),
-        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
+        'journal_id': fields.many2one('account.journal', string="Journal Code", readonly=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'date': fields.date('Posting date', readonly=True),
         # Third Parties Fields - BEGIN
@@ -52,13 +52,13 @@ class journal_items_corrections_lines(osv.osv_memory):
 #            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
 #            help="To use for python code when registering", multi="third_parties_key"),
         # Third Parties fields - END
-        'debit_currency': fields.float('Book. Out', readonly=True),
-        'credit_currency': fields.float('Book. In', readonly=True),
+        'debit_currency': fields.float('Book. Debit', readonly=True),
+        'credit_currency': fields.float('Book. Credit', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
     }
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Open an analytic distribution wizard
         """
@@ -73,44 +73,45 @@ class journal_items_corrections_lines(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0], context=context).wizard_id
         context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': wiz.id or False})
         # Get distribution
+        distrib_id = False
         if wiz and wiz.move_line_id and wiz.move_line_id.analytic_distribution_id:
             distrib_id = wiz.move_line_id.analytic_distribution_id.id or False
-        if distrib_id:
-            # Prepare values
-            company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-            currency = wiz.move_line_id.currency_id and wiz.move_line_id.currency_id.id or company_currency
-            amount = wiz.move_line_id.amount_currency and wiz.move_line_id.amount_currency or 0.0
-            vals = {
-                'total_amount': amount,
-                'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
-                'currency_id': currency or False,
-                'state': 'dispatch',
-                'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
-                'distribution_id': distrib_id,
-                'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
-                'date': wiz.date or strftime('%Y-%m-%d'),
-            }
-            # Create the wizard
-            wiz_obj = self.pool.get('analytic.distribution.wizard')
-            wiz_id = wiz_obj.create(cr, uid, vals, context=context)
-            # Change wizard state to 'correction' in order to display mandatory fields
-            wiz_obj.write(cr, uid, [wiz_id], {'state': 'correction'}, context=context)
-            # Update some context values
-            context.update({
-                'active_id': ids[0],
-                'active_ids': ids,
-            })
-            # Open it!
-            return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'analytic.distribution.wizard',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'res_id': [wiz_id],
-                    'context': context,
-            }
-        return False
+        if not distrib_id:
+            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+            self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': distrib_id})
+        # Prepare values
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = wiz.move_line_id.currency_id and wiz.move_line_id.currency_id.id or company_currency
+        amount = wiz.move_line_id.amount_currency and wiz.move_line_id.amount_currency or 0.0
+        vals = {
+            'total_amount': amount,
+            'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
+            'currency_id': currency or False,
+            'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+            'distribution_id': distrib_id,
+            'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
+            'date': wiz.date or strftime('%Y-%m-%d'),
+        }
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Change wizard state to 'correction' in order to display mandatory fields
+        wiz_obj.write(cr, uid, [wiz_id], {'state': 'correction'}, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
 
 journal_items_corrections_lines()
 
@@ -129,7 +130,7 @@ class journal_items_corrections(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
-    def onchange_date(self, cr, uid, ids, date, context={}):
+    def onchange_date(self, cr, uid, ids, date, context=None):
         """
         Write date on this wizard.
         NB: this is essentially for analytic distribution correction wizard
@@ -143,7 +144,7 @@ class journal_items_corrections(osv.osv_memory):
             return False
         return self.write(cr, uid, ids, {'date': date}, context=context)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Fill in all elements in our wizard with given move_line_id field
         """
@@ -177,7 +178,7 @@ class journal_items_corrections(osv.osv_memory):
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
         return res
 
-    def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context={}):
+    def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context=None):
         """
         Compare an account move line to a wizard journal items corrections lines regarding 3 fields:
          - account_id (1)
@@ -211,7 +212,7 @@ class journal_items_corrections(osv.osv_memory):
             res += 4
         return res
 
-    def action_reverse(self, cr, uid, ids, context={}):
+    def action_reverse(self, cr, uid, ids, context=None):
         """
         Do a reverse from the lines attached to this wizard
         NB: The reverse is done on the first correction journal found (type = 'correction')
@@ -230,10 +231,10 @@ class journal_items_corrections(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         aml_obj = self.pool.get('account.move.line')
         # Do reverse
-        res = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
+        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
-    def action_confirm(self, cr, uid, ids, context={}):
+    def action_confirm(self, cr, uid, ids, context=None):
         """
         Do a correction from the given line
         """

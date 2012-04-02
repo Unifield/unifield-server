@@ -156,24 +156,54 @@
     <blockTable colWidths="253.0,59.0,223.0" style="Tableau1">
       <tr>
         <td>
-          <blockTable colWidths="253.0" style="Tableau2">
+          <blockTable colWidths="120.0,13.0,120.0" style="Tableau2">
             <tr>
+              <td>
+                [[ not o.invoice_address_id and removeParentNode('td') ]]
+                <para style="terp_default_Bold_9">Bill To :</para>
+                <para style="terp_default_9">[[ (o.invoice_address_id and o.invoice_address_id.partner_id.title and o.invoice_address_id.partner_id.title.name) or '' ]] [[ (o.invoice_address_id.partner_id and o.invoice_address_id.partner_id.name) or '' ]]</para>
+                <para style="terp_default_9">[[ o.invoice_address_id.street ]]</para>
+                <para style="terp_default_9">[[ o.invoice_address_id.street2 or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ o.invoice_address_id.zip or '' ]] [[ o.invoice_address_id.city or '' ]]</para>
+                <para style="terp_default_9">[[ o.invoice_address_id.state_id and o.invoice_address_id.state_id.name or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ o.invoice_address_id.country_id and o.invoice_address_id.country_id.name or '' ]]</para>
+              </td>
+              <td>
+              	[[ o.invoice_address_id and removeParentNode('td') ]]
+        	  	<para style="terp_default_9">[[ repeatIn(o.company_id and o.company_id.partner_id and [get_company_addr(o.company_id.partner_id.id)] or [],'cp_addr') ]]</para>
+                <para style="terp_default_Bold_9">Ship To :</para>
+                <para style="terp_default_9">[[ (cp_addr.partner_id and cp_addr.partner_id.title and cp_addr.partner_id.title.name) or '' ]] [[ (cp_addr.partner_id and cp_addr.partner_id.name) or '' ]]</para>
+                <para style="terp_default_9">[[ cp_addr.street ]]</para>
+                <para style="terp_default_9">[[ cp_addr.street2 or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ cp_addr.zip or '' ]] [[ cp_addr.city or '' ]]</para>
+                <para style="terp_default_9">[[ cp_addr.state_id and cp_addr.state_id.name or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ cp_addr.country_id and cp_addr.country_id.name or '' ]]</para>
+              </td>
               <td>
                 <para style="terp_default_9">
                   <font color="white"> </font>
                 </para>
               </td>
-            </tr>
-            <tr>
               <td>
-                <para style="terp_default_9">[[ repeatIn(o.dest_address_id and [o.dest_address_id] or [],'addr') ]]</para>
-                <para style="terp_default_Bold_9">Shipping address :</para>
-                <para style="terp_default_9">[[ (addr.partner_id and addr.partner_id.title and addr.partner_id.title.name) or '' ]] [[ (addr.partner_id and addr.partner_id.name) or '' ]]</para>
-                <para style="terp_default_9">[[ addr.street ]]</para>
-                <para style="terp_default_9">[[ addr.street2 or removeParentNode('para') ]]</para>
-                <para style="terp_default_9">[[ addr.zip or '' ]] [[ addr.city or '' ]]</para>
-                <para style="terp_default_9">[[ addr.state_id and addr.state_id.name or removeParentNode('para') ]]</para>
-                <para style="terp_default_9">[[ addr.country_id and addr.country_id.name or '' ]]</para>
+          		[[ not o.dest_address_id and removeParentNode('td') ]]
+                <para style="terp_default_Bold_9">Ship To :</para>
+                <para style="terp_default_9">[[ (o.dest_address_id.partner_id and o.dest_address_id.partner_id.title and o.dest_address_id.partner_id.title.name) or '' ]] [[ (o.dest_address_id.partner_id and o.dest_address_id.partner_id.name) or '' ]]</para>
+                <para style="terp_default_9">[[ o.dest_address_id.street ]]</para>
+                <para style="terp_default_9">[[ o.dest_address_id.street2 or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ o.dest_address_id.zip or '' ]] [[ o.dest_address_id.city or '' ]]</para>
+                <para style="terp_default_9">[[ o.dest_address_id.state_id and o.dest_address_id.state_id.name or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ o.dest_address_id.country_id and o.dest_address_id.country_id.name or '' ]]</para>
+              </td>
+              <td>
+              	[[ o.dest_address_id and removeParentNode('td') ]]
+        	  	<para style="terp_default_9">[[ repeatIn(o.company_id and o.company_id.partner_id and [get_company_addr(o.company_id.partner_id.id)] or [],'cp_addr') ]]</para>
+                <para style="terp_default_Bold_9">Ship To :</para>
+                <para style="terp_default_9">[[ (cp_addr.partner_id and cp_addr.partner_id.title and cp_addr.partner_id.title.name) or '' ]] [[ (cp_addr.partner_id and cp_addr.partner_id.name) or '' ]]</para>
+                <para style="terp_default_9">[[ cp_addr.street ]]</para>
+                <para style="terp_default_9">[[ cp_addr.street2 or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ cp_addr.zip or '' ]] [[ cp_addr.city or '' ]]</para>
+                <para style="terp_default_9">[[ cp_addr.state_id and cp_addr.state_id.name or removeParentNode('para') ]]</para>
+                <para style="terp_default_9">[[ cp_addr.country_id and cp_addr.country_id.name or '' ]]</para>
               </td>
             </tr>
           </blockTable>

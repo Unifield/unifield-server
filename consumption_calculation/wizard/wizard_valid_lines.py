@@ -38,7 +38,7 @@ class wizard_valid_line(osv.osv_memory):
 				     'wizard_id', 'line_id', string='Lines',),
     }
 
-    def select_all_lines(self, cr, uid, ids, context={}):
+    def select_all_lines(self, cr, uid, ids, context=None):
         '''
         Select all lines of the selected report
         '''
@@ -64,7 +64,7 @@ class wizard_valid_line(osv.osv_memory):
                 'target': 'new',
                 'context': context}
 
-    def valid_lines(self, cr, uid, ids, context={}):
+    def valid_lines(self, cr, uid, ids, context=None):
         '''
         Valid all lines
         '''

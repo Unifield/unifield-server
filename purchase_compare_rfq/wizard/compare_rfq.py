@@ -36,7 +36,10 @@ class wizard_compare_rfq(osv.osv_memory):
         'tender_id': fields.many2one('tender', string="Tender", readonly=True,)
     }
 
-    def start_compare_rfq(self, cr, uid, ids, context={}):
+    def start_compare_rfq(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
         order_obj = self.pool.get('purchase.order')
         compare_line_obj = self.pool.get('wizard.compare.rfq.line')
         
@@ -134,10 +137,12 @@ class wizard_compare_rfq(osv.osv_memory):
                     'context': context
                     }
         
-    def create_po(self, cr, uid, ids, context={}):
+    def create_po(self, cr, uid, ids, context=None):
         '''
         Creates PO according to the selection
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -225,10 +230,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                        string='Quotation Line'),
     }
     
-    def choose_supplier(self, cr, uid, ids, context={}):
+    def choose_supplier(self, cr, uid, ids, context=None):
         '''
         Opens a wizard to compare and choose a supplier for this line
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]        
         
@@ -250,10 +257,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                                              'po_line_id': l.id,
                                                              'price_unit': l.price_unit,
                                                              'qty': l.product_qty,
+                                                             'notes': l.notes,
                                                              'compare_line_id': line_id.id,
                                                              'compare_id': line_id.compare_id.id,
                                                              'price_total': l.product_qty*l.price_unit}))
-        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)]})
+        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)],
+                                                 'line_notes_ids': [(6,0,line_ids)]})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.choose.supplier',
@@ -276,13 +285,17 @@ class wizard_choose_supplier(osv.osv_memory):
         'supplier_id': fields.many2one('res.partner', string='Supplier'),
         'line_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
                                      string='Lines'),
+        'line_notes_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
+                                     string='Lines'),
         'compare_id': fields.many2one('wizard.compare.rfq.line', string='Wizard'),
     }
     
-    def return_view(self, cr, uid, ids, context={}):
+    def return_view(self, cr, uid, ids, context=None):
         '''
         Return to the main wizard
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
             
@@ -313,9 +326,10 @@ class wizard_choose_supplier_line(osv.osv_memory):
         'price_unit': fields.float(digits=(16,2), string='Unit Price'),
         'qty': fields.float(digits=(16,2), string='Qty'),
         'price_total': fields.float(digits=(16,2), string='Total Price'),
+        'notes': fields.text(string='Notes'),
     }
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Change the quantity on the purchase order line if 
         it's modified on the supplier choose line
@@ -329,10 +343,12 @@ class wizard_choose_supplier_line(osv.osv_memory):
                 
         return super(wizard_choose_supplier_line, self).write(cr, uid, ids, data, context=context)
     
-    def choose_supplier(self, cr, uid, ids, context={}):
+    def choose_supplier(self, cr, uid, ids, context=None):
         '''
         Define the supplier for the line
         '''
+        if context is None:
+            context = {}
         compare_obj = self.pool.get('wizard.compare.rfq')
         compare_line_obj = self.pool.get('wizard.compare.rfq.line')
         

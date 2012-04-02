@@ -30,5 +30,6 @@ import account
 import account_cheque_register
 import invoice
 import purchase
+import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

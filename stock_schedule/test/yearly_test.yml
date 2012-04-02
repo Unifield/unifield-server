@@ -36,7 +36,10 @@
   !python {model: stock.frequence}: |
     from mx.DateTime import *
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
-    assert next_date.month == today().month and next_date.day == today().day, 'Next date is not March, the 3rd (2)'
+    if today().month == 2 and today().day == 29:
+      assert next_date.month == 3 and next_date.day == 1, 'Next date is not March, the 1st (2) %s' % next_date
+    else:
+      assert next_date.month == today().month and next_date.day == today().day, 'Next date is not correct (2) %s' % next_date
 -
   Change the choose month to October
 -
@@ -104,7 +107,7 @@
 -
   !record {model: stock.frequence, id: yearly3}:
     start_date: 2009-01-01
-    last_run: !eval time.strftime('2009-%m-%d')
+    last_run: !eval time.strftime('2009-%m-28')
     yearly_day: !eval time.localtime()[2]
     yearly_choose_month: !eval time.localtime()[1]
 -

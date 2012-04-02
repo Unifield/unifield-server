@@ -129,11 +129,11 @@ class import_analytic_lines(osv.osv_memory):
 
         creation_obj = self.pool.get('wizard.register.creation')
 
-        date_period = DateTime.now()+DateTime.RelativeDateTime(months=1, day=1)
         creation_obj = self.pool.get('wizard.register.creation')
 
-        while date_period <= max_date:
-            period = period_obj.search(cr, uid, [('date_start', '=', date_period.strftime('%Y-%m-%d'))])
+        jan = DateTime.now()+DateTime.RelativeDateTime(month=1, day=1)
+        while jan.strftime('%Y-%m-%d') <= max_date.strftime('%Y-%m-%d'):
+            period = period_obj.search(cr, uid, [('date_start', '=', jan.strftime('%Y-%m-%d'))])
             if period_obj.read(cr, uid, period[0], ['state'])['state'] == 'created':
                 period_obj.action_set_state(cr, uid, period, context={'state': 'draft'})
             try:
@@ -144,7 +144,7 @@ class import_analytic_lines(osv.osv_memory):
             else:
                 creation_obj.button_create_registers(cr, uid, [creation_id])
 
-            date_period += DateTime.RelativeDateTime(months=1)
+            jan += DateTime.RelativeDateTime(months=1)
 
         fileobj.seek(0)
         reader = csv.reader(fileobj, quotechar='"', delimiter=',')
@@ -174,6 +174,9 @@ class import_analytic_lines(osv.osv_memory):
             if key_reg not in register_id:
                 p_ids = period_obj.search(cr, uid, [('date_start', '=', date.strftime('%Y-%m-01'))])
                 reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal[row[1]]), ('period_id', '=', p_ids[0])])
+                if not reg_id:
+                    logging.getLogger('import analytic').info("No register: journal: %s, period: %s, date: %s"%(journal[row[1]], p_ids[0], date.strftime('%Y-%m-01')))
+                    continue
                 register_id[key_reg] = reg_id[0]
                 reg_data = reg_obj.read(cr, uid, reg_id[0], ['state', 'prev_reg_id'])
                 if reg_data['state'] == 'draft':
@@ -232,7 +235,9 @@ Nb register lines: %s
         cr.commit()
         cr.close()
 
-    def import_csv(self, cr, uid, ids, context={}):
+    def import_csv(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         new_id = self.pool.get('data_finance.import_lines.result').create(cr, uid, {})

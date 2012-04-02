@@ -25,6 +25,7 @@ from tools.translate import _
 from tools.misc import flatten
 from collections import defaultdict
 from time import strftime
+from lxml import etree
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -34,14 +35,39 @@ class analytic_line(osv.osv):
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
+        'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
     }
 
-    def _check_date(self, cr, uid, vals, context={}):
+    _defaults = {
+        'from_write_off': lambda *a: False,
+    }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change account_id field name to "Funding Pool if we come from a funding pool
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        is_funding_pool_view = False
+        if context.get('display_fp', False) and context.get('display_fp') is True:
+            is_funding_pool_view = True
+        view = super(analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree' and is_funding_pool_view:
+            tree = etree.fromstring(view['arch'])
+            # Change OC field
+            fields = tree.xpath('/tree/field[@name="account_id"]')
+            for field in fields:
+                field.set('string', _("Funding Pool"))
+            view['arch'] = etree.tostring(tree)
+        return view
+
+    def _check_date(self, cr, uid, vals, context=None):
         """
         Check if given account_id is active for given date. Except for mass reallocation ('from' = 'mass_reallocation' in context)
         """
         if not context:
-            context={}
+            context = {}
         if not 'account_id' in vals:
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
         if 'date' in vals and vals['date'] is not False:
@@ -53,30 +79,31 @@ class analytic_line(osv.osv):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
                     raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Check date for given date and given account_id
         """
         self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).create(cr, uid, vals, context=context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         """
         Verify date for all given ids with account
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for id in ids:
+            vals2 = vals.copy()
             if not 'account_id' in vals:
                 line = self.browse(cr, uid, [id], context=context)
                 account_id = line and line[0] and line[0].account_id.id or False
-                vals.update({'account_id': account_id})
-            self._check_date(cr, uid, vals, context=context)
+                vals2.update({'account_id': account_id})
+            self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-    def update_account(self, cr, uid, ids, account_id, context={}):
+    def update_account(self, cr, uid, ids, account_id, context=None):
         """
         Update account on given analytic lines with account_id
         """
@@ -128,7 +155,7 @@ class analytic_line(osv.osv):
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
         return True
 
-    def check_analytic_account(self, cr, uid, ids, account_id, context={}):
+    def check_analytic_account(self, cr, uid, ids, account_id, context=None):
         """
         Analytic distribution validity verification with given account for given ids.
         Return all valid ids.
@@ -197,7 +224,12 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 # Verify that:
                 # - the line doesn't have any draft/open contract
-                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
+                link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aline.account_id.id)], context=context)
+                format_ids = []
+                for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
+                    if link.contract_id:
+                        format_ids.append(link.contract_id.id)
+                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
                 valid = True
                 for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
                     if contract.state in ['soft_closed', 'hard_closed']:

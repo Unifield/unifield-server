@@ -77,7 +77,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
             	
@@ -93,7 +93,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="stock_journal_id" position="after">
+            		<field name="origin" position="after">
             			<field name="order_category" />
             		</field>
             		
@@ -132,7 +132,7 @@
             <field name="arch" type="xml">
             	<data>
 
-					<xpath expr="/form//field[@name='stock_journal_id']" position="after">
+					<xpath expr="/form//field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
             	
@@ -148,7 +148,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="stock_journal_id" position="after">
+            		<field name="origin" position="after">
             			<field name="order_category" />
             		</field>
             		
@@ -187,7 +187,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
             	
@@ -203,7 +203,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="stock_journal_id" position="after">
+            		<field name="origin" position="after">
             			<field name="order_category" />
             		</field>
             		
@@ -224,7 +224,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="stock_journal_id" position="after">
+            		<field name="address_id" position="after">
             			<field name="order_category" />
             		</field>
             		
@@ -262,7 +262,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
             	
@@ -278,7 +278,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="stock_journal_id" position="after">
+            		<field name="origin" position="after">
             			<field name="order_category" />
             		</field>
             		
@@ -316,7 +316,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
             	
@@ -332,7 +332,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="stock_journal_id" position="after">
+            		<field name="origin" position="after">
             			<field name="order_category" />
             		</field>
             		

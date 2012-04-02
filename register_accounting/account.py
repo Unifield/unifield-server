@@ -47,7 +47,7 @@ class account_move(osv.osv):
     _name = "account.move"
     _inherit = "account.move"
 
-    def _get_third_parties_from_move_line(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_third_parties_from_move_line(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Give the third parties of the given account.move.
         If all move lines content the same third parties, then return this third parties.

@@ -9,32 +9,34 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100">
-                    <field name="journal_id" string="Journal Code"/>
-                    <field name="move_id" string="Entry Sequence"/>
                     <field name="instance"/>
-                    <field name="ref"/>
-                    <field name="date" string="Posting Date"/>
-                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
                     <field name="name"/>
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="document_date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id"/>
                     <field name="account_type" invisible="1"/>
                     <field name="move_state" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="register_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
-                    <field name="debit_currency" string="Book. Debit"/>
-                    <field name="credit_currency" string="Book. Credit"/>
-                    <field name="currency_id" string="Book. Currency"/>
-                    <field name="debit" sum="Total Functional Debit" string="Func. Debit"/>
-                    <field name="credit" sum="Total Functional Credit" string="Func. Credit"/>
-                    <field name="functional_currency_id" string="Func. Currency"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Functional Debit"/>
+                    <field name="credit" sum="Total Functional Credit"/>
+                    <field name="functional_currency_id"/>
                     <field name="output_amount_debit"/>
                     <field name="output_amount_credit"/>
                     <field name="output_currency"/>
-                    <field name="state"/>
                     <field name="reconcile_total_partial_id" />
+                    <field name="state"/>
                     <field name="statement_id" invisible="1"/>
                 </tree>
             </field>
@@ -49,18 +51,24 @@
                 <tree string="Analytic Line" min_rows="100">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
-                    <field name="journal_id" string="Journal Code"/>
-                    <field name="date"/>
                     <field name="company_id" string="Proprietary Instance"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="amount"/>
+                    <field name="date"/>
+                    <field name="document_date"/>
+                    <field name="period_id"/>
+                    <field name="general_account_id"/>
+                    <field name="account_id"/>
+                    <field name="partner_txt"/>
                     <field name="amount_currency"/>
                     <field name="currency_id"/>
+                    <field name="amount"/>
+                    <field name="functional_currency_id"/>
                     <field name="output_amount"/>
                     <field name="output_currency"/>
-                    <field name="account_id"/>
-                    <field name="general_account_id"/>
+                    <field name="reversal_origin"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
             </field>
@@ -87,6 +95,8 @@
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
                         <field name="date" select='1'/>
+                        <field name="document_date"/>
+                        <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
                             <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
@@ -108,7 +118,7 @@
                     <group expand="0" string="Group By..." colspan="12" col="10">
                         <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
-                        <filter string="3rd party Register" icon="terp-dolar" domain="[]" context="{'group_by': 'register_id'}"/>
+                        <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
@@ -132,7 +142,20 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
-                <xpath expr="/search/group[3]/filter[@string='Product']" position='after'>
+                <xpath expr="/search/group[1]/field[@name='date']" position='after'>
+                    <field name="document_date" select="1"/>
+                    <newline/>
+                </xpath>
+                <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[2]/field[@name='product_id']" position="replace">
+                    <field name="amount_currency"/>
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='User']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Product']" position="replace">
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='after'>
                     <separator orientation="vertical"/>
                     <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'company_id'}"/>
                 </xpath>

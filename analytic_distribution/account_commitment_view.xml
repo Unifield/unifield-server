@@ -8,7 +8,7 @@
             <field name="model">account.commitment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Commitment Voucher" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Commitment Voucher" hide_duplicate_button="1">
                     <group col="6" colspan="4">
                         <field name="journal_id"/>
                         <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
@@ -29,6 +29,7 @@
                             <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"/>
                         </page>
                     </notebook>
+                    <field name="notes" colspan="4"/>
                     <group col="6" colspan="4">
                         <button name="button_compute" string="Compute total" icon="gtk-execute" colspan="2"/>
                         <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft" colspan="2"/>
@@ -45,7 +46,7 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'" hide_delete_button="1">
+                <tree string="Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
                     <field name="date"/>
                     <field name="name"/>
                     <field name="partner_id"/>
@@ -88,9 +89,10 @@
                         <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
                         <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
                         <separator orientation="vertical"/>
-                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state"/>
-                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state"/>
-                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state"/>
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state" name="validated"/>
+                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state" name="done"/>
+                        <filter icon="terp-emblem-important" string="Except Done" domain="[('state','!=','done')]" help="Commitment Voucher not in Done state" name="exceptdone"/>
                         <newline/>
                         <field name="currency_id" select="1"/>
                         <field name="date" select='1'/>
@@ -101,13 +103,14 @@
             </field>
         </record>
 
-    <!-- Actions -->
+    <!-- Commitment Voucher Actions -->
         <record model="ir.actions.act_window" id="action_account_commitment_tree">
             <field name="res_model">account.commitment</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_commitment_tree"/>
             <field name="search_view_id" ref="account_commitment_search"/>
+            <field name="context">{'search_default_exceptdone': 1}</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_engagement_line_tree">
@@ -117,10 +120,25 @@
             <field name="context">{'search_default_engagements': 1}</field>
         </record>
 
+        <record id="action_commitment_voucher_engagement_lines_search" model="ir.actions.server">
+            <field name="name">Commitment details</field>
+            <field name="model_id" ref="model_account_commitment"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_engagement_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_commitment_engagement_lines_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.commitment</field>
+            <field name="name">Commitment details</field>
+            <field eval="'ir.actions.server,%d'%action_commitment_voucher_engagement_lines_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
     <!-- Menu -->
         <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="5"/>
         <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
-        <menuitem name="Engagement Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
+        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
 
     </data>
 </openerp>

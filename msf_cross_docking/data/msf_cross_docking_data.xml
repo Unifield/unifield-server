@@ -1,0 +1,10 @@
+<openerp>
+    <data noupdate="1">
+        <record id="stock_location_cross_docking" model="stock.location">
+            <field name="name">Cross docking</field>
+        </record>
+        <record id="stock_location_input" model="stock.location">
+            <field name="name">INPUT</field>
+        </record>
+    </data>
+</openerp>

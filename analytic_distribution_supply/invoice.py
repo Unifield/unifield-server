@@ -33,6 +33,9 @@ class account_invoice_line(osv.osv):
     _columns = {
         'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, 
             help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
+        'sale_order_lines': fields.many2many('sale.order.line', 'sale_order_line_invoice_rel', 'invoice_id', 'order_line_id', 'Sale Order Lines', readonly=True),
+        'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line", readonly=True, 
+            help="Sale Order Line from which this line have been generated (when coming from a sale order)"),
     }
 
 account_invoice_line()
@@ -46,7 +49,7 @@ class account_invoice(osv.osv):
             help="Purchase Order from which invoice have been generated"),
     }
 
-    def fetch_analytic_distribution(self, cr, uid, ids, context={}):
+    def fetch_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Recover distribution from purchase order. If a commitment is attached to purchase order, then retrieve analytic distribution from commitment voucher.
         NB: This method only works because there is a link between purchase and invoice.
@@ -77,25 +80,35 @@ class account_invoice(osv.osv):
                         # create default funding pool lines
                         ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
                         self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
-                # Then set distribution on invoice line regarding purchase order line distribution
-                for invl in inv.invoice_line:
-                    if invl.order_line_id:
-                        # Fetch PO line analytic distribution or nothing (that implies it take those from PO)
-                        distrib_id = invl.order_line_id.analytic_distribution_id and invl.order_line_id.analytic_distribution_id.id or False
-                        # Attempt to fetch commitment line analytic distribution or commitment voucher analytic distribution or default distrib_id
-                        if invl.order_line_id.commitment_line_ids:
-                            distrib_id = invl.order_line_id.commitment_line_ids[0].analytic_distribution_id \
-                                and invl.order_line_id.commitment_line_ids[0].analytic_distribution_id.id or distrib_id
-                        if distrib_id:
-                            new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
-                            if not new_invl_distrib_id:
-                                raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                            # create default funding pool lines
-                            ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id])
-                            invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
+            # Then set distribution on invoice line regarding purchase order line distribution
+            for invl in inv.invoice_line:
+                if invl.order_line_id:
+                    # Fetch PO line analytic distribution or nothing (that implies it take those from PO)
+                    distrib_id = invl.order_line_id.analytic_distribution_id and invl.order_line_id.analytic_distribution_id.id or False
+                    # Attempt to fetch commitment line analytic distribution or commitment voucher analytic distribution or default distrib_id
+                    if invl.order_line_id.commitment_line_ids:
+                        distrib_id = invl.order_line_id.commitment_line_ids[0].analytic_distribution_id \
+                            and invl.order_line_id.commitment_line_ids[0].analytic_distribution_id.id or distrib_id
+                    if distrib_id:
+                        new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
+                        if not new_invl_distrib_id:
+                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                        # create default funding pool lines
+                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id])
+                        invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
+                # Fetch SO line analytic distribution
+                if invl.sale_order_line_id:
+                    distrib_id = invl.sale_order_line_id.analytic_distribution_id and invl.sale_order_line_id.analytic_distribution_id.id or False
+                    if distrib_id:
+                        new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
+                        if not new_invl_distrib_id:
+                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                        # create default funding pool lines
+                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id])
+                        invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
         return True
 
-    def update_commitments(self, cr, uid, ids, context={}):
+    def update_commitments(self, cr, uid, ids, context=None):
         """
         Update engagement lines for given invoice.
         NB: We use COMMITMENT VOUCHER ANALYTIC DISTRIBUTION for updating!
@@ -120,9 +133,22 @@ class account_invoice(osv.osv):
                 self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'open'}, context=context)
             # Try to update engagement lines regarding invoice line amounts and account
             invoice_lines = defaultdict(list)
-            # Group by account
+            # Group by account (those from purchase order line)
             for invl in inv.invoice_line:
-                invoice_lines[invl.account_id.id].append(invl)
+                # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
+                if not invl.order_line_id:
+                    continue
+                # Fetch purchase order line account
+                pol = invl.order_line_id
+                if pol.product_id:
+                    a = pol.product_id.product_tmpl_id.property_account_expense.id
+                    if not a:
+                        a = pol.product_id.categ_id.property_account_expense_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
+                else:
+                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                invoice_lines[a].append(invl)
             # Browse result
             diff_lines = []
             processed_commitment_line = []
@@ -206,7 +232,7 @@ class account_invoice(osv.osv):
                 self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
         return True
 
-    def action_open_invoice(self, cr, uid, ids, context={}):
+    def action_open_invoice(self, cr, uid, ids, context=None):
         """
         Launch engagement lines updating if a commitment is attached to PO that generate this invoice.
         """

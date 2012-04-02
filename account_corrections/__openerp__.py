@@ -27,7 +27,7 @@
     "description" : """
         Permits some corrections from Journal Items.
     """,
-    "author" : "TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal'],

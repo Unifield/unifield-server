@@ -55,6 +55,10 @@
                         	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="RfQs">
                                     <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="notes" />
+                                    <field name="amount_total" />
+                                    <field name="currency_id" />
                                     <field name="state" />
                                 </tree>
                             </field>
@@ -75,7 +79,7 @@
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add" 
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
-                        <button name="done" string="Done" type="object" icon="gtk-go-forward" 
+                        <button name="done" string="Closed" type="object" icon="gtk-go-forward" 
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
                     </group>
                 </form>
@@ -109,7 +113,7 @@
                             domain="[('state', '=', 'draft')]" />
                     <filter name="comparison" icon="gtk-sort-descending" string="Comparison"
                             domain="[('state', '=', 'comparison')]" />
-                    <filter name="done" icon="gtk-apply" string="Done"
+                    <filter name="done" icon="gtk-apply" string="Closed"
                             domain="[('state', '=', 'done')]" />
                     <filter name="cancel" icon="gtk-cancel" string="Cancelled"
                             domain="[('state', '=', 'cancel')]" />
@@ -123,7 +127,7 @@
                     <group string="Priority" expand="0">
                       <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                       <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                      <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
                     </group>
                     
                     <newline />
@@ -197,9 +201,6 @@
                     <xpath expr="/form//field[@name='categ']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="readonly">True</attribute>
-                    </xpath>
                     <xpath expr="/form//field[@name='invoiced']" position="attributes">
                         <attribute name="readonly">True</attribute>
                     </xpath>
@@ -225,7 +226,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='location_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'invisible': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
@@ -245,7 +246,7 @@
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
                             <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
-                            <button name="rfq_done" states="rfq_updated" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
+                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
                     </xpath>
                 </data>
@@ -342,34 +343,6 @@
             </field>
         </record>
        	
-       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
-            <field name="name">product.supplierinfo.form.view</field>
-            <field name="model">product.supplierinfo</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            		
-            		<xpath expr="//form/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            	
-            	</data>
-            </field>
-       	</record>
-       	
         <record id="rfq_form" model="ir.ui.view">
             <field name="name">rfq.form</field>
             <field name="model">purchase.order</field>
@@ -463,18 +436,31 @@
             <field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="inherit_id" ref="supplier_catalogue.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
             			<field name="currency_id" />
+            		</xpath>
+            		
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='min_order_qty']" position="after">
             			<field name="valid_till" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />
             			<field name="purchase_order_line_id" />
             		</xpath>
+                 </data>
+            </field>
+        </record>
             		
+        <record id="product_supplierinfo_form_view2" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<data>	
             		<xpath expr="//form/field[@name='price']" position="after">
             			<field name="currency_id" />
             			<field name="valid_till" />
@@ -497,7 +483,7 @@
                     <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
                     <filter icon="gtk-apply" name="sent" string="Sent" domain="[('state','=','rfq_sent')]" separator="1" />
                     <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
-                    <filter icon="gtk-yes" name="done" string="Done" domain="[('state','=','done')]" separator="1" />
+                    <filter icon="gtk-yes" name="done" string="Closed" domain="[('state','=','done')]" separator="1" />
                     <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]" separator="1" />
                     <field name="partner_id" select="1" string="Supplier" />
                     <field name="product_id" select="1" />
@@ -518,7 +504,7 @@
 	                    <group string="Priority" expand="0">
                             <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                             <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                            <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
 	                    </group>
 	                    <newline />
 	                    <group string="Category" expand="0">

@@ -33,5 +33,6 @@ import register_creation
 import wizard_confirm_bank
 import invoice_date
 import down_payment
+import transfer_with_change
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

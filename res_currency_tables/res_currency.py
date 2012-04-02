@@ -39,18 +39,26 @@ class res_currency(osv.osv):
         if not source_currency.reference_currency_id or not source_currency.currency_table_id :
             # "Real" currency; the one from the table is retrieved
             res = self.search(cr, uid, [('currency_table_id', '=', table_id), ('reference_currency_id', '=', currency_id)], context=context)
-            return res and res[0] or currency_id
+            if len(res) > 0:
+                return res[0]
+            else:
+                return False
         elif source_currency.currency_table_id.id != table_id:
             # Reference currency defined, not the wanted table
             res = self.search(cr, uid, [('currency_table_id', '=', table_id), ('reference_currency_id', '=', source_currency.reference_currency_id.id)], context=context)
-            return  res and res[0] or currency_id
+            if len(res) > 0:
+                return res[0]
+            else:
+                return False
         else:
             # already ok
             return currency_id
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         # add argument to discard table currencies by default
         table_in_args = False
+        if args is None:
+            args = []
         for a in args:
             if a[0] == 'currency_table_id':
                 table_in_args = True
@@ -65,9 +73,11 @@ class res_currency(osv.osv):
             # A currency table is set, retrieve the correct currency ids
             new_from_currency_id = self._get_table_currency(cr, uid, from_currency_id, context['currency_table_id'], context=context)
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
-            return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
-        else:
-            return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
+            # only use new currencies if both are defined in the table
+            if new_from_currency_id and new_to_currency_id:
+                return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
+        # Fallback case if no currency table or one currency not defined in the table
+        return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
             
 res_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

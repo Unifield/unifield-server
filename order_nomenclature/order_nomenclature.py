@@ -216,7 +216,7 @@ class purchase_order_line(osv.osv):
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('sale.order.line').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
 
-    def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context={}):
+    def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context=None):
         return self.pool.get('sale.order.line').onChangeSubNom(cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context)
 purchase_order_line()
 
@@ -497,7 +497,7 @@ class sale_order_line(osv.osv):
         ret['value']['nomenclature_description'] = newval.get('nomenclature_description')
         return ret
 
-    def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context={}):
+    def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context=None):
         newval = {}
         for i in range(0, 6):
             if i < 4:

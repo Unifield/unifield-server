@@ -21,7 +21,7 @@
 {
     "name" : "Analytic Account for MSF",
     "version": "1.1",
-    "author" : "MSF - TeMPO Consulting",
+    "author" : "MSF, TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
     "depends" : ["analytic", "account", "account_override"],
     "description": """Module for defining analytic accounting object and commitment voucher.
