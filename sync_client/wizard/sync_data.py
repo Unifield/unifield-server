@@ -155,6 +155,7 @@ class update_to_send(osv.osv):
                 continue
             
             #print "create update for ", id, " model", rule.model.model
+            context['sync_context'] = True
             values = obj.export_data(cr, uid, [id], included_fields, context=context)['datas'][0]
             data = {
                 'session_id' : session_id,
