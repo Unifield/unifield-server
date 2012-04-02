@@ -35,9 +35,9 @@ from tools.safe_eval import safe_eval as eval
 
 
 class local_message_rule(osv.osv):
-    
+
     _name = 'sync.client.message_rule'
-    
+
     _columns = {
         'name' : fields.char('Rule name', size=64, readonly=True),
         'server_id' : fields.integer('Server ID'),
@@ -46,9 +46,9 @@ class local_message_rule(osv.osv):
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'remote_call': fields.text('Method to call', required=True),
         'arguments': fields.text('Arguments of the method', required=True),
-        'destination_name': fields.char('Fields to extract destination', size=256, required=True), 
+        'destination_name': fields.char('Fields to extract destination', size=256, required=True),
     }
-    
+
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
         for data in data_list:
@@ -58,13 +58,13 @@ class local_message_rule(osv.osv):
                 sync_data.log(self, cr, uid, "Model %s does not exist" % model_name, data=data, context=context)
                 continue #we do not save this rule
             data['model'] = model_id[0]
-            
+
             self.create(cr, uid, data, context=context)
-                
+
     def _delete_old_rules(self, cr, uid, context=None):
         ids_to_unlink = self.search(cr, uid, [], context=context)
         self.unlink(cr, uid, ids_to_unlink, context=context)
-        
+
     _order = 'sequence_number asc'
 local_message_rule()
 
@@ -72,17 +72,18 @@ local_message_rule()
 class message_to_send(osv.osv):
     _name = "sync.client.message_to_send"
     _rec_name = 'identifier'
-    
+
     _columns = {
-        
+
         'identifier' : fields.char('Identifier', size=128),
         'sent' : fields.boolean('Sent ?'),
         'remote_call':fields.text('Method to call', required = True),
-        'arguments':fields.text('Arguments of the method', required = True), 
-        'destination_name':fields.char('Destination Name', size=256, required = True), 
+        'arguments':fields.text('Arguments of the method', required = True),
+        'destination_name':fields.char('Destination Name', size=256, required = True),
+        'sent_date' : fields.datetime('Sent Date', readonly=True),
     }
-    
-    
+
+
     """
         Creation from rule
     """
@@ -107,13 +108,13 @@ class message_to_send(osv.osv):
             name = self.pool.get('ir.model.data').browse(cr, uid, model_data_id, context=context).name
             res[id] = name + "_" + str(server_rule_id)
         return res
-        
-        
+
+
     def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, context=None):
         data = {
                 'identifier' : identifier,
                 'remote_call': remote_call,
-                'arguments': arguments, 
+                'arguments': arguments,
                 'destination_name': destination_name,
                 'sent' : False,
         }
@@ -122,9 +123,9 @@ class message_to_send(osv.osv):
             self.create(cr, uid, data, context=context)
         #else:
             #sync_data.log(self, cr, uid, "Message %s already exist" % identifier, context=context)
-            
-    
-    
+
+
+
     """
         Sending Part
     """
@@ -132,7 +133,7 @@ class message_to_send(osv.osv):
         ids = self.search(cr, uid, [('sent', '=', False)], context=context)
         if not ids:
             return False
-        
+
         packet = []
         for data in self.browse(cr, uid, ids, context=context):
             res = {
@@ -143,36 +144,38 @@ class message_to_send(osv.osv):
             }
             packet.append(res)
         return packet
-            
-        
+
+
     def packet_sent(self, cr, uid, packet, context=None):
         message_uuids = [data['id'] for data in packet]
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids)], context=context)
         if ids:
-            self.write(cr, uid, ids, {'sent' : True}, context=context)
-    
+            self.write(cr, uid, ids, {'sent' : True, 'sent_date' : datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+
     _order = 'id asc'
-        
+
 message_to_send()
 
 
 class message_received(osv.osv):
     _name = "sync.client.message_received"
     _rec_name = 'identifier'
-    
+
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'remote_call':fields.text('Method to call', required = True, readonly=True),
-        'arguments':fields.text('Arguments of the method', required = True, readonly=True), 
-        'source':fields.char('Source Name', size=256, required = True, readonly=True), 
+        'arguments':fields.text('Arguments of the method', required = True, readonly=True),
+        'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages"),
+        'execution_date' :fields.datetime('Execution Date', readonly=True),
+        'create_date' :fields.datetime('Receive Date', readonly=True),
     }
-    
+
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
-            if ids: 
+            if ids:
                 sync_data.log(self, cr, uid, 'Message %s already in the database' % data['id'])
                 continue
             self.create(cr, uid, {
@@ -180,12 +183,12 @@ class message_received(osv.osv):
                 'remote_call' : data['call'],
                 'arguments' : data['args'],
                 'source' : data['source'] }, context=context)
-    
+
     def get_model_and_method(self, remote_call):
         remote_call = remote_call.strip()
         call_list = remote_call.split('.')
         return '.'.join(call_list[:-1]), call_list[-1]
-    
+
     def get_arg(self, args):
         res = []
         for arg  in eval(args):
@@ -194,11 +197,12 @@ class message_received(osv.osv):
             else:
                 res.append(arg)
         return res
-    
+
     def execute(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('run', '=', False)], context=context)
-        if not ids:
-            return True
+        if not ids: return True
+        execution_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
         for message in self.browse(cr, uid, ids, context=context):
             cr.execute("SAVEPOINT exec_message")
             model, method = self.get_model_and_method(message.remote_call)
@@ -215,14 +219,10 @@ class message_received(osv.osv):
                 print log
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True
-            
+
     _order = 'id asc'
-    
+
 message_received()
 
-
-
-    
-    
-
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
