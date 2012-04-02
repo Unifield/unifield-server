@@ -66,12 +66,13 @@ class register_entity(osv.osv_memory):
         return self.pool.get('sync.client.entity').get_entity(cr, uid, context).email
     
     _columns = {
-        'name':fields.char('Entity Name', size=64, required=True),
+        'name': fields.char('Entity Name', size=64, required=True),
         'message' : fields.text('Message'),
         'max_size' : fields.integer("Max Packet Size"),
-        'parent':fields.char('Parent Entity', size=64),
+        #'parent':fields.char('Parent Entity', size=64),
+        'parent_id' : fields.many2one('sync_client.instance.temp', 'Parent Instance'),
         'email' : fields.char('Contact Email', size=256, required=True),
-        'identifier':fields.char('Identifier', size=64, readonly=True), 
+        'identifier': fields.char('Identifier', size=64, readonly=True), 
         'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
@@ -96,6 +97,7 @@ class register_entity(osv.osv_memory):
         return True
     
     def next(self, cr, uid, ids, context=None):
+        self.pool.get("sync_client.instance.temp").fetch(cr, uid)
         self.write(cr, uid, ids, {'state' : 'parents'}, context=context)
         return True
     
@@ -205,5 +207,25 @@ class activate_entity(osv.osv_memory):
                 raise osv.except_osv(_('Error !'), res[1])
         return True
         
-        
 activate_entity()
+
+class instance_temp(osv.osv):
+    _name = "sync_client.instance.temp"
+
+    _columns = {
+        'name' : fields.char("Instance Name", size=64, required=True)      
+    }
+
+    def fetch(self, cr, uid):
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+        whole = self.search(cr, uid, [])
+        self.unlink(cr, uid, whole)
+        for entity in proxy.read(proxy.search([]), ['id','name']):
+            self.create(cr, uid, entity)
+        return True
+
+instance_temp()
+
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
