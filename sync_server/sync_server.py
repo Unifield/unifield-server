@@ -291,6 +291,9 @@ class entity(osv.osv):
         
     @check_validated
     def validate(self, cr, uid, entity, uuid_list, context=None):
+        for uuid in uuid_list:
+            if not uuid:
+                return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be actived")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want to validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in', uuid_list)], context=context)
@@ -300,6 +303,9 @@ class entity(osv.osv):
     
     @check_validated
     def invalidate(self, cr, uid, entity, uuid_list, context=None):
+        for uuid in uuid_list:
+            if not uuid:
+                return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be actived")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in', uuid_list)], context=context)
