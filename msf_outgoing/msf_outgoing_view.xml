@@ -263,7 +263,7 @@
 									</group>
 									<group colspan="2" col="4" groups="base.group_extended">
 										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 										<field name="prodlot_id" groups="base.group_extended"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 										'search_default_real': True}"
@@ -545,7 +545,7 @@
 										<field name="date_expected" string="Expected Pack Date" />
 									</group>
 									<group colspan="2" col="4" groups="base.group_extended">
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
 										<field name="prodlot_id" groups="base.group_extended"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
@@ -785,7 +785,7 @@
 									</group>
 									<group colspan="2" col="4" groups="base.group_extended">
 										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 										<field name="prodlot_id" groups="base.group_extended"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 										'search_default_real': True}"
@@ -856,7 +856,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
-						<field name="reason_type_id" />
+						<field name="reason_type_id" widget="selection"/>
 						<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
 					</group>
