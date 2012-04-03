@@ -267,7 +267,7 @@
                             % endif
                             % for i in range(min_rows - len(data)):
                                 % if editors:
-                                    <tr class="grid-row inline_editors">
+                                    <tr class="grid-row inline_editors ${hide_new_button and 'noteditable' or ''}">
                                 % else:
                                     <tr class="grid-row">
                                 % endif
