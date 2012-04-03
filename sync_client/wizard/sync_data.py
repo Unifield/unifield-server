@@ -215,13 +215,14 @@ class update_received(osv.osv):
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'sequence' : fields.integer('Sequence', readonly=True),
         'version' : fields.integer('Record Version', readonly=True),
-        'fields' : fields.text("Fields", readonly=True),
-        'values' : fields.text("Values", readonly=True),
+        'fields' : fields.text("Fields"),
+        'values' : fields.text("Values"),
         'run' : fields.boolean("Run", readonly=True),
-        'log' : fields.text("Execution Messages", readonly=True),
-        'fallback_values':fields.text('Fallback values', readonly=True),
-        'create_date':fields.text('Synchro date/time', readonly=True),
-        'execution_date':fields.text('Execution date', readonly=True),
+        'log' : fields.text("Execution Messages"),
+        'fallback_values':fields.text('Fallback values'),
+        'create_date':fields.datetime('Synchro date/time', readonly=True),
+        'execution_date':fields.datetime('Execution date', readonly=True),
+        'editable' : fields.boolean("Set editable"),
     }
     
     def unfold_package(self, cr, uid, packet, context=None):
@@ -379,4 +380,7 @@ class update_received(osv.osv):
             
     _order = 'id asc'
 update_received()
+
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
