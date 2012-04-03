@@ -597,6 +597,7 @@ class supplier_historical_catalogue(osv.osv_memory):
             
         for hist in self.browse(cr, uid, ids, context=context):
             catalogue_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id', '=', hist.partner_id.id),
+                                                                                 ('active', 'in', ['t', 'f']),
                                                                                  ('currency_id', '=', hist.currency_id.id),
                                                                                  ('period_from', '<=', hist.to_date),
                                                                                  '|', ('period_to', '=', False),
