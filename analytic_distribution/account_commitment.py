@@ -69,7 +69,7 @@ class account_commitment(osv.osv):
     }
 
     _defaults = {
-        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
+        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment') or '',
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
@@ -202,6 +202,7 @@ class account_commitment(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Global analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -433,7 +434,7 @@ class account_commitment_line(osv.osv):
                 analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
                 ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or ''
-                self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', cl.commit_id.date, amount, 
+                self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], cl.commit_id and cl.commit_id.name or 'Commitment voucher line', cl.commit_id.date, amount, 
                     cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, 
                     commitment_line_id=cl.id, context=context)
         return True
@@ -568,6 +569,7 @@ class account_commitment_line(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

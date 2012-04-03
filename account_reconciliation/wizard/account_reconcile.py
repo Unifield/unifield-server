@@ -75,7 +75,15 @@ class account_move_line_reconcile(osv.osv_memory):
         state = 'partial'
         account_id = False
         count = 0
+        # Search salaries default account
+        salary_account_id = False
+        if self.pool.get('res.users').browse(cr, uid, uid).company_id.salaries_default_account:
+            salary_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.salaries_default_account.id
         # Browse all lines
+        for line in account_move_line_obj.browse(cr, uid, context['active_ids']):
+            if line.move_id and line.move_id.state == 'posted':
+                continue
+            raise osv.except_osv(_('Warning'), _('You can only do reconciliation on Posted Entries!'))
         prev_acc_id = None
         prev_third_party = None
         transfer = False
@@ -126,7 +134,9 @@ class account_move_line_reconcile(osv.osv_memory):
                 if not prev_third_party:
                     prev_third_party = third_party
                 if prev_third_party != third_party:
-                    raise osv.except_osv(_('Error'), _('Cannot reconcile entries : Cross check between Journal Code and Third Party failed.'))
+                    # Do not raise an exception if salary_default_account is configured and this line account is equal to default salary account
+                    if line.account_id.id != salary_account_id:
+                        raise osv.except_osv(_('Error'), _('A third party is different from others: %s') % line.partner_txt)
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
@@ -143,6 +153,12 @@ class account_move_line_reconcile(osv.osv_memory):
             credit = fcredit
             if (fdebit - fcredit) == 0.0:
                 state = 'total_change'
+        # For salaries, behaviour is the same as total_change: we use functional debit/credit
+        if account_id == salary_account_id:
+            if (fdebit - fcredit) == 0.0:
+                state = 'total'
+            else:
+                state = 'partial'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
 
     def total_reconcile(self, cr, uid, ids, context=None):

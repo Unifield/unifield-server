@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from product._common import rounding
 
 from tools.translate import _
 
@@ -53,13 +54,20 @@ class split_sale_order_line_wizard(osv.osv_memory):
 
         for split in self.browse(cr, uid, ids, context=context):
             # Check if the sum of new line and old line qty is equal to the original qty
-            if split.old_line_qty  > split.original_qty:
-                raise osv.except_osv(_('Error'), _('You cannot have a new quantity different than the original quantity !'))
-            # Change the qty of the old line
-            line_obj.write(cr, uid, [split.sale_line_id.id], {'product_uom_qty': split.original_qty - split.new_line_qty}, context=context)
-            # Create the new line
-            new_line_id = line_obj.copy(cr, uid, split.sale_line_id.id, {'parent_line_id': split.sale_line_id.id,
-                                                                         'product_uom_qty': split.new_line_qty}, context=context)
+            if split.new_line_qty > split.original_qty:
+                raise osv.except_osv(_('Error'), _('You cannot have a new quantity greater than the original quantity !'))
+            elif split.new_line_qty <= 0.00:
+                raise osv.except_osv(_('Error'), _('The new quantity must be positive !'))
+            elif split.new_line_qty == split.original_qty:
+                raise osv.except_osv(_('Error'), _('The new quantity must be different than the original quantity !'))
+            elif split.new_line_qty != rounding(split.new_line_qty, split.sale_line_id.product_uom.rounding):
+                raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.sale_line_id.product_uom.rounding)
+            else:
+                # Change the qty of the old line
+                line_obj.write(cr, uid, [split.sale_line_id.id], {'product_uom_qty': split.original_qty - split.new_line_qty}, context=context)
+                # Create the new line
+                new_line_id = line_obj.copy(cr, uid, split.sale_line_id.id, {'parent_line_id': split.sale_line_id.id,
+                                                                             'product_uom_qty': split.new_line_qty}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -67,11 +75,6 @@ class split_sale_order_line_wizard(osv.osv_memory):
         '''
         Update the old line qty according to the new line qty
         '''
-        if new_line_qty > original_qty:
-            raise osv.except_osv(_('Error'), _('You cannot have a new line quantity bigger than the original quantity'))
-        elif new_line_qty == original_qty:
-            raise osv.except_osv(_('Error'), _('You cannot have a new line quantity equal to the original quantity'))
-
         res = {'old_line_qty': original_qty - new_line_qty}
 
         return {'value': res}

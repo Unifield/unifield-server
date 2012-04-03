@@ -194,6 +194,10 @@ class stock_warehouse_orderpoint(osv.osv):
     add message
     '''
     _inherit = 'stock.warehouse.orderpoint'
+
+    _columns = {
+         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+    }
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -496,6 +500,8 @@ class stock_move(osv.osv):
         '''
         function for KC/SSL/DG/NP products
         '''
+        # objects
+        kit_obj = self.pool.get('composition.kit')
         result = {}
         for id in ids:
             result[id] = {}
@@ -521,6 +527,18 @@ class stock_move(osv.osv):
             # expiry date management
             if obj.product_id.perishable:
                 result[obj.id]['exp_check'] = True
+            # contains a kit and allow the creation of a new composition LIst
+            # will be false if the kit is batch management and a composition list already uses this batch number
+            # only one composition list can  use a given batch number for a given product
+            if obj.product_id.type == 'product' and obj.product_id.subtype == 'kit':
+                if obj.prodlot_id:
+                    # search if composition list already use this batch number
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', obj.prodlot_id.id)], context=context)
+                    if not kit_ids:
+                        result[obj.id]['kit_check'] = True
+                else:
+                    # not batch management, we can create as many composition list as we want
+                    result[obj.id]['kit_check'] = True
             
         return result
     
@@ -549,8 +567,9 @@ class stock_move(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
+        'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
@@ -861,7 +880,8 @@ class stock_production_lot(osv.osv):
         return True
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
-                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
+                # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
+                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
                 #'expiry_date': fields.date('Expiry Date'),
                 'name': fields.char('Batch Number', size=1024, required=True, help="Unique batch number, will be displayed as: PREFIX/SERIAL [INT_REF]"),
                 'date': fields.datetime('Auto Creation Date', required=True),
@@ -877,7 +897,7 @@ class stock_production_lot(osv.osv):
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+                'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 }
     
@@ -1279,7 +1299,7 @@ class stock_inventory_line(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
     }
     
@@ -1386,12 +1406,16 @@ class product_product(osv.osv):
         if ids:
             prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
             name = "%s: [%s] %s"%(name, prod['code'], prod['name'])
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'view_location_tree_tree')[1] 
+
         return {
             'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'stock.location',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_type': 'tree',
+            'view_id': [view_id],
+            'domain': [('location_id','=',False)],
+            'view_mode': 'tree',
             'context': {'product_id': context.get('active_id') , 'compute_child': False},
             'target': 'current',
         }

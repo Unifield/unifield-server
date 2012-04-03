@@ -49,7 +49,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
             if st_line.account_id:
                 # Prepare some values
                 acc_obj = self.pool.get('account.account')
-                third_type = [('res.partner', 'Partner')]
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
                 if acc_type in ['transfer', 'transfer_same']:

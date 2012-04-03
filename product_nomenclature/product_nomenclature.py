@@ -193,6 +193,12 @@ class product_nomenclature(osv.osv):
         '''
         Returns the number of products for the nomenclature
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         res = {}
         
         for nomen in self.browse(cr, uid, ids, context=context):
@@ -277,6 +283,10 @@ class product_nomenclature(osv.osv):
         parent = {'nomen_manda_1': 'nomen_manda_0', 'nomen_manda_2': 'nomen_manda_1', 'nomen_manda_3': 'nomen_manda_2'}
         level = {'nomen_manda_1': 1, 'nomen_manda_2': 2, 'nomen_manda_3': 3}
         p_id = obj.read(cr, uid, id, [parent[field]])[parent[field]]
+        # when dealing with osv_memory, the read method for many2one returns the id and not the tuple (id, name) as for osv.osv
+        if p_id and isinstance(p_id, int):
+            name = self.name_get(cr, uid, [p_id], context=context)[0]
+            p_id = name
         dom = [('level', '=',  level.get(field)), ('type', '=', 'mandatory'), ('parent_id', '=', p_id and p_id[0] or 0)]
         return self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
     
@@ -317,7 +327,10 @@ class product_template(osv.osv):
         return ret
     
     def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
-
+        # Some verifications
+        if context is None:
+            context = {}
+            
         if not args:
             return []
         narg = []
@@ -363,6 +376,10 @@ class product_template(osv.osv):
     ### END OF COPY
 
     def _get_default_nom(self, cr, uid, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        
         res = {}
         toget = [('nomen_manda_0', 'nomen_med'), ('nomen_manda_1', 'nomen_med_drugs'), 
             ('nomen_manda_2', 'nomen_med_drugs_infusions'), ('nomen_manda_3', 'nomen_med_drugs_infusions_dex')]
@@ -376,8 +393,7 @@ class product_template(osv.osv):
         '''
         Set default values for datas.xml and tests.yml
         '''
-
-        if not context:
+        if context is None:
             context = {}
         if context.get('update_mode') in ['init', 'update']:
             required = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']

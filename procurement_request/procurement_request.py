@@ -70,17 +70,17 @@ class procurement_request(osv.osv):
     #@@@end override
     
     _columns = {
-        'requestor': fields.char(size=128, string='Requestor'),
+        'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
-        'requested_date': fields.date(string='Requested date'),
-        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
-        'origin': fields.char(size=64, string='Origin'),
+        'requested_date': fields.date(string='Requested date', states={'draft': [('readonly', False)]}, readonly=True),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
+        'origin': fields.char(size=64, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
         'notes': fields.text(string='Notes'),
         'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
@@ -194,10 +194,28 @@ class procurement_request(osv.osv):
         
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
+    def wkf_action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Cancel the procurement request and all lines
+        '''
+        line_ids = []
+        for req in self.browse(cr, uid, ids, context=context):
+            for line in req.order_line:
+                if line.id not in line_ids:
+                    line_ids.append(line.id)
+
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        self.pool.get('sale.order.line').write(cr, uid, line_ids, {'state': 'cancel'}, context=context)
+
+        return True
+
     def validate_procurement(self, cr, uid, ids, context=None):
         '''
         Validate the request
         '''
+        for req in self.browse(cr, uid, ids, context=context):
+            if len(req.order_line) <= 0:
+                raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True

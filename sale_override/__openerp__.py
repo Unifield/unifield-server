@@ -45,6 +45,7 @@
     "test": [
         "test/data.yml",
         "test/sale_test.yml",
+        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,

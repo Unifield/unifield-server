@@ -162,6 +162,7 @@ class msf_accrual_line(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

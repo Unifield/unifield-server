@@ -31,12 +31,19 @@ class log_line(report_sxw.rml_parse):
             'order_id': self._get_order_id,
             'get_lines': self._get_lines,
             'get_method': self._get_method,
+            'order_name': self._get_order_name,
         })
 
     def _get_order_id(self, line_id):
         line = self.pool.get('audittrail.log.line').browse(self.cr, self.uid, line_id)
         order = self.pool.get(line.object_id.model).browse(self.cr, self.uid, line.res_id)
         return order
+
+    def _get_order_name(self, line_id):
+        line = self.pool.get('audittrail.log.line').browse(self.cr, self.uid, line_id)
+        order = self.pool.get(line.object_id.model).browse(self.cr, self.uid, line.res_id)
+        name = order.name or self.pool.get(line.object_id.model)._description or ''
+        return name
 
     def _get_lines(self, order):
         model = order._name

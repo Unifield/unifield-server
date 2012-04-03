@@ -154,7 +154,7 @@ class auto_supply_rules_report(osv.osv):
                     min.frequence_id AS frequency_id,
                     line.product_qty AS order_qty,
                     prod.default_code AS product_reference,
-                    prod.name AS product_name,
+                    temp.name AS product_name,
                     temp.nomen_manda_0 AS nomen_manda_0,
                     temp.nomen_manda_1 AS nomen_manda_1,
                     temp.nomen_manda_2 AS nomen_manda_2,
