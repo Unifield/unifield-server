@@ -32,6 +32,7 @@
     ],
     "depends" : [
         "msf_audittrail",
+        "msf_tools",
         "base_report_designer",
         "msf_partner",
         "register_accounting",
@@ -85,7 +86,6 @@
         "account_mcdb",
         "out_step",
         "delivery_mechanism",
-        "msf_tools",
         "transport_mgmt",
         "documents_done",
         "msf_budget",

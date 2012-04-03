@@ -169,7 +169,15 @@ class tender(osv.osv):
                               }
                     # create purchase order line
                     pol_id = pol_obj.create(cr, uid, values, context=context)
-                po_obj.log(cr, uid, po_id, "Request for Quotation '%s' has been created."%po_obj.browse(cr, uid, po_id, context=context).name, context={'rfq_ok': True})
+                    message = "Request for Quotation '%s' has been created."%po_obj.browse(cr, uid, po_id, context=context).name
+                    # create the log message
+                    self.pool.get('res.log').create(cr, uid,
+                                                           {'name': message,
+                                                            'res_model': po_obj._name,
+                                                            'secondary': False,
+                                                            'res_id': po_id,
+                                                            'domain': [('rfq_ok', '=', True)],
+                                                            }, context={'rfq_ok': True})
             
         self.write(cr, uid, ids, {'state':'comparison'}, context=context)
         return True

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,5 +19,23 @@
 #
 ##############################################################################
 
-import msf_tools
-import res_log
+from osv import fields, osv
+
+class res_log(osv.osv):
+    _inherit = 'res.log'
+    _columns = {'domain': fields.text('Domain'),
+                }
+    _defaults = {'domain': "[]",
+                 }
+    
+    def _hook_log_get(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the get method from base>res_log.py>res_log
+        
+        - allow to modify the list of fields available in web server
+        - add the new domain attribute, in order to specify a domain for the displayed form
+        '''
+        return super(res_log, self)._hook_log_get(cr, uid, context=context, *args, **kwargs) + ['domain']
+    
+res_log()
