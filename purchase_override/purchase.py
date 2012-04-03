@@ -810,12 +810,22 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for pol in self.read(cr, uid, ids, ['state']):
+            ret[pol['id']] = pol['state']
+        return ret
+
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
         'other_line_pb': fields.function(_get_other_line, method=True, type='boolean', string='Other lines'),
         'change_price_manually': fields.boolean(string='Update price manually'),
+        # openerp bug: eval invisible in p.o use the po line state and not the po state !
+        'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
     }
 
     _defaults = {
