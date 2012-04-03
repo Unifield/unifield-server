@@ -35,6 +35,7 @@
         "stock_override",
         "purchase_double_validation",
         "reason_types_moves",
+        "product",
     ],
     "update_xml": [
         "purchase_view.xml",
@@ -49,6 +50,7 @@
     "test": [
         "test/data.yml",
         "test/purchase_test.yml",
+        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,
