@@ -385,7 +385,7 @@
 	            <field name="view_type">form</field>
 	            <field name="view_mode">tree,form</field>
 	            <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
-	            <field name="context">{'search_financing_contract': 1}</field>
+	            <field name="context">{'search_financing_contract': 1, 'reporting_line_id': active_id}</field>
 	        </record>
 	
 	        <record id="ir_open_donor_reporting_line" model="ir.values">
