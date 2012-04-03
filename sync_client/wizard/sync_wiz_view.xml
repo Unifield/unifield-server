@@ -172,6 +172,7 @@
 	        		<group col="2" colspan="3">
 	        			<button type="object" string="Start Pulling Message" name="pull_message" states="init"/>
 	        		</group>
+	        		<button type="object" string="Pull all updates" name="pull_all_data" states="init"/>
 	        	</form>
 	   		</field>
 	   </record> 

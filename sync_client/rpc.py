@@ -244,6 +244,7 @@ class NetRPCConnector(Connector):
     def send(self, service_name, method, *args):
         i = 0
         retry = True
+        result = None
         print "send rpc"
         while retry:
             try:
@@ -258,7 +259,7 @@ class NetRPCConnector(Connector):
                     print "retry to connect", i
                 i += 1
                 
-            
+        if result == None: raise RuntimeError, "Unable to connect to host! Please check connection manager"
         socket.disconnect()
         return result
 
