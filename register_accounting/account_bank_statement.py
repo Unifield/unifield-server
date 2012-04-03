@@ -1243,11 +1243,8 @@ class account_bank_statement_line(osv.osv):
             if not absl.is_down_payment:
                 continue
             move_ids = [x.id or None for x in absl.move_ids]
-            operator = 'in'
-            if len(move_ids) == 1:
-                operator = '='
             # Search line that have same account for given register line
-            line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', operator, move_ids)])
+            line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', 'in', move_ids)])
             # Add down_payment link
             for line_id in line_ids:
                 self.pool.get('account.move.line').write(cr, uid, [line_id], {'down_payment_id': absl.down_payment_id.id})

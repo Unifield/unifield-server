@@ -62,8 +62,6 @@ class account_invoice(osv.osv):
         Reconcile move line if invoice is a Direct Invoice
         NB: In order to define that an invoice is a Direct Invoice, we need to have register_line_ids not null
         """
-#        res = super(account_invoice, self).action_move_create(cr, uid, ids, context)
-#        if res:
         for inv in self.browse(cr, uid, ids):
             # Verify that this invoice is linked to a register line and have a move
             if inv.move_id and inv.register_line_ids:
@@ -163,8 +161,6 @@ class account_invoice(osv.osv):
                 self.pool.get('account.move').post(cr, uid, [move_id])
                 # and reconcile down payment counterpart
                 self.pool.get('account.move.line').reconcile_partial(cr, uid, [el[0], dp_counterpart_id], type='manual')
-#                # and link payment to invoice
-#                link_payment = self.pool.get('account.invoice').write(cr, uid, [inv.id], {'payment_ids': [(4, dp_counterpart_id)]})
                 # and reconcile invoice and supplier_line
                 to_reconcile = [supplier_line_id]
                 for line in inv.move_id.line_id:
@@ -247,7 +243,7 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             # Create down payments for invoice that come from a purchase
             if inv.purchase_ids:
-                self.check_down_payments(cr, uid, ids)
+                self.check_down_payments(cr, uid, inv.id)
         return res
 
 account_invoice()
