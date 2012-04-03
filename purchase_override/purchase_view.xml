@@ -195,7 +195,8 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='price_unit']" position="replace">
                     <field name="other_line_pb" invisible="1" />
-                    <field name="change_price_manually" attrs="{'invisible': [('other_line_pb', '=', False)]}" />
+                    <field name="rfq_ok" invisible="1" />
+                    <field name="change_price_manually" attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('other_line_pb', '=', False)]}" />
                     <label colspan="2" />
                     <field name="price_unit" 
                         on_change="price_unit_change(price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, context)" />
