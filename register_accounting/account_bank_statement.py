@@ -1498,6 +1498,10 @@ class account_bank_statement_line(osv.osv):
             vals.update({amount_field: absl.transfer_amount,})
         if absl and absl.transfer_currency:
             vals.update({'currency_id': absl.transfer_currency.id, curr_field: absl.transfer_currency.id})
+            # Verify that transfer_journal currency is not different
+            if absl.transfer_journal_id:
+                if absl.transfer_currency.id != absl.transfer_journal_id.currency.id:
+                    vals.update({curr_field: absl.transfer_journal_id.currency.id})
         elif absl and absl.transfer_journal_id:
             vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
         if absl and absl.state == 'hard':
