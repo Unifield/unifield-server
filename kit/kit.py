@@ -227,7 +227,7 @@ class composition_kit(osv.osv):
                     'res_model': 'composition.kit',
                     'res_id': obj.id,
                     'type': 'ir.actions.act_window',
-                    'target': 'current',
+                    'target': 'dummy',
                     'domain': [('composition_type', '=', 'real')],
                     'context': {'composition_type':'real'},
                     }
@@ -1363,7 +1363,7 @@ class purchase_order_line(osv.osv):
 #                    result[obj.id].update({'kit_pol_check': True})
         return result
     
-    _columns = {'kit_pol_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals'),
+    _columns = {'kit_pol_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals_kit'),
                 }
 
 purchase_order_line()

@@ -31,7 +31,7 @@
                     <notebook colspan="4">
                     	<page string="Components">
                     		<field name="default_location_src_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', '!=', 'in_production')]}" /> 
+                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', 'not in', ['draft', 'in_production'])]}" /> 
                     		<field name="internal_picking_id_kit_creation" />
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" /> <!-- attrs="{'readonly': [('state', '!=', 'in_production')]}" /> -->
                     		<group col="4" colspan="4">
