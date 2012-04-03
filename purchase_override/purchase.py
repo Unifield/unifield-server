@@ -671,12 +671,14 @@ class purchase_order_line(osv.osv):
         Update the merged line
         '''
         merged_line_obj = self.pool.get('purchase.order.merged.line')
+        
+        tmp_vals = vals.copy()
 
         # If it's an update of a line
         if vals and line_id:
             line = self.browse(cr, uid, line_id, context=context)
             if not 'product_uom' in vals: vals.update({'product_uom': line.product_uom.id})
-            if not 'price_unit' in vals: vals.update({'price_unit': line.price_unit})
+            if not 'product_qty' in vals: vals.update({'product_qty': line.product_qty})
             # If the user has changed the product on the PO line
             if ('product_id' in vals and line.product_id.id != vals['product_id']) or ('product_uom' in vals and line.product_uom.id != vals['product_uom']):
                 # Need removing the merged_id link before update the merged line because the merged line
@@ -691,10 +693,10 @@ class purchase_order_line(osv.osv):
                 res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, 0.00, context=context)
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
-            if 'price_unit' in vals and line.price_unit != vals['price_unit'] and not ('product_id' in vals and line.product_id.id != vals['product_id']):
+            if 'price_unit' in tmp_vals and line.price_unit != tmp_vals['price_unit'] and not ('product_id' in vals and line.product_id.id != vals['product_id']):
                 c = context.copy()
                 c.update({'manual_change': vals.get('change_price_manually', False)})
-                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, 0.00, vals['price_unit'], context=c)
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, 0.00, tmp_vals['price_unit'], context=c)
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
                 
