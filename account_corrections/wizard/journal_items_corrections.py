@@ -104,6 +104,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         })
         # Open it!
         return {
+                'name': 'Analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

@@ -100,6 +100,7 @@ class purchase_order(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Global analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -388,6 +389,7 @@ class purchase_order_line(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
