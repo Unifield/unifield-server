@@ -153,6 +153,12 @@ class account_move_line_reconcile(osv.osv_memory):
             credit = fcredit
             if (fdebit - fcredit) == 0.0:
                 state = 'total_change'
+        # For salaries, behaviour is the same as total_change: we use functional debit/credit
+        if account_id == salary_account_id:
+            if (fdebit - fcredit) == 0.0:
+                state = 'total'
+            else:
+                state = 'partial'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
 
     def total_reconcile(self, cr, uid, ids, context=None):

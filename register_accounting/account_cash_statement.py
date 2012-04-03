@@ -174,7 +174,7 @@ class account_cash_statement(osv.osv):
             'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
-            'name': fields.char('Register Name', size=64, required=False, readonly=True),
+            'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
