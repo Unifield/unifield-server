@@ -860,8 +860,10 @@ class purchase_order_line(osv.osv):
         if not order_id:
             return res
 
+        order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
+
         lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)])
-        if lines and price != price_unit:
+        if lines and price != price_unit and not order.rfq_ok:
             if price_unit != 0.00:
                 warning = {
                 'title': 'Other lines updated !',
