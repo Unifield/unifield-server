@@ -92,9 +92,11 @@
         "msf_budget",
         "account_subscription",
         "msf_homere_interface",
+        "kit",
         "msf_accrual",
         "purchase_allocation_report",
         "supplier_catalogue",
+        "msf_cross_docking",
     ],
     "update_xml": [
         "report.xml",

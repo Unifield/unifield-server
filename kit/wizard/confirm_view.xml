@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_confirm_form_wizard" model="ir.ui.view">
+            <field name="name">view.confirm.form.wizard</field>
+            <field name="model">confirm</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Confirmation">
+                <field name="question" nolabel="True" invisible="True" colspan="4" />
+                <group colspan="4">
+	                <button icon='gtk-cancel' special="cancel"
+	                    string="_Close" />
+	                <button name="do_action" string="Ok"
+	                    type="object" icon="gtk-ok" />
+                </group>
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

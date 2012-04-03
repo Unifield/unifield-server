@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_modify_expiry_date_form_wizard" model="ir.ui.view">
+            <field name="name">view.modify.expiry.date.form.wizard</field>
+            <field name="model">modify.expiry.date</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Modify Expiry Date">
+            	<separator string="You need to specify a new date." colspan="4"/>
+                <field name="kit_id" colspan="4" />
+                <field name="date" colspan="1" />
+                <group colspan="3" />
+                <field name="new_date" colspan="1" />
+                <group colspan="4" col="4">
+	                <button icon='gtk-cancel' special="cancel"
+	                    string="_Close" />
+                    <button name="compute_date" string="Compute Date from Kit Components" type="object" icon="gtk-execute" />
+	                <button name="do_modify_expiry_date" string="Ok" type="object" icon="gtk-ok" />
+                </group>
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

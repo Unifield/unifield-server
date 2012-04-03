@@ -69,7 +69,7 @@ class account_commitment(osv.osv):
     }
 
     _defaults = {
-        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
+        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment') or '',
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',

@@ -30,6 +30,7 @@
                 "sale_override",
                 "purchase_override",
                 "partner_modification",
+                "msf_tools",
                 ],
     "author": "TeMPO Consulting, MSF",
     "website": "",

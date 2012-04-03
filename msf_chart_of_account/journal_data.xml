@@ -95,8 +95,8 @@
             <field name="code">BNK-CHF-1</field>
             <field name="type">bank</field>
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
-            <field name="default_debit_account_id" ref="msf_chart_of_account.5351" />
-            <field name="default_credit_account_id" ref="msf_chart_of_account.5351" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.1020" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.1020" />
             <field name="analytic_journal_id" ref="bank_analytic_journal"/>
         </record>
         <record id="bank_euro_journal" model="account.journal">
@@ -104,8 +104,8 @@
             <field name="code">BNK-EUR-1</field>
             <field name="type">bank</field>
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
-            <field name="default_debit_account_id" ref="msf_chart_of_account.5350" />
-            <field name="default_credit_account_id" ref="msf_chart_of_account.5350" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.1020" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.1020" />
             <field name="analytic_journal_id" ref="bank_analytic_journal"/>
         </record>
         
@@ -119,8 +119,8 @@
             <field name="code">CAS-CHF-1</field>
             <field name="type">cash</field>
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
-            <field name="default_debit_account_id" ref="msf_chart_of_account.5311" />
-            <field name="default_credit_account_id" ref="msf_chart_of_account.5311" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.1010" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.1010" />
             <field name="analytic_journal_id" ref="cash_analytic_journal"/>
         </record>
         <record id="cash_euro_journal" model="account.journal">
@@ -128,8 +128,8 @@
             <field name="code">CAS-EUR-1</field>
             <field name="type">cash</field>
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
-            <field name="default_debit_account_id" ref="msf_chart_of_account.5310" />
-            <field name="default_credit_account_id" ref="msf_chart_of_account.5310" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.1010" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.1010" />
             <field name="analytic_journal_id" ref="cash_analytic_journal"/>
         </record>
         
@@ -143,8 +143,8 @@
             <field name="code">CHE-CHF-1</field>
             <field name="type">cheque</field>
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
-            <field name="default_debit_account_id" ref="msf_chart_of_account.5362" />
-            <field name="default_credit_account_id" ref="msf_chart_of_account.5362" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.3001" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.3001" />
             <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
         <record id="cheque_euro_journal" model="account.journal">
@@ -152,8 +152,8 @@
             <field name="code">CHE-EUR-1</field>
             <field name="type">cheque</field>
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
-            <field name="default_debit_account_id" ref="msf_chart_of_account.5361" />
-            <field name="default_credit_account_id" ref="msf_chart_of_account.5361" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.3001" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.3001" />
             <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
         
@@ -173,7 +173,7 @@
             <field name="name">Miscellaneous Transactions</field>
             <field name="code">MT</field>
             <field name="type">cur_adj</field>
-            <field name="default_debit_account_id" ref="msf_chart_of_account.6308" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.6940" />
             <field name="analytic_journal_id" ref="analytic_miscellaneous_transactions"/>
         </record>
         

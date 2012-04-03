@@ -34,6 +34,7 @@
     # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line
     "depends" : [
         "base",
+        "msf_audittrail",
         "account",
         "hr",
         "account_payment",
