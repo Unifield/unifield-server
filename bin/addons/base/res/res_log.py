@@ -28,6 +28,7 @@ class res_log(osv.osv):
         'user_id': fields.many2one('res.users','User'),
         'res_model': fields.char('Object', size=128, select=1),
         'context': fields.text('Context'),
+        'domain': fields.text('Domain'),
         'res_id': fields.integer('Object ID'),
         'secondary': fields.boolean('Secondary Log', help='Do not display this log if it belongs to the same object the user is working on'),
         'create_date': fields.datetime('Creation Date', readonly=True, select=1),
@@ -36,6 +37,7 @@ class res_log(osv.osv):
     _defaults = {
         'user_id': lambda self,cr,uid,ctx: uid,
         'context': "{}",
+        'domain': "[]",
         'read': False,
     }
     _order='create_date desc'
@@ -56,25 +58,13 @@ class res_log(osv.osv):
         if create_context and not vals.get('context'):
             vals['context'] = create_context
         return super(res_log, self).create(cr, uid, vals, context=context)
-    
-    def _hook_log_get(self, cr, uid, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the get method from base>res_log.py>res_log
-        
-        - allow to modify the list of fields available in web server
-        '''
-        return kwargs['list_of_fields']
 
     # TODO: do not return secondary log if same object than in the model (but unlink it)
     def get(self, cr, uid, context=None):
         unread_log_ids = self.search(cr, uid,
             [('user_id','=',uid), ('read', '=', False)], context=context)
-        list_of_fields = ['name','res_model','res_id','context']
-        list_of_fields = self._hook_log_get(cr, uid, context=context, list_of_fields=list_of_fields)
-        res = self.read(cr, uid, unread_log_ids,
-            list_of_fields,
-            context=context)
+        list_of_fields = ['name','res_model','res_id','context', 'domain']
+        res = self.read(cr, uid, unread_log_ids, list_of_fields, context=context)
         res.reverse()
         result = []
         res_dict = {}
