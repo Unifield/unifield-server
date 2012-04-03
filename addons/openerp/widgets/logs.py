@@ -32,3 +32,4 @@ class Logs(TinyInputWidget):
         super(Logs, self).__init__()
         # Server log will display in flash message in form, tree view for any server action like wizard.
         self.logs = rpc.RPCProxy('res.log').get()
+        pass
