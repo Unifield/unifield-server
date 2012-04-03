@@ -31,6 +31,7 @@
     ],
     "depends" : [
         "purchase",
+        "account_override",
         "stock_override",
         "purchase_double_validation",
         "reason_types_moves",

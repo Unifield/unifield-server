@@ -24,12 +24,35 @@
 		    	<field name="consumption_type" />
 		    	<field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')]}" />
 			<separator colspan="2" string="Product parameters" />
-			<field name="nomen_id" />
-			<field name="sublist_id" />
+            <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" />
+            <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                <field name="nomen_manda_0"
+                    domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                    widget="selection"
+                    on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                />
+                <field name="nomen_manda_1"
+                    domain="[('id','=', 0)]"
+                    widget="selection"
+                    get_selection="get_nomen"
+                    on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                />
+                <field name="nomen_manda_2"
+                    domain="[('id','=', 0)]"
+                    widget="selection"
+                    get_selection="get_nomen"
+                    on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                />
+                <field name="nomen_manda_3"
+                    domain="[('id','=', 0)]"
+                    widget="selection"
+                    get_selection="get_nomen"
+                    on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                />
+            </group>
 			<separator colspan="2" string="Actions" />
 			<button name="create_lines" type="object" string="View historical data" icon="gtk-execute" colspan="2" />
 		    </group>
-
 		</form>
 	    </field>
 	</record>
@@ -49,7 +72,7 @@
             <field name="key2">tree_but_open</field>
             <field name="model">ir.ui.menu</field>
             <field name="name">Historical consumptions</field>
-	    <field name="res_id" ref="menu_product_history_consumption" />
+	        <field name="res_id" ref="menu_product_history_consumption" />
             <field eval="'ir.actions.server,%d'%action_open_history_consumption_view" name="value"/>
             <field eval="True" name="object"/>
         </record>

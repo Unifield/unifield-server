@@ -34,11 +34,37 @@ class account_invoice(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
+            help="This field contains the information related to the numbering of the lines of this order."),
     }
 
     _defaults = {
         'from_yml_test': lambda *a: False,
     }
+
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every new invoice
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = 'Invoice L' # For Invoice Lines
+        code = 'account.invoice'
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        }
+        return seq_pool.create(cr, uid, seq)
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -49,6 +75,9 @@ class account_invoice(osv.osv):
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
+        # Create a sequence for this new invoice
+        res_seq = self.create_sequence(cr, uid, vals, context)
+        vals.update({'sequence_id': res_seq,})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
@@ -88,22 +117,51 @@ class account_invoice_line(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'line_number': fields.integer(string='Line Number'),
     }
 
     _defaults = {
         'from_yml_test': lambda *a: False,
     }
 
+    _order = 'line_number'
+
     def create(self, cr, uid, vals, context=None):
         """
-        Filled in 'from_yml_test' to True if we come from tests
+        Filled in 'from_yml_test' to True if we come from tests.
+        Give a line_number to invoice line.
+        NB: This appends only for account invoice line and not other object (for an example direct invoice line)
         """
         if not context:
             context = {}
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
+        # Create new number with invoice sequence
+        if vals.get('invoice_id') and self._name in ['account.invoice.line']:
+            invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
+            if invoice and invoice.sequence_id:
+                sequence = invoice.sequence_id
+                line = sequence.get_id(test='id', context=context)
+                vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Give a line_number in invoice_id in vals
+        NB: This appends only for account invoice line and not other object (for an example direct invoice line)
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if vals.get('invoice_id') and self._name in ['account.invoice.line']:
+            for il in self.browse(cr, uid, ids):
+                if not il.line_number and il.invoice_id.sequence_id:
+                    sequence = il.invoice_id.sequence_id
+                    il_number = sequence.get_id(test='id', context=context)
+                    vals.update({'line_number': il_number})
+        return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
