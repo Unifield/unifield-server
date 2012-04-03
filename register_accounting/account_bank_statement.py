@@ -1324,6 +1324,7 @@ class account_bank_statement_line(osv.osv):
             'state': 'draft',
             'transfer_amount': False,
             'transfer_currency': False,
+            'down_payment_id': False,
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 

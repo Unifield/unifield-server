@@ -324,10 +324,10 @@ class purchase_order_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        line = self.browse(cr, uid, ids, context=context)[0]
-        if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
-            vals['price_unit'] = 1.00
+        if ids:
+            line = self.browse(cr, uid, ids, context=context)[0]
+            if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
+                vals['price_unit'] = 1.00
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
@@ -399,7 +399,6 @@ class purchase_order_line(osv.osv):
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
-        Copy global distribution and give it to new purchase line
         Copy global distribution and give it to new purchase line.
         """
         # Some verifications

@@ -32,5 +32,14 @@ class purchase_order(osv.osv):
         'down_payment_ids': fields.one2many('account.move.line', 'down_payment_id', string="Down Payments", readonly=True),
     }
 
+    def copy(self, cr, uid, id, default=None, context=None):
+        """
+        Remove down_payment_ids field on new purchase.order
+        """
+        if not default:
+            default = {}
+        default.update({'down_payment_ids': False})
+        return super(purchase_order, self).copy(cr, uid, id, default, context=context)
+
 purchase_order()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
