@@ -32,6 +32,7 @@
     "depends" : [
         "sale",
         "stock_override",
+        "product",
     ],
     "update_xml": [
         "sale_view.xml",
@@ -45,6 +46,7 @@
     "test": [
         "test/data.yml",
         "test/sale_test.yml",
+        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,
