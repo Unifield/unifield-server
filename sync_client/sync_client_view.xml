@@ -320,23 +320,18 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <group col="6" colspan="4">
-                        <field name="identifier"/>
-                        <field name="destination_name"/>
-                        <field name="sent"/>
-                        <field name="sent_date"/>
+                    <field name="identifier"/>
+                    <field name="destination_name"/>
+                    <field name="sent_date"/>
+                    <field name="sent"/>
+                    <group colspan="2" col="1">
+                        <separator string="Call"/>
+                        <field name="remote_call" nolabel="1"/>
                     </group>
-                    <group colspan="4" col="4">
-                        <group colspan="2" col="2">
-                            <separator string="Call" colspan="2"/>
-                            <field name="remote_call" nolabel="1"/>
-                        </group>
-                        <group colspan="2" col="2">
-                            <separator string="Arguments" colspan="2"/>
-                            <field name="arguments" nolabel="1"/>
-                        </group>
+                    <group colspan="2" col="1">
+                        <separator string="Arguments"/>
+                        <field name="arguments" nolabel="1"/>
                     </group>
-
                 </form>
             </field>
         </record>
