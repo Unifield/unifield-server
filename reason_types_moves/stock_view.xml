@@ -191,11 +191,11 @@
                     </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-                                <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                <field name="reason_type_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                         </xpath>
 
                         <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-                                <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                <field name="reason_type_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                         </xpath>
 
 			<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
@@ -219,11 +219,11 @@
                     	</xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-                            <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                            <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                        </xpath>
 
                        <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-                                <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                        </xpath>
 
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
@@ -253,11 +253,11 @@
                     </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-                            <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                            <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                        </xpath>
 
                        <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-                                <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                        </xpath>
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
                                 <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />

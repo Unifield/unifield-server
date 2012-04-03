@@ -44,6 +44,7 @@ class financing_contract_contract(osv.osv):
     
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
+    _trace = True
 
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
