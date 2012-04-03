@@ -163,13 +163,14 @@ class message_received(osv.osv):
 
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
-        'remote_call':fields.text('Method to call', required = True, readonly=True),
-        'arguments':fields.text('Arguments of the method', required = True, readonly=True),
+        'remote_call':fields.text('Method to call', required = True),
+        'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages"),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
+        'editable' : fields.boolean("Set editable"),
     }
 
     def unfold_package(self, cr, uid, package, context=None):

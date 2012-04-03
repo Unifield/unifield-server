@@ -153,29 +153,29 @@
             <field name="model">sync.client.message_received</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Entity Form">
-                    <group col="10" colspan="4">
+                <form string="Message Received">
+                    <group col="6" colspan="4">
                         <field name="identifier"/>
                         <field name="source"/>
                         <field name="run"/>
                         <field name="create_date"/>
                         <field name="execution_date"/>
                     </group>
-                    <group colspan="4" >
-                        <separator string="Execution log" colspan="4"/>
-                        <field name="log" nolabel="1" colspan="4"/>
+                    <separator string="Execution log" colspan="4"/>
+                    <field name="log" nolabel="1" colspan="4" attrs="{'readonly':[('editable','=',False)]}"/>
+                    <group colspan="2" col="1">
+                        <separator string="Call"/>
+                        <field name="remote_call" nolabel="1" attrs="{'readonly':[('editable','=',False)]}"/>
                     </group>
-                    <group colspan="4" col="4">
-                        <group colspan="2" col="2">
-                            <separator string="Call" colspan="2"/>
-                            <field name="remote_call" nolabel="1"/>
-                        </group>
-                        <group colspan="2" col="2">
-                            <separator string="Arguments" colspan="2"/>
-                            <field name="arguments" nolabel="1"/>
-                        </group>
+                    <group colspan="2" col="1">
+                        <separator string="Arguments"/>
+                        <field name="arguments" nolabel="1" attrs="{'readonly':[('editable','=',False)]}"/>
                     </group>
-
+                    <label string="" colspan="3"/>
+                    <group colspan="1" col="3">
+                        <field name="editable" attrs="{'invisible':[('run','=',True)]}"/>
+                        <button string="Run manually" name="run" type="object" attrs="{'invisible':[('run','=',True)]}"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -239,22 +239,21 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Entity Form">
-                    <group col="8" colspan="4">
+                    <group col="6" colspan="4">
                         <field name="model"/>
                         <field name="rule_id"/>
+                        <field name="xml_id"/>
                         <field name="sent"/>
                         <field name="sent_date"/>
                         <field name="sync_date"/>
-
                         <field name="version"/>
                         <field name="session_id"/>
-                        <field name="xml_id"/>
-                    </group>
-                    <group colspan="4" >
-                        <separator string="Fields" colspan="4"/>
-                        <field name="fields" nolabel="1" colspan="4"/>
-                         <separator string="Values" colspan="4"/>
-                         <field name="values" nolabel="1" colspan="4"/>
+                        <group colspan="6" col="1">
+                            <separator string="Fields"/>
+                            <field name="fields" nolabel="1"/>
+                            <separator string="Values"/>
+                            <field name="values" nolabel="1"/>
+                        </group>
                     </group>
                 </form>
             </field>
