@@ -759,6 +759,8 @@ class purchase_order_line(osv.osv):
 
         if not context.get('update_merge', False):
             for line in self.browse(cr, uid, ids, context=context):
+                if not vals.get('product_id', False) and not line.product_id:
+                    continue
                 if not line.order_id.rfq_ok and vals.get('price_unit', line.price_unit) != line.price_unit and line.other_line_pb and not vals.get('change_price_manually', line.change_price_manually):
                     raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
 
