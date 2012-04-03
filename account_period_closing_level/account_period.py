@@ -142,7 +142,8 @@ class account_period(osv.osv):
                 journal_state = 'draft'
             for id in ids:
                 cr.execute('update account_journal_period set state=%s where period_id=%s', (journal_state, id))
-                cr.execute('update account_period set state=%s where id=%s', (state, id))
+                # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
+                self.write(cr, uid, id, {'state': state}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
 
     _columns = {
