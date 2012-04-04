@@ -66,10 +66,10 @@ class res_partner(osv.osv):
         if not args:
             return []
         if args[0][2]:
-           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type'])
-           if t['type'] == 'payable':
+           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type', 'type_for_register'])
+           if t['type'] == 'payable' and t['type_for_register'] != 'down_payment':
                return [('property_account_payable', '=', args[0][2])]
-           if t['type'] == 'receivable':
+           if t['type'] == 'receivable' and t['type_for_register'] != 'down_payment':
                 return [('property_account_receivable', '=', args[0][2])]
         return []
 
