@@ -216,6 +216,18 @@
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
 -
+  I create a Down Payment account
+-
+  !record {model: account.account, id: account_account_down_payment_0}:
+    name: Advance for suppliers
+    code: '4203-down-payment-test'
+    type: receivable
+    user_type: account_account_type_receivable0
+    type_for_register: down_payment
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+-
   I create Supplier 401 Payable Account.
 -
   !record {model: account.account, id: account_account_payable_supplier0}:
