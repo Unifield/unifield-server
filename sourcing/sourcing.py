@@ -853,8 +853,8 @@ class procurement_order(osv.osv):
         procurement = kwargs['procurement']
         values = kwargs['values']
         # Make the line as price changed manually to do not raise an error on purchase order line creation
-        if 'order_line' in values and len(values['order_line']) > 0 and len(values['order_line'][0]) > 2 and 'price_unit' in values['order_line'][0][2]:
-            values['order_line'][0][2].update({'change_price_manually': True})
+#        if 'order_line' in values and len(values['order_line']) > 0 and len(values['order_line'][0]) > 2 and 'price_unit' in values['order_line'][0][2]:
+#            values['order_line'][0][2].update({'change_price_manually': True})
 
         partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
         
