@@ -60,6 +60,10 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':
                 vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+                
+        if not 'transport_currency_id' in vals and 'pricelist_id' in vals:
+            currency_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], context=context).currency_id.id
+            vals.update({'transport_currency_id': currency_id})
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
@@ -71,6 +75,10 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':
                 vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+                
+        for po in self.browse(cr, uid, ids, context=context):
+            if not po.transport_currency_id:
+                vals.update({'transport_currency_id': po.pricelist_id.currency_id.id})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 

@@ -20,12 +20,12 @@
                                                                 }"/>
                             <label colspan="15" />
                             <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                                'required': [('intl_supplier_ok', '=', True)],
+                                                                'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],
                                                                 'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }" nolabel="1" />
                             <field name="transport_currency_id" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                                 'required': [('intl_supplier_ok', '=', True)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)]
+                                                                 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],
+                                                                 'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }" nolabel="1" />
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}" />
                         </group>
