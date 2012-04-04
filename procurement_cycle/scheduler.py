@@ -73,6 +73,8 @@ class procurement_order(osv.osv):
                         'coverage': cycle.order_coverage,
                         'safety_time': cycle.safety_stock_time,
                         'safety': cycle.safety_stock,
+                        'consumption_period_from': cycle.consumption_period_from,
+                        'consumption_period_to': cycle.consumption_period_to,
                         'past_consumption': cycle.past_consumption,
                         'reviewed_consumption': cycle.reviewed_consumption,
                         'manual_consumption': cycle.manual_consumption,}
@@ -144,8 +146,11 @@ class procurement_order(osv.osv):
 
         if isinstance(product_id, (int, long)):
             product_id = [product_id]
+            
+        if d_values.get('past_consumption', False):
+            context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
-        product = product_obj.browse(cr, uid, product_id[0])
+        product = product_obj.browse(cr, uid, product_id[0], context=context)
         
         # Enter the stock location in cache to know which products has been already replenish for this location
         if not cache.get(location_id, False):
@@ -154,7 +159,7 @@ class procurement_order(osv.osv):
             
         if product.id not in cache.get(location_id):
             newdate = datetime.today()
-            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values)
+            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
                 
             if quantity_to_order <= 0:
                 return False
@@ -218,7 +223,7 @@ class procurement_order(osv.osv):
         
         if 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
             monthly_consumption = product.reviewed_consumption
-        elif 'monthly_consumption' in d_values and d_values.get('monthly_consumption'):
+        elif 'past_consumption' in d_values and d_values.get('past_consumption'):
             monthly_consumption = product.product_amc
         else:
             monthly_consumption = d_values.get('manual_consumption', 0.00)
