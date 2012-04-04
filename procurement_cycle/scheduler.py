@@ -149,9 +149,10 @@ class procurement_order(osv.osv):
             
         if d_values.get('past_consumption', False):
             if not d_values.get('consumption_period_from', False):
-                d_values.update({'consumption_period_from': (now + RelativeDate(day=1, months=-d_values.get('order_coverage', 3.00)+1)).strftime('%Y-%m-%d')})
+                order_coverage = d_values.get('coverage', 3)
+                d_values.update({'consumption_period_from': (now() + RelativeDate(day=1, months=-round(order_coverage, 1)+1)).strftime('%Y-%m-%d')})
             if not d_values.get('consumption_period_to', False):
-                d_values.update({'consumption_period_to': (now + RelativeDate(days=-1, day=1, months=1)).strftime('%Y-%m-%d')})
+                d_values.update({'consumption_period_to': (now() + RelativeDate(days=-1, day=1, months=1)).strftime('%Y-%m-%d')})
             context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
         product = product_obj.browse(cr, uid, product_id[0], context=context)
