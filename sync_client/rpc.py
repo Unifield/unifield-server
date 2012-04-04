@@ -180,6 +180,7 @@ class NetRPC:
         self.sock.close()
 
     def mysend(self, msg, exception=False, traceback=None):
+        self.__logger.debug("rpc message : %s", msg)
         msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
             raw_size = len(msg)
@@ -244,7 +245,8 @@ class NetRPCConnector(Connector):
     def send(self, service_name, method, *args):
         i = 0
         retry = True
-        print "send rpc"
+        result = False
+        error = False
         while retry:
             try:
                 retry = False
@@ -252,14 +254,17 @@ class NetRPCConnector(Connector):
                 socket.connect(self.hostname, self.port)
                 socket.mysend((service_name, method, )+args)
                 result = socket.myreceive()
-            except Exception:
+            except Exception, e:
+                error = e
                 if i < NB_RETRY:
                     retry = True
-                    print "retry to connect", i
+                    self.__logger.debug("retry to connect %s, error : %s" ,i, e)
                 i += 1
                 
-            
+        
         socket.disconnect()
+        if error:
+            raise e
         return result
 
 class GzipNetRPCConnector(NetRPCConnector):

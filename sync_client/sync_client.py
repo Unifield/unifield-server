@@ -452,7 +452,15 @@ class sync_server_connection(osv.osv):
             else:
                 res[connection.id] = "Disconnected"
         return res
-    
+ 
+    _password = {}
+
+    def _get_password(self, cr, uid, ids, field, arg, context):
+        return dict.fromkeys(ids, self._password.get(cr.dbname))
+
+    def _set_password(self, cr, uid, ids, field, password, arg, context):
+        self._password[cr.dbname] = password
+
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
     _rec_name = 'host'
@@ -464,7 +472,7 @@ class sync_server_connection(osv.osv):
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
         'uid': fields.integer('Uid on synchro server', readonly=True),
-        'password': fields.char('Password', size=64),
+        'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
         'max_size' : fields.integer("Max Packet Size"),
     }
@@ -474,7 +482,6 @@ class sync_server_connection(osv.osv):
         'port' : 10070,
         'protocol': 'netrpc',
         'login' : 'admin',
-        'password' : 'a',
         'max_size' : 5,
     }
     
@@ -529,6 +536,7 @@ class sync_server_connection(osv.osv):
 
 sync_server_connection()
 
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
