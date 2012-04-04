@@ -60,7 +60,18 @@ class order_cycle_rules_report(osv.osv):
         res = {}
         
         for rule in self.browse(cr, uid, ids, context=context):
-            res[rule.id] = rule.nomen_manda_0.name + '/' + rule.nomen_manda_1.name + '/' + rule.nomen_manda_2.name + '/' + rule.nomen_manda_3.name 
+            res[rule.id] = ''
+            if rule.nomen_manda_0:
+                res[rule.id] = rule.nomen_manda_0.name
+            if rule.nomen_manda_1:
+                res[rule.id] += '/'
+                res[rule.id] += rule.nomen_manda_1.name
+            if rule.nomen_manda_2:
+                res[rule.id] += '/'
+                res[rule.id] += rule.nomen_manda_2.name
+            if rule.nomen_manda_3:
+                res[rule.id] += '/'
+                res[rule.id] += rule.nomen_manda_3.name  
             
         return res
     
@@ -75,8 +86,8 @@ class order_cycle_rules_report(osv.osv):
         ir_data = self.pool.get('ir.model.data')
         stock_location = ir_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         # TODO: Change msf_profile by msf_location_setup module
-        intermediate_stock = ir_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_intermediate_stock_view')[1]
-        consumption_stock = ir_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_consumption_unit_view')[1]
+        intermediate_stock = ir_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
+        consumption_stock = ir_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
         
         for rule in self.browse(cr, uid, ids, context=context):
             res[rule.id] = {'stock': 0.00,
