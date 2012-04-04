@@ -108,15 +108,15 @@ class account_invoice(osv.osv):
                     # verify that total is not superior to amount
                     if total >= amount:
                         continue
+                    diff = 0.0
                     # Take only line that have a down_payment_amount not superior or equal to line amount
                     if not dp.down_payment_amount > dp.amount_currency:
-                        diff = 0.0
                         if dp.amount_currency <= (amount - total):
                             diff = dp.amount_currency
                         else:
                             diff = (amount - total)
-                    # Have a tuple containing line id and amount to use for create a payment on invoice
-                    to_use.append((dp.id, diff))
+                        # Have a tuple containing line id and amount to use for create a payment on invoice
+                        to_use.append((dp.id, diff))
                     # Increment processed total
                     total += diff
             # Create counterparts and reconcile them
@@ -171,7 +171,7 @@ class account_invoice(osv.osv):
                 self.pool.get('account.move.line').reconcile_partial(cr, uid, to_reconcile)
                 # add amount of invoice down_payment line on purchase order to keep used amount
                 current_amount = self.pool.get('account.move.line').read(cr, uid, el[0], ['down_payment_amount']).get('down_payment_amount')
-                self.pool.get('account.move.line').write(cr, uid, [el[0]], {'down_payment_amount': current_amount + diff})
+                self.pool.get('account.move.line').write(cr, uid, [el[0]], {'down_payment_amount': current_amount + el[1]})
                 # add payment to result
                 res.append(dp_counterpart_id)
         return res
@@ -191,7 +191,7 @@ class account_invoice(osv.osv):
             for po in inv.purchase_ids:
                 for dp in po.down_payment_ids:
                     if abs(dp.down_payment_amount) < abs(dp.amount_currency):
-                        total_payments += dp.amount_currency
+                        total_payments += (dp.amount_currency - dp.down_payment_amount)
             if total_payments == 0.0:
                 continue
             elif (inv.amount_total - total_payments) > 0.0:
