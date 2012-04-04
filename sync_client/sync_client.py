@@ -215,7 +215,7 @@ class entity(osv.osv, Thread):
     """
         Pull update
     """
-    def pull_update(self, cr, uid, context=None):
+    def pull_update(self, cr, uid, recover=False, context=None):
         if not context:
             context = {}
         entity = self.get_entity(cr, uid, context)
@@ -224,7 +224,7 @@ class entity(osv.osv, Thread):
         try:
             if entity.state == 'init':
                 self.set_last_sequence(cr, uid, context)
-            self.retreive_update(cr, uid, context)
+            self.retreive_update(cr, uid, recover=recover, context=context)
             cr.commit()
             self.execute_update(cr, uid, context)
         except Exception, e:
@@ -241,8 +241,8 @@ class entity(osv.osv, Thread):
             self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise osv.except_osv(res[1], _('Error') )
-        
-    def retreive_update(self, cr, uid, context=None):
+
+    def retreive_update(self, cr, uid, recover=False, context=None):
         entity = self.get_entity(cr, uid, context)
         last = False
         last_seq = entity.update_last
@@ -255,7 +255,7 @@ class entity(osv.osv, Thread):
             last = True
         while not last:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, context)
+            res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, recover, context)
             if res and res[0]:
                 #print "retreive packet", res
                 nb_upate = self.pool.get('sync.client.update_received').unfold_package(cr, uid, res[1], context=context)
@@ -266,7 +266,7 @@ class entity(osv.osv, Thread):
             elif res and not res[0]:
                 raise osv.except_osv(res[1], _('Error') )
         
-        print 'update finished'
+        print 'update', 'all' if all else '','finished'
         self.write(cr, uid, entity.id, {'update_offset' : 0, 
                                         'max_update' : 0, 
                                         'update_last' : max_seq}, context=context) 

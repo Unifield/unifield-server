@@ -510,7 +510,7 @@ class sync_manager(osv.osv):
         return (True, self.pool.get('sync.server.update').get_last_sequence(cr, uid, context=context))
     
     @check_validated
-    def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, context=None):
+    def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         """
             @param entity: string : uuid of the synchronizing entity
             @param last_seq: integer : Last sequence of update receive succefully in the previous pull session. 
@@ -538,10 +538,8 @@ class sync_manager(osv.osv):
                               }
                               
         """
-        package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, context)
-        if not package:
-            return (True, False, True)
-        return (True, package, False)
+        package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, context=context)
+        return (True, package or False, not package)
     
     """
         Message synchronization

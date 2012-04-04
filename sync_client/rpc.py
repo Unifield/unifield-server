@@ -261,7 +261,6 @@ class NetRPCConnector(Connector):
                     self.__logger.debug("retry to connect %s, error : %s" ,i, e)
                 i += 1
                 
-        
         socket.disconnect()
         if error:
             raise e

@@ -146,36 +146,48 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Manage Data synchronization" col="6" >
-                    <field name="state" />
-                    <group col="2" colspan="3">
-                        <button type="object" string="Start Synchronization Process" name="sync" states="init"/>
-                        <button type="object" string="Resume Synchronization Process" name="sync" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+                    <separator string="Synchronize" colspan="4"/>
+                    <group colspan="4" col="6" >
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start All Synchronization Process" name="sync" states="init"/>
+	                        <button type="object" string="Resume All Synchronization Process" name="sync" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+	                    </group>
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start All Synchronization In Background" name="sync_threaded" states="init"/>
+	                        <button type="object" string="Resume All Synchronization In Background" name="sync_threaded" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+	                    </group>
+	                </group>
+                    <separator string="Debug" colspan="4"/>
+                    <group colspan="4" col="6" >
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pushing Data" name="push_data" states="init"/>
+	                        <button type="object" string="Resume Pushing Data" name="push_data" states="update_send,update_validate" />
+	                    </group>
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pulling Data" name="pull_data" states="init"/>
+	                        <button type="object" string="Resume Pulling Data" name="pull_data" states="update_pull"/>
+	                    </group>
+	                </group>
+	                <group colspan="4" col="6" >
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pushing Message" name="push_message" states="init"/>
+	                        <button type="object" string="Resume Pushing Message" name="push_message" states="msg_push"/>
+	                    </group>
+	                    <group col="2" colspan="3">
+	                        <button type="object" string="Start Pulling Message" name="pull_message" states="init"/>
+	                    </group>
+	                </group>
+	                <separator string="Recover After Backup" colspan="4"/>
+	                <group colspan="4" col="2" >
+                    	<button type="object" string="Pull all updates" name="pull_all_data" states="init"/>
                     </group>
-                    <newline />
-                    <group col="2" colspan="3">
-                        <button type="object" string="Start Background Sync" name="sync_threaded" states="init"/>
-                        <button type="object" string="Resume Background Sync" name="sync_threaded" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
-                    </group>
-                    <newline />
-                    <group col="2" colspan="3">
-                        <button type="object" string="Start Pushing Data" name="push_data" states="init"/>
-                        <button type="object" string="Resume Pushing Data" name="push_data" states="update_send,update_validate" />
-                    </group>
-                    <group col="2" colspan="3">
-                        <button type="object" string="Start Pulling Data" name="pull_data" states="init"/>
-                        <button type="object" string="Resume Pulling Data" name="pull_data" states="update_pull"/>
-                    </group>
-                    <group col="2" colspan="3">
-                        <button type="object" string="Start Pushing Message" name="push_message" states="init"/>
-                        <button type="object" string="Resume Pushing Message" name="push_message" states="msg_push"/>
-                    </group>
-                    <group col="2" colspan="3">
-                        <button type="object" string="Start Pulling Message" name="pull_message" states="init"/>
+                    <group colspan="4" col="3">
+                    	<label string="" />
+	                    <field name="state" />
                     </group>
                 </form>
                </field>
        </record>
-
 
         <record model="ir.actions.act_window" id="register_wizard_action">
             <field name="name">Register</field>

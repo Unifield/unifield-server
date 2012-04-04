@@ -112,10 +112,17 @@ class update(osv.osv):
     def _save_puller(self, cr, uid, ids, context, entity_id):
         return self.write(cr, uid, ids, {'puller_ids': [(4, entity_id)]}, context)
 
-    def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, context=None):
+    
+    def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
-        ids = self.search(cr, uid, [('rule_id', 'in', rules), 
+        
+        if not recover:
+            ids = self.search(cr, uid, [('rule_id', 'in', rules), 
                                     ('source', '!=', entity.id), #avoid receiving his own update
+                                    ('sequence', '>', last_seq), 
+                                    ('sequence', '<=', max_seq)], context=context)
+        else:
+            ids = self.search(cr, uid, [('rule_id', 'in', rules), 
                                     ('sequence', '>', last_seq), 
                                     ('sequence', '<=', max_seq)], context=context)
         update_to_send = self.get_update_to_send(cr, uid, entity, ids, context)
