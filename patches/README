@@ -1,0 +1,19 @@
+=== server_patch_export_boolean.diff
+Change the original way in the server to export boolean False value to print a string containing "False" instead
+
+=== server_patch_gzip_xmlrpc.diff
+Add a new protocol of communication with the server: gzipxmlrpc. It's all based on XML-RPC protocol but transfer its data compressed in gzip instead
+
+=== server_patch_netrpc_gzip.diff
+Add a new protocol of communication with the server: netrpc_gzip. It's all based on netrpc protocol but transfer its data compressed in gzip instead
+
+=== server_whole_file_patch.zip
+Archive that contains all server patched files:
+server/bin/osv/orm.py   
+server/bin/service/gzip_xmlrpclib.py  
+server/bin/service/timeout_transport.py  
+server/bin/service/http_server.py  
+server/bin/service/netrpc_server.py  
+server/bin/tiny_socket.py  
+server/bin/tools/config.py  
+
