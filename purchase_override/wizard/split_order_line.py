@@ -64,11 +64,14 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.purchase_line_id.product_uom.rounding)
             else:
                 # Change the qty of the old line
-                line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty}, context=context)
+                line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
+                                                                      'price_unit': split.purchase_line_id.price_unit,}, context=context)
                 # Create the new line
                 new_line_id = line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
+                                                                                 'change_price_manually': split.purchase_line_id.change_price_manually,
+                                                                                 'price_unit': split.purchase_line_id.price_unit,
                                                                                  'line_number': None,
-                                                                             'product_qty': split.new_line_qty}, context=context)
+                                                                                 'product_qty': split.new_line_qty}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
