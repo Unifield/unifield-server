@@ -101,9 +101,9 @@ class entity(osv.osv, Thread):
     _constraints = [
         (_entity_unique,_('The entity is unique, you cannot create a new one'), ['name','identifier'])
     ]
-    
+
     _defaults = {
-        'name' : 'default_entity_name',
+        'name' :  lambda self, cr, uid, c={}: cr.dbname,
         'update_last' : 0,
         'update_offset' : 0
     }
@@ -529,4 +529,6 @@ class sync_server_connection(osv.osv):
 
 sync_server_connection()
 
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

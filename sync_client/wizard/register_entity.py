@@ -53,18 +53,6 @@ class register_entity(osv.osv_memory):
     _name = "sync.client.register_entity"
     _description = "Synchronization Entity"
 
-    def _get_identifier(self, cr, uid, context=None):
-        return self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
-
-    def _get_name(self, cr, uid, context=None):
-        return self.pool.get('sync.client.entity').get_entity(cr, uid, context).name
-    
-    def _get_parent(self, cr, uid, context=None):
-        return self.pool.get('sync.client.entity').get_entity(cr, uid, context).parent
-    
-    def _get_email(self, cr, uid, context=None):
-        return self.pool.get('sync.client.entity').get_entity(cr, uid, context).email
-    
     _columns = {
         'name':fields.char('Entity Name', size=64, required=True),
         'message' : fields.text('Message'),
@@ -75,13 +63,22 @@ class register_entity(osv.osv_memory):
         'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
+
+    def default_get(self, cr, uid, fields, context=None):
+        values = super(register_entity, self).default_get(cr, uid, fields, context)
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
+        
+        values.update({
+                'identifier': entity.identifier,
+                'name': entity.name,
+                'parent' : entity.parent,
+                'email' : entity.email,
+            })
+        
+        return values
     
     _defaults = {
-        'parent' : _get_parent,
-        'name' : _get_name,
-        'email' : _get_email,
         'state' : 'register',
-        'identifier' : _get_identifier,
         'max_size' : 5,
     }
     
@@ -207,3 +204,6 @@ class activate_entity(osv.osv_memory):
         
         
 activate_entity()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
