@@ -386,7 +386,7 @@ class entity(osv.osv, Thread):
         return True
             
     def execute_message(self, cr, uid, context):
-        return self.pool.get('sync.client.message_received').execute(cr, uid, context)
+        return self.pool.get('sync.client.message_received').execute(cr, uid, context=context)
       
       
     """

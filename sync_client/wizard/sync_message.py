@@ -163,13 +163,14 @@ class message_received(osv.osv):
 
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
-        'remote_call':fields.text('Method to call', required = True, readonly=True),
-        'arguments':fields.text('Arguments of the method', required = True, readonly=True),
+        'remote_call':fields.text('Method to call', required = True),
+        'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages",readonly=True),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
+        'editable' : fields.boolean("Set editable"),
     }
 
     def unfold_package(self, cr, uid, package, context=None):
@@ -198,8 +199,9 @@ class message_received(osv.osv):
                 res.append(arg)
         return res
 
-    def execute(self, cr, uid, context=None):
-        ids = self.search(cr, uid, [('run', '=', False)], context=context)
+    def execute(self, cr, uid, ids=False, context=None):
+        if not ids:
+            ids = self.search(cr, uid, [('run', '=', False)], context=context)
         if not ids: return True
         execution_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)

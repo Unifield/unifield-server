@@ -30,13 +30,13 @@
                     <field name="protocol"/>
                     <field name="database"/>
                     <field name="login"/>
-                    <field name="password" />
-                    <field name="max_size" />
+                    <field name="password"/>
+                    <field name="max_size"/>
                     <separator string="Connection state" colspan="4"/>
-                    <field name="uid" invisible="1" />
-                    <field name="state" />
-                    <button  icon="gtk-apply" string="Connect" name="connect" type="object" attrs="{'invisible' : [('state', '=', 'Connected')]}" />
-                    <button  icon="gtk-go-back" string="Reset Connection" name="disconnect" type="object" attrs="{'invisible' : [('state', '!=', 'Connected')]}" />
+                    <field name="uid" invisible="1"/>
+                    <field name="state"/>
+                    <button  icon="gtk-apply" string="Connect" name="connect" type="object" attrs="{'invisible' : [('state', '=', 'Connected')]}"/>
+                    <button  icon="gtk-go-back" string="Reset Connection" name="disconnect" type="object" attrs="{'invisible' : [('state', '!=', 'Connected')]}"/>
                 </form>
             </field>
         </record>
@@ -44,7 +44,7 @@
 
 <!-- ========================= UPDATE RECEIVED =============================== -->
 
-    <record model="ir.ui.view" id="update_received_tree_view">
+        <record model="ir.ui.view" id="update_received_tree_view">
             <field name="name">update.received.tree</field>
             <field name="model">sync.client.update_received</field>
             <field name="type">tree</field>
@@ -66,34 +66,35 @@
             <field name="name">update.received.form</field>
             <field name="model">sync.client.update_received</field>
             <field name="type">form</field>
+            <field name="priority">1</field>
             <field name="arch" type="xml">
-                <form string="Instance Form">
-                    <group col="10" colspan="4">
+                <form string="Update Received">
+                    <group col="6" colspan="4">
                         <field name="source"/>
                         <field name="model"/>
+                        <field name="sequence"/>
                         <field name="create_date"/>
                         <field name="execution_date"/>
-                        <field name="sequence"/>
+                        <field name="run"/>
                         <field name="version"/>
-                        <field name="run" />
                     </group>
-                    <group colspan="4" >
-                        <separator string="Execution log" colspan="4"/>
-                        <field name="log" nolabel="1" colspan="4"/>
-                         <separator string="Values" colspan="4"/>
-                         <field name="values" nolabel="1" colspan="4" />
+                    <separator string="Execution Messages" colspan="4"/>
+                    <field name="log" nolabel="1" colspan="4" attrs="{'readonly':[('editable','=',False)]}"/>
+                    <group colspan="2" col="1">
+                        <separator string="Fields"/>
+                        <field name="fields" nolabel="1" attrs="{'readonly':[('editable','=',False)]}"/>
                     </group>
-                    <group colspan="4" col="4">
-                        <group colspan="2" col="2">
-                            <separator string="Fields" colspan="2"/>
-                            <field name="fields" nolabel="1" />
-                        </group>
-                        <group colspan="2" col="2">
-                            <separator string="Fallback Values" colspan="2"/>
-                            <field name="fallback_values" nolabel="1" />
-                        </group>
+                    <group colspan="2" col="1">
+                        <separator string="Fallback Values"/>
+                        <field name="fallback_values" nolabel="1" attrs="{'readonly':[('editable','=',False)]}"/>
                     </group>
-
+                    <separator string="Values" colspan="4"/>
+                    <field name="values" nolabel="1" colspan="4" attrs="{'readonly':[('editable','=',False)]}"/>
+                    <label string="" colspan="3"/>
+                    <group colspan="1" col="3">
+                        <field name="editable" attrs="{'invisible':[('run','=',True)]}"/>
+                        <button string="Run manually" name="run" type="object" attrs="{'invisible':[('run','=',True)]}"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -104,26 +105,24 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search update Received">
+                   <field name="source"/>
+                   <field name="model"/>
+                   <field name="sequence" />
+                   <newline />
+                   <field name="create_date"/>
+                   <field name="execution_date"/>
+                   <newline/>
                    <filter icon="terp-check" string="Not Run"
                        name="current"
                        domain="[('run','=', False)]"/>
-
-                   <separator orientation="vertical"/>
-                   <field name="source"/>
-                   <field name="model"/>
-                   <field name="create_date"/>
-                   <field name="execution_date"/>
                    <newline />
-                   <field name="log" />
-                   <field name="sequence" />
-                   <newline/>
                    <group expand="0" string="Group By..." colspan="4">
                        <filter string="Source" icon="terp-partner" domain="[]"
-                           context="{'group_by':'source'}" />
+                           context="{'group_by':'source'}"/>
                        <filter string="Model" icon="terp-personal"
-                           domain="[]" context="{'group_by':'model'}" />
+                           domain="[]" context="{'group_by':'model'}"/>
                       <filter string="Sequence" icon="terp-accessories-archiver"
-                           domain="[]" context="{'group_by':'sequence'}" />
+                           domain="[]" context="{'group_by':'sequence'}"/>
 
                    </group>
                </search>
@@ -154,29 +153,29 @@
             <field name="model">sync.client.message_received</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Instance Form">
-                    <group col="10" colspan="4">
-                        <field name="identifier" />
+                <form string="Message Received">
+                    <group col="6" colspan="4">
+                        <field name="identifier"/>
                         <field name="source"/>
-                        <field name="run" />
+                        <field name="run"/>
                         <field name="create_date"/>
                         <field name="execution_date"/>
                     </group>
-                    <group colspan="4" >
-                        <separator string="Execution log" colspan="4"/>
-                        <field name="log" nolabel="1" colspan="4"/>
+                    <separator string="Execution log" colspan="4"/>
+                    <field name="log" nolabel="1" colspan="4" />
+                    <group colspan="2" col="1">
+                        <separator string="Call"/>
+                        <field name="remote_call" nolabel="1" attrs="{'readonly':[('editable','=',False)]}"/>
                     </group>
-                    <group colspan="4" col="4">
-                        <group colspan="2" col="2">
-                            <separator string="Call" colspan="2"/>
-                            <field name="remote_call" nolabel="1"/>
-                        </group>
-                        <group colspan="2" col="2">
-                            <separator string="Arguments" colspan="2"/>
-                            <field name="arguments" nolabel="1" />
-                        </group>
+                    <group colspan="2" col="1">
+                        <separator string="Arguments"/>
+                        <field name="arguments" nolabel="1" attrs="{'readonly':[('editable','=',False)]}"/>
                     </group>
-
+                    <label string="" colspan="3"/>
+                    <group colspan="1" col="3">
+                        <field name="editable" attrs="{'invisible':[('run','=',True)]}"/>
+                        <button string="Run manually" name="execute" type="object" attrs="{'invisible':[('run','=',True)]}"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -187,24 +186,22 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search update Received">
-                   <filter icon="terp-check" string="Not Run"
-                       name="current"
-                       domain="[('run','=', False)]"/>
-
-                   <separator orientation="vertical"/>
                    <field name="source"/>
                    <field name="remote_call"/>
-                   <field name="log" />
                    <field name="create_date"/>
                    <field name="execution_date"/>
                    <newline/>
+                   <filter icon="terp-check" string="Not Run"
+                       name="current"
+                       domain="[('run','=', False)]"/>
+                   <newline />
                    <group expand="0" string="Group By..." colspan="4">
                        <filter string="Source" icon="terp-partner" domain="[]"
-                           context="{'group_by':'source'}" />
+                           context="{'group_by':'source'}"/>
                        <filter string="Call" icon="terp-personal"
-                           domain="[]" context="{'group_by':'remote_call'}" />
+                           domain="[]" context="{'group_by':'remote_call'}"/>
                        <filter string="Sequence" icon="terp-accessories-archiver"
-                           domain="[]" context="{'group_by':'sequence'}" />
+                           domain="[]" context="{'group_by':'sequence'}"/>
 
                    </group>
                </search>
@@ -227,7 +224,7 @@
                     <field name="rule_id"/>
                     <field name="sent"/>
                     <field name="sent_date"/>
-                    <field name="xml_id" invisible="1" />
+                    <field name="xml_id" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -239,21 +236,20 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
-                    <group col="8" colspan="4">
+                    <group col="6" colspan="4">
                         <field name="model"/>
                         <field name="rule_id"/>
+                        <field name="xml_id"/>
                         <field name="sent"/>
                         <field name="sent_date"/>
-
                         <field name="version"/>
-                        <field name="session_id" />
-                        <field name="xml_id" />
-                    </group>
-                    <group colspan="4" >
-                        <separator string="Fields" colspan="4"/>
-                        <field name="fields" nolabel="1" colspan="4"/>
-                         <separator string="Values" colspan="4"/>
-                         <field name="values" nolabel="1" colspan="4" />
+                        <field name="session_id"/>
+                        <group colspan="6" col="1">
+                            <separator string="Fields"/>
+                            <field name="fields" nolabel="1"/>
+                            <separator string="Values"/>
+                            <field name="values" nolabel="1"/>
+                        </group>
                     </group>
                 </form>
             </field>
@@ -265,32 +261,30 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search update Sent">
+                   
+                   <field name="sent_date"/>
+                   <field name="model"/>
+                   <field name="rule_id"/>
+                   <newline />
                    <filter icon="terp-check" string="Not Run"
                        name="current"
                        domain="[('sent','=', False)]"/>
-                   <field name="sent_date"/>
-                   <separator orientation="vertical"/>
-                   <field name="model"/>
-                   <field name="rule_id"/>
-                   <field name="version" />
-                   <field name="session_id" />
-                   <field name="sent_date" />
                    <newline/>
                    <group expand="0" string="Group By..." colspan="4">
                       <filter string="Model" icon="terp-partner" domain="[]"
-                           context="{'group_by':'model'}" />
+                           context="{'group_by':'model'}"/>
 
                       <filter string="Rule" icon="terp-personal"
-                           domain="[]" context="{'group_by':'rule_id'}" />
+                           domain="[]" context="{'group_by':'rule_id'}"/>
 
                       <filter string="Session" icon="terp-accessories-archiver"
-                           domain="[]" context="{'group_by':'session_id'}" />
+                           domain="[]" context="{'group_by':'session_id'}"/>
 
                       <filter string="Date" icon="terp-partner" domain="[]"
-                           context="{'group_by':'sync_date'}" />
+                           context="{'group_by':'sync_date'}"/>
 
                       <filter string="Record" icon="terp-partner" domain="[]"
-                           context="{'group_by':'xml_id'}" />
+                           context="{'group_by':'xml_id'}"/>
 
                    </group>
                </search>
@@ -305,7 +299,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree colors="red:sent == False">
-                    <field name="identifier" />
+                    <field name="identifier"/>
                     <field name="destination_name"/>
                     <field name="remote_call"/>
                     <field name="sent"/>
@@ -321,23 +315,18 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <group col="6" colspan="4">
-                        <field name="identifier" />
-                        <field name="destination_name"/>
-                        <field name="sent"/>
-                        <field name="sent_date"/>
+                    <field name="identifier"/>
+                    <field name="destination_name"/>
+                    <field name="sent_date"/>
+                    <field name="sent"/>
+                    <group colspan="2" col="1">
+                        <separator string="Call"/>
+                        <field name="remote_call" nolabel="1"/>
                     </group>
-                    <group colspan="4" col="4">
-                        <group colspan="2" col="2">
-                            <separator string="Call" colspan="2"/>
-                            <field name="remote_call" nolabel="1"/>
-                        </group>
-                        <group colspan="2" col="2">
-                            <separator string="Arguments" colspan="2"/>
-                            <field name="arguments" nolabel="1" />
-                        </group>
+                    <group colspan="2" col="1">
+                        <separator string="Arguments"/>
+                        <field name="arguments" nolabel="1"/>
                     </group>
-
                 </form>
             </field>
         </record>
@@ -348,20 +337,23 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search>
-                   <filter icon="terp-check" string="Not Sent"
-                       name="current"
-                       domain="[('sent','=', False)]"/>
+                   
                    <field name="sent_date"/>
                    <separator orientation="vertical"/>
                    <field name="identifier"/>
                    <field name="remote_call"/>
-                   <field name="destination_name" />
+                   <field name="destination_name"/>
+                   
                    <newline/>
+                   <filter icon="terp-check" string="Not Sent"
+                       name="current"
+                       domain="[('sent','=', False)]"/>
+                   <newline />
                    <group expand="0" string="Group By..." colspan="4">
                        <filter string="Destination" icon="terp-partner" domain="[]"
-                           context="{'group_by':'destination_name'}" />
+                           context="{'group_by':'destination_name'}"/>
                        <filter string="Call" icon="terp-personal"
-                           domain="[]" context="{'group_by':'remote_call'}" />
+                           domain="[]" context="{'group_by':'remote_call'}"/>
                    </group>
                </search>
             </field>
@@ -423,7 +415,7 @@
         <menuitem id="message_menu" name="Message" parent="mon_menu"/>
 
         <menuitem id="connection_manager_menu" name="Connection Manager" parent="reg_menu"
-                action="connection_manager_action" />
+                action="connection_manager_action"/>
 
         <menuitem id="update_received_menu" name="Update Received Monitor" parent="update_menu"
                 action="update_received_action" />
@@ -435,8 +427,8 @@
                 action="message_received_action" />
 
         <menuitem id="message_sent_menu" name="Messages Sent Monitor" parent="message_menu"
-
                 action="message_sent_action" />
+
 
 
 
@@ -447,8 +439,8 @@
             <field name="inherit_id" ref="base.view_model_data_form"/>
             <field name="arch" type="xml">
                 <field name="date_init" position="after">
-                     <field name="last_modification" />
-                  <field name="sync_date" />
+                     <field name="last_modification"/>
+                  <field name="sync_date"/>
                 </field>
             </field>
         </record>

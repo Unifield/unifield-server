@@ -191,6 +191,10 @@ class message_rule(osv.osv):
         return rules_data
         
     _order = 'sequence_number asc,model_id asc'
+    
+    _defaults = {
+          'applies_to_type' : True,       
+    }
 
 message_rule()
 
