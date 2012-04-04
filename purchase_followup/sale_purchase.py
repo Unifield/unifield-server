@@ -33,6 +33,9 @@ class purchase_order(osv.osv):
         res = {}
         
         for order in self.browse(cr, uid, ids, context=context):
+            if order.order_type == 'direct' and order.state == 'approved':
+                res[order.id] = 100.00
+                continue
             res[order.id] = 0.00
             amount_total = 0.00
             amount_received = 0.00
