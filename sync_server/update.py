@@ -45,7 +45,11 @@ class update(osv.osv):
         'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null"),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
+        'create_date': fields.datetime('Synchro Date/Time', readonly=True),
+        'puller_ids': fields.many2many('sync.server.entity', 'sync_server_entity_rel', 'entity_id', 'update_id', string="Pulled by")
     }
+
+    _order = 'sequence, create_date desc'
     
     def unfold_package(self, cr, uid, entity, packet, context=None):
         data = {
@@ -104,7 +108,10 @@ class update(osv.osv):
                     if group.id in s_group:
                         update_to_send.append(update)
         return update_to_send
-    
+
+    def _save_puller(self, cr, uid, ids, context, entity_id):
+        return self.write(cr, uid, ids, {'puller_ids': [(4, entity_id)]}, context)
+
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, context=None):
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         ids = self.search(cr, uid, [('rule_id', 'in', rules), 
@@ -114,6 +121,7 @@ class update(osv.osv):
         update_to_send = self.get_update_to_send(cr, uid, entity, ids, context)
         #offset + limit 
         update_to_send = update_to_send[offset:offset+max_size]
+        self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
             return False
         update_master = update_to_send[0]
@@ -178,4 +186,6 @@ class update(osv.osv):
     _order = 'sequence asc, id asc'
     
 update()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -53,6 +53,8 @@
                     <field name="source"/>
                     <field name="model"/>
                     <field name="sequence"/>
+                    <field name="create_date"/>
+                    <field name="execution_date"/>
                     <field name="version"/>
                     <field name="run"/>
                 </tree>
@@ -66,9 +68,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
+                <form string="Entity Form">
                     <group col="10" colspan="4">
                         <field name="source"/>
                         <field name="model"/>
+                        <field name="create_date"/>
+                        <field name="execution_date"/>
                         <field name="sequence"/>
                         <field name="version"/>
                         <field name="run" />
@@ -107,6 +112,8 @@
                    <separator orientation="vertical"/>
                    <field name="source"/>
                    <field name="model"/>
+                   <field name="create_date"/>
+                   <field name="execution_date"/>
                    <field name="log" />
                    <field name="sequence" />
                    <newline/>
@@ -135,6 +142,8 @@
                     <field name="source"/>
                     <field name="remote_call"/>
                     <field name="run"/>
+                    <field name="create_date"/>
+                    <field name="execution_date"/>
                 </tree>
             </field>
         </record>
@@ -149,8 +158,9 @@
                     <group col="10" colspan="4">
                         <field name="identifier" />
                         <field name="source"/>
-
                         <field name="run" />
+                        <field name="create_date"/>
+                        <field name="execution_date"/>
                     </group>
                     <group colspan="4" >
                         <separator string="Execution log" colspan="4"/>
@@ -185,6 +195,8 @@
                    <field name="source"/>
                    <field name="remote_call"/>
                    <field name="log" />
+                   <field name="create_date"/>
+                   <field name="execution_date"/>
                    <newline/>
                    <group expand="0" string="Group By..." colspan="4">
                        <filter string="Source" icon="terp-partner" domain="[]"
@@ -215,6 +227,7 @@
                     <field name="rule_id"/>
                     <field name="sync_date"/>
                     <field name="sent"/>
+                    <field name="sent_date"/>
                     <field name="xml_id" invisible="1" />
                 </tree>
             </field>
@@ -231,6 +244,7 @@
                         <field name="model"/>
                         <field name="rule_id"/>
                         <field name="sent"/>
+                        <field name="sent_date"/>
                         <field name="sync_date"/>
 
                         <field name="version"/>
@@ -256,7 +270,7 @@
                    <filter icon="terp-check" string="Not Run"
                        name="current"
                        domain="[('sent','=', False)]"/>
-
+                   <field name="sent_date"/>
                    <separator orientation="vertical"/>
                    <field name="model"/>
                    <field name="rule_id"/>
@@ -296,6 +310,7 @@
                     <field name="destination_name"/>
                     <field name="remote_call"/>
                     <field name="sent"/>
+                    <field name="sent_date"/>
                 </tree>
             </field>
         </record>
@@ -311,6 +326,7 @@
                         <field name="identifier" />
                         <field name="destination_name"/>
                         <field name="sent"/>
+                        <field name="sent_date"/>
                     </group>
                     <group colspan="4" col="4">
                         <group colspan="2" col="2">
@@ -336,7 +352,7 @@
                    <filter icon="terp-check" string="Not Sent"
                        name="current"
                        domain="[('sent','=', False)]"/>
-
+                   <field name="sent_date"/>
                    <separator orientation="vertical"/>
                    <field name="identifier"/>
                    <field name="remote_call"/>
@@ -420,6 +436,7 @@
                 action="message_received_action" />
 
         <menuitem id="message_sent_menu" name="Messages Sent Monitor" parent="message_menu"
+
                 action="message_sent_action" />
 
 

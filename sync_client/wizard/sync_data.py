@@ -119,6 +119,7 @@ class update_to_send(osv.osv):
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'sent' : fields.boolean('Sent ?'),
         'sync_date' : fields.datetime('Start date'),
+        'sent_date' : fields.datetime('Sent date'),
         'session_id' : fields.char('Session Id', size=128),
         'version' : fields.integer('Record Version'),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
@@ -199,7 +200,7 @@ class update_to_send(osv.osv):
         
         for update in self.browse(cr, uid, update_ids, context=context):
             model_data_pool.write(cr, uid, update.xml_id.id, {'sync_date' : update.sync_date, 'version' : update.version})
-        self.write(cr, uid, update_ids, {'sent' : True}, context=context)    
+        self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)    
         
         
     _order = 'id asc'
@@ -220,6 +221,8 @@ class update_received(osv.osv):
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'fallback_values':fields.text('Fallback values', readonly=True),
+        'create_date':fields.text('Synchro date/time', readonly=True),
+        'execution_date':fields.text('Execution date', readonly=True),
     }
     
     def unfold_package(self, cr, uid, packet, context=None):
@@ -234,6 +237,8 @@ class update_received(osv.osv):
             'fields' : packet['fields'],
             'sequence' : packet['sequence'],
             'fallback_values' : packet['fallback_values'],
+            # Retrieve synchro date/time from the packet and store it
+            #'create_date' : packet['create_date'],
         }
         for load_item in packet['load']:
             data.update({
@@ -301,6 +306,7 @@ class update_received(osv.osv):
         return rollback
     
     def run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'execution_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
         for update in self.browse(cr, uid, ids, context=context):
             try:
                 cr.execute("SAVEPOINT exec_update")
