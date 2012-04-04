@@ -1627,17 +1627,20 @@ class account_bank_statement_line(osv.osv):
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
-            account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
-            acc_type = account.type_for_register
-            if acc_type in ['transfer', 'transfer_same']:
+            a = acc_obj.read(cr, uid, account_id, ['type_for_register'])
+            if a['type_for_register'] in ['transfer', 'transfer_same']:
                 # UF-428: transfer type shows only Journals instead of Registers as before
                 third_type = [('account.journal', 'Journal')]
                 third_required = True
                 third_selection = 'account.journal,0'
-            elif acc_type == 'advance':
+            elif a['type_for_register'] == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
+            elif a['type_for_register'] == 'down_payment':
+                third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
 
     def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context=None):
