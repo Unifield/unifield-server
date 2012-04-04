@@ -115,16 +115,16 @@ class update_to_send(osv.osv):
     
 
     _columns = {
-        'values':fields.text('Values', size=128),
+        'values':fields.text('Values', size=128, readonly=True),
         'model' : fields.many2one('ir.model','Model', readonly=True),
-        'sent' : fields.boolean('Sent ?'),
-        'sync_date' : fields.datetime('Start date'),
-        'sent_date' : fields.datetime('Sent date'),
-        'session_id' : fields.char('Session Id', size=128),
-        'version' : fields.integer('Record Version'),
+        'sent' : fields.boolean('Sent ?', readonly=True),
+        'sync_date' : fields.datetime('Start date',readonly=True),
+        'sent_date' : fields.datetime('Sent date', readonly=True),
+        'session_id' : fields.char('Session Id', size=128, readonly=True),
+        'version' : fields.integer('Record Version', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
         'xml_id' : fields.many2one('ir.model.data', 'Synchronization information', readonly=True, ondelete="set null"),
-        'fields':fields.text('Fields', size=128),
+        'fields':fields.text('Fields', size=128, readonly=True),
         
     }
     
@@ -221,8 +221,8 @@ class update_received(osv.osv):
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'fallback_values':fields.text('Fallback values', readonly=True),
-        'create_date':fields.text('Synchro date/time', readonly=True),
-        'execution_date':fields.text('Execution date', readonly=True),
+        'create_date':fields.datetime('Synchro date/time', readonly=True),
+        'execution_date':fields.datetime('Execution date', readonly=True),
     }
     
     def unfold_package(self, cr, uid, packet, context=None):

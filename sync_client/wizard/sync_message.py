@@ -75,11 +75,11 @@ class message_to_send(osv.osv):
 
     _columns = {
 
-        'identifier' : fields.char('Identifier', size=128),
-        'sent' : fields.boolean('Sent ?'),
-        'remote_call':fields.text('Method to call', required = True),
-        'arguments':fields.text('Arguments of the method', required = True),
-        'destination_name':fields.char('Destination Name', size=256, required = True),
+        'identifier' : fields.char('Identifier', size=128, readonly=True),
+        'sent' : fields.boolean('Sent ?', readonly=True),
+        'remote_call':fields.text('Method to call', required = True,readonly=True),
+        'arguments':fields.text('Arguments of the method', required = True, readonly=True),
+        'destination_name':fields.char('Destination Name', size=256, required = True, readonly=True),
         'sent_date' : fields.datetime('Sent Date', readonly=True),
     }
 
@@ -167,7 +167,7 @@ class message_received(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True, readonly=True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
-        'log' : fields.text("Execution Messages"),
+        'log' : fields.text("Execution Messages",readonly=True),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
     }

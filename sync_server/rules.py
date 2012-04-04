@@ -42,6 +42,7 @@ class sync_rule(osv.osv):
         'included_fields':fields.text('Fields to include', required = True),
         'forced_values':fields.text('Values to force', required = False),
         'fallback_values':fields.text('Fallback values', required = False),
+        'active': fields.boolean('Active'),
     }
         
     _order = 'sequence_number asc,model_id asc'
@@ -153,6 +154,7 @@ class message_rule(osv.osv):
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination_name': fields.char('Fields to extract destination', size=256, required = True),
+        'active': fields.boolean('Active'),
     }
     
     def _get_message_rule(self, cr, uid, entity, context=None):

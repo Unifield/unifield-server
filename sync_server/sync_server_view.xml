@@ -45,6 +45,8 @@
         <record model="ir.ui.view" id="update_tree_view">
             <field name="name">update.tree</field>
             <field name="model">sync.server.update</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
                 <tree string="Synchronization Monitor">
                     <field name="source"/>
                     <field name="create_date"/>
@@ -203,7 +205,7 @@
 
         <menuitem id="mon_menu" name="Monitoring" parent="sync_menu" sequence="10"/>
 
-        <menuitem id="conf_menu" name="Configuration menu" parent="sync_menu" sequence="90"/>
+        <menuitem id="conf_menu" name="Configuration" parent="sync_menu" sequence="90"/>
 
         <menuitem id="entity_menu" name="Instance" parent="conf_menu" sequence="10"
                 action="entity_action"/>

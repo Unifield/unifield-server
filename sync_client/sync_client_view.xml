@@ -68,7 +68,6 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
-                <form string="Entity Form">
                     <group col="10" colspan="4">
                         <field name="source"/>
                         <field name="model"/>
@@ -114,6 +113,7 @@
                    <field name="model"/>
                    <field name="create_date"/>
                    <field name="execution_date"/>
+                   <newline />
                    <field name="log" />
                    <field name="sequence" />
                    <newline/>
@@ -149,8 +149,8 @@
         </record>
 
 
-        <record model="ir.ui.view" id="update_received_form_view">
-            <field name="name">update.received.form</field>
+        <record model="ir.ui.view" id="message_received_form_view">
+            <field name="name">message.received.form</field>
             <field name="model">sync.client.message_received</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
@@ -225,7 +225,6 @@
                     <field name="session_id"/>
                     <field name="version"/>
                     <field name="rule_id"/>
-                    <field name="sync_date"/>
                     <field name="sent"/>
                     <field name="sent_date"/>
                     <field name="xml_id" invisible="1" />
@@ -245,7 +244,6 @@
                         <field name="rule_id"/>
                         <field name="sent"/>
                         <field name="sent_date"/>
-                        <field name="sync_date"/>
 
                         <field name="version"/>
                         <field name="session_id" />
@@ -276,6 +274,7 @@
                    <field name="rule_id"/>
                    <field name="version" />
                    <field name="session_id" />
+                   <field name="sent_date" />
                    <newline/>
                    <group expand="0" string="Group By..." colspan="4">
                       <filter string="Model" icon="terp-partner" domain="[]"
