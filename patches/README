@@ -1,11 +1,14 @@
 === server_patch_export_boolean.diff
 Change the original way in the server to export boolean False value to print a string containing "False" instead
+bzr branch lp:openobject-server/6.0-msf-patch-export-boolean
 
 === server_patch_gzip_xmlrpc.diff
 Add a new protocol of communication with the server: gzipxmlrpc. It's all based on XML-RPC protocol but transfer its data compressed in gzip instead
+bzr branch lp:openobject-server/6.0-msf-patch-gzip-xmlrpc
 
 === server_patch_netrpc_gzip.diff
 Add a new protocol of communication with the server: netrpc_gzip. It's all based on netrpc protocol but transfer its data compressed in gzip instead
+bzr branch lp:openobject-server/6.0-msf-patch-netrpc-gzip
 
 === server_whole_file_patch.zip
 Archive that contains all server patched files:
@@ -19,6 +22,7 @@ server/bin/tools/config.py
 
 === web_patch_choose_server_port.diff
 Enable OpenERP Web Client to use a different OpenERP Server host, port and protocol.
+bzr branch lp:openobject-client-web/6.0-msf-patch-choose-server-port
 
 === web_whole_file_patch.zip
 Archive that contains all web client patched files:
