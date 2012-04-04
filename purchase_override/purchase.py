@@ -131,6 +131,14 @@ class purchase_order(osv.osv):
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
+            
+        if vals.get('order_type'):
+            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                vals.update({'invoice_method': 'manual'})
+            elif vals.get('order_type') == 'direct':
+                vals.update({'invoice_method': 'order'})
+            else:
+                vals.update({'invoice_method': 'picking'})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -157,6 +165,8 @@ class purchase_order(osv.osv):
         elif order_type == 'direct':
             v['invoice_method'] = 'order'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+        else:
+            v['invoice_method'] = 'picking'
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
@@ -473,6 +483,14 @@ class purchase_order(osv.osv):
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True
+            
+        if vals.get('order_type'):
+            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                vals.update({'invoice_method': 'manual'})
+            elif vals.get('order_type') == 'direct':
+                vals.update({'invoice_method': 'order'})
+            else:
+                vals.update({'invoice_method': 'picking'})
             
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)

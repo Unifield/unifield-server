@@ -228,9 +228,6 @@
                     <xpath expr="/form//field[@name='location_id']" position="attributes">
                         <attribute name="attrs">{'invisible': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
 
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                         <group colspan="4" col="14">
@@ -324,7 +321,7 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                                 <field name="fiscal_position" widget="selection"/>
                             </group>
                             <newline/>
@@ -413,7 +410,7 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                                 <field name="fiscal_position" widget="selection"/>
                             </group>
                             <newline/>
