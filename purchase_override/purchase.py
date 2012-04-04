@@ -658,6 +658,8 @@ class purchase_order_line(osv.osv):
 
         if not merged_ids:
             new_vals['order_id'] = order_id
+            if not new_vals.get('price_unit', False):
+                new_vals['price_unit'] = price_unit
             vals['merged_id'] = line_obj.create(cr, uid, new_vals, context=context)
         else:
             res_merged = line_obj._update(cr, uid, merged_ids[0], product_qty, price_unit, context=context, no_update=False)
@@ -666,12 +668,14 @@ class purchase_order_line(osv.osv):
 
         return vals
 
-    def _update_merged_line(self, cr, uid, line_id, vals, context=None):
+    def _update_merged_line(self, cr, uid, line_id, vals=None, context=None):
         '''
         Update the merged line
         '''
         merged_line_obj = self.pool.get('purchase.order.merged.line')
         
+        if not vals:
+            vals = {}
         tmp_vals = vals.copy()
 
         # If it's an update of a line
