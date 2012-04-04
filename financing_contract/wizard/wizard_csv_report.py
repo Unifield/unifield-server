@@ -22,6 +22,8 @@ from osv import fields, osv
 import csv
 import StringIO
 from tools.translate import _
+import datetime
+from mx.DateTime import *
 
 class wizard_csv_report(osv.osv_memory):
     
@@ -39,12 +41,27 @@ class wizard_csv_report(osv.osv_memory):
             context = {}
         if 'reporting_type' in context:
             # Dictionary for selection
+            
+            # get Cost Center codes of the given contract
+            costcenter_codes = ""
+            for cc in contract.cost_center_ids:
+                costcenter_codes = cc.code + ", " + costcenter_codes
+            if costcenter_codes:
+                costcenter_codes = costcenter_codes[:-2]
+            
             reporting_type_selection = dict(self.pool.get('financing.contract.format')._columns['reporting_type'].selection)
-            return [['Financing contract name:', contract.name],
-                    ['Financing contract code:', contract.code],
+            return [['FINANCIAL REPORT for financing contract'],
+                    ['Report printing date::', datetime.datetime.now().strftime("%d-%b-%Y %H:%M")],
+                    [''],
                     ['Donor:', contract.donor_id.name],
-                    ['Eligible from:', contract.eligibility_from_date, 'to:', contract.eligibility_to_date],
-                    ['Reporting type:', reporting_type_selection[context.get('reporting_type')]]]
+                    ['Financing contract name:', contract.name],
+                    ['Financing contract code:', contract.code],
+                    ['Grant amount:', str(contract.grant_amount)],
+                    ['Reporting currency:', contract.reporting_currency.name],
+                    ['Eligible from:', DateFrom(contract.eligibility_from_date).strftime('%d-%b-%Y')],
+                    ['to:', DateFrom(contract.eligibility_to_date).strftime('%d-%b-%Y')],
+                    ['Reporting type:', reporting_type_selection[context.get('reporting_type')]],
+                    ['Cost centers:', costcenter_codes]]
         else:
             return []
     
