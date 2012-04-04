@@ -4,7 +4,7 @@
             <field name="name">Cross docking</field>
         </record>
         <record id="stock_location_input" model="stock.location">
-            <field name="name">INPUT</field>
+            <field name="name">Input</field>
         </record>
     </data>
 </openerp>

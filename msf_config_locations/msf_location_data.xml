@@ -55,7 +55,7 @@
         <field name="posz">4</field>
     </record>
 
-    <record id="stock_location_input" model="stock.location">
+    <record id="msf_cross_docking.stock_location_input" model="stock.location">
         <field name="name">Input</field>
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
@@ -366,7 +366,7 @@
 
     <record id="stock.warehouse0" model="stock.warehouse">
         <field name="name">MSF Coordination C1</field>
-        <field name="lot_input_id" ref="stock_location_input"/>
+        <field name="lot_input_id" ref="msf_cross_docking.stock_location_input"/>
         <field name="lot_stock_id" ref="stock.stock_location_stock"/>
         <field name="lot_output_id" ref="stock.stock_location_output"/>
     </record>
