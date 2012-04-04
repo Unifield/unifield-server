@@ -770,7 +770,7 @@ class purchase_order_line(osv.osv):
 #                    if context.get('__copy_data_seen') and context.get('__copy_data_seen').get('purchase.order.line') and vals.get('parent_line_id'):
 #                        price = self.browse(cr, uid, vals.get('parent_line_id'), context=context).price_unit
                     # If the price doesn't came from product pricelists and the price is not manually updated, raise an error
-                    if vals.get('price_unit', 0.00) != price and not vals.get('parent_line_id', False):
+                    if price and vals.get('price_unit', 0.00) != price and not vals.get('parent_line_id', False):
                         raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
                     else:
                         vals = self._update_merged_line(cr, uid, False, vals, context=context)
@@ -891,7 +891,7 @@ class purchase_order_line(osv.osv):
         order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
 
         lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)])
-        if lines and price != price_unit and not order.rfq_ok:
+        if lines and price and price != price_unit and not order.rfq_ok:
             if price_unit != 0.00:
                 warning = {
                 'title': 'Other lines updated !',
