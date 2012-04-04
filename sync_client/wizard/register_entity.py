@@ -57,9 +57,9 @@ class register_entity(osv.osv_memory):
         'name':fields.char('Instance Name', size=64, required=True),
         'message' : fields.text('Message'),
         'max_size' : fields.integer("Max Packet Size"),
-        'parent':fields.char('Parent Instance', size=64),
+        'parent_id' : fields.many2one('sync_client.instance.temp', 'Parent Instance'),
         'email' : fields.char('Contact Email', size=256, required=True),
-        'identifier':fields.char('Identifier', size=64, readonly=True), 
+        'identifier': fields.char('Identifier', size=64, readonly=True), 
         'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
@@ -71,7 +71,7 @@ class register_entity(osv.osv_memory):
         values.update({
                 'identifier': entity.identifier,
                 'name': entity.name,
-                'parent' : entity.parent,
+                #'parent' : entity.parent,
                 'email' : entity.email,
             })
         
@@ -83,17 +83,27 @@ class register_entity(osv.osv_memory):
     }
     
     def previous(self, cr, uid, ids, state, context=None):
-        map = {'parents' : 'register',
+        maping = {'parents' : 'register',
                'groups' : 'parents',
                'message' : 'groups'}
         
-        for id in ids:
-            state = self.browse(cr, uid, id, context=context).state
-            self.write(cr, uid, [id], {'state' : map[state]}, context=context)
+        for res_id in ids:
+            state = self.browse(cr, uid, res_id, context=context).state
+            self.write(cr, uid, [res_id], {'state' : maping[state]}, context=context)
         return True
     
+    def _get_default_entity(self, cr, uid, ids, context=None):
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
+        if entity.parent:
+            ids = self.pool.get('sync_client.instance.temp').search(cr, uid, [('name', '=', entity.parent)] , context=context)
+            if ids:
+                return ids[0]
+        return False
+    
     def next(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state' : 'parents'}, context=context)
+        self.pool.get("sync_client.instance.temp").fetch(cr, uid)
+        parent_id = self._get_default_entity(cr, uid, ids, context)
+        self.write(cr, uid, ids, {'state' : 'parents', 'parent_id' : parent_id}, context=context)
         return True
     
     def group_state(self, cr, uid, ids, context=None):
@@ -108,7 +118,7 @@ class register_entity(osv.osv_memory):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         for entity in self.browse(cr, uid, ids, context=context):
             data = {'name' : entity.name,
-                    'parent_name' : entity.parent,
+                    'parent_name' : entity.parent_id and entity.parent_id.name or '',
                     'identifier' : entity.identifier,
                     'email' : entity.email,
                     'group_names' : [group.name for group in entity.group_ids],
@@ -128,7 +138,7 @@ class register_entity(osv.osv_memory):
         data = { 
                 'identifier' : cur.identifier, 
                 'name' : cur.name,
-                'parent' : cur.parent,
+                'parent' : cur.parent_id and cur.parent_id.name or '',
                 'email' : cur.email,
                 'max_size' : cur.max_size,
             }
@@ -202,8 +212,25 @@ class activate_entity(osv.osv_memory):
                 raise osv.except_osv(_('Error !'), res[1])
         return True
         
-        
 activate_entity()
+
+class instance_temp(osv.osv):
+    _name = "sync_client.instance.temp"
+
+    _columns = {
+        'name' : fields.char("Instance Name", size=64, required=True)      
+    }
+
+    def fetch(self, cr, uid):
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+        whole = self.search(cr, uid, [])
+        self.unlink(cr, uid, whole)
+        for entity in proxy.read(proxy.search([]), ['id','name']):
+            self.create(cr, uid, entity)
+        return True
+
+instance_temp()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -11,14 +11,13 @@
                     <group colspan="4" states="register" width="450" height="200">
                         <field name="name" colspan="4"/>
                         <field name="email" colspan="4" />
-
                         <separator string="" colspan="4" />
                         <button type="special" special="cancel" string="Cancel" colspan="2"/>
                         <button type="object" string="Next" name="next" colspan="2"/>
                     </group>
                     <group colspan="4" col="5" states="parents" width="450" height="200">
                         <field name="identifier" colspan="4"/><button type="object" string="Generate a new UUID" name="generate_uuid" colspan="1"/>
-                        <field name="parent" colspan="5"/>
+                        <field name="parent_id" colspan="5"/>
                         <separator string="" colspan="5" />
                         <button type="special" special="cancel" string="Cancel" colspan="1"/>
                         <label colspan="2" />
