@@ -104,7 +104,9 @@ class account_invoice(osv.osv):
             # Create down payment until given amount is reached
             # browse all invoice purchase, then all down payment attached to purchases
             for po in inv.purchase_ids:
-                for dp in po.down_payment_ids:
+                # Order by id all down payment in order to have them in creation order
+                dp_ids = self.pool.get('account.move.line').search(cr, uid, [('down_payment_id', '=', po.id)], order='date ASC, id ASC')
+                for dp in self.pool.get('account.move.line').browse(cr, uid, dp_ids):
                     # verify that total is not superior to amount
                     if total >= amount:
                         continue
