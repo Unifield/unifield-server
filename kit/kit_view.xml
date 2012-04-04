@@ -16,7 +16,11 @@
                         </group>
                         <group col="6" colspan="2">
                         	<field name="composition_version_txt" attrs="{'required': [('composition_type', '=', 'theoretical')], 'invisible': [('composition_type', '!=', 'theoretical')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="composition_version_id" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" domain="[('composition_product_id', '=', composition_product_id), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" colspan="2" />
+                        	<field name="composition_version_id"
+                        		context="{'wizard_composition_type': 'theoretical', 'composition_type': 'theoretical'}"
+                        		attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}"
+                        		domain="[('composition_product_id', '=', composition_product_id), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]"
+                        		colspan="2" />
 	                        <field name="composition_creation_date" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_batch_check" invisible="True" colspan="2" />
 	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
@@ -159,7 +163,10 @@
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <separator orientation="vertical" />
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
-                    <field name="composition_version_id" select="1" context="{'wizard_composition_type': 'theoretical'}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
+                    <field name="composition_version_id"
+                    	select="1"
+                    	context="{'wizard_composition_type': 'theoretical', 'composition_type': 'theoretical'}"
+                    	domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="composition_combined_ref_lot" select="1" />
                     <field name="composition_exp" select="1" />
                     <newline />
