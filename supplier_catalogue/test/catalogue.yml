@@ -117,3 +117,18 @@
                         'date': '2012-04-01',
                         })[ref('purchase.list0')]
     assert price == 200.00, "Bad price computation :: result -> %s (expected -> 200.00)" % price
+-
+  We remove a supplier catalogue line
+-
+  !python {model: supplier.catalogue.line}: |
+    self.unlink(cr, uid, [ref('catalogue1_line5')], context=context)
+-
+  We check the line in supplier information has been removed
+-
+  !python {model: product.supplierinfo}: |
+    ref_product = self.pool.get('product.product').browse(cr, uid, ref('product3')).product_tmpl_id.id
+    info_ids = self.search(cr, uid, [('product_id', '=', ref_product), ('name', '=', ref('supplier1'))])
+    assert len(info_ids) == 1, "Number of supplier info not correct :: result %s (expected 1)" % len(info_ids)
+    for info in self.browse(cr, uid, info_ids):
+      assert info.delay == 10, "Delay is not correct :: result: %s (expected 10)" % info.delay
+      assert len(info.pricelist_ids) == 2, "Number of lines in supplier info not correct :: result %s (expected 2)" % len(info.pricelist_ids)
