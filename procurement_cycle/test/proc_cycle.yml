@@ -15,7 +15,7 @@
   We create a new rule for Categ1 and cycle_sloc2
 -
   !record {model: stock.warehouse.order.cycle, id: r1, context: {'button': 'test'}}:
-    warehouse_id: stock.warehouse0
+    warehouse_id: warehouse_proc_cycle
     location_id: cycle_sloc2
     frequence_id: daily1
     name: R4
@@ -34,7 +34,7 @@
   We create a new rule for P3 in Sloc2
 -
   !record {model: stock.warehouse.order.cycle, id: r2, context: {'button': 'test'}}:
-    warehouse_id: stock.warehouse0
+    warehouse_id: warehouse_proc_cycle
     location_id: cycle_sloc2
     frequence_id: daily1
     active: 1
@@ -51,7 +51,7 @@
   We create a new rule for Categ2 on Sloc2
 -
   !record {model: stock.warehouse.order.cycle, id: r3, context: {'button': 'test'}}:
-    warehouse_id: stock.warehouse0
+    warehouse_id: warehouse_proc_cycle
     location_id: cycle_sloc2
     frequence_id: daily1
     active: 1
@@ -67,7 +67,7 @@
   We create a new rule for Categ 1 on Sloc1
 -
   !record {model: stock.warehouse.order.cycle, id: r4, context: {'button': 'test'}}:
-    warehouse_id: stock.warehouse0
+    warehouse_id: warehouse_proc_cycle
     location_id: cycle_sloc1
     frequence_id: daily1
     active: 1
