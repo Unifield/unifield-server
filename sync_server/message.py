@@ -38,8 +38,8 @@ class message(osv.osv):
         'sent': fields.boolean('Sent to destination ?'),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True), 
-        'destination': fields.many2one('sync.server.entity', string="Destination Entity"),
-        'source': fields.many2one('sync.server.entity', string="Source Entity"), 
+        'destination': fields.many2one('sync.server.entity', string="Destination Instance"),
+        'source': fields.many2one('sync.server.entity', string="Source Instance"), 
     }
     
     def unfold_package(self, cr, uid, entity, package, context=None):
