@@ -17,3 +17,10 @@ server/bin/service/netrpc_server.py
 server/bin/tiny_socket.py  
 server/bin/tools/config.py  
 
+=== web_patch_choose_server_port.diff
+Enable OpenERP Web Client to use a different OpenERP Server host, port and protocol.
+
+=== web_whole_file_patch.zip
+Archive that contains all web client patched files:
+web/openobject/commands.py
+
