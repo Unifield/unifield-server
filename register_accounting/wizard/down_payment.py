@@ -44,6 +44,7 @@ class wizard_down_payment(osv.osv_memory):
     def check_register_line_and_po(self, cr, uid, absl_id, po_id, context=None):
         """
         Verify that register line amount is not superior to (PO total_amount - all down payments).
+        Check partner on register line AND PO (should be equal)
         """
         # Some verifications
         if not absl_id or not po_id:
@@ -57,6 +58,11 @@ class wizard_down_payment(osv.osv_memory):
         # Prepare some values
         po = self.pool.get('purchase.order').browse(cr, uid, po_id)
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
+        # Verify that PO partner is the same as down payment partner
+        if not absl.partner_id:
+            raise osv.except_osv(_('Warning'), _('Third Party is mandatory for down payments!'))
+        if po.partner_id.id != absl.partner_id.id:
+            raise osv.except_osv(_('Error'), _('Third party from Down payment and Purchase Order are different!'))
         total = po.amount_total
         for dp in po.down_payment_ids:
             move_ids = [x.id or None for x in absl.move_ids]
