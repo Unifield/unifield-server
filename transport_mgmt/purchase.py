@@ -79,7 +79,7 @@ class purchase_order(osv.osv):
         if not vals.get('transport_currency_id', False):        
             for po in self.browse(cr, uid, ids, context=context):
                 if not po.transport_currency_id:
-                    vals.update({'transport_currency_id': po.pricelist_id.currency_id.id})
+                    self.write(cr, uid, po.id, {'transport_currency_id': po.pricelist_id.currency_id.id}, context=context)
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
