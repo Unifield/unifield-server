@@ -227,6 +227,7 @@
     company_id: base.main_company
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: 1
 -
   I create Supplier 401 Payable Account.
 -
@@ -602,6 +603,7 @@
     city: Oberhausbergen
     phone: +33 3 88 56 82 10
     email: info@tempo-consulting.fr
+    partner_id: res_partner_supplier_wood_0
 -
   I create a Cheque USD Register
 -
@@ -661,7 +663,7 @@
 -
   !record {model: product.product, id: product_basic_finance_0}:
     categ_id: product.cat0
-    cost_method: standard
+    cost_method: average
     mes_type: fixed
     name: Basic product for finance tests
     price_margin: 2.0

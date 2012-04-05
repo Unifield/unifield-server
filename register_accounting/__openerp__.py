@@ -82,6 +82,7 @@
         'test/bug_closing_balance_on_cashbox.yml',
         'test/import_invoice.yml',
         'test/import_invoice_rate_before_import.yml',
+        'test/down_payments.yml',
     ],
     "installable": True,
     "active": False
