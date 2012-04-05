@@ -644,7 +644,7 @@ class purchase_order_merged_line(osv.osv):
                                                           {'uom': line.product_uom.id,
                                                            'date': line.order_id.date_order})[line.order_id.pricelist_id.id]
         values = {'product_qty': new_qty}
-        if new_price and not context.get('manual_change', False) and not context.get('change_price_manually', False):
+        if new_price and not context.get('manual_change', False) and not context.get('change_price_manually', False) and not context.get('split_line', False):
             values.update({'price_unit': new_price})
         else:
             values.update({'price_unit': price})
@@ -762,7 +762,7 @@ class purchase_order_line(osv.osv):
         if order_id.rfq_ok:
             vals.update({'change_price_manually': True})
         
-        if vals.get('product_id'):            
+        if vals.get('product_id') and vals.get('product_qty') and vals.get('product_uom') and vals.get('price_unit'):        
             other_lines = self.search(cr, uid, [('order_id', '=', vals['order_id']), ('product_id', '=', vals['product_id']), ('product_uom', '=', vals['product_uom'])], context=context)
 
             if other_lines:
@@ -794,7 +794,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context.get('update_merge', False):
+        if ('product_id' in vals or 'product_qty' in vals or 'product_uom' in vals or 'price_unit' in vals) and not context.get('update_merge', False):
             for line in self.browse(cr, uid, ids, context=context):
                 if not vals.get('product_id', False) and not line.product_id:
                     continue
@@ -808,10 +808,8 @@ class purchase_order_line(osv.osv):
 
                 if price != vals.get('price_unit', line.price_unit) and vals.get('product_id', False) == line.product_id.id and vals.get('product_uom', False) == line.product_uom.id:
                     context.update({'change_price_manually': True})
-
-        if ('product_id' in vals or 'product_qty' in vals or 'product_uom' in vals or 'price_unit' in vals) and not context.get('update_merge'):
-            for line_id in ids:
-                vals = self._update_merged_line(cr, uid, line_id, vals, context=context)
+                    
+                vals = self._update_merged_line(cr, uid, line.id, vals, context=context)
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
