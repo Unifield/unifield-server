@@ -699,8 +699,12 @@ class purchase_order_line(osv.osv):
         # If it's an update of a line
         if vals and line_id:
             line = self.browse(cr, uid, line_id, context=context)
-            if not 'product_uom' in vals: vals.update({'product_uom': line.product_uom.id})
-            if not 'product_qty' in vals: vals.update({'product_qty': line.product_qty})
+            if not 'product_uom' in vals: 
+                vals.update({'product_uom': line.product_uom.id})
+                tmp_vals.update({'product_uom': line.product_uom.id})
+            if not 'product_qty' in vals: 
+                vals.update({'product_qty': line.product_qty})
+                tmp_vals.update({'product_qty': line.product_qty})
             # If the user has changed the product on the PO line
             if ('product_id' in vals and line.product_id.id != vals['product_id']) or ('product_uom' in vals and line.product_uom.id != vals['product_uom']):
                 # Need removing the merged_id link before update the merged line because the merged line
