@@ -218,10 +218,10 @@ class procurement_order(osv.osv):
             for supplier_info in product.seller_ids:
                 if sequence and supplier_info.sequence < sequence:
                     sequence = supplier_info.sequence
-                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
+                    delivery_leadtime = supplier_info.name.supplier_lt
                 elif not sequence:
                     sequence = supplier_info.sequence
-                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
+                    delivery_leadtime = supplier_info.name.supplier_lt
                 
         # Get the monthly consumption
         monthly_consumption = 0.00
@@ -263,8 +263,7 @@ class procurement_order(osv.osv):
         move_obj = self.pool.get('stock.move')
         
         context.update({'location': location_id,
-                        'compute_child': True, 
-                        'from_date': time.strftime('%Y-%m-%d')})
+                        'compute_child': True, })
         
         product = product_obj.browse(cr, uid, product_id, context=context)
         location_name = location_obj.browse(cr, uid, location_id, context=context).name
