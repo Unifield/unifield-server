@@ -107,16 +107,16 @@ class account_invoice(osv.osv):
                 # Order by id all down payment in order to have them in creation order
                 dp_ids = self.pool.get('account.move.line').search(cr, uid, [('down_payment_id', '=', po.id)], order='date ASC, id ASC')
                 for dp in self.pool.get('account.move.line').browse(cr, uid, dp_ids):
-                    # verify that total is not superior to amount
+                    # verify that total is not superior to demanded amount
                     if total >= amount:
                         continue
                     diff = 0.0
                     # Take only line that have a down_payment_amount not superior or equal to line amount
                     if not dp.down_payment_amount > dp.amount_currency:
-                        if dp.amount_currency <= (amount - total):
-                            diff = dp.amount_currency
+                        if amount > (abs(dp.amount_currency) - abs(dp.down_payment_amount)):
+                            diff = (abs(dp.amount_currency) - abs(dp.down_payment_amount))
                         else:
-                            diff = (amount - total)
+                            diff = amount
                         # Have a tuple containing line id and amount to use for create a payment on invoice
                         to_use.append((dp.id, diff))
                     # Increment processed total
