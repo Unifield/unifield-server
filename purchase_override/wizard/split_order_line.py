@@ -51,6 +51,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        context.update({'split_line': True})
 
         for split in self.browse(cr, uid, ids, context=context):
             # Check if the sum of new line and old line qty is equal to the original qty
