@@ -110,7 +110,7 @@ class update(osv.osv):
         return update_to_send
 
     def _save_puller(self, cr, uid, ids, context, entity_id):
-        return self.write(cr, uid, ids, {'puller_ids': [(4, entity_id)]}, context)
+        return self.write(cr, 1, ids, {'puller_ids': [(4, entity_id)]}, context)
 
     
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):

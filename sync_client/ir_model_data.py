@@ -519,22 +519,7 @@ class dict_to_obj(object):
 
 
 def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-    print "generate xml name"
     return uuid + '/' + table_name + '/' + str(res_id)
 
 osv.osv.get_unique_xml_name = get_unique_xml_name
-
-
-
-
-"""
-class address(osv.osv):
-    _inherit = "res.partner.address"
-    
-    def get_unique_xml_name(self, uuid, table_name, res_id):
-        print "generate_xml_id"
-        return uuid + '/' + "res/partner/address/custom" + '/' + str(res_id)
-        
-address()
-"""
 

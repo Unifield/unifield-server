@@ -7,7 +7,7 @@ import threading
 
 from config import *
 
-client_module = ['sync_client', 'sync_client_test', 'sync_so', 'purchase', 'account_voucher', 'account_analytic_plans'] #add sync_so
+client_module = ['sync_client', 'sync_client_test', 'sync_so', 'purchase', 'account_voucher', 'account_analytic_plans'] # 
 server_module = ['sync_server', 'sync_server_test']
 
 def get_proxy(host, port, database, model):

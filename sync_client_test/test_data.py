@@ -56,9 +56,10 @@ class test(osv.osv_memory):
         for gname in group_name_list:
             id_res = self.pool.get('sync.client.entity_group').create(cr, uid,  {'name' : gname}, context=context)
             group_ids.append(id_res)
+        parent_id = self.pool.get('sync_client.instance.temp').create(cr, uid, {'name' : parent_name}, context=context) 
         res_id = re_obj.create(cr, uid, {'name' : name, 
                                          'email' : email,
-                                         'parent' : parent_name,
+                                         'parent_id' : parent_id,
                                          'group_ids' : [(6, 0, group_ids)]}, context=context)
         re_obj.validate(cr, uid, [res_id], context=context)
         return True
