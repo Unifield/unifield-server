@@ -87,6 +87,7 @@ pp = pprint.PrettyPrinter(indent=4)
 from tools.safe_eval import safe_eval as eval
 
 class write_info(osv.osv):
+    
     _name = 'sync.client.write_info'
     
     _rec_name = 'fields_modif'

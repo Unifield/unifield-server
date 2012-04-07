@@ -1,0 +1,57 @@
+=== modified file 'bin/osv/orm.py'
+--- bin/osv/orm.py	2011-12-11 11:55:32 +0000
++++ bin/osv/orm.py	2012-04-06 09:26:29 +0000
+@@ -551,6 +551,8 @@
+     def __export_row(self, cr, uid, row, fields, context=None):
+         if context is None:
+             context = {}
++            
++        sync_context = context.get('sync_context')
+ 
+         def check_type(field_type):
+             if field_type == 'float':
+@@ -569,6 +571,31 @@
+                 selection_field(col_obj._inherits)
+             else:
+                 return False
++            
++        def _get_xml_id(self, cr, uid, r):
++            model_data = self.pool.get('ir.model.data')
++            data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
++            if len(data_ids):
++                d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
++                if d['module']:
++                    r = '%s.%s' % (d['module'], d['name'])
++                else:
++                    r = d['name']
++            else:
++                postfix = 0
++                while True:
++                    n = self._table+'_'+str(r['id']) + (postfix and ('_'+str(postfix)) or '' )
++                    if not model_data.search(cr, uid, [('name', '=', n)]):
++                        break
++                    postfix += 1
++                model_data.create(cr, uid, {
++                    'name': n,
++                    'model': self._name,
++                    'res_id': r['id'],
++                    'module': '__export__',
++                })
++                r = '__export__.'+n
++            return r
+ 
+         lines = []
+         data = map(lambda x: '', range(len(fields)))
+@@ -620,6 +647,11 @@
+                             if [x for x in fields2 if x]:
+                                 break
+                         done.append(fields2)
++                        
++                        if sync_context and cols and cols._type=='many2many' and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
++                            data[fpos] = ','.join([_get_xml_id(self, cr, uid, x) for x in r])
++                            break
++                        
+                         for row2 in r:
+                             lines2 = self.__export_row(cr, uid, row2, fields2,
+                                     context)
+
