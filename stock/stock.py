@@ -1870,7 +1870,7 @@ class stock_move(osv.osv):
                 context
             )
             if dest:
-                if dest[1] == 'transparent':
+                if dest[1] == 'transparent' and context.get('action_confirm', False):
                     newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
                     self.write(cr, uid, [m.id], {
                         'date': newdate,
@@ -1885,7 +1885,7 @@ class stock_move(osv.osv):
                     for pick_id in res2.keys():
                         result.setdefault(pick_id, [])
                         result[pick_id] += res2[pick_id]
-                else:
+                elif not context.get('action_confirm', False):
                     result.setdefault(m.picking_id, [])
                     result[m.picking_id].append( (m, dest) )
         return result
@@ -1973,7 +1973,9 @@ class stock_move(osv.osv):
         moves = self.browse(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
 
-        self.create_chained_picking(cr, uid, moves, context)
+        ctx = context.copy()
+        ctx.update({'action_confirm': True})
+        self.create_chained_picking(cr, uid, moves, context=ctx)
         return []
     
     def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
