@@ -55,7 +55,7 @@
 			<field name="model">supplier.catalogue</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree string="Supplier catalogues">
+				<tree string="Supplier catalogues" hide_new_button="1">
 					<field name="name" />
 					<field name="period_from" />
 					<field name="period_to" />

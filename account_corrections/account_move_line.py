@@ -598,7 +598,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not date:
-            date = strftime('%Y-%d-%m')
+            date = strftime('%Y-%m-%d')
         if not partner_id:
             raise osv.except_osv(_('Error'), _('No new partner_id given!'))
         # Prepare some values

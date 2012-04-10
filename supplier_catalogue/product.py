@@ -54,11 +54,13 @@ class product_supplierinfo(osv.osv):
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if not context:
             context = {}
-            
+        
+        new_res = [] 
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
         
-        new_res = []
+        if isinstance(res, (int, long)):
+            res = [res]
         
         for r in self.browse(cr, uid, res, context=context):
             if not r.catalogue_id or r.catalogue_id.active:
@@ -66,8 +68,22 @@ class product_supplierinfo(osv.osv):
         
         return new_res
     
+    def _get_editable(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if no catalogue associated
+        '''
+        res = {}
+        
+        for x in self.browse(cr, uid, ids, context=context):
+            res[x.id] = True
+            if x.catalogue_id:
+                res[x.id] = False
+        
+        return res
+    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
+        'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
                                       help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
@@ -113,8 +129,8 @@ class pricelist_partnerinfo(osv.osv):
             context = {}
         info = self.browse(cr, uid, info_id, context=context)
         if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
-            raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked' \
-                                               'to a supplier catalogue line ! Please remove the corresponding' \
+            raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked ' \
+                                               'to a supplier catalogue line ! Please remove the corresponding ' \
                                                'supplier catalogue line to remove this supplier information.'))
         
         return super(pricelist_partnerinfo, self).unlink(cr, uid, info_id, context=context)

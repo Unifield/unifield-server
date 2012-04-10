@@ -44,6 +44,7 @@ class financing_contract_contract(osv.osv):
     
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
+    _trace = True
 
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
@@ -121,6 +122,8 @@ class financing_contract_contract(osv.osv):
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
+        # Define for _inherits
+        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade", required=True),
     }
     
     _defaults = {

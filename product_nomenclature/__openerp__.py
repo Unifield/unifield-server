@@ -35,6 +35,7 @@
     'update_xml': [
         'security/ir.model.access.csv',
         'product_nomenclature_view.xml',
+        'remove_categ.xml',
     ],
     "demo_xml": [
                  'product_nomenclature_data.xml',

@@ -35,13 +35,19 @@ class purchase_order(osv.osv):
 
         for order in self.browse(cr, uid, ids, context=context):
             cur_obj = self.pool.get('res.currency')
-            transport_cost = order.transport_cost + order.amount_total
+            transport_cost = order.transport_cost
+            if order.transport_currency_id.id != order.pricelist_id.currency_id.id:
+                transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
+                        order.pricelist_id.currency_id.id, order.transport_cost, round=True)
+            
+            total_cost = order.amount_total + transport_cost
+            
             try:
-                func_transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
-                        order.functional_currency_id.id, transport_cost, round=True)
+                func_transport_cost = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id,
+                        order.functional_currency_id.id, total_cost, round=True)
             except:
-                func_transport_cost = transport_cost
-            res[order.id] = {'total_price_include_transport': transport_cost,
+                func_transport_cost = total_cost
+            res[order.id] = {'total_price_include_transport': total_cost,
                              'func_total_price_include_transport': func_transport_cost,}
 
         return res
@@ -54,6 +60,10 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':
                 vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+                
+        if not 'transport_currency_id' in vals and 'pricelist_id' in vals:
+            currency_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], context=context).currency_id.id
+            vals.update({'transport_currency_id': currency_id})
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
@@ -65,6 +75,11 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':
                 vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+        
+        if not vals.get('transport_currency_id', False):        
+            for po in self.browse(cr, uid, ids, context=context):
+                if not po.transport_currency_id:
+                    self.write(cr, uid, po.id, {'transport_currency_id': po.pricelist_id.currency_id.id}, context=context)
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 

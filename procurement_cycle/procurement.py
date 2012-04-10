@@ -24,6 +24,8 @@ from osv import osv, fields
 import time
 from tools.translate import _
 
+from mx.DateTime import *
+
 class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
     _description = 'Order Cycle'
@@ -87,7 +89,7 @@ class stock_warehouse_order_cycle(osv.osv):
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", domain="[('usage', '=', 'internal')]"),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
         'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products"),
@@ -99,6 +101,10 @@ class stock_warehouse_order_cycle(osv.osv):
         'safety_stock_time': fields.float(digits=(16,2), string='Safety stock in time'),
         'safety_stock': fields.integer(string='Safety stock (quantity'),
         'past_consumption': fields.boolean(string='Average monthly consumption'),
+        'consumption_period_from': fields.date(string='Period of calculation', 
+                                             help='This period is a number of past months the system has to consider for AMC calculation.'\
+                                             'By default this value is equal to the order coverage of the rule.'),
+        'consumption_period_to': fields.date(string='-'),
         'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption'),
         'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
@@ -120,6 +126,24 @@ class stock_warehouse_order_cycle(osv.osv):
         'order_coverage': lambda *a: 3,
     }
     
+    def on_change_period(self, cr, uid, ids, from_date, to_date):
+        '''
+        Check if the from date is younger than the to date
+        '''
+        warn = {}
+        val = {}
+        
+        if from_date and to_date and from_date > to_date:
+            warn = {'title': 'Issue on date',
+                    'message': 'The start date must be younger than end date'}
+            
+        if from_date:
+            val.update({'consumption_period_from': (DateFrom(from_date) + RelativeDate(day=1)).strftime('%Y-%m-%d')})
+            
+        if to_date:
+            val.update({'consumption_period_to': (DateFrom(to_date) + RelativeDate(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+        
+        return {'value': val, 'warning': warn}
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
@@ -164,23 +188,33 @@ class stock_warehouse_order_cycle(osv.osv):
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
-    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, field='past'):
+    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, order_coverage, field='past'):
         '''
         Uncheck a box when the other is checked
         '''
         v = {}
         if field == 'past' and past_consumption:
-            v.update({'reviewed_consumption': 0, 'manual_consumption': 0.00})
+            date_from = now() + RelativeDate(day=1, months=-round(order_coverage, 1)+1)
+            date_to = now() + RelativeDate(days=-1, day=1, months=1)
+            dates = self.on_change_period(cr, uid, ids, date_from, date_to)
+            v.update({'reviewed_consumption': 0, 'manual_consumption': 0.00,
+                      'consumption_period_from': dates.get('value', {}).get('consumption_period_from'),
+                      'consumption_period_to': dates.get('value', {}).get('consumption_period_to'),})
         elif field == 'past' and not past_consumption:
-            v.update({'reviewed_consumption': 1, 'manual_consumption': 0.00})
+            v.update({'reviewed_consumption': 1, 'manual_consumption': 0.00,})
+            v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'review' and reviewed_consumption:
             v.update({'past_consumption': 0, 'manual_consumption': 0.00})
+            v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'review' and not reviewed_consumption:
             v.update({'past_consumption': 1, 'manual_consumption': 0.00})
+            v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'manual' and manual_consumption != 0.00 :
             v.update({'reviewed_consumption': 0, 'past_consumption': 0})
+            v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'manual' and (manual_consumption == 0.00 ):
             v.update({'past_consumption': 1})
+            v.update({'consumption_period_from': False, 'consumption_period_to': False})
             
         return {'value': v}
     

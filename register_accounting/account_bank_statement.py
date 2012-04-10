@@ -72,6 +72,7 @@ class res_partner(osv.osv):
            if t['type'] == 'receivable':
                 return [('property_account_receivable', '=', args[0][2])]
         return []
+
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
     }
@@ -167,7 +168,7 @@ class account_bank_statement(osv.osv):
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
-        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
@@ -1295,6 +1296,8 @@ class account_bank_statement_line(osv.osv):
 
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
+                absl = self.browse(cr, uid, absl.id, context=context)
 
             if postype == "hard":
                 # some verifications
@@ -1495,6 +1498,10 @@ class account_bank_statement_line(osv.osv):
             vals.update({amount_field: absl.transfer_amount,})
         if absl and absl.transfer_currency:
             vals.update({'currency_id': absl.transfer_currency.id, curr_field: absl.transfer_currency.id})
+            # Verify that transfer_journal currency is not different
+            if absl.transfer_journal_id:
+                if absl.transfer_currency.id != absl.transfer_journal_id.currency.id:
+                    vals.update({curr_field: absl.transfer_journal_id.currency.id})
         elif absl and absl.transfer_journal_id:
             vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
         if absl and absl.state == 'hard':
@@ -1524,7 +1531,7 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         acc_obj = self.pool.get('account.account')
-        third_type = [('res.partner', 'Partner')]
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
         third_required = False
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required

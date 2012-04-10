@@ -22,6 +22,7 @@
 ##############################################################################
 
 from time import strftime
+from osv import osv
 
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
@@ -58,4 +59,15 @@ def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return period.date_stop
     return date
 
+class account_period(osv.osv):
+    _name = 'account.period'
+    _inherit = 'account.period'
+
+    def get_period_from_date(self, cr, uid, date=False, context=None):
+        return get_period_from_date(self, cr, uid, date, context)
+
+    def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
+        return get_date_in_period(self, cr, uid, date, period_id, context)
+
+account_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

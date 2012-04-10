@@ -852,11 +852,15 @@ class procurement_order(osv.osv):
         po_obj = self.pool.get('purchase.order')
         procurement = kwargs['procurement']
         values = kwargs['values']
+        # Make the line as price changed manually to do not raise an error on purchase order line creation
+#        if 'order_line' in values and len(values['order_line']) > 0 and len(values['order_line'][0]) > 2 and 'price_unit' in values['order_line'][0][2]:
+#            values['order_line'][0][2].update({'change_price_manually': True})
 
         partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
         
         purchase_domain = [('partner_id', '=', partner.id),
                            ('state', '=', 'draft'),
+                           ('rfq_ok', '=', False),
                            ('delivery_requested_date', '=', values.get('delivery_requested_date'))]
         
         if procurement.po_cft == 'dpo':
@@ -876,8 +880,12 @@ class procurement_order(osv.osv):
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0],'origin': procurement.origin})
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
-            if not re.search(procurement.origin, po.origin):
+            # Update the origin of the PO with the origin of the procurement
+            if procurement.origin and po.origin and not re.search(procurement.origin, po.origin):
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s/%s' % (po.origin, procurement.origin)}, context=context)
+            elif not po.origin:
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s' % (procurement.origin)}, context=context)
+                
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:

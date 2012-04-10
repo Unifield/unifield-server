@@ -140,6 +140,7 @@
 		parent="stock.menu_product_in_config_stock"/>
 		<!-- Changed name to 'Picking Tickets' -->
 		<record id="view_picking_ticket_tree" model="ir.ui.view">
+
 			<field name="name">picking.ticket.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
@@ -216,6 +217,7 @@
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="asset_id" />
+									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
 									<field name="product_uos" groups="product.group_uos"/>
@@ -238,8 +240,9 @@
 									<group colspan="2" col="4">
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />
-										<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
 										<field name="asset_id" />
+                                        <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="4" />
 										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
@@ -260,7 +263,7 @@
 									</group>
 									<group colspan="2" col="4" groups="base.group_extended">
 										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 										<field name="prodlot_id" groups="base.group_extended"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 										'search_default_real': True}"
@@ -495,6 +498,7 @@
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="asset_id" />
+									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
 									<field name="product_uos" groups="product.group_uos"/>
@@ -519,8 +523,9 @@
 									<group colspan="2" col="4">
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />
-										<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
 										<field name="asset_id" />
+                                        <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="4" />
 										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
@@ -540,7 +545,7 @@
 										<field name="date_expected" string="Expected Pack Date" />
 									</group>
 									<group colspan="2" col="4" groups="base.group_extended">
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
 										<field name="prodlot_id" groups="base.group_extended"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
@@ -729,6 +734,7 @@
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="asset_id" />
+									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
 									<field name="product_uos" groups="product.group_uos"/>
@@ -756,8 +762,9 @@
 									<group colspan="2" col="4">
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />
-										<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
 										<field name="asset_id" />
+                                        <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="4" />
 										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
@@ -778,7 +785,7 @@
 									</group>
 									<group colspan="2" col="4" groups="base.group_extended">
 										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 										<field name="prodlot_id" groups="base.group_extended"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 										'search_default_real': True}"
@@ -849,7 +856,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
-						<field name="reason_type_id" />
+						<field name="reason_type_id" widget="selection"/>
 						<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
 					</group>

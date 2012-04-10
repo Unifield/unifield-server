@@ -32,8 +32,9 @@ class account_analytic_journal(osv.osv):
     _inherit = 'account.analytic.journal'
     _columns = {
         'type': fields.selection([('sale','Sale'), ('purchase','Purchase'), ('cash','Cash'), ('general','General'), ('situation','Situation'), 
-            ('engagement', 'Engagement'), ('correction', 'Correction'), ('cur_adj', 'Currency Adjustement'),], 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
-(eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
+            ('engagement', 'Engagement'), ('correction', 'Correction'), ('cur_adj', 'Currency Adjustement'), ('hr', 'HR')], 'Type', 
+            required=True, 
+            help="Gives the type of the analytic journal. When it needs for a document (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
     }
 
     def _check_engagement_count(self, cr, uid, ids, context=None):

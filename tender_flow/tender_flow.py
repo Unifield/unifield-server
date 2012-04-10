@@ -351,6 +351,7 @@ class tender(osv.osv):
                                                                'product_qty': line.qty,
                                                                'product_id': line.product_id.id,
                                                                'product_uom': line.product_uom.id,
+                                                               'change_price_manually': 'True',
                                                                'price_unit': line.price_unit,
                                                                'date_planned': line.date_planned,
                                                                'move_dest_id': False,

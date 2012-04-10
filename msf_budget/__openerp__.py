@@ -24,7 +24,7 @@
     'category': 'Generic Modules/Accounting',
     'author': 'MSF, TeMPO Consulting',
     'developer': 'Matthieu Dietrich',
-    'depends': ['res_currency_tables'],
+    'depends': ['res_currency_tables',"msf_audittrail",],
     'description': '''
         Budget view
     ''',
