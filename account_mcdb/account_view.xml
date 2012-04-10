@@ -61,6 +61,7 @@
                     <field name="period_id"/>
                     <field name="general_account_id"/>
                     <field name="account_id"/>
+                    <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     <field name="partner_txt"/>
                     <field name="amount_currency"/>
                     <field name="currency_id"/>

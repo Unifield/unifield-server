@@ -81,6 +81,7 @@ class account_mcdb(osv.osv_memory):
         'rev_period_ids': fields.boolean('Exclude period selection'),
         'rev_account_type_ids': fields.boolean('Exclude account type selection'),
         'rev_analytic_journal_ids': fields.boolean('Exclude analytic journal selection'),
+        'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('cc', 'Cost Center'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
     }
 
     _defaults = {
@@ -279,6 +280,19 @@ class account_mcdb(osv.osv_memory):
                     domain.append(('is_reversal', '=', True))
                 elif wiz.reversed == 'notreversed':
                     domain.append(('is_reversal', '=', False))
+            # ANALYTIC AXIS FIELD
+            if res_model == 'account.analytic.line':
+                if wiz.analytic_axis == 'fp':
+                    context.update({'display_fp': True})
+                    domain.append(('account_id.category', '=', 'FUNDING'))
+                elif wiz.analytic_axis == 'cc':
+                    domain.append(('account_id.category', '=', 'OC'))
+                elif wiz.analytic_axis == 'f1':
+                    domain.append(('account_id.category', '=', 'FREE1'))
+                elif wiz.analytic_axis == 'f2':
+                    domain.append(('account_id.category', '=', 'FREE2'))
+                else:
+                    raise osv.except_osv(_('Warning'), _('Display field is mandatory!'))
             ## SPECIAL fields
             #
             # AMOUNTS fields
