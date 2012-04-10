@@ -52,9 +52,9 @@ def create_csv(self, cr, uid, ids, data, context=None):
     writer = csv.writer(outfile, quotechar='"', delimiter=',')
 
     if self.table == 'account.analytic.line':
-        obj._account_analytic_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context={})
+        obj._account_analytic_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
     else:
-        obj._account_move_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context={})
+        obj._account_move_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
 
     outfile.seek(0)
     out = outfile.read()
