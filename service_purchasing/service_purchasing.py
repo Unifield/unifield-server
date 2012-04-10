@@ -25,7 +25,6 @@ import netsvc
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
-import netsvc
 import logging
 import tools
 from os import path
@@ -60,6 +59,21 @@ class product_product(osv.osv):
         if type == 'service_recep':
             return {'value': {'procure_method': 'make_to_order', 'supply_method': 'buy',}}
         return {}
+    
+    def _check_procurement_for_service_with_recep(self, cr, uid, ids, context=None):
+        """
+        You cannot select Service Location as Source Location.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'service_recep' and obj.procure_method != 'make_to_order':
+                raise osv.except_osv(_('Error'), _('You must select on order procurement method for Service with Reception products.'))
+        return True
+    
+    _constraints = [
+        (_check_procurement_for_service_with_recep, 'You must select on order procurement method for Service with Reception products.', []),
+    ]
     
 product_product()
 
@@ -128,6 +142,54 @@ class stock_move(osv.osv):
     ]
 
 stock_move()
+
+
+class sale_order_line(osv.osv):
+    '''
+    add a constraint as service with reception products are only available with on order procurement method
+    '''
+    _inherit = 'sale.order.line'
+    
+    def _check_procurement_for_service_with_recep(self, cr, uid, ids, context=None):
+        """
+        You cannot select Service Location as Source Location.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type == 'service_recep' and obj.type != 'make_to_order':
+                raise osv.except_osv(_('Error'), _('You must select on order procurement method for Service with Reception products.'))
+        return True
+    
+    _constraints = [
+        (_check_procurement_for_service_with_recep, 'You must select on order procurement method for Service with Reception products.', []),
+    ]
+    
+sale_order_line()
+
+
+class sourcing_line(osv.osv):
+    '''
+    add a constraint as service with reception products are only available with on order procurement method
+    '''
+    _inherit = 'sourcing.line'
+    
+    def _check_procurement_for_service_with_recep(self, cr, uid, ids, context=None):
+        """
+        You cannot select Service Location as Source Location.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type == 'service_recep' and obj.type != 'make_to_order':
+                raise osv.except_osv(_('Error'), _('You must select on order procurement method for Service with Reception products.'))
+        return True
+    
+    _constraints = [
+        (_check_procurement_for_service_with_recep, 'You must select on order procurement method for Service with Reception products.', []),
+    ]
+    
+sourcing_line()
 
 
 class purchase_order(osv.osv):

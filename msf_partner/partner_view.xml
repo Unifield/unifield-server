@@ -30,7 +30,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/group/field[@name='title']" position="replace">
-                        <field name="partner_type" />
+                        <field name="partner_type" on_change="on_change_partner_type(partner_type)" />
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />

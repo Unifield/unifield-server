@@ -44,6 +44,7 @@ class financing_contract_contract(osv.osv):
     
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
+    _trace = True
 
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
@@ -67,7 +68,7 @@ class financing_contract_contract(osv.osv):
         })
         return True
     
-    def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context={}):
+    def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
         # we update the context with the contract reporting type and currency
         format_line_obj = self.pool.get('financing.contract.format.line')
         # Values to be set
@@ -121,6 +122,8 @@ class financing_contract_contract(osv.osv):
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
+        # Define for _inherits
+        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade", required=True),
     }
     
     _defaults = {
@@ -129,9 +132,9 @@ class financing_contract_contract(osv.osv):
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
 
-    def _check_unicity(self, cr, uid, ids, context={}):
+    def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
-            context={}
+            context = {}
         for contract in self.browse(cr, uid, ids, context=context):
             bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', contract.name),('code', '=ilike', contract.code)])
             if len(bad_ids) and len(bad_ids) > 1:
@@ -142,16 +145,21 @@ class financing_contract_contract(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
     ]
 
-    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         contract = self.browse(cr, uid, id, context=context)
         if not default:
             default = {}
         default = default.copy()
         default['code'] = (contract['code'] or '') + '(copy)'
         default['name'] = (contract['name'] or '') + '(copy)'
-        return super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
+        # Copy lines manually
+        default['actual_line_ids'] = []
+        copy_id = super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
+        copy = self.browse(cr, uid, copy_id, context=context)
+        self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.format_id.id, copy.format_id.id, context=context)
+        return copy_id
     
-    def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
+    def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context=None):
         res = {}
         if donor_id and format_id:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, donor_id, context=context)
@@ -164,7 +172,7 @@ class financing_contract_contract(osv.osv):
                 self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, format_id, context=context)
         return {'value': format_vals}
     
-    def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context={}):
+    def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context=None):
         values = {'reporting_currency': False}
         if reporting_currency_id:
             # it can be a currency from another table
@@ -195,6 +203,7 @@ class financing_contract_contract(osv.osv):
                                                                context=context)
         vals = {'name': browse_format_line.name,
                 'code': browse_format_line.code,
+                'line_type': browse_format_line.line_type,
                 'allocated_budget': round(browse_format_line.allocated_budget),
                 'project_budget': round(browse_format_line.project_budget),
                 'allocated_real': round(browse_format_line.allocated_real),
@@ -210,7 +219,9 @@ class financing_contract_contract(osv.osv):
             self.create_reporting_line(cr, uid, browse_contract, child_line, reporting_line_id, context=context)
         return reporting_line_id
     
-    def menu_interactive_report(self, cr, uid, ids, context={}):
+    def menu_interactive_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         # we update the context with the contract reporting type
         contract = self.browse(cr, uid, ids[0], context=context)
         context.update({'reporting_currency': contract.reporting_currency.id,
@@ -224,7 +235,8 @@ class financing_contract_contract(osv.osv):
         contract_line_id = reporting_line_obj.create(cr,
                                                      uid,
                                                      vals = {'name': contract.name,
-                                                             'code': contract.code},
+                                                             'code': contract.code,
+                                                             'line_type': 'view'},
                                                      context=context)
         
         # Values to be set
@@ -270,7 +282,9 @@ class financing_contract_contract(osv.osv):
                'context': context
         }
         
-    def menu_allocated_expense_report(self, cr, uid, ids, context={}):
+    def menu_allocated_expense_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         wiz_obj = self.pool.get('wizard.expense.report')
         wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'allocated',
                                           'filename': 'allocated_expenses.csv',
@@ -286,7 +300,9 @@ class financing_contract_contract(osv.osv):
                 'context': context,
         }
         
-    def menu_project_expense_report(self, cr, uid, ids, context={}):
+    def menu_project_expense_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         wiz_obj = self.pool.get('wizard.expense.report')
         wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'project',
                                           'filename': 'project_expenses.csv',
@@ -302,7 +318,9 @@ class financing_contract_contract(osv.osv):
                 'context': context,
         }
         
-    def menu_csv_interactive_report(self, cr, uid, ids, context={}):
+    def menu_csv_interactive_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         wiz_obj = self.pool.get('wizard.interactive.report')
         wiz_id = wiz_obj.create(cr, uid, {'filename': 'interactive_report.csv',
                                           'contract_id': ids[0]}, context=context)

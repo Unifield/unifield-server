@@ -34,6 +34,7 @@
         'product_nomenclature',
         'msf_outgoing',
         'stock_override',
+        'msf_cross_docking',
     ],
     "init_xml" : [
     ],

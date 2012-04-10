@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-        <menuitem name="Transport costs" id="menu_transport_cost_reports" parent="base.next_id_73"/>
+        <menuitem name="Transport costs" id="menu_transport_cost_reports" parent="base.next_id_73" sequence="2" />
 
         <record id="purchase_form_view_transport_mgmt_line" model="ir.ui.view">
             <field name="name">purchase.form.view.transport.mgmt.line</field>
@@ -12,31 +12,30 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page/group[1]/field[@name='currency_id']" position="before">
-                        <group colspan="12" col="19" attrs="{'invisible': ['|', '|', ('rfq_ok', '=' True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
+                        <group colspan="12" col="19" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
                             <field name="display_intl_transport_ok" invisible="1" />
                             <field name="intl_supplier_ok" invisible="1" />
                             <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)],
+                                                                'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }"/>
                             <label colspan="15" />
                             <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                                'required': [('intl_supplier_ok', '=', True)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)],
+                                                                'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],
+                                                                'readonly': [('shipped_rate', '!=', 0.00)]
                                                                 }" nolabel="1" />
-                            <field name="transport_currency_id" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                                 'required': [('intl_supplier_ok', '=', True)],
-                                                                'readonly': [('shipped_rate', '!=', 0.00)],
-                                                                }" nolabel="1" />
+                            <field name="transport_currency_id" 
+                                attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" 
+                                nolabel="1" />
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}" />
                         </group>
                     </xpath>
 
                     <xpath expr="/form/notebook/page/group[1]/field[@name='amount_total']" position="after">
-                        <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}" />
+                        <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}" />
                     </xpath>
 
                     <xpath expr="/form/notebook/page/group[1]/field[@name='functional_amount_total']" position="after">
-                        <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
+                        <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                     </xpath>
 
                     <xpath expr="/form/notebook/page[@string='Purchase Order']" position="after">
@@ -88,7 +87,7 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='location_id']" position="after">
-                        <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)]}" widget="selection" />
+                        <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" widget="selection" />
                     </xpath>
 
                 </data>

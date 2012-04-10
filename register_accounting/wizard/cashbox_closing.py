@@ -34,8 +34,10 @@ class wizard_closing_cashbox(osv.osv_memory):
         'be_sure': fields.boolean( string="Are you sure ?", required=False ),
     }
 
-    def button_close_cashbox(self, cr, uid, ids, context={}):
+    def button_close_cashbox(self, cr, uid, ids, context=None):
         # retrieve context active id (verification)
+        if context is None:
+            context = {}
         id = context.get('active_id', False)
         if not id:
             raise osv.except_osv(_('Warning'), _("You don't select any item!"))
@@ -58,8 +60,6 @@ class wizard_closing_cashbox(osv.osv_memory):
                 else:
                     # @@@override@account.account_bank_statement.button_confirm_bank()
                     obj_seq = self.pool.get('ir.sequence')
-                    if context is None:
-                        context = {}
 
                     for st in st_obj.browse(cr, uid, [id], context=context):
                         j_type = st.journal_id.type

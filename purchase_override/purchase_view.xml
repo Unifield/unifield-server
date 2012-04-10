@@ -22,8 +22,25 @@
                         <field name="details" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="replace">
-                        <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                        <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                     </xpath>
+                    <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
+                        <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
+                        	on_change="on_change_dest_partner_id(dest_partner_id)" />
+                        <field name="dest_address_id" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
+                    	<field name="invoice_address_id" domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
+                    		attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                    </xpath>
+
+                    <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
+                        <field name="rfq_ok" invisible="1" />
+                        <field name="fake_state" invisible="1" />
+                        <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
+                            attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'in', ('confirmed', 'done', 'cancel'))]}" />
+                    </xpath>
+
                 </data>
             </field>
         </record>
@@ -58,13 +75,14 @@
             <field name="arch" type="xml">
                 <search string="Search Purchase Orders">
                     <group col="8" colspan="4">
-                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft',])]" separator="1" help="Purchase orders which are in draft state" />
+                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
                       <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
-                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved', 'done',])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
                       <separator orientation="vertical" />
-                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel',])]" separator="1" help="Purchase orders which are in cancelled state." />
+                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state." />
                       <separator orientation="vertical" />
-                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking',])]" separator="1" help="Purchase orders which are in the exception state." />
+                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking'])]" separator="1" help="Purchase orders which are in the exception state." />
                       <separator orientation="vertical" />
                       <field name="name" select="1" string="Reference" />
                       <field name="partner_id" select="1" string="Supplier" />
@@ -75,7 +93,6 @@
                       <field name="origin" />
                       <field name="create_uid" />
                       <field name="date_order" />
-                      <!-- Creation date from/to − TODO: To validate with Magali -->
                     </group>
                     <newline />
                     <group string="Type" expand="0">
@@ -91,13 +108,14 @@
 	                <group string="Priority" expand="0">
                       <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                       <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                      <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
 	                </group>
 	                <newline />
 	                <group string="Category" expand="0">
                       <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                       <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
                       <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
                       <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                </group>
                     <newline />
@@ -126,7 +144,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
-            <field name="domain">[('tender_id', '=', False),]</field>
+            <field name="domain">[('tender_id', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
@@ -168,8 +186,25 @@
         <menuitem action="action_supplier_address_form"
                   id="menu_supplier_address_form"
                   parent="base.menu_procurement_management_supplier" />
+
+        <record id="purchase_order_line_form_view_inherit" model="ir.ui.view">
+            <field name="name">purchase.order.line.form.view</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='price_unit']" position="replace">
+                    <field name="other_line_pb" invisible="1" />
+                    <field name="rfq_ok" invisible="1" />
+                    <field name="change_price_manually" attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('other_line_pb', '=', False)]}" />
+                    <label colspan="2" />
+                    <field name="price_unit" 
+                        on_change="price_unit_change(price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, context)" />
+                </xpath>
+            </field>
+        </record>
         
-        <!-- Invoice control -->
+	<!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_pending_invoice" model="ir.ui.menu" />
         <delete id="purchase.menu_purchase_line_order_draft" model="ir.ui.menu" />

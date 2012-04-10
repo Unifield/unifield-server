@@ -31,7 +31,7 @@
             <field name="name">procurement_cancel</field>
             <field name="flow_stop">True</field>
             <field name="kind">function</field>
-            <field name="action">write({'state': 'cancel'})</field>
+            <field name="action">wkf_action_cancel()</field>
         </record>
         <record id="act_proc_done" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale" />
@@ -59,6 +59,11 @@
             <field name="condition">procurement_request==True</field>
             <field name="signal">procurement_confirm</field>
         </record>
+        <record id="trans_validate_cancel" model="workflow.transition">
+            <field name="act_from" ref="act_proc_validate"/>
+            <field name="act_to" ref="act_proc_cancel"/>
+            <field name="signal">procurement_cancel</field>
+        </record>
         <record id="trans_procurement_cancel" model="workflow.transition">
             <field name="act_from" ref="act_procurement"/>
             <field name="act_to" ref="act_proc_cancel"/>
@@ -72,7 +77,9 @@
         <record id="trans_confirm_proc_done" model="workflow.transition">
             <field name="act_from" ref="act_proc_confirm"/>
             <field name="act_to" ref="act_proc_done"/>
-            <field name="signal">order_confirm</field>
+            <field name="trigger_model">procurement.order</field>
+            <field name="trigger_expr_id">procurement_lines_get()</field>
+            <field name="condition">test_state('finished')</field>
         </record>
     
     </data>

@@ -24,12 +24,10 @@ import decimal_precision as dp
 from tools.misc import flatten
 from time import strftime
 
-class analytic_distribution(osv.osv):
+class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
 
     _columns = {
-        'name': fields.char('Name', size=12),
-        'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
         'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
         'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
@@ -39,16 +37,13 @@ class analytic_distribution(osv.osv):
         'commitment_line_ids': fields.one2many('account.commitment.line', 'analytic_distribution_id', string="Commitment voucher lines"),
     }
 
-    _defaults ={
-        'name': lambda *a: 'Distribution',
-        'global_distribution': lambda *a: False,
-    }
-
-    def copy(self, cr, uid, id, defaults={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy an analytic distribution without the one2many links
         """
-        defaults.update({
+        if default is None:
+            default = {}
+        default.update({
             'analytic_lines': False,
             'invoice_ids': False,
             'invoice_line_ids': False,
@@ -57,9 +52,19 @@ class analytic_distribution(osv.osv):
             'commitment_ids': False,
             'commitment_line_ids': False,
         })
-        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
-    def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
+    def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context=None):
+        """
+        Return distribution state
+        """
+        if context is None:
+            context = {}
+        # Have an analytic distribution on another account than expense account make no sense. So their analaytic distribution is valid
+        if account_id:
+            account =  self.pool.get('account.account').browse(cr, uid, account_id)
+            if account and account.user_type and account.user_type.code != 'expense':
+                return 'valid'
         if not id:
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
@@ -81,8 +86,7 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
         return 'valid'
 
-
-analytic_distribution()
+analytic_distribution1()
 
 class distribution_line(osv.osv):
     _name = "distribution.line"
@@ -136,7 +140,7 @@ free_2_distribution_line()
 class analytic_distribution(osv.osv):
     _inherit = "analytic.distribution"
 
-    def _get_lines_count(self, cr, uid, ids, name, args, context={}):
+    def _get_lines_count(self, cr, uid, ids, name, args, context=None):
         """
         Get count of each analytic distribution lines type.
         Example: with an analytic distribution with 2 cost center, 3 funding pool and 1 Free 1:
@@ -156,7 +160,7 @@ class analytic_distribution(osv.osv):
             txt += str(len(distrib.cost_center_lines) or '0') + ' CC; '
             txt += str(len(distrib.funding_pool_lines) or '0') + ' FP; '
             txt += str(len(distrib.free_1_lines) or '0') + ' F1; '
-            txt += str(len(distrib.free_2_lines) or '0') + ' F2; '
+            txt += str(len(distrib.free_2_lines) or '0') + ' F2'
             if not txt:
                 txt = ''
             res[distrib.id] = txt
@@ -167,11 +171,10 @@ class analytic_distribution(osv.osv):
         'funding_pool_lines': fields.one2many('funding.pool.distribution.line', 'distribution_id', 'Funding Pool Distribution'),
         'free_1_lines': fields.one2many('free.1.distribution.line', 'distribution_id', 'Free 1 Distribution'),
         'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
-        'lines_count': fields.function(_get_lines_count, method=True, type='char', size=256,
-            string="Analytic distribution count", readonly=True, store=False),
+        'name': fields.function(_get_lines_count, method=True, type='char', size=256, string="Name", readonly=True, store=False),
     }
 
-    def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
+    def update_distribution_line_amount(self, cr, uid, ids, amount=False, context=None):
         """
         Update amount on distribution lines for given distribution (ids)
         """
@@ -194,7 +197,7 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
         return True
 
-    def update_distribution_line_account(self, cr, uid, ids, old_account_id, account_id, context={}):
+    def update_distribution_line_account(self, cr, uid, ids, old_account_id, account_id, context=None):
         """
         Update account on distribution line
         """
@@ -225,7 +228,7 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], {'analytic_id': account_id,}, context=context)
         return True
 
-    def create_funding_pool_lines(self, cr, uid, ids, context={}):
+    def create_funding_pool_lines(self, cr, uid, ids, context=None):
         """
         Create funding pool lines regarding cost_center_lines from analytic distribution.
         If funding_pool_lines exists, then nothing appends.
@@ -246,10 +249,15 @@ class analytic_distribution(osv.osv):
             # Browse cost center lines
             for line in distrib.cost_center_lines:
                 # Search MSF Private Fund
-                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
+                try:
+                    pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                    'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    pf_id = 0
+#                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
                 if pf_id:
                     vals = {
-                        'analytic_id': pf_id[0],
+                        'analytic_id': pf_id,
                         'amount': line.amount or 0.0,
                         'percentage': line.percentage or 0.0,
                         'currency_id': line.currency_id and line.currency_id.id or False,
@@ -261,7 +269,7 @@ class analytic_distribution(osv.osv):
         return res
 
     def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, ref=False, source_date=False, general_account_id=False, \
-        move_id=False, invoice_line_id=False, commitment_line_id=False, context={}):
+        move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date

@@ -29,10 +29,12 @@ class wizard_confirm_bank(osv.osv_memory):
     _name = 'wizard.confirm.bank'
     _description = 'Bank confirmation wizard'
 
-    def button_confirm(self, cr, uid, ids, context={}):
+    def button_confirm(self, cr, uid, ids, context=None):
         """
         Confirm that we close the bank register
         """
+        if context is None:
+            context = {}
         # Some verification
         if isinstance(ids, (int, long)):
             ids = [ids]

@@ -123,15 +123,14 @@
   !python {model: product.product}: |
     import time
     from mx.DateTime import *
-    context = {'average': True}
-    p1_rac = self.browse(cr, uid, ref('product1'), context=context)
-    uom_id = p1_rac.uom_id.id
     from_date = Date(2011, 6, 10)
     to_date = now()
-    date_diff = Age(to_date, from_date)
-    nb_months = round(date_diff.years*12 + date_diff.months + (date_diff.days/30.0), 2)
-    res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, 506.0/nb_months, uom_id)
-    assert p1_rac.monthly_consumption == res, "The average of product 1 is not correct"
+    context = {'average': True, 'from_date': from_date.strftime('%Y-%m-%d'), 'to_date': to_date.strftime('%Y-%m-%d'), 'location_id': ref('stock.stock_location_stock')}
+    p1_rac = self.browse(cr, uid, ref('product1'), context=context)
+    uom_id = p1_rac.uom_id.id
+    nb_months = self._get_date_diff(from_date, to_date)
+    res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, 426.0/nb_months, uom_id)
+    assert p1_rac.monthly_consumption == res, "The average of product 1 is not correct %s :: %s" % (res, p1_rac.monthly_consumption)
 #-
 #  I check the average consumption for 2011, June
 #-

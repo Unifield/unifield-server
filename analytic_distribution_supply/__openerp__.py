@@ -27,11 +27,12 @@
     "description" : "This permits to have analytic distribution wizard on a Purchase Order",
     "author" : "TeMPO Consulting, MSF",
     "category" : "Tools",
-    "depends" : ["base", "analytic_distribution", "purchase_override", "stock"],
+    "depends" : ["base", "analytic_distribution", "purchase_override", "stock", "res_currency_functional"],
     "init_xml" : [],
     "update_xml" : [
             "purchase_view.xml",
             "account_commitment_view.xml",
+            "sale_view.xml",
     ],
     "demo_xml" : [],
     "test": [],

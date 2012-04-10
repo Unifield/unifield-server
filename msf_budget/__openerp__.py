@@ -22,8 +22,9 @@
     'name': 'MSF Budget Management',
     'version': '1.0',
     'category': 'Generic Modules/Accounting',
-    'author': 'MSF: Matthieu Dietrich',
-    'depends': ['res_currency_tables'],
+    'author': 'MSF, TeMPO Consulting',
+    'developer': 'Matthieu Dietrich',
+    'depends': ['res_currency_tables',"msf_audittrail",],
     'description': '''
         Budget view
     ''',
@@ -36,6 +37,7 @@
         'wizard/wizard_budget_criteria_export_view.xml'
     ],
     'test': [
+        'test/budget_test.yml'
     ],
     'installable': True,
     'active': False,

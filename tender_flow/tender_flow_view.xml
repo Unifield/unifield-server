@@ -55,6 +55,10 @@
                         	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="RfQs">
                                     <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="notes" />
+                                    <field name="amount_total" />
+                                    <field name="currency_id" />
                                     <field name="state" />
                                 </tree>
                             </field>
@@ -66,17 +70,17 @@
                     <group col="13" colspan="4">
                         <field name="state" />
                         <field name="internal_state" invisible="True"/>
-                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':['|', ('sale_order_id','!=', False), ('state', 'in', ('cancel', 'done',)),],}" />
+                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':['|', ('sale_order_id','!=', False), ('state', 'in', ['cancel', 'done'])]}" />
                         <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" 
-                            attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'),],}" />
+                            attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison')]}" />
                         <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward" 
-                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False),],}" />
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add" 
-                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
-                        <button name="done" string="Done" type="object" icon="gtk-go-forward" 
-                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
+                        <button name="done" string="Closed" type="object" icon="gtk-go-forward" 
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
                     </group>
                 </form>
             </field>
@@ -106,13 +110,13 @@
 			<field name="arch" type="xml">
 				<search string="Tender">
 					<filter name="draft" icon="gtk-file" string="Draft"
-                            domain="[('state', '=', 'draft'),]" />
+                            domain="[('state', '=', 'draft')]" />
                     <filter name="comparison" icon="gtk-sort-descending" string="Comparison"
-                            domain="[('state', '=', 'comparison'),]" />
-                    <filter name="done" icon="gtk-apply" string="Done"
-                            domain="[('state', '=', 'done'),]" />
+                            domain="[('state', '=', 'comparison')]" />
+                    <filter name="done" icon="gtk-apply" string="Closed"
+                            domain="[('state', '=', 'done')]" />
                     <filter name="cancel" icon="gtk-cancel" string="Cancelled"
-                            domain="[('state', '=', 'cancel'),]" />
+                            domain="[('state', '=', 'cancel')]" />
 					<field name="name" />
                     <field name="supplier_ids" string="Supplier" widget="many2one" />
                     <field name="product_id" string="Product" widget="many2one" />
@@ -123,7 +127,7 @@
                     <group string="Priority" expand="0">
                       <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                       <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                      <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
                     </group>
                     
                     <newline />
@@ -174,8 +178,8 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="details" position="after">
-                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
-                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
                     </field>
 
@@ -196,9 +200,6 @@
                     </xpath>
                     <xpath expr="/form//field[@name='categ']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="readonly">True</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='invoiced']" position="attributes">
                         <attribute name="readonly">True</attribute>
@@ -225,14 +226,11 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='location_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'invisible': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
 
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
-                        <group colspan="4" col="13">
+                        <group colspan="4" col="14">
                             <field name="state" readonly="1"/>
                             <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
@@ -242,10 +240,10 @@
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
                             <button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
                             <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
-                            <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft'),],}" />
-                            <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft'),],}" />
-                            <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent'),],}" />
-                            <button name="rfq_done" states="rfq_updated" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'),],}" />
+                            <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
+                            <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
+                            <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
+                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
                     </xpath>
                 </data>
@@ -310,8 +308,8 @@
                                 <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"/>
                                 <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"/>
                                 <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"/>
-                                <button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', True), ('state', '!=', 'draft'),],}" />
-            					<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'rfq_sent'),],}" />
+                                <button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', True), ('state', '!=', 'draft')]}" />
+            					<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'rfq_sent')]}" />
                             </group>
                         </page>
                         <page string="Delivery &amp; Invoicing" groups="base.group_extended">
@@ -323,7 +321,7 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                                 <field name="fiscal_position" widget="selection"/>
                             </group>
                             <newline/>
@@ -341,34 +339,6 @@
                 </form>
             </field>
         </record>
-       	
-       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
-            <field name="name">product.supplierinfo.form.view</field>
-            <field name="model">product.supplierinfo</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            		
-            		<xpath expr="//form/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            	
-            	</data>
-            </field>
-       	</record>
        	
         <record id="rfq_form" model="ir.ui.view">
             <field name="name">rfq.form</field>
@@ -427,8 +397,8 @@
                                 <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"/>
                                 <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"/>
                                 <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"/>
-                                <button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', True), ('state', '!=', 'draft'),],}" />
-            					<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'rfq_sent'),],}" />
+                                <button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', True), ('state', '!=', 'draft')]}" />
+            					<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'rfq_sent')]}" />
                             </group>
                         </page>
                         <page string="Delivery &amp; Invoicing" groups="base.group_extended">
@@ -440,7 +410,7 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                                 <field name="fiscal_position" widget="selection"/>
                             </group>
                             <newline/>
@@ -463,18 +433,31 @@
             <field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="inherit_id" ref="supplier_catalogue.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
             			<field name="currency_id" />
+            		</xpath>
+            		
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='min_order_qty']" position="after">
             			<field name="valid_till" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />
             			<field name="purchase_order_line_id" />
             		</xpath>
+                 </data>
+            </field>
+        </record>
             		
+        <record id="product_supplierinfo_form_view2" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<data>	
             		<xpath expr="//form/field[@name='price']" position="after">
             			<field name="currency_id" />
             			<field name="valid_till" />
@@ -497,7 +480,7 @@
                     <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
                     <filter icon="gtk-apply" name="sent" string="Sent" domain="[('state','=','rfq_sent')]" separator="1" />
                     <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
-                    <filter icon="gtk-yes" name="done" string="Done" domain="[('state','=','done')]" separator="1" />
+                    <filter icon="gtk-yes" name="done" string="Closed" domain="[('state','=','done')]" separator="1" />
                     <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]" separator="1" />
                     <field name="partner_id" select="1" string="Supplier" />
                     <field name="product_id" select="1" />
@@ -518,7 +501,7 @@
 	                    <group string="Priority" expand="0">
                             <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                             <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                            <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
 	                    </group>
 	                    <newline />
 	                    <group string="Category" expand="0">
@@ -575,8 +558,8 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
-            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1,}</field>
-            <field name="domain">[('rfq_ok', '=', True),]</field>
+            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1}</field>
+            <field name="domain">[('rfq_ok', '=', True)]</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="search_view_id" ref="view_rfq_filter"/>
             <field name="help">You can create a request for quotation when you want to buy products to a supplier but the purchase is not confirmed yet. Use also this menu to review requests for quotation created automatically based on your logistic rules (minimum stock, MTO, etc). You can convert the request for quotation into a purchase order once the order is confirmed. If you use the extended interface (from user's preferences), you can select the way to control your supplier invoices: based on the order, based on the receptions or manual encoding.</field>
@@ -595,7 +578,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
-            <field name="domain">[('rfq_ok', '=', False),]</field>
+            <field name="domain">[('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>

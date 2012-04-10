@@ -37,6 +37,7 @@
     default_code: P0
     name: product 0 test
     type: service_recep
+    procure_method: make_to_order
     
 - 
   Creating a product.product record stockable
@@ -109,7 +110,7 @@
     price_unit: 1.0
     product_id: product_service_p0
     product_uom: product.product_uom_unit
-    
+    product_qty: 1.0
 -
 
   I validate the purchase order and check that no Incoming shipment has been created
@@ -152,6 +153,7 @@
     price_unit: 1.0
     product_id: product_service_p0
     product_uom: product.product_uom_unit
+    product_qty: 1.00
 
 - 
   Creating a purchase.order.line record for service with reception product
@@ -161,7 +163,7 @@
     price_unit: 1.0
     product_id: product_service_recep_p1
     product_uom: product.product_uom_unit
-
+    product_qty: 1.00
 - 
   Creating a purchase.order.line record for service with stockable product
 - 
@@ -170,7 +172,7 @@
     price_unit: 1.0
     product_id: product_stockable_p2
     product_uom: product.product_uom_unit
-
+    product_qty: 1.00
 -
 
   I validate the purchase order and check that no Incoming shipment has been created and
@@ -219,7 +221,7 @@
     price_unit: 1.0
     product_id: product_service_recep_p1
     product_uom: product.product_uom_unit
-
+    product_qty: 1.00
 -
 
   I validate the purchase order and check that no Incoming shipment has been created
@@ -256,7 +258,7 @@
     price_unit: 1.0
     product_id: product_stockable_p2
     product_uom: product.product_uom_unit
-
+    product_qty: 1.00
 -
 
   I change the category of the purchase order to service, an exception should have been raised

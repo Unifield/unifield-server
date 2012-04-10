@@ -34,12 +34,13 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_automatic_cycle(self, cr, uid, use_new_cursor=False, context={}):
+    def run_automatic_cycle(self, cr, uid, use_new_cursor=False, context=None):
         '''
         Create procurement on fixed date
         '''
         if use_new_cursor:
             cr = pooler.get_db(use_new_cursor).cursor()
+        wf_service = netsvc.LocalService("workflow")
             
         request_obj = self.pool.get('res.request')
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
@@ -72,28 +73,22 @@ class procurement_order(osv.osv):
                         'coverage': cycle.order_coverage,
                         'safety_time': cycle.safety_stock_time,
                         'safety': cycle.safety_stock,
+                        'consumption_period_from': cycle.consumption_period_from,
+                        'consumption_period_to': cycle.consumption_period_to,
                         'past_consumption': cycle.past_consumption,
                         'reviewed_consumption': cycle.reviewed_consumption,
                         'manual_consumption': cycle.manual_consumption,}
 
-            if not cycle.product_id:
-                not_products = []
+            if cycle.product_ids:
+                product_ids = []
                 for p in cycle.product_ids:
-                    not_products.append(p.id)
-
-                product_ids = product_obj.search(cr, uid, [('categ_id', 'child_of', cycle.category_id.id), ('id', 'not in', not_products)])
-                
+                    product_ids.append(p.id)
                 for product in product_obj.browse(cr, uid, product_ids):
                     proc_id = self.create_proc_cycle(cr, uid, cycle, product.id, location_id, d_values, cache=cache)
                     
 
                     if proc_id:
                         created_proc.append(proc_id)
-            else:
-                proc_id = self.create_proc_cycle(cr, uid, cycle, cycle.product_id.id, location_id, d_values, cache=cache)
-                
-                if proc_id:
-                    created_proc.append(proc_id)
         
             if cycle.frequence_id:
                 freq_obj.write(cr, uid, cycle.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
@@ -131,7 +126,7 @@ class procurement_order(osv.osv):
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values={}, cache={}, context={}):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, cache=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -141,41 +136,41 @@ class procurement_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         report = []
         proc_id = False
-        
+       
+        if context is None:
+            context = {}
+        if d_values is None:
+            d_values = {}
+        if cache is None:
+            cache = {}
+
         if isinstance(product_id, (int, long)):
             product_id = [product_id]
+            
+        if d_values.get('past_consumption', False):
+            if not d_values.get('consumption_period_from', False):
+                order_coverage = d_values.get('coverage', 3)
+                d_values.update({'consumption_period_from': (now() + RelativeDate(day=1, months=-round(order_coverage, 1)+1)).strftime('%Y-%m-%d')})
+            if not d_values.get('consumption_period_to', False):
+                d_values.update({'consumption_period_to': (now() + RelativeDate(days=-1, day=1, months=1)).strftime('%Y-%m-%d')})
+            context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
-        product = product_obj.browse(cr, uid, product_id[0])
+        product = product_obj.browse(cr, uid, product_id[0], context=context)
         
         # Enter the stock location in cache to know which products has been already replenish for this location
         if not cache.get(location_id, False):
             cache.update({location_id: []})
         
-        # If a rule already exist for the category of the product or for the product
-        # itself for the same location, we don't create a procurement order
-        #cycle_ids = cycle_obj.search(cr, uid, [('category_id', '=', product.categ_id.id), ('product_id', '=', False), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
-        #cycle2_ids = cycle_obj.search(cr, uid, [('product_id', '=', product.id), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
-        #if cycle_ids:
-        #    cr.execute('''SELECT order_cycle_id
-        #                FROM order_cycle_product_rel
-        #                WHERE order_cycle_id in %s
-        #                AND product_id = %s''', (tuple(cycle_ids), product.id))
-        #    res = cr.fetchall()
-        #    for r in res:
-        #        cycle_ids.remove(r[0])
-        #if cycle2_ids or cycle_ids:
-        #    return False
-        
             
         if product.id not in cache.get(location_id):
             newdate = datetime.today()
-            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values)
+            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
                 
             if quantity_to_order <= 0:
                 return False
             else:
                 proc_id = proc_obj.create(cr, uid, {
-                                        'name': _('Automatic Supply: %s') % (cycle.name,),
+                                        'name': _('Procurement cycle: %s') % (cycle.name,),
                                         'origin': cycle.name,
                                         'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
                                         'product_id': product.id,
@@ -194,13 +189,15 @@ class procurement_order(osv.osv):
         
         return proc_id
     
-    def _compute_quantity(self, cr, uid, cycle_id, product_id, location_id, d_values={}, context={}):
+    def _compute_quantity(self, cr, uid, cycle_id, product_id, location_id, d_values=None, context=None):
         '''
         Compute the quantity of product to order like thid :
             [Delivery lead time (from supplier tab of the product or by default or manually overwritten) x Monthly Consumption]
             + Order coverage (number of months : 3 by default, manually overwritten) x Monthly consumption
             - Projected available quantity
         '''
+        if d_values is None:
+            d_values = {}
         product_obj = self.pool.get('product.product')
         supplier_info_obj = self.pool.get('product.supplierinfo')
         location_obj = self.pool.get('stock.location')
@@ -231,7 +228,7 @@ class procurement_order(osv.osv):
         
         if 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
             monthly_consumption = product.reviewed_consumption
-        elif 'monthly_consumption' in d_values and d_values.get('monthly_consumption'):
+        elif 'past_consumption' in d_values and d_values.get('past_consumption'):
             monthly_consumption = product.product_amc
         else:
             monthly_consumption = d_values.get('manual_consumption', 0.00)
@@ -247,7 +244,7 @@ class procurement_order(osv.osv):
         return round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
         
         
-    def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
+    def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values=None, context=None):
         '''
         Compute the projected available quantity like this :
             Available stock (real stock - picked reservation)
@@ -257,6 +254,10 @@ class procurement_order(osv.osv):
                         manually overwritten for a product or at product level)]
             - Expiry quantities.
         '''
+        if context is None:
+            context = {}
+        if d_values is None:
+            d_values = {}
         product_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
         move_obj = self.pool.get('stock.move')

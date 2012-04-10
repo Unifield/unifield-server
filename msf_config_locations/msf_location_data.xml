@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-
-    <record model="product.nomenclature" id="nomen_med">
-        <field name="code">01</field>
-        <field name="name">MED</field>
-        <field name="type">mandatory</field>
-        <field name="level">0</field>
-    </record>
     
-    <record model="product.nomenclature" id="nomen_log">
-        <field name="code">02</field>
-        <field name="name">LOG</field>
-        <field name="type">mandatory</field>
-        <field name="level">0</field>
-    </record>
+	<record model="product.nomenclature" id="nomen_med">
+		<field name="code">01</field>
+		<field name="name">MED</field>
+		<field name="type">mandatory</field>
+		<field name="level">0</field>
+	</record>
 
-    
+	<record model="product.nomenclature" id="nomen_log">
+		<field name="code">02</field>
+		<field name="name">LOG</field>
+		<field name="type">mandatory</field>
+		<field name="level">0</field>
+	</record>
+
+
     <record id="stock.stock_location_locations" model="stock.location">
         <field name="name">Instance Full View</field>
         <field name="location_category">other</field>
@@ -55,7 +55,7 @@
         <field name="posz">4</field>
     </record>
 
-    <record id="stock_location_input" model="stock.location">
+    <record id="msf_cross_docking.stock_location_input" model="stock.location">
         <field name="name">Input</field>
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
@@ -63,8 +63,8 @@
         <field name="chained_location_type">fixed</field>
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
-       <field name="chained_picking_type">internal</field>
-       <field name="posz">1</field>
+        <field name="chained_picking_type">in</field>
+        <field name="posz">2</field>
     </record>
 
     <record id="stock.stock_location_stock" model="stock.location">
@@ -74,8 +74,8 @@
         <field name="location_id" ref="stock.stock_location_company" />
         <field name="chained_location_type">nomenclature</field>
         <field name="chained_auto_packing">transparent</field>
-        <field name="chained_picking_type">internal</field>
-        <field name="posz">2</field>
+        <field name="chained_picking_type">in</field>
+        <field name="posz">1</field>
     </record>
 
     <record id="stock_location_medical" model="stock.location">
@@ -109,6 +109,14 @@
         <field name="nomen_id" ref="nomen_log" />
         <field name="dest_location_id" ref="stock_location_logistic" />
     </record>
+    
+    <record id="msf_cross_docking.stock_location_cross_docking" model="stock.location">
+        <field name="name">Cross docking</field>
+        <field name="location_id" ref="stock.stock_location_company"/>
+        <field name="usage">internal</field>
+        <field name="location_category">transition</field>
+        <field name="posz">3</field>
+    </record>
 
     <record id="stock.stock_location_output" model="stock.location">
         <field name="name">Output</field>
@@ -119,7 +127,7 @@
         <field name="chained_auto_packing">transparent</field>
         <field name="chained_picking_type">out</field>
 	<field name="chained_journal_id" eval="False" />
-        <field name="posz">3</field>
+        <field name="posz">4</field>
     </record>
 
     <record id="msf_outgoing.stock_location_packing" model="stock.location">
@@ -209,7 +217,7 @@
     </record>
 
     <record id="stock.location_production" model="stock.location">
-        <field name="name">Production</field>
+        <field name="name">Kitting</field>
         <field name="location_id" ref="stock.stock_location_locations_virtual" />
         <field name="location_category">other</field>
         <field name="usage">production</field>
@@ -358,7 +366,7 @@
 
     <record id="stock.warehouse0" model="stock.warehouse">
         <field name="name">MSF Coordination C1</field>
-        <field name="lot_input_id" ref="stock_location_input"/>
+        <field name="lot_input_id" ref="msf_cross_docking.stock_location_input"/>
         <field name="lot_stock_id" ref="stock.stock_location_stock"/>
         <field name="lot_output_id" ref="stock.stock_location_output"/>
     </record>

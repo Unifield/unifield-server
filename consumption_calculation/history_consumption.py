@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from mx.DateTime import *
 from lxml import etree
+from tools.translate import _
 
 import time
 
@@ -39,25 +40,29 @@ class product_history_consumption(osv.osv_memory):
         'location_id': fields.many2one('stock.location', string='Location', domain="[('usage', '=', 'internal')]"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
 
     _defaults = {
         'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
     }
 
-    def open_history_consumption(self, cr, uid, ids, context={}):
+    def open_history_consumption(self, cr, uid, ids, context=None):
         if not context:
             context = {}
         new_id = self.create(cr, uid, {}, context=context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.history.consumption',
                 'res_id': new_id,
-                'context': {'active_id': new_id, 'active_ids': [new_id]},
+                'context': {'active_id': new_id, 'active_ids': [new_id], 'withnum': 1},
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'dummy'}
 
-    def date_change(self, cr, uid, ids, date_from, date_to, context={}):
+    def date_change(self, cr, uid, ids, date_from, date_to, context=None):
         '''
         Add the list of months in the defined period
         '''
@@ -104,7 +109,7 @@ class product_history_consumption(osv.osv_memory):
         return res
 
 
-    def create_lines(self, cr, uid, ids, context={}):
+    def create_lines(self, cr, uid, ids, context=None):
         '''
         Create one line by product for the period
         '''
@@ -126,48 +131,34 @@ class product_history_consumption(osv.osv_memory):
         nb_months = len(months)
         total_consumption = {}
 
-        if obj.nomen_id:
-            nomen_id = obj.nomen_id.id
-            nomen = self.pool.get('product.nomenclature').browse(cr, uid, nomen_id, context=context)
-            if nomen.type == 'mandatory':
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_0', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_1', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_2', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_3', '=', nomen_id)], context=context))
-                # Prefill the search view
-                tmp_nomen = [nomen]
-                while nomen.parent_id:
-                    tmp_nomen.append(nomen.parent_id.id)
-                    nomen = nomen.parent_id
-
-                tmp_nomen.reverse()
-
-                i = 0
-                while i < len(tmp_nomen):
-                    context.update({'search_default_nomen_manda_%s' %i: obj.sublist_id.id})
-                    i += 1
-            else:
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_0', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_1', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_2', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_3', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_4', '=', nomen_id)], context=context))
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_5', '=', nomen_id)], context=context))
-                # Prefill the search view
-                tmp_nomen = [nomen]
-                while nomen.parent_id:
-                    tmp_nomen.append(nomen.parent_id.id)
-                    nomen = nomen.parent_id
-
-                tmp_nomen.reverse()
-
-                i = 0
-                while i < len(tmp_nomen):
-                    if i > 3:
-                        context.update({'search_default_nomen_sub_%s' % i-3: obj.sublist_id.id})
-                    else:
-                        context.update({'search_default_nomen_manda_%s' % i: obj.sublist_id.id})
-                    i += 1
+        if obj.nomen_manda_0:
+            for report in self.browse(cr, uid, ids, context=context):
+                product_ids = []
+                products = []
+    
+                nom = False
+                # Get all products for the defined nomenclature
+                if report.nomen_manda_3:
+                    nom = report.nomen_manda_3.id
+                    field = 'nomen_manda_3'
+                elif report.nomen_manda_2:
+                    nom = report.nomen_manda_2.id
+                    field = 'nomen_manda_2'
+                elif report.nomen_manda_1:
+                    nom = report.nomen_manda_1.id
+                    field = 'nomen_manda_1'
+                elif report.nomen_manda_0:
+                    nom = report.nomen_manda_0.id
+                    field = 'nomen_manda_0'
+                if nom:
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+                    
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    batch_mandatory = product.batch_management or product.perishable
+                    date_mandatory = not product.batch_management and product.perishable
+                    self.pool.get('product.product').write(cr, uid, ids, {'name': product.id,})
 
         if obj.sublist_id:
             context.update({'search_default_list_ids': obj.sublist_id.id})
@@ -176,7 +167,7 @@ class product_history_consumption(osv.osv_memory):
 
         domain = [('id', 'in', product_ids)]
 
-        if not obj.nomen_id and not obj.sublist_id:
+        if not obj.nomen_manda_0 and not obj.sublist_id:
             domain = []
 
         new_context = context.copy()
@@ -195,8 +186,31 @@ class product_history_consumption(osv.osv_memory):
                 'context': new_context,
                 'target': 'dummy'}
 
-product_history_consumption()
+##############################################################################################################################
+# The code below aims to enable filtering products regarding their nomenclature.
+# NB: the difference with the other same kind of product filters (with nomenclature and sublist) is that here we are dealing with osv_memory
+##############################################################################################################################
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        res = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+        return res
 
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('sublist_id',False):
+            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if vals.get('nomen_manda_0',False):
+            vals.update({'sublist_id':False})
+        if vals.get('nomen_manda_1',False):
+            vals.update({'sublist_id':False})
+        ret = super(product_history_consumption, self).write(cr, uid, ids, vals, context=context)
+        return ret
+##############################################################################
+# END of the definition of the product filters and nomenclatures
+##############################################################################
+
+product_history_consumption()
 
 class product_history_consumption_month(osv.osv_memory):
     _name = 'product.history.consumption.month'
@@ -216,9 +230,9 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
-           context={}
+           context = {}
 
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
@@ -255,7 +269,7 @@ class product_product(osv.osv):
 
         return res
 
-    def fields_get(self, cr, uid, fields=None, context={}):
+    def fields_get(self, cr, uid, fields=None, context=None):
         if not context:
             context = {}
 
@@ -278,7 +292,7 @@ class product_product(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, vals=None, context={}, load='_classic_read'):
+    def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read'):
         '''
         Set value for each month
         '''

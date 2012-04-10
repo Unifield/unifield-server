@@ -32,9 +32,9 @@
     Administrator can subscribe rules for read,write and
     delete on objects and can check logs.
     """,
-    'author': 'OpenERP SA − TeMPO Consulting − MSF',
+    'author': 'OpenERP SA, TeMPO Consulting, MSF',
     'website': 'http://www.unifield.org',
-    'depends': ['base', 'purchase'],
+    'depends': ['base', 'purchase', 'account'],
     'init_xml': [],
     'update_xml': [
         'wizard/audittrail_view_log_view.xml',
@@ -43,6 +43,7 @@
         'security/audittrail_security.xml',
         'audittrail_data.yml',
         'audittrail_report.xml',
+        'audittrail_invoice_data.yml',
     ],
     'demo_xml': [],
     'installable': True,

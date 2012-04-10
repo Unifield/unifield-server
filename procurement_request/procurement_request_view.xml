@@ -54,8 +54,9 @@
                                     <field name="latest" />
 				    <field name="my_company_id" invisible="1" />
                                     <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"/>
-                                    <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
-                                    <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
+				    <field name="state" invisible="1" />
+                                    <button name="open_split_wizard" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" 
+					    attrs="{'invisible': [('state', 'in', ('confirmed', 'cancel', 'done', 'exception'))]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
@@ -72,9 +73,8 @@
                             <group colspan="4" col="6">
                                 <field name="state" />
                                 <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,progress,validated" />
-                                <button name="procurement_validate" icon="" string="Validate" states="draft" />
+                                <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" />
-                                <button name="order_confirm" icon="gtk-execute" string="Done" states="progress" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
@@ -120,8 +120,9 @@
                 <search string="Internal Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', '=', 'draft')]" />
+                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', '=', 'validated')]" />
                         <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
-                        <filter name="state_done" string="Done" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
+                        <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="origin" />

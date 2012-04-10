@@ -57,7 +57,7 @@ class stock_reason_type(osv.osv):
         
         return level
     
-    def _get_level(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_level(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the level of the reason type
         '''
@@ -68,7 +68,7 @@ class stock_reason_type(osv.osv):
         
         return res
     
-    def _get_inventory(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_inventory(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns if the type will be present in inventory line
         '''
@@ -82,7 +82,7 @@ class stock_reason_type(osv.osv):
             
         return res
     
-    def _search_inventory(self, cr, uid, obj, name, args, context={}):
+    def _search_inventory(self, cr, uid, obj, name, args, context=None):
         '''
         Returns the ids of all reason type which are displayed in inventory line
         '''
@@ -141,7 +141,7 @@ class stock_inventory_line(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
     }
     
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
         '''
@@ -191,7 +191,7 @@ class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
         
-    def _get_default_reason(self, cr, uid, context={}):
+    def _get_default_reason(self, cr, uid, context=None):
         res = {}
         toget = [('reason_type_id', 'reason_type_external_supply')]
 
@@ -200,7 +200,7 @@ class stock_picking(osv.osv):
             res[field] = nom[1]
         return res
     
-    def onchange_move(self, cr, uid, ids, context={}):
+    def onchange_move(self, cr, uid, ids, context=None):
         res = {}
         if ids:
             for pick in self.browse(cr, uid, ids, context=context):
@@ -208,7 +208,7 @@ class stock_picking(osv.osv):
 
         return {'value': res}
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Take into account all stock_picking with reason_type_id is a children
         '''
@@ -225,7 +225,7 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
     
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
         '''
@@ -260,7 +260,7 @@ class stock_move(osv.osv):
             
         return pick_values
     
-    def _get_default_reason(self, cr, uid, context={}):
+    def _get_default_reason(self, cr, uid, context=None):
         res = {}
         toget = [('reason_type_id', 'reason_type_external_supply')]
 
@@ -269,7 +269,7 @@ class stock_move(osv.osv):
             res[field] = nom[1]
         return res
     
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
         '''
@@ -302,7 +302,7 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Set default values if the reason type has changed
         '''
@@ -322,7 +322,7 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Take into account all stock_picking with reason_type_id is a children
         '''
@@ -348,7 +348,7 @@ class stock_move(osv.osv):
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
     }
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, context={}):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
@@ -371,11 +371,13 @@ class stock_return_picking(osv.osv_memory):
     _name = 'stock.return.picking'
     _inherit = 'stock.return.picking'
 
-    def _hook_default_return_data(self, cr, uid, ids, context={}, 
+    def _hook_default_return_data(self, cr, uid, ids, context=None, 
                                   *args, **kwargs):
         '''
         Hook to allow user to modify the value for the stock move copy method
         '''
+        if context is None:
+            context = {}
         default_value = super(stock_return_picking, self).\
                         _hook_default_return_data(cr, uid, ids, 
                                       context=context, 

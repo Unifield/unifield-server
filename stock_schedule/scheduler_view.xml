@@ -13,7 +13,7 @@
                     <group colspan="4" col="16" attrs="{'invisible': [('name', '!=', 'daily')]}">
                         <separator colspan="16" string="Daily configuration" />
                         <label />
-                        <field name="daily_frequency_ok" nolabel="1" on_change="choose_daily_frequency(daily_frequency_ok, False)" />
+                        <field name="daily_frequency_ok" nolabel="1" readonly="1" />
                         <field name="daily_frequency" attrs="{'readonly': [('daily_frequency_ok', '=', 0)], 'required': [('daily_frequency_ok', '=', True)]}" />
                         <label string="day(s)" />
                         <newline />
@@ -175,12 +175,13 @@
         <!-- REWORKING OF WAREHOUSE MENU ACCORDING TO UF-657 ERGONOMIC IMPROVEMENTS -->
         <menuitem id="stock.menu_traceability" name="Traceability" parent="stock.menu_stock_root" sequence="5"/>
         <menuitem id="stock.menu_stock_inventory_control" name="Inventory Control" parent="stock.menu_stock_root" sequence="6"/>
-        <menuitem id="procurement.menu_stock_sched" name="Schedulers" parent="stock.menu_stock_root" sequence="10"/>
+        <menuitem id="procurement.menu_stock_sched" name="POs Creation" parent="stock.menu_stock_root" sequence="10"/>
         <menuitem id="stock.next_id_61" name="Reporting" parent="stock.menu_stock_root" sequence="8" />
 
         <!-- REWORKING OF TRACEABILITY MENU -->
         <record id="stock.action_production_lot_form" model="ir.actions.act_window">
             <field name="name">Batch numbers</field>
+            <field name="help">This is the list of all the batch numbers you recorded. When you select a lot, you can get the upstream or downstream traceability of the products contained in batch. By default, the list is filtred on the batch numbers that are available in your warehouse but you can uncheck the 'Available' button to get all the batch numbers you produced, received or delivered to customers.</field>
         </record>
 
         <menuitem id="stock.menu_action_production_lot_form" action="stock.action_production_lot_form" sequence="-10" parent="stock.menu_traceability" />
@@ -192,7 +193,7 @@
 
 
         <menuitem id="stock_automatic_procurements_menu"
-                  name="Automatic Procurements"
+                  name="Replenishment Rules"
                   sequence="4"
                   parent="stock.menu_stock_root" />
 

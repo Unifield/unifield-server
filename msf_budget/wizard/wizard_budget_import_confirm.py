@@ -22,22 +22,19 @@ from osv import osv, fields
 
 class wizard_budget_import_confirm(osv.osv_memory):
     _name = 'wizard.budget.import.confirm'
+    
+    _columns = {
+        'budget_list': fields.text("Budget list"),
+    }
 
     def button_confirm(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         budget_obj = self.pool.get('msf.budget')
-        budget_line_obj = self.pool.get('msf.budget.line')
-        if 'budget_vals' in context and 'latest_budget_id' in context and 'budget_line_vals' in context:
-            # Overwrite budget
-            budget_obj.write(cr, uid, [context['latest_budget_id']], vals=context['budget_vals'], context=context)
-            # Delete old lines
-            old_line_ids = budget_line_obj.search(cr, uid, [('budget_id','=',context['latest_budget_id'])], context=context)
-            budget_line_obj.unlink(cr, uid, old_line_ids, context=context)
-            # Recreate the lines
-            for line_vals in context['budget_line_vals']:
-                line_vals.update({'budget_id': context['latest_budget_id']})
-                self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
+        if 'budgets' in context:
+            for budget in context['budgets'].values():
+                # Delete old budget
+                budget_obj.unlink(cr, uid, [budget['latest_budget_id']], context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -47,6 +44,16 @@ class wizard_budget_import_confirm(osv.osv_memory):
                 'target': 'new',
                 'context': context
         }
+
+    def button_cancel(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        budget_obj = self.pool.get('msf.budget')
+        if 'budgets' in context:
+            for budget in context['budgets'].values():
+                # Delete new budget
+                budget_obj.unlink(cr, uid, [budget['created_budget_id']], context=context)
+        return {'type' : 'ir.actions.act_window_close'}
 
 wizard_budget_import_confirm()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

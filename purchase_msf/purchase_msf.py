@@ -29,7 +29,6 @@ import netsvc
 import pooler
 import time
 
-
 class purchase_order_line(osv.osv):
     '''
     information from product are repacked
@@ -138,7 +137,6 @@ class purchase_order_line(osv.osv):
 
 purchase_order_line()
 
-
 class product_product(osv.osv):
 
     _inherit = 'product.product'
@@ -172,6 +170,4 @@ class product_product(osv.osv):
         return result
     
 product_product()
-    
-    
-    
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

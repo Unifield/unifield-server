@@ -55,7 +55,7 @@ class stock_report_prodlots_virtual(osv.osv):
                         on (sl.id = sm.location_id)
                     left join product_uom uo
                         on (uo.id=sm.product_uom)
-                    where state in ('confirmed','waiting','assigned','done')
+                    where state in ('assigned','done')
                     group by sm.location_id, sm.product_id, sm.product_uom, sm.prodlot_id
                     union all
                     select max(sm.id) as id,
@@ -74,7 +74,7 @@ class stock_report_prodlots_virtual(osv.osv):
                 group by location_id, product_id, prodlot_id
             )""")
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
 
 stock_report_prodlots_virtual()

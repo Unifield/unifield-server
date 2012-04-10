@@ -22,12 +22,11 @@
                         <field name="register_posting_date" />
                         <field name="state" invisible="1"/>
                         <field name="amount_total"/>
-                        <group colspan="6">
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}" />
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}" />
-                            <field name="analytic_distribution_id" invisible="1"/>
-                            <label string=" " />
-                        </group>
+                        <newline/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <group colspan="2"/>
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" required="1"/>
@@ -44,8 +43,10 @@
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment}"
                                         />
-                                    <field name="analytic_distribution_state"/>
-                                    <field name="have_analytic_distribution_from_header"/>
+                                    <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
                                     <field name="quantity"/>
                                     <field name="price_unit"/>
                                      <!-- Removed if subtotal is set -->
@@ -75,112 +76,6 @@
                             <field name="user_id"/>
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
-                        </page>
-                    </notebook>
-                </form>
-            </field>
-        </record>
-
-    <!-- Supplier Invoice Form -->
-        <record model="ir.ui.view" id="wizard_supplier_invoice_form_view">
-            <field name="name">wizard.supplier.invoice.form.view</field>
-            <field name="model">account.invoice</field>
-            <field name="type">form</field>
-            <field name="inherit_id" eval="False" />
-            <field name="priority">200</field>
-            <field name="arch" type="xml">
-                <form string="Supplier Invoice">
-                    <group col="8" colspan="4">
-                        <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection"/>
-                        <field name="number" readonly="1"/>
-                        <field name="type" invisible="1"/>
-                        <field name="currency_id" invisible="1"/>
-                        <field name="virtual_currency_id" width="50"/>
-                        <newline/>
-                        <field name="partner_id" invisible="1"/>
-                        <field string="Supplier" name="virtual_partner_id"/>
-                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
-                        <newline/>
-                        <field name="date_invoice" readonly="1"/>
-                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection" readonly="1" 
-                            string="Posting Period"/>
-                        <group colspan="2" col="1" groups="account.group_account_user">
-                            <label align="0.0" string="(keep empty to use the current period)"/>
-                        </group>
-                        <group colspan="6">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="2"/>
-                            <label string="" colspan="4"/>
-                        </group>
-                    </group>
-                    <notebook colspan="4">
-                        <page string="Invoice">
-                            <field name="account_id" invisible="1"/>
-                           <field name="virtual_account_id"/>
-                            <field name="reference_type" nolabel="1" size="0"/>
-                            <field name="reference" nolabel="1"/>
-                            <field name="date_due"/>
-                            <field name="check_total" required="1" readonly="1"/>
-                            <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': 
-                                address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
-                                name="invoice_line" nolabel="1">
-                                <tree editable="bottom" string="Invoice lines">
-                                    <field name="product_code"/>
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
-                                        {'company_id': parent.company_id})"/>
-                                    <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), 
-                                        ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
-                                    <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" 
-                                        name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
-                                    <field name="quantity"/>
-                                    <field name="price_unit"/>
-                                     <!-- Removed if subtotal is set -->
-                                    <field name="price_subtotal"/>
-                                    <field name="name"/>
-                                    <field invisible="True" name="uos_id"/>
-                                </tree>
-                            </field>
-                            <group col="4" colspan="4">
-                                <field name="reconciled"/>
-                                <field name="amount_total"/>
-                                <field name="state"/>
-                                <field name="residual"/>
-                                <group col="6" colspan="4">
-                                    <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel Invoice" icon="gtk-cancel"/>
-                                    <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" 
-                                        icon="terp-stock_effects-object-colorize"/>
-                                    <button name="invoice_open" type="object" states="draft,proforma2" string="Approve" icon="terp-camera_test"/>
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Other Info">
-                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)"/>
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" 
-                                widget="selection" groups="base.group_multi_company"/>
-                            <newline/>
-                            <field name="payment_term" widget="selection"/>
-                            <field name="name"/>
-                            <newline/>
-                            <field name="origin" groups="base.group_extended"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
-                            <field name="user_id"/>
-                            <field name="move_id" groups="account.group_account_user"/>
-                            <separator colspan="4" string="Additional Information"/>
-                            <field colspan="4" name="comment" nolabel="1"/>
-                        </page>
-                        <page string="Payments" groups="base.group_extended">
-                            <field name="payment_ids" colspan="4" nolabel="1" >
-                                <tree string="Payments">
-                                    <field name="date" string="Payment Date"/>
-                                    <field name="ref"/>
-                                    <field name="name" groups="base.group_extended"/>
-                                    <field name="journal_id"/>
-                                    <field name="debit"/>
-                                    <field name="credit"/>
-                                    <field name="amount_currency" groups="base.group_extended"/>
-                                    <field name="currency_id" groups="base.group_extended"/>
-                                </tree>
-                            </field>
                         </page>
                     </notebook>
                 </form>
@@ -219,13 +114,6 @@
             <field name="sequence" eval="5"/>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="account.invoice_tree"/>
-            <field name="act_window_id" ref="action_direct_invoice"/>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="act_direct_supplier_invoice2">
-            <field name="sequence" eval="10"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="wizard_supplier_invoice_form_view"/>
             <field name="act_window_id" ref="action_direct_invoice"/>
         </record>
 

@@ -25,12 +25,12 @@ import decimal_precision as dp
 class account_analytic_line_compute_currency(osv.osv):
     _inherit = "account.analytic.line"
     
-    def update_amounts(self, cr, uid, ids, context={}):
+    def update_amounts(self, cr, uid, ids, context=None):
         """
         Update analytic line amount with debit and credit if move_id exists, otherwise use amount_currency to do change
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for analytic_line in self.browse(cr, uid, ids):

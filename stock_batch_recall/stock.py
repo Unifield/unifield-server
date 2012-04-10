@@ -37,7 +37,7 @@ class stock_batch_recall(osv.osv_memory):
         'expired_date': fields.date(string='Expired Date')
     }
     
-    def get_ids(self, cr, uid, ids, context={}):
+    def get_ids(self, cr, uid, ids, context=None):
         '''
         Returns all stock moves according to parameters
         '''
@@ -57,10 +57,12 @@ class stock_batch_recall(osv.osv_memory):
                 domain.append(('prodlot_id', '=', track.prodlot_id.id))
         return domain
     
-    def return_view(self, cr, uid, ids, context={}):
+    def return_view(self, cr, uid, ids, context=None):
         '''
         Print the report on Web client (search view)
         '''
+        if context is None:
+            context = {}
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         
@@ -90,7 +92,7 @@ class report_batch_recall(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number', readonly=True),
         'expired_date': fields.date('Expired Date', readonly=True),
         'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
@@ -226,7 +228,7 @@ class report_batch_recall(osv.osv):
               addr.partner_id
         );""")
         
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
 
 report_batch_recall()

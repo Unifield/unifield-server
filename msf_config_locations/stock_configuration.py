@@ -52,7 +52,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
         'reactivate': lambda *a: False,
     }
     
-    def name_on_change(self, cr, uid, ids, location_name, usage, type, context={}):
+    def name_on_change(self, cr, uid, ids, location_name, usage, type, context=None):
         '''
         Check if a location with the same parameter exists on
         the instance warehouse
@@ -88,11 +88,15 @@ class stock_location_configuration_wizard(osv.osv_memory):
         return {'value': res,
                 'warning': warning}
         
-    def confirm_creation2(self, cr, uid, ids, context={}):
+    def confirm_creation2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         context.update({'reactivate_loc': True})
         return self.confirm_creation(cr, uid, ids, context=context)
 
-    def confirm_creation(self, cr, uid, ids, context={}):
+    def confirm_creation(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         parent_location_id = False
@@ -237,7 +241,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         'has_child': fields.boolean(string='Location has children locations'),
     }
     
-    def location_id_on_change(self, cr, uid, ids, location_id, context={}):
+    def location_id_on_change(self, cr, uid, ids, location_id, context=None):
         '''
         Check if no moves to this location aren't done
         Check if there is no stock in this location
@@ -285,7 +289,7 @@ Please click on the 'Children locations' button to see all children locations.''
         return {'value': res,
                 'warning': warning}
         
-    def check_error(self, cr, uid, ids, context={}):
+    def check_error(self, cr, uid, ids, context=None):
         '''
         Check if errors are always here
         '''
@@ -300,13 +304,13 @@ Please click on the 'Children locations' button to see all children locations.''
                 'view_mode': 'form',
                 'target': 'new',}
         
-    def location_usage_change(self, cr, uid, ids, usage, context={}):
+    def location_usage_change(self, cr, uid, ids, usage, context=None):
         if usage and usage == 'customer':
             return {'value': {'location_category': 'consumption_unit'}} 
         
         return {}
         
-    def deactivate_location(self, cr, uid, ids, context={}):
+    def deactivate_location(self, cr, uid, ids, context=None):
         '''
         Deactivate the selected location
         '''
@@ -356,7 +360,7 @@ Please click on the 'Children locations' button to see all children locations.''
         else:
             return {'type': 'ir.actions.act_window'}
     
-    def see_moves(self, cr, uid, ids, context={}):
+    def see_moves(self, cr, uid, ids, context=None):
         '''
         Returns all stock.picking containing a stock move not done from/to the location
         '''
@@ -384,10 +388,12 @@ Please click on the 'Children locations' button to see all children locations.''
                 'target': 'current',
                 }
         
-    def products_in_location(self, cr, uid, ids, context={}):
+    def products_in_location(self, cr, uid, ids, context=None):
         '''
         Returns a list of products in the location
         '''
+        if context is None:
+            context = {}
         location = False
         
         for wizard in self.browse(cr, uid, ids, context=context):
@@ -407,7 +413,7 @@ Please click on the 'Children locations' button to see all children locations.''
                 'context': context,
                 'target': 'current'}
         
-    def children_location(self, cr, uid, ids, context={}):
+    def children_location(self, cr, uid, ids, context=None):
         '''
         Returns the list of all children locations
         '''

@@ -39,7 +39,7 @@ class account_line_csv_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
 
-    def _account_move_line_to_csv(self, cr, uid, ids, writer, currency_id, context={}):
+    def _account_move_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):
         """
         Take account_move_line and return a csv string
         """
@@ -56,31 +56,35 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = ['Journal Code', 'Sequence', 'Instance', 'Reference', 'Posting date', 'Period', 'Name', 'Account Code', 'Account Description', 'Third party', 
+        head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 'Period', 'Account Code', 'Account Description', 'Third party', 
             'Book. Debit', 'Book. Credit', 'Book. currency']
         if not currency_id:
-            head += ['Func. Debit', 'Func. Credit', 'Func. currency']
+            head += ['Func. Debit', 'Func. Credit', 'Func. Currency']
         else:
-            head += ['Output debit', 'Output credit', 'Output currency']
-        head += ['State', 'Reconcile']
+            head += ['Output Debit', 'Output Credit', 'Output Currency']
+        head += ['Reconcile', 'State']
         writer.writerow(head)
+        # Sort items
+        ids.sort()
         # Then write lines
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             csv_line = []
+            #instance (Proprietary Instance)
+            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
             # journal_id
             csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
-            #move_id
+            #move_id (Entry Sequence)
             csv_line.append(ml.move_id and ml.move_id.name and ml.move_id.name.encode('utf-8') or '')
-            #instance
-            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
+            #name
+            csv_line.append(ml.name and ml.name.encode('utf-8') or '')
             #ref
             csv_line.append(ml.ref and ml.ref.encode('utf-8') or '')
             #date
             csv_line.append(ml.date or '')
+            #document_date
+            csv_line.append(ml.document_date or '')
             #period_id
             csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
-            #name
-            csv_line.append(ml.name and ml.name.encode('utf-8') or '')
             #account_id code
             csv_line.append(ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or '')
             #account_id name
@@ -111,10 +115,10 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
-            #state
-            csv_line.append(ml.state.encode('utf-8') or '')
             #reconcile_total_partial_id
             csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
+            #state
+            csv_line.append(ml.state.encode('utf-8') or '')
             # Write line
             writer.writerow(csv_line)
             
@@ -136,7 +140,7 @@ class account_line_csv_export(osv.osv_memory):
             #############################
         return True
 
-    def _account_analytic_line_to_csv(self, cr, uid, ids, writer, currency_id, context={}):
+    def _account_analytic_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):
         """
         Take account_analytic_line and return a csv string
         """
@@ -155,45 +159,59 @@ class account_line_csv_export(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
         # Prepare csv head
-        head = ['Journal Code', 'Date', 'Instance', 'Description', 'Reference', 'Amount', 'Company currency', 'Amount currency', 'Currency']
+        head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 
+            'Period', 'General Account', 'Analytic Account', 'Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency']
         if currency_id:
             head += ['Output amount', 'Output currency']
-        head += ['Analytic Account']
+        head+= ['Reversal Origin']
         writer.writerow(head)
+        # Sort items
+        ids.sort()
         # Then write lines
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             csv_line = []
-            # journal_id
-            csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
-            #date
-            csv_line.append(al.date or '')
             #instance
             csv_line.append(al.company_id and al.company_id.name and al.company_id.name.encode('utf-8') or '')
-            #name
+            # journal_id
+            csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
+            #sequence
+            csv_line.append(al.move_id and al.move_id.move_id and al.move_id.move_id.name and al.move_id.move_id.name.encode('utf-8') or '')
+            #name (description)
             csv_line.append(al.name and al.name.encode('utf-8') or '')
             #ref
             csv_line.append(al.ref and al.ref.encode('utf-8') or '')
-            #amount
-            csv_line.append(al.amount or 0.0)
-            #company currency
-            csv_line.append(company_currency.encode('utf-8') or '')
+            #date
+            csv_line.append(al.date or '')
+            #document_date
+            csv_line.append(al.document_date or '')
+            #period
+            csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
+            #general_account_id (general account)
+            csv_line.append(al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or '')
+            #account_id name (analytic_account)
+            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
+            #third party
+            csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
             #amount_currency
             csv_line.append(al.amount_currency or 0.0)
             #currency_id
             csv_line.append(al.currency_id and al.currency_id.name and al.currency_id.name.encode('utf-8') or '')
+            #amount
+            csv_line.append(al.amount or 0.0)
+            #company currency
+            csv_line.append(company_currency.encode('utf-8') or '')
             if currency_id:
                 #output amount
                 amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
                 csv_line.append(amount or 0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
-            #account_id name
-            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
+            csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
             # Write Line
             writer.writerow(csv_line)
         return True
 
-    def export_to_csv(self, cr, uid, ids, currency_id, model, context={}):
+    def export_to_csv(self, cr, uid, ids, currency_id, model, context=None):
         """
         Return a CSV file containing all given line
         """

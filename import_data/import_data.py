@@ -97,6 +97,7 @@ class import_data(osv.osv_memory):
             ('account.analytic.account','Analytic Account'),
             ('crossovered.budget','Budget'),
             ('account.budget.post','Budget Line'),
+            ('product.supplierinfo', 'Supplier Info'),
             ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
     }
@@ -142,7 +143,7 @@ class import_data(osv.osv_memory):
             newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
             if not newids:
                 # TODO: no obj
-                raise osv.except_osv(_('Warning !'), '%s does not exist'%(value,))
+                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
             return newids[0]
 
         def process_data(field, value, fields_def):
@@ -170,7 +171,7 @@ class import_data(osv.osv_memory):
                 if fields_def[field.split('.')[0]]['type'] in 'many2one':
                     return _get_obj(field, value, fields_def)
             
-            raise osv.except_osv(_('Warning !'), '%s does not exist'%(value,))
+            raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
         
         i = 1
         nb_error = 0
@@ -287,7 +288,7 @@ Find in attachment the rejected lines'''%(nb_error)
         cr.commit()
         cr.close()
 
-    def import_csv(self, cr, uid, ids, context={}):
+    def import_csv(self, cr, uid, ids, context=None):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         return {'type': 'ir.actions.act_window_close'}

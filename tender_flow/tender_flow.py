@@ -39,30 +39,11 @@ class tender(osv.osv):
     _name = 'tender'
     _description = 'Tender'
 
-    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         if not default:
             default = {}
         default['internal_state'] = 'draft' # UF-733: Reset the internal_state
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
-    
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        return function values
-        '''
-        result = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {'rfq_name_list': '',
-                              }
-            
-            rfq_names = []
-            for rfq in obj.rfq_ids:
-                rfq_names.append(rfq.name)
-            # generate string
-            rfq_names.sort()
-            result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
-            
-        return result
-
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -95,7 +76,7 @@ class tender(osv.osv):
                 'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft':[('readonly',False)],}, readonly=True),
-                'creation_date': fields.date(string="Creation Date", readonly=True),
+                'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft':[('readonly',False)]}),
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
@@ -151,7 +132,7 @@ class tender(osv.osv):
                 # create a purchase order for each supplier
                 address_id = partner_obj.address_get(cr, uid, [supplier.id], ['delivery'])['delivery']
                 if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!'%supplier.name))
+                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
                           'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
@@ -231,7 +212,7 @@ class tender(osv.osv):
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('done',)),], context=context)
         if rfq_ids:
-            raise osv.except_osv(_('Error !'), _("Some RfQ are already Done. Integrity failure."))
+            raise osv.except_osv(_('Error !'), _("Some RfQ are already Closed. Integrity failure."))
         # all rfqs must have been treated
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('draft', 'rfq_sent',)),], context=context)
@@ -302,8 +283,8 @@ class tender(osv.osv):
                               'product_name': False,
                               'product_code': False,
                               'sequence' : -99,
-                              'product_uom': line.product_uom.id,
-                              'min_qty': 0.0,
+                              #'product_uom': line.product_uom.id,
+                              #'min_qty': 0.0,
                               #'qty': function
                               'product_id' : product.product_tmpl_id.id,
                               'delay' : int(line.supplier_id.default_delay),
@@ -316,6 +297,7 @@ class tender(osv.osv):
                     values = {'suppinfo_id': new_info_id,
                               'min_quantity': line.qty,
                               'price': line.price_unit,
+                              'uom_id': line.product_uom.id,
                               'currency_id': line.purchase_order_line_id.currency_id.id,
                               'valid_till': line.purchase_order_id.valid_till,
                               'purchase_order_line_id': line.purchase_order_line_id.id,
@@ -369,6 +351,7 @@ class tender(osv.osv):
                                                                'product_qty': line.qty,
                                                                'product_id': line.product_id.id,
                                                                'product_uom': line.product_uom.id,
+                                                               'change_price_manually': 'True',
                                                                'price_unit': line.price_unit,
                                                                'date_planned': line.date_planned,
                                                                'move_dest_id': False,
@@ -399,7 +382,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, po_data, context=context)
                 po = po_obj.browse(cr, uid, po_id, context=context)
                 po_obj.log(cr, uid, po_id, 'The Purchase order %s for supplier %s has been created.'%(po.name, po.partner_id.name))
-                wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                #UF-802: the PO created must be in draft state, and not validated!
+                #wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 
             # when the po is generated, the tender is done - no more modification or comparison
             self.done(cr, uid, [tender.id], context=context)
@@ -422,7 +406,7 @@ class tender(osv.osv):
                 
         return True
 
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the tender and all related documents to done state
         '''
@@ -432,11 +416,15 @@ class tender(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for tender in self.browse(cr, uid, ids, context=context):
+            line_updated = False
             if tender.state not in ('done', 'cancel'):
+                for line in tender.tender_line_ids:
+                    if line.purchase_order_line_id:
+                        line_updated = True
                 # Cancel or done all RfQ related to the tender
                 for rfq in tender.rfq_ids:
                     if rfq.state not in ('done', 'cancel'):
-                        if rfq.state == 'draft':
+                        if rfq.state == 'draft' or not line_updated:
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
                         else:
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
@@ -444,12 +432,13 @@ class tender(osv.osv):
                                 self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'valid_till': time.strftime('%Y-%m-%d')}, context=context)
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-                if tender.state == 'draft' or not tender.tender_line_ids:
-                    # Call the cancel method of the tender
-                    wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
-                else:
-                    # Call the cancel method of the tender
-                    wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
+                if all_doc:
+                    if tender.state == 'draft' or not tender.tender_line_ids or not line_updated:
+                        # Call the cancel method of the tender
+                        wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+                    else:
+                        # Call the cancel method of the tender
+                        wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
 
         return True
 
@@ -463,7 +452,7 @@ class tender_line(osv.osv):
     _name = 'tender.line'
     _description= 'Tender Line'
     
-    _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'),]
+    _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'),]
     
     def on_product_change(self, cr, uid, id, product_id, context=None):
         '''
@@ -519,7 +508,7 @@ class tender_line(osv.osv):
 tender_line()
 
 
-class tender(osv.osv):
+class tender2(osv.osv):
     '''
     tender class
     '''
@@ -541,7 +530,7 @@ class tender(osv.osv):
                        rfq_ids=[],
                        sale_order_line_id=False,)
             
-        result = super(tender, self).copy(cr, uid, id, default, context)
+        result = super(tender2, self).copy(cr, uid, id, default, context)
         
         return result
     
@@ -556,7 +545,7 @@ class tender(osv.osv):
                            purchase_order_line_id=False,)
         return result
 
-tender()
+tender2()
 
 
 class procurement_order(osv.osv):
@@ -582,7 +571,7 @@ class procurement_order(osv.osv):
     _columns = {'is_tender': fields.function(_is_tender, method=True, type='boolean', string='Is Tender', readonly=True,),
                 'sale_order_line_ids': fields.one2many('sale.order.line', 'procurement_id', string="Sale Order Lines"),
                 'tender_id': fields.many2one('tender', string='Tender', readonly=True),
-                'is_tender_done': fields.boolean(string="Tender Done"),
+                'is_tender_done': fields.boolean(string="Tender Closed"),
                 'state': fields.selection([('draft','Draft'),
                                            ('confirmed','Confirmed'),
                                            ('exception','Exception'),
@@ -710,7 +699,7 @@ class purchase_order(osv.osv):
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
-                'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
+                'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Closed'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
                 }
@@ -736,7 +725,7 @@ class purchase_order(osv.osv):
                 result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
-    def rfq_sent(self, cr, uid, ids, context={}):
+    def rfq_sent(self, cr, uid, ids, context=None):
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
@@ -747,7 +736,7 @@ class purchase_order(osv.osv):
                 'report_name': 'purchase.quotation',
                 'datas': datas}
 
-    def check_rfq_updated(self, cr, uid, ids, context={}):
+    def check_rfq_updated(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -776,6 +765,7 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
+                'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 }
     
 purchase_order_line()
@@ -797,7 +787,7 @@ class pricelist_partnerinfo(osv.osv):
     add new information from specifications
     '''
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency',),
+    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
                 'valid_till': fields.date(string="Valid Till",),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),

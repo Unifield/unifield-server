@@ -23,9 +23,8 @@
     "name": "MSF Tools",
     "version": "1.0",
     "depends": ["base",
-                "msf_order_date",
                 ],
-    "author": "MSF",
+    "author": "MSF, TeMPO Consulting",
     "website": "",
     "category": "Specific Modules",
     "description": """

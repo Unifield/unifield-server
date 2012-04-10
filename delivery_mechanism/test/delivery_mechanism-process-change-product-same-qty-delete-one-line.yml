@@ -58,6 +58,8 @@
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
+    # change Invoicing control to From Picking
+    self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
@@ -75,6 +77,10 @@
     po_id = data['purchase_id'][0]
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
+    pick = self.browse(cr, uid, in_ids[0], context=context)
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    # open process wizard
     dic = self.action_process(cr, uid, in_ids, context=context)
     wiz_model = dic['res_model']
     wiz_id = dic['res_id']
@@ -82,7 +88,7 @@
     # only change product for both lines
     wiz_obj = self.pool.get(wiz_model)
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c):
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type):
         # change the product of original move
         dic_change = out.change_product(context=wiz_c)
         change_model = dic_change['res_model']

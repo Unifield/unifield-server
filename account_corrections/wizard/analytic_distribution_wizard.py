@@ -39,7 +39,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def button_cancel(self, cr, uid, ids, context={}):
+    def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
         """
@@ -60,7 +60,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             }
         return super(analytic_distribution_wizard, self).button_cancel(cr, uid, ids, context=context)
 
-    def button_confirm(self, cr, uid, ids, context={}):
+    def button_confirm(self, cr, uid, ids, context=None):
         """
         Change wizard state in order to use normal method
         """

@@ -33,7 +33,7 @@ class account_move_line(osv.osv):
     _name = "account.move.line"
     _inherit = "account.move.line"
 
-    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Lines that have an account that come from a cheque register.
         """
@@ -42,7 +42,7 @@ class account_move_line(osv.osv):
             res[id] = False
         return res
 
-    def _search_cheque(self, cr, uid, obj, name, args, context={}):
+    def _search_cheque(self, cr, uid, obj, name, args, context=None):
         """
         Search cheque move lines
         """
@@ -62,7 +62,7 @@ class account_move_line(osv.osv):
                 res.append(j['default_credit_account_id'][0])
         return [('account_id', 'in', res)]
     
-    def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context={}):
+    def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         dom1 = [
@@ -131,10 +131,10 @@ class account_move_line(osv.osv):
             res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
         return res
 
-    def _get_reconciles(self, cr, uid, ids, context={}):
+    def _get_reconciles(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
 
-    def _get_linked_statement(self, cr, uid, ids, context={}):
+    def _get_linked_statement(self, cr, uid, ids, context=None):
         new_move = True
         r_move = {}
         while new_move:
@@ -171,19 +171,25 @@ class account_move_line(osv.osv):
             help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
-        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", method=True, string="Canbe imported as invoice in register ?",),
-        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 
+            method=True, string="Can be imported as invoice in register?",),
+        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", 
+            help="This line has been created by a cheque import. This id is the move line imported."),
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
                         store={
-                          'account.move.line': (lambda self, cr, uid, ids, c={}: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                          'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
                           'account.move.reconcile': (_get_reconciles, None, 10),
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
-        'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'partner_txt': fields.text(string="Third Party", help="Help user to display and sort Third Parties"),
+        'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
+        'transfer_currency': fields.many2one("res.currency", "Transfer Currency", readonly=True, required=False),
+        'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
     }
 
     _defaults = {
-        'partner_txt': lambda *a: '',
+        'partner_txt': lambda *a: '', # empty string
+        'is_transfer_with_change': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -260,7 +266,7 @@ class account_move_line(osv.osv):
         val.update({'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}})
         return {'value': val}
 
-    def onchange_partner_type(self, cr, uid, ids, partner_type=None, credit=None, debit=None, context={}):
+    def onchange_partner_type(self, cr, uid, ids, partner_type=None, credit=None, debit=None, context=None):
         """
         Give the right account_id according partner_type and third parties choosed
         """
@@ -269,7 +275,7 @@ class account_move_line(osv.osv):
             partner_type = partner_type.get('selection')
         return self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, ids, partner_type, credit, debit, context=context)
 
-    def create(self, cr, uid, vals, context={}, check=True):
+    def create(self, cr, uid, vals, context=None, check=True):
         """
         Add partner_txt to vals regarding partner_id, employee_id and register_id
         """
@@ -282,7 +288,7 @@ class account_move_line(osv.osv):
             vals.update({'partner_txt': res})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
-    def write(self, cr, uid, ids, vals, context={}, check=True, update_check=True):
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
         Add partner_txt to vals
         """

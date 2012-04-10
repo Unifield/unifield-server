@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -23,17 +23,18 @@
 {
     "name" : "Products Nomenclature",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["product", "stock", "purchase"],
     "init_xml" : [],
-    "demo_xml" : [],
     "description": """
     Add nomenclature abilities to products.
     """,
     'update_xml': [
         'security/ir.model.access.csv',
         'product_nomenclature_view.xml',
+        'remove_categ.xml',
     ],
     "demo_xml": [
                  'product_nomenclature_data.xml',

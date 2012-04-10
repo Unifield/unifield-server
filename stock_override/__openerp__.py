@@ -22,7 +22,7 @@
 {
     "name" : "Stock override",
     "version" : "1.0",
-    "author" : "MSF",
+    "author" : "MSF, TeMPO Consulting",
     "description" : """
     Add hook to stock class and wizard
     """,
@@ -34,10 +34,10 @@
     "update_xml" : [
         "stock_view.xml",
         "stock_workflow.xml",
-        "report/report_stock_move_view.xml",
         "procurement_view.xml",
         "destruction_report.xml",
         "report/report_destruction_location_view.xml",
+        "report/report_stock_move_view.xml",
         "wizard/stock_analyze_view_view.xml",
         "security/ir.model.access.csv",
         ],

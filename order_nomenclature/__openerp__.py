@@ -23,7 +23,8 @@
 {
     "name" : "Order Nomenclature",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["msf_order_date", "product_nomenclature","purchase","sale"],
     "init_xml" : [],

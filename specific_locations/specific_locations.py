@@ -114,6 +114,7 @@ class stock_location(osv.osv):
                     else:
                         return False
         return True
+
     
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Loction'),

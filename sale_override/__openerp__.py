@@ -36,6 +36,8 @@
     "update_xml": [
         "sale_view.xml",
         "sale_workflow.xml",
+        "wizard/split_order_line_view.xml",
+        "sale_sequence.xml",
         "report/sale_report_view.xml",
     ],
     "demo_xml": [
@@ -43,6 +45,7 @@
     "test": [
         "test/data.yml",
         "test/sale_test.yml",
+        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,

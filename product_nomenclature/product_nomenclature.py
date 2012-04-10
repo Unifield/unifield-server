@@ -62,12 +62,17 @@ class product_nomenclature(osv.osv):
             return []
         if context is None:
             context = {}
-        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
+        fields = ['name','parent_id']
+        if context.get('withnum') == 1:
+            fields.append('number_of_products')
+        reads = self.read(cr, uid, ids, fields, context=context)
         res = []
         for record in reads:
             name = record['name']
             if not context.get('nolevel') and record['parent_id']:
                 name = record['parent_id'][1]+' / '+name
+            if context.get('withnum') == 1:
+                name = "%s (%s)"%(name, record['number_of_products'])
             res.append((record['id'], name))
         return res
 
@@ -160,10 +165,10 @@ class product_nomenclature(osv.osv):
             type = vals['type']
             # level test
             if level > _LEVELS:
-                raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s'%(level,_LEVELS)))
+                raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s')%(level,_LEVELS))
             # type test
             if (level == _LEVELS) and (type != 'optional'):
-                raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves'%(type)))
+                raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves')%(type,))
     
     def write(self, cr, user, ids, vals, context=None):
         '''
@@ -184,10 +189,16 @@ class product_nomenclature(osv.osv):
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
     
-    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context={}):
+    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the number of products for the nomenclature
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         res = {}
         
         for nomen in self.browse(cr, uid, ids, context=context):
@@ -204,11 +215,11 @@ class product_nomenclature(osv.osv):
             
         return res
     
-    def _search_complete_name(self, cr, uid, obj, name, args, context={}):
+    def _search_complete_name(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         if args[0][1] != "=":
-            raise osv.except_osv(_('Error !'), 'Filter not implemented on %s'%(name,))
+            raise osv.except_osv(_('Error !'), _('Filter not implemented on %s')%(name,))
 
         parent_ids = None
         for path in args[0][2].split('/'):
@@ -265,12 +276,19 @@ class product_nomenclature(osv.osv):
     def child_get(self, cr, uid, ids):
         return [ids]
     
-    def get_nomen(self, cr, uid, obj, id, field):
+    def get_nomen(self, cr, uid, obj, id, field, context=None):
+        if context is None:
+            context = {}
+        context['nolevel'] = 1
         parent = {'nomen_manda_1': 'nomen_manda_0', 'nomen_manda_2': 'nomen_manda_1', 'nomen_manda_3': 'nomen_manda_2'}
         level = {'nomen_manda_1': 1, 'nomen_manda_2': 2, 'nomen_manda_3': 3}
         p_id = obj.read(cr, uid, id, [parent[field]])[parent[field]]
+        # when dealing with osv_memory, the read method for many2one returns the id and not the tuple (id, name) as for osv.osv
+        if p_id and isinstance(p_id, int):
+            name = self.name_get(cr, uid, [p_id], context=context)[0]
+            p_id = name
         dom = [('level', '=',  level.get(field)), ('type', '=', 'mandatory'), ('parent_id', '=', p_id and p_id[0] or 0)]
-        return self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context={'nolevel':1})
+        return self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
     
     def get_sub_nomen(self, cr, uid, obj, id, field):
         parent = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
@@ -308,8 +326,11 @@ class product_template(osv.osv):
             ret[id] = value
         return ret
     
-    def _search_nomen_s(self, cr, uid, obj, name, args, context={}):
-
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+            
         if not args:
             return []
         narg = []
@@ -354,7 +375,11 @@ class product_template(osv.osv):
     }
     ### END OF COPY
 
-    def _get_default_nom(self, cr, uid, context={}):
+    def _get_default_nom(self, cr, uid, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        
         res = {}
         toget = [('nomen_manda_0', 'nomen_med'), ('nomen_manda_1', 'nomen_med_drugs'), 
             ('nomen_manda_2', 'nomen_med_drugs_infusions'), ('nomen_manda_3', 'nomen_med_drugs_infusions_dex')]
@@ -364,12 +389,11 @@ class product_template(osv.osv):
             res[field] = nom[1]
         return res
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
         '''
-
-        if not context:
+        if context is None:
             context = {}
         if context.get('update_mode') in ['init', 'update']:
             required = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
@@ -421,6 +445,9 @@ class product_product(osv.osv):
         '''
         the nomenclature selection search changes
         '''
+        if context is None:
+            context = {}
+
         mandaName = 'nomen_manda_%s'
         optName = 'nomen_sub_%s'
         # selected value
@@ -454,14 +481,15 @@ class product_product(osv.osv):
         prodObj = self.pool.get('product.product')
         
         # loop through children nomenclature of mandatory type
+        shownum = num or context.get('withnum') == 1
         if position < 3:
             nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
-                for n in nomenObj.read(cr, uid, nomenids, ['name'] + (num and ['number_of_products'] or []), context=context):
+                for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
                     # get the name and product number
                     id = n['id']
                     name = n['name']
-                    if num:
+                    if shownum:
                         number = n['number_of_products']
                         values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
                     else:
@@ -545,7 +573,7 @@ class product_product(osv.osv):
         
         # level not of interest
         if level not in levels:
-            raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s'%(level, levels)))
+            raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s')%(level, levels))
         
         
         for x in levels[level+1:]:
@@ -606,7 +634,7 @@ class product_product(osv.osv):
             # newType check
             if nomenclatureType != newType:
                 result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's type is '%s'. Must be '%s' (field's type)."%(newType,nomenclatureType)),
+                                          'message': _("The selected nomenclature's type is '%s'. Must be '%s' (field's type).")%(newType,nomenclatureType)
                                           })
                 newId = False
                 newType = nomenclatureType
@@ -616,7 +644,7 @@ class product_product(osv.osv):
             if  newType == 'mandatory':
                 if fieldNumber != newLevel:
                     result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level)."%(newLevel,fieldNumber)),
+                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).")%(newLevel,fieldNumber)
                                           })
                     newId = False
                     
@@ -624,7 +652,7 @@ class product_product(osv.osv):
                 if fieldNumber != newSubLevel:
                     ### NOTE adapt level to user level for warning message (+1)
                     result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level)."%(newSubLevel+1,fieldNumber+1)),
+                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).")%(newSubLevel+1,fieldNumber+1)
                                           })
                     newId = False
                     

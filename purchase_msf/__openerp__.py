@@ -33,7 +33,8 @@
     * Graph for quantity and amount per month    
 
     """,
-    'author': 'MSF pam',
+    'author': 'MSF, TeMPO Consulting',
+    'developer': 'pam',
     'website': 'unifield.org',
     'depends': ['purchase','msf_partner'],
     'init_xml' : [ ],

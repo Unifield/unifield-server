@@ -31,7 +31,7 @@
         <field name="arch" type="xml">
             <search string="Destruction Location">
                 <group>
-                	<filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
+                	<filter icon="terp-dialog-close" string="Closed" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
                 	<filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
                 	<filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
 	                <field name="product_id" default_focus="1"/>
@@ -64,7 +64,7 @@
         <field name="view_mode">tree,graph</field>
         <field name="search_view_id" ref="view_destruction_location_search"/>
         <field name="view_id" ref="view_destruction_location_tree" />
-        <field name="domain">[('location_dest_id.scrap_location', '=', True)]</field>
+        <field name="domain">[('location_dest_id.destruction_location', '=', True)]</field>
         <field name="help">Destruction Location</field>
     </record>
     <menuitem action="action_destruction_location_report" id="menu_action_destruction_location_report" parent="stock.next_id_61" sequence="4"/>
