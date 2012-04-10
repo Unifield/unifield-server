@@ -2565,6 +2565,7 @@ class stock_move(osv.osv):
             product_price = partial_data.get('product_price',0.0)
             product_currency = partial_data.get('product_currency',False)
             prodlot_ids[move.id] = partial_data.get('prodlot_id')
+            old_moves = self.search(cr, uid, [('type', '=', 'in'), ('move_dest_id', '=', move.id)], context=context)
             if move.product_qty == product_qty:
                 complete.append(move)
             elif move.product_qty > product_qty:
@@ -2573,7 +2574,7 @@ class stock_move(osv.osv):
                 too_many.append(move)
 
             # Average price computation
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
+            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not old_moves:
                 product = product_obj.browse(cr, uid, move.product_id.id)
                 move_currency_id = move.company_id.currency_id.id
                 context['currency_id'] = move_currency_id
