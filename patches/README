@@ -25,7 +25,7 @@ server/bin/tiny_socket.py
 server/bin/tools/config.py  
 
 === web_patch_choose_server_port.diff
-Enable OpenERP Web Client to use a different OpenERP Server host, port and protocol.
+Enable OpenERP Web Client 6.0 to use a different OpenERP Server host, port and protocol. (Useless with OpenERP Web Client 6.1)
 bzr branch lp:openobject-client-web/6.0-msf-patch-choose-server-port
 
 === web_whole_file_patch.zip
