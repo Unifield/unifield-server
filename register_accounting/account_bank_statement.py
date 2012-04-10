@@ -33,6 +33,7 @@ from register_tools import totally_or_partial_reconciled
 import time
 from datetime import datetime
 import decimal_precision as dp
+from tools.misc import flatten
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -483,6 +484,61 @@ class account_bank_statement(osv.osv):
             'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
+            'target': 'current',
+        }
+
+    def get_register_lines(self, cr, uid, ids, context=None):
+        """
+        Return all register lines from first given register
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        domain = [('statement_id', '=', ids[0])]
+        # Search valid ids
+        reg = self.browse(cr, uid, ids[0])
+        return {
+            'name': reg and reg.name or 'Register Lines',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+    def get_analytic_register_lines(self, cr, uid, ids, context=None):
+        """
+        Return all analytic lines attached to register lines from first given register
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        valid_ids = []
+        # Search valid ids
+        reg = self.browse(cr, uid, ids[0])
+        for line in reg.line_ids:
+            for move in line.move_ids:
+                for ml in move.line_id:
+                    if ml.analytic_lines:
+                        valid_ids.append([x.id for x in ml.analytic_lines])
+        valid_ids = flatten(valid_ids)
+        domain = [('id', 'in', valid_ids)]
+        return {
+            'name': reg and 'Analytic Entries from ' + reg.name or 'Analytic Entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
             'target': 'current',
         }
 
