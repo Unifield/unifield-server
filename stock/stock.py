@@ -663,11 +663,24 @@ class stock_picking(osv.osv):
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
     }
+    
+    def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_process method from stock>stock.py>stock_picking
+        
+        - allow to modify the data for wizard display
+        '''
+        if context is None:
+            context = {}
+        res = kwargs['res']
+        return res
+    
     def action_process(self, cr, uid, ids, context=None):
         if context is None: context = {}
         partial_id = self.pool.get("stock.partial.picking").create(
             cr, uid, {}, context=dict(context, active_ids=ids))
-        return {
+        res = {
             'name':_("Products to Process"),
             'view_mode': 'form',
             'view_id': False,
@@ -680,6 +693,9 @@ class stock_picking(osv.osv):
             'domain': '[]',
             'context': dict(context, active_ids=ids)
         }
+        # hook on view dic
+        res = self._stock_picking_action_process_hook(cr, uid, ids, context=context, res=res,)
+        return res
 
     def _erase_prodlot_hook(self, cr, uid, id, context=None, *args, **kwargs):
         '''
@@ -755,7 +771,7 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state == 'confirmed']
+            move_ids = [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
@@ -869,6 +885,7 @@ class stock_picking(osv.osv):
         @return: True
         """
         self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')})
+        self.log_picking(cr, uid, ids, context=context)
         return True
 
     def action_move(self, cr, uid, ids, context=None):
@@ -1299,7 +1316,6 @@ class stock_picking(osv.osv):
                     defaults.update(picking_id=new_picking)
                 move_obj.write(cr, uid, [move.id], defaults)
 
-
             # At first we confirm the new picking (if necessary)
             if new_picking:
                 wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
@@ -1341,6 +1357,12 @@ class stock_picking(osv.osv):
         '''
         message = kwargs['message']
         return message
+    
+    def _hook_state_list(self, cr, uid, *args, **kwargs):
+        '''
+        Change terms into states list
+        '''
+        return kwargs['state_list']
 
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
@@ -1376,6 +1398,7 @@ class stock_picking(osv.osv):
                 'done': _('is done.'),
                 'draft':_('is in draft state.'),
             }
+            state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
             res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
@@ -1414,10 +1437,15 @@ class stock_production_lot(osv.osv):
         """
         if context is None:
             context = {}
-        if 'location_id' not in context:
+        # when the location_id = False results now in showing stock for all internal locations
+        # *previously*, was showing the location of no location (= 0.0 for all prodlot)
+        if 'location_id' not in context or not context['location_id']:
             locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = context['location_id'] and [context['location_id']] or []
+            locations = context['location_id'] or []
+
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1439,21 +1467,30 @@ class stock_production_lot(osv.osv):
         """ Searches Ids of products
         @return: Ids of locations
         """
-        if context.get('location_id', False):
-            locations = context['location_id'] and [context['location_id']] or []
+        if context is None:
+            context = {}
+        # when the location_id = False results now in showing stock for all internal locations
+        # *previously*, was showing the location of no location (= 0.0 for all prodlot)
+        if 'location_id' not in context or not context['location_id']:
+            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+            locations = context['location_id'] or []
+        
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
-        cr.execute('''select
-                prodlot_id,
-                sum(qty)
-            from
-                stock_report_prodlots
-            where
-                location_id IN %s group by prodlot_id
-            having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
-        res = cr.fetchall()
-        ids = [('id', 'in', map(lambda x: x[0], res))]
+        ids = [('id', 'in', [])]
+        if locations:
+            cr.execute('''select
+                    prodlot_id,
+                    sum(qty)
+                from
+                    stock_report_prodlots
+                where
+                    location_id IN %s group by prodlot_id
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+            res = cr.fetchall()
+            ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
 
     _columns = {
@@ -1918,6 +1955,9 @@ class stock_move(osv.osv):
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
                 wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
+                # Make the stock moves available
+                picking_obj.action_assign(cr, uid, [pickid], context=context)
         if new_moves:
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
@@ -1935,6 +1975,12 @@ class stock_move(osv.osv):
 
         self.create_chained_picking(cr, uid, moves, context)
         return []
+    
+    def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
+        '''
+        Always return True
+        '''
+        return True
 
     def action_assign(self, cr, uid, ids, *args):
         """ Changes state to confirmed or waiting.
@@ -1942,6 +1988,7 @@ class stock_move(osv.osv):
         """
         todo = []
         for move in self.browse(cr, uid, ids):
+            self._hook_confirmed_move(cr, uid, move=move)
             if move.state in ('confirmed', 'waiting'):
                 todo.append(move.id)
         res = self.check_assign(cr, uid, todo)
@@ -2019,6 +2066,12 @@ class stock_move(osv.osv):
                 last_track = last_track[-1]
             self.write(cr, uid, ids, {'tracking_id': last_track})
         return True
+    
+    def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
+        '''
+        Change the state of the chained move
+        '''
+        return {'state': 'confirmed'}, kwargs['context']
 
     #
     # Cancel move => cancel others move and pickings
@@ -2038,7 +2091,9 @@ class stock_move(osv.osv):
                 if move.picking_id:
                     pickings[move.picking_id.id] = True
             if move.move_dest_id and move.move_dest_id.state == 'waiting':
-                self.write(cr, uid, [move.move_dest_id.id], {'state': 'confirmed'})
+                state, c = self._hook_move_cancel_state(cr, uid, context=context)
+                context.update(c)
+                self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
@@ -2164,6 +2219,13 @@ class stock_move(osv.osv):
                          'line_id': move_lines,
                          'ref': move.picking_id and move.picking_id.name})
 
+    def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        choose if the corresponding out stock move must be updated
+        '''
+        move = kwargs['move']
+        result = move.move_dest_id.id and (move.state != 'done')
+        return result
 
     def action_done(self, cr, uid, ids, context=None):
         """ Makes the move done and if all moves are done, it will finish the picking.
@@ -2197,7 +2259,7 @@ class stock_move(osv.osv):
 
             if move.picking_id:
                 picking_ids.append(move.picking_id.id)
-            if move.move_dest_id.id and (move.state != 'done'):
+            if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 self.write(cr, uid, [move.id], {'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))
                 if move.move_dest_id.state in ('waiting', 'confirmed'):
@@ -2225,6 +2287,9 @@ class stock_move(osv.osv):
 
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+            
+        moves = self.browse(cr, uid, move_ids, context=context)
+        self.create_chained_picking(cr, uid, moves, context)
 
         return True
 
@@ -2665,7 +2730,8 @@ class stock_inventory(osv.osv):
                             'location_dest_id': location_id,
                         })
                     move_ids.append(self._inventory_line_hook(cr, uid, line, value))
-            message = _('Inventory') + " '" + inv.name + "' "+ _("is done.")
+            # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value         
+            message = _('Inventory') + " '" + inv.name + "' "+ _("is confirmed.")
             self.log(cr, uid, inv.id, message)
             self.write(cr, uid, [inv.id], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
         return True

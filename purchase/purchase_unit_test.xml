@@ -9,6 +9,7 @@
             <field name="partner_id" search="[]" model="res.partner"/>
             <field name="partner_address_id" search="[]" model="res.partner.address"/>
             <field name="location_id" ref="stock.stock_location_stock"/>
+            <field name="invoice_method">order</field>
         </record>
         <record model="purchase.order.line" id="test_purchase_1_line_1">
             <field name="order_id" ref="test_purchase_1"/>
@@ -47,6 +48,12 @@
         <assert model="purchase.order" id="test_purchase_1" string="Test purchase's invoice has the same amount and is currently a draft">
             <test expr="invoice_ids[0].state">draft</test>
         </assert>
+
+        <!-- Disallow analytic distribution verification -->
+        <function model="account.invoice" name="write">
+            <value model="purchase.order" eval="[obj(ref('test_purchase_1')).invoice_ids[0].id]" />
+            <value eval="{'from_yml_test': True}"/>
+        </function>
 
         <workflow model="account.invoice" action="invoice_open">
             <value model="purchase.order" eval="obj(ref('test_purchase_1')).invoice_ids[0].id" />

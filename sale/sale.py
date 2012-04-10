@@ -592,6 +592,12 @@ class sale_order(osv.osv):
             self.log(cr, uid, sale.id, message)
         self.write(cr, uid, ids, {'state': 'cancel'})
         return True
+    
+    def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
+        '''
+        Hook the message displayed on sale order confirmation
+        '''
+        return kwargs['message']
 
     def action_wait(self, cr, uid, ids, *args):
         for o in self.browse(cr, uid, ids):
@@ -601,6 +607,7 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [o.id], {'state': 'progress', 'date_confirm': time.strftime('%Y-%m-%d')})
             self.pool.get('sale.order.line').button_confirm(cr, uid, [x.id for x in o.order_line])
             message = _("The quotation '%s' has been converted to a sales order.") % (o.name,)
+            message = self._hook_message_action_wait(cr, uid, order=o, message=message)
             self.log(cr, uid, o.id, message)
         return True
 
@@ -698,6 +705,15 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         pass
+
+    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+            
+        - allow to customize the execution condition
+        '''
+        return True
     
     def _hook_ship_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -774,7 +790,7 @@ class sale_order(osv.osv):
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
 
-                if line.product_id:
+                if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line,):
                     proc_data = {'name': line.name,
                                  'origin': order.name,
                                  'date_planned': date_planned,

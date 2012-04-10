@@ -84,6 +84,8 @@
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     invoice_ids = so.invoice_ids
+    # Avoid analytic distribution error
+    self.write(cr, uid, [x.id for x in invoice_ids], {'from_yml_test': True})
     for invoice in invoice_ids:
         wf_service.trg_validate(uid, 'account.invoice',invoice.id,'invoice_open', cr)
 -
@@ -99,7 +101,7 @@
     so = sale_order_obj.browse(cr, uid, ref("sale_order_so7"))
     invoice_id = self.search(cr, uid, [('origin','like',so.name),('state','=','open')])
     self.pay_and_reconcile(cr, uid, invoice_id,
-        255000.0, ref('account.cash'), ref('account.period_8'),
+        100000.0, ref('account.cash'), ref('account.period_8'),
         ref('sale.account_journal_bankjournal0'), ref('account.cash'),
         ref('account.period_8'), ref('sale.account_journal_bankjournal0'),
         name='test')
@@ -178,6 +180,8 @@
         import netsvc
         wf_service = netsvc.LocalService("workflow")
         pur_ids = pur_obj.search(cr, uid, [('origin','=',so.name)])
+        # Avoid analytic distribution error
+        pur_obj.write(cr, uid, pur_ids, {'from_yml_test': True})
         for pur in pur_ids:
           wf_service.trg_validate(uid, 'purchase.order',pur,'purchase_confirm', cr)
 -
@@ -194,6 +198,8 @@
         import netsvc
         wf_service = netsvc.LocalService("workflow")
         pur_ids = pur_obj.search(cr, uid, [('origin','=',so.name)])
+        # Avoid analytic distribution error
+        pur_obj.write(cr, uid, pur_ids, {'from_yml_test': True})
         for pur in pur_ids:
           wf_service.trg_validate(uid, 'purchase.order',pur,'purchase_approve', cr)
 -

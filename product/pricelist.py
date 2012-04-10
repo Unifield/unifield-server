@@ -123,6 +123,48 @@ class product_pricelist(osv.osv):
         'active': lambda *a: 1,
         "currency_id": _get_currency
     }
+    
+    def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
+        '''
+        Call this hook method to rework the price computation from the partner
+        section in product form
+        '''
+        partner = kwargs['partner']
+        tmpl_id = kwargs['tmpl_id']
+        qty = kwargs['qty']
+        context = kwargs['context']
+        uom_price_already_computed = kwargs['uom_price_already_computed']
+        
+        supplierinfo_obj = self.pool.get('product.supplierinfo')
+        product_template_obj = self.pool.get('product.template')
+        product_uom_obj = self.pool.get('product.uom')
+        
+        #this section could be improved by moving the queries outside the loop:
+        where = []
+        if partner:
+            where = [('name', '=', partner) ]
+        sinfo = supplierinfo_obj.search(cr, uid,
+                [('product_id', '=', tmpl_id)] + where)
+        price = 0.0
+        if sinfo:
+            qty_in_product_uom = qty
+            product_default_uom = product_template_obj.read(cr, uid, [tmpl_id], ['uom_id'])[0]['uom_id'][0]
+            supplier = supplierinfo_obj.browse(cr, uid, sinfo, context=context)[0]
+            seller_uom = supplier.product_uom and supplier.product_uom.id or False
+            supplier_currency = supplier.company_id and supplier.company_id.currency_id.id or False
+            if seller_uom and product_default_uom and product_default_uom != seller_uom:
+                uom_price_already_computed = True
+                qty_in_product_uom = product_uom_obj._compute_qty(cr, uid, product_default_uom, qty, to_uom_id=seller_uom)
+            cr.execute('SELECT * ' \
+                    'FROM pricelist_partnerinfo ' \
+                    'WHERE suppinfo_id IN %s' \
+                        'AND min_quantity <= %s ' \
+                    'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
+            res2 = cr.dictfetchone()
+            if res2:
+                price = currency_obj.compute(cr, uid, supplier_currency,\
+                        res['currency_id'], res2['price'], round=False, context=context)
+        return price, uom_price_already_computed
 
     #def price_get_multi(self, cr, uid, product_ids, context=None):
     def price_get_multi(self, cr, uid, pricelist_ids, products_by_qty_by_partner, context=None):
@@ -236,29 +278,15 @@ class product_pricelist(osv.osv):
                                 ptype_src = self.browse(cr, uid, res['base_pricelist_id']).currency_id.id
                                 price = currency_obj.compute(cr, uid, ptype_src, res['currency_id'], price_tmp, round=False)
                         elif res['base'] == -2:
-                            # this section could be improved by moving the queries outside the loop:
-                            where = []
-                            if partner:
-                                where = [('name', '=', partner) ]
-                            sinfo = supplierinfo_obj.search(cr, uid,
-                                    [('product_id', '=', tmpl_id)] + where)
-                            price = 0.0
-                            if sinfo:
-                                qty_in_product_uom = qty
-                                product_default_uom = product_template_obj.read(cr, uid, [tmpl_id], ['uom_id'])[0]['uom_id'][0]
-                                supplier = supplierinfo_obj.browse(cr, uid, sinfo, context=context)[0]
-                                seller_uom = supplier.product_uom and supplier.product_uom.id or False
-                                if seller_uom and product_default_uom and product_default_uom != seller_uom:
-                                    uom_price_already_computed = True
-                                    qty_in_product_uom = product_uom_obj._compute_qty(cr, uid, product_default_uom, qty, to_uom_id=seller_uom)
-                                cr.execute('SELECT * ' \
-                                        'FROM pricelist_partnerinfo ' \
-                                        'WHERE suppinfo_id IN %s' \
-                                            'AND min_quantity <= %s ' \
-                                        'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
-                                res2 = cr.dictfetchone()
-                                if res2:
-                                    price = res2['price']
+                            price, uom_price_already_computed = self._hook_product_partner_price(cr, uid, product_id=product_id,
+                                                                                                          partner=partner,
+                                                                                                          qty=qty,
+                                                                                                          currency_id=res['currency_id'],
+                                                                                                          date=date,
+                                                                                                          uom=context['uom'],
+                                                                                                          tmpl_id=tmpl_id,
+                                                                                                          uom_price_already_computed=uom_price_already_computed,
+                                                                                                          context=context)
                         else:
                             price_type = price_type_obj.browse(cr, uid, int(res['base']))
                             price = currency_obj.compute(cr, uid,
