@@ -107,8 +107,6 @@
     c_line_ids = compare_line_obj.search(cr, uid, [('product_id', '=', ref('product3'))])
     line_ids = self.search(cr, uid, [('compare_line_id', 'in', c_line_ids), ('supplier_id', '=', ref('supplier1'))])
     if line_ids:
-      # Change the quantity to ten
-      self.write(cr, uid, [line_ids[0]], {'qty': 10})
       self.choose_supplier(cr, uid, line_ids[0])
       assert len(compare_line_obj.search(cr, uid, [('product_id', '=', ref('product3'))])) == 1, "Wrong number of line for S1 for P1"
       c_line_ids = compare_line_obj.search(cr, uid, [('product_id', '=', ref('product3'))])
@@ -130,14 +128,14 @@
     assert len(po.order_line) == 3, "Wrong number of lines on the PO for S1"
     for line in po.order_line:
       if line.product_id.id == ref('product1'):
-        assert line.price_unit == 1.30, "Wrong price unit for line with P1"
-        assert line.product_qty == 10, "Wrong quantity for line with P1"
+        assert line.price_unit == 1.30, "Wrong price unit for line with P1 - 1.30 : %s" % line.price_unit
+        assert line.product_qty == 10.00, "Wrong quantity for line with P1 - 10 : %s" % line.product_qty
       elif line.product_id.id == ref('product2'):
-        assert line.price_unit == 1.75, "Wrong price unit for line with P2"
-        assert line.product_qty == 20, "Wrong quantity for line with P2"
+        assert line.price_unit == 1.75, "Wrong price unit for line with P2 - 1.75 : %s" % line.price_unit
+        assert line.product_qty == 20.00, "Wrong quantity for line with P2 - 20 : %s" % line.product_qty
       elif line.product_id.id == ref('product3'):
-        assert line.price_unit == 2.17, "Wrong price unit for line with P3"
-        assert line.product_qty == 10, "Wrong quantity for line with P3"
+        assert line.price_unit == 2.17, "Wrong price unit for line with P3 - 2.17 : %s" % line.price_unit
+        assert line.product_qty == 30.00, "Wrong quantity for line with P3 - 30 : %s" % line.product_qty
       else:
         assert True == False, "Found line with product different of P1, P2 or P3"
 -
@@ -145,4 +143,4 @@
 -
   !python {model: purchase.order}: |
     assert len(self.search(cr, uid, [('id', '=', ref('rfq2'))])) == 0, "RfQ 2 wasn't deleted"
-    assert len(self.search(cr, uid, [('id', '=', ref('rfq3'))])) == 0, "RfQ 2 wasn't deleted"
+    assert len(self.search(cr, uid, [('id', '=', ref('rfq3'))])) == 0, "RfQ 3 wasn't deleted"

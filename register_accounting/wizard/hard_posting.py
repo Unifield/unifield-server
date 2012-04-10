@@ -30,10 +30,12 @@ from ..register_tools import open_register_view
 class wizard_hard_posting(osv.osv_memory):
     _name = "wizard.hard.posting"
 
-    def action_confirm_hard_posting(self, cr, uid, ids, context={}):
+    def action_confirm_hard_posting(self, cr, uid, ids, context=None):
         """
         Hard post some statement lines
         """
+        if context is None:
+            context = {}
         if 'active_ids' in context:
             # Retrieve statement line ids
             st_line_ids = context.get('active_ids')

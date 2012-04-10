@@ -35,7 +35,7 @@ class financing_contract_format_line(osv.osv):
         domain += "])"
         return domain
 
-    def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context=None):
         # Verifications
         if not context:
             context = {}
@@ -263,7 +263,7 @@ class financing_contract_format_line(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         if not context:
-            context={}
+            context = {}
         # if the account is set as view, remove budget and account values
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
@@ -273,7 +273,7 @@ class financing_contract_format_line(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # if the account is set as view, remove budget and account values

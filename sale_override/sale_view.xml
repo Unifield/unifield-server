@@ -50,6 +50,9 @@
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
+                    <xpath expr="/form/notebook//tree/field[@name='price_subtotal']" position="after">
+                        <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" />
+                    </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
@@ -97,7 +100,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search//filter[@string='Quotations']" position="after">
-                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Sales Order validated"/>
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                     </xpath>
 		    <xpath expr="/search/field[@name='name']" position="after">
 			<field name="client_order_ref" />
@@ -114,7 +117,7 @@
                         <group string="Priority" expand="0">
 	                        <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
 	                        <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-	                        <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+	                        <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
                         </group>
                         <newline />
                         <group string="Category" expand="0">

@@ -1,0 +1,235 @@
+-
+  In order to test the budget import,
+  we need a lot.
+  I create, in order, a account type, ...
+-
+  !record {model: account.account.type, id: account_account_type_expense0}:
+    close_method: none
+    code: expense
+    name: Expense
+    sign: 1
+-
+  ...an account, ...
+-
+  !record {model: account.account, id: test_expense}:
+    name: "Test Expense"
+    code: "TEST"
+    user_type: account_account_type_expense0
+    type: payable 
+-
+ ...a cost center...
+-
+  !record {model: account.analytic.account, id: analytic_account_OC1}:
+    name: "OC1"
+    code: "OC1"
+    category: OC
+-
+ ...a cost center...
+-
+  !record {model: account.analytic.account, id: analytic_account_OC2}:
+    name: "OC2"
+    code: "OC2"
+    category: OC
+-
+ ...a funding pool...
+-
+  !record {model: account.analytic.account, id: analytic_account_FP1}:
+    name: "FP1"
+    code: "FP1"
+    category: FUNDING
+    cost_center_ids:
+      - analytic_account_OC2
+    account_ids:
+      - test_expense
+-
+ ...a funding pool...
+-
+  !record {model: account.analytic.account, id: analytic_account_FP2}:
+    name: "FP2"
+    code: "FP2"
+    category: FUNDING
+    cost_center_ids:
+      - analytic_account_OC1
+      - analytic_account_OC2
+    account_ids:
+      - test_expense
+-
+  I set the company currency's rate to 1 for the move
+-
+  !record {model: res.currency.rate, id: currency_rate_test_3}:
+    name: !eval "'%s-01-01' %(datetime.now().year+1)"
+    rate: 1.00
+    currency_id: base.CHF
+-
+  I set another currency's rate to 100 for the move
+-
+  !record {model: res.currency.rate, id: currency_rate_test_4}:
+    name: !eval "'%s-01-01' %(datetime.now().year+1)"
+    rate: 100.00
+    currency_id: base.EUR
+-
+  ...an analytical journal, ...
+-
+  !record {model: account.analytic.journal, id: analytic_journal_1}:
+    code: CANJ
+    name: Cash Analytic Journal
+    type: general
+-
+  I create a cash account type
+-
+  !record {model: account.account.type, id: account_account_type_cash_0}:
+    close_method: balance
+    code: cash
+    name: Cash
+    sign: 1
+    report_type: asset
+
+-
+  I create a X11003 Cash Account.
+-
+  !record {model: account.account, id: account_account_cash0}:
+    code: 'X11003-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cash (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash_0
+    activation_date: !eval time.strftime('%Y-01-01')
+-
+  ...a journal, ...
+-
+  !record {model: account.journal, id: account_journal_1}:
+    name: Cash Journal
+    code: CTST
+    currency: base.EUR
+    type: cash
+    analytic_journal_id: analytic_journal_1
+    default_debit_account_id: account_account_cash0
+    default_credit_account_id: account_account_cash0
+-
+  ...a fiscal year, ...
+-
+  !record {model: account.fiscalyear, id: account_fiscalyear_fiscalyear0}:
+    code: !eval "'FY%s'% (datetime.now().year+1)"
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' %(datetime.now().year+1)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+1)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+1)"
+-
+  ... and a period.
+-
+  !record {model: account.period, id: account_period_mar0}:
+    company_id: base.main_company
+    date_start: !eval "'%s-03-01' %(datetime.now().year+1)"
+    date_stop: !eval "'%s-03-31' %(datetime.now().year+1)"
+    fiscalyear_id: account_fiscalyear_fiscalyear0
+    name: !eval "'Mar %s' %(datetime.now().year+1)"
+    special: 1
+    state: draft
+-
+  ... and a distribution.
+-
+  !record {model: analytic.distribution, id: distribution_test}:
+    cost_center_lines: 
+    - analytic_id: analytic_account_OC1
+      percentage: 100
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    funding_pool_lines:
+    - analytic_id: analytic_distribution.analytic_account_msf_private_funds
+      cost_center_id: analytic_account_OC1
+      percentage: 50
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    - analytic_id: analytic_account_FP1
+      cost_center_id: analytic_account_OC1
+      percentage: 50
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+-
+  ... and another distribution.
+-
+  !record {model: analytic.distribution, id: distribution_test_2}:
+    cost_center_lines: 
+    - analytic_id: analytic_account_OC1
+      percentage: 80
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    - analytic_id: analytic_account_OC2
+      percentage: 20
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    funding_pool_lines:
+    - analytic_id: analytic_account_FP2
+      cost_center_id: analytic_account_OC1
+      percentage: 80
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    - analytic_id: analytic_account_FP2
+      cost_center_id: analytic_account_OC2
+      percentage: 20
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+-
+  I create an account move line with all of this.
+-
+  !record {model: account.move.line, id: move_line_test}:
+    name: testline
+    journal_id: account_journal_1
+    period_id: account_period_mar0
+    account_id: test_expense
+    currency_id: base.CHF
+    date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    debit_currency: 4242.0
+    analytic_distribution_id: distribution_test
+-
+  I create an account move line with all of this.
+-
+  !record {model: account.move.line, id: move_line_test_2}:
+    name: testline2
+    journal_id: account_journal_1
+    period_id: account_period_mar0
+    account_id: test_expense
+    currency_id: base.CHF
+    date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    debit_currency: 12500.0
+    analytic_distribution_id: distribution_test_2
+      
+-
+  Analytic lines are created from it
+-
+  !python {model: account.move.line}: |
+    self.create_analytic_lines(cr, uid, [ref("move_line_test"), ref("move_line_test_2")], context={})
+    
+-
+  Now that lines are here, time for the budget
+-
+  !record {model: msf.budget, id: budget_test}:
+    name: Test Budget
+    code: BUTEST
+    fiscalyear_id: account_fiscalyear_fiscalyear0
+    state: 'draft'
+    cost_center_id: analytic_account_OC1
+    decision_moment: 'Test moment'
+    version: 1
+    currency_id: base.EUR
+      
+-
+  and its line
+-
+  !record {model: msf.budget.line, id: budget_line_test}:
+    budget_id: budget_test
+    account_id: test_expense
+    budget_values: '[3323232,455,2221,55542,21,555,2113,345,2212,766,33356,222]'
+    line_type: 'normal'
+      
+-
+  Check budget, actual, percentage, balance for the line
+-
+  !python {model: msf.budget.line}: |
+     budget_line = self.browse(cr, uid, ref("budget_line_test"), context={})
+     assert budget_line.budget_amount == 3421040, ("Not the correct budget amount!")
+     assert budget_line.actual_amount == 1424200.0, ("Not the correct actual amount!")
+     assert budget_line.balance == 1996840.0, ("Not the correct balance!")
+     assert budget_line.percentage == 42.0, ("Not the correct percentage!")

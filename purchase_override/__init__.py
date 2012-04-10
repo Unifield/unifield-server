@@ -24,3 +24,4 @@ PURCHASE_ORDER_STATE_SELECTION = [
 
 import purchase
 import report
+import wizard

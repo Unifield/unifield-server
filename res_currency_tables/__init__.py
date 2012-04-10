@@ -21,5 +21,6 @@
 
 import res_currency_table
 import res_currency
+import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

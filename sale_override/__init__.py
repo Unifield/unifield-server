@@ -12,4 +12,4 @@ SALE_ORDER_STATE_SELECTION = [
 
 import sale
 import report
-
+import wizard

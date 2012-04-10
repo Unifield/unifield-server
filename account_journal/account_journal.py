@@ -99,8 +99,8 @@ class account_journal(osv.osv):
         result = self.browse(cr, user, ids, context=context)
         res = []
         for rs in result:
-            code = rs.code
-            res += [(rs.id, code)]
+            txt = rs.name
+            res += [(rs.id, txt)]
         return res
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
@@ -174,7 +174,7 @@ class account_journal(osv.osv):
             context.update({'from_journal_creation': True})
             self.pool.get('account.bank.statement') \
                 .create(cr, uid, {'journal_id': journal_obj,
-                                  'name': "REG1" + vals['code'],
+                                  'name': vals['name'],
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
                                   context=context)

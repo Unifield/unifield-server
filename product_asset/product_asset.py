@@ -407,17 +407,6 @@ class stock_move(osv.osv):
         
         return defaults
     
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False):
-        '''
-        override on change for the product, we clear the selected asset.
-        '''
-        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                                                    loc_dest_id, address_id)
-        
-        result['value'].update({'asset_id': False})
-        return result
-    
     def _check_asset(self, cr, uid, ids, context=None):
         """ Checks if asset is assigned to stock move or not.
         @return: True or False

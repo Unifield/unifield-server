@@ -38,7 +38,7 @@ class product_to_list(osv.osv_memory):
                                         string='Products to import',readonly=True),
     }
     
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         if not context:
             context = {}
             
@@ -49,7 +49,7 @@ class product_to_list(osv.osv_memory):
         
         return res
     
-    def import_products(self, cr, uid, ids, context={}):
+    def import_products(self, cr, uid, ids, context=None):
         '''
         Import products in list
         '''

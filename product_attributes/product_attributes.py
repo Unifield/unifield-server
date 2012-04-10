@@ -73,7 +73,7 @@ product_attributes_template()
 class product_attributes(osv.osv):
     _inherit = "product.product"
     
-    def _get_nomen(self, cr, uid, ids, field_name, args, context={}):
+    def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         
         for product in self.browse(cr, uid, ids, context=context):
@@ -91,7 +91,7 @@ class product_attributes(osv.osv):
             
         return res
     
-    def _search_nomen(self, cr, uid, obj, name, args, context={}):
+    def _search_nomen(self, cr, uid, obj, name, args, context=None):
         '''
         Filter the search according to the args parameter
         '''

@@ -32,7 +32,7 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
-    def _get_virtual_fields(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_virtual_fields(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get fields in order to transform them into 'virtual fields" (kind of field duplicity):
          - currency_id
@@ -57,7 +57,7 @@ class account_invoice(osv.osv):
             type='many2one', relation="res.partner", readonly=True),
     }
 
-    def action_reconcile_direct_invoice(self, cr, uid, ids, context={}):
+    def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):
         """
         Reconcile move line if invoice is a Direct Invoice
         NB: In order to define that an invoice is a Direct Invoice, we need to have register_line_ids not null
@@ -117,7 +117,7 @@ class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
 
-    def _get_product_code(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_product_code(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Give product code for each invoice line
         """

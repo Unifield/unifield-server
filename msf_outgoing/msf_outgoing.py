@@ -26,7 +26,6 @@ from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
-import netsvc
 import logging
 import tools
 import time
@@ -252,6 +251,7 @@ class shipment(osv.osv):
                 'consignee_signature': fields.char(string='Signature', size=1024),
                 # functions
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+                'partner_id2': fields.many2one('res.partner', string='Customer', required=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
@@ -314,12 +314,13 @@ class shipment(osv.osv):
         for draft_shipment in self.browse(cr, uid, partial_datas_shipment.keys(), context=context):
             # for each shipment create a new shipment which will be used by the group of new packing objects
             address_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['address_id'], context=context)[0]['address_id'][0]
+            partner_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['partner_id'], context=context)[0]['partner_id'][0]
             sequence = draft_shipment.sequence_id
             shipment_number = sequence.get_id(test='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
             # 
-            values = {'name': shipment_name, 'address_id': address_id, 'shipment_expected_date': draft_shipment.shipment_expected_date, 'shipment_actual_date': draft_shipment.shipment_actual_date, 'parent_id': draft_shipment.id}
+            values = {'name': shipment_name, 'address_id': address_id, 'partner_id': partner_id, 'partner_id2': partner_id, 'shipment_expected_date': draft_shipment.shipment_expected_date, 'shipment_actual_date': draft_shipment.shipment_actual_date, 'parent_id': draft_shipment.id}
             shipment_id = shipment_obj.create(cr, uid, values, context=context)
             context['shipment_id'] = shipment_id
             for draft_packing in pick_obj.browse(cr, uid, partial_datas_shipment[draft_shipment.id].keys(), context=context):
@@ -341,7 +342,7 @@ class shipment(osv.osv):
                 pick_obj.force_assign(cr, uid, [new_packing_id])
                 
             # log creation message
-            self.log(cr, uid, shipment_id, _('The new Shipment %s has been created.'%shipment_name))
+            self.log(cr, uid, shipment_id, _('The new Shipment %s has been created.')%(shipment_name,))
             # the shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
         # TODO which behavior
@@ -453,10 +454,10 @@ class shipment(osv.osv):
                 # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
                 if not log_flag:
                     draft_shipment_name = self.read(cr, uid, draft_shipment_id, ['name'], context=context)['name']
-                    self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock."%draft_shipment_name),)
+                    self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock.")%(draft_shipment_name,))
                     log_flag = True
                 res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated."%draft_picking.name), context={'view_id': res,})
+                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context={'view_id': res,})
             
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
@@ -649,8 +650,8 @@ class shipment(osv.osv):
             
             # log corresponding action
             shipment_name = self.read(cr, uid, shipment_id, ['name'], context=context)['name']
-            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to dispatch location."%shipment_name),)
-            self.log(cr, uid, draft_shipment_id, _("The corresponding Draft Shipment (%s) has been updated."%packing.backorder_id.shipment_id.name),)
+            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to dispatch location.")%(shipment_name,))
+            self.log(cr, uid, draft_shipment_id, _("The corresponding Draft Shipment (%s) has been updated.")%(packing.backorder_id.shipment_id.name,))
                             
         # call complete_finished on the shipment object
         # if everything is allright (all draft packing are finished) the shipment is done also 
@@ -680,8 +681,8 @@ class shipment(osv.osv):
                 # we cancel each picking object - action_cancel is overriden at stock_picking level for stock_picking of subtype == 'packing'
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_cancel', cr)
             # log corresponding action
-            self.log(cr, uid, shipment.id, _("The Shipment (%s) has been canceled."%shipment.name),)
-            self.log(cr, uid, shipment.backshipment_id.id, _("The corresponding Draft Shipment (%s) has been updated."%shipment.backshipment_id.name),)
+            self.log(cr, uid, shipment.id, _("The Shipment (%s) has been canceled.")%(shipment.name,))
+            self.log(cr, uid, shipment.backshipment_id.id, _("The corresponding Draft Shipment (%s) has been updated.")%(shipment.backshipment_id.name,))
                 
         return True
     
@@ -735,7 +736,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(new_packing.sale_id.name, today)))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
                 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -751,7 +752,7 @@ class shipment(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
                 
             # log the ship action
-            self.log(cr, uid, shipment.id, _('The Shipment %s has been shipped.'%shipment.name))
+            self.log(cr, uid, shipment.id, _('The Shipment %s has been shipped.')%(shipment.name,))
     
         # TODO which behavior
         return True
@@ -851,7 +852,7 @@ class shipment(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
                 
             # log validate action
-            self.log(cr, uid, shipment.id, _('The Shipment %s has been validated.'%shipment.name))
+            self.log(cr, uid, shipment.id, _('The Shipment %s has been validated.')%(shipment.name,))
             
         result = self.complete_finished(cr, uid, ids, context=context)
         return True
@@ -943,7 +944,7 @@ class pack_family_memory(osv.osv_memory):
                                                                                               ('stock_return', 'Returned to Stock'),
                                                                                               ('ship_return', 'Returned from Shipment'),
                                                                                               ('cancel', 'Cancelled'),
-                                                                                              ('done', 'Done'),], string='State', multi='get_vals',),
+                                                                                              ('done', 'Closed'),], string='State', multi='get_vals',),
                 'location_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Src Loc.', multi='get_vals',),
                 'location_dest_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Dest. Loc.', multi='get_vals',),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
@@ -960,11 +961,40 @@ class pack_family_memory(osv.osv_memory):
 pack_family_memory()
 
 
-class shipment(osv.osv):
+class shipment2(osv.osv):
     '''
     add pack_family_ids
     '''
     _inherit = 'shipment'
+    
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
+        '''
+        Change the delivery address when the partner change.
+        '''
+        v = {}
+        d = {}
+        
+        if not partner_id:
+            v.update({'address_id': False})
+        else:
+            d.update({'address_id': [('partner_id', '=', partner_id)]})
+            
+
+        if address_id:
+            addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
+        
+        if not address_id or addr.partner_id.id != partner_id:
+            addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
+            if not addr.get('delivery'):
+                addr = addr.get('default')
+            else:
+                addr = addr.get('delivery')
+                
+            v.update({'address_id': addr})
+            
+        
+        return {'value': v,
+                'domain': d}
     
     def _vals_get_2(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -990,7 +1020,7 @@ class shipment(osv.osv):
     _columns = {'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 }
 
-shipment()
+shipment2()
 
 
 class ppl_customize_label(osv.osv):
@@ -1189,7 +1219,7 @@ class stock_picking(osv.osv):
             #check the qty of all stock moves
             treat_draft = True
             for move in draft_picking.move_lines:
-                if move.product_qty:
+                if move.product_qty != 0.0 and move.state != 'done':
                     treat_draft = False
             
             if treat_draft:
@@ -1814,8 +1844,11 @@ class stock_picking(osv.osv):
                 if not len(shipment_ids):
                     # no shipment, create one - no need to specify the state, it's a function
                     name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
+                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
+                    partner_id = addr.partner_id and addr.partner_id.id or False
                     values = {'name': name,
                               'address_id': vals['address_id'],
+                              'partner_id2': partner_id,
                               'shipment_expected_date': rts,
                               'shipment_actual_date': rts,
                               'sequence_id': self.create_sequence(cr, uid, {'name':name,
@@ -1824,7 +1857,7 @@ class stock_picking(osv.osv):
                                                                             'padding':2}, context=context)}
                     
                     shipment_id = shipment_obj.create(cr, uid, values, context=context)
-                    shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.'%name))
+                    shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
                 else:
                     shipment_id = shipment_ids[0]
                     shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
@@ -1833,7 +1866,7 @@ class stock_picking(osv.osv):
                     if rts_obj < shipment_expected:
                         shipment.write({'shipment_expected_date': rts, 'shipment_actual_date': rts,}, context=context)
                     shipment_name = shipment.name
-                    shipment_obj.log(cr, uid, shipment_id, _('The ppl has been added to the existing Draft Shipment %s.'%shipment_name))
+                    shipment_obj.log(cr, uid, shipment_id, _('The ppl has been added to the existing Draft Shipment %s.')%(shipment_name,))
             
             # update the new pick with shipment_id
             self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
@@ -1879,7 +1912,7 @@ class stock_picking(osv.osv):
             
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
-            self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).'%(obj.name, new_name)))
+            self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).')%(obj.name, new_name))
             # change subtype and name
             obj.write({'name': new_name,
                        'subtype': 'standard',
@@ -2335,9 +2368,9 @@ class stock_picking(osv.osv):
             # TODO refactoring needed
             obj_data = self.pool.get('ir.model.data')
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
-            self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock."%picking.name), context={'view_id': res,})
+            self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock.")%(picking.name,), context={'view_id': res,})
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated."%picking.previous_step_id.backorder_id.name), context={'view_id': res,})
+            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context={'view_id': res,})
             # if all moves are done or canceled, the ppl is canceled
             cancel_ppl = True
             for move in picking.move_lines:
@@ -2423,7 +2456,7 @@ class stock_picking(osv.osv):
                     # TODO refactoring needed
                     obj_data = self.pool.get('ir.model.data')
                     res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated."%picking.backorder_id.name), context={'view_id': res,})
+                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context={'view_id': res,})
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing

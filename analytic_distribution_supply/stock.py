@@ -55,7 +55,7 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
 
-    def action_cancel(self, cr, uid, ids, context={}):
+    def action_cancel(self, cr, uid, ids, context=None):
         """
         Update commitment voucher line for the given moves
         """

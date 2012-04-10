@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from mx.DateTime import *
 from lxml import etree
+from tools.translate import _
 
 import time
 
@@ -45,7 +46,7 @@ class product_history_consumption(osv.osv_memory):
         'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
     }
 
-    def open_history_consumption(self, cr, uid, ids, context={}):
+    def open_history_consumption(self, cr, uid, ids, context=None):
         if not context:
             context = {}
         new_id = self.create(cr, uid, {}, context=context)
@@ -57,7 +58,7 @@ class product_history_consumption(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'dummy'}
 
-    def date_change(self, cr, uid, ids, date_from, date_to, context={}):
+    def date_change(self, cr, uid, ids, date_from, date_to, context=None):
         '''
         Add the list of months in the defined period
         '''
@@ -104,7 +105,7 @@ class product_history_consumption(osv.osv_memory):
         return res
 
 
-    def create_lines(self, cr, uid, ids, context={}):
+    def create_lines(self, cr, uid, ids, context=None):
         '''
         Create one line by product for the period
         '''
@@ -216,9 +217,9 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
-           context={}
+           context = {}
 
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
@@ -255,7 +256,7 @@ class product_product(osv.osv):
 
         return res
 
-    def fields_get(self, cr, uid, fields=None, context={}):
+    def fields_get(self, cr, uid, fields=None, context=None):
         if not context:
             context = {}
 
@@ -278,7 +279,7 @@ class product_product(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, vals=None, context={}, load='_classic_read'):
+    def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read'):
         '''
         Set value for each month
         '''

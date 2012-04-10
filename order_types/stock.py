@@ -27,7 +27,7 @@ class stock_move(osv.osv):
     _name= 'stock.move'
     _inherit = 'stock.move'
    
-    def _search_order(self, cr, uid, obj, name, args, context={}):
+    def _search_order(self, cr, uid, obj, name, args, context=None):
         if not len(args):
             return []
         matching_fields = {'order_priority': 'priority', 'order_category': 'categ'}
@@ -55,7 +55,7 @@ class stock_move(osv.osv):
         
         return newrgs
 
-    def _get_order_information(self, cr, uid, ids, fields_name, arg, context={}):
+    def _get_order_information(self, cr, uid, ids, fields_name, arg, context=None):
         '''
         Returns information about the order linked to the stock move
         '''
@@ -103,7 +103,7 @@ class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
     
-    def _get_certificate(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_certificate(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return True if at least one stock move requires a donation certificate
         '''
@@ -130,10 +130,13 @@ class stock_picking(osv.osv):
         'attach_cert': lambda *a: False,
     }
 
-    def print_certificate(self, cr, uid, ids, context={}):
+    def print_certificate(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to print the certificate
-        '''        
+        '''
+        if context is None:
+            context = {}
+
         print_id = self.pool.get('stock.print.certificate').create(cr, uid, {'type': 'donation',
                                                                              'picking_id': ids[0]})
     
@@ -156,7 +159,7 @@ class stock_picking(osv.osv):
                 'target': 'new'}
 
     
-    def print_donation_certificate(self, cr, uid, ids, context={}):
+    def print_donation_certificate(self, cr, uid, ids, context=None):
         '''
         Launch printing of the donation certificate
         '''
@@ -177,11 +180,14 @@ class stock_picking(osv.osv):
         else:
             raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a donation certificate'))
 
-    def action_process(self, cr, uid, ids, context={}):
+    def action_process(self, cr, uid, ids, context=None):
         '''
         Override the method to display a message to attach
         a certificate of donation
         '''
+        if context is None:
+            context = {}
+
         certif = False
         for pick in self.browse(cr, uid, ids, context=context):
             if pick.type == 'in':

@@ -23,7 +23,7 @@
 
 from time import strftime
 
-def get_period_from_date(self, cr, uid, date=False, context={}):
+def get_period_from_date(self, cr, uid, date=False, context=None):
     """
     Get period in which this date could go into, otherwise return last open period
     """
@@ -43,14 +43,14 @@ def get_period_from_date(self, cr, uid, date=False, context={}):
         period_ids = [period_ids]
     return period_ids
 
-def get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
+def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
     """
     Permit to return a date included in period :
      - if given date is included in period, return the given date
      - else return the date_stop of given period
     """
     if not context:
-        context={}
+        context = {}
     if not date or not period_id:
         return False
     period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)

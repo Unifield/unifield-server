@@ -37,7 +37,7 @@ NUMBER_OF_CHOICE = 3
 class product_template(osv.osv):
     _inherit = 'product.template'
 
-    def _get_delay_for_supplier(self, cr, uid, ids, fields, arg, context={}):
+    def _get_delay_for_supplier(self, cr, uid, ids, fields, arg, context=None):
         if not context:
             context = {}
         ret = {}
@@ -59,7 +59,7 @@ class product_template(osv.osv):
 
     
     _columns = {
-        'delay_for_supplier': fields.function(_get_delay_for_supplier, type='interger', string='Default delay for a supplier', method=True) 
+        'delay_for_supplier': fields.function(_get_delay_for_supplier, type='integer', string='Default delay for a supplier', method=True) 
     }
     
 product_template()
@@ -133,6 +133,12 @@ class res_partner(osv.osv):
                 'transport_2_lt': fields.integer('3rd Transport Lead Time'),
                 'transport_2': fields.selection(selection=TRANSPORT_TYPE, string='3nd Mode of Transport'),
                 'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time (computed)', multi="seller_delay"),
+                'po_by_project': fields.selection([('all', 'All requirements'), ('project', 'Requirements by Project')], string='Order creation mode',
+                                          help='''When option “all requirements” is set for 
+                                        a given supplier, the system will create a PO that merge all requirements
+                                        for this supplier. If option “requirements by project” is set, the POs will
+                                        be created by original requestor (customer of the SO origin), meaning
+                                        system creates one PO by project for this supplier.'''),
                 }
     
     _defaults = {'zone': 'national',
@@ -145,6 +151,7 @@ class res_partner(osv.osv):
                  'transport_1_lt': 0,
                  'transport_2': TRANSPORT_TYPE[0][0], # empty
                  'transport_2_lt': 0,
+                 'po_by_project': lambda *a: 'all',
                  }
 
 res_partner()

@@ -34,14 +34,19 @@ class analytic_line(osv.osv):
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
+        'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
     }
 
-    def _check_date(self, cr, uid, vals, context={}):
+    _defaults = {
+        'from_write_off': lambda *a: False,
+    }
+
+    def _check_date(self, cr, uid, vals, context=None):
         """
         Check if given account_id is active for given date. Except for mass reallocation ('from' = 'mass_reallocation' in context)
         """
         if not context:
-            context={}
+            context = {}
         if not 'account_id' in vals:
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
         if 'date' in vals and vals['date'] is not False:
@@ -53,30 +58,31 @@ class analytic_line(osv.osv):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
                     raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         """
         Check date for given date and given account_id
         """
         self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).create(cr, uid, vals, context=context)
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         """
         Verify date for all given ids with account
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for id in ids:
+            vals2 = vals.copy()
             if not 'account_id' in vals:
                 line = self.browse(cr, uid, [id], context=context)
                 account_id = line and line[0] and line[0].account_id.id or False
-                vals.update({'account_id': account_id})
-            self._check_date(cr, uid, vals, context=context)
+                vals2.update({'account_id': account_id})
+            self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-    def update_account(self, cr, uid, ids, account_id, context={}):
+    def update_account(self, cr, uid, ids, account_id, context=None):
         """
         Update account on given analytic lines with account_id
         """
@@ -128,7 +134,7 @@ class analytic_line(osv.osv):
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
         return True
 
-    def check_analytic_account(self, cr, uid, ids, account_id, context={}):
+    def check_analytic_account(self, cr, uid, ids, account_id, context=None):
         """
         Analytic distribution validity verification with given account for given ids.
         Return all valid ids.
