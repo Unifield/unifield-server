@@ -22,7 +22,7 @@
                         <field name="details" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="replace">
-                        <field name="invoice_method" invisible="1" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                        <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
                         <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
@@ -36,9 +36,9 @@
 
                     <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
                         <field name="rfq_ok" invisible="1" />
-			<field name="state" invisible="1" />
+                        <field name="fake_state" invisible="1" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
-				attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('state', 'in', ('confirmed', 'done', 'cancel'))]}" />
+                            attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'in', ('confirmed', 'done', 'cancel'))]}" />
                     </xpath>
 
                 </data>
@@ -195,7 +195,8 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='price_unit']" position="replace">
                     <field name="other_line_pb" invisible="1" />
-                    <field name="change_price_manually" attrs="{'invisible': [('other_line_pb', '=', False)]}" />
+                    <field name="rfq_ok" invisible="1" />
+                    <field name="change_price_manually" attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('other_line_pb', '=', False)]}" />
                     <label colspan="2" />
                     <field name="price_unit" 
                         on_change="price_unit_change(price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, context)" />

@@ -4265,7 +4265,7 @@ msgid "✔"
 msgstr ""
 
 #. module: msf_profile
-#: model:stock.location,name:msf_profile.stock_location_intermediate_stock_view
+#: model:stock.location,name:msf_profile.stock_location_intermediate_client_view
 msgid "Intermediate Stocks View"
 msgstr ""
 
@@ -29113,7 +29113,7 @@ msgid "Power"
 msgstr ""
 
 #. module: msf_profile
-#: model:stock.location,name:msf_profile.stock_location_consumption_unit_view
+#: model:stock.location,name:msf_profile.stock_location_consumption_units_view
 msgid "Consumption Units View"
 msgstr ""
 

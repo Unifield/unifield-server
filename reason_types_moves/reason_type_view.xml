@@ -146,7 +146,7 @@
 		<field name="arch" type="xml">
 			<data>
 				<xpath expr="/tree/field[@name='origin']" position="after">
-					<field name="reason_type_id" />
+					<field name="reason_type_id" widget="selection" />
 				</xpath>
 			</data>
 		</field>
@@ -160,7 +160,7 @@
 		<field name="arch" type="xml">
 			<data>
 				<xpath expr="/tree/field[@name='origin']" position="after">
-					<field name="reason_type_id" />
+					<field name="reason_type_id" widget="selection" />
 				</xpath>
 			</data>
 		</field>

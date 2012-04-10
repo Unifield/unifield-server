@@ -45,10 +45,21 @@
                         <label />
                         <newline />
                         <group name="consumption calculation" colspan="6" col="6">
-	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, 'past')" />
-	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, 'review')" />
-	                        <field name="manual_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, 'manual')" />
+	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'past')" />
+	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'review')" />
+	                        <field name="manual_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'manual')" />
                         </group>
+                        <group colspan="2" col="5">
+	        				<field name="consumption_period_from"
+	        						on_change="on_change_period(consumption_period_from, consumption_period_to)"
+	        						attrs="{'required': [('past_consumption', '=', True)], 
+	        								'readonly': [('past_consumption', '=', False)]}" />
+	        				<label string="-" />
+	        				<field name="consumption_period_to" nolabel="1" colspan="2"
+	        						on_change="on_change_period(consumption_period_from, consumption_period_to)"
+	        						attrs="{'required': [('past_consumption', '=', True)], 
+	        								'readonly': [('past_consumption', '=', False)]}" />
+        				</group>
                     </group>
                     <separator colspan="4" string="Product filters" />
                     <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}"/>
@@ -80,7 +91,7 @@
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
 
                     <group colspan="4" col="4" >
-                        <separator colspan="4" string="Products" />
+                        <separator colspan="4" string="Products that will be included in the current policy" />
                         <!-- <field name="product_ids" nolabel="1" colspan="4" domain="[('fnct_categ_id', '=', category_id)]"/>
                          -->
                         <field name="product_ids" nolabel="1" colspan="4" 

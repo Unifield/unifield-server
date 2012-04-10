@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from product._common import rounding
 
 from tools.translate import _
 
@@ -59,7 +60,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The new quantity must be positive !'))
             elif split.new_line_qty == split.original_qty:
                 raise osv.except_osv(_('Error'), _('The new quantity must be different than the original quantity !'))
-            elif split.new_line_qty % split.sale_line_id.product_uom.rounding != 0.00:
+            elif split.new_line_qty != rounding(split.new_line_qty, split.sale_line_id.product_uom.rounding):
                 raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.sale_line_id.product_uom.rounding)
             else:
                 # Change the qty of the old line

@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from product._common import rounding
 
 from tools.translate import _
 
@@ -50,6 +51,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        context.update({'split_line': True})
 
         for split in self.browse(cr, uid, ids, context=context):
             # Check if the sum of new line and old line qty is equal to the original qty
@@ -59,15 +62,18 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The new quantity must be positive !'))
             elif split.new_line_qty == split.original_qty:
                 raise osv.except_osv(_('Error'), _('The new quantity must be different than the original quantity !'))
-            elif split.new_line_qty % split.purchase_line_id.product_uom.rounding != 0.00:
+            elif split.new_line_qty != rounding(split.new_line_qty, split.purchase_line_id.product_uom.rounding):
                 raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.purchase_line_id.product_uom.rounding)
             else:
                 # Change the qty of the old line
-                line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty}, context=context)
+                line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
+                                                                      'price_unit': split.purchase_line_id.price_unit,}, context=context)
                 # Create the new line
                 new_line_id = line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
+                                                                                 'change_price_manually': split.purchase_line_id.change_price_manually,
+                                                                                 'price_unit': split.purchase_line_id.price_unit,
                                                                                  'line_number': None,
-                                                                             'product_qty': split.new_line_qty}, context=context)
+                                                                                 'product_qty': split.new_line_qty}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

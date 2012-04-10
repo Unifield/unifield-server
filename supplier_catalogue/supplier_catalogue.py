@@ -441,14 +441,20 @@ class supplier_catalogue_line(osv.osv):
         Remove the pricelist line on product supplier information tab
         If the product supplier information has no line, remove it
         '''
-        line = self.browse(cr, uid, line_id, context=context)
-        # Remove the pricelist line in product tab
-        self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=context)
-        
-        # Check if the removed line wasn't the last line of the supplierinfo
-        if len(line.supplier_info_id.pricelist_ids) == 0:
-            # Remove the supplier info
-            self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=context)
+        if isinstance(line_id, (int, long)):
+            line_id = [line_id]
+            
+        for l in line_id:
+            line = self.browse(cr, uid, l, context=context)
+            c = context.copy()
+            c.update({'product_change': True})
+            # Remove the pricelist line in product tab
+            self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+            
+            # Check if the removed line wasn't the last line of the supplierinfo
+            if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
+                # Remove the supplier info
+                self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
         
         return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
     
@@ -597,6 +603,7 @@ class supplier_historical_catalogue(osv.osv_memory):
             
         for hist in self.browse(cr, uid, ids, context=context):
             catalogue_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id', '=', hist.partner_id.id),
+                                                                                 ('active', 'in', ['t', 'f']),
                                                                                  ('currency_id', '=', hist.currency_id.id),
                                                                                  ('period_from', '<=', hist.to_date),
                                                                                  '|', ('period_to', '=', False),

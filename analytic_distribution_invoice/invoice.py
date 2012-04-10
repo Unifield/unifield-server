@@ -223,7 +223,7 @@ class account_invoice_line(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        vals['newline'] = False
+        vals.update({'newline': False,})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
     def copy_data(self, cr, uid, id, default=None, context=None):

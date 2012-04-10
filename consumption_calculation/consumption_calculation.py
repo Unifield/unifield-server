@@ -801,12 +801,13 @@ class monthly_review_consumption_line(osv.osv):
     _name = 'monthly.review.consumption.line'
     _description = 'Monthly review consumption line'
     
-    def _get_amc(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_amc(self, cr, uid, ids, field_name, arg, ctx=None):
         '''
         Calculate the product AMC for the period
         '''
-        if context is None:
-            context = {}
+        if ctx is None:
+            ctx = {}
+        context = ctx.copy()
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
@@ -1255,9 +1256,10 @@ class product_product(osv.osv):
                      
             
 
-    def _compute_product_amc(self, cr, uid, ids, field_name, args, context=None):
-        if context is None:
-            context = {}
+    def _compute_product_amc(self, cr, uid, ids, field_name, args, ctx=None):
+        if ctx is None:
+            ctx = {}
+        context = ctx.copy()
         res = {}
         from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
         to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')

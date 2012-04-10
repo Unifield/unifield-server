@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Invoice Lines
+    -->
+        <record id="invoice_line_form_2" model="ir.ui.view">
+            <field name="name">account.invoice.line.form.2</field>
+            <field name="model">account.invoice.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_invoice_line_tree"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='name']" position="before">
+                        <field name="line_number"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+        Supplier Invoice
+    -->
+        <record id="invoice_supplier_form_3" model="ir.ui.view">
+            <field name="name">account.invoice.supplier.form.3</field>
+            <field name="model">account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
+                        <field name="line_number"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

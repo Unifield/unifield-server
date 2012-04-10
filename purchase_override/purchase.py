@@ -131,6 +131,14 @@ class purchase_order(osv.osv):
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
+            
+        if vals.get('order_type'):
+            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                vals.update({'invoice_method': 'manual'})
+            elif vals.get('order_type') in ['direct', 'purchase_list']:
+                vals.update({'invoice_method': 'order'})
+            else:
+                vals.update({'invoice_method': 'picking'})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -154,9 +162,11 @@ class purchase_order(osv.osv):
         
         if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
             v['invoice_method'] = 'manual'
-        elif order_type == 'direct':
+        elif order_type in ['direct', 'purchase_list']:
             v['invoice_method'] = 'order'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+        else:
+            v['invoice_method'] = 'picking'
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
@@ -474,6 +484,14 @@ class purchase_order(osv.osv):
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True
             
+        if vals.get('order_type'):
+            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                vals.update({'invoice_method': 'manual'})
+            elif vals.get('order_type') in ['direct', 'purchase_list']:
+                vals.update({'invoice_method': 'order'})
+            else:
+                vals.update({'invoice_method': 'picking'})
+            
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
     
@@ -571,6 +589,15 @@ purchase_order()
 
 
 class purchase_order_merged_line(osv.osv):
+    '''
+    A purchase order merged line is a special PO line.
+    These lines give the total quantity of all normal PO lines
+    which have the same product and the same quantity.
+    When a new normal PO line is created, the system will check
+    if this new line can be attached to other PO lines. If yes,
+    the unit price of all normal PO lines with the same product and
+    the same UoM will be computed from supplier catalogue and updated on lines.
+    '''
     _name = 'purchase.order.merged.line'
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Merged Lines'
@@ -598,6 +625,8 @@ class purchase_order_merged_line(osv.osv):
             context = {}
         new_context = context.copy()
         new_context.update({'update_merge': True})
+        # If the unit price is changing, update the price unit of all normal PO lines
+        # associated to this merged PO line
         if 'price_unit' in vals:
             for merged_line in self.browse(cr, uid, ids, context=context):
                 for po_line in merged_line.order_line_ids:
@@ -617,7 +646,7 @@ class purchase_order_merged_line(osv.osv):
             return False
 
         new_qty = line.product_qty + product_qty
-        # Get the price according to the total qty
+        # Get the catalogue unit price according to the total qty
         new_price = self.pool.get('product.pricelist').price_get(cr, uid, 
                                                           [line.order_id.pricelist_id.id],
                                                           line.product_id.id,
@@ -625,13 +654,18 @@ class purchase_order_merged_line(osv.osv):
                                                           line.order_id.partner_id.id,
                                                           {'uom': line.product_uom.id,
                                                            'date': line.order_id.date_order})[line.order_id.pricelist_id.id]
+        
+        # Update the quantity of the merged line                  
         values = {'product_qty': new_qty}
-        if new_price and not price:
+        # If a catalogue unit price exist and the unit price is not manually changed
+        if new_price and not context.get('manual_change', False) and not context.get('change_price_manually', False) and not context.get('split_line', False):
             values.update({'price_unit': new_price})
         else:
+            # Keep the unit price given by the user
             values.update({'price_unit': price})
             new_price = price
 
+        # Update the unit price and the quantity of the merged line
         if not no_update:
             self.write(cr, uid, [id], values, context=context)
 
@@ -658,53 +692,81 @@ class purchase_order_line(osv.osv):
 
         if not merged_ids:
             new_vals['order_id'] = order_id
+            if not new_vals.get('price_unit', False):
+                new_vals['price_unit'] = price_unit
+            # Create a new merged line which is the same than the normal PO line except for price unit
             vals['merged_id'] = line_obj.create(cr, uid, new_vals, context=context)
         else:
+            # Update the associated merged line
             res_merged = line_obj._update(cr, uid, merged_ids[0], product_qty, price_unit, context=context, no_update=False)
             vals['merged_id'] = res_merged[0]
+            # Update unit price
             vals['price_unit'] = res_merged[1]
 
         return vals
 
-    def _update_merged_line(self, cr, uid, line_id, vals, context=None):
+    def _update_merged_line(self, cr, uid, line_id, vals=None, context=None):
         '''
         Update the merged line
         '''
         merged_line_obj = self.pool.get('purchase.order.merged.line')
+        
+        if not vals:
+            vals = {}
+        tmp_vals = vals.copy()
 
         # If it's an update of a line
         if vals and line_id:
             line = self.browse(cr, uid, line_id, context=context)
-            if not 'product_uom' in vals: vals.update({'product_uom': line.product_uom.id})
-            if not 'price_unit' in vals: vals.update({'price_unit': line.price_unit})
-            # If the user has changed the product on the PO line
+            
+            # Set default values if not pass in values
+            if not 'product_uom' in vals: 
+                vals.update({'product_uom': line.product_uom.id})
+                tmp_vals.update({'product_uom': line.product_uom.id})
+            if not 'product_qty' in vals: 
+                vals.update({'product_qty': line.product_qty})
+                tmp_vals.update({'product_qty': line.product_qty})
+            
+            # If the user changed the product or the UoM or both on the PO line
             if ('product_id' in vals and line.product_id.id != vals['product_id']) or ('product_uom' in vals and line.product_uom.id != vals['product_uom']):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, line_id, {'merged_id': False}, context=context)
-                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, 0.00, context=context)
-                if res_merged and res_merged[1]:
-                    vals.update({'price_unit': res_merged[1]})
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, line.price_unit, context=context)
+                
                 # Create or update an existing merged line with the new product
-                vals = self.link_merged_line(cr, uid, vals, vals.get('product_id', line.product_id.id), line.order_id.id, vals.get('product_qty', line.product_qty), vals.get('product_uom', line.product_uom.id), vals.get('price_unit', line.price_unit), context=context)
+                vals = self.link_merged_line(cr, uid, tmp_vals, tmp_vals.get('product_id', line.product_id.id), line.order_id.id, tmp_vals.get('product_qty', line.product_qty), tmp_vals.get('product_uom', line.product_uom.id), tmp_vals.get('price_unit', line.price_unit), context=context)
+            
+            # If the quantity is changed
             if 'product_qty' in vals and line.product_qty != vals['product_qty']:
-                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, 0.00, context=context)
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, line.price_unit, context=context)
+                # Update the unit price
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
-            if 'price_unit' in vals and line.price_unit != vals['price_unit'] and not ('product_id' in vals and line.product_id.id != vals['product_id']):
-                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, 0.00, vals['price_unit'], context=context)
+                    
+            # If the price unit is changed and the product and the UoM is not modified
+            if 'price_unit' in tmp_vals and (line.price_unit != tmp_vals['price_unit'] or vals['price_unit'] != tmp_vals['price_unit']) and not (line.product_id.id != vals.get('product_id', False) or line.product_uom.id != vals.get('product_uom', False)):
+                c = context.copy()
+                c.update({'manual_change': vals.get('change_price_manually', False)})
+                # Give 0.00 to quantity because the _update should recompute the price unit with the same quantity
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, 0.00, tmp_vals['price_unit'], context=c)
+                # Update the unit price
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
                 
                 
         # If it's a new line
         elif not line_id:
-            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=context)
+            c = context.copy()
+            c.update({'manual_change': vals.get('change_price_manually', False)})
+            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=c)
         # If the line is removed
         elif not vals:
             line = self.browse(cr, uid, line_id, context=context)
             # Remove the qty from the merged line
             if line.merged_id:
+                if line.change_price_manually:
+                    context.update({'manual_change': True})
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, [line.id], {'merged_id': False}, context=context)
@@ -718,23 +780,38 @@ class purchase_order_line(osv.osv):
         '''
         if not context:
             context = {}
-        
-        if vals.get('product_id'):
-            order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
-            if order_id.from_yml_test: vals.update({'change_price_manually': True})
-            other_lines = self.search(cr, uid, [('order_id', '=', vals['order_id']), ('product_id', '=', vals['product_id']), ('product_uom', '=', vals['product_uom'])], context=context)
-            if not vals.get('product_qty', False) and self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context).from_yml_test:
+            
+        order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
+        if order_id.from_yml_test:
+            vals.update({'change_price_manually': True})
+            if not vals.get('product_qty', False):
                 vals['product_qty'] = 1.00
-            price = self.pool.get('product.pricelist').price_get(cr,uid,[order_id.pricelist_id.id], 
-                                                                    vals['product_id'], float(vals['product_qty']), order_id.partner_id.id,
-                                                                    {'uom': vals['product_uom'], 'date': order_id.date_order})[order_id.pricelist_id.id]
-            if other_lines and (price is False or price == 0.00):
-                price_unit = self.browse(cr, uid, other_lines[0], context=context).price_unit
-    
-                if vals.get('price_unit', 0.00) != price_unit  and not vals.get('change_price_manually', False):
-                    raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
-    
-            vals = self._update_merged_line(cr, uid, False, vals, context=context)
+                
+        # If we are on a RfQ, use the last entered unit price and update other lines with this price
+        if order_id.rfq_ok:
+            vals.update({'change_price_manually': True})
+        
+        # Check if at least one field to compute merge price is given to the create method 
+        if vals.get('product_id') and vals.get('product_qty') and vals.get('product_uom') and vals.get('price_unit'):
+            # Search if there are other lines on the same order with the same product and the same UoM        
+            other_lines = self.search(cr, uid, [('order_id', '=', vals['order_id']), ('product_id', '=', vals['product_id']), ('product_uom', '=', vals['product_uom'])], context=context)
+
+            if other_lines:
+                # If there are other lines with same parameters and the unit_price comes form the product pricelists
+                if not vals.get('change_price_manually', False):
+                    price = self.pool.get('product.pricelist').price_get(cr,uid,[order_id.pricelist_id.id], 
+                                                                vals['product_id'], float(vals['product_qty']), order_id.partner_id.id,
+                                                                {'uom': vals['product_uom'], 'date': order_id.date_order})[order_id.pricelist_id.id]
+
+                    # If the price doesn't came from product pricelists and there isn't confirmation of manually update, raise an error
+                    if price and vals.get('price_unit', 0.00) != price and not context.get('split_line', False):
+                        raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
+                    else:
+                        vals = self._update_merged_line(cr, uid, False, vals, context=context)
+                else:
+                    vals = self._update_merged_line(cr, uid, False, vals, context=context)
+            else:
+                vals = self._update_merged_line(cr, uid, False, vals, context=context)
 
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
 
@@ -748,14 +825,30 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context.get('update_merge', False):
+        # Check if at least one field to compute merge price is given to the create method
+        if ('product_id' in vals or 'product_qty' in vals or 'product_uom' in vals or 'price_unit' in vals) and not context.get('update_merge', False):
             for line in self.browse(cr, uid, ids, context=context):
-                if not line.order_id.rfq_ok and vals.get('price_unit', line.price_unit) != line.price_unit and line.other_line_pb and not vals.get('change_price_manually', line.change_price_manually):
+                # If it's a line with no product (only nomenclature + description), don't process this line
+                if not vals.get('product_id', False) and not line.product_id:
+                    continue
+
+                # Get the catalogue price                
+                price = self.pool.get('product.pricelist').price_get(cr,uid,[line.order_id.pricelist_id.id], 
+                                                                     vals.get('product_id', line.product_id.id), float(vals.get('product_qty', line.product_qty)), 
+                                                                     line.order_id.partner_id.id,
+                                                                     {'uom': vals.get('product_uom', line.product_uom.id), 
+                                                                      'date': line.order_id.date_order})[line.order_id.pricelist_id.id]
+
+                # If the given unit price is not equal to the catalogue price and there isn't confirmation of manually update => Raise an error                
+                if not line.order_id.rfq_ok and vals.get('price_unit', line.price_unit) != line.price_unit and vals.get('price_unit', line.price_unit) != price and line.other_line_pb and not vals.get('change_price_manually', line.change_price_manually):
                     raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
 
-        if ('product_id' in vals or 'product_qty' in vals or 'product_uom' in vals or 'price_unit' in vals) and not context.get('update_merge'):
-            for line_id in ids:
-                vals = self._update_merged_line(cr, uid, line_id, vals, context=context)
+                # If the price is manually updated and there isn't other line on the PO, set the manually updated flag to True 
+                if price != vals.get('price_unit', line.price_unit) and vals.get('product_id', False) == line.product_id.id and vals.get('product_uom', False) == line.product_uom.id:
+                    context.update({'change_price_manually': True})
+                    
+                # Compute merge price
+                vals = self._update_merged_line(cr, uid, line.id, vals, context=context)
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
@@ -793,18 +886,39 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for pol in self.read(cr, uid, ids, ['state']):
+            ret[pol['id']] = pol['state']
+        return ret
+
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
         'other_line_pb': fields.function(_get_other_line, method=True, type='boolean', string='Other lines'),
         'change_price_manually': fields.boolean(string='Update price manually'),
+        # openerp bug: eval invisible in p.o use the po line state and not the po state !
+        'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
     }
 
     _defaults = {
         'change_price_manually': lambda *a: False,
         'other_line_pb': lambda *a: False
     }
+    
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+                                                                 partner_id, date_order, fiscal_position, 
+                                                                 date_planned, name, price_unit, notes)
+        
+        res['value'].update({'change_price_manually': False, 'other_line_pb': False})
+        
+        return res
 
     def price_unit_change(self, cr, uid, ids, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context=None):
         '''
@@ -825,14 +939,18 @@ class purchase_order_line(osv.osv):
         if not order_id:
             return res
 
-        lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)])
-        if lines and (price is False or price == 0.00):
+        order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
+
+        lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom), ('price_unit', '!=', price_unit)])
+        if lines and price != price_unit and not order.rfq_ok:
             if price_unit != 0.00:
                 warning = {
                 'title': 'Other lines updated !',
                 'message': 'Be careful ! If you validate the change of the unit price by clicking on \'Save\' button, other lines with the same product and the same UoM will be also updated ! \
 Please check the \'Update price manually\' box to confirm the modification of the price.',}
             res.update({'warning': warning, 'value': {'other_line_pb': True, 'change_price_manually': False}})
+        elif price_unit == price:
+            res.update({'value': {'change_price_manually': False, 'other_line_pb': False}})
 
         return res
 

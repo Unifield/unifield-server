@@ -30,6 +30,8 @@ class financing_contract_donor(osv.osv):
         'name': fields.char('Donor name', size=64, required=True),
         'code': fields.char('Donor code', size=16, required=True),
         'active': fields.boolean('Active'),
+        # Define for _inherits
+        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade", required=True),
     }
     
     _defaults = {

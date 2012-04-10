@@ -366,7 +366,6 @@ class account_mcdb(osv.osv_memory):
         # Prepare some value
         res_id = ids[0]
         all_fields = True
-        vals = {}
         if field and field in (self._columns and self._columns.keys()):
             if self._columns[field]._type == 'many2many':
                 # Don't clear all other fields
@@ -381,11 +380,25 @@ class account_mcdb(osv.osv_memory):
             'active_id': ids[0],
             'active_ids': ids,
         })
+        # Search model
+        wiz = self.browse(cr, uid, res_id)
+        res_model = wiz and wiz.model or False
+        # Prepare some values
+        name = _('Multi-Criteria Data Browser')
+        view_name = False
+        if res_model == 'account.move.line':
+            name = _('Journal Items MCDB')
+            view_name = 'account_mcdb_form'
+        elif res_model == 'account.analytic.line':
+            name = _('Analytic Journal Items MCDB')
+            view_name = 'account_mcdb_analytic_form'
+        if not view_name or not name:
+            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
         # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_mcdb_form')
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
         view_id = view_id and view_id[1] or False
         return {
-            'name': _('Multi-Criteria Data Browser'),
+            'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.mcdb',
             'res_id': res_id,

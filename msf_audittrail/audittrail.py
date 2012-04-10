@@ -56,7 +56,7 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
     _trace = True
-    
+
 sale_order_line()
 
 class stock_picking(osv.osv):
@@ -70,8 +70,43 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
     _trace = True
-    
+
 stock_move()
+
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+    _trace = True
+
+account_invoice()
+
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+    _trace = True
+
+account_invoice_line()
+
+class account_bank_statement(osv.osv):
+    _name = 'account.bank.statement'
+    _inherit = 'account.bank.statement'
+    _trace = True
+
+account_bank_statement()
+
+class account_analytic_account(osv.osv):
+    _name = 'account.analytic.account'
+    _inherit = 'account.analytic.account'
+    _trace = True
+
+account_analytic_account()
+
+class account_period(osv.osv):
+    _name = 'account.period'
+    _inherit = 'account.period'
+    _trace = True
+
+account_period()
 
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
@@ -387,8 +422,12 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values:
                 date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
-                res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
-                res = datetime.strftime(res, date_format)
+                try:
+                    res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S.%f')
+                finally:
+                    res = datetime.strftime(res, date_format)
             return res
         elif field['ttype'] == 'selection':
             res = False
@@ -550,9 +589,9 @@ def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
 def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):
     """
     Logging function: This function is performs logging oprations according to method
-    @param db: the current database
+    @param cr: the current database
     @param uid: the current user’s ID for security checks,
-    @param object: Object who's values are being changed
+    @param model: Object who's values are being changed
     @param method: method to log: create, read, write, unlink
     @param fct_src: execute method of Object proxy
 
@@ -608,7 +647,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
 
         # Add the name of the created sub-object
         if parent_field_id:
-            vals.update({'sub_obj_name': resource[name_get_field],
+            vals.update({'sub_obj_name': resource[name_get_field or 'name'],
                          'rule_id': rule_id,
                          'fct_object_id': model.id,
                          'fct_res_id': res_id})
@@ -775,7 +814,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
 #                                                                       #
 #########################################################################
 
-_old_create = osv.osv.create
+_old_create = orm.orm.create
 _old_write = orm.orm.write
 _old_unlink = osv.osv.unlink
 
@@ -816,7 +855,7 @@ def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
                 fields_to_trace.append(field.name)
             if getattr(thisrule, 'log_' + method_name):
                 return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, thisrule.domain_filter, *args, **kwargs)
-            return old_method(*args, **kwargs)
+            return old_method(self, *args, **kwargs)
     res = my_fct(cr, uid_orig, model, method_name, *args, **kwargs)
     return res
 
@@ -833,7 +872,7 @@ def _audittrail_unlink(self, *args, **kwargs):
     """ Wrapper to trace the osv.unlink method """
     return _audittrail_osv_method(self, _old_unlink, 'unlink', args[0], *args, **kwargs)
 
-osv.osv.create = _audittrail_create
+orm.orm.create = _audittrail_create
 orm.orm.write = _audittrail_write
 osv.osv.unlink = _audittrail_unlink
 
