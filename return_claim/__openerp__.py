@@ -24,7 +24,10 @@
     "version": "0.1",
     "depends": ["purchase",
                 "sale",
-                "stock"],
+                "stock",
+                "product_attributes", # for product menu
+                "delivery_mechanism", # for do_incoming function
+                ],
     "author": "MSF",
     "website": "",
     "category": "Specific Modules",

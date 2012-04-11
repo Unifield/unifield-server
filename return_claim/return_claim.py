@@ -37,6 +37,15 @@ CLAIM_TYPE = [('supplier', 'Supplier'),
 CLAIM_STATE = [('draft', 'Draft'),
                ('in_progress', 'In Progress'),
                ('done', 'Done')]
+# event type
+CLAIM_EVENT_TYPE = [('accept', 'Accept'),
+                    ('quarantine', 'Move to Quarantine'),
+                    ('scrap', 'Scrap'),
+                    ('return', 'Return')]
+# event state
+CLAIM_EVENT_STATE = [('draft', 'Draft'),
+                     ('in_progress', 'In Progress'),
+                     ('done', 'Done')]
 # import partner_type from msf_partner
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
@@ -54,11 +63,12 @@ class return_claim(osv.osv):
                 'po_so_return_claim': fields.char(string='Order', size=1024),
                 'type_return_claim': fields.selection(CLAIM_TYPE, string='Type'),
                 'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category'),
-                'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id', string='Events'),
+                'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id_claim_event', string='Events'),
                 'product_line_ids_return_claim': fields.one2many('claim.product.line', 'return_claim_id', string='Products'),
                 'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True),
                 'dest_location_id_return_claim': fields.many2one('stock.location', string='Destination Location'), #function depending on type
                 'description_return_claim': fields.text(string='Description'),
+                'follow_up_return_claim': fields.text(string='Follow Up'),
                 'state': fields.selection(CLAIM_STATE, string='State'),
                 }
     
@@ -71,7 +81,12 @@ class claim_event(osv.osv):
     event for claims
     '''
     _name = 'claim.event'
-    _columns = {'return_claim_id': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
+    _columns = {'return_claim_id_claim_event': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
+                'name_claim_event': fields.char(string='Reference', size=1024),
+                'creation_date_claim_event': fields.date(string='Creation Date', required=True),
+                'type_claim_event': fields.selection(CLAIM_EVENT_TYPE, string='Type'),
+                'description_claim_event': fields.text(string='Description'),
+                'state': fields.selection(CLAIM_EVENT_STATE, string='State'),
                 }
     
 claim_event()

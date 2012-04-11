@@ -11,14 +11,52 @@
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
 	                        <field name="name_return_claim" />
+	                        <field name="creation_date_return_claim" />
+	                        <field name="partner_return_claim" colspan="4" />
+	                        <field name="type_return_claim" />
+	                        <field name="category_return_claim" />
+                        </group>
+                        <group col="2" colspan="1">
+	                        <field name="po_so_return_claim" />
+	                        <field name="picking_id_return_claim" />
                         </group>
                     </group>
                     <notebook colspan="4">
-                    	<page string="Composition Items">
+                    	<page string="Events">
+                    		<field name="event_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list">
+                    			<form string="Event">
+				                    <group col="6" colspan="4">
+				            			<notebook colspan="4">
+				            				<page string="Event">
+				           						<field name="name_claim_event" />
+				           						<field name="creation_date_claim_event" />
+						                        <field name="type_claim_event" />
+					                        </page>
+					                        <page string="Notes">
+					                        	<field name="description_claim_event" nolabel="True" />
+					                        </page>
+				            			</notebook>
+				            			<group col="5" colspan="2">
+					                    	<field name="state" colspan="3" />
+					                    </group>
+				                    </group>
+				            	</form>
+                    			<tree string="Event">
+				            		<field name="name_claim_event" />
+				            		<field name="type_claim_event" />
+				            		<field name="creation_date_claim_event" />
+				            		<field name="state" />
+				            	</tree>
+                    		</field>
+                    	</page>
+                    	<page string="Products">
                     		
                     	</page>
-                    	<page string="Notes">
-                    		
+                    	<page string="Description">
+                    		<field name="description_return_claim" nolabel="True" />
+                    	</page>
+                    	<page string="Follow Up">
+                    		<field name="follow_up_return_claim" nolabel="True" />
                     	</page>
                     </notebook>
                     <group col="5" colspan="2">
