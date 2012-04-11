@@ -38,6 +38,7 @@
     ],
     'update_xml': [
         'return_claim_view.xml',
+        'return_claim_sequence.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [

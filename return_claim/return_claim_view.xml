@@ -10,25 +10,26 @@
             	<form string="Claim">
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
-	                        <field name="name_return_claim" />
-	                        <field name="creation_date_return_claim" />
-	                        <field name="partner_return_claim" colspan="4" />
+	                        <field name="name" />
+	                        <field name="partner_return_claim" />
+	                        <field name="po_so_return_claim" />
+	                        <field name="picking_id_return_claim" />
 	                        <field name="type_return_claim" />
 	                        <field name="category_return_claim" />
                         </group>
                         <group col="2" colspan="1">
-	                        <field name="po_so_return_claim" />
-	                        <field name="picking_id_return_claim" />
+                        	<field name="creation_date_return_claim" />
+                        	<field name="from_picking_wizard_return_claim" />
                         </group>
                     </group>
                     <notebook colspan="4">
                     	<page string="Events">
-                    		<field name="event_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list">
+                    		<field name="event_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
                     			<form string="Event">
 				                    <group col="6" colspan="4">
 				            			<notebook colspan="4">
 				            				<page string="Event">
-				           						<field name="name_claim_event" />
+				           						<field name="name" invisible="True" />
 				           						<field name="creation_date_claim_event" />
 						                        <field name="type_claim_event" />
 					                        </page>
@@ -41,16 +42,21 @@
 					                    </group>
 				                    </group>
 				            	</form>
-                    			<tree string="Event">
-				            		<field name="name_claim_event" />
+                    			<tree string="Events" editable="top" hide_new_button="True">
+				            		<field name="name" invisible="True" />
+				            		<field name="order_claim_event" invisible="True" />
 				            		<field name="type_claim_event" />
 				            		<field name="creation_date_claim_event" />
 				            		<field name="state" />
+				            		<button string="Process" />
 				            	</tree>
                     		</field>
+                    		<group colspan="3" col="3" />
+                    		<button name="add_an_event" type="object" string="Add an Event" icon="gtk-add" />
                     	</page>
                     	<page string="Products">
-                    		
+                    		<field name="default_src_location_id_return_claim" />
+                    		<field name="dest_location_id_return_claim" />
                     	</page>
                     	<page string="Description">
                     		<field name="description_return_claim" nolabel="True" />
@@ -63,14 +69,8 @@
                     	<field name="state" colspan="3" />
                     </group>
                     <group col="7" colspan="2">
-                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
                     	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
-                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
-                        <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
-                    </group>
+                   	</group>
             	</form>
             </field>
 		</record>
@@ -81,7 +81,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Claim">
-            		<field name="name_return_claim" />
+            		<field name="name" />
             		<field name="creation_date_return_claim" />
             		<field name="state" />
             	</tree>

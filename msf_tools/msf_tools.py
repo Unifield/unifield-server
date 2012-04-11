@@ -223,4 +223,26 @@ class sequence_tools(osv.osv):
         seq_obj.write(cr, uid, seq_ids, {'number_next': value}, context=context)
         return True
     
+    def create_sequence(self, cr, uid, vals, name, code, prefix='', padding=0, context=None):
+        '''
+        create a new sequence
+        '''
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+        
+        assert name, 'create sequence: missing name'
+        assert code, 'create sequence: missing code'
+
+        types = {'name': name,
+                 'code': code
+                 }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {'name': name,
+               'code': code,
+               'prefix': prefix,
+               'padding': padding,
+               }
+        return seq_pool.create(cr, uid, seq)
+    
 sequence_tools()
