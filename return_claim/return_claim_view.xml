@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+    	<record id="view_return_claim_form" model="ir.ui.view">
+            <field name="name">return.claim.form</field>
+            <field name="model">return.claim</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Claim">
+            		<group col="6" colspan="4">
+            			<group col="4" colspan="4">
+	                        <field name="name_return_claim" />
+                        </group>
+                    </group>
+                    <notebook colspan="4">
+                    	<page string="Composition Items">
+                    		
+                    	</page>
+                    	<page string="Notes">
+                    		
+                    	</page>
+                    </notebook>
+                    <group col="5" colspan="2">
+                    	<field name="state" colspan="3" />
+                    </group>
+                    <group col="7" colspan="2">
+                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
+                    	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
+                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
+                        <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
+                    </group>
+            	</form>
+            </field>
+		</record>
+		
+		<record id="view_return_claim_tree" model="ir.ui.view">
+            <field name="name">return.claim.tree</field>
+            <field name="model">return.claim</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Claim">
+            		<field name="name_return_claim" />
+            		<field name="creation_date_return_claim" />
+            		<field name="state" />
+            	</tree>
+            </field>
+		</record>
+		
+		<record id="view_return_claim_filter" model="ir.ui.view">
+            <field name="name">return.claim.filter</field>
+            <field name="model">return.claim</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Claim">
+                    <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
+                    <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
+                    <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <separator orientation="vertical" />
+                    <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
+                    <separator orientation="vertical" />
+                    <field name="state" select="1" />
+					<newline />
+                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
+	                    <separator orientation="vertical"/>
+	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date_return_claim'}"/>
+                	</group>
+              	</search>
+            </field>
+        </record>
+		
+		<record id="return_claim_action" model="ir.actions.act_window">
+			<field name="name">Claim</field>
+			<field name="res_model">return.claim</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[]</field>
+			<field name="context">{}</field>
+			<field name="search_view_id" ref="view_return_claim_filter" />
+		</record>
+		
+		<menuitem id="return_claim" name="Claim" parent="product_attributes.menu_main_product" sequence="15" />
+		<menuitem action="return_claim_action" id="return_claim_menu" parent="return_claim" sequence="1" />
+    
+    </data>
+</openerp>

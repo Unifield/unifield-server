@@ -97,6 +97,7 @@
         "purchase_allocation_report",
         "supplier_catalogue",
         "msf_cross_docking",
+        "return_claim",
     ],
     "update_xml": [
         "report.xml",
