@@ -1291,7 +1291,7 @@ class procurement_order(osv.osv):
         # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
         # confirmed_delivery_date (confirmed date) = False
         # both values are taken from line 
-        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line['confirmed_delivery_date'],})
+        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line.get('confirmed_delivery_date', line['date_planned']),})
         return values  
 
 procurement_order()
