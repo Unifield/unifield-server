@@ -221,11 +221,13 @@ class account_commitment(osv.osv):
 
     def get_engagement_lines(self, cr, uid, ids, context=None):
         """
-        Return all engagement lines from given commitments
+        Return all engagement lines from given commitments (in context)
         """
         # Some verifications
         if not context:
             context = {}
+        if context.get('active_ids', False):
+            ids = context.get('active_ids')
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
