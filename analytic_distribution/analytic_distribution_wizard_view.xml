@@ -127,7 +127,8 @@
                 <form>
                     <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
                     <newline/>
-                    <field name="line_ids" nolabel="1" colspan="4"/>
+                    <field name="display_fp" invisible="1"/>
+                    <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
                     <group col="6" colspan="4">
                         <label string="" colspan="2"/>
                         <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
@@ -150,37 +151,12 @@
                         <field name="nb_error" colspan="2"/>
                         <field name="nb_other" colspan="2"/>
                     </group>
+                    <field name="display_fp" invisible="1"/>
                     <field name="account_id" colspan="2"/>
                     <newline/>
-                    <field name="error_ids" colspan="4" nolabel="1">
-                        <tree string="Non reallocatable lines" noteditable="1">
-                            <field name="date"/>
-                            <field name="ref"/>
-                            <field name="name"/>
-                            <field name="journal_id" string="Analytic Journal"/>
-                            <field name="amount"/>
-                            <field name="amount_currency"/>
-                            <field name="currency_id"/>
-                            <field name="account_id"/>
-                            <field name="cost_center_id" string="Cost Center"/>
-                            <field name="general_account_id"/>
-                        </tree>
-                    </field>
+                    <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />
-                    <field name="process_ids" colspan="4" nolabel="1">
-                        <tree string="Reallocatable lines" noteditable="1">
-                            <field name="date"/>
-                            <field name="ref"/>
-                            <field name="name"/>
-                            <field name="journal_id" string="Analytic Journal"/>
-                            <field name="amount"/>
-                            <field name="amount_currency"/>
-                            <field name="currency_id"/>
-                            <field name="account_id"/>
-                            <field name="cost_center_id" string="Cost Center"/>
-                            <field name="general_account_id"/>
-                        </tree>
-                    </field>
+                    <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />
                     <group col="6" colspan="4"/>
                         <label string="" colspan="2"/>
