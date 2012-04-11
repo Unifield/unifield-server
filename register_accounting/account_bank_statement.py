@@ -530,7 +530,8 @@ class account_bank_statement(osv.osv):
                     if ml.analytic_lines:
                         valid_ids.append([x.id for x in ml.analytic_lines])
         valid_ids = flatten(valid_ids)
-        domain = [('id', 'in', valid_ids)]
+        domain = [('id', 'in', valid_ids), ('account_id.category', '=', 'FUNDING')]
+        context.update({'display_fp': True})
         return {
             'name': reg and 'Analytic Entries from ' + reg.name or 'Analytic Entries',
             'type': 'ir.actions.act_window',

@@ -24,7 +24,7 @@
 
         <!-- Display all Analytic Lines attached to Register Lines from given Register -->
         <record id="action_analytic_register_lines_search" model="ir.actions.server">
-            <field name="name">Analytic Lines</field>
+            <field name="name">Analytic Lines (FP)</field>
             <field name="model_id" ref="model_account_bank_statement"/>
             <field name="state">code</field>
             <field name="code">action = obj.get_analytic_register_lines(context=context)</field>
