@@ -54,8 +54,8 @@ class return_claim(osv.osv):
                 'po_so_return_claim': fields.char(string='Order', size=1024),
                 'type_return_claim': fields.selection(CLAIM_TYPE, string='Type'),
                 'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category'),
-#                'event_ids_return_claim': fields,
-#                'product_line_ids_return_claim': fields,
+                'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id', string='Events'),
+                'product_line_ids_return_claim': fields.one2many('claim.product.line', 'return_claim_id', string='Products'),
                 'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True),
                 'dest_location_id_return_claim': fields.many2one('stock.location', string='Destination Location'), #function depending on type
                 'description_return_claim': fields.text(string='Description'),
@@ -64,3 +64,28 @@ class return_claim(osv.osv):
     
     
 return_claim()
+
+
+class claim_event(osv.osv):
+    '''
+    event for claims
+    '''
+    _name = 'claim.event'
+    _columns = {'return_claim_id': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
+                }
+    
+claim_event()
+
+
+class claim_product_line(osv.osv):
+    '''
+    product line for claim
+    '''
+    _name = 'claim.product.line'
+    _columns = {'return_claim_id': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
+                }
+    
+claim_product_line()
+
+
+
