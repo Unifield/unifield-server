@@ -86,10 +86,10 @@
           <para style="P3">General Account</para>
         </td>
         <td>
-          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Funding Pool" or "Analytic Account" ]]</para>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Cost Center" or removeParentNode('td') ]]</para>
         </td>
         <td>
-          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Cost Center" or removeParentNode('td') ]]</para>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Funding Pool" or "Analytic Account" ]]</para>
         </td>
         <td>
           <para style="P3">Third Party</para>
@@ -146,10 +146,10 @@
           <para style="P3">[[ o.general_account_id and o.general_account_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.account_id and o.account_id.name or '' ]]</para>
+          <para style="P4">[[ data.get('context') and data['context'].get('display_fp', False) and (o.cost_center_id and o.cost_center_id.name or '') or removeParentNode('td') ]]</para>
         </td>
         <td>
-          <para style="P4">[[ data.get('context') and data['context'].get('display_fp', False) and (o.cost_center_id and o.cost_center_id.name or '') or removeParentNode('td') ]]</para>
+          <para style="P3">[[ o.account_id and o.account_id.name or '' ]]</para>
         </td>
         <td>
           <para style="P4">[[ o.partner_txt or '' ]]</para>
