@@ -33,7 +33,7 @@
         <record id="ir_open_analytic_register_lines_search" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">account.bank.statement</field>
-            <field name="name">Analytic Lines</field>
+            <field name="name">Analytic Lines (FP)</field>
             <field eval="'ir.actions.server,%d'%action_analytic_register_lines_search" name="value"/>
             <field eval="True" name="object"/>
         </record>
