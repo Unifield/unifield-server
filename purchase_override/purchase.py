@@ -918,6 +918,19 @@ class purchase_order_line(osv.osv):
         
         res['value'].update({'change_price_manually': False, 'other_line_pb': False})
         
+        # Remove the warning message if the product has no staged pricelist
+        if res.get('warning'):
+            supplier_info = self.pool.get('product.supplierinfo').search(cr, uid, [('product_id', '=', product)])
+            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
+            if not product_pricelist:
+                res['warning'] = {}
+                
+        # Set the unit price with cost price if the product has no staged pricelist 
+        st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
+        
+        if res.get('value', {}).get('price_unit', False) == False :
+            res['value'].update({'price_unit': st_price})            
+        
         return res
 
     def price_unit_change(self, cr, uid, ids, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context=None):
@@ -930,7 +943,6 @@ class purchase_order_line(osv.osv):
             context = {}
         if not product_id or not product_uom or not product_qty:
             return res
-
 
         price = self.pool.get('product.pricelist').price_get(cr,uid,[pricelist], product_id, product_qty, partner_id,
                                                                 {'uom': product_uom, 'date': date_order})[pricelist]
