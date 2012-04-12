@@ -893,6 +893,14 @@ class purchase_order_line(osv.osv):
         for pol in self.read(cr, uid, ids, ['state']):
             ret[pol['id']] = pol['state']
         return ret
+    
+    def _get_fake_id(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for pol in self.read(cr, uid, ids, ['id']):
+            ret[pol['id']] = pol['id']
+        return ret
 
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
@@ -902,6 +910,8 @@ class purchase_order_line(osv.osv):
         'change_price_manually': fields.boolean(string='Update price manually'),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
+        # openerp bug: id is not given to onchanqge call if we are into one2many view
+        'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
     }
 
     _defaults = {
@@ -933,7 +943,7 @@ class purchase_order_line(osv.osv):
         
         return res
 
-    def price_unit_change(self, cr, uid, ids, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context=None):
+    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context=None):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
@@ -953,7 +963,10 @@ class purchase_order_line(osv.osv):
 
         order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
 
-        lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom), ('price_unit', '!=', price_unit)])
+        if fake_id and fake_id > 0:
+            lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom), ('price_unit', '!=', price_unit), ('id', '!=', fake_id)])
+        else:
+            lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom), ('price_unit', '!=', price_unit)])
         if lines and price != price_unit and not order.rfq_ok:
             if price_unit != 0.00:
                 warning = {
