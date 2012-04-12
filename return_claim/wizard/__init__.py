@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,33 +19,4 @@
 #
 ##############################################################################
 
-{
-    "name": "MSF Return-Claim",
-    "version": "0.1",
-    "depends": ["purchase",
-                "sale",
-                "stock",
-                "product_attributes", # for product menu
-                "delivery_mechanism", # for do_incoming function
-                ],
-    "author": "MSF",
-    "website": "",
-    "category": "Specific Modules",
-    "description": """
-        Return and Claims
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'return_claim_view.xml',
-        'return_claim_sequence.xml',
-        'wizard/add_event_view.xml',
-        'security/ir.model.access.csv',
-    ],
-    'demo_xml': [
-    ],
-    'test': ['test/return_claim_data.yml',
-             'test/return_claim.yml'],
-    'installable': True,
-    'active': False,
-}
+import add_event

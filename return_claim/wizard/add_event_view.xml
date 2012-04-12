@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_add_event_form_wizard" model="ir.ui.view">
+            <field name="name">view.add.event.form.wizard</field>
+            <field name="model">add.event</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Add Event">
+            	<separator string="Specify the type of the new event." colspan="4"/>
+            	<group colspan="4" col="6">
+	                <field name="claim_id" />
+	                <field name="claim_partner_id" />
+	                <field name="claim_type" />
+	                <field name="creation_date" />
+	                <field name="event_type" on_change="on_change_event_type(event_type,claim_partner_id,claim_type,context)" />
+	                <field name="dest_location_id" />
+                </group>
+                <group colspan="2" />
+                <group colspan="2" col="4">
+	                <button icon='gtk-cancel' special="cancel"
+	                    string="_Close" />
+	                <button name="do_add_event" string="Ok" type="object" icon="gtk-ok" />
+                </group>
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

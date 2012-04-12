@@ -11,15 +11,20 @@
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
 	                        <field name="name" />
-	                        <field name="partner_return_claim" />
 	                        <field name="po_so_return_claim" />
-	                        <field name="picking_id_return_claim" />
-	                        <field name="type_return_claim" />
+	                        <field name="picking_id_return_claim"
+	                        	domain="[('type', 'in', ['out', 'in'])]"
+	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
+	                        <field name="partner_id_return_claim"
+	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
+	                        <field name="type_return_claim"
+	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
 	                        <field name="category_return_claim" />
                         </group>
                         <group col="2" colspan="1">
                         	<field name="creation_date_return_claim" />
                         	<field name="from_picking_wizard_return_claim" />
+                        	<field name="contains_event_return_claim" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -46,17 +51,18 @@
 				            		<field name="name" invisible="True" />
 				            		<field name="order_claim_event" invisible="True" />
 				            		<field name="type_claim_event" />
+				            		<field name="dest_location_id_claim_event" />
 				            		<field name="creation_date_claim_event" />
 				            		<field name="state" />
 				            		<button string="Process" />
 				            	</tree>
                     		</field>
                     		<group colspan="3" col="3" />
-                    		<button name="add_an_event" type="object" string="Add an Event" icon="gtk-add" />
+                    		<button name="add_event" type="object" string="Add an Event" icon="gtk-add"
+                    			attrs="{'readonly': [('type_return_claim', '=', 'transport')]}" />
                     	</page>
                     	<page string="Products">
                     		<field name="default_src_location_id_return_claim" />
-                    		<field name="dest_location_id_return_claim" />
                     	</page>
                     	<page string="Description">
                     		<field name="description_return_claim" nolabel="True" />

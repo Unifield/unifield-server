@@ -1,0 +1,7 @@
+-
+  I create a claim 001
+- 
+  !record {model: return.claim, id: claim_001}:
+    partner_id_return_claim: claim_partner_A
+    category_return_claim: medical
+    type_return_claim: supplier
