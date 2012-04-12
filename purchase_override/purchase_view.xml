@@ -186,6 +186,28 @@
         <menuitem action="action_supplier_address_form"
                   id="menu_supplier_address_form"
                   parent="base.menu_procurement_management_supplier" />
+                  
+        <record id="purchase_order_line_nomen_form_view_inherit" model="ir.ui.view">
+            <field name="name">purchase.order.line.nomen.form.view</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="order_nomenclature.purchase_order_line_form" />
+            <field name="arch" type="xml">
+            	<data>
+            		<xpath expr="/form//field[@name='product_id']" position="replace">
+            			<field name="product_id" colspan="4" 
+            				context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
+            				on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes, parent.state, old_price_unit)"/>
+            		</xpath>
+            		
+            		<xpath expr="/form//field[@name='product_qty']" position="replace">
+            			<field name="product_qty" 
+            				context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
+            				on_change="product_qty_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state, old_price_unit)"/>
+            		</xpath>
+            	</data>
+            </field>
+        </record>
 
         <record id="purchase_order_line_form_view_inherit" model="ir.ui.view">
             <field name="name">purchase.order.line.form.view</field>
@@ -196,6 +218,7 @@
             	<data>
 	                <xpath expr="/form//field[@name='price_unit']" position="replace">
 	                    <field name="rfq_ok" invisible="1" />
+	                    <field name="state" invisible="1" />
 	                    <field name="fake_id" invisible="1" />
 	                    <field name="change_price_ok" invisible="1" />
 	                    <field name="old_price_unit" invisible="1" />
