@@ -648,7 +648,6 @@ class purchase_order_merged_line(osv.osv):
         # If no PO line attached to this merged line, remove the merged line
         if not line.order_line_ids:
             self.unlink(cr, uid, [id], context=context)
-            return False
 
         new_price = False
         new_qty = line.product_qty + product_qty
@@ -779,6 +778,8 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
             
+        vals.update({'old_price_unit': vals.get('price_unit', False)})
+            
         order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
         if order_id.from_yml_test:
             vals.update({'change_price_manually': True})
@@ -876,7 +877,7 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = True
             stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id, context=context)
-            if len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages:
+            if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages:
                 res[line.id] = False
                         
         return res
@@ -948,7 +949,7 @@ class purchase_order_line(osv.osv):
         
         return res
 
-    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, change_price_ok, old_price_unit, context=None):
+    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, change_price_ok, state, old_price_unit, context=None):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
@@ -974,9 +975,6 @@ class purchase_order_line(osv.osv):
             res['value'].update({'price_unit': old_price_unit})
         else:
             res['value'].update({'old_price_unit': price_unit})
-            
-        if order.state == 'confirmed':
-            res['value'].update({'price_unit': old_price_unit, 'old_price_unit': old_price_unit})
 
         return res
 
