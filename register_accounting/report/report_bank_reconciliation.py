@@ -26,6 +26,15 @@ from report import report_sxw
 class bank_reconciliation(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(bank_reconciliation, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'get_selection': self.get_selection,
+        })
+        return
+
+    def get_selection(self, value):
+        # Parse each budget line
+        register_states = dict(self.pool.get('account.bank.statement')._columns['state'].selection)
+        return register_states[value]
 
 report_sxw.report_sxw('report.bank.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/bank_reconciliation.rml', parser=bank_reconciliation)
 
