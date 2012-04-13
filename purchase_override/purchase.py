@@ -778,6 +778,12 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
             
+        if vals.get('product_qty', 0.00) == 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+            
+        if vals.get('price_unit', 0.00) == 0.00:
+            raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
+            
         vals.update({'old_price_unit': vals.get('price_unit', False)})
             
         order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
@@ -813,6 +819,16 @@ class purchase_order_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        if 'price_unit' in vals:
+            vals.update({'old_price_unit': vals.get('price_unit')})
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            if vals.get('product_qty', line.product_qty) == 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+            
+            if vals.get('price_unit', line.price_unit) == 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         if not context.get('update_merge'):
             for line in ids:
@@ -958,7 +974,7 @@ class purchase_order_line(osv.osv):
         if product and qty != 0.00: 
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
         
-            if res.get('value', {}).get('price_unit', False) == False :
+            if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
                 res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})
             elif state and state != 'draft' and old_price_unit:
                 res['value'].update({'price_unit': old_price_unit, 'old_price_unit': old_price_unit})
