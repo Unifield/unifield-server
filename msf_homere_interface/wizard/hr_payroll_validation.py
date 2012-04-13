@@ -81,7 +81,7 @@ class hr_payroll_validation(osv.osv):
             'journal_id': journal_id,
             'period_id': period_id,
             'date': self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id) or False,
-            'name': 'Salaries' + ' ' + field,
+            'ref': 'Salaries' + ' ' + field,
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
         # Create lines into this move
