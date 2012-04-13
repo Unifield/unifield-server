@@ -210,13 +210,13 @@
 			<field name="model">purchase.order.line</field>
 			<field name="type">form</field>
 			<field name="priority" eval="100" />
-			<field name="inherit_id" ref="purchase.purchase_order_line_form" />
+			<field name="inherit_id" ref="purchase_override.purchase_order_line_form_view_inherit" />
 			<field name="arch" type="xml">
 				<data>
 				
 					<!-- modification of onchange function - avoid change to clear Comment field -->
 					<xpath expr="//form//page[@string='Order Line']/field[@name='product_qty']" position="replace">
-						<field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)"/>
+						<field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit)"/>
 					</xpath>
 
 					<!-- EXACT COPY SO-> Po -->

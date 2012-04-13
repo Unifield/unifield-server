@@ -832,6 +832,19 @@ class procurement_order(osv.osv):
         'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
     }
     
+    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+        
+        - allow to modify the data for purchase order line creation
+        '''
+        line = kwargs['line']
+        if line.get('price_unit', False) == False:
+            st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
+            line.update({'price_unit': st_price})
+        return line
+    
     def action_check_finished(self, cr, uid, ids):
         res = super(procurement_order, self).action_check_finished(cr, uid, ids)
         
