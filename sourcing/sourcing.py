@@ -839,7 +839,7 @@ class procurement_order(osv.osv):
         
         - allow to modify the data for purchase order line creation
         '''
-        line = kwargs['line']
+        line = super(procurement_order, self)..po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         if line.get('price_unit', False) == False:
             st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
             line.update({'price_unit': st_price})
