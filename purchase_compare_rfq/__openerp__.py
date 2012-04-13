@@ -30,7 +30,7 @@
     """,
     'author': 'TeMPO Consulting, MSF',
     'website': 'http://unifield.msf.org',
-    'depends': ['purchase', 'purchase_override'],
+    'depends': ['purchase'],
     'init_xml': [],
     'update_xml': [
         'wizard/compare_rfq_view.xml',
