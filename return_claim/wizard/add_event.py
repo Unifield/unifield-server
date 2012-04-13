@@ -26,8 +26,6 @@ import time
 
 import netsvc
 
-from ..return_claim import CLAIM_TYPE
-
 class add_event(osv.osv_memory):
     '''
     wizard called to confirm an action
@@ -42,43 +40,58 @@ class add_event(osv.osv_memory):
         available_list = context['data'][claim_id]['list']
         return available_list
     
+    def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # results
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            dest_loc_id = self.pool.get('claim.event').get_location_for_event_type(cr, uid, context=context,
+                                                           event_type=obj.event_type,
+                                                           claim_partner_id=obj.claim_partner_id.id,
+                                                           claim_type=obj.claim_type,
+                                                           claim_picking=obj.claim_id.picking_id_return_claim)
+            result[obj.id] = {'location_id_claim_event': dest_loc_id}
+            
+        return result
+    
     _columns = {'claim_id': fields.many2one('return.claim', string='Claim', readonly=True),
-                'claim_type': fields.selection(CLAIM_TYPE, string='Claim Type', readonly=True),
+                'claim_type': fields.selection(lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_type(), string='Claim Type', readonly=True),
                 'claim_partner_id': fields.many2one('res.partner', string='Claim Partner', readonly=True),
+                'claim_picking_id': fields.many2one('stock.picking', string='Claim Origin', readonly=True),
                 'creation_date': fields.date(string='Creation Date', required=True),
                 'event_type': fields.selection(_get_types, string='Event Type', required=True),
-                'dest_location_id': fields.many2one('stock.location', string='Destination Location', readonly=True),
+                # functions
+                'dest_location_id': fields.function(_vals_get_claim, method=True, string='Associated Location', type='many2one', relation='stock.location', readonly=True, multi='get_vals_claim'),
                 }
     
     _defaults = {'claim_id': lambda s, cr, uid, c: c.get('claim_id', False),
                  'claim_type': lambda s, cr, uid, c: c.get('claim_type', False),
                  'claim_partner_id': lambda s, cr, uid, c: c.get('claim_partner_id', False),
+                 'claim_picking_id': lambda s, cr, uid, c: c.get('claim_picking_id', False),
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  }
     
-    def on_change_event_type(self, cr, uid, ids, event_type, claim_partner_id, claim_type, context=None):
+    def on_change_event_type(self, cr, uid, ids, event_type, claim_partner_id, claim_type, claim_picking_id, context=None):
         '''
         the event changes
         '''
         # objects
         event_obj = self.pool.get('claim.event')
         result = {'value': {}}
-        dest_loc_id = event_obj.get_location_for_event_type(cr, uid, context=context, event_type=event_type, claim_partner_id=claim_partner_id, claim_type=claim_type)
+        dest_loc_id = event_obj.get_location_for_event_type(cr, uid, context=context,
+                                                            event_type=event_type,
+                                                            claim_partner_id=claim_partner_id,
+                                                            claim_type=claim_type,
+                                                            claim_picking=self.pool.get('stock.picking').browse(cr, uid, claim_picking_id, context=context)),
         result['value'].update({'dest_location_id': dest_loc_id})
         return result
-    
-    def compute_date(self, cr, uid, ids, context=None):
-        '''
-        compute the date from items and write it to the wizard
-        '''
-        if context is None:
-            context = {}
-        # objects
-        kit_obj = self.pool.get('composition.kit')
-        kit_ids = context['active_ids']
-        new_date = kit_obj._compute_expiry_date(cr, uid, kit_ids, context=context)
-        self.write(cr, uid, ids, {'new_date': new_date}, context=context)
-        return True
 
     def do_add_event(self, cr, uid, ids, context=None):
         '''
@@ -97,12 +110,13 @@ class add_event(osv.osv_memory):
             if not obj.event_type:
                 raise osv.except_osv(_('Warning !'), _('You need to specify an event type.'))
             # event values
-            event_values = {'return_claim_id_claim_event': 1,
-                            'creation_date_claim_event': 1,
-                            'type_claim_event': 1,
-                            'description_claim_event': 1,
+            event_values = {'return_claim_id_claim_event': obj.claim_id.id,
+                            'creation_date_claim_event': obj.creation_date,
+                            'type_claim_event': obj.event_type,
+                            'description_claim_event': False,
                             }
             # create event
+            event_id = event_obj.create(cr, uid, event_values, context=context)
             
         return {'type': 'ir.actions.act_window',
                 'res_model': 'return.claim',

@@ -23,6 +23,8 @@ from osv import osv, fields
 
 import time
 
+import inspect
+
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -246,3 +248,78 @@ class sequence_tools(osv.osv):
         return seq_pool.create(cr, uid, seq)
     
 sequence_tools()
+
+
+def check_none(pos):
+    '''
+    if parameter at position pos is None, it is replaced by {}
+    '''
+    def decorator(fn):
+        def wrapper(*args):
+            if args[pos] is None:
+                args = tuple([{} if x == pos else args[x] for x in range(len(args))])
+            return fn(*args)
+        return wrapper
+    return decorator
+
+
+def check_int_float(pos):
+    '''
+    if parameter at position pos is float or int, it is packed in a list
+    '''
+    def decorator(fn):
+        def wrapper(*args):
+            if isinstance(args[pos], (int, long)):
+                args = tuple([[args[x]] if x == pos else args[x] for x in range(len(args))])
+            return fn(*args)
+        return wrapper
+    return decorator
+
+
+def check_both():
+    '''
+    decorator to replacing:
+    - None 'context' by {}
+    - int/float 'ids' packed in a list
+    
+    can only be used as first decorator... second decorator gets args as parameter name for the function...
+    -> will do nothing if called after another decorator
+    
+    decorators are called in the following order
+    
+    @last to be called
+    @second to be called
+    @first to be called
+    def function
+    
+    does not work -> def test(self, ids, context=None)
+    if we call the function with self.test(1) -> we get an index out of bounds for args[pos]...
+    '''
+    def decorator(fn):
+        def wrapper(*args):
+            # first ids
+            param = 'ids'
+            print args
+            # inspect method signature
+            data = inspect.getargspec(fn)
+            print data
+            # if context exists and appears one time
+            if param in data[0] and data[0].count(param) == 1:
+                # get position of context parameter
+                pos = data[0].index(param)
+                if isinstance(args[pos], (int, long)):
+                    args = tuple([[args[x]] if x == pos else args[x] for x in range(len(args))])
+            print args
+            # then context
+            param = 'context'
+            # if context exists and appears one time
+            if param in data[0] and data[0].count(param) == 1:
+                # get position of context parameter
+                pos = data[0].index(param)
+                if args[pos] is None:
+                    args = tuple([{} if x == pos else args[x] for x in range(len(args))])
+            print args
+            return fn(*args)
+        return wrapper
+    return decorator
+

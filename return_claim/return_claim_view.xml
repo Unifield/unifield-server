@@ -13,7 +13,7 @@
 	                        <field name="name" />
 	                        <field name="po_so_return_claim" />
 	                        <field name="picking_id_return_claim"
-	                        	domain="[('type', 'in', ['out', 'in'])]"
+	                        	domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
 	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
 	                        <field name="partner_id_return_claim"
 	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
@@ -51,10 +51,12 @@
 				            		<field name="name" invisible="True" />
 				            		<field name="order_claim_event" invisible="True" />
 				            		<field name="type_claim_event" />
-				            		<field name="dest_location_id_claim_event" />
+				            		<field name="location_id_claim_event" />
 				            		<field name="creation_date_claim_event" />
 				            		<field name="state" />
-				            		<button string="Process" />
+				            		<field name="hidden_state" invisible="True" />
+				            		<button name="do_process_event" type="object" string="Add an Event" icon="gtk-go-forward"
+										attrs="{'invisible': [('hidden_state', '=', 'done')]}" />
 				            	</tree>
                     		</field>
                     		<group colspan="3" col="3" />
