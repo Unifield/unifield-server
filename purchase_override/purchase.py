@@ -641,6 +641,7 @@ class purchase_order_merged_line(osv.osv):
         '''
         line = self.browse(cr, uid, id, context=context)
         change_price_ok = True
+        delete = False
         if not po_line_id:
             change_price_ok = context.get('change_price_ok', True)
         else:
@@ -649,13 +650,11 @@ class purchase_order_merged_line(osv.osv):
         # If no PO line attached to this merged line, remove the merged line
         if not line.order_line_ids:
             self.unlink(cr, uid, [id], context=context)
+            return False, False
 
         new_price = False
-        if line:
-            new_qty = line.product_qty + product_qty
-        else:
-            new_qty = product_qty
-        if (po_line_id and not po_line.change_price_ok) or (not po_line_id and not change_price_ok):    
+        new_qty = line.product_qty + product_qty
+        if (po_line_id and not po_line.change_price_ok and not po_line.order_id.rfq_ok) or (not po_line_id and not change_price_ok):    
             # Get the catalogue unit price according to the total qty
             new_price = self.pool.get('product.pricelist').price_get(cr, uid, 
                                                               [line.order_id.pricelist_id.id],
@@ -694,11 +693,14 @@ class purchase_order_line(osv.osv):
         Check if a merged line exist. If not, create a new one and attach them to the Po line
         '''
         line_obj = self.pool.get('purchase.order.merged.line')
-        domain = [('product_id', '=', product_id), ('order_id', '=', order_id), ('product_uom', '=', uom_id)]
+        if product_id:
+            domain = [('product_id', '=', product_id), ('order_id', '=', order_id), ('product_uom', '=', uom_id)]
+            # Search if a merged line already exist for the same product, the same order and the same UoM
+            merged_ids = line_obj.search(cr, uid, domain, context=context)
+        else:
+            merged_ids = []
+        
         new_vals = vals.copy()
-
-        # Search if a merged line already exist for the same product, the same order and the same UoM
-        merged_ids = line_obj.search(cr, uid, domain, context=context)
 
         if not merged_ids:
             new_vals['order_id'] = order_id
@@ -762,7 +764,7 @@ class purchase_order_line(osv.osv):
         # If it's a new line
         elif not line_id:
             c = context.copy()
-            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=c)
+            vals = self.link_merged_line(cr, uid, vals, vals.get('product_id'), vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=c)
         # If the line is removed
         elif not vals:
             line = self.browse(cr, uid, line_id, context=context)
@@ -782,12 +784,6 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
             
-        if vals.get('product_qty', 0.00) == 0.00:
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
-            
-        if vals.get('price_unit', 0.00) == 0.00:
-            raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
-            
         vals.update({'old_price_unit': vals.get('price_unit', False)})
             
         order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
@@ -799,6 +795,12 @@ class purchase_order_line(osv.osv):
         # If we are on a RfQ, use the last entered unit price and update other lines with this price
         if order_id.rfq_ok:
             vals.update({'change_price_manually': True})
+        else:
+            if vals.get('product_qty', 0.00) == 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+            
+            if vals.get('price_unit', 0.00) == 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         order_id = vals.get('order_id')
         product_id = vals.get('product_id')
@@ -828,10 +830,10 @@ class purchase_order_line(osv.osv):
             vals.update({'old_price_unit': vals.get('price_unit')})
         
         for line in self.browse(cr, uid, ids, context=context):
-            if vals.get('product_qty', line.product_qty) == 0.00:
+            if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
             
-            if vals.get('price_unit', line.price_unit) == 0.00:
+            if vals.get('price_unit', line.price_unit) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         if not context.get('update_merge'):
@@ -897,7 +899,7 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = True
             stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id, context=context)
-            if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages:
+            if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages and not line.order_id.rfq_ok:
                 res[line.id] = False
                         
         return res
@@ -1009,7 +1011,7 @@ class purchase_order_line(osv.osv):
         other_lines = self.search(cr, uid, [('id', '!=', fake_id), ('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
         
-        if not change_price_ok or (other_lines and stages and order.state != 'confirmed'):
+        if not change_price_ok or (other_lines and stages and order.state != 'confirmed' and not context.get('rfq_ok')):
             res.update({'warning': {'title': 'Error',
                                     'message': 'This product get stages prices for this supplier, you cannot change the price manually in draft state '\
                                                'as you have multiple order lines (it is possible in "validated" state.'}})
