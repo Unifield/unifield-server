@@ -630,7 +630,8 @@ class purchase_order_merged_line(osv.osv):
         if 'price_unit' in vals:
             for merged_line in self.browse(cr, uid, ids, context=context):
                 for po_line in merged_line.order_line_ids:
-                    self.pool.get('purchase.order.line').write(cr, uid, [po_line.id], {'price_unit': vals['price_unit']}, context=new_context)
+                    self.pool.get('purchase.order.line').write(cr, uid, [po_line.id], {'price_unit': vals['price_unit'],
+                                                                                       'old_price_unit': vals['price_unit']}, context=new_context)
 
         return super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
 
@@ -650,7 +651,10 @@ class purchase_order_merged_line(osv.osv):
             self.unlink(cr, uid, [id], context=context)
 
         new_price = False
-        new_qty = line.product_qty + product_qty
+        if line:
+            new_qty = line.product_qty + product_qty
+        else:
+            new_qty = product_qty
         if (po_line_id and not po_line.change_price_ok) or (not po_line_id and not change_price_ok):    
             # Get the catalogue unit price according to the total qty
             new_price = self.pool.get('product.pricelist').price_get(cr, uid, 
@@ -943,7 +947,8 @@ class purchase_order_line(osv.osv):
 #            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
 #            if not product_pricelist:
 #                res['warning'] = {}
-        res.update({'warning': {}})
+        if res.get('warning', {}).get('title', '') == 'No valid pricelist line found !' or qty == 0.00:
+            res.update({'warning': {}})
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
