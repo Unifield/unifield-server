@@ -79,7 +79,6 @@
                             </group>
                             <group col="8" colspan="4" groups="base.group_user">
                                 <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
-                                <button name="action_cancel_draft" states="cancel" string="Reset to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                                 <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                                 <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
@@ -153,9 +152,7 @@
                             <field name="is_debit_note" invisible="1"/>
                         </group>
                         <group col="8" colspan="4" groups="base.group_user">
-                            <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
-                            <button name="action_cancel_draft" states="cancel" string="Reset to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
-
+                            <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                             <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
