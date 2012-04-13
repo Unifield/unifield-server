@@ -910,6 +910,7 @@ class purchase_order_line(osv.osv):
                                                                   partner_id, date_order, fiscal_position, date_planned,
                                                                   name, price_unit, notes)
         res['value'].update({'product_qty': 0.00})
+        res.update({'warning': {}})
         
         return res
     
@@ -921,18 +922,37 @@ class purchase_order_line(osv.osv):
                                                                  date_planned, name, price_unit, notes)
         
         # Remove the warning message if the product has no staged pricelist
-        if res.get('warning'):
-            supplier_info = self.pool.get('product.supplierinfo').search(cr, uid, [('product_id', '=', product)])
-            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
-            if not product_pricelist:
-                res['warning'] = {}
+#        if res.get('warning'):
+#            supplier_info = self.pool.get('product.supplierinfo').search(cr, uid, [('product_id', '=', product)])
+#            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
+#            if not product_pricelist:
+#                res['warning'] = {}
+        res.update({'warning': {}})
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if res.get('value', {}).get('price_unit', False):
-            res['value'].update({'old_price_unit': res['value']['price_unit']})
+        if not res.get('value', {}).get('price_unit', False) and qty != 0.00:
+            # Display a warning message if the quantity is under the minimal qty of the supplier
+            suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), 
+                                                                              ('product_id', '=', product)])
+            if suppinfo_ids:
+                currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
+                pricelist_ids = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('currency_id', '=', currency_id),
+                                                                                        ('suppinfo_id', 'in', suppinfo_ids),
+                                                                                        ('uom_id', '=', uom),
+                                                                                        '|', ('valid_till', '=', False),
+                                                                                        ('valid_till', '>=', date_order)], order='min_quantity')
+                if pricelist_ids:
+                    pricelist = self.pool.get('pricelist.partnerinfo').browse(cr, uid, pricelist_ids[0])
+                    res['value'].update({'old_price_unit': pricelist.price, 'price_unit': pricelist.price})
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal ' \
+                                                                                'quantity set to %s, you cannot purchase less.') % pricelist.min_quantity}})
+                else:
+                    res['value'].update({'old_price_unit': res['value']['price_unit']})
+            else:
+                res['value'].update({'old_price_unit': res['value']['price_unit']})
         else:
-            res['value'].update({'old_price_unit': price_unit})
+            res['value'].update({'old_price_unit': res.get('value').get('price_unit')})
                 
         # Set the unit price with cost price if the product has no staged pricelist
         if product and qty != 0.00: 
