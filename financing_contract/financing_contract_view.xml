@@ -145,6 +145,7 @@
 	                <tree string="Financing Contracts">
 	                    <field name="code"/>
 	                    <field name="name"/>
+	                    <field name="hq_grant_reference"/>
 	                    <field name="donor_id"/>
                         <field name="grant_amount" digits="(24,0)"/>
                         <field name="reporting_currency"/>
@@ -167,6 +168,7 @@
 	                        <separator orientation="vertical"/>
 	                        <field name="code"/>
 	                        <field name="name"/>
+	                        <field name="hq_grant_reference"/>
 	                        <field name="donor_id"/>
                             <field name="reporting_currency"/>
 	                    </group>
@@ -261,7 +263,7 @@
                 <field name="view_type">form</field>
                 <field name="view_mode">tree,form</field>
             </record>
-            <menuitem id="donor_reporting_menu" name="Donor Management" parent="account.menu_finance"/>
+            <menuitem id="donor_reporting_menu" name="Grant Management" parent="account.menu_finance"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
 
