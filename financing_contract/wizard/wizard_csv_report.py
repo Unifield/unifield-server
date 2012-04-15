@@ -58,8 +58,8 @@ class wizard_csv_report(osv.osv_memory):
                     ['Financing contract code:', contract.code],
                     ['Grant amount:', str(contract.grant_amount)],
                     ['Reporting currency:', contract.reporting_currency.name],
-                    ['Eligible from:', DateFrom(contract.eligibility_from_date).strftime('%d-%b-%Y')],
-                    ['to:', DateFrom(contract.eligibility_to_date).strftime('%d-%b-%Y')],
+                    ['Eligible from:', contract.eligibility_from_date],
+                    ['to:', contract.eligibility_to_date],
                     ['Reporting type:', reporting_type_selection[context.get('reporting_type')]],
                     ['Cost centers:', costcenter_codes]]
         else:

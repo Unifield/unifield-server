@@ -183,7 +183,7 @@
     <para style="P7">Contract information:</para>
     <para style="P1">[[ o.donor_grant_reference and 'Donor grant reference: ' + o.donor_grant_reference or '' ]]</para>
     <para style="P1">[[ o.hq_grant_reference and 'HQ grant reference: ' + o.hq_grant_reference or '' ]]</para>
-    <para style="P1">Grant amount: [[ formatLang(o.grant_amount) ]]</para>
+    <para style="P1">Grant amount: [[ locale.format('%.0f', o.grant_amount, True) ]]</para>
     <para style="P1">[[ o.currency_table_id and 'Currency table: ' + o.currency_table_id.name or '' ]]</para>
     <para style="P1">Reporting currency: [[ o.reporting_currency.name ]]</para>
     <para style="P6">
