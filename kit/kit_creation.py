@@ -929,60 +929,6 @@ class kit_creation_to_consume(osv.osv):
 kit_creation_to_consume()
 
 
-#class kit_creation_consumed(osv.osv):
-#    '''
-#    products to be consumed
-#    '''
-#    _name = 'kit.creation.consumed'
-#    _inherit = 'kit.creation.consume.common'
-#    
-#    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-#        '''
-#        multi fields function method
-#        '''
-#        # Some verifications
-#        if context is None:
-#            context = {}
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#            
-#        result = {}
-#        for obj in self.browse(cr, uid, ids, context=context):
-#            result[obj.id] = {}
-#            # state
-#            result[obj.id].update({'state': obj.kit_creation_id_to_consume.state})
-#        return result
-#    
-#    def _get_consumed_ids(self, cr, uid, ids, context=None):
-#        '''
-#        ids represents the ids of composition.kit objects for which values have changed
-#        
-#        return the list of ids of composition.item objects which need to get their fields updated
-#        
-#        self is an composition.kit object
-#        '''
-#        # Some verifications
-#        if context is None:
-#            context = {}
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#            
-#        consumed_obj = self.pool.get('kit.creation.consumed')
-#        result = consumed_obj.search(cr, uid, [('kit_creation_id_to_consume', 'in', ids)], context=context)
-#        return result
-#    
-#    _columns = {'lot_id_consumed': fields.char(string='Batch Nb', size=1024),
-#                'expiry_date_consumed': fields.date(string='Expiry Date'),
-#                'kit_id_consumed': fields.many2one('kit.creation', string='Kit Ref', readonly=True),
-#                # functions
-#                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
-#                                         store= {'kit.creation.consumed': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
-#                                                 'kit.creation': (_get_consumed_ids, ['state'], 10)}),
-#                }
-#    
-#kit_creation_consumed()
-
-
 class stock_move(osv.osv):
     '''
     add link to kit creation
