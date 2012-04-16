@@ -226,6 +226,8 @@ class sale_order(osv.osv):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
+            if len(order.order_line) < 1:
+                raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
