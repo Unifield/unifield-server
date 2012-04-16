@@ -8,11 +8,36 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Auto POs creation batch configuration">
-					<separator colspan="4" string="Parameters" />
-					<field name="interval_number" />
-					<field name="interval_type" />
-					<field name="nextcall" />
-					<field name="active" />
+					<notebook colspan="4">
+						<page string="POs creation">
+							<separator colspan="4" string="Parameters" />
+							<field name="interval_number" required="1" />
+							<field name="interval_type" required="1" />
+							<field name="nextcall" />
+							<field name="active" />
+						</page>
+						<page string="Order cycle">
+							<separator colspan="4" string="Parameters" />
+							<field name="cycle_interval_number" required="1" />
+							<field name="cycle_interval_type" required="1" />
+							<field name="cycle_nextcall" />
+							<field name="cycle_active" />
+						</page>
+						<page string="Automatic supply">
+							<separator colspan="4" string="Parameters" />
+							<field name="auto_interval_number" required="1" />
+							<field name="auto_interval_type" required="1" />
+							<field name="auto_nextcall" />
+							<field name="auto_active" />
+						</page>
+						<page string="Threshold">
+							<separator colspan="4" string="Parameters" />
+							<field name="threshold_interval_number" required="1" />
+							<field name="threshold_interval_type" required="1" />
+							<field name="threshold_nextcall" />
+							<field name="threshold_active" />
+						</page>
+					</notebook>
 					<separator colspan="4" string="Actions" />
 					<button special="cancel" string="Cancel" icon="gtk-cancel" />
 					<button name="update_cron_tasks" string="Update" icon="terp-gtk-jump-to-ltr" colspan="3" type="object" /> 
