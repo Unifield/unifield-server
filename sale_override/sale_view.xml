@@ -9,6 +9,28 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form//field[@name='name']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='shop_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_invoice_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_order_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_shipping_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='pricelist_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='order_line']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
+                	
                     <xpath expr="/form//field[@name='partner_id']" position="replace">
                         <field name="company_id2" invisible="1" />
                         <field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>

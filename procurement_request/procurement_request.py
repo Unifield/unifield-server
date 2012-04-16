@@ -79,8 +79,6 @@ class procurement_request(osv.osv):
         'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
-        # Remove readonly parameter from sale.order class
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
@@ -287,12 +285,22 @@ class procurement_request_line(osv.osv):
                 
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
+    def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for pol in self.read(cr, uid, ids, ['state']):
+            ret[pol['id']] = pol['state']
+        return ret
+    
     _columns = {
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
         'my_company_id': fields.many2one('res.company','Company',select=1),
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
+        # openerp bug: eval invisible in p.o use the po line state and not the po state !
+        'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
