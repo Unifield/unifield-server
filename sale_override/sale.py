@@ -200,6 +200,9 @@ class sale_order(osv.osv):
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
     def wkf_validated(self, cr, uid, ids, context=None):
+        for order in self.browse(cr, uid, ids, context=context):
+            if len(order.order_line) < 1:
+                raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
             self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
