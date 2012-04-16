@@ -152,11 +152,13 @@ class procurement_rules_report(osv.osv):
                         null AS location_id
                     FROM product_product product
                     WHERE product.id NOT IN 
-                        (((SELECT product_id FROM stock_warehouse_automatic_supply_line)
+                        (SELECT product_id FROM stock_warehouse_automatic_supply_line
                         UNION
-                        (SELECT product_id FROM order_cycle_product_rel))
+                        SELECT product_id FROM order_cycle_product_rel
                         UNION
-                        (SELECT product_id FROM stock_warehouse_orderpoint))
+                        SELECT product_id FROM stock_warehouse_orderpoint
+                        UNION
+                        SELECT product_id FROM threshold_value_line)
                 )) AS al
                 LEFT JOIN
                     product_product prod
