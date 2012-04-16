@@ -33,7 +33,8 @@
                     <field name="password"/>
                     <field name="max_size"/>
                     <separator string="Connection state" colspan="4"/>
-                    <field name="uid" invisible="1"/>
+                    <!-- the following line break the 6.1 web client backport because its a functional field of type integer -->
+                    <!-- <field name="uid" invisible="1"/> -->
                     <field name="state"/>
                     <button  icon="gtk-apply" string="Connect" name="connect" type="object" attrs="{'invisible' : [('state', '=', 'Connected')]}"/>
                     <button  icon="gtk-go-back" string="Reset Connection" name="disconnect" type="object" attrs="{'invisible' : [('state', '!=', 'Connected')]}"/>
@@ -410,9 +411,9 @@
 
         <menuitem id="mon_menu" name="Monitoring" parent="main_menu" sequence="30"/>
 
-        <menuitem id="update_menu" name="Update" parent="mon_menu"/>
+        <menuitem id="update_menu" name="Update" parent="mon_menu" sequence="50"/>
 
-        <menuitem id="message_menu" name="Message" parent="mon_menu"/>
+        <menuitem id="message_menu" name="Message" parent="mon_menu" sequence="60"/>
 
         <menuitem id="connection_manager_menu" name="Connection Manager" parent="reg_menu"
                 action="connection_manager_action"/>

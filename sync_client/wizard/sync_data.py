@@ -212,7 +212,7 @@ class update_received(osv.osv):
     _rec_name = 'source'
 
     _columns = {
-        'source': fields.char('Source entity', size=128, readonly=True), 
+        'source': fields.char('Source Instance', size=128, readonly=True), 
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'sequence' : fields.integer('Sequence', readonly=True),
         'version' : fields.integer('Record Version', readonly=True),

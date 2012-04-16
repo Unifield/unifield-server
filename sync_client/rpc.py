@@ -340,7 +340,7 @@ class Connection(object):
             self.user_id = Common(self.connector).login(self.database, self.login, self.password)
             
         if self.user_id is False:
-            raise Exception('The user can connect to the system !')
+            raise Exception('Unable to connect to the distant server with this user!')
         self.__logger.debug(self.user_id)
 
     def __repr__(self):

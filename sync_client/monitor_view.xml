@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <!-- msf_III.3_Monitor_object -->
+        <record id="sync_monitor_form" model="ir.ui.view">
+            <field name="name">sync.monitor.form</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="sequence"/>
+                    <field name="status"/>
+                    <separator string="Synchronization date and time" colspan="4"/>
+                    <field name="start"/>
+                    <field name="end"/>
+                    <separator string="Status details" colspan="4"/>
+                    <field name="data_pull"/>
+                    <field name="msg_pull"/>
+                    <field name="data_push"/>
+                    <field name="msg_push"/>
+                    <newline/>
+                    <separator string="Error messages" colspan="4"/>
+                    <field name="error" colspan="4" nolabel="1"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="sync_monitor_tree" model="ir.ui.view">
+            <field name="name">sync.monitor.tree</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="sequence"/>
+                    <field name="start"/>
+                    <field name="end"/>
+                    <field name="data_pull"/>
+                    <field name="msg_pull"/>
+                    <field name="data_push"/>
+                    <field name="msg_push"/>
+                    <field name="status"/>
+                    <field name="error"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="sync_monitor_search" model="ir.ui.view">
+            <field name="name">sync.monitor.search</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="start" filter_domain="[('start','&gt;=',self)]"/>
+                    <field name="start" filter_domain="[('start','&lt;=',self)]" string="Until:"/>
+                    <field name="end" filter_domain="[('start','&gt;=',self)]"/>
+                    <field name="end" filter_domain="[('start','&lt;=',self)]" string="Until:"/>
+                    <newline/>
+                    <field name="sequence"/>
+                    <field name="status"/>
+                    <newline/>
+                    <!-- TODO: Make buttons -->
+                    <filter string="Data Pull Ok" domain="[('data_pull','=','ok')]"/>
+                    <filter string="Msg Pull Ok" domain="[('msg_pull','=','ok')]"/>
+                    <filter string="Data Push Ok" domain="[('data_push','=','ok')]"/>
+                    <filter string="Msg Push Ok" domain="[('msg_push','=','ok')]"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="sync_monitor_action">
+            <field name="name">Synchronisation Monitor</field>
+            <field name="res_model">sync.monitor</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="sync_monitor_menu" name="Synchronisation Processes Monitor"
+            parent="mon_menu" sequence="20" action="sync_monitor_action"/>
+
+
+    </data>
+</openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+-->
