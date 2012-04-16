@@ -643,8 +643,8 @@ msgstr "This account will be used for invoices to value field orders for the cur
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_invoice_tree1
-msgid "With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from field orders or deliveries. You should only confirm them before sending them to your customers."
-msgstr "With Customer Invoices you can create and manage field invoices issued to your customers. OpenERP can also generate draft invoices automatically from field orders or deliveries. You should only confirm them before sending them to your customers."
+msgid "With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers."
+msgstr "With Stock Transfer Vouchers you can create and manage field invoices issued to your customers. OpenERP can also generate draft invoices automatically from field orders or deliveries. You should only confirm them before sending them to your customers."
 
 #. module: sale
 #: code:addons/sale/sale.py:1099
@@ -674,3 +674,34 @@ msgstr "This pricelist will be used, instead of the default one, for field order
 msgid "A price list contains rules to be evaluated in order to compute the purchase or sales price for all the partners assigned to a price list. Price lists have several versions (2010, 2011, Promotion of February 2010, etc.) and each version has several rules. Example: the customer price of a product category will be based on the supplier price multiplied by 1.80."
 msgstr "A price list contains rules to be evaluated in order to compute the purchase or field price for all the partners assigned to a price list. Price lists have several versions (2010, 2011, Promotion of February 2010, etc.) and each version has several rules. Example: the customer price of a product category will be based on the supplier price multiplied by 1.80."
 
+#. module: account
+#: model:ir.actions.act_window,help:account.action_account_moves_sale
+msgid "This view is used by accountants in order to record entries massively in OpenERP. If you want to record a customer invoice, select the journal and the period in the search toolbar. Then, start by recording the entry line of the income account. OpenERP will propose to you automatically the Tax related to this account and the counter-part \"Account receivable\"."
+msgstr "This view is used by accountants in order to record entries massively in OpenERP. If you want to record a stock transfer voucher, select the journal and the period in the search toolbar. Then, start by recording the entry line of the income account. OpenERP will propose to you automatically the Tax related to this account and the counter-part \"Account receivable\"."
+
+#. modules: account_msf, account
+#: view:board.board:0
+#: model:ir.actions.act_window,name:account.action_draft_customer_invoices_dashboard
+#: view:board.board:0
+msgid "Customer Invoices to Approve"
+msgstr "Stock Transfer Vouchers to Approve"
+
+#. modules: account, register_accounting
+#: selection:account.invoice,type:0
+#: selection:account.invoice.report,type:0
+#: model:process.process,name:account.process_process_invoiceprocess0
+#: selection:report.invoice.created,type:0
+#: selection:wizard.account.invoice,type:0
+msgid "Customer Invoice"
+msgstr "Stock Transfer Voucher"
+
+#. module: account
+#: model:ir.actions.act_window,name:account.action_invoice_tree1
+#: model:ir.ui.menu,name:account.menu_action_invoice_tree1
+msgid "Customer Invoices"
+msgstr "Stock Transfer Vouchers"
+
+#. module: account
+#: model:process.transition,note:account.process_transition_invoiceimport0
+msgid "Import of the statement in the system from a supplier or customer invoice"
+msgstr "Import of the statement in the system from a supplier or stock transfer voucher"
