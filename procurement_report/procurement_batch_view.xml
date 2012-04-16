@@ -16,14 +16,14 @@
 							<field name="nextcall" />
 							<field name="active" />
 						</page>
-						<page string="Order cycle">
+						<page string="Procurement rules">
 							<separator colspan="4" string="Parameters" />
 							<field name="cycle_interval_number" required="1" />
 							<field name="cycle_interval_type" required="1" />
 							<field name="cycle_nextcall" />
 							<field name="cycle_active" />
 						</page>
-						<page string="Automatic supply">
+						<!--<page string="Automatic supply">
 							<separator colspan="4" string="Parameters" />
 							<field name="auto_interval_number" required="1" />
 							<field name="auto_interval_type" required="1" />
@@ -36,7 +36,7 @@
 							<field name="threshold_interval_type" required="1" />
 							<field name="threshold_nextcall" />
 							<field name="threshold_active" />
-						</page>
+						</page>-->
 					</notebook>
 					<separator colspan="4" string="Actions" />
 					<button special="cancel" string="Cancel" icon="gtk-cancel" />

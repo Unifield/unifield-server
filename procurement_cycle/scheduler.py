@@ -93,6 +93,8 @@ class procurement_order(osv.osv):
             if cycle.frequence_id:
                 freq_obj.write(cr, uid, cycle.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
 
+        created_doc = '''################################
+Created documents : \n'''
                     
         for proc in proc_obj.browse(cr, uid, created_proc):
             if proc.state == 'exception':
@@ -100,6 +102,8 @@ class procurement_order(osv.osv):
                                (proc.id, proc.product_qty, proc.product_uom.name,
                                 proc.product_id.name,))
                 report_except += 1
+            elif proc.purchase_id:
+                created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
                 
         end_date = datetime.now()
                 
@@ -109,16 +113,17 @@ class procurement_order(osv.osv):
         End Time: %s
         Total Procurements processed: %d
         Procurements with exceptions: %d
-        \n'''% (start_date, end_date, len(created_proc), report_except)
+        \n %s \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
         summary += '\n'.join(report)
         req_id = request_obj.create(cr, uid,
-                {'name': "Procurement Processing Report.",
+                {'name': "Procurement Processing Report (Order cycle).",
                  'act_from': uid,
                  'act_to': uid,
                  'body': summary,
                 })
-        if req_id:
-            request_obj.request_send(cr, uid, [req_id])
+        # UF-952 : Requests should be in consistent state
+#        if req_id:
+#            request_obj.request_send(cr, uid, [req_id])
         
         if use_new_cursor:
             cr.commit()

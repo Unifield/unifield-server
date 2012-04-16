@@ -23,6 +23,29 @@ from osv import osv
 from osv import fields
 
 
+class procurement_order(osv.osv):
+    _inherit = 'procurement.order'
+    
+    def _hook_add_created_docs(self, cr, uid, *args, **kwargs):
+        '''
+        Add information in summary
+        '''
+        summary = super(procurement_order, self)._hook_add_created_docs(cr, uid, *args, **kwargs)
+        len_res = 0
+        if 'procurement_ids' in kwargs:
+            created_doc = '''################################
+Created documents : \n'''
+            for proc in self.browse(cr, uid, kwargs['procurement_ids']):
+                if proc.state != 'exception' and proc.purchase_id:
+                    created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
+                    len_res +=1
+                    
+        summary += len_res > 0 and created_doc or ''
+        
+        return summary
+
+procurement_order()
+
 class procurement_batch_cron(osv.osv):
     _name = 'procurement.batch.cron'
     _inherit = 'ir.cron'
@@ -34,16 +57,16 @@ class procurement_batch_cron(osv.osv):
             ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
         'cycle_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
         'cycle_active': fields.boolean('Active'),
-        'auto_interval_number': fields.integer('Interval Number',help="Repeat every x."),
-        'auto_interval_type': fields.selection( [('minutes', 'Minutes'),
-            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
-        'auto_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
-        'auto_active': fields.boolean('Active'),
-        'threshold_interval_number': fields.integer('Interval Number',help="Repeat every x."),
-        'threshold_interval_type': fields.selection( [('minutes', 'Minutes'),
-            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
-        'threshold_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
-        'threshold_active': fields.boolean('Active'),
+#        'auto_interval_number': fields.integer('Interval Number',help="Repeat every x."),
+#        'auto_interval_type': fields.selection( [('minutes', 'Minutes'),
+#            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
+#        'auto_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
+#        'auto_active': fields.boolean('Active'),
+#        'threshold_interval_number': fields.integer('Interval Number',help="Repeat every x."),
+#        'threshold_interval_type': fields.selection( [('minutes', 'Minutes'),
+#            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
+#        'threshold_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
+#        'threshold_active': fields.boolean('Active'),
     }
     
     _defaults = {
@@ -76,15 +99,15 @@ class procurement_batch_cron(osv.osv):
                     'cycle_interval_number': cycle_values['interval_number'],
                     'cycle_interval_type': cycle_values['interval_type'],
                     'cycle_nextcall': cycle_values['nextcall'],
-                    'cycle_active': cycle_values['active'],
-                    'auto_interval_number': auto_values['interval_number'],
-                    'auto_interval_type': auto_values['interval_type'],
-                    'auto_nextcall': auto_values['nextcall'],
-                    'auto_active': auto_values['active'],
-                    'threshold_interval_number': threshold_values['interval_number'],
-                    'threshold_interval_type': threshold_values['interval_type'],
-                    'threshold_nextcall': threshold_values['nextcall'],
-                    'threshold_active': threshold_values['active'],})
+                    'cycle_active': cycle_values['active'],})
+#                    'auto_interval_number': auto_values['interval_number'],
+#                    'auto_interval_type': auto_values['interval_type'],
+#                    'auto_nextcall': auto_values['nextcall'],
+#                    'auto_active': auto_values['active'],
+#                    'threshold_interval_number': threshold_values['interval_number'],
+#                    'threshold_interval_type': threshold_values['interval_type'],
+#                    'threshold_nextcall': threshold_values['nextcall'],
+#                    'threshold_active': threshold_values['active'],})
         
         return res
         
@@ -107,21 +130,22 @@ class procurement_batch_cron(osv.osv):
                                                                          'interval_type': value.interval_type,
                                                                          'active': value.active,
                                                                          'nextcall': value.nextcall}, context=context)
-            cron_obj.write(cr, uid, [cycle], {'active': value.active,
+#            cron_obj.write(cr, uid, [cycle], {'active': value.active,
+            cron_obj.write(cr, uid, [cycle, auto, threshold], {'active': value.active,
                                                                          'interval_number': value.cycle_interval_number,
                                                                          'interval_type': value.cycle_interval_type,
                                                                          'active': value.cycle_active,
                                                                          'nextcall': value.cycle_nextcall}, context=context)
-            cron_obj.write(cr, uid, [auto], {'active': value.active,
-                                                                         'interval_number': value.auto_interval_number,
-                                                                         'interval_type': value.auto_interval_type,
-                                                                         'active': value.auto_active,
-                                                                         'nextcall': value.auto_nextcall}, context=context)
-            cron_obj.write(cr, uid, [threshold], {'active': value.active,
-                                                                         'interval_number': value.threshold_interval_number,
-                                                                         'interval_type': value.threshold_interval_type,
-                                                                         'active': value.threshold_active,
-                                                                         'nextcall': value.threshold_nextcall}, context=context)
+#            cron_obj.write(cr, uid, [auto], {'active': value.active,
+#                                                                         'interval_number': value.auto_interval_number,
+#                                                                         'interval_type': value.auto_interval_type,
+#                                                                         'active': value.auto_active,
+#                                                                         'nextcall': value.auto_nextcall}, context=context)
+#            cron_obj.write(cr, uid, [threshold], {'active': value.active,
+#                                                                         'interval_number': value.threshold_interval_number,
+#                                                                         'interval_type': value.threshold_interval_type,
+#                                                                         'active': value.threshold_active,
+#                                                                         'nextcall': value.threshold_nextcall}, context=context)
         
         return {'type': 'ir.actions.act_window_close'}
     
