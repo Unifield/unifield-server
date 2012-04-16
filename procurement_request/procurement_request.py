@@ -230,6 +230,8 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'progress'}, context=context)
 
         for request in self.browse(cr, uid, ids, context=context):
+            if len(request.order_line) <= 0:
+                raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
             context.update({'view_id': proc_view and proc_view[1] or False})
