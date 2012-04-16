@@ -87,6 +87,7 @@ class hr_payroll_validation(osv.osv):
         # Create lines into this move
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 
             'free1_id', 'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id']):
+            line_vals = {}
             # fetch amounts
             amount = line.get('amount', 0.0)
             debit = credit = 0.0
@@ -128,7 +129,7 @@ class hr_payroll_validation(osv.osv):
                 'move_id': move_id,
                 'name': line.get('name', ''),
                 'date': line.get('date', ''),
-                'ref': line.get('ref', ''),
+                'reference': line.get('ref', ' '), # a backspace is mandatory for salary lines! Do not remove this backspace.
                 'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
                 'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
                 'transfer_journal_id': line.get('journal_id', False) and line.get('journal_id')[0] or False,
