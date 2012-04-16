@@ -82,7 +82,10 @@ class account_move_line(osv.osv):
         """
         Just used to not break default OpenERP behaviour
         """
-        return self.write(cursor, user, id, {'ref': value or ''}, context=context)
+        if name and value:
+            sql = "UPDATE %s SET %s = %s WHERE id = %s" % (self._table, 'ref', value, id)
+            cr.execute(sql)
+        return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
         """
