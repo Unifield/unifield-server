@@ -33,11 +33,13 @@ class msf_budget(osv.osv):
         res = {}
         
         for budget in self.browse(cr, uid, ids, context=context):
+            total_amounts = self.pool.get('msf.budget.line')._get_total_amounts(cr, uid, [x.id for x in budget.budget_line_ids], context=context)
+            
             budget_amount = 0.0
             for budget_line in budget.budget_line_ids:
-                if budget_line.line_type == 'normal' and budget_line.budget_values:
-                    budget_amount += sum(eval(budget_line.budget_values))
-            res[budget.id] = budget_amount
+                if not budget_line.parent_id:
+                    res[budget.id] = total_amounts[budget_line.id]['budget_amount']
+                    break
         
         return res
     
