@@ -107,7 +107,7 @@ class kit_selection(osv.osv_memory):
                 # create a new pol
                 p_values = {'product_id': product_id,
                             'product_qty': pol.product_qty*qty,
-                            'price_unit': data['value']['price_unit'],
+                            'price_unit': item_v.price_unit,
                             'product_uom': uom_id,
                             'default_code': data['value']['default_code'],
                             'name': data['value']['name'],
@@ -142,13 +142,35 @@ class kit_selection_line(osv.osv_memory):
         '''
         default price unit from pol on_change function
         '''
-        product_id = vals.get('product_id_kit_selection_line', False)
-        
-        # gather default values
-        data = pol_obj.product_id_change(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
-                                         partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
-                                         name=False, price_unit=0.0, notes=False)
-        
+        # objects
+        pol_obj = self.pool.get('purchase.order.line')
+        # id of corresponding purchase order line
+        pol_id = context.get('active_ids', False) and context['active_ids'][0]
+        if pol_id and ('price_unit' not in vals or vals.get('price_unit') == 0.0):
+            pol = pol_obj.browse(cr, uid, pol_id, context=context)
+            # selected product_id
+            product_id = vals.get('product_id_kit_selection_line', False)
+            # selected qty
+            qty = vals.get('qty_kit_selection_line', 0.0)
+            # selected uom
+            uom_id = vals.get('uom_id_kit_selection_line', False)
+            # pricelist from purchase order
+            pricelist_id = pol.order_id.pricelist_id.id
+            # partner_id from purchase order
+            partner_id = pol.order_id.partner_id.id
+            # date_order from purchase order
+            date_order = pol.order_id.date_order
+            # fiscal_position from purchase order
+            fiscal_position_id = pol.order_id.fiscal_position.id
+            # date_planned from purchase order line
+            date_planned = pol.date_planned
+            # gather default values
+            data = pol_obj.product_id_change(cr, uid, context['active_ids'], pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
+                                             partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
+                                             name=False, price_unit=0.0, notes=False)
+            # update price_unit value
+            vals.update({'price_unit': data['value']['price_unit']})
+        return super(kit_selection_line, self).create(cr, uid, vals, context=context)
     
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
