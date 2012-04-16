@@ -350,7 +350,7 @@ class kit_creation(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'in_production':
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
-            return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id], context=context)
+            return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id]) #original function does not support context
     
     def cancel_all_lines(self, cr, uid, ids, context=None):
         '''
@@ -535,6 +535,9 @@ class kit_creation(osv.osv):
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
+            # only if in production
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             if context.get('to_consume_line_id', False):
                 # only one line has been selected
                 to_consume_list = [to_consume_obj.browse(cr, uid, context.get('to_consume_line_id'), context=context)]
@@ -745,7 +748,7 @@ class kit_creation_to_consume(osv.osv):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')
-            
+        
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # batch management
@@ -756,7 +759,10 @@ class kit_creation_to_consume(osv.osv):
             total_qty = obj.kit_creation_id_to_consume.qty_kit_creation * obj.qty_to_consume
             result.setdefault(obj.id, {}).update({'total_qty_to_consume': total_qty})
             # state
-            result.setdefault(obj.id, {}).update({'state': obj.kit_creation_id_to_consume.state})
+            state = obj.kit_creation_id_to_consume.state
+            result.setdefault(obj.id, {}).update({'state': state})
+            # fill the fake state attribute - because of openERP bug in attrs, the one2many state field was considered by kitting order attrs, instead of kitting order state
+            result.setdefault(obj.id, {}).update({'fake_state': state})
             # qty_available_to_consume
             # corresponding product object
             product = obj.product_id_to_consume
@@ -885,6 +891,9 @@ class kit_creation_to_consume(osv.osv):
                 'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Qty', multi='get_vals', store=False),
                 'qty_available_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
+                                         store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
+                                                 'kit.creation': (_get_to_consume_ids, ['state'], 10)}),
+                'fake_state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='Fake State', readonly=True, multi='get_vals',
                                          store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
                                                  'kit.creation': (_get_to_consume_ids, ['state'], 10)}),
                 'batch_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
