@@ -48,6 +48,8 @@
                     				<field name="assigned_qty_stock_move" />
                     				<field name="product_uom" readonly="True" />
                     				<field name="prodlot_id"
+                    					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  		'search_default_real': True}"
                     					domain="[('product_id', '=', product_id),('check_type','=', True)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)]}" />
                     				<field name="expired_date" />
@@ -58,6 +60,7 @@
                     				<field name="state" />
                     				<field name="lot_check" />
 	                   				<field name="exp_check" />
+	                   				<field name="hidden_perishable_mandatory" invisible="True" />
 	                   				<field name="hidden_exp_check" invisible="True" />
                     				<field name="hidden_state" invisible="True" />
                     				<field name="hidden_prodlot_id" invisible="True" />

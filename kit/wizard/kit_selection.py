@@ -79,6 +79,9 @@ class kit_selection(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items must be selected.'))
             # for each item from the product_ids_kit_selection
             for item_v in obj.product_ids_kit_selection:
+                # price unit is mandatory
+                if item_v.price_unit <= 0.0:
+                    raise osv.except_osv(_('Warning !'), _('Unit Price must be specified for each line.'))
                 # selected product_id
                 product_id = item_v.product_id_kit_selection_line.id
                 # selected qty
@@ -135,6 +138,18 @@ class kit_selection_line(osv.osv_memory):
     '''
     _name = 'kit.selection.line'
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        default price unit from pol on_change function
+        '''
+        product_id = vals.get('product_id_kit_selection_line', False)
+        
+        # gather default values
+        data = pol_obj.product_id_change(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
+                                         partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
+                                         name=False, price_unit=0.0, notes=False)
+        
+    
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
         on change
@@ -154,6 +169,7 @@ class kit_selection_line(osv.osv_memory):
                 'product_id_kit_selection_line': fields.many2one('product.product', string='Product', required=True),
                 'qty_kit_selection_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_kit_selection_line': fields.many2one('product.uom', string='UoM', required=True),
+                'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price')),
                 }
     
 kit_selection_line()
