@@ -35,7 +35,7 @@ class report_liquidity_position(report_sxw.report_sxw):
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
         # Create the header
-        data = [['Journal Code', 'Journal Name', 'Ending Balance in register currency', 'Register Currency', 'Ending Balance in functional currency', 'Functional Currency']]
+        data = [['Journal Code', 'Journal Name', 'Calculated Balance in register currency', 'Register Balance in register currency', 'Register Currency', 'Calculated Balance in functional currency', 'Register Balance in functional currency', 'Functional Currency']]
 
         # retrieve ids of latest, non-cheque, non-draft registers
         sql_register_ids = """
@@ -52,6 +52,12 @@ class report_liquidity_position(report_sxw.report_sxw):
         for register in pool.get('account.bank.statement').browse(cr, uid, register_ids, context=context):
             functional_currency = register.journal_id.company_id.currency_id
             date_context = {'date': datetime.datetime.today().strftime('%Y-%m-%d')}
+            real_end_balance = 0.0
+            if register.journal_id.type == 'cash':
+                real_end_balance = register.balance_end_cash
+            elif register.journal_id.type == 'bank':
+                real_end_balance = register.balance_end_real
+                
             converted_end_balance = pool.get('res.currency').compute(cr,
                                                                      uid,
                                                                      register.journal_id.currency.id,
@@ -59,11 +65,22 @@ class report_liquidity_position(report_sxw.report_sxw):
                                                                      register.balance_end or 0.0,
                                                                      round=True,
                                                                      context=date_context)
+                
+            converted_real_end_balance = pool.get('res.currency').compute(cr,
+                                                                          uid,
+                                                                          register.journal_id.currency.id,
+                                                                          functional_currency.id, 
+                                                                          real_end_balance or 0.0,
+                                                                          round=True,
+                                                                          context=date_context)
+            
             register_values = [[register.journal_id.code,
                                 register.journal_id.name,
                                 int(round(register.balance_end)),
+                                int(round(real_end_balance)),
                                 register.journal_id.currency.name,
                                 int(round(converted_end_balance)),
+                                int(round(converted_real_end_balance)),
                                 functional_currency.name]]
             data += register_values
         
