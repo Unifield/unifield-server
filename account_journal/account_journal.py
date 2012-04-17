@@ -115,7 +115,7 @@ class account_journal(osv.osv):
             except KeyError:
                 pass
         value['domain']['default_debit_account_id'] = default_dom
-        value['domain']['default_crebit_account_id'] = default_dom
+        value['domain']['default_credit_account_id'] = default_dom
         # Analytic journal associated
         if type == 'cash':
             analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS')], context=context)[0]
