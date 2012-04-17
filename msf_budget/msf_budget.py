@@ -29,6 +29,20 @@ class msf_budget(osv.osv):
     _description = 'MSF Budget'
     _trace = True
     
+    def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        res = {}
+        
+        for budget in self.browse(cr, uid, ids, context=context):
+            total_amounts = self.pool.get('msf.budget.line')._get_total_amounts(cr, uid, [x.id for x in budget.budget_line_ids], context=context)
+            
+            budget_amount = 0.0
+            for budget_line in budget.budget_line_ids:
+                if not budget_line.parent_id:
+                    res[budget.id] = total_amounts[budget_line.id]['budget_amount']
+                    break
+        
+        return res
+    
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=64, required=True),
@@ -40,6 +54,7 @@ class msf_budget(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'display_type': fields.selection([('all', 'All lines'), ('view', 'View lines only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
+        'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly="True"),
     }
     
     _defaults = {
