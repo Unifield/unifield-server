@@ -54,6 +54,7 @@ class configmanager(object):
             'db_maxconn': 64,
             'reportgz': False,
             'netrpc': True,
+            'netrpc_gzip': False,
             'xmlrpc': True,
             'gzipxmlrpc': False,
             'xmlrpcs': True,
@@ -140,6 +141,7 @@ class configmanager(object):
         group.add_option("--netrpc-interface", dest="netrpc_interface", help="specify the TCP IP address for the NETRPC protocol")
         group.add_option("--netrpc-port", dest="netrpc_port", help="specify the TCP port for the NETRPC protocol", type="int")
         group.add_option("--no-netrpc", dest="netrpc", action="store_false", help="disable the NETRPC protocol")
+        group.add_option("--netrpc-gzip", dest="netrpc_gzip", action="store_true", help="enable gzipping the NETRPC protocol")
         parser.add_option_group(group)
 
         # Static HTTP
@@ -292,15 +294,16 @@ class configmanager(object):
         if self.options['pidfile'] in ('None', 'False'):
             self.options['pidfile'] = False
 
+        if opt.netrpc_gzip:
+            opt.xmlrpc = False
         if opt.gzipxmlrpc:
-            # gzip prevails over standard
             opt.xmlrpc = False
 
         keys = ['xmlrpc_interface', 'xmlrpc_port', 'db_name', 'db_user', 'db_password', 'db_host',
                 'db_port', 'logfile', 'pidfile', 'smtp_port', 'cache_timeout',
                 'email_from', 'smtp_server', 'smtp_user', 'smtp_password',
                 'netrpc_interface', 'netrpc_port', 'db_maxconn', 'import_partial', 'addons_path',
-                'netrpc', 'xmlrpc', 'gzipxmlrpc', 'syslog', 'without_demo', 'timezone',
+                'netrpc', 'netrpc_gzip', 'gzipxmlrpc', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix'
