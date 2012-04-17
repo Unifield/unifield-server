@@ -519,9 +519,11 @@
   !python {model: kit.selection}: |
     self.write(cr, uid, context['wizard']['ids'], {'kit_id': ref("kit_compo_03")}, context=context['wizard']['c'])
     self.import_items(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
-    # set price_unit
+    # set price_unit and test on_change functions
     for line in self.browse(cr, uid, context['wizard']['id'], context=context['wizard']['c']).product_ids_kit_selection:
       line.write({'price_unit_kit_selection_line': 10}, context=context['wizard']['c'])
+      line.on_product_id_change(line.product_id_kit_selection_line.id, line.qty_kit_selection_line, line.uom_id_kit_selection_line.id, line.price_unit_kit_selection_line, context=context['wizard']['c'])
+      line.on_uom_id_change(line.product_id_kit_selection_line.id, line.qty_kit_selection_line, line.uom_id_kit_selection_line.id, line.price_unit_kit_selection_line, context=context['wizard']['c'])
     self.do_de_kitting(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
 -
   I check the purchase order line after replacement - 100 kit_product_C at arrival
