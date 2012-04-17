@@ -49,6 +49,9 @@ class report_liquidity_position(report_sxw.report_sxw):
         cr.execute(sql_register_ids)
         register_ids = [x[0] for x in cr.fetchall()]
         
+        total_converted_end_balance = 0
+        total_converted_real_end_balance = 0
+        
         for register in pool.get('account.bank.statement').browse(cr, uid, register_ids, context=context):
             functional_currency = register.journal_id.company_id.currency_id
             date_context = {'date': datetime.datetime.today().strftime('%Y-%m-%d')}
@@ -74,6 +77,10 @@ class report_liquidity_position(report_sxw.report_sxw):
                                                                           round=True,
                                                                           context=date_context)
             
+            total_converted_end_balance += int(round(converted_end_balance))
+            total_converted_real_end_balance += int(round(converted_real_end_balance))
+            
+            
             register_values = [[register.journal_id.code,
                                 register.journal_id.name,
                                 int(round(register.balance_end)),
@@ -83,6 +90,8 @@ class report_liquidity_position(report_sxw.report_sxw):
                                 int(round(converted_real_end_balance)),
                                 functional_currency.name]]
             data += register_values
+        
+        data += [['', '', '', '', '', total_converted_end_balance, total_converted_real_end_balance]]
         
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
