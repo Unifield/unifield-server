@@ -61,7 +61,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_account_analytic_line_tree"/>
-            <field name="domain">[('cost_center_id', '!=', False)]</field>
+            <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
             <field name="context">{'display_fp': True}</field>
         </record>
 
@@ -72,7 +72,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('cost_center_id', '=', False), ('account_id.category', '=', 'OC')]</field>
+            <field name="domain">[('account_id.category', '=', 'OC')]</field>
         </record>
 
     <!-- Action for Analytic Journal Items (FREE 1) -->
@@ -82,7 +82,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('cost_center_id', '=', False), ('account_id.category', '=', 'FREE1')]</field>
+            <field name="domain">[('account_id.category', '=', 'FREE1')]</field>
         </record>
 
     <!-- Action for Analytic Journal Items (FREE 2) -->
@@ -92,7 +92,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('cost_center_id', '=', False), ('account_id.category', '=', 'FREE2')]</field>
+            <field name="domain">[('account_id.category', '=', 'FREE2')]</field>
         </record>
 
     <!-- Menu for Analytic Journal Items -->
