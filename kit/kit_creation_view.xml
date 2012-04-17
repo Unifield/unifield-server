@@ -37,7 +37,7 @@
                     		<group col="4" colspan="4">
                     			<group colspan="2" />
 	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" attrs="{'readonly': [('state', 'not in', ['draft', 'in_production'])]}" />
-	                    		<button name="do_process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
+	                    		<button name="do_process_to_consume2" type="object" string="Process All Lines" icon="gtk-go-forward" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
                     		</group>
                     		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}">
                     			<tree string="Consumed Components" editable="top" hide_new_button="True" hide_delete_button="True">

@@ -522,7 +522,7 @@ class kit_creation(osv.osv):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
     
-    def do_process_to_consume(self, cr, uid, ids, context=None):
+    def do_process_to_consume2(self, cr, uid, ids, context=None):
         '''
         - update components to consume
         - create a stock move for each line
