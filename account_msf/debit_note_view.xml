@@ -32,6 +32,7 @@
             <field name="name">debit.note.form</field>
             <field name="model">account.invoice</field>
             <field name="type">form</field>
+            <field name="priority">60</field>
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
@@ -134,6 +135,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="priority">65</field>
             <field name="arch" type="xml">
                 <data>
                     <field name="fiscal_position" position="replace"/>
