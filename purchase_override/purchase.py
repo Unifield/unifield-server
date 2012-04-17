@@ -291,12 +291,14 @@ class purchase_order(osv.osv):
         
         if todo2:
             sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
-            move_obj.write(cr, uid, sm_ids, {'state': 'done'}, context=context)
+            move_obj.action_done(cr, uid, sm_ids, context=context)
+            #move_obj.write(cr, uid, sm_ids, {'state': 'done'}, context=context)
             for move in move_obj.browse(cr, uid, sm_ids, context=context):
                 if move.picking_id: todo3.append(move.picking_id.id)
                 
         if todo3:
             for pick_id in todo3:
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
