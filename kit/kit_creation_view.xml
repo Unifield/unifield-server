@@ -74,7 +74,7 @@
                     		</field>
                     		<group col="4" colspan="4">
 	                    		<button name="cancel_all_lines" type="object" string="Cancel All Lines" icon="gtk-cancel" invisible="True" />
-	                    		<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
+	                    		<button name="force_assign2" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="check_availability" type="object" string="Check Availability" icon="gtk-find" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="process_to_consume" type="object" string="Assign Automatically to Kits" icon="gtk-go-forward" readonly="True" invisible="True" />
                     		</group>

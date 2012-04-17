@@ -338,11 +338,13 @@ class kit_creation(osv.osv):
             self._validate_internal_picking(cr, uid, ids, obj.internal_picking_id_kit_creation.id, context=context)
         return True
     
-    def force_assign(self, cr, uid, ids, context=None):
+    def force_assign2(self, cr, uid, ids, context=None):
         '''
         force assign moves in 'confirmed' (Not Available) state
         
         the force_assign function is not called correctly
+        
+        renamed because two buttons cannot have the same name in the view - force_assign already exist in stock moves
         '''
         # objects
         pick_obj = self.pool.get('stock.picking')
