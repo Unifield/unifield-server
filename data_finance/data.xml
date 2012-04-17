@@ -148,7 +148,7 @@
         <!--model: account.analytic.account, id: 49b-->
         <record model="account.analytic.account" id="account_analytic_account_oc___ocba____haiti_capital_cooridna_49b">
             <field name="category">OC</field>
-            <field name="code">HM000</field>
+            <field name="code">HT 1</field>
             <field name="name">HAITI MISSION</field>
             <field name="type">view</field>
             <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
