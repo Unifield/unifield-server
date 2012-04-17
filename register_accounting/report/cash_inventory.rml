@@ -296,7 +296,7 @@
       </tr>
       <tr>
         <td>
-          <para style="P3">Closed on: [[ o.closing_date == False and o.closing_date or '' ]]</para>
+          <para style="P3">Closed on: [[ o.closing_date and o.closing_date or '' ]]</para>
         </td>
         <td>
           <para style="P3">Cash Transaction: [[ o.total_entry_encoding and o.total_entry_encoding or '0.0' ]]</para>
@@ -334,7 +334,7 @@
     <para style="P27">
       <font color="white"> </font>
     </para>
-    <para style="P7">State: [[ o.state ]]</para>
+    <para style="P7">State: [[ get_selection(o.state) ]]</para>
     <para style="P7">Report date: [[ time.strftime('%d/%m/%Y %H:%M') ]]</para>
     <para style="P6">
       <font color="white"> </font>
