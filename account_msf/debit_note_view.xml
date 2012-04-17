@@ -11,6 +11,7 @@
             <field name="name">Debit Note</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
+            <field name="priority">19</field>
             <field name="arch" type="xml">
                 <tree string="Note" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="date_invoice"/>
@@ -32,6 +33,7 @@
             <field name="name">debit.note.form</field>
             <field name="model">account.invoice</field>
             <field name="type">form</field>
+            <field name="priority">60</field>
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
@@ -79,7 +81,6 @@
                             </group>
                             <group col="8" colspan="4" groups="base.group_user">
                                 <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
-                                <button name="action_cancel_draft" states="cancel" string="Reset to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                                 <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                                 <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
@@ -135,6 +136,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="priority">65</field>
             <field name="arch" type="xml">
                 <data>
                     <field name="fiscal_position" position="replace"/>
@@ -153,9 +155,7 @@
                             <field name="is_debit_note" invisible="1"/>
                         </group>
                         <group col="8" colspan="4" groups="base.group_user">
-                            <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
-                            <button name="action_cancel_draft" states="cancel" string="Reset to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
-
+                            <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                             <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>

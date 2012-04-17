@@ -7,6 +7,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="priority">40</field>
             <field name="arch" type="xml">
                 <button name='invoice_open' position="after">
                     <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
@@ -19,6 +20,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="priority">45</field>
             <field name="arch" type="xml">
                 <button name='invoice_open' position="after">
                     <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
