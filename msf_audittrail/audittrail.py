@@ -180,7 +180,7 @@ class audittrail_rule(osv.osv):
                 self.write(cr, uid, [thisrule.id], {"state": "draft"})
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
             val = {
-                 "name": 'View Log',
+                 "name": 'Track changes',
                  "res_model": 'audittrail.log.line',
                  "src_model": thisrule.object_id.model,
                  "search_view_id": search_view_id and search_view_id[1] or False,
