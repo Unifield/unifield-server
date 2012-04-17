@@ -699,7 +699,11 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             if not parent_field_id:
                 vals.update({'res_id': res_id})
             else:
-                res_id = resource_pool.read(cr, uid, res_id, [parent_field.name])[parent_field.name][0]
+                res_id = resource_pool.read(cr, uid, res_id, [parent_field.name])[parent_field.name]
+                if res_id:
+                    res_id = res_id[0]
+                else:
+                    continue
                 vals = {
                         "name": "%s" %model_name,
                         "method": method,

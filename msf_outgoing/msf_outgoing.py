@@ -251,7 +251,7 @@ class shipment(osv.osv):
                 'consignee_signature': fields.char(string='Signature', size=1024),
                 # functions
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
-                'partner_id2': fields.many2one('res.partner', string='Customer', required=True),
+                'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
