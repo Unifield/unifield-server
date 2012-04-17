@@ -1,63 +1,49 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
 	<data>
-	
+
+		<record id="procurement_batch_tree_view" model="ir.ui.view">
+			<field name="name">procurement.batch.tree.view</field>
+			<field name="model">procurement.batch.cron</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="POs creation batches configuration">
+					<field name="name" />
+					<field name="type" />
+					<field name="interval_number" />
+					<field name="interval_type" />
+					<field name="nextcall" />
+				</tree>
+			</field>
+		</record>
+		
 		<record id="procurement_batch_form_view" model="ir.ui.view">
 			<field name="name">procurement.batch.form.view</field>
 			<field name="model">procurement.batch.cron</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form string="Auto POs creation batch configuration">
-					<notebook colspan="4">
-						<page string="POs creation">
-							<separator colspan="4" string="Parameters" />
-							<field name="interval_number" required="1" />
-							<field name="interval_type" required="1" />
-							<field name="nextcall" />
-							<field name="active" />
-						</page>
-						<page string="Procurement rules">
-							<separator colspan="4" string="Parameters" />
-							<field name="cycle_interval_number" required="1" />
-							<field name="cycle_interval_type" required="1" />
-							<field name="cycle_nextcall" />
-							<field name="cycle_active" />
-						</page>
-						<!--<page string="Automatic supply">
-							<separator colspan="4" string="Parameters" />
-							<field name="auto_interval_number" required="1" />
-							<field name="auto_interval_type" required="1" />
-							<field name="auto_nextcall" />
-							<field name="auto_active" />
-						</page>
-						<page string="Threshold">
-							<separator colspan="4" string="Parameters" />
-							<field name="threshold_interval_number" required="1" />
-							<field name="threshold_interval_type" required="1" />
-							<field name="threshold_nextcall" />
-							<field name="threshold_active" />
-						</page>-->
-					</notebook>
-					<separator colspan="4" string="Actions" />
-					<button special="cancel" string="Cancel" icon="gtk-cancel" />
-					<button name="update_cron_tasks" string="Update" icon="terp-gtk-jump-to-ltr" colspan="3" type="object" /> 
+				<form string="POs creation batch configuration">
+					<separator colspan="4" string="General information" />
+					<field name="name" colspan="4" />
+					<field name="type" />
+					<separator colspan="4" string="Parameters" />
+					<field name="interval_number" />
+					<field name="interval_type" />
+					<field name="nextcall" />
+					<field name="active" />
 				</form>
 			</field>
 		</record>
-		
 		<record id="action_procurement_batch_form" model="ir.actions.act_window">
 			<field name="name">POs Creation (Batch configuration)</field>
 			<field name="res_model">procurement.batch.cron</field>
 			<field name="view_type">form</field>
-			<field name="view_mode">form</field>
-			<field name="target">new</field>
-			<field name="res_id" ref="procurement_report.procurement_batch_configuration" />
+			<field name="view_mode">tree,form</field>
+			<field name="target" eval="False" />
 		</record>
-		
 		<menuitem id="menu_procurement_batch"
-				  action="action_procurement_batch_form"
-				  sequence="99"
-				  parent="procurement.menu_stock_sched" />
-				  
+		action="action_procurement_batch_form"
+		sequence="99"
+		parent="procurement.menu_stock_sched" />
 	</data>
 </openerp>

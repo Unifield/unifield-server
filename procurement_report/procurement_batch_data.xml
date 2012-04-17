@@ -2,12 +2,12 @@
 <openerp>
 	<data noupdate="1">
 		
-		<record id="procurement_batch_configuration" model="procurement.batch.cron">
+		<!-- <record id="procurement_batch_configuration" model="procurement.batch.cron">
 			<field name="name">Standard Configuration</field>
 			<field name="active" eval="False" />
 			<field name="interval_number">1</field>
 			<field name="interval_type">days</field>
-		</record>
+		</record> -->
 		
 	</data>
 </openerp>

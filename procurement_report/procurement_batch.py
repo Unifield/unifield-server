@@ -22,133 +22,104 @@
 from osv import osv
 from osv import fields
 
-
-class procurement_order(osv.osv):
-    _inherit = 'procurement.order'
-    
-    def _hook_add_created_docs(self, cr, uid, *args, **kwargs):
-        '''
-        Add information in summary
-        '''
-        summary = super(procurement_order, self)._hook_add_created_docs(cr, uid, *args, **kwargs)
-        len_res = 0
-        if 'procurement_ids' in kwargs:
-            created_doc = '''################################
-Created documents : \n'''
-            for proc in self.browse(cr, uid, kwargs['procurement_ids']):
-                if proc.state != 'exception' and proc.purchase_id:
-                    created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
-                    len_res +=1
-                    
-        summary += len_res > 0 and created_doc or ''
-        
-        return summary
-
-procurement_order()
-
 class procurement_batch_cron(osv.osv):
     _name = 'procurement.batch.cron'
     _inherit = 'ir.cron'
     
     _columns = {
         'name': fields.char(size=64, string='Name'),
-        'cycle_interval_number': fields.integer('Interval Number',help="Repeat every x."),
-        'cycle_interval_type': fields.selection( [('minutes', 'Minutes'),
-            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
-        'cycle_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
-        'cycle_active': fields.boolean('Active'),
-#        'auto_interval_number': fields.integer('Interval Number',help="Repeat every x."),
-#        'auto_interval_type': fields.selection( [('minutes', 'Minutes'),
-#            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
-#        'auto_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
-#        'auto_active': fields.boolean('Active'),
-#        'threshold_interval_number': fields.integer('Interval Number',help="Repeat every x."),
-#        'threshold_interval_type': fields.selection( [('minutes', 'Minutes'),
-#            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
-#        'threshold_nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
-#        'threshold_active': fields.boolean('Active'),
+        'type': fields.selection([('standard', 'From orders'), ('rules', 'Replenishment rules')], string='Type', required=True),
+        'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests'),
+        'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
     }
     
-    _defaults = {
-        'name': lambda *a: 'Standard configuration',
-    }
-    
-    def default_get(self, cr, uid, fields, context=None):
+    def _create_associated_cron(self, cr, uid, batch_id, vals, context=None):
         '''
-        Get the current values
+        Create cron according to type
         '''
-        model_obj = self.pool.get('ir.model.data')
         cron_obj = self.pool.get('ir.cron')
         
-        standard = model_obj.get_object_reference(cr, uid, 'procurement', 'ir_cron_scheduler_action')[1]
-        cycle = model_obj.get_object_reference(cr, uid, 'procurement_cycle', 'ir_cron_proc_cycle_action')[1]
-        auto = model_obj.get_object_reference(cr, uid, 'procurement_auto', 'ir_cron_auto_supply_action')[1]
-        threshold = model_obj.get_object_reference(cr, uid, 'threshold_value', 'ir_cron_threshold_action')[1]
+        data = {'active': vals.get('active', True),
+                'user_id': uid,
+                'interval_number': vals.get('interval_number'),
+                'interval_type': vals.get('interval_type'),
+                'nextcall': vals.get('nextcall'),
+                'batch_id': int(batch_id),
+                'model': 'procurement.order',
+                'args': '(False, %s)' % batch_id}
         
-        standard_values = cron_obj.read(cr, uid, standard, ['interval_number', 'interval_type', 'nextcall', 'active'], context=context)
-        cycle_values = cron_obj.read(cr, uid, cycle, ['interval_number', 'interval_type', 'nextcall', 'active'], context=context)
-        auto_values = cron_obj.read(cr, uid, auto, ['interval_number', 'interval_type', 'nextcall', 'active'], context=context)
-        threshold_values = cron_obj.read(cr, uid, threshold, ['interval_number', 'interval_type', 'nextcall', 'active'], context=context)
+        if vals.get('type') == 'standard':
+            # Create a cron task for the standard batch
+            data.update({'function': 'run_scheduler',
+                         'name': vals.get('name', 'Run mrp scheduler')})
+            cron_obj.create(cr, uid, data, context=context)
+        else:
+            # Create a cron for order cycle
+            data.update({'function': 'run_automatic_cycle',
+                         'name': vals.get('name', 'Run automatic cycle')})
+            cron_obj.create(cr, uid, data, context=context)
+            
+            # Create a cron for auto supply
+            data.update({'function': 'run_automatic_supply',
+                         'name': vals.get('name', 'Run automatic supply')})
+            cron_obj.create(cr, uid, data, context=context)
+            
+            # Create a cron for threshold values
+            data.update({'function': 'run_threshold_value',
+                         'name': vals.get('name', 'Run threshold value')})
+            cron_obj.create(cr, uid, data, context=context)
         
-        res = super(procurement_batch_cron, self).default_get(cr, uid, fields, context=context)
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Create the associated cron tasks according to parameters
+        '''
+        # Get the id of the new batch
+        batch_id = super(procurement_batch_cron, self).create(cr, uid, vals, context=context)
         
-        res.update({'interval_number': standard_values['interval_number'],
-                    'interval_type': standard_values['interval_type'],
-                    'nextcall': standard_values['nextcall'],
-                    'active': standard_values['active'],
-                    'cycle_interval_number': cycle_values['interval_number'],
-                    'cycle_interval_type': cycle_values['interval_type'],
-                    'cycle_nextcall': cycle_values['nextcall'],
-                    'cycle_active': cycle_values['active'],})
-#                    'auto_interval_number': auto_values['interval_number'],
-#                    'auto_interval_type': auto_values['interval_type'],
-#                    'auto_nextcall': auto_values['nextcall'],
-#                    'auto_active': auto_values['active'],
-#                    'threshold_interval_number': threshold_values['interval_number'],
-#                    'threshold_interval_type': threshold_values['interval_type'],
-#                    'threshold_nextcall': threshold_values['nextcall'],
-#                    'threshold_active': threshold_values['active'],})
-        
-        return res
-        
+        self._create_associated_cron(cr, uid, batch_id, vals, context=context)
+            
+        return batch_id
     
-    def update_cron_tasks(self, cr, uid, ids, context=None):
+
+    def write(self, cr, uid, ids, vals, context=None):
         '''
-        Update all scheduler cron tasks
+        Set batch modifications on associated cron tasks 
         '''
-        model_obj = self.pool.get('ir.model.data')
         cron_obj = self.pool.get('ir.cron')
         
-        standard = model_obj.get_object_reference(cr, uid, 'procurement', 'ir_cron_scheduler_action')[1]
-        cycle = model_obj.get_object_reference(cr, uid, 'procurement_cycle', 'ir_cron_proc_cycle_action')[1]
-        auto = model_obj.get_object_reference(cr, uid, 'procurement_auto', 'ir_cron_auto_supply_action')[1]
-        threshold = model_obj.get_object_reference(cr, uid, 'threshold_value', 'ir_cron_threshold_action')[1]
-        
-        for value in self.browse(cr, uid, ids, context=context):
-            cron_obj.write(cr, uid, [standard], {'active': value.active,
-                                                                         'interval_number': value.interval_number,
-                                                                         'interval_type': value.interval_type,
-                                                                         'active': value.active,
-                                                                         'nextcall': value.nextcall}, context=context)
-#            cron_obj.write(cr, uid, [cycle], {'active': value.active,
-            cron_obj.write(cr, uid, [cycle, auto, threshold], {'active': value.active,
-                                                                         'interval_number': value.cycle_interval_number,
-                                                                         'interval_type': value.cycle_interval_type,
-                                                                         'active': value.cycle_active,
-                                                                         'nextcall': value.cycle_nextcall}, context=context)
-#            cron_obj.write(cr, uid, [auto], {'active': value.active,
-#                                                                         'interval_number': value.auto_interval_number,
-#                                                                         'interval_type': value.auto_interval_type,
-#                                                                         'active': value.auto_active,
-#                                                                         'nextcall': value.auto_nextcall}, context=context)
-#            cron_obj.write(cr, uid, [threshold], {'active': value.active,
-#                                                                         'interval_number': value.threshold_interval_number,
-#                                                                         'interval_type': value.threshold_interval_type,
-#                                                                         'active': value.threshold_active,
-#                                                                         'nextcall': value.threshold_nextcall}, context=context)
-        
-        return {'type': 'ir.actions.act_window_close'}
+        for batch in self.browse(cr, uid, ids, context=context):
+            if vals.get('type') and vals.get('type') != batch.type:
+                for cron in batch.cron_ids:
+                    cron_obj.unlink(cr, uid, cron.id, context=context)
+                self._create_associated_cron(cr, uid, batch.id, vals, context=context)
+            else:
+                for cron in batch.cron_ids:
+                    cron_obj.write(cr, uid, vals, context=context)
+                    
+        return super(procurement_batch_cron, self).write(cr, uid, ids, vals, context=context)
     
 procurement_batch_cron()
+
+
+class ir_cron(osv.osv):
+    _name = 'ir.cron'
+    _inherit = 'ir.cron'
+    
+    _columns = {
+        'batch_id': fields.many2one('procurement.batch.cron', string='Batch', ondelete='cascade'),
+    }
+    
+ir_cron()
+
+
+class res_request(osv.osv):
+    _name = 'res.request'
+    _inherit = 'res.request'
+    
+    _columns = {
+        'batch_id': fields.many2one('procurement.batch.cron', string='Batch', ondelete='cascade'),
+    }
+    
+res_request() 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
