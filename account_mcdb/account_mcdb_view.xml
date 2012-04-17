@@ -96,11 +96,11 @@
                     <separator string="Reallocation" colspan="4"/>
                     <field name="reallocated" colspan="2"/>
                     <field name="reversed" colspan="2"/>
-                    <separator string="Analytic Account" colspan="4"/>
+                    <separator string="Analytic Accounts" colspan="4"/>
                     <group colspan="2" col="2">
                         <group col="2" colspan="2">
-                            <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pool" icon="gtk-clear" colspan="1"/>
-                            <button name="button_funding_pool_add" type="object" string="Add all Funding Pool" icon="gtk-add" colspan="1"/>
+                            <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pools" icon="gtk-clear" colspan="1"/>
+                            <button name="button_funding_pool_add" type="object" string="Add all Funding Pools" icon="gtk-add" colspan="1"/>
                         </group>
                         <field name="rev_analytic_account_fp_ids"/>
                         <field name="analytic_account_fp_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
@@ -113,8 +113,8 @@
                     </group>
                     <group colspan="2" col="2">
                         <group col="2" colspan="2">
-                            <button name="button_cost_center_clear" type="object" string="Remove all Cost Center" icon="gtk-clear" colspan="1"/>
-                            <button name="button_cost_center_add" type="object" string="Add all Cost Center" icon="gtk-add" colspan="1"/>
+                            <button name="button_cost_center_clear" type="object" string="Remove all Cost Centers" icon="gtk-clear" colspan="1"/>
+                            <button name="button_cost_center_add" type="object" string="Add all Cost Centers" icon="gtk-add" colspan="1"/>
                         </group>
                         <field name="rev_analytic_account_cc_ids"/>
                         <field name="analytic_account_cc_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
