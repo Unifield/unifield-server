@@ -85,7 +85,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.accrual_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'credit': accrual_line.accrual_amount,
+                        'credit_currency': accrual_line.accrual_amount,
                         'currency_id': accrual_line.currency_id.id,
                     }
                     expense_move_line_vals = {
@@ -98,7 +98,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.expense_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'debit': accrual_line.accrual_amount,
+                        'debit_currency': accrual_line.accrual_amount,
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                     }
@@ -114,7 +114,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.accrual_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'debit': accrual_line.accrual_amount,
+                        'debit_currency': accrual_line.accrual_amount,
                         'currency_id': accrual_line.currency_id.id,
                     }
                     reversal_expense_move_line_vals = {
@@ -127,7 +127,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'account_id': accrual_line.expense_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
-                        'credit': accrual_line.accrual_amount,
+                        'credit_currency': accrual_line.accrual_amount,
                         'currency_id': accrual_line.currency_id.id,
                         'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                     }
