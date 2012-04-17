@@ -526,6 +526,9 @@ class kit_creation(osv.osv):
         '''
         - update components to consume
         - create a stock move for each line
+        
+        renamed with do_process_to_consume2 because two button cannot have the same name in the view
+        and we have also a do_process_to_consume method at lines to consume level
         '''
         # objects
         to_consume_obj = self.pool.get('kit.creation.to.consume')
@@ -735,7 +738,7 @@ class kit_creation_to_consume(osv.osv):
             # we only want one line in it
             context.update({'to_consume_line_id': obj.id})
             # call the kit order method
-            return kit_creation_obj.do_process_to_consume(cr, uid, [obj.kit_creation_id_to_consume.id], context=context)
+            return kit_creation_obj.do_process_to_consume2(cr, uid, [obj.kit_creation_id_to_consume.id], context=context)
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
