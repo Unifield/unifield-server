@@ -140,17 +140,27 @@
             <field name="category">OC</field>
             <field name="code">OCBA</field>
             <field name="name">OCBA</field>
-            <field name="type">normal</field>
+            <field name="type">view</field>
             <field name="parent_id" ref="analytic_distribution.analytic_account_project"/>
+        </record>
+
+
+        <!--model: account.analytic.account, id: 49b-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___ocba____haiti_capital_cooridna_49b">
+            <field name="category">OC</field>
+            <field name="code">HM000</field>
+            <field name="name">HAITI MISSION</field>
+            <field name="type">view</field>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
         </record>
 
         <!--model: account.analytic.account, id: 49-->
         <record model="account.analytic.account" id="account_analytic_account_oc___ocba____haiti_capital_cooridna_49">
             <field name="category">OC</field>
             <field name="code">HT 102</field>
-            <field name="name"> HAITI CAPITAL COORIDNATION</field>
+            <field name="name">HAITI CAPITAL COORDINATION</field>
             <field name="type">view</field>
-            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba____haiti_capital_cooridna_49b"/>
         </record>
 
         <!--model: account.analytic.account, id: 25-->
@@ -186,7 +196,7 @@
             <field name="code">HT 104</field>
             <field name="name">HAITI JACMEL HOSPITAL EMERGENCY</field>
             <field name="type">view</field>
-            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba____haiti_capital_cooridna_49b"/>
         </record>
 
         <!--model: account.analytic.account, id: 39-->
@@ -285,7 +295,7 @@
             <field name="code">HT 107</field>
             <field name="name">HAITI JACMEL HOSPITAL</field>
             <field name="type">view</field>
-            <field name="parent_id" ref="account_analytic_account_oc___ocba_17"/>
+            <field name="parent_id" ref="account_analytic_account_oc___ocba____haiti_capital_cooridna_49b"/>
         </record>
 
         <!--model: account.analytic.account, id: 27-->

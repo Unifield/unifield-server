@@ -109,7 +109,11 @@ class account_journal(osv.osv):
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
         value =  {'value': {}, 'domain': {}}
         if type in ('cash', 'bank', 'cheque', 'cur_adj'):
-            default_dom += [('code', '=like', '5%' )]
+            try:
+                xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_cash_moves')
+                default_dom += [('user_type', '=', xml_id[1])]
+            except KeyError:
+                pass
         value['domain']['default_debit_account_id'] = default_dom
         value['domain']['default_crebit_account_id'] = default_dom
         # Analytic journal associated

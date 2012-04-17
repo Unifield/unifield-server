@@ -43,7 +43,7 @@
         <record model="account.account" id="msf_chart_of_account.1010">
             <field name="code">1010</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">liquidity</field>
             <field name="name">Cash on hand</field>
             <field name="parent_id" ref="msf_chart_of_account.101" />
             <field name="reconcile" eval="False" />
@@ -63,7 +63,7 @@
         <record model="account.account" id="msf_chart_of_account.1020">
             <field name="code">1020</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">liquidity</field>
             <field name="name">Cash at Bank</field>
             <field name="parent_id" ref="msf_chart_of_account.102" />
             <field name="reconcile" eval="False" />
@@ -756,7 +756,7 @@
             <field name="type">view</field>
             <field name="name">Buildings - accumulated depreciation</field>
             <field name="parent_id" ref="msf_chart_of_account.21" />
-            <field name="reconcile" eval="True" />
+            <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_asset" />
         </record>
 
@@ -776,7 +776,7 @@
             <field name="type">view</field>
             <field name="name">Medical equipments - accumulated depreciation</field>
             <field name="parent_id" ref="msf_chart_of_account.21" />
-            <field name="reconcile" eval="True" />
+            <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_asset" />
         </record>
 
@@ -796,7 +796,7 @@
             <field name="type">view</field>
             <field name="name">Non medical equipments - accumulated depreciation</field>
             <field name="parent_id" ref="msf_chart_of_account.21" />
-            <field name="reconcile" eval="True" />
+            <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_asset" />
         </record>
 
@@ -856,7 +856,7 @@
             <field name="type">view</field>
             <field name="name">Softwares - trademarks and licence  - accumulated depreciation</field>
             <field name="parent_id" ref="msf_chart_of_account.23" />
-            <field name="reconcile" eval="True" />
+            <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_asset" />
         </record>
 
@@ -963,7 +963,7 @@
         <record model="account.account" id="msf_chart_of_account.3000">
             <field name="code">3000</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Trade payables</field>
             <field name="parent_id" ref="msf_chart_of_account.300" />
             <field name="reconcile" eval="True" />
@@ -973,11 +973,11 @@
         <record model="account.account" id="msf_chart_of_account.3001">
             <field name="code">3001</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">liquidity</field>
             <field name="name">Check - suspense account</field>
             <field name="parent_id" ref="msf_chart_of_account.300" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_payable" />
+            <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.301">
@@ -993,7 +993,7 @@
         <record model="account.account" id="msf_chart_of_account.3010">
             <field name="code">3010</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Remuneration payable</field>
             <field name="parent_id" ref="msf_chart_of_account.301" />
             <field name="reconcile" eval="True" />
@@ -1003,7 +1003,7 @@
         <record model="account.account" id="msf_chart_of_account.3011">
             <field name="code">3011</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">expatriates payables - OCA only</field>
             <field name="parent_id" ref="msf_chart_of_account.301" />
             <field name="reconcile" eval="True" />
@@ -1023,7 +1023,7 @@
         <record model="account.account" id="msf_chart_of_account.3020">
             <field name="code">3020</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Social security</field>
             <field name="parent_id" ref="msf_chart_of_account.302" />
             <field name="reconcile" eval="True" />
@@ -1053,7 +1053,7 @@
         <record model="account.account" id="msf_chart_of_account.3031">
             <field name="code">3031</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Payroll taxes / PAYE payable</field>
             <field name="parent_id" ref="msf_chart_of_account.303" />
             <field name="reconcile" eval="True" />
@@ -1063,7 +1063,7 @@
         <record model="account.account" id="msf_chart_of_account.3032">
             <field name="code">3032</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Other Taxes</field>
             <field name="parent_id" ref="msf_chart_of_account.303" />
             <field name="reconcile" eval="True" />
@@ -1093,7 +1093,7 @@
         <record model="account.account" id="msf_chart_of_account.3100">
             <field name="code">3100</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Accrued salaries payable </field>
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
@@ -1103,7 +1103,7 @@
         <record model="account.account" id="msf_chart_of_account.3101">
             <field name="code">3101</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Accrued 13th month payable</field>
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
@@ -1113,7 +1113,7 @@
         <record model="account.account" id="msf_chart_of_account.3102">
             <field name="code">3102</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Accrued holiday pay - leave days payement</field>
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
@@ -1123,7 +1123,7 @@
         <record model="account.account" id="msf_chart_of_account.3103">
             <field name="code">3103</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Accrued severance pay - employees benefits </field>
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
@@ -1133,7 +1133,7 @@
         <record model="account.account" id="msf_chart_of_account.3104">
             <field name="code">3104</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Other accrued employee costs</field>
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
@@ -1153,7 +1153,7 @@
         <record model="account.account" id="msf_chart_of_account.3110">
             <field name="code">3110</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Accrued Payroll taxes</field>
             <field name="parent_id" ref="msf_chart_of_account.311" />
             <field name="reconcile" eval="True" />
@@ -1173,7 +1173,7 @@
         <record model="account.account" id="msf_chart_of_account.3120">
             <field name="code">3120</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Accrued social security </field>
             <field name="parent_id" ref="msf_chart_of_account.312" />
             <field name="reconcile" eval="True" />
@@ -1193,7 +1193,7 @@
         <record model="account.account" id="msf_chart_of_account.3130">
             <field name="code">3130</field>
             <field name="type_for_register">none</field>
-            <field name="type">other</field>
+            <field name="type">payable</field>
             <field name="name">Other accrued liabilities </field>
             <field name="parent_id" ref="msf_chart_of_account.313" />
             <field name="reconcile" eval="True" />
@@ -1286,7 +1286,7 @@
             <field name="type">view</field>
             <field name="name">Non current amounts payable </field>
             <field name="parent_id" ref="msf_chart_of_account.40" />
-            <field name="reconcile" eval="True" />
+            <field name="reconcile" eval="False" />
             <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
@@ -1316,7 +1316,7 @@
             <field name="type">view</field>
             <field name="name">Long term provisions </field>
             <field name="parent_id" ref="msf_chart_of_account.41" />
-            <field name="reconcile" eval="True" />
+            <field name="reconcile" eval="False" />
             <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
@@ -1366,7 +1366,7 @@
             <field name="type">other</field>
             <field name="name">Surplus carried forward</field>
             <field name="parent_id" ref="msf_chart_of_account.500" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_equity" />
         </record>
 
@@ -1386,7 +1386,7 @@
             <field name="type">other</field>
             <field name="name">Deficit carried forward</field>
             <field name="parent_id" ref="msf_chart_of_account.510" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_equity" />
         </record>
 
@@ -2378,6 +2378,10 @@
             <field name="parent_id" ref="msf_chart_of_account.7" />
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_income" />
+        </record>
+
+        <record model="res.company" id="main_company">
+            <field name="import_invoice_default_account" ref="msf_chart_of_account.1404" />
         </record>
     </data>
 </openerp>
