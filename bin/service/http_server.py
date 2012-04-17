@@ -43,7 +43,9 @@ import socket
 import xmlrpclib
 import logging
 
+import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
+import gzip_xmlrpclib
 
 try:
     import fcntl
@@ -227,7 +229,7 @@ httpsd = None
 
 def init_servers():
     global httpd, httpsd
-    if tools.config.get('xmlrpc'):
+    if tools.config.get('xmlrpc') or tools.config.get('gzipxmlrpc'):
         httpd = HttpDaemon(tools.config.get('xmlrpc_interface', ''),
                            int(tools.config.get('xmlrpc_port', 8069)))
 
@@ -260,7 +262,6 @@ def list_http_services(protocol=None):
     else:
         raise Exception("Incorrect protocol or no http services")
 
-import SimpleXMLRPCServer
 class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
@@ -283,6 +284,27 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,
         self.connection = dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
+class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
+    rpc_paths = []
+    protocol_version = 'HTTP/1.1'
+    _logger = logging.getLogger('xmlrpc')
+
+    def _dispatch(self, method, params):
+        try:
+            service_name = self.path.split("/")[-1]
+            return self.dispatch(service_name, method, params)
+        except netsvc.OpenERPDispatcherException, e:
+            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
+
+    def handle(self):
+        pass
+
+    def finish(self):
+        pass
+
+    def setup(self):
+        self.connection = dummyconn()
+        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):
@@ -290,6 +312,12 @@ def init_xmlrpc():
         # reg_http_service(HTTPDir('/test/',HTTPHandler))
         reg_http_service(HTTPDir('/xmlrpc/', XMLRPCRequestHandler))
         logging.getLogger("web-services").info("Registered XML-RPC over HTTP")
+
+    if tools.config.get('gzipxmlrpc', False):
+        # Example of http file serving:
+        # reg_http_service(HTTPDir('/test/',HTTPHandler))
+        reg_http_service(HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler))
+        logging.getLogger("web-services").info("Registered gzipped XML-RPC over HTTP")
 
     if tools.config.get('xmlrpcs', False) \
             and not tools.config.get('xmlrpc', False):

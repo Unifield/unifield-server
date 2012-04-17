@@ -55,6 +55,7 @@ class configmanager(object):
             'reportgz': False,
             'netrpc': True,
             'xmlrpc': True,
+            'gzipxmlrpc': False,
             'xmlrpcs': True,
             'translate_in': None,
             'translate_out': None,
@@ -119,6 +120,7 @@ class configmanager(object):
         group.add_option("--xmlrpc-interface", dest="xmlrpc_interface", help="specify the TCP IP address for the XML-RPC protocol")
         group.add_option("--xmlrpc-port", dest="xmlrpc_port", help="specify the TCP port for the XML-RPC protocol", type="int")
         group.add_option("--no-xmlrpc", dest="xmlrpc", action="store_false", help="disable the XML-RPC protocol")
+        group.add_option("--gzipxmlrpc", dest="gzipxmlrpc", action="store_true", help="enable gzipping XML-RPC protocol (disable standard XMLRPC)")
         parser.add_option_group(group)
 
         title = "XML-RPC Secure Configuration"
@@ -290,11 +292,15 @@ class configmanager(object):
         if self.options['pidfile'] in ('None', 'False'):
             self.options['pidfile'] = False
 
+        if opt.gzipxmlrpc:
+            # gzip prevails over standard
+            opt.xmlrpc = False
+
         keys = ['xmlrpc_interface', 'xmlrpc_port', 'db_name', 'db_user', 'db_password', 'db_host',
                 'db_port', 'logfile', 'pidfile', 'smtp_port', 'cache_timeout',
                 'email_from', 'smtp_server', 'smtp_user', 'smtp_password',
                 'netrpc_interface', 'netrpc_port', 'db_maxconn', 'import_partial', 'addons_path',
-                'netrpc', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
+                'netrpc', 'xmlrpc', 'gzipxmlrpc', 'syslog', 'without_demo', 'timezone',
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix'
