@@ -16,7 +16,7 @@
                         />
                     </xpath>
                     <field name="location_id" position= "replace">
-                        <field name="location_id" attrs="{'readonly':[('cross_docking_ok','=', True )]}"/>
+                        <field name="location_id" attrs="{'readonly':['|', '|', ('state', 'not in', ['draft', 'confirmed']), ('warehouse_id', '!=', False), ('cross_docking_ok','=', True)]}"/>
                     </field>
                 </data>
             </field>

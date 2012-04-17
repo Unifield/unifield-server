@@ -114,6 +114,17 @@ class purchase_order(osv.osv):
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
     }
+    
+    def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, order_type, dest_address_id):
+        '''
+        Don't change the destination address if it's set or the order type is DPO 
+        '''
+        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids, warehouse_id)
+        if order_type == 'direct' or dest_address_id:
+            if 'dest_address_id' in res.get('value', {}):
+                res['value'].pop('dest_address_id')
+        
+        return res
 
     def _check_user_company(self, cr, uid, company_id, context=None):
         '''
