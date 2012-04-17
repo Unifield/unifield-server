@@ -33,7 +33,7 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_threshold_value(self, cr, uid, use_new_cursor=False, context=None):
+    def run_threshold_value(self, cr, uid, use_new_cursor=False, batch_id=False, context=None):
         '''
         Creates procurement for products where real stock is under threshold value
         '''
