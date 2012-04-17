@@ -126,7 +126,7 @@ class stock_picking(osv.osv):
                  "* Closed: has been processed, can't be modified or cancelled anymore\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
-        'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=True, domain="[('partner_id', '=', partner_id)]"),
+        'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
     }
     
@@ -420,7 +420,7 @@ class stock_move(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
-        'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=True, domain="[('partner_id', '=', partner_id)]"),
+        'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'already_confirmed': fields.boolean(string='Already confirmed'),
     }
