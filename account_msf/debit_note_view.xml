@@ -11,6 +11,7 @@
             <field name="name">Debit Note</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
+            <field name="priority">19</field>
             <field name="arch" type="xml">
                 <tree string="Note" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="date_invoice"/>

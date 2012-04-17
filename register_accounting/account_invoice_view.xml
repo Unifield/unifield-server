@@ -127,6 +127,7 @@
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="account.invoice_tree"/>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <xpath expr="/tree/button[@name='invoice_open']" position="replace">
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
