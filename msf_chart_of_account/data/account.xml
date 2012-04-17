@@ -2379,9 +2379,5 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_income" />
         </record>
-
-        <record model="res.company" id="main_company">
-            <field name="import_invoice_default_account" ref="msf_chart_of_account.1404" />
-        </record>
     </data>
 </openerp>
