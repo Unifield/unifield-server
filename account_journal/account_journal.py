@@ -108,7 +108,7 @@ class account_journal(osv.osv):
 #        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
         value =  {'value': {}, 'domain': {}}
-        if type in ('cash', 'bank', 'cheque', 'cur_adj'):
+        if type in ('cash', 'bank', 'cheque'):
             try:
                 xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_cash_moves')
                 default_dom += [('user_type', '=', xml_id[1])]
