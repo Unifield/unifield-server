@@ -53,6 +53,8 @@ class kit_selection(osv.osv_memory):
         '''
         # objects
         line_obj = self.pool.get('kit.selection.line')
+        # purchase order line id
+        pol_ids = context['active_ids']
         
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.kit_id:
@@ -65,7 +67,7 @@ class kit_selection(osv.osv_memory):
                           'uom_id_kit_selection_line': item.item_uom_id.id,
                           }
                 line_obj.create(cr, uid, values, context=dict(context, pol_ids=context['active_ids']))
-        return True
+        return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
     
     def validate_lines(self, cr, uid, ids, context=None):
         '''
