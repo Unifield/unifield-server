@@ -968,8 +968,9 @@ class purchase_order_line(osv.osv):
                 if pricelist_ids:
                     pricelist = self.pool.get('pricelist.partnerinfo').browse(cr, uid, pricelist_ids[0])
                     res['value'].update({'old_price_unit': pricelist.price, 'price_unit': pricelist.price})
-                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal ' \
-                                                                                'quantity set to %s, you cannot purchase less.') % pricelist.min_quantity}})
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
+                                                                                'for a minimal quantity of %s (the min quantity of the price list), '\
+                                                                                'it might change at the supplier confirmation.') % pricelist.min_quantity}})
                 else:
                     res['value'].update({'old_price_unit': res['value']['price_unit']})
             else:
