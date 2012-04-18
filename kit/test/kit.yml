@@ -514,6 +514,11 @@
         c = res['context']
         context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
+  I complete the the theoretical kit - kit_compo_03, so it can be used in the wizard
+-
+  !python {model: composition.kit}: |
+    self.mark_as_completed(cr, uid, [ref("kit_compo_03")], context=context)
+-
   I select the theoretical kit - kit_compo_03, import the items and validate the decomposition
 -
   !python {model: kit.selection}: |
