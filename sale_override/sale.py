@@ -122,7 +122,6 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
-        'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, select=True),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
