@@ -323,10 +323,10 @@
                         <field name="code"/>
                         <field name="name"/>
                          <field name="line_type"/>
-                        <field name="allocated_budget" digits="(24,0)" widget="float"/>
-                        <field name="allocated_real" digits="(24,0)" widget="float"/>
-                        <field name="project_budget" digits="(24,0)" widget="float"/>
-                        <field name="project_real" digits="(24,0)" widget="float"/>
+                        <field name="allocated_budget" string="FUNDED - BUDGET" digits="(24,0)" widget="float"/>
+                        <field name="allocated_real" string="FUNDED - ACTUALS" digits="(24,0)" widget="float"/>
+                        <field name="project_budget" string="TOTAL PROJECT - BUDGET" digits="(24,0)" widget="float"/>
+                        <field name="project_real" string="TOTAL PROJECT - ACTUALS" digits="(24,0)" widget="float"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
