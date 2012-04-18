@@ -48,9 +48,9 @@ class procurement_order(osv.osv):
         product_obj = self.pool.get('product.product')
         freq_obj = self.pool.get('stock.frequence')
 
-        start_date = datetime.now()
+        start_date = time.strftime('%Y-%m-%d %H:%M:%S')
         
-        cycle_ids = cycle_obj.search(cr, uid, [('next_date', '<=', start_date.strftime('%Y-%m-%d'))])
+        cycle_ids = cycle_obj.search(cr, uid, [('next_date', '<=', datetime.now())])
         
         created_proc = []
         report = []
@@ -105,7 +105,7 @@ Created documents : \n'''
             elif proc.purchase_id:
                 created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
                 
-        end_date = datetime.now()
+        end_date = time.strftime('%Y-%m-%d %H:%M:%S')
                 
         summary = '''Here is the procurement scheduling report for Order Cycle
 
@@ -113,12 +113,18 @@ Created documents : \n'''
         End Time: %s
         Total Procurements processed: %d
         Procurements with exceptions: %d
-        \n %s \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
+        \n %s \n Exceptions: \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
         summary += '\n'.join(report)
+        if batch_id:
+            self.pool.get('procurement.batch.cron').write(cr, uid, batch_id, {'last_run_on': time.strftime('%Y-%m-%d %H:%M:%S')})
+            old_request = request_obj.search(cr, uid, [('batch_id', '=', batch_id), ('name', '=', 'Procurement Processing Report (Order cycle).')])
+            request_obj.write(cr, uid, old_request, {'batch_id': False})
+        
         req_id = request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report (Order cycle).",
                  'act_from': uid,
                  'act_to': uid,
+                 'batch_id': batch_id,
                  'body': summary,
                 })
         # UF-952 : Requests should be in consistent state

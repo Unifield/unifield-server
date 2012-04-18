@@ -53,7 +53,7 @@ class procurement_order(osv.osv):
         created_proc = []
         report = []
         report_except = 0
-        start_date = datetime.now()
+        start_date = time.strftime('%Y-%m-%d %H:%M:%S')
         
         wf_service = netsvc.LocalService("workflow")
         
@@ -87,7 +87,7 @@ Created documents : \n'''
             elif proc.purchase_id:
                 created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
                 
-        end_date = datetime.now()
+        end_date = time.strftime('%Y-%m-%d %H:%M:%S')
                 
         summary = '''Here is the procurement scheduling report for Threshold values
 
@@ -95,12 +95,17 @@ Created documents : \n'''
         End Time: %s
         Total Procurements processed: %d
         Procurements with exceptions: %d
-        \n %s \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
+        \n %s \n  Exceptions: \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
         summary += '\n'.join(report)
+        if batch_id:
+            self.pool.get('procurement.batch.cron').write(cr, uid, batch_id, {'last_run_on': time.strftime('%Y-%m-%d %H:%M:%S')})
+            old_request = request_obj.search(cr, uid, [('batch_id', '=', batch_id), ('name', '=', 'Procurement Processing Report (Threshold values).')])
+            request_obj.write(cr, uid, old_request, {'batch_id': False})
         req_id = request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report (Threshold values).",
                  'act_from': uid,
                  'act_to': uid,
+                 'batch_id': batch_id,
                  'body': summary,
                 })
         # UF-952 : Requests should be in consistent state
