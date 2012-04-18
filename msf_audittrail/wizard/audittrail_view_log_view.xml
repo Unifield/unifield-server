@@ -29,7 +29,7 @@
   <!-- action for audittrail view log wizard -->
   		
         <record id="action_audittrail_view_log" model="ir.actions.act_window">
-            <field name="name">View log</field>
+            <field name="name">Track changes</field>
             <field name="res_model">audittrail.view.log</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

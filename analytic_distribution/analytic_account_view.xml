@@ -57,12 +57,19 @@
                     <filter name="active" icon="terp-check" string="Active"
                             context="{'filter_inactive_accounts': 1}"/>
                 </filter>
-                <field name="user_id" position="after">
-                    <field name="category"/>
+                <field name="partner_id" position="replace">
+                </field>
+                <field name="user_id" position="replace">
+                    <field name="category" string="Account category"/>
+                    <field name="type" string="Account type"/>
                 </field>
                 <group string="Group By..." position="replace">
                     <group expand="0" string="Group By...">
                         <filter string="Parent" icon="terp-folder-orange" domain="[]" context="{'group_by':'parent_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account Category" icon="terp-folder-violet" domain="[]" context="{'group_by': 'category'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account Type" icon="terp-folder-blue" domain="[]" context="{'group_by': 'type'}"/>
                     </group>
                 </group>
             </field>

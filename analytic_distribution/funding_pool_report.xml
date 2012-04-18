@@ -3,7 +3,7 @@
     <data>
         
         <report id="funding_pool"
-        string="Funding Pool"
+        string="Funding Pool export (pdf)"
         model="account.analytic.account"
         name="funding.pool"
         rml="analytic_distribution/report/funding_pool.rml"

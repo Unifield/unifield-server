@@ -13,6 +13,7 @@
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="account.invoice_tree"/>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree/field[@name='user_id']" position="replace">
@@ -40,6 +41,7 @@
             <field name="model">account.invoice</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">

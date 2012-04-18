@@ -37,9 +37,7 @@ class msf_budget_summary(osv.osv_memory):
                     budget_amount += child_amounts[child_line.id]['budget_amount']
             else:
                 #  Budget Amount, normal budget
-                for budget_line in summary_line.budget_id.budget_line_ids:
-                    if budget_line.line_type == 'normal' and budget_line.budget_values:
-                        budget_amount += sum(eval(budget_line.budget_values))
+                budget_amount = summary_line.budget_id.total_budget_amount
                 # Actual amount, normal budget
                 actual_domain = [('account_id', '=', summary_line.budget_id.cost_center_id.id)]
                 actual_domain.append(('date', '>=', summary_line.budget_id.fiscalyear_id.date_start))

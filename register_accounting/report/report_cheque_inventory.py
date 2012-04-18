@@ -31,6 +31,15 @@ class report_cheque_inventory(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def translate_state(self, cr, line):
+        # Parse each budget line
+        pool = pooler.get_pool(cr.dbname)
+        register_states = dict(pool.get('account.bank.statement')._columns['state'].selection)
+        if len(line) > 2 and line[2] in register_states:
+            return list(line[:2]) + [register_states[line[2]]] + list(line[3:])
+        else:
+            return line
+
     def create(self, cr, uid, ids, data, context=None):
         # Create the header
         header = [['Register Name', 'Register Period', 'Register State', 'Posting Date', 'Document Date', 'Cheque Number', 'Sequence', 'Description', 'Reference', 'Account', 'Third Parties', 'Amount Out', 'Currency']]
@@ -62,7 +71,7 @@ class report_cheque_inventory(report_sxw.report_sxw):
             ORDER BY st.date
         """
         cr.execute(sql_posted_moves)
-        res = header + cr.fetchall()
+        res = header + map((lambda x: self.translate_state(cr, x)), cr.fetchall())
         
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)

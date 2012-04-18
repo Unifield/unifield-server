@@ -29,7 +29,7 @@ class financing_contract_funding_pool_line(osv.osv):
     _columns = {
         'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding pool name', required=True),
-        'funded': fields.boolean('Funded'),
+        'funded': fields.boolean('Earmarked'),
         'total_project': fields.boolean('Total project'),
     }
         
@@ -228,7 +228,9 @@ class financing_contract_contract(osv.osv):
                         'reporting_type': contract.reporting_type,
                         'currency_table_id': contract.currency_table_id.id,
                         'active_id': ids[0],
-                        'active_ids': ids})
+                        'active_ids': ids,
+                        'display_fp': True})
+        ## INFO: display_fp in context permits to display Funding Pool column and its attached cost center.
         reporting_line_obj = self.pool.get('financing.contract.donor.reporting.line')
         # Create reporting lines
         # Contract line first (we'll fill it later)

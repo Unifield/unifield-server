@@ -26,7 +26,7 @@
         menu="True"/>
         
         <report id="contract"
-        string="Financing Contract"
+        string="Export Contract info - pdf"
         model="financing.contract.contract"
         name="financing.contract"
         rml="financing_contract/report/financing_contract.rml"

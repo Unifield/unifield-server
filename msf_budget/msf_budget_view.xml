@@ -14,6 +14,7 @@
                     <field name="state"/>
                     <field name="decision_moment"/>
                     <field name="version"/>
+                    <field name="total_budget_amount"/>
                 </tree>
             </field>
         </record>

@@ -22297,7 +22297,7 @@ msgstr ""
 
 #. module: msf_audittrail
 #: model:ir.actions.act_window,name:msf_audittrail.action_audittrail_view_log
-msgid "View log"
+msgid "Track changes"
 msgstr ""
 
 #. module: consumption_calculation

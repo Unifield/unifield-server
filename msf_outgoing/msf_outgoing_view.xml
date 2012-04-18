@@ -147,7 +147,7 @@
 			<field name="arch" type="xml">
 				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking Tickets">
 					<field name="name"/>
-					<field name="partner_id2"/>
+					<field name="partner_id2" />
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
@@ -196,6 +196,7 @@
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
 							<field name="invoice_state"/>
@@ -474,6 +475,7 @@
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
 							<field name="invoice_state"/>
@@ -712,6 +714,7 @@
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" />
 							<field name="invoice_state"/>
@@ -945,6 +948,7 @@
 							<field name="transport_type" />
 							<field name="backshipment_id" readonly="True" />
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                                required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" context="{'contact_display':'partner'}" />
 						</group>
