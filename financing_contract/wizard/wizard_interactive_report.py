@@ -33,12 +33,14 @@ class wizard_interactive_report(osv.osv_memory):
                      line.name,
                      locale.format("%d", round(line.allocated_budget), grouping=True),
                      locale.format("%d", round(line.allocated_real), grouping=True),
+                     '' if line.allocated_real == 0 else str(locale.format("%d", round(line.allocated_real/line.allocated_budget * 100), grouping=True)) + "%",
                      locale.format("%d", round(line.project_budget), grouping=True),
-                     locale.format("%d", round(line.project_real), grouping=True)])
+                     locale.format("%d", round(line.project_real), grouping=True),
+                     '' if line.project_real == 0 else str(locale.format("%d", round(line.project_real/line.project_budget * 100), grouping=True)) + "%"])
+        
         for child_line in line.child_ids:
             max_parent_hierarchy = self._create_reporting_line(child_line, parent_hierarchy + 1, data)
         return max_parent_hierarchy
-        
     
     def _get_interactive_data(self, cr, uid, contract_id, context=None):
         res = {}
@@ -75,17 +77,22 @@ class wizard_interactive_report(osv.osv_memory):
         temp_analytic_data = [[0,
                                'Code',
                                'Name',
-                               'Funded Amount - Budget',
-                               'Funded Amount - Actuals',
-                               'Total Project Amount - Budget',
-                               'Total Project Amount - Actuals'],
-                              [0,
-                               contract.code,
-                               contract.name,
+                               'Earmarked - Budget',
+                               'Earmarked - Actuals',
+                               'Earmarked - %used',
+                               'Total Project - Budget',
+                               'Total Project - Actuals',
+                               'Total Project - %used']] + temp_analytic_data + [   
+                               [0,
+                               '',
+                               'TOTAL',
                                locale.format("%d", allocated_budget, grouping=True),
                                locale.format("%d", allocated_real, grouping=True),
+                               '' if allocated_real == 0 else str(locale.format("%d", round(allocated_real/allocated_budget * 100), grouping=True)) + "%",
                                locale.format("%d", project_budget, grouping=True),
-                               locale.format("%d", project_real, grouping=True)]] + temp_analytic_data
+                               locale.format("%d", project_real, grouping=True),
+                               '' if project_real == 0 else str(locale.format("%d", round(project_real/project_budget * 100), grouping=True)) + "%"]]
+
 
         # Now, do the hierarchy
         analytic_data = []
@@ -102,10 +109,10 @@ class wizard_interactive_report(osv.osv_memory):
             final_line.append(temp_line[2])
             # then, add values depending of the reporting type
             if contract.reporting_type != 'project':
-                essai = temp_line[3:5]
-                final_line += temp_line[3:5]
+                essai = temp_line[3:6]
+                final_line += temp_line[3:6]
             if contract.reporting_type != 'allocated':
-                final_line += temp_line[5:7]
+                final_line += temp_line[6:9]
             analytic_data.append(final_line)
             
         data = header_data + [[]] + analytic_data + [[]] + footer_data

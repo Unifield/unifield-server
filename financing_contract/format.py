@@ -27,9 +27,9 @@ class financing_contract_format(osv.osv):
     
     _columns = {
         'format_name': fields.char('Name', size=64, required=True),
-        'reporting_type': fields.selection([('project','Total project costs'),
-                                            ('allocated','Funded costs'),
-                                            ('all', 'Total project and funded costs')], 'Reporting type', required=True),
+        'reporting_type': fields.selection([('project','Total project only'),
+                                            ('allocated','Earmarked only'),
+                                            ('all', 'Earmarked and total project')], 'Reporting type', required=True),
         # For contract only, but needed for line domain;
         # we need to keep them available
         'eligibility_from_date': fields.date('Eligibility date from'),

@@ -29,7 +29,7 @@ class financing_contract_funding_pool_line(osv.osv):
     _columns = {
         'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding pool name', required=True),
-        'funded': fields.boolean('Funded'),
+        'funded': fields.boolean('Earmarked'),
         'total_project': fields.boolean('Total project'),
     }
         
