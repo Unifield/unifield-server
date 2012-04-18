@@ -237,10 +237,18 @@ class kit_selection_line(osv.osv_memory):
             name = prod_obj.read(cr, uid, product_id, ['name'], context=context)['name']
         # notes
         notes = pol.notes
+        # state
+        state = pol.order_id.state
         # gather default values
-        data = getattr(pol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
-                                      partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
-                                      name=name, price_unit=price_unit, notes=notes)
+        if type in ['product_id_change', 'product_uom_change']:
+            data = getattr(pol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
+                                          partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
+                                          name=name, price_unit=price_unit, notes=notes)
+        elif type == 'product_id_on_change':
+            data = getattr(pol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id,
+                                          qty=qty, uom=uom_id, partner_id=partner_id, date_order=date_order,
+                                          fiscal_position=fiscal_position_id, date_planned=date_planned, name=name,
+                                          price_unit=price_unit, notes=notes, state=state, old_price_unit=False)
         return data
     
     def on_product_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
@@ -261,7 +269,8 @@ class kit_selection_line(osv.osv_memory):
                             'uom_id_kit_selection_line': False,
                             'price_unit_kit_selection_line': 0.0}}
         # gather default values
-        data = self._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_change', context=context)
+#        data = self._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_change', context=context)
+        data = self._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_on_change', context=context)
         # update result price_unit and default uom
         result['value'].update({'price_unit_kit_selection_line': 'price_unit' in data['value'] and data['value']['price_unit'] or 0.0,
                                 'qty_kit_selection_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0,
