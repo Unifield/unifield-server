@@ -34,7 +34,7 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     _columns = {
-        'cross_docking_ok': fields.boolean('Cross docking'),
+        'cross_docking_ok': fields.boolean('Cross docking', readonly=True, states={'draft': [('readonly', False)]}),
     }
 
     _defaults = {
@@ -54,15 +54,37 @@ class purchase_order(osv.osv):
         elif cross_docking_ok == False:
             l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         return {'value': {'location_id': l}}
+    
+    def onchange_categ(self, cr, uid, ids, categ, context=None):
+        """ Sets cross_docking to False if the categ is service or transport.
+        @param categ: Changed value of categ.
+        @return: Dictionary of values.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        bool_value = None
+        defined_location = None
+        if categ in ['service', 'transport']:
+            bool_value = False
+            defined_location = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
+        elif categ in ['medical', 'log', 'other']:
+            defined_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
+        bool_value = None
+        defined_location = None
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
         elif vals.get('cross_docking_ok') == False:
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1], })
+        if vals.get('categ') in ['service', 'transport']:
+            defined_location = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
+            vals.update({'cross_docking_ok': False, 'location_id':defined_location})
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
