@@ -338,11 +338,13 @@ class kit_creation(osv.osv):
             self._validate_internal_picking(cr, uid, ids, obj.internal_picking_id_kit_creation.id, context=context)
         return True
     
-    def force_assign(self, cr, uid, ids, context=None):
+    def force_assign2(self, cr, uid, ids, context=None):
         '''
         force assign moves in 'confirmed' (Not Available) state
         
         the force_assign function is not called correctly
+        
+        renamed because two buttons cannot have the same name in the view - force_assign already exist in stock moves
         '''
         # objects
         pick_obj = self.pool.get('stock.picking')
@@ -350,7 +352,7 @@ class kit_creation(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'in_production':
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
-            return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id], context=context)
+            return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id]) #original function does not support context
     
     def cancel_all_lines(self, cr, uid, ids, context=None):
         '''
@@ -522,10 +524,13 @@ class kit_creation(osv.osv):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
     
-    def do_process_to_consume(self, cr, uid, ids, context=None):
+    def do_process_to_consume2(self, cr, uid, ids, context=None):
         '''
         - update components to consume
         - create a stock move for each line
+        
+        renamed with do_process_to_consume2 because two button cannot have the same name in the view
+        and we have also a do_process_to_consume method at lines to consume level
         '''
         # objects
         to_consume_obj = self.pool.get('kit.creation.to.consume')
@@ -535,6 +540,9 @@ class kit_creation(osv.osv):
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
+            # only if in production
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             if context.get('to_consume_line_id', False):
                 # only one line has been selected
                 to_consume_list = [to_consume_obj.browse(cr, uid, context.get('to_consume_line_id'), context=context)]
@@ -732,7 +740,7 @@ class kit_creation_to_consume(osv.osv):
             # we only want one line in it
             context.update({'to_consume_line_id': obj.id})
             # call the kit order method
-            return kit_creation_obj.do_process_to_consume(cr, uid, [obj.kit_creation_id_to_consume.id], context=context)
+            return kit_creation_obj.do_process_to_consume2(cr, uid, [obj.kit_creation_id_to_consume.id], context=context)
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -745,7 +753,7 @@ class kit_creation_to_consume(osv.osv):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')
-            
+        
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # batch management
@@ -756,7 +764,10 @@ class kit_creation_to_consume(osv.osv):
             total_qty = obj.kit_creation_id_to_consume.qty_kit_creation * obj.qty_to_consume
             result.setdefault(obj.id, {}).update({'total_qty_to_consume': total_qty})
             # state
-            result.setdefault(obj.id, {}).update({'state': obj.kit_creation_id_to_consume.state})
+            state = obj.kit_creation_id_to_consume.state
+            result.setdefault(obj.id, {}).update({'state': state})
+            # fill the fake state attribute - because of openERP bug in attrs, the one2many state field was considered by kitting order attrs, instead of kitting order state
+            result.setdefault(obj.id, {}).update({'fake_state': state})
             # qty_available_to_consume
             # corresponding product object
             product = obj.product_id_to_consume
@@ -887,6 +898,9 @@ class kit_creation_to_consume(osv.osv):
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
                                          store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
                                                  'kit.creation': (_get_to_consume_ids, ['state'], 10)}),
+                'fake_state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='Fake State', readonly=True, multi='get_vals',
+                                         store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
+                                                 'kit.creation': (_get_to_consume_ids, ['state'], 10)}),
                 'batch_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'expiry_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
                 }
@@ -918,60 +932,6 @@ class kit_creation_to_consume(osv.osv):
     _constraints = [(_kit_creation_to_consume_constraint, 'Constraint error on Kit Creation to Consume.', []),]
     
 kit_creation_to_consume()
-
-
-#class kit_creation_consumed(osv.osv):
-#    '''
-#    products to be consumed
-#    '''
-#    _name = 'kit.creation.consumed'
-#    _inherit = 'kit.creation.consume.common'
-#    
-#    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-#        '''
-#        multi fields function method
-#        '''
-#        # Some verifications
-#        if context is None:
-#            context = {}
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#            
-#        result = {}
-#        for obj in self.browse(cr, uid, ids, context=context):
-#            result[obj.id] = {}
-#            # state
-#            result[obj.id].update({'state': obj.kit_creation_id_to_consume.state})
-#        return result
-#    
-#    def _get_consumed_ids(self, cr, uid, ids, context=None):
-#        '''
-#        ids represents the ids of composition.kit objects for which values have changed
-#        
-#        return the list of ids of composition.item objects which need to get their fields updated
-#        
-#        self is an composition.kit object
-#        '''
-#        # Some verifications
-#        if context is None:
-#            context = {}
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#            
-#        consumed_obj = self.pool.get('kit.creation.consumed')
-#        result = consumed_obj.search(cr, uid, [('kit_creation_id_to_consume', 'in', ids)], context=context)
-#        return result
-#    
-#    _columns = {'lot_id_consumed': fields.char(string='Batch Nb', size=1024),
-#                'expiry_date_consumed': fields.date(string='Expiry Date'),
-#                'kit_id_consumed': fields.many2one('kit.creation', string='Kit Ref', readonly=True),
-#                # functions
-#                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
-#                                         store= {'kit.creation.consumed': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
-#                                                 'kit.creation': (_get_consumed_ids, ['state'], 10)}),
-#                }
-#    
-#kit_creation_consumed()
 
 
 class stock_move(osv.osv):

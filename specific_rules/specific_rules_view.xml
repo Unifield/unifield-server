@@ -314,7 +314,7 @@
             <field name="model">stock.production.lot</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Expiry Dates">
+                <tree string="Expiry Dates" hide_new_button="True">
                     <field name="prefix" invisible="True" />
                     <field name="type" invisible="True" />
             		<field name="life_date" />

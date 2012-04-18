@@ -96,7 +96,7 @@
   I process with all lines button
 -
   !python {model: kit.creation}: |
-    self.do_process_to_consume(cr, uid, [ref("kit_creation_01")], context=dict(context))
+    self.do_process_to_consume2(cr, uid, [ref("kit_creation_01")], context=dict(context))
 -
   I check a stock move has been created
 -
