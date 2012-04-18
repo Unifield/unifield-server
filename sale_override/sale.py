@@ -122,27 +122,34 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, select=True),
+        'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
-                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
-        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'details': fields.char(size=30, string='Details', readonly=True, states={'draft': [('readonly', False)]}),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'details': fields.char(size=30, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'company_id2': fields.many2one('res.company','Company',select=1),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines'),
+        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current sales order."),
+        'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
+        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current sales order."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Pricelist for current sales order."),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
             ('postpaid', 'Invoice On Order After Delivery'),
             ('picking', 'Invoice From The Picking'),
-        ], 'Shipping Policy', required=True, readonly=True, states={'draft': [('readonly', False)]},
+        ], 'Shipping Policy', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]},
             help="""The Shipping Policy is used to synchronise invoice and delivery operations.
   - The 'Pay Before delivery' choice will first generate the invoice and then generate the picking order after the payment of this invoice.
   - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
@@ -200,6 +207,9 @@ class sale_order(osv.osv):
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
     def wkf_validated(self, cr, uid, ids, context=None):
+        for order in self.browse(cr, uid, ids, context=context):
+            if len(order.order_line) < 1:
+                raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
             self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
@@ -223,6 +233,8 @@ class sale_order(osv.osv):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
+            if len(order.order_line) < 1:
+                raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
