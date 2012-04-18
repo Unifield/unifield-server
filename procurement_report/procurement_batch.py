@@ -36,6 +36,9 @@ class procurement_batch_cron(osv.osv):
         'last_run_on': fields.datetime('Last run on', readonly=True),
     }
     
+    _constraints = [
+    ]
+    
     def open_request_view(self, cr, uid, ids, context=None):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_report', 'batch_requests_view')[1]
         return {'type': 'ir.actions.act_window',
@@ -94,6 +97,7 @@ class procurement_batch_cron(osv.osv):
         '''
         Create the associated cron tasks according to parameters
         '''
+        vals.update({'args': '()'})
         # Get the id of the new batch
         batch_id = super(procurement_batch_cron, self).create(cr, uid, vals, context=context)
         
@@ -123,7 +127,7 @@ class procurement_batch_cron(osv.osv):
         return super(procurement_batch_cron, self).write(cr, uid, ids, vals, context=context)
 
 
-    def read(self, cr, uid, ids, fields_to_read=None, context=None):
+    def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
         if not fields_to_read:
             fields_to_read = []
 
@@ -133,11 +137,11 @@ class procurement_batch_cron(osv.osv):
         res = super(procurement_batch_cron, self).read(cr, uid, ids, fields_to_read, context=context)
 
         if 'nextcall' in fields_to_read:
-            for id in ids:
-                cron_ids = self.pool.get('ir.cron').search(cr, uid, [('batch_id', '=', id)])
+            for data in res:
+                cron_ids = self.pool.get('ir.cron').search(cr, uid, [('batch_id', '=', data['id'])])
                 if cron_ids:
                     nextcall = self.pool.get('ir.cron').browse(cr, uid, cron_ids[0]).nextcall
-                    res[id].update({'nextcall': nextcall})
+                    data.update({'nextcall': nextcall})
 
         return res
     

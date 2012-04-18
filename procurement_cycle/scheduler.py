@@ -91,7 +91,7 @@ class procurement_order(osv.osv):
                         created_proc.append(proc_id)
         
             if cycle.frequence_id:
-                freq_obj.write(cr, uid, cycle.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
+                freq_obj.write(cr, uid, cycle.frequence_id.id, {'last_run': datetime.now()})
 
         created_doc = '''################################
 Created documents : \n'''
