@@ -172,6 +172,7 @@ class product_product(osv.osv):
         res = {}
         one_product = False
         partner_price = self.pool.get('pricelist.partnerinfo')
+        suppinfo_obj = self.pool.get('product.supplierinfo')
         prod_obj = self.pool.get('product.product')
         
         if not context:
@@ -182,14 +183,16 @@ class product_product(osv.osv):
             product_ids = [product_ids]
             
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
+            suppinfo_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
+                                                         ('product_id', '=', product.product_tmpl_id.id),
+                                                         '|', ('catalogue_id.period_from', '<=', order_date),
+                                                         ('catalogue_id', '=', False)],
+                                               order='sequence', limit=1, context=context) 
             # Search the good line for the price
-            info_price = partner_price.search(cr, uid, [('suppinfo_id.name', '=', partner_id),
-                                                        ('suppinfo_id.product_id', '=', product.product_tmpl_id.id),
+            info_price = partner_price.search(cr, uid, [('suppinfo_id', 'in', suppinfo_ids),
                                                         ('min_quantity', '<=', product_qty),
                                                         ('uom_id', '=', product_uom_id),
                                                         ('currency_id', '=', currency_id),
-                                                        '|', ('suppinfo_id.catalogue_id.period_from', '<=', order_date),
-                                                        ('suppinfo_id.catalogue_id', '=', False),
                                                         '|', ('valid_till', '>=', order_date),
                                                         ('valid_till', '=', False)],
                                                    order='valid_till asc, min_quantity desc', limit=1, context=context)
