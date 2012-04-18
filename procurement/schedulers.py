@@ -37,6 +37,12 @@ class procurement_order(osv.osv):
         Hook to change the request values
         '''
         return kwargs['request_vals']
+    
+    def _hook_add_purchase_created(self, cr, uid, *args, **kwargs):
+        '''
+        Returns the created docs in report
+        '''
+        return ''
 
     def _procure_confirm(self, cr, uid, ids=None, use_new_cursor=False, context=None):
         '''
@@ -73,6 +79,7 @@ class procurement_order(osv.osv):
             report_total = 0
             report_except = 0
             report_later = 0
+            purchase_ids = []
             while True:
                 cr.execute("select id from procurement_order where state='confirmed' and procure_method='make_to_order' order by priority,date_planned limit 500 offset %s", (offset,))
                 ids = map(lambda x: x[0], cr.fetchall())
@@ -88,6 +95,8 @@ class procurement_order(osv.osv):
                                 (proc.id, proc.product_qty, proc.product_uom.name,
                                     proc.product_id.name))
                         report_except += 1
+                    elif proc.purchase_id:
+                        purchase_ids.append(proc.id)
                     report_total += 1
                 if use_new_cursor:
                     cr.commit()
@@ -126,7 +135,12 @@ class procurement_order(osv.osv):
         Procurements with exceptions: %d
         Skipped Procurements (scheduled date outside of scheduler range) %d
 
-        Exceptions:\n'''% (start_date, end_date, report_total, report_except, report_later)
+        \n'''% (start_date, end_date, report_total, report_except, report_later)
+                if purchase_ids:
+                    summary += self._hook_add_purchase_created(cr, uid, purchase_ids=purchase_ids)
+                summary += '''
+        Exception : \n
+        '''
                 summary += '\n'.join(report)
                 request_vals = {'name': "Procurement Processing Report.",
                         'act_from': uid,
