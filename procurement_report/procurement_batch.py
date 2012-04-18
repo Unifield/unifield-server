@@ -122,6 +122,8 @@ class procurement_batch_cron(osv.osv):
                 self._create_associated_cron(cr, uid, batch.id, vals, context=context)
             else:
                 for cron in batch.cron_ids:
+                    if 'name' in vals:
+                        vals.pop('name')
                     cron_obj.write(cr, uid, cron.id, vals, context=context)
                     
         return super(procurement_batch_cron, self).write(cr, uid, ids, vals, context=context)
