@@ -28,12 +28,24 @@ class procurement_batch_cron(osv.osv):
     _name = 'procurement.batch.cron'
     _inherit = 'ir.cron'
     
+    def _get_nextcall(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for batch in self.browse(cr, uid, ids, context=context):
+            if batch.cron_ids:
+                res[batch.id] = batch.cron_ids[0].nextcall
+            else:
+                res[batch.id] = False
+        
+        return res
+    
     _columns = {
         'name': fields.char(size=64, string='Name'),
         'type': fields.selection([('standard', 'POs creation Batch (from orders)'), ('rules', 'POs creation Batch (replenishment rules)')], string='Type', required=True),
         'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests', readonly=True),
         'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
         'last_run_on': fields.datetime('Last run on', readonly=True),
+        'nextcall': fields.function(_get_nextcall, method=True, type='datetime', string='Next execution date', store=False),
     }
     
     def open_request_view(self, cr, uid, ids, context=None):
