@@ -55,6 +55,7 @@ class procurement_order(osv.osv):
         created_proc = []
         report = []
         report_except = 0
+        ran_proc = []
         
         # Cache for product/location
         cache = {}
@@ -81,6 +82,7 @@ class procurement_order(osv.osv):
 
             if cycle.product_ids:
                 product_ids = []
+                ran_proc.append(cycle.id)
                 for p in cycle.product_ids:
                     product_ids.append(p.id)
                 for product in product_obj.browse(cr, uid, product_ids):
@@ -111,9 +113,9 @@ Created documents : \n'''
 
         Start Time: %s
         End Time: %s
-        Total Procurements processed: %d
+        Total Rules processed: %d
         Procurements with exceptions: %d
-        \n %s \n Exceptions: \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
+        \n %s \n Exceptions: \n'''% (start_date, end_date, len(ran_proc), report_except, len(created_proc) > 0 and created_doc or '')
         summary += '\n'.join(report)
         if batch_id:
             self.pool.get('procurement.batch.cron').write(cr, uid, batch_id, {'last_run_on': time.strftime('%Y-%m-%d %H:%M:%S')})
