@@ -258,10 +258,10 @@
           <para style="P16" alignment="LEFT">Name</para>
         </td>
         <td>
-          <para style="P16" alignment="RIGHT">Funded amount - Budget</para>
+          <para style="P16" alignment="RIGHT">Funded - Budget</para>
         </td>
         <td>
-          <para style="P17" alignment="RIGHT">Total project amount - Budget</para>
+          <para style="P17" alignment="RIGHT">Total project - Budget</para>
         </td>
       </tr>
     </blockTable>
