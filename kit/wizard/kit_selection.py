@@ -25,6 +25,7 @@ import decimal_precision as dp
 
 import netsvc
 
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 class kit_selection(osv.osv_memory):
     '''
@@ -34,6 +35,7 @@ class kit_selection(osv.osv_memory):
     _columns = {'product_id': fields.many2one('product.product', string='Kit Product', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Theoretical Kit'),
                 'order_line_id_kit_selection': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+                # one2many
                 'product_ids_kit_selection': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_line', string='Replacement Products'),
                 # related fields
                 'partner_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'partner_id', string='Partner', type='many2one', relation='res.partner', readonly=True),
@@ -64,6 +66,39 @@ class kit_selection(osv.osv_memory):
                           }
                 line_obj.create(cr, uid, values, context=dict(context, pol_ids=context['active_ids']))
         return True
+    
+    def validate_lines(self, cr, uid, ids, context=None):
+        '''
+        validate the lines
+        
+        - qty > 0.0 (must_be_greater_than_0)
+        - unit price > 0.0
+        
+        return True or False
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        # errors
+        errors = {'must_be_greater_than_0': False,
+                  'price_must_be_greater_than_0': False,
+                  }
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in obj.product_ids_kit_selection:
+                # reset the integrity status
+                item.write({'integrity_status': 'empty'}, context=context)
+                # qty
+                if item.qty_kit_selection_line <= 0.0:
+                    # qty is needed
+                    errors.update(must_be_greater_than_0=True)
+                    item.write({'integrity_status': 'must_be_greater_than_0'}, context=context)
+                # unit price
+                if item.price_unit_kit_selection_line <= 0.0:
+                    # unit price is needed
+                    errors.update(price_must_be_greater_than_0=True)
+                    item.write({'integrity_status': 'price_must_be_greater_than_0'}, context=context)
+        # check the encountered errors
+        return all([not x for x in errors.values()])
 
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
@@ -76,8 +111,15 @@ class kit_selection(osv.osv_memory):
         # objects
         pol_obj = self.pool.get('purchase.order.line')
         # id of corresponding purchase order line
+        pol_ids = context['active_ids']
         pol_id = context['active_ids'][0]
         pol = pol_obj.browse(cr, uid, pol_id, context=context)
+        # integrity constraint
+        integrity_check = self.validate_lines(cr, uid, ids, context=context)
+        if not integrity_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
+        # process
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.product_ids_kit_selection):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items must be selected.'))
@@ -90,6 +132,8 @@ class kit_selection(osv.osv_memory):
                 product_id = item_v.product_id_kit_selection_line.id
                 # selected qty
                 qty = item_v.qty_kit_selection_line
+                if qty <= 0.0:
+                    raise osv.except_osv(_('Warning !'), _('Quantity must be greater than 0.0.'))
                 # selected uom
                 uom_id = item_v.uom_id_kit_selection_line.id
                 # price unit
@@ -249,7 +293,8 @@ class kit_selection_line(osv.osv_memory):
         # return result
         return result
     
-    _columns = {'order_line_id_kit_selection_line': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+    _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+                'order_line_id_kit_selection_line': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
                 'wizard_id_kit_selection_line': fields.many2one('kit.selection', string='Kit Selection wizard'),
                 # data
                 'product_id_kit_selection_line': fields.many2one('product.product', string='Product', required=True),
@@ -257,6 +302,9 @@ class kit_selection_line(osv.osv_memory):
                 'uom_id_kit_selection_line': fields.many2one('product.uom', string='UoM', required=True),
                 'price_unit_kit_selection_line': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price')),
                 }
+    
+    _defaults = {'integrity_status': 'empty',
+                 }
     
 kit_selection_line()
 

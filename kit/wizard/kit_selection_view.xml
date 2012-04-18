@@ -33,7 +33,7 @@
             <field name="model">kit.selection.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-            	<tree string="Replacement Items" editable="top" colors="red:price_unit == 0.0">
+            	<tree string="Replacement Items" editable="top" colors="red:integrity_status!='empty'">
             		<field name="product_id_kit_selection_line"
             			context="partner_id=parent.partner_id_kit_selection,quantity=qty_kit_selection_line,pricelist=parent.pricelist_id_kit_selection,uom=uom_id_kit_selection_line,warehouse=parent.warehouse_id_kit_selection"
             			on_change="on_product_id_change(product_id_kit_selection_line,qty_kit_selection_line,uom_id_kit_selection_line,price_unit_kit_selection_line,context)" />
@@ -43,6 +43,7 @@
             		<field name="uom_id_kit_selection_line"
             			on_change="on_uom_id_change(product_id_kit_selection_line,qty_kit_selection_line,uom_id_kit_selection_line,price_unit_kit_selection_line,context)" />
             		<field name="price_unit_kit_selection_line" />
+            		<field name="integrity_status" />
             	</tree>
             </field>
 		</record>
