@@ -59,6 +59,8 @@ class kit_selection(osv.osv_memory):
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.kit_id:
                 raise osv.except_osv(_('Warning !'), _('A theoretical version should be selected.'))
+            if obj.kit_id.state != 'completed':
+                raise osv.except_osv(_('Warning !'), _('The theoretical version must be completed.'))
             for item in obj.kit_id.composition_item_ids:
                 values = {'order_line_id_kit_selection_line': obj.order_line_id_kit_selection.id,
                           'wizard_id_kit_selection_line': obj.id,
@@ -198,7 +200,7 @@ class kit_selection_line(osv.osv_memory):
             price_unit = vals.get('price_unit_kit_selection_line', 0.0)
             # gather default values
             data = self._call_pol_on_change(cr, uid, context['active_ids'],
-                                            product_id, qty, uom_id, price_unit, type='product_id_change',
+                                            product_id, qty, uom_id, price_unit, type='product_id_on_change',
                                             context=dict(context, pol_ids=context['active_ids']))
             # update price_unit value
             vals.update({'price_unit_kit_selection_line': data['value']['price_unit']})
