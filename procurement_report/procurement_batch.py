@@ -28,24 +28,12 @@ class procurement_batch_cron(osv.osv):
     _name = 'procurement.batch.cron'
     _inherit = 'ir.cron'
     
-    def _get_nextcall(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        
-        for batch in self.browse(cr, uid, ids, context=context):
-            if batch.cron_ids:
-                res[batch.id] = batch.cron_ids[0].nextcall
-            else:
-                res[batch.id] = False
-        
-        return res
-    
     _columns = {
         'name': fields.char(size=64, string='Name'),
         'type': fields.selection([('standard', 'POs creation Batch (from orders)'), ('rules', 'POs creation Batch (replenishment rules)')], string='Type', required=True),
         'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests', readonly=True),
         'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
         'last_run_on': fields.datetime('Last run on', readonly=True),
-        'nextcall': fields.function(_get_nextcall, method=True, type='datetime', string='Next execution date', store=False),
     }
     
     def open_request_view(self, cr, uid, ids, context=None):
@@ -133,6 +121,25 @@ class procurement_batch_cron(osv.osv):
                     cron_obj.write(cr, uid, cron.id, vals, context=context)
                     
         return super(procurement_batch_cron, self).write(cr, uid, ids, vals, context=context)
+
+
+    def read(self, cr, uid, ids, fields_to_read=None, context=None):
+        if not fields_to_read:
+            fields_to_read = []
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = super(procurement_batch_cron, self).read(cr, uid, ids, fields_to_read, context=context)
+
+        if 'nextcall' in fields_to_read:
+            for id in ids:
+                cron_ids = self.pool.get('ir.cron').search(cr, uid, [('batch_id', '=', id)])
+                if cron_ids:
+                    nextcall = self.pool.get('ir.cron').browse(cr, uid, cron_ids[0]).nextcall
+                    res[id].update({'nextcall': nextcall})
+
+         return res
     
 procurement_batch_cron()
 
