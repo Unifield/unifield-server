@@ -30,6 +30,13 @@ import pooler
 
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
+    
+    
+    def _hook_request_vals(self, cr, uid, *args, **kwargs):
+        '''
+        Hook to change the request values
+        '''
+        return kwargs['request_vals']
 
     def _procure_confirm(self, cr, uid, ids=None, use_new_cursor=False, context=None):
         '''
@@ -121,12 +128,13 @@ class procurement_order(osv.osv):
 
         Exceptions:\n'''% (start_date, end_date, report_total, report_except, report_later)
                 summary += '\n'.join(report)
-                request.create(cr, uid,
-                    {'name': "Procurement Processing Report.",
+                request_vals = {'name': "Procurement Processing Report.",
                         'act_from': uid,
                         'act_to': uid,
                         'body': summary,
-                    })
+                    }
+                self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
+                request.create(cr, uid, request_vals)
 
             if use_new_cursor:
                 cr.commit()
@@ -289,12 +297,14 @@ class procurement_order(osv.osv):
             if use_new_cursor:
                 cr.commit()
         if user_id and report:
-            request_obj.create(cr, uid, {
+            request_vals = {
                 'name': 'Orderpoint report.',
                 'act_from': user_id,
                 'act_to': user_id,
                 'body': '\n'.join(report)
-            })
+            }
+            request_vals = self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
+            request_obj.create(cr, uid, request_vals)
         if use_new_cursor:
             cr.commit()
             cr.close()
