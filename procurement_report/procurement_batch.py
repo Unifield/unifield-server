@@ -139,7 +139,7 @@ class procurement_batch_cron(osv.osv):
                     nextcall = self.pool.get('ir.cron').browse(cr, uid, cron_ids[0]).nextcall
                     res[id].update({'nextcall': nextcall})
 
-         return res
+        return res
     
 procurement_batch_cron()
 
