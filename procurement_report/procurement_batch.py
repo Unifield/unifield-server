@@ -184,6 +184,21 @@ class procurement_order(osv.osv):
                 request_obj.write(cr, uid, old_request, {'batch_id': False})
         return res
     
+    def _hook_add_purchase_created(self, cr, uid, *args, **kwargs):
+        '''
+        Returns the created docs in report
+        '''
+        if not 'purchase_ids' in kwargs:
+            return ''
+        else:
+            created_doc = '''################################
+Created documents : \n'''
+            for proc in self.browse(cr, uid, kwargs['purchase_ids']):
+                created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
+                
+            return created_doc
+        return ''
+    
 procurement_order()
 
 
