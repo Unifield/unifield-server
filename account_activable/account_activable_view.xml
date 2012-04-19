@@ -47,11 +47,18 @@
             <field name="field_parent">child_id</field>
             <field name="inherit_id" ref="account.view_account_search"/>
             <field name="arch" type="xml">
-                <filter string="Receivable Accounts" position="before">
-                    <filter name="active" icon="terp-check" string="Active"
-                            context="{'filter_inactive_accounts': 1}"/>
-                    <separator orientation="vertical"/>
-                </filter>
+                <data>
+	                <filter string="Receivable Accounts" position="before">
+	                    <filter name="active" icon="terp-check" string="Active"
+	                            context="{'filter_inactive_accounts': 1}"/>
+	                    <separator orientation="vertical"/>
+	                </filter>
+                    <group string="Group By..." position="replace">
+                        <group expand="0" string="Group By...">
+                            <filter string="Internal Type" icon="terp-stock_symbol-selection" domain="" context="{'group_by':'type'}"/>
+                        </group>
+                    </group>
+                </data>
             </field>
         </record>
 
