@@ -346,7 +346,12 @@
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
                 <tree string="Register Lines">
-                    <button name="button_advance" states="hard" string="Advance return" type="object" icon="terp-stock_effects-object-colorize" context="context"/>
+                    <button name="button_advance" states="hard" string="Advance return" type="object" 
+                        icon="terp-stock_effects-object-colorize" context="context"
+                        attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
+                            ('employee_id', '=', False)]}"/>
+                    <field name="from_cash_return" invisible="1"/>
+                    <field name="amount" invisible="1"/>
                     <field name="date"/>
                     <field name="sequence"/>
                     <field name="name" string="Description"/>
