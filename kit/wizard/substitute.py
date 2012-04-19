@@ -81,13 +81,14 @@ class substitute(osv.osv_memory):
                             if not item.exp_substitute_item:
                                 errors.update(missing_date=True)
                                 item.write({'integrity_status': 'missing_date'}, context=context)
-                elif perishable and not item.exp_substitute_item:
-                    # expiry date is needed
-                    errors.update(missing_date=True)
-                    item.write({'integrity_status': 'missing_date'}, context=context)
+                elif perishable:
+                    if not item.exp_substitute_item:
+                        # expiry date is needed
+                        errors.update(missing_date=True)
+                        item.write({'integrity_status': 'missing_date'}, context=context)
                 else:
-                    # no lot needed
-                    if item.lot_mirror:
+                    # no lot needed - no date needed
+                    if item.lot_mirror or item.exp_substitute_item:
                         errors.update(no_lot_needed=True)
                         item.write({'integrity_status': 'no_lot_needed'}, context=context)
         # check the encountered errors

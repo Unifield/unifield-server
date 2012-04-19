@@ -26,6 +26,15 @@ from report import report_sxw
 class cash_inventory(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(cash_inventory, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'get_selection': self.get_selection,
+        })
+        return
+
+    def get_selection(self, value):
+        # Parse each budget line
+        register_states = dict(self.pool.get('account.bank.statement')._columns['state'].selection)
+        return register_states[value]
 
 report_sxw.report_sxw('report.cash.inventory', 'account.bank.statement', 'addons/register_accounting/report/cash_inventory.rml', parser=cash_inventory)
 

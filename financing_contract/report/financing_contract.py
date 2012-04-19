@@ -20,12 +20,19 @@
 ##############################################################################
 
 import time
+import locale
 
 from report import report_sxw
 
 class contract(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(contract, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'locale': locale,
+        })
+        return
+        
+        
 
 report_sxw.report_sxw('report.financing.contract', 'financing.contract.contract', 'addons/financing_contract/report/financing_contract.rml', parser=contract)
 

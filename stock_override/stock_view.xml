@@ -61,11 +61,11 @@
                 <xpath expr="/form/group/group/field[@name='origin']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
-                <xpath expr="/form//field[@name='address_id']" position="replace">
-                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
+                <xpath expr="/form//field[@name='address_id']" position="replace" />
+<!--                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
                 				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                 	<field name="address_id" colspan="2" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                </xpath>
+                </xpath>-->
                 <xpath expr="/form/group/group/field[@name='date']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
@@ -101,8 +101,9 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='address_id']" position="replace">
                 	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
+                                                required="1"
                 				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" required="1" />
                 </xpath>
                 <xpath expr="/form/group/group/field[@name='date']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
@@ -138,9 +139,10 @@
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='address_id']" position="replace">
-                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
+                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                required="0"
                 				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                	<!--<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />-->
                 </xpath>
                 <xpath expr="/form/group/group/field[@name='date']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>

@@ -193,14 +193,23 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='price_unit']" position="replace">
-                    <field name="other_line_pb" invisible="1" />
-                    <field name="rfq_ok" invisible="1" />
-                    <field name="change_price_manually" attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('other_line_pb', '=', False)]}" />
-                    <label colspan="2" />
-                    <field name="price_unit" 
-                        on_change="price_unit_change(price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, context)" />
-                </xpath>
+            	<data>            		
+            		<xpath expr="/form//field[@name='product_id']" position="replace">
+	            		<field name="product_id" colspan="4" 
+	            			context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
+	            			on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit)"/>
+	            	</xpath>
+            		
+	                <xpath expr="/form//field[@name='price_unit']" position="replace">
+	                    <field name="rfq_ok" invisible="1" />
+	                    <field name="state" invisible="1" />
+	                    <field name="fake_id" invisible="1" />
+	                    <field name="change_price_ok" invisible="1" />
+	                    <field name="old_price_unit" invisible="1" />
+	                    <field name="price_unit" 
+	                        on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, context)" />
+	                </xpath>
+               	</data>
             </field>
         </record>
         

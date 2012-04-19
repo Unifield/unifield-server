@@ -141,20 +141,20 @@
     <blockTable colWidths="266.0,269.0" style="Table2">
       <tr>
         <td>
-          <para style="P12">Active from:</para>
+          <para style="P12" alignment="LEFT">Active from:</para>
         </td>
         <td>
-          <para style="P12">Inactive from:</para>
+          <para style="P12" alignment="LEFT">Inactive from:</para>
         </td>
       </tr>
     </blockTable>
     <blockTable colWidths="266.0,269.0" style="Table3">
       <tr>
         <td>
-          <para style="P13">[[ o.date_start ]] </para>
+          <para style="P13"  alignment="LEFT">[[ formatLang(o.date_start,  date=True) ]] </para>
         </td>
         <td>
-          <para style="P13">[[ o.date != 'False' and o.date or '' ]] </para>
+          <para style="P13" alignment="LEFT">[[ o.date != 'False' and formatLang(o.date,  date=True) or '' ]] </para>
         </td>
       </tr>
     </blockTable>
@@ -168,10 +168,10 @@
     <blockTable colWidths="281.0,258.0" style="Table11">
       <tr>
         <td>
-          <para style="P2">Cost center name</para>
+          <para style="P2" alignment="LEFT">Cost center name</para>
         </td>
         <td>
-          <para style="P2">Cost center code</para>
+          <para style="P2" alignment="LEFT">Cost center code</para>
         </td>
       </tr>
     </blockTable>
@@ -180,10 +180,10 @@
       <blockTable colWidths="278.0,255.0" style="Table9">
         <tr>
           <td>
-            <para style="P3">[[ line.name ]]</para>
+            <para style="P3" alignment="LEFT">[[ line.name ]]</para>
           </td>
           <td>
-            <para style="P3">[[ line.code ]]</para>
+            <para style="P3" alignment="LEFT">[[ line.code ]]</para>
           </td>
         </tr>
       </blockTable>
@@ -195,43 +195,43 @@
       <font color="white"> </font>
     </para>
     <para style="P6">Accounts:</para>
-    <blockTable colWidths="79.0,89.0,165.0,122.0,81.0" repeatRows="1" style="Table4">
+    <blockTable colWidths="40.0,180.0,80.0,80.0,140.0" repeatRows="1" style="Table4">
       <tr>
         <td>
-          <para style="P14">Code</para>
+          <para style="P14" alignment="LEFT">Code</para>
         </td>
         <td>
-          <para style="P15">Name</para>
+          <para style="P15" alignment="LEFT">Name</para>
         </td>
         <td>
-          <para style="P15">Active from</para>
+          <para style="P15" alignment="LEFT">Active from</para>
         </td>
         <td>
-          <para style="P25">Inactive from</para>
+          <para style="P25" alignment="LEFT">Inactive from</para>
         </td>
         <td>
-          <para style="P24">Note</para>
+          <para style="P24" alignment="LEFT">Note</para>
         </td>
       </tr>
     </blockTable>
     <section>
       [[repeatIn(o.account_ids,'line')]]
-      <blockTable colWidths="79.0,90.0,165.0,122.0,81.0" style="Table5">
+      <blockTable colWidths="40.0,180.0,80.0,80.0,140.0" style="Table5">
         <tr>
           <td>
-            <para style="P16">[[ line.code ]]</para>
+            <para style="P16" alignment="LEFT">[[ line.code ]]</para>
           </td>
           <td>
-            <para style="P11">[[ line.name ]]</para>
+            <para style="P11" alignment="LEFT">[[ line.name ]]</para>
           </td>
           <td>
-            <para style="P11">[[ line.activation_date ]] </para>
+            <para style="P11" alignment="LEFT">[[ formatLang(line.activation_date,  date=True) ]] </para>
           </td>
           <td>
-            <para style="P29">[[ line.inactivation_date != 'False' and line.inactivation_date or ' ' ]]</para>
+            <para style="P29" alignment="LEFT">[[ line.inactivation_date != 'False' and formatLang(line.inactivation_date,  date=True) or ' ' ]]</para>
           </td>
           <td>
-            <para style="P28">[[ line.note ]]</para>
+            <para style="P28" alignment="LEFT">[[ line.note ]]</para>
           </td>
         </tr>
       </blockTable>
@@ -242,11 +242,11 @@
     <para style="P6">
       <font color="white"> </font>
     </para>
-    <para style="P6">Comments:</para>
+    <para style="P6" alignment="LEFT">Comments:</para>
     <blockTable colWidths="533.0" style="Table7">
       <tr>
         <td>
-          <para style="P10">[[ format(o.description or '') ]]</para>
+          <para style="P10" alignment="LEFT">[[ format(o.description or '') ]]</para>
         </td>
       </tr>
     </blockTable>

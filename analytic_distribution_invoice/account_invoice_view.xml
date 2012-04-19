@@ -8,6 +8,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook" position="before">
@@ -35,6 +36,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="priority">35</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook" position="before">

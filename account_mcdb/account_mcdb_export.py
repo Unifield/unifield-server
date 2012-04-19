@@ -149,6 +149,8 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Is funding pool column needed?
+        display_fp = context.get('display_fp', False)
         if not writer:
             raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
         # Prepare some value
@@ -160,7 +162,12 @@ class account_line_csv_export(osv.osv_memory):
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
         # Prepare csv head
         head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 
-            'Period', 'General Account', 'Analytic Account', 'Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency']
+            'Period', 'General Account']
+        if display_fp:
+            head += ['Funding Pool', 'Cost Center']
+        else:
+            head += ['Analytic Account']
+        head += ['Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency']
         if currency_id:
             head += ['Output amount', 'Output currency']
         head+= ['Reversal Origin']
@@ -190,6 +197,9 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or '')
             #account_id name (analytic_account)
             csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
+            if display_fp:
+                #cost_center_id
+                csv_line.append(al.cost_center_id and al.cost_center_id.name and al.cost_center_id.name.encode('utf-8') or '')
             #third party
             csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
             #amount_currency

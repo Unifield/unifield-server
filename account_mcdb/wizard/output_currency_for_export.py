@@ -66,6 +66,7 @@ class output_currency_for_export(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         model = context.get('active_model')
+        display_fp = context.get('display_fp', False)
         wiz = self.browse(cr, uid, ids, context=context)[0]
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
@@ -98,6 +99,7 @@ class output_currency_for_export(osv.osv_memory):
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
             'datas': datas,
+            'context': {'display_fp': display_fp},
         }
 
 output_currency_for_export()
