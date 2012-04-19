@@ -114,7 +114,8 @@ class purchase_order(osv.osv):
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
     }
-    
+   
+    # Be careful during integration, the onchange_warehouse_id method is also defined on UF-966 
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, order_type, dest_address_id):
         '''
         Don't change the destination address if it's set or the order type is DPO 
