@@ -524,13 +524,7 @@ class account_bank_statement(osv.osv):
         valid_ids = []
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
-        for line in reg.line_ids:
-            for move in line.move_ids:
-                for ml in move.line_id:
-                    if ml.analytic_lines:
-                        valid_ids.append([x.id for x in ml.analytic_lines])
-        valid_ids = flatten(valid_ids)
-        domain = [('id', 'in', valid_ids), ('account_id.category', '=', 'FUNDING')]
+        domain = [('account_id.category', '=', 'FUNDING'), ('move_id.statement_id', 'in', [ids[0]])]
         context.update({'display_fp': True})
         return {
             'name': reg and 'Analytic Entries from ' + reg.name or 'Analytic Entries',
