@@ -409,13 +409,13 @@ class account_mcdb(osv.osv_memory):
         wiz = self.browse(cr, uid, res_id)
         res_model = wiz and wiz.model or False
         # Prepare some values
-        name = _('Multi-Criteria Data Browser')
+        name = _('Selector')
         view_name = False
         if res_model == 'account.move.line':
-            name = _('Journal Items MCDB')
+            name = _('Selector - G/L')
             view_name = 'account_mcdb_form'
         elif res_model == 'account.analytic.line':
-            name = _('Analytic Journal Items MCDB')
+            name = _('Selector - Analytic')
             view_name = 'account_mcdb_analytic_form'
         if not view_name or not name:
             raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
@@ -445,20 +445,36 @@ class account_mcdb(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_mcdb_form')
-        view_id = view_id and view_id[1] or False
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
         })
         res_id = ids[0]
+        # Do search
         if obj and field:
             # Search all elements
             element_ids = self.pool.get(obj).search(cr, uid, args)
             if element_ids:
                 self.write(cr, uid, ids, {field: [(6, 0, element_ids)]})
+        # Search model
+        wiz = self.browse(cr, uid, res_id)
+        res_model = wiz and wiz.model or False
+        # Prepare some values
+        name = _('Selector')
+        view_name = False
+        if res_model == 'account.move.line':
+            name = _('Selector - G/L')
+            view_name = 'account_mcdb_form'
+        elif res_model == 'account.analytic.line':
+            name = _('Selector - Analytic')
+            view_name = 'account_mcdb_analytic_form'
+        if not view_name or not name:
+            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
+        # Search view_id
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
+        view_id = view_id and view_id[1] or False
         return {
-            'name': _('Multi-Criteria Data Browser'),
+            'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.mcdb',
             'res_id': res_id,
