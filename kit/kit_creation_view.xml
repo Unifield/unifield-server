@@ -36,8 +36,8 @@
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" /> <!-- attrs="{'readonly': [('state', '!=', 'in_production')]}" /> -->
                     		<group col="4" colspan="4">
                     			<group colspan="2" />
-	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
-	                    		<button name="do_process_to_consume" type="object" string="Process All Lines" icon="gtk-go-forward" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
+	                    		<button name="dummy_function" type="object" string="Update Available Qty" icon="gtk-refresh" attrs="{'readonly': [('state', 'not in', ['draft', 'in_production'])]}" />
+	                    		<button name="do_process_to_consume2" type="object" string="Process All Lines" icon="gtk-go-forward" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
                     		</group>
                     		<field name="consumed_ids_kit_creation" colspan="4" nolabel="True" mode="tree,form,graph" context="{'consumed': True}">
                     			<tree string="Consumed Components" editable="top" hide_new_button="True" hide_delete_button="True">
@@ -48,6 +48,8 @@
                     				<field name="assigned_qty_stock_move" />
                     				<field name="product_uom" readonly="True" />
                     				<field name="prodlot_id"
+                    					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  		'search_default_real': True}"
                     					domain="[('product_id', '=', product_id),('check_type','=', True)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)]}" />
                     				<field name="expired_date" />
@@ -58,6 +60,7 @@
                     				<field name="state" />
                     				<field name="lot_check" />
 	                   				<field name="exp_check" />
+	                   				<field name="hidden_perishable_mandatory" invisible="True" />
 	                   				<field name="hidden_exp_check" invisible="True" />
                     				<field name="hidden_state" invisible="True" />
                     				<field name="hidden_prodlot_id" invisible="True" />
@@ -71,7 +74,7 @@
                     		</field>
                     		<group col="4" colspan="4">
 	                    		<button name="cancel_all_lines" type="object" string="Cancel All Lines" icon="gtk-cancel" invisible="True" />
-	                    		<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
+	                    		<button name="force_assign2" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="check_availability" type="object" string="Check Availability" icon="gtk-find" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="process_to_consume" type="object" string="Assign Automatically to Kits" icon="gtk-go-forward" readonly="True" invisible="True" />
                     		</group>
@@ -131,14 +134,14 @@
             		<field name="uom_id_to_consume"
             			on_change="on_change_uom_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_to_consume, location_src_id_to_consume, context)" />
             		<field name="location_src_id_to_consume"
-            			attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('state', '!=', 'in_production')]}"
+            			attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}"
             			context="{'product_id':product_id_to_consume, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}" />
             		<field name="qty_available_to_consume" />
             		<field name="availability_to_consume" invisible="True" />
-            		<field name="state" invisible="True" />
+            		<field name="fake_state" invisible="True" />
             		<field name="batch_check_kit_creation_to_consume" />
             		<field name="expiry_check_kit_creation_to_consume" />
-            		<button name="do_process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" attrs="{'invisible': ['|', ('consumed_to_consume', '=', True), ('state', '!=', 'in_production')]}" />
+            		<button name="do_process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" attrs="{'invisible': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}" />
             		<field name="consumed_to_consume" invisible="True" />
             	</tree>
             </field>
