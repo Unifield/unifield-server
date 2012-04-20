@@ -421,7 +421,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'datetime':
             res = False
             if values:
-                date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+                date_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
                 try:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
