@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_supplier_catalogue_all","supplier.catalogue.all","model_supplier_catalogue",,1,1,1,1
+"access_supplier_catalogue_line_all","supplier.catalogue.line.all","model_supplier_catalogue_line",,1,1,1,1

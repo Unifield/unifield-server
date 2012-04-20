@@ -2,35 +2,44 @@
 <openerp>
     <data>
 
+        <!-- View used by reconciliation -->
         <record model="ir.ui.view" id="view_move_line_tree">
             <field name="name">account.move.line.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
-            <field name="priority" eval="1"/>
+            <field name="priority" eval="200"/>
             <field name="arch" type="xml">
-                <tree string="Account Entry Line" noteditable="1">
-                    <field name="journal_id" string="Journal Code"/>
-                    <field name="move_id" string="Entry Sequence"/>
+                <tree string="Account Entry Line" noteditable="1" colors="red:state in ('draft');black:state in ('valid')">
                     <field name="instance"/>
-                    <field name="ref"/>
-                    <field name="date" string="Posting Date"/>
-                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
                     <field name="name"/>
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="document_date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
-                    <field name="partner_id" invisible="1"/>
-                    <field name="debit_currency" sum="Total Booking Debit"/>
-                    <field name="credit_currency" sum="Total Booking Credit"/>
-                    <field name="currency_id" string="Booking Currency"/>
-                    <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
+                    <field name="debit_currency" sum="Total Book. Debit"/>
+                    <field name="credit_currency" sum="Total Book. Credit"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Func. Debit"/>
+                    <field name="credit" sum="Total Func. Credit"/>
                     <field name="functional_currency_id"/>
+                    <field name="reconcile_total_partial_id"/>
                     <field name="state"/>
-                    <field name="reconcile_total_partial_id" />
                 </tree>
             </field>
         </record>
+
+        <act_window
+            context="{'search_default_next_partner':1,'view_mode':True}"
+            id="account.action_account_manual_reconcile" name="Journal Items"
+            res_model="account.move.line"
+            view_id="view_move_line_tree"/>
 
         <record id="view_move_line_form" model="ir.ui.view">
             <field name="name">account.move.line.form</field>
@@ -49,7 +58,8 @@
                         <field name="period_id"/>
                         <field name="instance" invisible="1"/>
                         <newline />
-                        <field name="date" string="Posting Date"/>
+                        <field name="date"/>
+                        <field name="document_date"/>
                     </group>
                     
                     <group col="6" colspan="4">
@@ -57,17 +67,20 @@
                         <newline/>
                         <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" on_change="onchange_account_id(account_id)" colspan="2"/>
                         <field name="partner_type" select="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                            attrs="{'required': [('partner_type_mandatory', '=', True)]}" colspan="2"/>
+                            attrs="{'required': [('partner_type_mandatory', '=', True)]}" colspan="2"
+                            domain="[('filter_for_third_party', '=', account_id)]"
+                            context="{'curr': currency_id}"
+                            />
                         <field name="partner_type_mandatory" invisible="1" colspan="2"/>
                         <newline />
-                        <field name="credit" string="Functional In" readonly="0" colspan="2"/>
-                        <field name="debit" string="Functional Out" readonly="0" colspan="2"/>
-                        <field name="functional_currency_id" string="Func. Currency" readonly="0" colspan="2"/>
+                        <field name="credit" readonly="0" colspan="2"/>
+                        <field name="debit" readonly="0" colspan="2"/>
+                        <field name="functional_currency_id" readonly="0" colspan="2"/>
                     </group>
                     
                     <group col="2" colspan="2" attrs="{'readonly':[('state','=','valid')]}" >
                         <separator colspan="2" string="Currency"/>
-                        <field name="currency_id" string="Booking Currency"/>
+                        <field name="currency_id"/>
                         <field name="credit_currency"/>
                         <field name="debit_currency"/>
                     </group>
@@ -76,7 +89,7 @@
                         <separator colspan="2" string="States"/>
                         <field name="state"/>
                         <field name="reconcile_id" readonly="1"/>
-                        <field name="reconcile_partial_id"  readonly="1"/>
+                        <field name="reconcile_partial_id" readonly="1"/>
                     </group>
                 </form>
             </field>
@@ -89,25 +102,29 @@
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom" noteditable="1">
-                    <field name="journal_id" string="Journal Code"/>
-                    <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="instance"/>
+                    <field name="journal_id"/>
+                    <field name="move_id" readonly="1" string="Entry Sequence"/>
+                    <field name="name"/>
                     <field name="ref"/>
-                    <field name="date" string="Posting Date"/>
+                    <field name="date"/>
+                    <field name="document_date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
                     <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
-                    <field name="partner_id" invisible="1"/>
+                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"
+                        domain="[('filter_for_third_party', '=', account_id)]"
+                        context="{'curr': currency_id}"                        
+                        />
                     <field name="partner_type_mandatory" invisible="1"/>
-                    <field name="name"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
-                    <field name="currency_id" string="Booking Currency"/>
-                    <field name="debit" sum="Total Functional Debit" string="Functional Debit" readonly="1"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional Credit" readonly="1"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Functional Debit" readonly="1"/>
+                    <field name="credit" sum="Total Functional Credit" readonly="1"/>
                     <field name="functional_currency_id" readonly="1"/>
                     <field name="reconcile_total_partial_id" readonly="1"/>
                     <field name="state"/>

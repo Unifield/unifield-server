@@ -50,6 +50,8 @@
     type: cash
     view_id: journal_view_1
     analytic_journal_id: analytic_journal_1
+    default_debit_account_id: account_1
+    default_credit_account_id: account_1
 -
   ...a fiscal year, ...
 -

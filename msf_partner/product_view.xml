@@ -11,7 +11,7 @@
                 <xpath expr="/form/field[@name='product_uom']" position="replace"/>
                 <xpath expr="/form/field[@name='name']" position="replace">
                 	<field name="company_id" invisible="1" />
-                	<field name="name" domain="[('supplier','=',True), ('id', '!=', company_id)]" />
+                	<field name="name" domain="[('supplier','=',True), ('id', '!=', company_id)]" on_change="onchange_supplier_id(name)"/>
                 </xpath>
                 <xpath expr="/form/field[@name='min_qty']" position="replace">
                     <field name="manufacturer_id"/>
@@ -33,6 +33,9 @@
                     <field name="manufacturer_id" />
                     <field name="second_manufacturer_id" />
                     <field name="third_manufacturer_id" />
+                </xpath>
+                <xpath expr="field[@name='sequence']" position="replace">
+                    <field name="sequence_bis" />
                 </xpath>
             </field>
         </record>

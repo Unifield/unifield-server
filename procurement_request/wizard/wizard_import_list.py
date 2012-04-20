@@ -34,7 +34,7 @@ import csv
 
 class wizard_import_list(osv.osv_memory):
     _name = 'procurement.request.import'
-    _description = 'Import of Procurement Request'
+    _description = 'Import of Internal Request'
 
     _columns = {
         'file': fields.binary(strign='File to import', required=True),
@@ -55,10 +55,12 @@ class wizard_import_list(osv.osv_memory):
         """
     }
 
-    def close_window(self, cr, uid, ids, context={}):
+    def close_window(self, cr, uid, ids, context=None):
         '''
         Simply close the wizard
         '''
+        if context is None:
+            context = {}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order',
                 'view_type': 'form',
@@ -66,11 +68,13 @@ class wizard_import_list(osv.osv_memory):
                 'res_id': context.get('list_id'),
                 'target': 'crush'}
 
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         '''
         Check if the Procurement List is saved and 
         set the error message
         '''
+        if context is None:
+            context = {}
         res = super(wizard_import_list, self).default_get(cr, uid, fields, context=context)
 
         # If we are after the importation
@@ -80,23 +84,25 @@ class wizard_import_list(osv.osv_memory):
             return res
         else:
             if not context.get('active_id', False):
-                raise osv.except_osv(_('Warning'), _('Please save the Procurement Request before importing lines'))
+                raise osv.except_osv(_('Warning'), _('Please save the Internal Request before importing lines'))
 
             # We check if the Procurement List is in 'Draft' state
             list_id = self.pool.get('sale.order').browse(cr, uid, context.get('active_id', []))
             if not list_id.procurement_request:
                 raise osv.except_osv(_('Error'), _('You cannot import lines in a Sale Order'))
-            elif not list_id or list_id.state != 'procurement':
-                raise osv.except_osv(_('Warning'), _('You cannot import lines in a confirmed Procurement Request'))
+            elif not list_id or list_id.state != 'draft':
+                raise osv.except_osv(_('Warning'), _('You cannot import lines in a confirmed Internal Request'))
 
         return res
 
 
-    def import_file(self, cr, uid, ids, context={}):
+    def import_file(self, cr, uid, ids, context=None):
         '''
         Import the file passed on the wizard in the
         Procurement List
         '''
+        if context is None:
+            context = {}
         list_line_obj = self.pool.get('sale.order.line')
         list_obj = self.pool.get('sale.order')
         product_obj = self.pool.get('product.product')
@@ -106,7 +112,7 @@ class wizard_import_list(osv.osv_memory):
         list_id = context.get('active_id', False)
 
         if not list_id:
-            raise osv.except_osv(_('Error'), _('The system hasn\'t found a Procurement List to import lines'))
+            raise osv.except_osv(_('Error'), _('The system hasn\'t found a Internal Request to import lines'))
 
         import_list = self.browse(cr, uid, ids[0], context)
 

@@ -93,13 +93,13 @@ class purchase_order_line(osv.osv):
     
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
+            name=False, price_unit=False, notes=False, state=False, old_unit_price=False):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
-        result = self.product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+        result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes)
+            name, price_unit, notes, state, old_unit_price)
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
@@ -187,11 +187,7 @@ class purchase_order_line(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
-        # codes
-        'nomen_c_manda_0': fields.char('C1', size=32),
-        'nomen_c_manda_1': fields.char('C2', size=32),
-        'nomen_c_manda_2': fields.char('C3', size=32),
-        'nomen_c_manda_3': fields.char('C4', size=32),
+
         # optional nomenclature levels
         'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1'),
         'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2'),
@@ -199,13 +195,7 @@ class purchase_order_line(osv.osv):
         'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4'),
         'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5'),
         'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6'),
-        # codes
-        'nomen_c_sub_0': fields.char('C5', size=128),
-        'nomen_c_sub_1': fields.char('C6', size=128),
-        'nomen_c_sub_2': fields.char('C7', size=128),
-        'nomen_c_sub_3': fields.char('C8', size=128),
-        'nomen_c_sub_4': fields.char('C9', size=128),
-        'nomen_c_sub_5': fields.char('C10', size=128),
+
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
@@ -217,7 +207,17 @@ class purchase_order_line(osv.osv):
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
 
+    def get_sub_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('sale.order.line').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+
+    def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context=None):
+        return self.pool.get('sale.order.line').onChangeSubNom(cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context)
 purchase_order_line()
 
 #
@@ -356,7 +356,8 @@ class sale_order_line(osv.osv):
         '''
         set nomenclature_description
         '''
-        assert values, 'No values, error on function call'
+        if not values:
+            return {}
         
         constants = self.pool.get('product.nomenclature')._returnConstants()
         
@@ -458,11 +459,7 @@ class sale_order_line(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
-        # codes
-        'nomen_c_manda_0': fields.char('C1', size=32),
-        'nomen_c_manda_1': fields.char('C2', size=32),
-        'nomen_c_manda_2': fields.char('C3', size=32),
-        'nomen_c_manda_3': fields.char('C4', size=32),
+
         # optional nomenclature levels
         'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1'),
         'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2'),
@@ -470,13 +467,7 @@ class sale_order_line(osv.osv):
         'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4'),
         'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5'),
         'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6'),
-        # codes
-        'nomen_c_sub_0': fields.char('C5', size=128),
-        'nomen_c_sub_1': fields.char('C6', size=128),
-        'nomen_c_sub_2': fields.char('C7', size=128),
-        'nomen_c_sub_3': fields.char('C8', size=128),
-        'nomen_c_sub_4': fields.char('C9', size=128),
-        'nomen_c_sub_5': fields.char('C10', size=128),
+
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
@@ -487,5 +478,36 @@ class sale_order_line(osv.osv):
     
     _inherit = 'sale.order.line'
     _description = 'Sale Order Line'
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+
+    def get_sub_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=False, context=None):
+        ret = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+        newval = {}
+        for i in range(0, 4):
+            if 'nomen_manda_%s'%i not in ret.get('value',{}):
+                newval['nomen_manda_%s'%i] = eval('nomen_manda_%s'%i)
+        self._setNomenclatureInfo(cr, uid, newval)
+        if 'value' not in ret:
+            ret['value'] = {}
+        ret['value']['nomenclature_description'] = newval.get('nomenclature_description')
+        return ret
+
+    def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context=None):
+        newval = {}
+        for i in range(0, 6):
+            if i < 4:
+                newval['nomen_manda_%s'%i] = eval('nomen_manda_%s'%i)
+            newval['nomen_sub_%s'%i] = eval('nomen_sub_%s'%i)
+        self._setNomenclatureInfo(cr, uid, newval)
+        ret = {'value': {}}
+        ret['value']['nomenclature_description'] = newval.get('nomenclature_description')
+        return ret
+
+
     
 sale_order_line()

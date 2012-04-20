@@ -4,12 +4,12 @@
 
         <!-- Sequences for procurement.list -->
         <record id="seq_type_procurement_request" model="ir.sequence.type">
-            <field name="name">Procurement Sequence Order</field>
+            <field name="name">Internal Request Sequence Order</field>
             <field name="code">procurement.request</field>
         </record>
 
         <record id="seq_procurement_request" model="ir.sequence">
-            <field name="name">Procurement Request</field>
+            <field name="name">Internal Request</field>
             <field name="code">procurement.request</field>
             <field name="prefix">ISR/</field>
             <field name="padding">5</field>

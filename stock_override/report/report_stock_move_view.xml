@@ -58,7 +58,7 @@
                 domain="[('date','&lt;=',(datetime.date.today()+relativedelta(day=31)).strftime('%%Y-%%m-%%d')),('date','&gt;=',(datetime.date.today()-relativedelta(day=1)).strftime('%%Y-%%m-%%d'))]"
                 help="Current month"/>
                 <separator orientation="vertical"/>
-                <filter string="Done"
+                <filter string="Closed"
                     name="done"
                     icon="terp-dialog-close"
                     domain="[('state','=','done')]"
@@ -89,7 +89,7 @@
                     <field name="location_id" />
                     <field name="location_dest_id" />
                     <field name="categ_id"/>
-                    <field name="reason_type_id"/>
+                    <field name="reason_type_id" widget="selection"/>
                     <separator orientation="vertical"/>
                     <field name="company_id" groups="base.group_multi_company" widget = "selection"/>
                     <newline/>

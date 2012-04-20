@@ -33,10 +33,12 @@ class stock_certificate_picking(osv.osv_memory):
         'picking_id': fields.many2one('stock.picking', 'Picking id'),
     }
     
-    def attach_certificate(self, cr, uid, ids, context={}):
+    def attach_certificate(self, cr, uid, ids, context=None):
         '''
         Attach the certificate if any and goes to the next step
         '''
+        if context is None:
+            context = {}
         attachment = self.pool.get('ir.attachment')
         
         picking_ids = []

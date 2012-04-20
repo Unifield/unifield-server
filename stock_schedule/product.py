@@ -31,7 +31,7 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
-    def _get_categ(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_categ(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the category of the product
         '''
@@ -42,7 +42,7 @@ class product_product(osv.osv):
             
         return res
     
-    def _search_categ(self, cr, uid, obj, name, args, context={}):
+    def _search_categ(self, cr, uid, obj, name, args, context=None):
         '''
         Return False if the research has no category
         '''

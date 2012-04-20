@@ -27,7 +27,7 @@
     "description" : "HQ records integration",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Tools",
-    "depends" : ["base", "account", "analytic", "account_journal", "account_corrections", "funding_pool"],
+    "depends" : ["base", "account", "analytic", "account_journal", "account_corrections", "analytic_distribution"],
     "init_xml" : [],
     "update_xml" : [
         'account_view.xml',

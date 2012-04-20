@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Add icon ahead analytic line to inform if this line have been reallocated or not -->
+        <record id="inherit2_view_account_analytic_line_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='company_id']" position='before'>
+                        <field name="is_reallocated" invisible="1"/>
+                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" 
+                            icon="terp-mail-" colspan="2"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- Add a filter to search engagement journal lines -->
+        <record id="inherit2_view_account_analytic_line_filter" model="ir.ui.view">
+            <field name="name">inherit.account.analytic.line.select</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[1]/field[@name='account_id']" position='after'>
+                        <field name="is_reallocated"/>
+                    </xpath>
+                    <xpath expr="/search/group[1]/field[@name='name']" position='after'>
+                        <field name="ref"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- View for Analytic Journal Items (FUNDING POOL) -->
+        <record id="view_account_analytic_line_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='account_id']" position='before'>
+                        <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- Action for Analytic Journal Items (FUNDING POOL) -->
+        <record id="account.action_account_analytic_journal_open_form" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items (FP)</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_account_analytic_line_tree"/>
+            <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
+            <field name="context">{'display_fp': True}</field>
+        </record>
+
+    <!-- Action for Analytic Journal Items (COST CENTER) -->
+        <record id="action_account_analytic_cost_center_line" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items (CC)</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
+            <field name="domain">[('account_id.category', '=', 'OC')]</field>
+        </record>
+
+    <!-- Action for Analytic Journal Items (FREE 1) -->
+        <record id="action_account_analytic_free_1_line" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items (F1)</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
+            <field name="domain">[('account_id.category', '=', 'FREE1')]</field>
+        </record>
+
+    <!-- Action for Analytic Journal Items (FREE 2) -->
+        <record id="action_account_analytic_free_2_line" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items (F2)</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
+            <field name="domain">[('account_id.category', '=', 'FREE2')]</field>
+        </record>
+
+    <!-- Menu for Analytic Journal Items -->
+        <menuitem groups="analytic.group_analytic_accounting" action="account.action_account_analytic_journal_open_form" 
+            id="account.account_analytic_journal_entries" parent="account.menu_finance_entries"/>
+        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_cost_center_line" 
+            id="account_analytic_journal_cost_center_entries" parent="account.menu_finance_entries"/>
+        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_1_line" 
+            id="account.account_analytic_journal_free_1_entries" parent="account.menu_finance_entries"/>
+        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_2_line" 
+            id="account_analytic_journal_free_2_entries" parent="account.menu_finance_entries"/>
+
+    </data>
+</openerp>

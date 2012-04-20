@@ -40,7 +40,7 @@ class wizard_import_cheque_lines(osv.osv_memory):
         'supplier_ref': fields.char('Supplier Inv. Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date_maturity': fields.date('Due Date', readonly=True),
-        'date': fields.date('Effective Date', readonly=False, required=True),
+        'date': fields.date('Posting Date', readonly=False, required=True),
         'amount_to_pay': fields.integer('Amount to pay', readonly=True),
         'amount_currency': fields.integer('Amount currency', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
@@ -71,13 +71,15 @@ class wizard_import_cheque(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
-    def action_import(self, cr, uid, ids, context={}):
+    def action_import(self, cr, uid, ids, context=None):
         """
         Import some cheque statement line into wizard.import.cheque.lines before process.
         """
         # Some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
@@ -118,7 +120,7 @@ class wizard_import_cheque(osv.osv_memory):
          'target': 'new',
         }
 
-    def action_confirm(self, cr, uid, ids, context={}):
+    def action_confirm(self, cr, uid, ids, context=None):
         """
         Import some cheque statement lines into the bank register and temp post them.
         """
@@ -127,6 +129,8 @@ class wizard_import_cheque(osv.osv_memory):
             return False
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         absl_obj = self.pool.get('account.bank.statement.line')

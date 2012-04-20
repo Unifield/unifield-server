@@ -49,11 +49,14 @@ class wizard_split_invoice(osv.osv_memory):
         'invoice_line_ids': fields.one2many('wizard.split.invoice.lines', 'wizard_id', string='Invoice lines'),
     }
 
-    def button_confirm(self, cr, uid, ids, context={}):
+    def button_confirm(self, cr, uid, ids, context=None):
         """
         Validate changes and split invoice regarding given lines
         """
         # Prepare some values
+        if context is None:
+            context = {}
+
         wizard = self.browse(cr, uid, ids[0], context=context)
         invoice_ids = [] # created invoices
         invoice_origin_id = wizard.invoice_id.id

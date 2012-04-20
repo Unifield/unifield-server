@@ -33,7 +33,7 @@ class stock_print_certificate(osv.osv_memory):
         'valuation_ids': fields.one2many('stock.certificate.valuation', 'print_id', string='Product valuation'),
     }
     
-    def print_certificate(self, cr, uid, ids, context={}):
+    def print_certificate(self, cr, uid, ids, context=None):
         '''
         Prints the certificate
         '''
@@ -78,7 +78,7 @@ class stock_certificate_valuation(osv.osv_memory):
     _name = 'stock.certificate.valuation'
     _description = 'Valuation of product in Outgoing donation'
     
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Forbid the deletion of a line
         '''
@@ -93,7 +93,7 @@ class stock_certificate_valuation(osv.osv_memory):
         'move_id': fields.many2one('stock.move', string='Move'),
         'product_id': fields.many2one('product.product', string='Product'),
         'qty': fields.float(digits=(16,2), string='Qty'),
-        'prodlot_id': fields.many2one('stock.production.lot', string='Lot'),
+        'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
         'unit_price': fields.float(digits=(16,2), string='Unit Price'),
     }
     

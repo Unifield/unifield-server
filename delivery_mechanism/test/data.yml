@@ -1,0 +1,73 @@
+-
+  In order to make tests, I create some elements in accounting.
+-
+  I create a fiscalyear
+-
+  !record {model: account.fiscalyear, id: fiscalyear0-delivery}:
+    code: !eval "'FY%s'% (datetime.now().year+10)"
+    company_id: base.main_company
+    date_start: '2011-01-01'
+    date_stop: '2011-12-31'
+    name: delivery Fiscal Year 2011
+-
+  I create the period 000
+-
+  !record {model: account.period, id: period_000-delivery}:
+    company_id: base.main_company
+    date_start: '2011-01-01'
+    date_stop: '2011-12-31'
+    fiscalyear_id: fiscalyear0-delivery
+    name: delivery period
+    special: 1
+- 
+  Partner A
+- 
+  !record {model: res.partner, id: partner_A}:
+    name: A
+    supplier: true
+    customer: true
+- 
+  Address for Partner A
+- 
+  !record {model: res.partner.address, id: address_A}:
+    partner_id: partner_A
+    street: AddressA
+-
+  Product A
+- 
+  !record {model: product.product, id: product_A}:
+    name: ProdA
+    cost_method: average
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+-
+  Product B
+-
+  !record {model: product.product, id: product_B}:
+    name: ProdB
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+-
+  Product C
+-
+  !record {model: product.product, id: product_C}:
+    name: ProdC
+    cost_method: average
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+-
+  Product D
+-
+  !record {model: product.product, id: product_D}:
+    name: ProdD
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+        

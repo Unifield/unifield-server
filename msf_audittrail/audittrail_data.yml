@@ -1,0 +1,193 @@
+-
+  I will create a rule for Purchase Order object
+-
+  !python {model: audittrail.rule}: |
+    name = 'Purchase Order'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['arrival_date', 'date_approve', 'date_order', 'delivery_confirmed_date',
+                'delivery_requested_date', 'est_transport_lead_time', 'invoice_method', 'invoice_ids',
+                'loan_duration', 'loan_id', 'location_id', 'notes', 'order_type',
+                'picking_ids', 'priority', 'ready_to_ship_date', 'rfq_ok', 'shipment_date', 'shipped',
+                'state', 'tender_id', 'transport_type', 'valid_till']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('rfq_ok', '=', False)]",
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'log_create': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  I will create a rule for Purchase Order lines
+-
+  !python {model: audittrail.rule}: |
+    name = 'Purchase Order Line'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order.line')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['comment', 'confirmed_delivery_date', 'date_planned', 'default_code',
+                'default_name', 'name', 'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2',
+                'nomen_manda_3', 'notes', 'price_unit', 'product_qty', 'product_uom',
+                'taxes_id']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
+      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
+      field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'order_id')], context=context)
+      
+      name_id = False
+      parent_id = False
+      
+      if field_parent:
+        parent_id = field_parent[0]
+        if field_name:
+          name_id = field_name[0]
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'log_create': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                      'parent_field_id': parent_id,
+                                      'name_get_field_id': name_id,
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  I will create a rule for Sale Order object
+-
+  !python {model: audittrail.rule}: |
+    name = 'Sale Order'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sale.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['partner_invoice_id', 'partner_shipping_id', 'picking_ids', 'priority', 'procurement_request',
+                'project_id', 'ready_to_ship_date', 'receipt_date', 'requested_date', 'requestor',
+                'shipment_date', 'shipped', 'state', 'transport_type', 'warehouse_id']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sale.order'), ('name', 'in', fields)], context=context)
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'log_create': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  I will create a rule for Sale Order lines
+-
+  !python {model: audittrail.rule}: |
+    name = 'Sale Order Line'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sale.order.line')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['comment', 'confirmed_delivery_date', 'date_planned', 'default_code', 'default_name',
+                'delay', 'discount', 'invoiced', 'notes', 'po_cft', 'price_unit', 'product_uom', 
+                'product_uom_qty', 'product_uos', 'product_uos_qty', 'state', 'supplier', 'type']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sale.order.line'), ('name', 'in', fields)], context=context)
+      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sale.order.line'), ('name', '=', 'line_number')], context=context)
+      field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sale.order.line'), ('name', '=', 'order_id')], context=context)
+      
+      name_id = False
+      parent_id = False
+      
+      if field_parent:
+        parent_id = field_parent[0]
+        if field_name:
+          name_id = field_name[0]
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'log_create': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                      'parent_field_id': parent_id,
+                                      'name_get_field_id': name_id,
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  I will create a rule for Stock Picking object
+-
+  !python {model: audittrail.rule}: |
+    name = 'Stock Picking'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.picking')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['attach_cert', 'backorder_id', 'change_reason', 'converted_to_standard', 'date_done', 'delivered',
+                'first_shipment_packing_id', 'invoice_state', 'location_dest_id', 'max_date', 'min_date', 'name',
+                'note', 'order_category', 'origin', 'overall_qty', 'reason_type_id', 'sale_id', 'state',
+                'transport_order_id', 'warehouse_id']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('type', '=', 'in')]",
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'log_create': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  I will create a rule for Stock Moves
+-
+  !python {model: audittrail.rule}: |
+    name = 'Stock Moves'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.move')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['address_id', 'asset_id', 'change_reason', 'comment', 'date', 'date_expected', 'location_dest_id',
+                'location_id', 'move_dest_id', 'name', 'note', 'prodlot_id', 'product_id', 'product_qty', 'product_uom',
+                'reason_type_id', 'state']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.move'), ('name', 'in', fields)], context=context)
+      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'name')], context=context)
+      field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'picking_id')], context=context)
+      
+      name_id = False
+      parent_id = False
+      
+      if field_parent:
+        parent_id = field_parent[0]
+        if field_name:
+          name_id = field_name[0]
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('picking_id', '!=', False), ('type', '=', 'in')]",
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'log_create': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                      'parent_field_id': parent_id,
+                                      'name_get_field_id': name_id,
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)

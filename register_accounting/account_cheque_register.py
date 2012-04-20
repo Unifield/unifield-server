@@ -72,20 +72,23 @@ class account_cheque_register(osv.osv):
         'display_type': 'all',
     }
 
-    def button_open_cheque(self, cr, uid, ids, context={}):
+    def button_open_cheque(self, cr, uid, ids, context=None):
         """
         When you click on "Open Cheque Register"
         """
         return self.write(cr, uid, ids, {'state': 'open'}, context=context)
 
-    def button_confirm_cheque(self, cr, uid, ids, context={}):
+    def button_confirm_cheque(self, cr, uid, ids, context=None):
         """
         When you press "Confirm" on a Cheque Register.
         You have to verify that all lines are in hard posting.
         """
+        if context is None:
+            context = {}
+        context.update({'confirm_from': 'cheque'})
         return self.button_confirm_bank(cr, uid, ids, context=context)
 
-    def button_display_type(self, cr, uid, ids, context={}):
+    def button_display_type(self, cr, uid, ids, context=None):
         """
         Filter on display_type in order to just show lines that are reconciled or not
         """

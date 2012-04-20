@@ -26,7 +26,7 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _order = 'date_expected asc'
     
-    def _get_picking_ids(self, cr, uid, ids, context={}):
+    def _get_picking_ids(self, cr, uid, ids, context=None):
         res = []
         picking_ids = self.pool.get('stock.picking').browse(cr, uid, ids, context=context)
         for pick in picking_ids:
@@ -34,7 +34,7 @@ class stock_move(osv.osv):
 
         return res
     
-    def _get_lot_ids(self, cr, uid, ids, context={}):
+    def _get_lot_ids(self, cr, uid, ids, context=None):
         res = []
         lot_ids = self.pool.get('stock.production.lot').browse(cr, uid, ids, context=context)
         for lot in lot_ids:
@@ -47,14 +47,14 @@ class stock_move(osv.osv):
                                selection=[('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True, 
                                store={
                                 'stock.picking': (_get_picking_ids, ['type'], 20),
-                                'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['picking_id'], 20),
+                                'stock.move': (lambda self, cr, uid, ids, c=None: ids, ['picking_id'], 20),
                                 }
                                
                                ),
         'expired_date': fields.related('prodlot_id', 'life_date', string='Expiry Date', type='date', readonly=True, 
                                         store={
                                             'stock.production.lot': (_get_lot_ids, ['life_date'], 20),
-                                            'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['prodlot_id'], 20), 
+                                            'stock.move': (lambda self, cr, uid, ids, c=None: ids, ['prodlot_id'], 20), 
                                             }
                                         ),
     }

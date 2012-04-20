@@ -23,7 +23,8 @@
 {
     "name" : "Sourcing Tool",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification", "procurement_request"],
     "init_xml" : [],
@@ -34,12 +35,13 @@
     'test': [
              'test/sourcing.yml',
              'test/2lines_supplier.yml',
+             'test/grouped_po.yml',
+             'test/error_rfq_sourcing.yml',
              ],
     'update_xml': [
         'security/ir.model.access.csv',
         'sourcing_sequence.xml',
         'sourcing_view.xml',
-        #'wizard/picking_create_picking_ticket_view.xml'
     ],
     'installable': True,
 }

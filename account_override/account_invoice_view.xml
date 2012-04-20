@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Delete some field from account_invoice tree:
+        - Salesman or User (user_id)
+        - Total amount (amount_total)
+        - Untaxed (amount_untaxed)
+    -->
+        <record id="inherit_invoice_tree" model="ir.ui.view">
+            <field name="name">inherit.invoice.tree</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.invoice_tree"/>
+            <field name="priority">17</field>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='user_id']" position="replace">
+                    </xpath>
+                    <xpath expr="/tree/field[@name='amount_untaxed']" position="replace">
+                    </xpath>
+                    <xpath expr="/tree/field[@name='residual']" position="attributes">
+                        <attribute name="sum"></attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='amount_total']" position="attributes">
+                        <attribute name="sum"></attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+        Delete some element from Search views:
+        - Salesman or user (user_id)
+        - Total (amount_total)
+        - Responsible button (group by)
+    -->
+        <record id="inherit_view_account_invoice_filter" model="ir.ui.view">
+            <field name="name">inherit.view.account.invoice.filter</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="priority">17</field>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[3]/filter[@string='Responsible']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+        Delete total from Search view for Sales Receipt and Supplier Vouchers (from account_voucher module)
+    -->
+        <record id="inherit_view_voucher_tree" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.tree</field>
+            <field name="model">account.voucher</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_tree"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='amount']" position="attributes">
+                        <attribute name="sum"></attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

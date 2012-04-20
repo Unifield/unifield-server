@@ -56,6 +56,8 @@ class split_memory_move(osv.osv_memory):
         class_name = context['class_name']
         
         wiz_obj = self.pool.get('wizard')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         # memory moves selected
         memory_move_ids = context['memory_move_ids']
@@ -69,39 +71,38 @@ class split_memory_move(osv.osv_memory):
             
             # leave quantity must be greater than zero
             if leave_qty <= 0:
-                raise osv.except_osv(_('Error!'),  _('Selected quantity to leave must be greater than 0.0.'))
+                raise osv.except_osv(_('Error!'),  _('Selected quantity must be greater than 0.0.'))
 
             # cannot select more than available
             if leave_qty > available_qty:
-                raise osv.except_osv(_('Error!'),  _('Selected quantity to leave in the current stock move (%0.1f) exceeds the available quantity (%0.1f)'%(leave_qty, available_qty)))
+                raise osv.except_osv(_('Error!'),  _('Selected quantity (%0.1f %s) exceeds the available quantity (%0.1f %s)')%(leave_qty, memory_move.product_uom.name, available_qty, memory_move.product_uom.name))
             
             # cannot select all available
             if leave_qty == available_qty:
-                raise osv.except_osv(_('Error !'),_('Selected quantity to leave in the current stock move is equal to available quantity (%i).'%(available_qty)))
+                raise osv.except_osv(_('Error !'),_('Selected quantity is equal to available quantity (%0.1f %s).')%(available_qty, memory_move.product_uom.name))
             
             # quantity difference for new memory stock move
             new_qty = available_qty - leave_qty
             
             # update the selected memory move
-            values = {'quantity': leave_qty}
-            # if the call is from ppl (class_name='stock.move.memory.ppl')
-            # disabled for now - see from user side if needed
-#            if class_name=='stock.move.memory.ppl':
-#                values.update(qty_per_pack=leave_qty)
+            values = {'quantity': new_qty}
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
             # create new memory move - copy for memory is not implemented
-            default_val = {'product_id': memory_move.product_id.id,
-                           'quantity': new_qty,
+            default_val = {'line_number': memory_move.line_number,
+                           'product_id': memory_move.product_id.id,
+                           'quantity': leave_qty,
+                           'force_complete': memory_move.force_complete,
                            'product_uom': memory_move.product_uom.id,
                            'prodlot_id': memory_move.prodlot_id.id,
                            'move_id': memory_move.move_id.id,
-                           'wizard_id': memory_move.wizard_id.id,
+                           'wizard_pick_id': memory_move.wizard_pick_id and memory_move.wizard_pick_id.id,
+                           'wizard_id': memory_move.wizard_id and memory_move.wizard_id.id,
                            'cost': memory_move.cost,
                            'currency': memory_move.currency.id,
                            'asset_id': memory_move.asset_id.id,
-            }
+                           }
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
         
         # no data for type 'back'

@@ -1,0 +1,67 @@
+-
+  I create an analytic account attached to OC (Operation Center) named Gabon
+-
+  !record {model: account.analytic.account, id: analytic_account_gabon}:
+    name: "Gabon"
+    currency_id: 1
+    code: GAB
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date: !eval "'%s-01-01' %(datetime.now().year + 2)"
+-
+  I create an analytic account attached to OC (Operation Center) named Kenya
+-
+  !record {model: account.analytic.account, id: analytic_account_kenya}:
+    name: "Kenya"
+    currency_id: 1
+    code: KEN
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date: !eval "'%s-01-01' %(datetime.now().year + 2)"
+-
+  I create a global analytical distribution
+-
+  !record {model: analytic.distribution, id: global_distrib_1}:
+    name: GLOB DISTR 1
+-
+  I create a cost center distribution line for gabon
+-
+  !record {model: cost.center.distribution.line, id: cost_center_gabon}:
+    name: CC Line 1
+    amount: 0.0
+    percentage: 75.0
+    currency_id: 1
+    analytic_id: analytic_account_gabon
+    distribution_id: global_distrib_1
+-
+  I create a cost center distribution line for kenya
+-
+  !record {model: cost.center.distribution.line, id: cost_center_kenya}:
+    name: CC Line 2
+    amount: 0.0
+    percentage: 25.0
+    currency_id: 1
+    analytic_id: analytic_account_kenya
+    distribution_id: global_distrib_1
+-
+  I create a funding pool distribution line for gabon
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_gabon}:
+    name: FP Line 1
+    amount: 0.0
+    percentage: 75.0
+    currency_id: 1
+    analytic_id: analytic_account_gabon
+    distribution_id: global_distrib_1
+-
+  I create a funding pool distribution line for kenya
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_kenya}:
+    name: FP Line 2
+    amount: 0.0
+    percentage: 25.0
+    currency_id: 1
+    analytic_id: analytic_account_kenya
+    distribution_id: global_distrib_1

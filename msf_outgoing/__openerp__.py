@@ -21,7 +21,8 @@
 {
     "name" : "MSF Outgoing Management",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "description": """
         MSF module covering business needs for outgoing movement from
@@ -34,7 +35,17 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "purchase", "sale", "product_asset", "order_line_number","reason_types_moves", "specific_rules",],
+    "depends" : ["stock",
+                 "purchase",
+                 "sale",
+                 "product_asset",
+                 "kit",
+                 "order_line_number",
+                 "reason_types_moves",
+                 "specific_rules",
+                 "msf_order_date",
+                 "stock_override",
+                 ],
     'update_xml': [
         'data/msf_outgoing_data.xml',
         'outgoing_sequence.xml',
@@ -49,7 +60,8 @@
     ],
     "demo_xml": ['data/msf_outgoing_data.xml',
                  ],
-    'test': ['test/msf_outgoing.yml'
+    'test': ['test/data.yml',
+             'test/msf_outgoing.yml'
     ],
     'installable': True,
 }

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="threshold_value_report_tree_view" model="ir.ui.view">
+			<field name="name">threshold.value.report.tree.view</field>
+			<field name="model">threshold.value.rules.report</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Threshold value rules" editable="top" noteditable="1"
+    				hide_new_button="1" hide_delete_button="1">
+    				<field name="rule_id" />
+    				<field name="location_id" />
+    				<field name="nomen_name" />
+    				<field name="product_id" />
+    				<field name="product_uom_id" />
+    				<field name="compute_method" />
+    				<field name="consumption_method" />
+    				<field name="threshold_value" />
+    				<field name="manual_qty" />
+    				<field name="frequency_id" />
+    				<field name="safety_stock" />
+    				<field name="fixed_lt" />
+    				<field name="product_lt" />
+    				<field name="total_stock" />
+    				<field name="stock" />
+    				<field name="intermediate_stock" />
+    				<field name="consumption_stock" />
+    				<field name="amc" />
+    				<field name="moh" />
+    				<field name="fmc" />
+    			</tree>
+			</field>
+		</record>
+		
+		<record id="threshold_value_report_search_view" model="ir.ui.view">
+			<field name="name">threshold.value.report.search.view</field>
+			<field name="model">threshold.value.rules.report</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Threshold value rules">
+					<field name="product_reference" />
+					<field name="product_name" />
+					<field name="product_id" />
+					<field name="location_id" />
+					<newline />
+    				<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', False)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+					</group>
+				</search>
+			</field>
+		</record>
+		
+		<act_window
+			id="action_threshold_value_rules_report"
+			src_model="procurement.rules.report"
+			res_model="threshold.value.rules.report"
+			name="Threshold value rules"
+			key2="client_action_multi"
+			view_type="form"
+			view_mode="tree,form" />
+		
+	</data>
+</openerp>

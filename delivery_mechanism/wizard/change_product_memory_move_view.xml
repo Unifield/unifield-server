@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_change_product_memory_move_form_wizard" model="ir.ui.view">
+            <field name="name">Change Product move</field>
+            <field name="model">change.product.memory.move</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Change Product of Memory Move">
+                <separator string="Select a new Product - The UoM is restricted" colspan="4"/>
+                <field name="old_product_id" colspan="4" />
+                <field name="old_uom_id" />
+                <field name="new_product_id" domain="[('uom_id', '=', old_uom_id)]" colspan="4" />
+                <field name="change_reason" colspan="4" />
+                <group colspan="2" />
+                <button name="cancel" string="_Cancel"
+                	type="object" icon='gtk-cancel' />
+                <button name="change_product" string="Ok"
+                    type="object" icon="gtk-ok" />
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

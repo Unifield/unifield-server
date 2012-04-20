@@ -34,7 +34,7 @@ class stock_move_tracking(osv.osv_memory):
         'expired_date': fields.date('Expired date'),
     }
     
-    def get_ids(self, cr, uid, ids, context={}):
+    def get_ids(self, cr, uid, ids, context=None):
         '''
         Returns all stock moves according to parameters
         '''
@@ -49,8 +49,7 @@ class stock_move_tracking(osv.osv_memory):
             domain = []
             if track.expired_date:
                 # Add two lines in domain because we cannot compare equality between date and datetime
-                domain.append(('expired_date', '>=', track.expired_date))
-                domain.append(('expired_date', '<=', track.expired_date))
+                domain.append(('prodlot_id.life_date', '=', track.expired_date))
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
@@ -63,7 +62,7 @@ class stock_move_tracking(osv.osv_memory):
             
         return res, lot_ids
     
-    def print_report(self, cr, uid, ids, context={}):
+    def print_report(self, cr, uid, ids, context=None):
         '''
         Print the report as PDF file
         '''
@@ -76,7 +75,7 @@ class stock_move_tracking(osv.osv_memory):
             if track.product_id:
                 product_name = track.product_id and track.product_id.name or False
                 product_code = track.product_id and track.product_id.default_code or False
-            prodlot_id = track.prodlot_id
+            prodlot_id = track.prodlot_id.id
             expired_date = track.expired_date
         
         data = {
@@ -86,7 +85,7 @@ class stock_move_tracking(osv.osv_memory):
                 'expired_date': expired_date}
        
         move_ids = self.get_ids(cr, uid, ids, context=context)
-        if not move_ids:
+        if not move_ids[0]:
             raise osv.except_osv(_('Warning !'), _('Your search did not match with any moves'))
         datas = {'ids': move_ids[0],
                  'model': 'stock.move',
@@ -96,7 +95,7 @@ class stock_move_tracking(osv.osv_memory):
                 'report_name': 'tracking.move.report',
                 'datas': datas}
     
-    def print_view(self, cr, uid, ids, context={}):
+    def print_view(self, cr, uid, ids, context=None):
         '''
         Print the report on Web client (search view)
         '''

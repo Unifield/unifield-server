@@ -43,12 +43,12 @@ class res_currency_rate_functional(osv.osv):
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
 
-    def refresh_analytic_lines(self, cr, uid, ids, date=None, currency=None, context={}):
+    def refresh_analytic_lines(self, cr, uid, ids, date=None, currency=None, context=None):
         """
         Refresh analytic lines that don't come from a move
         """
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Engagement lines object
@@ -65,8 +65,9 @@ class res_currency_rate_functional(osv.osv):
         return True
 
     def create(self, cr, uid, vals, context=None):
-        # This method is used to re-compute all account move lines
-        # when a currency is modified
+        """
+        This method is used to re-compute all account move lines when a currency is modified.
+        """
         res_id = super(res_currency_rate_functional, self).create(cr, uid, vals, context)
         self.refresh_move_lines(cr, uid, [res_id], date=vals['name'])
         # Also update analytic move line that don't come from a move (engagement journal lines)
@@ -75,8 +76,9 @@ class res_currency_rate_functional(osv.osv):
         return res_id
     
     def write(self, cr, uid, ids, vals, context=None):
-        # This method is used to re-compute all account move lines
-        # when a currency is modified
+        """
+        This method is used to re-compute all account move lines when a currency is modified.
+        """
         res = super(res_currency_rate_functional, self).write(cr, uid, ids, vals, context)
         self.refresh_move_lines(cr, uid, ids, date=vals['name'])
         # Also update analytic move line that don't come from a move (engagement journal lines)
@@ -86,8 +88,9 @@ class res_currency_rate_functional(osv.osv):
         return res
     
     def unlink(self, cr, uid, ids, context=None):
-        # This method is used to re-compute all account move lines
-        # when a currency is modified
+        """
+        This method is used to re-compute all account move lines when a currency is modified.
+        """
         res = True
         for currency in self.read(cr, uid, ids, ['currency_id']):
             currency_id = currency['currency_id'][0]

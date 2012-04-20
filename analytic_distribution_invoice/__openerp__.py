@@ -27,7 +27,7 @@
     "description" : "This permits to have analytic distribution wizard on Invoices",
     "author" : "TeMPO Consulting, MSF",
     "category" : "Tools",
-    "depends" : ["base", "funding_pool"],
+    "depends" : ["base", "account_override", "analytic_distribution"],
     "init_xml" : [],
     "update_xml" : [
             "account_invoice_view.xml",

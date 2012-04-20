@@ -1,0 +1,75 @@
+-
+  I create a fiscalyear
+-
+  !record {model: account.fiscalyear, id: fiscalyear0}:
+    code: !eval "'FY%s'% (datetime.now().year+7)"
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' %(datetime.now().year+7)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+7)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+7)"
+-
+  I create the current period for some test
+-
+  !record {model: account.period, id: current_period}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-%m-01')
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
+    fiscalyear_id: fiscalyear0
+    name: Our current period
+    special: 1
+-
+  I create a Receivable Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_receivable0}:
+    close_method: balance
+    code: receivable
+    name: Receivable
+    sign: 1
+-
+  I create an Expense Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_expense0}:
+    close_method: unreconciled
+    code: expense
+    name: Expense
+    sign: 1
+-
+  I create 4302 Payable Account.
+-
+  !record {model: account.account, id: account_account_payable_customer0}:
+    code: '4302-customer-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Customer Payable Account
+    type: payable
+    user_type: account_account_type_receivable0
+    reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
+-
+  I create a 4500 receivable Account.
+-
+  !record {model: account.account, id: account_account_receivable0}:
+    code: '4500-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: 4500 Receivable Account
+    type: receivable
+    user_type: account_account_type_receivable0
+    reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
+-
+  I create a 6101 Expense Account.
+-
+  !record {model: account.account, id: account_account_expense0}:
+    code: '6101-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense Account
+    type: other
+    user_type: account_account_type_expense0
+    activation_date: !eval time.strftime('%Y-01-01')
+-
+  I set 4500 account than default debit note account
+-
+  !python {model: res.company}: |
+    self.write(cr, uid, uid, {'import_invoice_default_account': ref("account_account_receivable0")})

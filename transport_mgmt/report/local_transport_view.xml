@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="local_transport_cost_report_tree_view" model="ir.ui.view">
+            <field name="name">local.transport.cost.report.tree.view</field>
+            <field name="model">local.transport.cost.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Local Transport Costs" hide_new_button="1">
+                    <field name="order_id" />
+                    <field name="nb_order" sum="# of Orders" />
+                    <field name="date_order" />
+                    <field name="delivery_confirmed_date" />
+                    <field name="partner_id" />
+                    <field name="transport_mode" />
+                    <field name="func_transport_cost" sum="Transport cost" />
+                    <field name="func_currency_id" />
+                    <field name="transport_cost" />
+                    <field name="transport_currency_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="local_transport_cost_report_search_view" model="ir.ui.view">
+            <field name="name">local.transport.cost.report.search.view</field>
+            <field name="model">local.transport.cost.report</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Local Transport Costs">
+                    <group colspan="10" col="12">
+                        <filter icon="terp-check" name="approved" string="Confirmed" domain="[('order_state','=','approved')]" separator="1" />
+                        <filter icon="gtk-yes" name="done" string="Closed" domain="[('order_state','=','done')]" separator="1" />
+                        <separator orientation="vertical" />
+                        <field name="transport_mode" />
+                        <field name="transport_cost" />
+                        <field name="order_id" />
+                        <field name="date_order" />
+                        <field name="delivery_confirmed_date" />
+                        <field name="partner_id" />
+                    </group>
+                    <newline />
+                    <group expand="1" string="Group By..." colspan="10" col="12">
+                        <filter string="Transport Mode" name="group_transport_mode" icon="terp-accessories-archiver" context="{'group_by': 'transport_mode'}" />
+                        <separator orientation="vertical" />
+                        <filter string="Supplier" name="group_partner_id" icon="terp-personal" context="{'group_by':'partner_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_local_transport_cost_action" model="ir.actions.act_window">
+            <field name="name">Local Transport Costs</field>
+            <field name="res_model">local.transport.cost.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="context">{'search_default_group_transport_mode':1, 'search_default_group_partner_id':1, 'search_default_group_transport_currency_id':1, 'group_by':[], 'group_by_no_leaf':0}</field>
+        </record>
+
+        <menuitem action="action_local_transport_cost_action" id="menu_local_transport_cost_report" parent="menu_transport_cost_reports"/>
+
+    </data>
+</openerp>

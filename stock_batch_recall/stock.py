@@ -24,6 +24,8 @@ import tools
 from osv import osv, fields
 from tools.translate import _
 from decimal_precision import decimal_precision as dp
+from tools.sql import drop_view_if_exists
+
 
 class stock_batch_recall(osv.osv_memory):
     _name = 'stock.batch.recall'
@@ -35,13 +37,13 @@ class stock_batch_recall(osv.osv_memory):
         'expired_date': fields.date(string='Expired Date')
     }
     
-    def get_ids(self, cr, uid, ids, context={}):
+    def get_ids(self, cr, uid, ids, context=None):
         '''
         Returns all stock moves according to parameters
         '''
         move_obj = self.pool.get('stock.move')
         
-        domain = []
+        domain = [('product_qty', '>', 0.00)]
         for track in self.browse(cr, uid, ids):
             if not track.product_id and not track.prodlot_id and not track.expired_date:
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
@@ -55,26 +57,24 @@ class stock_batch_recall(osv.osv_memory):
                 domain.append(('prodlot_id', '=', track.prodlot_id.id))
         return domain
     
-    def return_view(self, cr, uid, ids, context={}):
+    def return_view(self, cr, uid, ids, context=None):
         '''
         Print the report on Web client (search view)
         '''
+        if context is None:
+            context = {}
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         
-        context = {'group_by': [],
-                   'full':'1',
-                   'group_by_no_leaf': 1}
+        view_context = {}
+        #view_context = {'group_by_ctx': ['product_id', 'location_id'], 'group_by_no_leaf': 1}
         
-        domain =self.get_ids(cr, uid, ids)
+        domain = self.get_ids(cr, uid, ids)
         
         result = mod_obj._get_id(cr, uid, 'stock_batch_recall', 'action_report_batch_recall')
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
         
         result = act_obj.read(cr, uid, [id], context=context)[0]
-        
-        for d in domain:
-            context.update({'search_default_%s' %d[0]: d[2]})
 
         result['domain'] = domain
         result['context'] = context
@@ -89,80 +89,147 @@ class report_batch_recall(osv.osv):
     _description = 'Batch Recall'
     _auto = False
     _columns = {
-        'date': fields.datetime('Date', readonly=True),
-        'partner_id':fields.many2one('res.partner.address', 'Partner', readonly=True),
+        'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
-        'product_categ_id':fields.many2one('product.category', 'Product Category', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number', readonly=True),
         'expired_date': fields.date('Expired Date', readonly=True),
-        'company_id': fields.many2one('res.company', 'Company', readonly=True),
         'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'value' : fields.float('Total Value',  digits_compute=dp.get_precision('Account'), required=True),
-        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Confirmed'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
-              help='When the stock move is created it is in the \'Draft\' state.\n After that it is set to \'Confirmed\' state.\n If stock is available state is set to \'Avaiable\'.\n When the picking it done the state is \'Done\'.\
-              \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
     }
     
     def init(self, cr):
-        tools.drop_view_if_exists(cr, 'report_batch_recall')
+        drop_view_if_exists(cr, 'report_batch_recall')
         cr.execute("""
-CREATE OR REPLACE view report_batch_recall AS (
-    (SELECT
-        min(m.id) as id, m.date as date,
-        m.address_id as partner_id, m.location_id as location_id,
-        m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
-        m.company_id,
-        m.expired_date::date,
-        m.state as state, m.prodlot_id as prodlot_id,
-        coalesce(sum(-pt.standard_price * m.product_qty)::decimal, 0.0) as value,
-        CASE when pt.uom_id = m.product_uom
-        THEN
-        coalesce(sum(-m.product_qty)::decimal, 0.0)
-        ELSE
-        coalesce(sum(-m.product_qty * pu.factor)::decimal, 0.0) END as product_qty
-    FROM
-        stock_move m
-            LEFT JOIN stock_picking p ON (m.picking_id=p.id)
-            LEFT JOIN product_product pp ON (m.product_id=pp.id)
-                LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
-                LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
-            LEFT JOIN product_uom u ON (m.product_uom=u.id)
-            LEFT JOIN stock_location l ON (m.location_id=l.id)
-    WHERE l.usage in ('internal', 'customer')
-    GROUP BY
-        m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
-        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
-) UNION ALL (
-    SELECT
-        -m.id as id, m.date as date,
-        m.address_id as partner_id, m.location_dest_id as location_id,
-        m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
-        m.company_id,
-        m.expired_date::date,
-        m.state as state, m.prodlot_id as prodlot_id,
-        coalesce(sum(pt.standard_price * m.product_qty )::decimal, 0.0) as value,
-        CASE when pt.uom_id = m.product_uom
-        THEN
-        coalesce(sum(m.product_qty)::decimal, 0.0)
-        ELSE
-        coalesce(sum(m.product_qty * pu.factor)::decimal, 0.0) END as product_qty
-    FROM
-        stock_move m
-            LEFT JOIN stock_picking p ON (m.picking_id=p.id)
-            LEFT JOIN product_product pp ON (m.product_id=pp.id)
-                LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
-                LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
-            LEFT JOIN product_uom u ON (m.product_uom=u.id)
-            LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
-    WHERE l.usage in ('internal', 'customer')
-    GROUP BY
-        m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
-        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
-    )
-);
-        """)
+         CREATE OR REPLACE VIEW report_batch_recall AS (
+            SELECT
+                row_number() OVER(ORDER BY rec.product_id,
+                                           lot.name,
+                                           rec.location_id,
+                                           addr.partner_id) AS id,
+                rec.product_id AS product_id,
+                rec.prodlot_id AS prodlot_id,
+                rec.expired_date AS expired_date,
+                rec.location_id AS location_id,
+                addr.partner_id AS partner_id,
+                loc.usage AS location_type,
+                sum(rec.product_qty) AS product_qty
+            FROM
+                (
+                    (SELECT
+                        m.product_id AS product_id,
+                        m.prodlot_id AS prodlot_id,
+                        m.expired_date AS expired_date,
+                        m.location_dest_id AS location_id,
+                        p.address_id AS partner_id,
+                        CASE when pt.uom_id = m.product_uom
+                        THEN
+                            sum(m.product_qty)
+                        ELSE
+                            sum(round((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                        END AS product_qty
+                    FROM
+                        stock_move m
+                      LEFT JOIN
+                        stock_production_lot lot
+                          ON m.prodlot_id = lot.id
+                      LEFT JOIN
+                        stock_picking p
+                          ON m.picking_id = p.id
+                      LEFT JOIN
+                        product_product pp
+                          ON m.product_id = pp.id
+                      LEFT JOIN
+                        product_template pt
+                          ON pp.product_tmpl_id = pt.id
+                      LEFT JOIN
+                        product_uom pu
+                          ON pt.uom_id = pu.id
+                      LEFT JOIN
+                        product_uom mu
+                          ON m.product_uom = mu.id
+                    WHERE
+                        m.state = 'done'
+                    GROUP BY
+                        m.product_id,
+                        m.prodlot_id,
+                        m.expired_date,
+                        m.location_dest_id,
+                        pt.uom_id,
+                        m.product_uom,
+                        p.address_id)
+                UNION ALL
+                    (SELECT
+                        m.product_id AS product_id,
+                        m.prodlot_id AS prodlot_id,
+                        m.expired_date AS expired_date,
+                        m.location_id AS location_id,
+                        NULL AS partner_id,
+                        CASE when pt.uom_id = m.product_uom
+                        THEN
+                            -sum(m.product_qty)
+                        ELSE
+                            -sum(round((((m.product_qty/mu.factor)) * pu.factor)/pu.rounding)*pu.rounding)
+                        END AS product_qty
+                    FROM 
+                        stock_move m
+                      LEFT JOIN
+                        stock_production_lot lot
+                          ON m.prodlot_id = lot.id
+                      LEFT JOIN
+                        stock_picking p
+                          ON m.picking_id = p.id
+                      LEFT JOIN
+                        product_product pp
+                          ON m.product_id = pp.id
+                      LEFT JOIN
+                        product_template pt
+                          ON pp.product_tmpl_id = pt.id
+                      LEFT JOIN
+                        product_uom pu
+                          ON pt.uom_id = pu.id
+                      LEFT JOIN
+                        product_uom mu
+                          ON m.product_uom = mu.id
+                    WHERE
+                        m.state = 'done'
+                    GROUP BY
+                        m.product_id,
+                        m.prodlot_id,
+                        m.expired_date,
+                        m.location_id,
+                        pt.uom_id,
+                        m.product_uom,
+                        p.address_id)
+            ) AS rec
+              LEFT JOIN
+                res_partner_address addr
+                  ON rec.partner_id = addr.id
+              LEFT JOIN
+                stock_location loc
+                  ON rec.location_id = loc.id
+              LEFT JOIN
+                stock_production_lot lot
+                  ON rec.prodlot_id = lot.id
+            WHERE
+              loc.usage IN ('customer', 'supplier', 'internal')
+            GROUP BY
+              rec.product_id,
+              rec.expired_date,
+              rec.prodlot_id,
+              lot.name,
+              rec.location_id,
+              addr.partner_id,
+              loc.usage
+            ORDER BY
+              rec.product_id,
+              lot.name,
+              rec.location_id,
+              addr.partner_id
+        );""")
+        
+    def unlink(self, cr, uid, ids, context=None):
+        raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
 
 report_batch_recall()
 

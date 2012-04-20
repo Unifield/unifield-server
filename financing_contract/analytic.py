@@ -22,40 +22,50 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
+import tools
+from tools.translate import _
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         donor_line_obj = self.pool.get('financing.contract.donor.reporting.line')
         if context is None:
             context = {}
         if 'search_financing_contract' in context and context['search_financing_contract']:
-            if 'active_id' in context and \
-               'reporting_type' in context:
-                donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
-                # project domain
-                if donor_line.computation_type not in ('children_sum', 'analytic_sum'):
-                    raise osv.except_osv(_('Warning !'), _("The line selected has no analytic lines associated."))
-                    return
+            if 'reporting_line_id' in context and context['reporting_line_id']:
+                donor_line = donor_line_obj.browse(cr, uid, context['reporting_line_id'], context=context)
+                if donor_line.analytic_domain:
+                    args += donor_line.analytic_domain
                 else:
-                    # common domain part
-                    date_domain = eval(donor_line.date_domain)
-                    args += [date_domain[0],
-                             date_domain[1],
-                             donor_line_obj._get_account_domain(donor_line)]
-                    if context['reporting_type'] == 'allocated':
-                        # funding pool lines
-                        args += [eval(donor_line.funding_pool_domain)]
-                    else:
-                        # total project lines
-                        private_funds_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')], context=context)
-                        if private_funds_id:
-                            args += [('account_id', '!=', private_funds_id),
-                                     eval(donor_line.cost_center_domain)]
-        
+                    # Line without domain (consumption, overhead)
+                    raise osv.except_osv(_('No Analytic Domain !'),_("This line does not have an analytic domain!"))
+                    
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
+    def _get_fake(self, cr, uid, ids, *a, **b):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {}.fromkeys(ids, False)
+
+    def _search_contract_open(self, cr, uid, obj, name, args, context):
+        if not len(args):
+            return []
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Warning'), _('Filter contract_open is not implemented with those arguments.'))
+
+        cr.execute('''select distinct fpline.funding_pool_id 
+                from financing_contract_funding_pool_line fpline
+                left join financing_contract_contract contract on contract.format_id = fpline.contract_id
+                where contract.state in ('soft_closed', 'hard_closed') ''')
+        ids = [x[0] for x in cr.fetchall()]
+        return [('account_id', 'not in', ids)]
+
+    _columns = {
+        'contract_open': fields.function(_get_fake, type='boolean', method=True, string='Exclude closed contract', fnct_search=_search_contract_open, help="Field used only to search lines."),
+    }
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

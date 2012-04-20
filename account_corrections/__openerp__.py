@@ -27,17 +27,20 @@
     "description" : """
         Permits some corrections from Journal Items.
     """,
-    "author" : "TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional', 'funding_pool', 'account_override'],
+    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal'],
     "init_xml" : [],
     "update_xml" : [
         'account_view.xml',
         'account_wizard_view.xml',
     ],
     "demo_xml" : [],
-    "test": [],
+    "test": [
+        'test/account_data.yml',
+        'test/invoice_correction.yml'
+    ],
     "installable": True,
     "active": False
 }

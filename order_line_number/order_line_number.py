@@ -163,18 +163,19 @@ class purchase_order_line(osv.osv):
                 'line_number': fields.integer(string='Line', required=True),
                 }
     _order = 'line_number'
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         _inherit = 'purchase.order.line'
         
         add the corresponding line number
         '''
-        # gather the line number from the sale order sequence
-        order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
-        sequence = order.sequence_id
-        line = sequence.get_id(test='id', context=context)
-        vals.update({'line_number': line})
+        if self._name != 'purchase.order.merged.line':
+            # gather the line number from the sale order sequence
+            order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
+            sequence = order.sequence_id
+            line = sequence.get_id(test='id', context=context)
+            vals.update({'line_number': line})
         
         # create the new sale order line
         result = super(purchase_order_line, self).create(cr, uid, vals, context=context)

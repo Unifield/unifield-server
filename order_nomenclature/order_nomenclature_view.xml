@@ -73,31 +73,31 @@
 								<group colspan="4" col="2">
 									<field name="nomen_manda_0"
 										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(0, nomen_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" />
+                                        widget="selection"
+                                        on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+										attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_manda_1"
-										domain="[('parent_id', '=', nomen_manda_0), ('level', '=', '1'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(1, nomen_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+										domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+                                        on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_manda_2"
-										domain="[('parent_id', '=', nomen_manda_1), ('level', '=', '2'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(2, nomen_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+                                        on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_manda_3"
-										domain="[('parent_id', '=', nomen_manda_2), ('level', '=', '3'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(3, nomen_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_manda_0" invisible="True"
-										on_change="codeChange(0, nomen_c_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_1" invisible="True"
-										on_change="codeChange(1, nomen_c_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_2" invisible="True"
-										on_change="codeChange(2, nomen_c_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_3" invisible="True"
-										on_change="codeChange(3, nomen_c_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+                                        on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 								</group>
 
 							</group>
@@ -112,44 +112,47 @@
 										levels (for med, log,...)
 									-->
 									<field name="nomen_sub_0"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '0'),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_1"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '1'), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_2"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '2'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_3"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '3'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_4"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '4'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
-										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_5"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
-										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_sub_0" invisible="True"
-										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_1" invisible="True"
-										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_2" invisible="True"
-										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_3" invisible="True"
-										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_4" invisible="True"
-										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_5" invisible="True"
-										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 								</group>
 
 							</group>
@@ -207,13 +210,13 @@
 			<field name="model">purchase.order.line</field>
 			<field name="type">form</field>
 			<field name="priority" eval="100" />
-			<field name="inherit_id" ref="purchase.purchase_order_line_form" />
+			<field name="inherit_id" ref="purchase_override.purchase_order_line_form_view_inherit" />
 			<field name="arch" type="xml">
 				<data>
 				
 					<!-- modification of onchange function - avoid change to clear Comment field -->
 					<xpath expr="//form//page[@string='Order Line']/field[@name='product_qty']" position="replace">
-						<field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)"/>
+						<field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit)"/>
 					</xpath>
 
 					<!-- EXACT COPY SO-> Po -->
@@ -239,31 +242,31 @@
 								<group colspan="4" col="2">
 									<field name="nomen_manda_0"
 										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(0, nomen_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" />
+                                        widget="selection"
+                                        on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+										attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_manda_1"
-										domain="[('parent_id', '=', nomen_manda_0), ('level', '=', '1'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(1, nomen_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+										domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+                                        on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_manda_2"
-										domain="[('parent_id', '=', nomen_manda_1), ('level', '=', '2'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(2, nomen_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+                                        on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_manda_3"
-										domain="[('parent_id', '=', nomen_manda_2), ('level', '=', '3'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(3, nomen_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_manda_0" invisible="True"
-										on_change="codeChange(0, nomen_c_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_1" invisible="True"
-										on_change="codeChange(1, nomen_c_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_2" invisible="True"
-										on_change="codeChange(2, nomen_c_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_3" invisible="True"
-										on_change="codeChange(3, nomen_c_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+                                        on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 								</group>
 
 							</group>
@@ -278,44 +281,47 @@
 										levels (for med, log,...)
 									-->
 									<field name="nomen_sub_0"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '0'),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_1"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '1'), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_2"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '2'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_3"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '3'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_4"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '4'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
-										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                        get_selection="get_sub_nomen"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 									<field name="nomen_sub_5"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
-										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'readonly':[('product_id', '!=', False)]}" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_sub_0" invisible="True"
-										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_1" invisible="True"
-										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_2" invisible="True"
-										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_3" invisible="True"
-										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_4" invisible="True"
-										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_5" invisible="True"
-										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                        widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                    />
 								</group>
 
 							</group>

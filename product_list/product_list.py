@@ -28,7 +28,7 @@ class product_list(osv.osv):
     _name = 'product.list'
     _description = 'Products list'
     
-    def _get_nb_products(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_nb_products(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the number of products on the list
         '''
@@ -39,24 +39,27 @@ class product_list(osv.osv):
         
         return res
     
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Adds update date and user information
         '''
         vals['reviewer_id'] = uid
         vals['last_update_date'] = time.strftime('%Y-%m-%d')
         
-        return super(product_list, self).write(cr, uid, ids, vals=vals, context=context)
+        return super(product_list, self).write(cr, uid, ids, vals, context=context)
     
         
-    def copy(self, cr, uid, id, defaults={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         '''
         Remove the last update date and the reviewer on the new list
         '''
         if not context:
             context = {}
+
+        name = self.browse(cr, uid, id, context=context).name + ' (copy)'
             
         return super(product_list, self).copy(cr, uid, id, {'last_update_date': False,
+                                                            'name': name,
                                                             'reviewer_id': False}, context=context)
     
     _columns = {
@@ -82,7 +85,11 @@ class product_list(osv.osv):
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def change_product_line(self, cr, uid, ids, context={}):
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
+    ]
+
+    def change_product_line(self, cr, uid, ids, context=None):
         '''
         Refresh the old product list
         '''
@@ -95,7 +102,29 @@ class product_list(osv.osv):
             res.update({'old_product_ids': old_products})
 
         return {'value': res}
-    
+
+    def call_add_products(self, cr, uid, ids, context=None):
+        '''
+        Call the add multiple products wizard
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for list in self.browse(cr, uid, ids, context=context):
+            wiz_id = self.pool.get('product.list.add.products').create(cr, uid, {'list_id': list.id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.list.add.products',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+
 product_list()
 
 
@@ -110,7 +139,7 @@ class product_list_line(osv.osv):
         'comment': fields.char(size=256, string='Comment'),
     }
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Create old product list line on product list line deletion
         '''
@@ -154,7 +183,7 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
 
-    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns all lists/sublists where the product is in
         '''
@@ -175,7 +204,7 @@ class product_product(osv.osv):
                     
         return res
     
-    def _search_list_sublist(self, cr, uid, obj, name, args, context={}):
+    def _search_list_sublist(self, cr, uid, obj, name, args, context=None):
         '''
         Filter the search according to the args parameter
         '''

@@ -20,8 +20,8 @@
                             <field name="period_id"/>
                             <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
                             <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
-                            <field name="credit_currency"/>
                             <field name="debit_currency"/>
+                            <field name="credit_currency"/>
                             <field name="currency_id"/>
                             <field name="analytic_distribution_id" invisible="1"/>
                         </tree>
@@ -40,81 +40,21 @@
         </record>
 
     <!-- Analytic Distribution Wizard -->
-        <record model="ir.ui.view" id="inherit_wizard_costcenter_distribution_form1">
-            <field name="name">inherit.wizard.costcenter.distribution.form1</field>
-            <field name="model">wizard.costcenter.distribution</field>
+        <record model="ir.ui.view" id="inherit_analytic_distribution_wizard">
+            <field name="name">inherit.analytic.distribution.wizard</field>
+            <field name="model">analytic.distribution.wizard</field>
             <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_costcenter_distribution_form1'/>
+            <field name='inherit_id' ref='analytic_distribution.analytic_distribution_wizard_view'/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/field[@name='total_amount']" position="before">
-                        <field name="state" invisible="1"/>
+                    <xpath expr="/form/field[@name='amount']" position="before">
                         <field name="date" context="context" 
                             attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
                         <newline/>
                     </xpath>
-                </data>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="inherit_wizard_fundingpool_distribution_form1">
-            <field name="name">inherit.wizard.fundingpool.distribution.form1</field>
-            <field name="model">wizard.fundingpool.distribution</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_fundingpool_distribution_form1'/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/field[@name='total_amount']" position="before">
-                        <field name="state" invisible="1"/>
-                        <field name="date" context="context" 
-                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
-                        <newline/>
-                    </xpath>
-                    <xpath expr="/form/group[1]/button[@name='button_save']" position="replace">
-                        <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
-                        <button name="button_save" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="inherit_wizard_free1_distribution_form1">
-            <field name="name">inherit.wizard.free1.distribution.form1</field>
-            <field name="model">wizard.free1.distribution</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_free1_distribution_form1'/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/field[@name='total_amount']" position="before">
-                        <field name="state" invisible="1"/>
-                        <field name="date" context="context" 
-                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
-                        <newline/>
-                    </xpath>
-                    <xpath expr="/form/group[1]/button[@name='button_save']" position="replace">
-                        <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
-                        <button name="button_save" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="inherit_wizard_free2_distribution_form1">
-            <field name="name">inherit.wizard.free2.distribution.form1</field>
-            <field name="model">wizard.free2.distribution</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_free2_distribution_form1'/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/field[@name='total_amount']" position="before">
-                        <field name="state" invisible="1"/>
-                        <field name="date" context="context" 
-                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
-                        <newline/>
-                    </xpath>
-                    <xpath expr="/form/group[1]/button[@name='button_save']" position="replace">
-                        <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
-                        <button name="button_save" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
+                    <xpath expr="/form//button[@name='button_confirm']" position="replace">
+                        <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')], 'readonly': [('is_writable', '=', False)]}"/>
+                        <button name="button_confirm" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
                     </xpath>
                 </data>
             </field>

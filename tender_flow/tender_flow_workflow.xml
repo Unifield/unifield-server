@@ -58,7 +58,7 @@
             <field name="act_to" ref="act_cancel" />
             <field name="signal">tender_cancel</field>
         </record>
-        
+
         <!-- PROCUREMENT WORKFLOW -->
  		<record id="procurement.act_tender" model="workflow.activity">
             <field name="wkf_id" ref="procurement.wkf_procurement"/>

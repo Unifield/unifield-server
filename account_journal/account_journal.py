@@ -25,6 +25,8 @@ import logging
 from os import path
 import tools
 
+from tools.translate import _
+
 class account_journal(osv.osv):
     _inherit = "account.journal"
 
@@ -52,23 +54,25 @@ class account_journal(osv.osv):
 
 
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank'), \
-                ('cash','Cash'), \
-                ('purchase', 'Purchase'), \
-                ('correction','Correction'), \
-                ('cheque', 'Cheque'), \
-                ('hq', 'HQ'), \
-                ('hr', 'HR'), \
-                ('accrual', 'Accrual'), \
-                ('stock', 'Stock'), \
-                ('depreciation', 'Depreciation'), \
+        return [('bank', 'Bank'),
+                ('cash','Cash'),
+                ('purchase', 'Purchase'),
+                ('correction','Correction'),
+                ('cheque', 'Cheque'),
+                ('hq', 'HQ'),
+                ('hr', 'HR'),
+                ('accrual', 'Accrual'),
+                ('stock', 'Stock'),
+                ('depreciation', 'Depreciation'), 
                 # Old journal types: not used, but kept to
                 # not break OpenERP's demo/install data
-                ('sale', 'Sale'), \
-                ('sale_refund','Sale Refund'), \
-                ('purchase_refund','Purchase Refund'), \
-                ('general', 'General'), \
-                ('situation', 'Opening/Closing Situation')]
+                ('sale', 'Sale'), 
+                ('sale_refund','Sale Refund'), 
+                ('purchase_refund','Purchase Refund'), 
+                ('general', 'General'), 
+                ('situation', 'Opening/Closing Situation'),
+                ('cur_adj', 'Currency Adjustement'),
+        ]
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
@@ -95,20 +99,34 @@ class account_journal(osv.osv):
         result = self.browse(cr, user, ids, context=context)
         res = []
         for rs in result:
-            code = rs.code
-            res += [(rs.id, code)]
+            txt = rs.name
+            res += [(rs.id, txt)]
         return res
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
-        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+#        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
-        value.setdefault('domain',{})
+        value =  {'value': {}, 'domain': {}}
         if type in ('cash', 'bank', 'cheque'):
-            default_dom += [('code', '=like', '5%' )]
+            try:
+                xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_cash_moves')
+                default_dom += [('user_type', '=', xml_id[1])]
+            except KeyError:
+                pass
         value['domain']['default_debit_account_id'] = default_dom
-        value['domain']['default_crebit_account_id'] = default_dom
+        value['domain']['default_credit_account_id'] = default_dom
+        # Analytic journal associated
+        if type == 'cash':
+            analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS')], context=context)[0]
+            value['value']['analytic_journal_id'] = analytic_cash_journal
+        elif type == 'bank': 
+            analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK')], context=context)[0]
+            value['value']['analytic_journal_id'] = analytic_bank_journal
+        elif type == 'cheque': 
+            analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
+            value['value']['analytic_journal_id'] = analytic_cheque_journal
         return value
-
 
     def create(self, cr, uid, vals, context=None):
         
@@ -148,6 +166,11 @@ class account_journal(osv.osv):
         # create journal
         journal_obj = super(account_journal, self).create(cr, uid, vals, context)
         
+        # Some verification for cash, bank, cheque and cur_adj type
+        if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
+            if not vals.get('default_debit_account_id'):
+                raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
+        
         # if the journal can be linked to a register, the register is also created
         if vals['type'] in ('cash','bank','cheque'):
             # 'from_journal_creation' in context permits to pass register creation that have a
@@ -155,13 +178,11 @@ class account_journal(osv.osv):
             context.update({'from_journal_creation': True})
             self.pool.get('account.bank.statement') \
                 .create(cr, uid, {'journal_id': journal_obj,
-                                  'name': "REG1" + vals['code'],
+                                  'name': vals['name'],
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
                                   context=context)
-                
         return journal_obj
-    
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

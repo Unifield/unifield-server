@@ -30,16 +30,18 @@ class cashbox_write_off(osv.osv_memory):
     _name = 'cashbox.write.off'
 
     _columns = {
-        'choice' : fields.selection( [('writeoff', 'Accept write-off and close cashbox'), ('reopen', 'Re-open CashBox')], \
+        'choice' : fields.selection( [('writeoff', 'Accept write-off and close register'), ('reopen', 'Re-open Register')], \
             string="Decision about CashBox", required=True),
         'account_id': fields.many2one('account.account', string="Write-off Account"),
         'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
     }
 
-    def default_get(self, cr, uid, fields=None, context={}):
+    def default_get(self, cr, uid, fields=None, context=None):
         """
         Return the difference between balance_end and balance_end_cash from the cashbox and diplay it in the wizard.
         """
+        if context is None:
+            context = {}
         res = super(cashbox_write_off, self).default_get(cr, uid, fields, context=context)
         # Have we got any cashbox id ?
         if 'active_id' in context:
@@ -63,34 +65,17 @@ class cashbox_write_off(osv.osv_memory):
             cashbox_id = context.get('active_id')
             cashbox = self.pool.get('account.bank.statement').browse(cr, uid, cashbox_id)
             if cashbox.state not in ['partial_close', 'confirm']:
-                # Retrieve view id
-                irmd_obj = self.pool.get('ir.model.data')
-                view_ids = irmd_obj.search(cr, uid, [('name', '=', 'wizard_write_off_form1'), ('model', '=', 'ir.ui.view')])
-                # Prepare element that permit to display the view
-                if view_ids:
-                    view = irmd_obj.read(cr, uid, view_ids[0])
-                    view_id = (view.get('res_id'), view.get('name'))
-                    res.update({
-                        'name': u'wizard.write.off.form1', 
-                        'view_id': view_id, 
-                        'fields': {},
-                        'model': 'cashbox.write.off', 
-                        'arch': """
-                            <form string="Write-off - Error">
-                                <label string="Please use 'Close CashBox' button before." />
-                                <newline />
-                                <button string='Close' special='cancel' icon='gtk-cancel' />
-                            </form>
-                        """, 
-                    })
+                raise osv.except_osv(_('Warning'), _("Please use 'Close CashBox' button before."))
         return res
 
-    def action_confirm_choice(self, cr, uid, ids, context={}):
+    def action_confirm_choice(self, cr, uid, ids, context=None):
         """
         Do what the user wants, but not coffee ! Just this : 
         - re-open the cashbox
         - do a write-off
         """
+        if context is None:
+            context = {}
         id = context.get('active_id', False)
         if not id:
             raise osv.except_osv(_('Warning'), _('You cannot decide about Cash Discrepancy without selecting any CashBox!'))
@@ -104,6 +89,8 @@ class cashbox_write_off(osv.osv_memory):
             # look at user choice
             choice = self.browse(cr,uid,ids)[0].choice
             if choice == 'reopen':
+                if cstate not in ['partial_close']:
+                    raise osv.except_osv(_('Warning'), _('You cannot re-open a Closed Register.'))
                 # re-open case
                 cashbox.write({'state': 'open'})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': id}
@@ -122,17 +109,40 @@ class cashbox_write_off(osv.osv_memory):
                         curr_date = time.strftime('%Y-%m-%d')
                         date = cashbox.period_id.date_stop
                         period_id = cashbox.period_id.id
-                        # description = register period (YYYYMM) + "-" + register code + " " + "Write-off"
                         cash_period = cashbox.period_id.date_start
                         desc_period = time.strftime('%Y%m', time.strptime(cash_period, '%Y-%m-%d'))
+                        # description = register period (YYYYMM) + "-" + register code + " " + "Write-off"
                         description = "" + desc_period[:6] + "-" + cashbox.name + " " + "Write-off"
                         cash_difference = cashbox.balance_end - cashbox.balance_end_cash
                         account_debit_id = cashbox.journal_id.default_debit_account_id.id
                         account_credit_id = cashbox.journal_id.default_credit_account_id.id
                         currency_id = cashbox.currency.id
-                        # FIXME ! Right now, no account can be set by default;
-                        # later, it should be a analytic distribution
                         analytic_account_id = False
+                        # search analytic account used for FX gain/loss
+                        search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)])
+                        if not search_ids:
+                            raise osv.except_osv(_('Warning'), _('No FX gain/loss analytic account defined!'))
+                        # create an analytic distribution
+                        distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
+                        # add a cost center for analytic distribution
+                        distrib_line_vals = {
+                            'distribution_id': distrib_id,
+                            'currency_id': cashbox.company_id.currency_id.id,
+                            'analytic_id': search_ids[0],
+                            'percentage': 100.0,
+                            'date': date,
+                            'source_date': date,
+                        }
+                        cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+                        # add a funding pool line for analytic distribution
+                        try:
+                            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                        except ValueError:
+                            fp_id = 0
+                        if not fp_id:
+                            raise osv.except_osv(_('Error'), _('No analytic account named "MSF Private Fund" found!'))
+                        distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0]})
+                        self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
                         # create an account move (a journal entry)
                         move_vals = {
                             'journal_id': journal_id,
@@ -200,7 +210,9 @@ class cashbox_write_off(osv.osv_memory):
                             'journal_id': journal_id,
                             'period_id': period_id,
                             'currency_id': currency_id,
-                            'analytic_account_id': analytic_account_id
+                            'analytic_account_id': analytic_account_id,
+                            'analytic_distribution_id': distrib_id,
+                            'is_write_off': True,
                         }
                         # add an amount currency if the currency is different from company currency
                         if amount:

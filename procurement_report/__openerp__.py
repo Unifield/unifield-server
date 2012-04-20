@@ -22,7 +22,7 @@
 {
     "name": "Procurement Report",
     "version": "1.0",
-    "depends": ["base", "product", "procurement", "stock", "procurement_auto", "procurement_cycle"],
+    "depends": ["base", "product", "procurement", "stock", "procurement_auto", "procurement_cycle", "stock_schedule",],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Warehouse/Reporting",
@@ -35,6 +35,12 @@
     ],
     'update_xml': [
         'procurement_report_view.xml',
+        'procurement_batch_data.xml',
+        'procurement_batch_view.xml',
+        'min_max_report_view.xml',
+        'auto_supply_report_view.xml',
+        'order_cycle_report_view.xml',
+        'threshold_value_report_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [

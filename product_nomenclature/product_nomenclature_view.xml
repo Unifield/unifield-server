@@ -12,38 +12,34 @@
 					<group string="Extended Filters..." position="after">
 						<newline />
 						<group expand="1" string="Nomenclature Filters...">
-							<field name="nomen_manda_0"
+							<field name="nomen_manda_0_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
-							<field name="nomen_manda_1"
+								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+							<field name="nomen_manda_1_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
-							<field name="nomen_manda_2"
+								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+							<field name="nomen_manda_2_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
-							<field name="nomen_manda_3"
+								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+							<field name="nomen_manda_3_s"
 								domain="[('parent_id', '=', -1)]"
 								 widget="selection"
-								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
+								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 						</group>
 						<newline />
 						<group expand="1" string="Optional Nomenclature Filters...">
-							<field name="nomen_sub_0" domain="[('parent_id', '=', -1)]" widget="selection" />
-							<field name="nomen_sub_1" domain="[('parent_id', '=', -1)]" widget="selection" />
-							<field name="nomen_sub_2" domain="[('parent_id', '=', -1)]" widget="selection" />
-							<field name="nomen_sub_3" domain="[('parent_id', '=', -1)]" widget="selection" />
-							<field name="nomen_sub_4" domain="[('parent_id', '=', -1)]" widget="selection" />
-							<field name="nomen_sub_5" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_3_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_4_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_5_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						</group>
 
 					</group>
-					<field name="pricelist_id" position="before">
-						<field name="location_id" context="{'location': self}" />
-						<separator orientation="vertical" />
-					</field>
 				</data>
 			</field>
 		</record>
@@ -67,34 +63,28 @@
 								<group colspan="4" col="2">
 									<field name="nomen_manda_0"
 										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(0, nomen_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										widget="selection"
+										on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
 									<field name="nomen_manda_1"
-										domain="[('parent_id', '=', nomen_manda_0), ('level', '=', '1'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(1, nomen_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+										on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)">
+									</field>
 									<field name="nomen_manda_2"
-										domain="[('parent_id', '=', nomen_manda_1), ('level', '=', '2'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(2, nomen_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+										widget="selection"
+                                        get_selection="get_nomen"
+										on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
 									<field name="nomen_manda_3"
-										domain="[('parent_id', '=', nomen_manda_2), ('level', '=', '3'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(3, nomen_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"										
+										widget="selection"
+                                        get_selection="get_nomen"
+										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
 								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_manda_0"
-										on_change="codeChange(0, nomen_c_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_1"
-										on_change="codeChange(1, nomen_c_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_2"
-										on_change="codeChange(2, nomen_c_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_3"
-										on_change="codeChange(3, nomen_c_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-								</group>
-
 
 							</group>
-							<group colspan="2" col="4"></group>
-							<newline />
-
+							
 							<group colspan="2" col="5">
 								<separator string="Optional Levels" colspan="4" />
 
@@ -104,38 +94,35 @@
 										Added False as parent_id clause to enable global optional levels (for med, log,...)
 									-->
 									<field name="nomen_sub_0"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '0'),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                    />
 									<field name="nomen_sub_1"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '1'), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
 									<field name="nomen_sub_2"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '2'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
 									<field name="nomen_sub_3"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '3'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
 									<field name="nomen_sub_4"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '4'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
-										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
 									<field name="nomen_sub_5"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
-										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_sub_0"
-										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_1"
-										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_2"
-										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_3"
-										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_4"
-										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_5"
-										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										widget="selection"
+                                        get_selection="get_sub_nomen"
+                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                    />
 								</group>
 
 							</group>
@@ -156,7 +143,6 @@
 			<field name="arch" type="xml">
 				<form string="Product Nomenclature">
 					<field name="name" select="1" />
-					<field name="code" />
 					<field name="type" />
 					<field name="sub_level"
 						attrs="{'invisible': [('type', '!=', 'optional')], 'required': [('type', '=', 'optional')]}" />
@@ -176,7 +162,6 @@
 			<field name="arch" type="xml">
 				<tree string="Product Nomenclature">
 					<field name="complete_name" />
-					<field name="code" />
 					<field name="type" />
 					<field name="sub_level" />
 				</tree>
@@ -192,7 +177,6 @@
 			<field name="arch" type="xml">
 				<tree string="Product Nomenclature">
 					<field name="name" colspan="4" />
-					<field name="code" />
 					<field name="number_of_products" />
 				</tree>
 			</field>
@@ -208,13 +192,7 @@
 				nomenclature.</field>
 		</record>
 		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_sales"
-			groups="base.group_extended" parent="base.menu_product" sequence="10" />
-		
-		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_purchases"
-			groups="base.group_extended" parent="purchase.menu_procurement_management_product" sequence="10" />
-			
-		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_warehouse"
-			groups="base.group_extended" parent="stock.menu_stock_product" sequence="10" />
+			groups="base.group_extended" parent="base.menu_product" sequence="4" />
 		
 		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
 			<field name="name">Products Nomenclature</field>
@@ -235,7 +213,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="context">{}</field>
-			<field name="domain">['|', ('nomen_manda_0', '=', active_id), '|', ('nomen_manda_1', '=', active_id), '|', ('nomen_manda_2', '=', active_id), '|', ('nomen_manda_3', '=', active_id), '|', ('nomen_sub_0', '=', active_id), '|', ('nomen_sub_1', '=', active_id), '|', ('nomen_sub_2', '=', active_id),	'|', ('nomen_sub_3', '=', active_id), '|', ('nomen_sub_4', '=', active_id),	('nomen_sub_5', '=', active_id),]</field>
+			<field name="domain">['|', ('nomen_manda_0', '=', active_id), '|', ('nomen_manda_1', '=', active_id), '|', ('nomen_manda_2', '=', active_id), '|', ('nomen_manda_3', '=', active_id), '|', ('nomen_sub_0', '=', active_id), '|', ('nomen_sub_1', '=', active_id), '|', ('nomen_sub_2', '=', active_id),	'|', ('nomen_sub_3', '=', active_id), '|', ('nomen_sub_4', '=', active_id),	('nomen_sub_5', '=', active_id)]</field>
 			<!-- <field name="context"></field> -->
 			<field name ="help">This is the nomenclature tree view</field>
 		</record>

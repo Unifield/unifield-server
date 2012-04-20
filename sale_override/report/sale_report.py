@@ -29,7 +29,7 @@ class sale_report(osv.osv):
     _auto = False
     _rec_name = 'date'
 
-    def _invoiced(self, cr, uid, ids, name, arg, context={}):
+    def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
         Return True is the sale order is an uninvoiced order
         '''
@@ -75,13 +75,13 @@ class sale_report(osv.osv):
         'categ_id': fields.many2one('product.category','Category of Product', readonly=True),
         'nbr': fields.integer('# of Lines', readonly=True),
         'state': fields.selection([
-            ('draft', 'Quotation'),
+            ('draft', 'Draft'),
             ('waiting_date', 'Waiting Schedule'),
-            ('manual', 'Manual In Progress'),
-            ('progress', 'In Progress'),
+            ('manual', 'Confirmed'),
+            ('progress', 'Confirmed'),
             ('shipping_except', 'Shipping Exception'),
             ('invoice_except', 'Invoice Exception'),
-            ('done', 'Done'),
+            ('done', 'Closed'),
             ('cancel', 'Cancelled')
             ], 'Order State', readonly=True),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', readonly=True),

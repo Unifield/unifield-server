@@ -29,7 +29,7 @@ class account_account(osv.osv):
     _inherit = "account.account"
 
     _columns = {
-        'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Transfer'), ('advance', 'Cash Advance')], string="Type for Third Parties", 
+        'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Transfer'), ('transfer_same','Transfer (same currency)'), ('advance', 'Cash Advance')], string="Type for Third Parties", 
             help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
             when he add a new register line.
@@ -46,7 +46,7 @@ class account_move(osv.osv):
     _name = "account.move"
     _inherit = "account.move"
 
-    def _get_third_parties_from_move_line(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_third_parties_from_move_line(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Give the third parties of the given account.move.
         If all move lines content the same third parties, then return this third parties.
@@ -70,7 +70,7 @@ class account_move(osv.osv):
 
     _columns = {
         'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
-            ('res.partner', 'Partner')], size=128, readonly="1", type="reference", method=True),
+            ('res.partner', 'Partner'), ('account.journal', 'Journal')], size=128, readonly="1", type="reference", method=True),
     }
 
 account_move()
