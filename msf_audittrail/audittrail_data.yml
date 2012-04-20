@@ -167,7 +167,7 @@
                 'reason_type_id', 'state']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.move'), ('name', 'in', fields)], context=context)
-      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'name')], context=context)
+      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'line_number')], context=context)
       field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'picking_id')], context=context)
       
       name_id = False
