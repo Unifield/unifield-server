@@ -67,6 +67,13 @@
                         </field>
                         <field name="included_fields" nolabel="1" required="True"/>
                         <separator string="Values to be forced" colspan="2"/>
+                        <field name="forced_values_sel" nolabel="1" required="True"
+                            on_change="on_change_forced_values(forced_values_sel)">
+                            <tree editable="bottom">
+                                <field name="name"/>
+                                <field name="value"/>
+                            </tree>
+                        </field>
                         <field name="forced_values" nolabel="1"/>
                         <separator string="Fallback Values" colspan="2"/>
                         <field name="fallback_values" nolabel="1"/>

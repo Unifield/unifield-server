@@ -22,6 +22,18 @@
 from osv import osv
 from osv import fields
 
+class forced_values(osv.osv):
+    _name = "sync_server.sync_rule.forced_values"
+
+    _columns = {
+        #'name' : fields.char("Field Name", size = 128, required = True),
+        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
+        'value' : fields.char("Value", size = 1024, required = True),
+        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
+    }
+
+forced_values()
+
 class sync_rule(osv.osv):
     """ Synchronization Rule """
 
@@ -41,6 +53,9 @@ class sync_rule(osv.osv):
         'sequence_number': fields.integer('Sequence', required = True),
         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
         'included_fields':fields.text('Fields to include', required = True),
+        # FIXME: many2one in the analysis
+        'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
+        #'forced_values_sel': fields.many2many('sync_server.sync_rule.forced_values', 'sync_server_sync_rule_forced_values_rel', 'value', 'name', 'Select Forced Values'),
         'forced_values':fields.text('Values to force', required = False),
         'fallback_values':fields.text('Fallback values', required = False),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),('not-checked','Not checked'),], 'Status', required = True, readonly = True),
@@ -143,6 +158,32 @@ class sync_rule(osv.osv):
             }
             rules_data.append(data)
         return rules_data
+
+    def on_change_forced_values(self, cr, uid, ids, values, context=None):
+        model = self.read(cr, uid, ids, ['model_id'])[0]['model_id']
+        sel = []
+        errors = []
+        for value in values:
+            value = value[2]
+            if not value: continue
+            # TODO: remove the if statement if type 'char' is used
+            # If 'name' is a many2one
+            if isinstance(value['name'], int):
+                field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name', 'model'])
+                if not field['model'] == model:
+                    errors.append('The field '+field['name']+' is not owned by model '+model+' but '+field['model']+'!')
+                    continue
+                value['name'] = field['name']
+            sel.append("'"+value['name']+"':"+value['value'])
+        res = {'value' : {'forced_values' :
+            ('{'+', '.join(sel)+'}' if sel else '')
+        }}
+        if errors:
+            res['warning'] = {
+                'title' : 'Error!',
+                'message' : "\n".join(errors),
+            }
+        return res
 
     def on_change_included_fields(self, cr, uid, ids, fields, context=None):
         model = self.read(cr, uid, ids, ['model_id'])[0]['model_id']
