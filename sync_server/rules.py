@@ -44,7 +44,7 @@ class sync_rule(osv.osv):
         'fallback_values':fields.text('Fallback values', required = False),
         'active': fields.boolean('Active'),
     }
-        
+
     _order = 'sequence_number asc,model_id asc'
     
     #TODO add a last update to send only rule that were updated before => problem of dates
@@ -154,9 +154,20 @@ class message_rule(osv.osv):
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination_name': fields.char('Fields to extract destination', size=256, required = True),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),('not-checked','Not checked'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
     }
-    
+
+    _defaults = {
+        'status': 'not-checked',
+        #FIXME: it is said in analysis that active must be True by default
+        #       but it is wrong because it needs validation before proceed
+        'active': False,
+        'applies_to_type' : True,
+    }
+
+    _order = 'sequence_number asc,model_id asc'
+
     def _get_message_rule(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules(cr, uid, entity, context)
         rules_data = self._serialize_rule(cr, uid, rules_ids, context)
@@ -189,12 +200,39 @@ class message_rule(osv.osv):
             }
             rules_data.append(data)
         return rules_data
-        
-    _order = 'sequence_number asc,model_id asc'
-    
-    _defaults = {
-          'applies_to_type' : True,       
-    }
+
+    def validate(self, cr, uid, ids, context=None):
+        error = None
+        for rec in self.browse(cr, uid, ids, context=context):
+            try:
+                # Check domain syntax
+                try: eval(rec.domain)
+                except: raise StandardError, "Syntax error in domain!"
+                # TODO Remote Call Possible
+                pass
+                # Arguments of the call syntax and existence
+                try:
+                    arguments = eval(rec.arguments)
+                except:
+                    raise StandardError, "Syntax error in arguments!"
+                else:
+                    for arg in arguments:
+                        # TODO : arguments existence
+                        pass
+                # Sequence is unique
+                if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+                    raise StandardError, "The sequence #"+str(rec.sequence_number)+" already exists!"
+            except StandardError, e:
+                error = 'This rule cannot be validated for the following reason:\n\n'+str(e)
+                break
+        self.write(cr, uid, ids, {'status': ('valid' if not error else 'invalid')})
+        ## FIXME replace the following two-three lines.
+        ##       (How to simply print a message box?)
+        cr.commit()
+        if error: raise osv.except_osv('Unable to comply', error)
+        return {'type': 'ir.actions.act_window_close',}
 
 message_rule()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
