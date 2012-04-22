@@ -28,6 +28,7 @@
                     <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)]}"/>
                     <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)]}" />
                     <field name="direction"/>
+                    <field name="status"/>
                 </tree>
             </field>
         </record>
@@ -51,17 +52,22 @@
                             <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}"/>
                             <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)], 'required':[('applies_to_type','=',True)]}" widget="selection"/>
                         </group>
-                        <field name="active" />
+                        <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
                     </group>
                     <group colspan="4" col="1">
                         <separator string="Domain" />
                         <field name="domain" nolabel="1"/>
                         <separator string="Included fields" />
                         <field name="included_fields" nolabel="1" required="True"/>
-                        <separator string="Values to force" />
+                        <separator string="Values to be forced" />
                         <field name="forced_values" nolabel="1"/>
                         <separator string="Fallback Values" />
                         <field name="fallback_values" nolabel="1"/>
+                    </group>
+                    <group colspan="4" col="6">
+                        <label string="" colspan="3"/>
+                        <field name="status"/>
+                        <button type="object" string="Validate" name="validate"/>
                     </group>
                 </form>
             </field>

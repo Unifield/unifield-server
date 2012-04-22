@@ -42,7 +42,15 @@ class sync_rule(osv.osv):
         'included_fields':fields.text('Fields to include', required = True),
         'forced_values':fields.text('Values to force', required = False),
         'fallback_values':fields.text('Fallback values', required = False),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),('not-checked','Not checked'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
+    }
+
+    _defaults = {
+        #FIXME: it is said in analysis that active must be True by default
+        #       but it is wrong because it needs validation before proceed
+        'active': False,
+        'status': 'not-checked',
     }
 
     _order = 'sequence_number asc,model_id asc'
@@ -135,6 +143,35 @@ class sync_rule(osv.osv):
             rules_data.append(data)
         return rules_data
             
+    def validate(self, cr, uid, ids, context=None):
+        error = None
+        for rec in self.browse(cr, uid, ids, context=context):
+            try:
+                # Check domain syntax
+                try: eval(rec.domain)
+                except: raise StandardError, "Syntax error in domain!"
+                # Check field syntax
+                try: eval(rec.included_fields)
+                except: raise StandardError, "Syntax error in included fields!"
+                # Check force values syntax (can be empty)
+                try: eval(rec.forced_values or '1')
+                except: raise StandardError, "Syntax error in forced values!"
+                # Check fallback values syntax (can be empty)
+                try: eval(rec.fallback_values or '1')
+                except: raise StandardError, "Syntax error in fallback values!"
+                # Sequence is unique
+                if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+                    raise StandardError, "The sequence #"+str(rec.sequence_number)+" already exists!"
+            except StandardError, e:
+                error = 'This rule cannot be validated for the following reason:\n\n'+str(e)
+                break
+        self.write(cr, uid, ids, {'status': ('valid' if not error else 'invalid')})
+        ## FIXME replace the following two-three lines.
+        ##       (How to simply print a message box?)
+        cr.commit()
+        if error: raise osv.except_osv('Unable to comply', error)
+        return {'type': 'ir.actions.act_window_close',}
+
 sync_rule()
 
 class message_rule(osv.osv):
