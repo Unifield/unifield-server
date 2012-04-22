@@ -54,14 +54,21 @@
                         </group>
                         <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
                     </group>
-                    <group colspan="4" col="1">
-                        <separator string="Domain" />
-                        <field name="domain" nolabel="1"/>
-                        <separator string="Included fields" />
+                    <group colspan="4" col="2">
+                        <separator string="Domain" colspan="2"/>
+                        <field name="domain" colspan="2" nolabel="1"/>
+                        <separator string="Included fields" colspan="2"/>
+                        <field name="included_fields_sel" nolabel="1" required="True" on_change="on_change_included_fields(included_fields_sel)">
+                            <tree>
+                                <field name="name"/>
+                                <field name="field_description"/>
+                                <field name="ttype"/>
+                            </tree>
+                        </field>
                         <field name="included_fields" nolabel="1" required="True"/>
-                        <separator string="Values to be forced" />
+                        <separator string="Values to be forced" colspan="2"/>
                         <field name="forced_values" nolabel="1"/>
-                        <separator string="Fallback Values" />
+                        <separator string="Fallback Values" colspan="2"/>
                         <field name="fallback_values" nolabel="1"/>
                     </group>
                     <group colspan="4" col="6">

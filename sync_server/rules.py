@@ -39,6 +39,7 @@ class sync_rule(osv.osv):
                     'Directionality',required = True,),
         'domain':fields.text('Domain', required = False),
         'sequence_number': fields.integer('Sequence', required = True),
+        'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
         'included_fields':fields.text('Fields to include', required = True),
         'forced_values':fields.text('Values to force', required = False),
         'fallback_values':fields.text('Fallback values', required = False),
@@ -142,6 +143,23 @@ class sync_rule(osv.osv):
             }
             rules_data.append(data)
         return rules_data
+
+    def on_change_included_fields(self, cr, uid, ids, fields, context=None):
+        model = self.read(cr, uid, ids, ['model_id'])[0]['model_id']
+        sel = []
+        errors = []
+        for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model']):
+            if not field['model'] == model: errors.append('The field '+field['name']+' is not owned by model '+model+' but '+field['model']+'!')
+            else: sel.append("'"+field['name']+"'")
+        res = {'value': {'included_fields' :
+            ("("+", ".join(sel)+")" if sel else '')
+        }}
+        if errors:
+            res['warning'] = {
+                'title' : 'Error!',
+                'message' : "\n".join(errors),
+            }
+        return res
             
     def validate(self, cr, uid, ids, context=None):
         error = None
