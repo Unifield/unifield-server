@@ -40,6 +40,11 @@
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'in', ('confirmed', 'done', 'cancel'))]}" />
                     </xpath>
+                    
+                    <xpath expr="/form//field[@name='state']" position="after">
+                    	<button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
+                    </xpath>
 
                 </data>
             </field>

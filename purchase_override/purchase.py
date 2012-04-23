@@ -244,6 +244,18 @@ class purchase_order(osv.osv):
             return _("Purchase order '%s' is validated.") % (po.name,)
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
+        
+    def wkf_picking_done(self, cr, uid, ids, context=None):
+        '''
+        Change the shipped boolean and the state of the PO
+        '''
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.order_type == 'direct':
+                self.write(cr, uid, order.id, {'state': 'approved'}, context=context)
+            else:
+                self.write(cr, uid, order.id, {'shipped':1,'state':'approved'}, context=context)
+                
+        return True
     
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
@@ -517,7 +529,12 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        return self.write(cr, uid, ids, {'state':'done'}, context=context)
+        for order in self.browse(cr, uid, ids, context=context):
+            vals = {'state': 'done'}
+            if order.order_type == 'direct':
+                vals.update({'shipped': 1})
+            self.write(cr, uid, order.id, vals, context=context)
+        return True
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''

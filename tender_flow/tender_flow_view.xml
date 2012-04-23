@@ -232,6 +232,8 @@
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                         <group colspan="4" col="14">
                             <field name="state" readonly="1"/>
+                            <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
                             <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/>

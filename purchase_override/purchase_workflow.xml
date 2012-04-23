@@ -22,7 +22,7 @@
         <record id="trans_router_loan_done" model="workflow.transition">
             <field name="act_from" ref="purchase.act_router" />
             <field name="act_to" ref="act_loan_done" />
-            <field name="condition">order_type!='loan' or loan_id</field>
+            <field name="condition">order_type in ('loan', 'direct') or loan_id</field>
         </record>
         <record id="trans_loan_done" model="workflow.transition">
             <field name="act_from" ref="act_loan"/>
@@ -33,6 +33,52 @@
             <field name="act_from" ref="act_loan_done" />
             <field name="act_to" ref="purchase.act_done" />
         </record>
+        
+        <!-- Redefine the condition to take into account the DPO process (invoice create at confirmation, but
+             the workflow isn't blocked by the invoicing process) -->
+        <record id="act_dpo_invoice" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order"/>
+            <field name="name">dpo_invoice</field>
+            <field name="kind">function</field>
+            <field name="action">action_invoice_create()</field>
+        </record>
+             
+        <record id="trans_router_dpo_invoice" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_router"/>
+            <field name="act_to" ref="act_dpo_invoice"/>
+            <field name="condition">invoice_method=='order' and order_type=='direct'</field>
+        </record>
+        <record id="trans_dpo_invoice_invoice_done" model="workflow.transition">
+            <field name="act_from" ref="act_dpo_invoice"/>
+            <field name="act_to" ref="purchase.act_invoice_done"/>
+        </record>
+        <record id="purchase.trans_router_invoice" model="workflow.transition">
+            <field name="condition">invoice_method=='order' and order_type!='direct'</field>
+        </record>
+        
+        <!-- Modify the action of the approved activity because DPO shouldn't be received
+             if any user hasn't validated the reception at the customer side -->
+        <record id="purchase.act_picking_done" model="workflow.activity">
+        	<field name="action">wkf_picking_done()</field>
+        </record>
+        
+        <!-- Add an activity to wait the confirmation of the reception of the DPO at customer side -->
+        <record id="act_dpo_wait" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order"/>
+            <field name="name">dpo_wait</field>
+            <field name="kind">dummy</field>
+        </record>
+        
+        <record id="trans_router_dpo_wait" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_router"/>
+            <field name="act_to" ref="act_dpo_wait"/>
+            <field name="condition">order_type=='direct'</field>
+        </record>
+        <record id="trans_dpo_wait_done" model="workflow.transition">
+        	<field name="act_from" ref="act_dpo_wait" />
+        	<field name="act_to" ref="purchase.act_done" />
+        	<field name="signal">dpo_received</field>
+        </record>"
 
     <!-- Redefine Cancel and Done activites for Accounting Commitments -->
         <record id="purchase.act_cancel" model="workflow.activity">
