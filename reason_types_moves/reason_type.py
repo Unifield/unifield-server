@@ -186,6 +186,27 @@ class stock_inventory(osv.osv):
 stock_inventory()
 
 
+class stock_fill_inventory(osv.osv_memory):
+    _name = 'stock.fill.inventory'
+    _inherit = 'stock.fill.inventory'
+    
+    _columns = {
+        'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True, domain=[('is_inventory', '=', True)]),
+    }
+    
+    def _hook_fill_datas(self, cr, uid, *args, **kwargs):
+        '''
+        Hook to add data values in fill inventory line data
+        '''
+        res = super(stock_fill_inventory, self)._hook_fill_datas(cr, uid, *args, **kwargs)
+        if kwargs.get('fill_inventory'):
+            res.update({'reason_type_id': kwargs['fill_inventory'].reason_type_id.id})
+
+        return res
+    
+stock_fill_inventory() 
+
+
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
