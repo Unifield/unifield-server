@@ -50,6 +50,7 @@ class object_proxy(netsvc.Service):
         netsvc.Service.__init__(self, 'object_proxy', audience='')
         self.exportMethod(self.exec_workflow)
         self.exportMethod(self.execute)
+        self.exportMethod(self.execute_kw)
 
     def check(f):
         @wraps(f)
@@ -165,6 +166,9 @@ class object_proxy(netsvc.Service):
         if not object:
             raise except_osv('Object Error', 'Object %s doesn\'t exist' % str(obj))
         return getattr(object, method)(cr, uid, *args, **kw)
+
+    def execute_kw(self, db, uid, obj, method, args, kw=None):
+        return self.execute(db, uid, obj, method, *args, **kw or {})
 
     @check
     def execute(self, db, uid, obj, method, *args, **kw):

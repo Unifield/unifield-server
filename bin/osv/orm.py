@@ -48,6 +48,7 @@ import re
 import time
 import traceback
 import types
+import simplejson
 
 import netsvc
 from lxml import etree
@@ -71,6 +72,128 @@ POSTGRES_CONFDELTYPES = {
     'SET NULL': 'n',
     'SET DEFAULT': 'd',
 }
+
+def transfer_field_to_modifiers(field, modifiers):
+    default_values = {}
+    state_exceptions = {}
+    for attr in ('invisible', 'readonly', 'required'):
+        state_exceptions[attr] = []
+        default_values[attr] = bool(field.get(attr))
+    for state, modifs in (field.get("states",{})).items():
+        for modif in modifs:
+            if default_values[modif[0]] != modif[1]:
+                state_exceptions[modif[0]].append(state)
+
+    for attr, default_value in default_values.items():
+        if state_exceptions[attr]:
+            modifiers[attr] = [("state", "not in" if default_value else "in", state_exceptions[attr])]
+        else:
+            modifiers[attr] = default_value
+
+
+# Don't deal with groups, it is done by check_group().
+# Need the context to evaluate the invisible attribute on tree views.
+# For non-tree views, the context shouldn't be given.
+def transfer_node_to_modifiers(node, modifiers, context=None, in_tree_view=False):
+    if node.get('attrs'):
+        modifiers.update(eval(node.get('attrs')))
+
+    if node.get('states'):
+        if 'invisible' in modifiers and isinstance(modifiers['invisible'], list):
+             # combine state and normalized existing domain with OR 
+             import expression
+             invisible_domain = expression.normalize(modifiers['invisible'])
+             modifiers['invisible'] = ['|', ('state', 'not in', node.get('states').split(','))] + invisible_domain
+        else:
+             modifiers['invisible'] = [('state', 'not in', node.get('states').split(','))]
+
+    for a in ('invisible', 'readonly', 'required'):
+        if node.get(a):
+            v = bool(eval(node.get(a), {'context': context or {}}))
+            if in_tree_view and a == 'invisible':
+                # Invisible in a tree view has a specific meaning, make it a
+                # new key in the modifiers attribute.
+                modifiers['tree_invisible'] = v
+            elif v or (a not in modifiers or not isinstance(modifiers[a], list)):
+                # Don't set the attribute to False if a dynamic value was
+                # provided (i.e. a domain from attrs or states).
+                modifiers[a] = v
+
+
+def simplify_modifiers(modifiers):
+    for a in ('invisible', 'readonly', 'required'):
+        if a in modifiers and not modifiers[a]:
+            del modifiers[a]
+
+
+def transfer_modifiers_to_node(modifiers, node):
+    if modifiers:
+        simplify_modifiers(modifiers)
+        node.set('modifiers', simplejson.dumps(modifiers))
+
+def setup_modifiers(node, field=None, context=None, in_tree_view=False):
+    """ Processes node attributes and field descriptors to generate
+    the ``modifiers`` node attribute and set it on the provided node.
+
+    Alters its first argument in-place.
+
+    :param node: ``field`` node from an OpenERP view
+    :type node: lxml.etree._Element
+    :param dict field: field descriptor corresponding to the provided node
+    :param dict context: execution context used to evaluate node attributes
+    :param bool in_tree_view: triggers the ``tree_invisible`` code
+                              path (separate from ``invisible``): in
+                              tree view there are two levels of
+                              invisibility, cell content (a column is
+                              present but the cell itself is not
+                              displayed) with ``invisible`` and column
+                              invisibility (the whole column is
+                              hidden) with ``tree_invisible``.
+    :returns: nothing
+    """
+    modifiers = {}
+    if field is not None:
+        transfer_field_to_modifiers(field, modifiers)
+    transfer_node_to_modifiers(
+        node, modifiers, context=context, in_tree_view=in_tree_view)
+    transfer_modifiers_to_node(modifiers, node)
+
+def test_modifiers(what, expected):
+    modifiers = {}
+    if isinstance(what, basestring):
+        node = etree.fromstring(what)
+        transfer_node_to_modifiers(node, modifiers)
+        simplify_modifiers(modifiers)
+        json = simplejson.dumps(modifiers)
+        assert json == expected, "%s != %s" % (json, expected)
+    elif isinstance(what, dict):
+        transfer_field_to_modifiers(what, modifiers)
+        simplify_modifiers(modifiers)
+        json = simplejson.dumps(modifiers)
+        assert json == expected, "%s != %s" % (json, expected)
+
+
+# FIXME: To use this test:
+# import openerp
+# openerp.osv.orm.modifiers_tests()
+def modifiers_tests():
+    test_modifiers('<field name="a"/>', '{}')
+    test_modifiers('<field name="a" invisible="1"/>', '{"invisible": true}')
+    test_modifiers('<field name="a" readonly="1"/>', '{"readonly": true}')
+    test_modifiers('<field name="a" required="1"/>', '{"required": true}')
+    test_modifiers('<field name="a" invisible="0"/>', '{}')
+    test_modifiers('<field name="a" readonly="0"/>', '{}')
+    test_modifiers('<field name="a" required="0"/>', '{}')
+    test_modifiers('<field name="a" invisible="1" required="1"/>', '{"invisible": true, "required": true}') # TODO order is not guaranteed
+    test_modifiers('<field name="a" invisible="1" required="0"/>', '{"invisible": true}')
+    test_modifiers('<field name="a" invisible="0" required="1"/>', '{"required": true}')
+    test_modifiers("""<field name="a" attrs="{'invisible': [('b', '=', 'c')]}"/>""", '{"invisible": [["b", "=", "c"]]}')
+
+    # The dictionary is supposed to be the result of fields_get().
+    test_modifiers({}, '{}')
+    test_modifiers({"invisible": True}, '{"invisible": true}')
+    test_modifiers({"invisible": False}, '{}')
+
 
 def last_day_of_current_month():
     today = datetime.date.today()
@@ -387,6 +510,7 @@ class orm_template(object):
     _name = None
     _trace = False
     _columns = {}
+    _all_columns = {}
     _constraints = []
     _defaults = {}
     _rec_name = 'name'
@@ -526,6 +650,18 @@ class orm_template(object):
             self._description = self._name
         if not self._table:
             self._table = self._name.replace('.', '_')
+
+    def _get_column_infos(self):
+        """Returns a dict mapping all fields names (direct fields and
+           inherited field via _inherits) to a ``column_info`` struct
+           giving detailed columns """
+        result = {}
+        for k, (parent, m2o, col, original_parent) in self._inherit_fields.iteritems():
+            result[k] = fields.column_info(k, col, parent, m2o, original_parent)
+        for k, col in self._columns.iteritems():
+            result[k] = fields.column_info(k, col)
+        return result
+
 
     def browse(self, cr, uid, select, context=None, list_class=None, fields_process=None):
         """Fetch records as objects allowing to use dot notation to browse fields and relations
@@ -724,7 +860,10 @@ class orm_template(object):
             if mode=='.id':
                 id = int(id)
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.search(cr, uid, [('id', '=', int(id))])
+                dom = [('id', '=', id)]
+                if obj_model._columns.get('active'):
+                    dom.append(('active', 'in', ['True','False']))
+                ids = obj_model.search(cr, uid, dom, context=context)
                 if not len(ids):
                     raise Exception(_("Database ID doesn't exist: %s : %s") %(model_name, id))
             elif mode=='id':
@@ -733,13 +872,13 @@ class orm_template(object):
                 else:
                     module, xml_id = current_module, id
                 record_id = ir_model_data_obj._get_id(cr, uid, module, xml_id)
-                ir_model_data = ir_model_data_obj.read(cr, uid, [record_id], ['res_id'])
+                ir_model_data = ir_model_data_obj.read(cr, uid, [record_id], ['res_id'], context=context)
                 if not ir_model_data:
                     raise ValueError('No references to %s.%s' % (module, xml_id))
                 id = ir_model_data[0]['res_id']
             else:
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.name_search(cr, uid, id, operator='=')
+                ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
                     raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
@@ -765,8 +904,6 @@ class orm_template(object):
             done = {}
             for i in range(len(fields)):
                 res = False
-                if not line[i]:
-                    continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
 
@@ -796,7 +933,7 @@ class orm_template(object):
                         continue
                     done[field[len(prefix)]] = True
                     relation_obj = self.pool.get(fields_def[field[len(prefix)]]['relation'])
-                    newfd = relation_obj.fields_get( cr, uid, context=context )
+                    newfd = relation_obj.fields_get(cr, uid, context=context)
                     pos = position
                     res = []
                     first = 0
@@ -818,7 +955,7 @@ class orm_template(object):
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = _get_id(relation, line[i], current_module, mode)
+                    res = line[i] and _get_id(relation, line[i], current_module, mode) or False
 
                 elif fields_def[field[len(prefix)]]['type']=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
@@ -829,8 +966,9 @@ class orm_template(object):
 
                     # TODO: improve this by using csv.csv_reader
                     res = []
-                    for db_id in line[i].split(config.get('csv_internal_sep')):
-                        res.append( _get_id(relation, db_id, current_module, mode) )
+                    if line[i]:
+                        for db_id in line[i].split(config.get('csv_internal_sep')):
+                            res.append( _get_id(relation, db_id, current_module, mode) )
                     res = [(6,0,res)]
 
                 elif fields_def[field[len(prefix)]]['type'] == 'integer':
@@ -1155,12 +1293,26 @@ class orm_template(object):
     def view_header_get(self, cr, user, view_id=None, view_type='form', context=None):
         return False
 
-    def __view_look_dom(self, cr, user, node, view_id, context=None):
+    #def __view_look_dom(self, cr, user, node, view_id, context=None):
+    def __view_look_dom(self, cr, user, node, view_id, in_tree_view, model_fields, context=None):
+        """ Return the description of the fields in the node.
+
+        In a normal call to this method, node is a complete view architecture
+        but it is actually possible to give some sub-node (this is used so
+        that the method can call itself recursively).
+
+        Originally, the field descriptions are drawn from the node itself.
+        But there is now some code calling fields_get() in order to merge some
+        of those information in the architecture.
+
+        """
         if not context:
             context = {}
         result = False
         fields = {}
         children = True
+
+        modifiers = {}
 
         def encode(s):
             if isinstance(s, unicode):
@@ -1175,6 +1327,7 @@ class orm_template(object):
                 can_see = any(access_pool.check_groups(cr, user, group) for group in groups)
                 if not can_see:
                     node.set('invisible', '1')
+                    modifiers['invisible'] = True
                     if 'attrs' in node.attrib:
                         del(node.attrib['attrs']) #avoid making field visible later
                 del(node.attrib['groups'])
@@ -1249,10 +1402,15 @@ class orm_template(object):
                             attrs['selection'].append((False, ''))
                 fields[node.get('name')] = attrs
 
+                field = model_fields.get(node.get('name'))
+                if field:
+                    transfer_field_to_modifiers(field, modifiers)
+
         elif node.tag in ('form', 'tree'):
             result = self.view_header_get(cr, user, False, node.tag, context)
             if result:
                 node.set('string', result)
+            in_tree_view = node.tag == 'tree'
 
         elif node.tag == 'calendar':
             for additional_field in ('date_start', 'date_delay', 'date_stop', 'color'):
@@ -1261,6 +1419,12 @@ class orm_template(object):
 
         if 'groups' in node.attrib:
             check_group(node)
+
+        # The view architeture overrides the python model.
+        # Get the attrs before they are (possibly) deleted by check_group below
+        transfer_node_to_modifiers(node, modifiers, context, in_tree_view)
+
+        # TODO remove attrs couterpart in modifiers when invisible is true ?
 
         # translate view
         if ('lang' in context) and not result:
@@ -1283,8 +1447,9 @@ class orm_template(object):
 
         for f in node:
             if children or (node.tag == 'field' and f.tag in ('filter','separator')):
-                fields.update(self.__view_look_dom(cr, user, f, view_id, context))
+                fields.update(self.__view_look_dom(cr, user, f, view_id, in_tree_view, model_fields, context))
 
+        transfer_modifiers_to_node(modifiers, node)
         return fields
 
     def _disable_workflow_buttons(self, cr, user, node):
@@ -1312,21 +1477,34 @@ class orm_template(object):
         return node
 
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
-        fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
-        node = self._disable_workflow_buttons(cr, user, node)
-        arch = etree.tostring(node, encoding="utf-8").replace('\t', '')
+        """ Return an architecture and a description of all the fields.
+
+        The field description combines the result of fields_get() and
+        __view_look_dom().
+
+        :param node: the architecture as as an etree
+        :return: a tuple (arch, fields) where arch is the given node as a
+            string and fields is the description of all the fields.
+
+        """
         fields = {}
         if node.tag == 'diagram':
             if node.getchildren()[0].tag == 'node':
-                node_fields = self.pool.get(node.getchildren()[0].get('object')).fields_get(cr, user, fields_def.keys(), context)
+                node_fields = self.pool.get(node.getchildren()[0].get('object')).fields_get(cr, user, None, context)
             if node.getchildren()[1].tag == 'arrow':
-                arrow_fields = self.pool.get(node.getchildren()[1].get('object')).fields_get(cr, user, fields_def.keys(), context)
+                arrow_fields = self.pool.get(node.getchildren()[1].get('object')).fields_get(cr, user, None, context)
             for key, value in node_fields.items():
                 fields[key] = value
             for key, value in arrow_fields.items():
                 fields[key] = value
         else:
-            fields = self.fields_get(cr, user, fields_def.keys(), context)
+            fields = self.fields_get(cr, user, None, context)
+        fields_def = self.__view_look_dom(cr, user, node, view_id, False, fields, context=context)
+        node = self._disable_workflow_buttons(cr, user, node)
+        arch = etree.tostring(node, encoding="utf-8").replace('\t', '')
+        for k in fields.keys():
+            if k not in fields_def:
+                del fields[k]
         for field in fields_def:
             if field == 'id':
                 # sometime, the view may contain the (invisible) field 'id' needed for a domain (when 2 objects have cross references)
@@ -1619,10 +1797,13 @@ class orm_template(object):
             elif view_type == 'tree':
                 _rec_name = self._rec_name
                 if _rec_name not in self._columns:
-                    _rec_name = self._columns.keys()[0]
+                    if len(self._columns.keys()):
+                        _rec_name = self._columns.keys()[0]
+                    else:
+                        _rec_name = 'id'
                 xml = '<?xml version="1.0" encoding="utf-8"?>' \
                        '<tree string="%s"><field name="%s"/></tree>' \
-                       % (self._description, self._rec_name)
+                       % (self._description, _rec_name)
 
             elif view_type == 'calendar':
                 xml = self.__get_default_calendar_view()
@@ -1815,7 +1996,7 @@ class orm_template(object):
     def copy(self, cr, uid, id, default=None, context=None):
         raise NotImplementedError(_('The copy method is not implemented on this object !'))
 
-    def exists(self, cr, uid, id, context=None):
+    def exists(self, cr, uid, ids, context=None):
         raise NotImplementedError(_('The exists method is not implemented on this object !'))
 
     def read_string(self, cr, uid, id, langs, fields=None, context=None):
@@ -1890,6 +2071,67 @@ class orm_template(object):
             values = defaults
         return values
 
+    def resolve_o2m_commands_to_record_dicts(self, cr, uid, field_name, o2m_commands, fields=None, context=None):
+        """ Serializes o2m commands into record dictionaries (as if
+        all the o2m records came from the database via a read()), and
+        returns an iterable over these dictionaries.
+
+        Because o2m commands might be creation commands, not all
+        record ids will contain an ``id`` field. Commands matching an
+        existing record (``UPDATE`` and ``LINK_TO``) will have an id.
+
+        .. note:: ``CREATE``, ``UPDATE`` and ``LINK_TO`` stand for the
+                  o2m command codes ``0``, ``1`` and ``4``
+                  respectively
+
+        :param field_name: name of the o2m field matching the commands
+        :type field_name: str
+        :param o2m_commands: one2many commands to execute on ``field_name``
+        :type o2m_commands: list((int|False, int|False, dict|False))
+        :param fields: list of fields to read from the database, when applicable
+        :type fields: list(str)
+        :raises AssertionError: if a command is not ``CREATE``, ``UPDATE`` or ``LINK_TO``
+        :returns: o2m records in a shape similar to that returned by
+                  ``read()`` (except records may be missing the ``id``
+                  field if they don't exist in db)
+        :rtype: ``list(dict)``
+        """
+        o2m_model = self._all_columns[field_name].column._obj
+
+        # convert single ids and pairs to tripled commands
+        commands = []
+        for o2m_command in o2m_commands:
+            if not isinstance(o2m_command, (list, tuple)):
+                command = 4
+                commands.append((command, o2m_command, False))
+            elif len(o2m_command) == 1:
+                (command,) = o2m_command
+                commands.append((command, False, False))
+            elif len(o2m_command) == 2:
+                command, id = o2m_command
+                commands.append((command, id, False))
+            else:
+                command = o2m_command[0]
+                commands.append(o2m_command)
+            assert command in (0, 1, 4), \
+                "Only CREATE, UPDATE and LINK_TO commands are supported in resolver"
+
+        # extract records to read, by id, in a mapping dict
+        ids_to_read = [id for (command, id, _) in commands if command in (1, 4)]
+        records_by_id = dict(
+            (record['id'], record)
+            for record in self.pool.get(o2m_model).read(
+                cr, uid, ids_to_read, fields, context=context))
+
+        record_dicts = []
+        # merge record from db with record provided by command
+        for command, id, record in commands:
+            item = {}
+            if command in (1, 4): item.update(records_by_id[id])
+            if command in (0, 1): item.update(record)
+            record_dicts.append(item)
+        return record_dicts
+
 class orm_memory(orm_template):
 
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
@@ -1900,6 +2142,7 @@ class orm_memory(orm_template):
 
     def __init__(self, cr):
         super(orm_memory, self).__init__(cr)
+        self._all_columns = self._get_column_infos()
         self.datas = {}
         self.next_id = 0
         self.check_id = 0
@@ -2157,9 +2400,9 @@ class orm_memory(orm_template):
         pass
 
     def exists(self, cr, uid, ids, context=None):
-        if isinstance(ids, (long,int)):
+        if isinstance(ids, (int,long)):
             ids = [ids]
-        return [id for id in ids if id in self.datas]
+        return all(( id in self.datas for id in ids ))
 
 class orm(orm_template):
     _sql_constraints = []
@@ -2214,16 +2457,19 @@ class orm(orm_template):
             groupby_def = self._columns.get(groupby) or (self._inherit_fields.get(groupby) and self._inherit_fields.get(groupby)[2])
             assert groupby_def and groupby_def._classic_write, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
-        fget = self.fields_get(cr, uid, fields)
+        fget = self.fields_get(cr, uid, fields, context=context)
         float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer'), fields)
         flist = ''
         group_count = group_by = groupby
         if groupby:
             if fget.get(groupby):
-                if fget[groupby]['type'] in ('date', 'datetime'):
-                    flist = "to_char(%s,'yyyy-mm') as %s " % (qualified_groupby_field, groupby)
-                    groupby = "to_char(%s,'yyyy-mm')" % (qualified_groupby_field)
-                    qualified_groupby_field = groupby
+                groupby_type = fget[groupby]['type']
+                if groupby_type in ('date', 'datetime'):    
+                    qualified_groupby_field = "to_char(%s,'yyyy-mm')" % qualified_groupby_field
+                    flist = "%s as %s " % (qualified_groupby_field, groupby)
+                elif groupby_type == 'boolean':
+                     qualified_groupby_field = "coalesce(%s,false)" % qualified_groupby_field
+                     flist = "%s as %s " % (qualified_groupby_field, groupby)
                 else:
                     flist = qualified_groupby_field
             else:
@@ -2286,20 +2532,20 @@ class orm(orm_template):
             del d['id']
         return data
 
-    def _inherits_join_add(self, parent_model_name, query):
+    def _inherits_join_add(self, current_table, parent_model_name, query):
         """
         Add missing table SELECT and JOIN clause to ``query`` for reaching the parent table (no duplicates)
 
         :param parent_model_name: name of the parent model for which the clauses should be added
         :param query: query object on which the JOIN should be added
         """
-        inherits_field = self._inherits[parent_model_name]
+        inherits_field = current_table._inherits[parent_model_name]
         parent_model = self.pool.get(parent_model_name)
         parent_table_name = parent_model._table
         quoted_parent_table_name = '"%s"' % parent_table_name
         if quoted_parent_table_name not in query.tables:
             query.tables.append(quoted_parent_table_name)
-            query.where_clause.append('("%s".%s = %s.id)' % (self._table, inherits_field, parent_table_name))
+            query.where_clause.append('(%s.%s = %s.id)' % (current_table._table, inherits_field, parent_table_name))
 
     def _inherits_join_calc(self, field, query):
         """
@@ -2314,7 +2560,7 @@ class orm(orm_template):
         while field in current_table._inherit_fields and not field in current_table._columns:
             parent_model_name = current_table._inherit_fields[field][0]
             parent_table = self.pool.get(parent_model_name)
-            self._inherits_join_add(parent_model_name, query)
+            self._inherits_join_add(current_table, parent_model_name, query)
             current_table = parent_table
         return '"%s".%s' % (current_table._table, field)
 
@@ -2916,10 +3162,11 @@ class orm(orm_template):
         for table in self._inherits:
             res.update(self.pool.get(table)._inherit_fields)
             for col in self.pool.get(table)._columns.keys():
-                res[col] = (table, self._inherits[table], self.pool.get(table)._columns[col])
+                res[col] = (table, self._inherits[table], self.pool.get(table)._columns[col], table)
             for col in self.pool.get(table)._inherit_fields.keys():
-                res[col] = (table, self._inherits[table], self.pool.get(table)._inherit_fields[col][2])
+                res[col] = (table, self._inherits[table], self.pool.get(table)._inherit_fields[col][2], self.pool.get(table)._inherit_fields[col][3])
         self._inherit_fields = res
+        self._all_columns = self._get_column_infos()
         self._inherits_reload_src()
 
     def _inherits_check(self):
@@ -3613,7 +3860,7 @@ class orm(orm_template):
         upd_todo = []
         for v in vals.keys():
             if v in self._inherit_fields:
-                (table, col, col_detail) = self._inherit_fields[v]
+                (table, col, col_detail, original_parent) = self._inherit_fields[v]
                 tocreate[table][v] = vals[v]
                 del vals[v]
             else:
@@ -3896,7 +4143,7 @@ class orm(orm_template):
         domain = domain[:]
         # if the object has a field named 'active', filter out all inactive
         # records unless they were explicitely asked for
-        if 'active' in self._columns and (active_test and context.get('active_test', True)):
+        if 'active' in (self._columns.keys() + self._inherit_fields.keys()) and (active_test and context.get('active_test', True)):
             if domain:
                 active_in_args = False
                 for a in domain:
@@ -3935,7 +4182,7 @@ class orm(orm_template):
                 if parent_model and child_object:
                     # as inherited rules are being applied, we need to add the missing JOIN
                     # to reach the parent table (if it was not JOINed yet in the query)
-                    child_object._inherits_join_add(parent_model, query)
+                    child_object._inherits_join_add(child_object, parent_model, query)
                 query.where_clause += added_clause
                 query.where_clause_params += added_params
                 for table in added_tables:
@@ -4024,7 +4271,7 @@ class orm(orm_template):
                     else:
                         continue # ignore non-readable or "non-joinable" fields
                 elif order_field in self._inherit_fields:
-                    parent_obj = self.pool.get(self._inherit_fields[order_field][0])
+                    parent_obj = self.pool.get(self._inherit_fields[order_field][3])
                     order_column = parent_obj._columns[order_field]
                     if order_column._classic_read:
                         inner_clause = self._inherits_join_calc(order_field, query)
@@ -4168,8 +4415,13 @@ class orm(orm_template):
         for parent_column in ['parent_left', 'parent_right']:
             data.pop(parent_column, None)
 
-        for v in self._inherits:
-            del data[self._inherits[v]]
+        # remove _inherits field's from data recursively, missing parents will
+        # be created by create() (so that copy() copy everything).
+        def remove_ids(inherits_dict):
+            for parent_table in inherits_dict:
+                del data[inherits_dict[parent_table]]
+                remove_ids(self.pool.get(parent_table)._inherits)
+        remove_ids(self._inherits)
         return data
 
     def copy_translations(self, cr, uid, old_id, new_id, context=None):

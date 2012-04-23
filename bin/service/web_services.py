@@ -385,7 +385,7 @@ class common(_ObjectService):
             return True
         elif method in ['about', 'timezone_get', 'get_server_environment',
                         'login_message','get_stats', 'check_connectivity',
-                        'list_http_services']:
+                        'list_http_services', 'authenticate']:
             pass
         elif method in ['get_available_updates', 'get_migration_scripts', 'set_loglevel', 'get_os_time', 'get_sqlcount']:
             passwd = params[0]
@@ -416,6 +416,10 @@ class common(_ObjectService):
             context={}
         res = ir.ir_get(cr,uid, keys, args, meta, context)
         return res
+
+    def exp_authenticate(self, db, login, password, user_agent_env):
+        res_users = pooler.get_pool(db).get('res.users')
+        return res_users.login(db, login, password)
 
     def exp_about(self, extended=False):
         """Return information about the OpenERP Server.
@@ -591,7 +595,7 @@ class objects_proxy(netsvc.ExportService):
         params = params[3:]
         if method == 'obj_list':
             raise NameError("obj_list has been discontinued via RPC as of 6.0, please query ir.model directly!")
-        if method not in ['execute','exec_workflow']:
+        if method not in ['execute','execute_kw','exec_workflow']:
             raise NameError("Method not available %s" % method)
         security.check(db,uid,passwd)
         ls = netsvc.LocalService('object_proxy')

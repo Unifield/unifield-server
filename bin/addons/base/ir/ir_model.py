@@ -461,7 +461,7 @@ class ir_model_access(osv.osv):
 
         if isinstance(model, browse_record):
             assert model._table_name == 'ir.model', 'Invalid model object'
-            model_name = model.name
+            model_name = model.model
         else:
             model_name = model
 
@@ -512,7 +512,7 @@ class ir_model_access(osv.osv):
             }
 
             raise except_orm(_('AccessError'), msgs[mode] % (model_name, groups) )
-        return r
+        return r or False
 
     check = tools.cache()(check)
 

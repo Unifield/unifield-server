@@ -38,6 +38,7 @@ import warnings
 import xmlrpclib
 from psycopg2 import Binary
 
+import osv
 import netsvc
 import tools
 from tools.translate import _
@@ -148,8 +149,20 @@ class integer_big(_column):
 
 class reference(_column):
     _type = 'reference'
+    _classic_read = False 
     def __init__(self, string, selection, size, **args):
         _column.__init__(self, string=string, size=size, selection=selection, **args)
+
+    def get(self, cr, obj, ids, name, uid=None, context=None, values=None):
+        result = {}
+        # copy initial values fetched previously.
+        for value in values:
+            result[value['id']] = value[name]
+            if value[name]:
+                model, res_id = value[name].split(',')
+                if not obj.pool.get(model).exists(cr, uid, [int(res_id)], context=context):
+                    result[value['id']] = False
+        return result
 
 
 class char(_column):
@@ -630,7 +643,7 @@ class many2many(_column):
                 if not cr.fetchone():
                     cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s,%s)', (id, act[1]))
             elif act[0] == 5:
-                cr.execute('update '+self._rel+' set '+self._id2+'=null where '+self._id2+'=%s', (id,))
+                cr.execute('delete from '+self._rel+' where ' + self._id1 + ' = %s', (id,))
             elif act[0] == 6:
 
                 d1, d2,tables = obj.pool.get('ir.rule').domain_get(cr, user, obj._name, context=context)
@@ -1031,8 +1044,14 @@ class property(function):
             cr.execute('DELETE FROM ir_property WHERE id IN %s', (tuple(nids),))
 
         default_val = self._get_default(obj, cr, uid, prop_name, context)
+        property_create = False
+        if isinstance(default_val, osv.orm.browse_record):
+            if default_val.id != id_val:
+                property_create = True
+        elif default_val != id_val:
+            property_create = True
 
-        if id_val is not default_val:
+        if property_create:
             def_id = self._field_get(cr, uid, obj._name, prop_name)
             company = obj.pool.get('res.company')
             cid = company._company_default_get(cr, uid, obj._name, def_id,
@@ -1104,6 +1123,28 @@ class property(function):
     def restart(self):
         self.field_id = {}
 
+
+class column_info(object):
+    """Struct containing details about an osv column, either one local to
+       its model, or one inherited via _inherits.
+
+       :attr name: name of the column
+       :attr column: column instance, subclass of osv.fields._column
+       :attr parent_model: if the column is inherited, name of the model
+                           that contains it, None for local columns.
+       :attr parent_column: the name of the column containing the m2o
+                            relationship to the parent model that contains
+                            this column, None for local columns.
+       :attr original_parent: if the column is inherited, name of the original
+                            parent model that contains it i.e in case of multilevel
+                            inheritence, None for local columns.
+    """
+    def __init__(self, name, column, parent_model=None, parent_column=None, original_parent=None):
+        self.name = name
+        self.column = column
+        self.parent_model = parent_model
+        self.parent_column = parent_column
+        self.original_parent = original_parent
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
