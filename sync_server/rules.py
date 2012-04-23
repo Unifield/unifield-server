@@ -22,6 +22,18 @@
 from osv import osv
 from osv import fields
 
+_valid_types = {
+    'text' : ['str','unicode'],
+    'char' : ['str','unicode'],
+    'selection' : ['str','unicode'],
+    'integer' : ['int'],
+    'many2one' : ['int'],
+    'many2many' : ['int'],
+    'boolean' : ['bool'],
+    'float' : ['float','int'],
+}
+
+
 class forced_values(osv.osv):
     _name = "sync_server.sync_rule.forced_values"
 
@@ -33,6 +45,9 @@ class forced_values(osv.osv):
     }
 
 forced_values()
+
+class sync_rule_validation(osv.osv_memory):
+    _name = "sync_server.sync_rule.validation"
 
 class sync_rule(osv.osv):
     """ Synchronization Rule """
@@ -53,20 +68,16 @@ class sync_rule(osv.osv):
         'sequence_number': fields.integer('Sequence', required = True),
         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
         'included_fields':fields.text('Fields to include', required = True),
-        # FIXME: many2one in the analysis
         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
-        #'forced_values_sel': fields.many2many('sync_server.sync_rule.forced_values', 'sync_server_sync_rule_forced_values_rel', 'value', 'name', 'Select Forced Values'),
         'forced_values':fields.text('Values to force', required = False),
         'fallback_values':fields.text('Fallback values', required = False),
-        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),('not-checked','Not checked'),], 'Status', required = True, readonly = True),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
     }
 
     _defaults = {
-        #FIXME: it is said in analysis that active must be True by default
-        #       but it is wrong because it needs validation before proceed
         'active': False,
-        'status': 'not-checked',
+        'status': 'invalid',
     }
 
     _order = 'sequence_number asc,model_id asc'
@@ -160,24 +171,16 @@ class sync_rule(osv.osv):
         return rules_data
 
     def on_change_forced_values(self, cr, uid, ids, values, context=None):
-        model = self.read(cr, uid, ids, ['model_id'])[0]['model_id']
-        sel = []
+        sel = {}
         errors = []
-        for value in values:
-            value = value[2]
-            if not value: continue
-            # TODO: remove the if statement if type 'char' is used
-            # If 'name' is a many2one
-            if isinstance(value['name'], int):
-                field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name', 'model'])
-                if not field['model'] == model:
-                    errors.append('The field '+field['name']+' is not owned by model '+model+' but '+field['model']+'!')
-                    continue
-                value['name'] = field['name']
-            sel.append("'"+value['name']+"':"+value['value'])
-        res = {'value' : {'forced_values' :
-            ('{'+', '.join(sel)+'}' if sel else '')
-        }}
+        for value in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'forced_values_sel', values, context=context):
+            field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name','model','ttype'])
+            try: value = eval(value['value'])
+            except: value = eval('"""'+value['value']+'"""')
+            if type(value).__name__ not in _valid_types.get(field['ttype'], type(value).__name__):
+                errors.append(field['name']+": got "+type(value).__name__+" but "+" or ".join(_valid_types[field['ttype']])+" expected!")
+            else: sel[str(field['name'])] = value
+        res = {'value' : {'forced_values' : (str(sel) if sel else '')}}
         if errors:
             res['warning'] = {
                 'title' : 'Error!',
@@ -186,49 +189,72 @@ class sync_rule(osv.osv):
         return res
 
     def on_change_included_fields(self, cr, uid, ids, fields, context=None):
-        model = self.read(cr, uid, ids, ['model_id'])[0]['model_id']
         sel = []
-        errors = []
+        #errors = []
+        #for field in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'forced_values_sel', fields, context=context):
         for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model']):
-            if not field['model'] == model: errors.append('The field '+field['name']+' is not owned by model '+model+' but '+field['model']+'!')
-            else: sel.append("'"+field['name']+"'")
-        res = {'value': {'included_fields' :
-            ("("+", ".join(sel)+")" if sel else '')
-        }}
-        if errors:
-            res['warning'] = {
-                'title' : 'Error!',
-                'message' : "\n".join(errors),
-            }
+            sel.append(str(field['name']))
+        res = {'value': {'included_fields' : (str(sel) if sel else '')}}
+        #if errors:
+        #    res['warning'] = {
+        #        'title' : 'Error!',
+        #        'message' : "\n".join(errors),
+        #    }
         return res
             
     def validate(self, cr, uid, ids, context=None):
-        error = None
+        error = False
+        message = ''
         for rec in self.browse(cr, uid, ids, context=context):
+            # Check domain syntax
+            message += "* Domain syntax... "
             try:
-                # Check domain syntax
-                try: eval(rec.domain)
-                except: raise StandardError, "Syntax error in domain!"
-                # Check field syntax
-                try: eval(rec.included_fields)
-                except: raise StandardError, "Syntax error in included fields!"
-                # Check force values syntax (can be empty)
-                try: eval(rec.forced_values or '1')
-                except: raise StandardError, "Syntax error in forced values!"
-                # Check fallback values syntax (can be empty)
-                try: eval(rec.fallback_values or '1')
-                except: raise StandardError, "Syntax error in fallback values!"
-                # Sequence is unique
-                if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
-                    raise StandardError, "The sequence #"+str(rec.sequence_number)+" already exists!"
-            except StandardError, e:
-                error = 'This rule cannot be validated for the following reason:\n\n'+str(e)
-                break
+                eval(rec.domain)
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Check field syntax
+            message += "* Included fields syntax... "
+            try:
+                eval(rec.included_fields)
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Check force values syntax (can be empty)
+            message += "* Forced values syntax... "
+            try:
+                eval(rec.forced_values or '1')
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Check fallback values syntax (can be empty)
+            message += "* Fallback values syntax... "
+            try:
+                eval(rec.fallback_values or '1')
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Sequence is unique
+            message += "* Sequence is unique... "
+            if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
         self.write(cr, uid, ids, {'status': ('valid' if not error else 'invalid')})
         ## FIXME replace the following two-three lines.
         ##       (How to simply print a message box?)
         cr.commit()
-        if error: raise osv.except_osv('Unable to comply', error)
+        raise osv.except_osv('Unable to comply',
+            'This rule cannot be validated for the following reason:\n\n'+message)
         return {'type': 'ir.actions.act_window_close',}
 
 sync_rule()
@@ -250,15 +276,13 @@ class message_rule(osv.osv):
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination_name': fields.char('Fields to extract destination', size=256, required = True),
-        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),('not-checked','Not checked'),], 'Status', required = True, readonly = True),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
     }
 
     _defaults = {
-        'status': 'not-checked',
-        #FIXME: it is said in analysis that active must be True by default
-        #       but it is wrong because it needs validation before proceed
         'active': False,
+        'status': 'invalid',
         'applies_to_type' : True,
     }
 
@@ -298,34 +322,59 @@ class message_rule(osv.osv):
         return rules_data
 
     def validate(self, cr, uid, ids, context=None):
-        error = None
+        error = False
+        message = ''
         for rec in self.browse(cr, uid, ids, context=context):
+            # Check domain syntax
+            message += "* Domain syntax... "
             try:
-                # Check domain syntax
-                try: eval(rec.domain)
-                except: raise StandardError, "Syntax error in domain!"
-                # TODO Remote Call Possible
-                pass
-                # Arguments of the call syntax and existence
-                try:
-                    arguments = eval(rec.arguments)
-                except:
-                    raise StandardError, "Syntax error in arguments!"
+                eval(rec.domain)
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Remote Call Possible
+            call_tree = rec.remote_call.split('.')
+            call_class = '.'.join(call_tree[:-1])
+            call_funct = call_tree[-1]
+            message += "* Remote call exists... "
+            try:
+                ##TODO doesn't work because sync_so needed but it needs sync_client to be installed
+                if not hasattr(self.pool.get(call_class), call_funct):
+                    message += "failed!\n"
+                    error = True
                 else:
-                    for arg in arguments:
-                        # TODO : arguments existence
-                        pass
-                # Sequence is unique
-                if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
-                    raise StandardError, "The sequence #"+str(rec.sequence_number)+" already exists!"
-            except StandardError, e:
-                error = 'This rule cannot be validated for the following reason:\n\n'+str(e)
-                break
+                    message += "pass.\n"
+            except AttributeError:
+                message += "failed (missing "+call_class+")!\n"
+                error = True
+            # Arguments of the call syntax and existence
+            message += "* Arugments syntax... "
+            try:
+                arguments = eval(rec.arguments)
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+                for arg in arguments:
+                    # TODO : arguments existence
+                    pass
+            # Sequence is unique
+            message += "* Sequence is unique... "
+            if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
         self.write(cr, uid, ids, {'status': ('valid' if not error else 'invalid')})
         ## FIXME replace the following two-three lines.
         ##       (How to simply print a message box?)
         cr.commit()
-        if error: raise osv.except_osv('Unable to comply', error)
+        if error:
+            raise osv.except_osv('Unable to comply',
+                'This rule cannot be validated for the following reason:\n\n'+message)
         return {'type': 'ir.actions.act_window_close',}
 
 message_rule()

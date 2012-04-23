@@ -58,8 +58,8 @@
                         <separator string="Domain" colspan="2"/>
                         <field name="domain" colspan="2" nolabel="1"/>
                         <separator string="Included fields" colspan="2"/>
-                        <field name="included_fields_sel" nolabel="1" required="True" on_change="on_change_included_fields(included_fields_sel)">
-                            <tree>
+                        <field name="included_fields_sel" nolabel="1" required="True" on_change="on_change_included_fields(included_fields_sel)" domain="[('model','=',model_id)]">
+                            <tree string="Included fields">
                                 <field name="name"/>
                                 <field name="field_description"/>
                                 <field name="ttype"/>
@@ -70,7 +70,7 @@
                         <field name="forced_values_sel" nolabel="1" required="True"
                             on_change="on_change_forced_values(forced_values_sel)">
                             <tree editable="bottom">
-                                <field name="name"/>
+                                <field name="name" domain="[('model','=',parent.model_id),('ttype','not in',['one2many'])]"/>
                                 <field name="value"/>
                             </tree>
                         </field>
