@@ -155,6 +155,27 @@ class audittrail_rule(osv.osv):
     _sql_constraints = [
         ('model_uniq', 'unique (object_id)', """There is a rule defined on this object\n You can not define other on the same!""")
     ]
+    
+    def _check_domain_filter(self, cr, uid, ids, context=None):
+        """
+        Check that if you select cross docking, you do not have an other location than cross docking
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        
+        for rule in self.browse(cr, uid, ids, context=context):
+            domain = eval(rule.domain_filter)
+            for d in tuple(domain):
+                if len(d[0].split('.')) > 2:
+                    return False
+        
+        return True
+    
+    _constraints = [
+        (_check_domain_filter, 'The domain shouldn\'t contain a right element in condition with more than 2 elements.', ['domain_filter']),
+    ]
     __functions = {}
 
     def subscribe(self, cr, uid, ids, *args):
@@ -567,8 +588,25 @@ def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
     Check if the values check with the domain
     '''
     res = True
+    pool = pooler.get_pool(cr.dbname)
     for d in tuple(domain):
         assert d[1] in ('=', '!=', 'in', 'not in'), _("'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators" %(d[1]))
+            
+        if len(d[0].split('.')) == 2 and model:
+            p_rel, p_field = d[0].split('.')
+            parent_field_id = pool.get('ir.model.fields').search(cr, uid, [('model', '=', model.model), ('name', '=', p_rel)])
+            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
+            if not vals.get(p_rel):
+                vals[d[0]] = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])[d[0]]
+            if parent_field and parent_field[0].relation and vals.get(p_rel):
+                if isinstance(vals[p_rel], (int, long)):
+                    p_rel_id = vals[p_rel]
+                else:
+                    p_rel_id = vals[p_rel][0] 
+                value = pool.get(parent_field[0].relation).read(cr, uid, p_rel_id, [p_field])
+                if value:
+                    d = (p_field, d[1], d[2])
+                    vals[p_field] = value[p_field]
         
         if d[0] not in vals and model and res_id:
             obj = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])
@@ -685,7 +723,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
         for res_id in res_ids:
             old_values[res_id] = resource_pool.read(cr, uid, res_id, fields_to_read)
             # If the object doesn't match with the domain
-            if domain and not _check_domain(self, cr, uid, old_values[res_id], domain):
+            if domain and not _check_domain(self, cr, uid, old_values[res_id], domain, model):
                 res_ids.pop(res_ids.index(res_id))
                 
             vals = {
@@ -699,17 +737,20 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             if not parent_field_id:
                 vals.update({'res_id': res_id})
             else:
-                res_id = resource_pool.read(cr, uid, res_id, [parent_field.name])[parent_field.name]
+                ressource = resource_pool.read(cr, uid, res_id, [parent_field.name, name_get_field or 'name'])
+                res_id = ressource[parent_field.name]
+                # Add the name of the created sub-object
                 if res_id:
                     res_id = res_id[0]
                 else:
                     continue
                 vals = {
                         "name": "%s" %model_name,
+                        "sub_obj_name": "%s" %ressource.get(name_get_field or 'name', ''),
                         "method": method,
                         "object_id": model_id,
                         "user_id": uid_orig,
-                        "res_id": res_id,
+                        "res_id": res_id,  
                         "field_description": model_name,
                         }
 
@@ -754,7 +795,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             for resource in resource_pool.read(cr, uid, res_ids, fields):
                 if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
                     continue
-                if domain and not _check_domain(self, cr, uid, resource, domain):
+                if domain and not _check_domain(self, cr, uid, resource, domain, model):
                     res_ids.pop(res_ids.index(resource['id']))
                     continue
                 

@@ -180,7 +180,7 @@
         
       rule_id = self.create(cr, uid, {'name': name,
                                       'object_id': object_ids[0],
-                                      'domain_filter': "[('picking_id', '!=', False), ('type', '=', 'in')]",
+                                      'domain_filter': "[('picking_id', '!=', False), ('picking_id.type', '=', 'in')]",
                                       'log_write': True,
                                       'log_unlink': True,
                                       'log_create': True,
