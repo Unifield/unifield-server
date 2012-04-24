@@ -183,20 +183,22 @@ class return_claim(osv.osv):
             
         return result
     
-    _columns = {'name': fields.char(string='Reference', size=1024, required=True),
-                'creation_date_return_claim': fields.date(string='Creation Date', required=True),
+    _columns = {'name': fields.char(string='Reference', size=1024, required=True), # default value
+                'creation_date_return_claim': fields.date(string='Creation Date', required=True), # default value
                 'po_so_return_claim': fields.char(string='Order', size=1024),
                 'type_return_claim': fields.selection(CLAIM_TYPE, string='Type', required=True),
                 'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category', required=True),
                 'description_return_claim': fields.text(string='Description'),
                 'follow_up_return_claim': fields.text(string='Follow Up'),
-                'state': fields.selection(CLAIM_STATE, string='State', readonly=True),
+                'state': fields.selection(CLAIM_STATE, string='State', readonly=True), # default value
                 'from_picking_wizard_return_claim': fields.boolean(string='From Picking Wizard', readonly=True),
                 # many2one
-                'sequence_id_return_claim': fields.many2one('ir.sequence', 'Events Sequence', required=True, ondelete='cascade'),
+                'sequence_id_return_claim': fields.many2one('ir.sequence', 'Events Sequence', required=True, ondelete='cascade'), # from create function
                 'partner_id_return_claim': fields.many2one('res.partner', string='Partner', required=True),
+                'po_id_return_claim': fields.many2one('purchase.order', string='Purchase Order'),
+                'so_id_return_claim': fields.many2one('sale.order', string='Sale Order'),
                 'picking_id_return_claim': fields.many2one('stock.picking', string='Origin', required=True), #origin
-                'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True),
+                'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True), # default value
                 # one2many
                 'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id_claim_event', string='Events'),
                 'product_line_ids_return_claim': fields.one2many('claim.product.line', 'return_claim_id', string='Products'),
@@ -209,6 +211,8 @@ class return_claim(osv.osv):
                  'default_src_location_id_return_claim': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'state': 'draft',
                  'from_picking_wizard_return_claim': False,
+                 'po_id_return_claim': False,
+                 'so_id_return_claim': False,
                  }
     
     def _check_claim(self, cr, uid, ids, context=None):
@@ -394,10 +398,10 @@ class claim_event(osv.osv):
         return result
     
     _columns = {'return_claim_id_claim_event': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
-                'creation_date_claim_event': fields.date(string='Creation Date', required=True),
+                'creation_date_claim_event': fields.date(string='Creation Date', required=True), # default value
                 'type_claim_event': fields.selection(CLAIM_EVENT_TYPE, string='Type', required=True),
                 'description_claim_event': fields.text(string='Description'),
-                'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=False),
+                'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=False), # default value
                 # auto fields from create function
                 'name': fields.char(string='Reference', size=1024, readonly=True), # from create function
                 'order_claim_event': fields.integer(string='Creation Order', readonly=True), # from create function
@@ -422,3 +426,151 @@ class claim_product_line(osv.osv):
                 }
     
 claim_product_line()
+
+
+class stock_picking(osv.osv):
+    '''
+    add a column
+    '''
+    _inherit = 'stock.picking'
+    
+    def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        move_obj = self.pool.get('stock.move')
+        data_tools = self.pool.get('data.tools')
+        # load common data
+        data_tools.load_common_data(cr, uid, ids, context=context)
+        # results
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            # chained_from_in_stock_picking
+            test_chained = True
+            # type of picking must be 'internal'
+            if obj.type != 'internal':
+                test_chained = False
+            for move in obj.move_lines:
+                # source location must be input for all moves
+                input_location_id = context['common']['input_id']
+                if move.location_id.id != input_location_id:
+                    test_chained = False
+                # all moves must be created from another stock move from IN picking (chained location)
+                src_ids = move_obj.search(cr, uid, [('move_dest_id', '=', move.id)], context=context)
+                # no stock move source of current stock move
+                if len(src_ids) != 1:
+                    test_chained = False
+                else:
+                    move_browse = move_obj.browse(cr, uid, src_ids[0], context=context)
+                    if move_browse.picking_id.type != 'in':
+                        # source stock move is not part of incoming shipment
+                        test_chained = False
+            result[obj.id] = {'chained_from_in_stock_picking': test_chained}
+            
+        return result
+    
+    def _picking_done_cond(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to conditionally execute the picking processing to done
+        '''
+        partial_datas = super(stock_picking, self)._picking_done_cond(cr, uid, ids, context=context, *args, **kwargs)
+        assert partial_datas is not None, 'missing partial_datas'
+        
+        # if a claim is needed:
+        # if return claim: we do not close the processed picking, it is now an out picking which need to be processed
+        if partial_datas['register_a_claim_partial_picking']:
+            if partial_datas['claim_type_partial_picking'] == 'return':
+                return False
+        
+        return True
+    
+    def _custom_code(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to execute specific custom code before processing picking to done
+        - no supposed to modify partial_datas
+        '''
+        # objects
+        claim_obj = self.pool.get('return.claim')
+        event_obj = self.pool.get('claim.event')
+        move_obj = self.pool.get('stock.move')
+        # get the partial_datas from the wizard
+        partial_datas = kwargs['partial_datas']
+        # get the processed picking (pick if no backorder, new_picking if backorder, both under concerned_picking name) - this is an internal chained picking
+        concerned_picking = kwargs['concerned_picking']
+        # test if we need a claim
+        if partial_datas['register_a_claim_partial_picking']:
+            # this is theoretically only possible for internal picking, which are linked to an incoming shipment
+            if concerned_picking.type != 'internal':
+                raise osv.except_osv(_('Warning !'), _('Claim registration during picking process is only available for internal picking.'))
+            # we create a claim
+            # corresponding move_id from incoming shipment
+            in_move_id = False
+            if not len(concerned_picking.move_lines):
+                # no lines, we cannot register a claim because the link to original picking is missing
+                raise osv.except_osv(_('Warning !'), _('Processed an internal picking without moves, cannot find original Incoming shipment for claim registration.'))
+            for move in concerned_picking.move_lines:
+                src_move_ids = move_obj.search(cr, uid, [('move_dest_id', '=', move.id)], context=context)
+                if not src_move_ids:
+                    # cannot find corresponding stock move in incoming shipment
+                    raise osv.except_osv(_('Warning !'), _('Corresponding Incoming Shipment cannot be found. Registration of claim cannot be processed.'))
+                in_move_id = src_move_ids[0]
+            # get corresponding stock move browse
+            in_move = move_obj.browse(cr, uid, in_move_id, context=context)
+            # check that corresponding picking is incoming shipment
+            if in_move.picking_id.type != 'in':
+                raise osv.except_osv(_('Warning !'), _('Corresponding picking object is not an Incoming Shipment. Registration of claim cannot be processed.'))
+            # po reference
+            po_reference = in_move.picking_id.origin
+            # po_id
+            po_id = in_move.picking_id.purchase_id.id
+            # category
+            category = in_move.picking_id.order_category
+            # partner id
+            partner_id = in_move.picking_id.partner_id2.id
+            # picking id
+            picking_id = in_move.picking_id.id
+            # we get the stock move of incoming shipment, we get the origin of picking
+            claim_values = {'po_so_return_claim': po_reference,
+                            'po_id_return_claim': po_id,
+                            'type_return_claim': 'supplier',
+                            'category_return_claim': category,
+                            'description_return_claim': 'Auto Claim creation from picking process.',
+                            'follow_up_return_claim': False,
+                            'from_picking_wizard_return_claim': True,
+                            'partner_id_return_claim': partner_id,
+                            'picking_id_return_claim': picking_id,
+                            }
+            new_claim_id = claim_obj.create(cr, uid, claim_values, context=context)
+            # depending on the claim type, we create corresponding event
+            selected_event_type = partial_datas['claim_type_partial_picking']
+            event_values = {'return_claim_id_claim_event': new_claim_id,
+                            'type_claim_event': selected_event_type,
+                            'description_claim_event': 'Auto Event creation from picking process.',
+                            }
+            new_event_id = event_obj.create(cr, uid, event_values, context=context)
+            # we process the event
+            event_obj.process_event(cr, uid, [new_event_id], context=context)
+        
+        raise osv.except_osv(_('Warning !'), _('End'))
+        return True
+    
+    _columns = {'chained_from_in_stock_picking': fields.function(_vals_get_claim, method=True, string='Chained Internal Picking from IN', type='boolean', readonly=True, multi='get_vals_claim')}
+    
+    
+stock_picking()
+
+
+

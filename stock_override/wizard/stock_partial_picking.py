@@ -97,7 +97,7 @@ class stock_partial_picking(osv.osv_memory):
                                                     })
                     
                 # override : add hook call
-                partial_datas = self.do_partial_hook(cr, uid, context, move=move, partial_datas=partial_datas)
+                partial_datas = self.do_partial_hook(cr, uid, context=context, move=move, partial_datas=partial_datas, pick=pick, partial=partial)
             
         pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return {'type': 'ir.actions.act_window_close'}

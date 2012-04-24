@@ -198,6 +198,9 @@ class data_tools(osv.osv):
         # kitting location
         kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
         context['common']['kitting_id'] = kitting_id
+        # input location
+        input_id = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        context['common']['input_id'] = input_id
         
         return True
 
