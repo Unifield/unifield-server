@@ -597,7 +597,7 @@ def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
             parent_field_id = pool.get('ir.model.fields').search(cr, uid, [('model', '=', model.model), ('name', '=', p_rel)])
             parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
             if not vals.get(p_rel):
-                vals[d[0]] = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])[d[0]]
+                vals[d[0]] = self.pool.get(model.model).read(cr, uid, res_id, [p_rel])[p_rel]
             if parent_field and parent_field[0].relation and vals.get(p_rel):
                 if isinstance(vals[p_rel], (int, long)):
                     p_rel_id = vals[p_rel]
@@ -725,6 +725,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             # If the object doesn't match with the domain
             if domain and not _check_domain(self, cr, uid, old_values[res_id], domain, model):
                 res_ids.pop(res_ids.index(res_id))
+                continue
                 
             vals = {
                 "name": "%s" %model_name,
