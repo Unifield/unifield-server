@@ -201,6 +201,20 @@ class stock_fill_inventory(osv.osv_memory):
         res = super(stock_fill_inventory, self)._hook_fill_datas(cr, uid, *args, **kwargs)
         if kwargs.get('fill_inventory'):
             res.update({'reason_type_id': kwargs['fill_inventory'].reason_type_id.id})
+        
+        # Fix unit tests on stock
+        if kwargs.get('context'):
+            context = kwargs['context']
+            if context.get('update_mode') in ['init', 'update']:
+                required = ['reason_type_id']
+                has_required = False
+                for req in required:
+                    if  req in res and res.get('req'):
+                        has_required = True
+                        break
+                    if not has_required:
+                        logging.getLogger('init').info('Loading default values for stock.picking')
+                        res.update(self.pool.get('stock.picking')._get_default_reason(cr, uid, context))
 
         return res
     
