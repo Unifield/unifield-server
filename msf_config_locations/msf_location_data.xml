@@ -77,7 +77,7 @@
 
     <record id="stock.stock_location_stock" model="stock.location">
         <field name="name">Stock</field>
-        <field name="location_category">transition</field>
+        <field name="location_category">stock</field>
         <field name="usage">internal</field>
         <field name="location_id" ref="stock_location_view_all_stock" />
         <field name="chained_location_type">nomenclature</field>
