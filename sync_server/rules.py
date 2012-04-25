@@ -38,7 +38,6 @@ class forced_values(osv.osv):
     _name = "sync_server.sync_rule.forced_values"
 
     _columns = {
-        #'name' : fields.char("Field Name", size = 128, required = True),
         'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
         'value' : fields.char("Value", size = 1024, required = True),
         'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
@@ -192,8 +191,10 @@ class sync_rule(osv.osv):
         sel = []
         #errors = []
         #for field in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'forced_values_sel', fields, context=context):
-        for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model']):
-            sel.append(str(field['name']))
+        for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model','ttype']):
+            name = str(field['name'])
+            if field['ttype'] == 'many2one': name += '/id'
+            sel.append(name)
         res = {'value': {'included_fields' : (str(sel) if sel else '')}}
         #if errors:
         #    res['warning'] = {
