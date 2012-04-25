@@ -21,26 +21,17 @@
 
 
 {
-    'name': 'Synchronization Utility',
+    'name': 'Synchronization Utility Server - Common Files',
     'version': '0.1',
     'category': 'Tools',
     'description': """
-        
+        Common files needed for sync_client and sync_server modules
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['sync_common'],
+    'depends': ['base'],
     'init_xml': [],
     'data': [
-        'sync_client_view.xml',
-        'wizard/sync_wiz_view.xml',
-        'wizard/monitoring_view.xml',
-        'fallback_values/demo.xml',
-        'monitor_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test':[
     ],
     'installable': True,
 }
