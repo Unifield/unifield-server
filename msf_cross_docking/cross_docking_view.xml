@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-    <data>
+    <data>   
         <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
+        
+        <record id="purchase_cross_docking_form_view2" model="ir.ui.view">
+            <field name="name">purchase.cross.docking.form.view2</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">301</field>
+            <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/group/field[@name='categ']" position="replace" >
+                        <field name="categ" on_change="onchange_categ(categ)" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
         <record id="purchase_cross_docking_form_view" model="ir.ui.view">
             <field name="name">purchase.cross.docking.form.view</field>
             <field name="model">purchase.order</field>
@@ -11,7 +27,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
-                        <field name="cross_docking_ok" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )]}" 
+                        <field name="cross_docking_ok" attrs="{'readonly':[('categ','in', ['service', 'transport'] )]}" 
                         on_change="onchange_cross_docking_ok(cross_docking_ok)"
                         />
                     </xpath>
