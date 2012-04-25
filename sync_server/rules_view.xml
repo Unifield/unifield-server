@@ -76,6 +76,13 @@
                         </field>
                         <field name="forced_values" nolabel="1"/>
                         <separator string="Fallback Values" colspan="2"/>
+                        <field name="fallback_values_sel" nolabel="1"
+                            on_change="on_change_fallback_values(fallback_values_sel)">
+                            <tree editable="bottom">
+                                <field name="name"/>
+                                <field name="value"/>
+                            </tree>
+                        </field>
                         <field name="fallback_values" nolabel="1"/>
                     </group>
                     <group colspan="4" col="6">
