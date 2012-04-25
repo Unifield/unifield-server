@@ -187,7 +187,7 @@ class return_claim(osv.osv):
                 'creation_date_return_claim': fields.date(string='Creation Date', required=True), # default value
                 'po_so_return_claim': fields.char(string='Order', size=1024),
                 'type_return_claim': fields.selection(CLAIM_TYPE, string='Type', required=True),
-                'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category', required=True),
+                'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category'),
                 'description_return_claim': fields.text(string='Description'),
                 'follow_up_return_claim': fields.text(string='Follow Up'),
                 'state': fields.selection(CLAIM_STATE, string='State', readonly=True), # default value
@@ -198,6 +198,7 @@ class return_claim(osv.osv):
                 'po_id_return_claim': fields.many2one('purchase.order', string='Purchase Order'),
                 'so_id_return_claim': fields.many2one('sale.order', string='Sale Order'),
                 'picking_id_return_claim': fields.many2one('stock.picking', string='Origin', required=True), #origin
+                'event_picking_id_return_claim': fields.many2one('stock.picking', string='Chained Picking from IN'), #chained picking from incoming shipment
                 'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True), # default value
                 # one2many
                 'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id_claim_event', string='Events'),
@@ -343,34 +344,67 @@ class claim_event(osv.osv):
     def _do_process_accept(self, cr, uid, obj, context=None):
         '''
         process logic for accept event
-        '''
-        print 'called' + str(obj.type_claim_event)
         
-        return result
+        - no change to event picking
+        '''
+        return True
         
     def _do_process_quarantine(self, cr, uid, obj, context=None):
-        print 'called' + str(obj.type_claim_event)
+        '''
+        process logic for quarantine event
+        
+        - destination of picking becomes Quarantine (Analyze)
+        '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        # load common datas
+        event_picking = obj.return_claim_id_claim_event.event_picking_id_return_claim
+        # update the destination location for each move
+        move_ids = [move.id for move in event_picking.move_lines]
+        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_anal']}, context=context)
+        return True
         
     def _do_process_scrap(self, cr, uid, obj, context=None):
+        '''
+        process logic for scrap event
+        '''
         print 'called' + str(obj.type_claim_event)
         
     def _do_process_return(self, cr, uid, obj, context=None):
+        '''
+        process logic for return event
+        '''
         print 'called' + str(obj.type_claim_event)
     
-    def do_process_event(self, cr, uid, ids, context=None):
+    def do_process_event(self, cr, uid, ids, from_picking, context=None):
         '''
         process the events
+        
+        - create a picking if not coming from chained picking processing
         '''
         # Some verifications
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+        # objects
+        event_obj = self.pool.get('claim.event')
+        fields_tools = self.pool.get('fields.tools')
+        data_tools = self.pool.get('data.tools')
+        # load common data
+        data_tools.load_common_data(cr, uid, ids, context=context)
+        # create picking object if not coming from chained IN picking process
+        if not from_picking:
+            pass
         # base of function names
         base_func = '_do_process_'
         for obj in self.browse(cr, uid, ids, context=context):
             result = getattr(self, base_func + obj.type_claim_event)(cr, uid, obj, context=context)
+            # event is done
+            obj.write({'state': 'done'}, context=context)
+            # log process message
+            event_type_name = fields_tools.get_selection_name(cr, uid, object=self, field='type_claim_event', key=obj.type_claim_event, context=context)
+            event_obj.log(cr, uid, obj.id, _('%s Event %s has been processed.')%(event_type_name, obj.name))
         return True
     
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
@@ -400,6 +434,7 @@ class claim_event(osv.osv):
     _columns = {'return_claim_id_claim_event': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
                 'creation_date_claim_event': fields.date(string='Creation Date', required=True), # default value
                 'type_claim_event': fields.selection(CLAIM_EVENT_TYPE, string='Type', required=True),
+                'replacement_picking_expected_claim_event': fields.boolean(string='Replacement expected for Return Claim?', help="An Incoming Shipment will be automatically created corresponding to returned products."),
                 'description_claim_event': fields.text(string='Description'),
                 'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=False), # default value
                 # auto fields from create function
@@ -482,8 +517,9 @@ class stock_picking(osv.osv):
         This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
         
         - allow to conditionally execute the picking processing to done
+        - no supposed to modify partial_datas
         '''
-        partial_datas = super(stock_picking, self)._picking_done_cond(cr, uid, ids, context=context, *args, **kwargs)
+        partial_datas = kwargs['partial_datas']
         assert partial_datas is not None, 'missing partial_datas'
         
         # if a claim is needed:
@@ -506,6 +542,7 @@ class stock_picking(osv.osv):
         claim_obj = self.pool.get('return.claim')
         event_obj = self.pool.get('claim.event')
         move_obj = self.pool.get('stock.move')
+        fields_tools = self.pool.get('fields.tools')
         # get the partial_datas from the wizard
         partial_datas = kwargs['partial_datas']
         # get the processed picking (pick if no backorder, new_picking if backorder, both under concerned_picking name) - this is an internal chained picking
@@ -550,21 +587,28 @@ class stock_picking(osv.osv):
                             'description_return_claim': 'Auto Claim creation from picking process.',
                             'follow_up_return_claim': False,
                             'from_picking_wizard_return_claim': True,
+                            'event_picking_id_return_claim': concerned_picking.id,
                             'partner_id_return_claim': partner_id,
                             'picking_id_return_claim': picking_id,
                             }
             new_claim_id = claim_obj.create(cr, uid, claim_values, context=context)
+            # log creation message
+            claim_name = claim_obj.read(cr, uid, new_claim_id, ['name'], context=context)['name']
+            claim_obj.log(cr, uid, new_claim_id, _('The new Claim %s to supplier has been registered during internal chained Picking process.')%claim_name)
             # depending on the claim type, we create corresponding event
             selected_event_type = partial_datas['claim_type_partial_picking']
             event_values = {'return_claim_id_claim_event': new_claim_id,
                             'type_claim_event': selected_event_type,
-                            'description_claim_event': 'Auto Event creation from picking process.',
+                            'replacement_picking_expected_claim_event': partial_datas['replacement_picking_expected_partial_picking'],
+                            'description_claim_event': partial_datas['description_partial_picking'],
                             }
             new_event_id = event_obj.create(cr, uid, event_values, context=context)
+            event_type_name = fields_tools.get_selection_name(cr, uid, object='claim.event', field='type_claim_event', key=selected_event_type, context=context)
+            event_obj.log(cr, uid, new_event_id, _('The new %s Event %s has been created.')%(event_type_name, claim_name))
             # we process the event
-            event_obj.process_event(cr, uid, [new_event_id], context=context)
+            event_obj.do_process_event(cr, uid, [new_event_id], from_picking=True, context=context)
         
-        raise osv.except_osv(_('Warning !'), _('End'))
+#        raise osv.except_osv(_('Warning !'), _('End'))
         return True
     
     _columns = {'chained_from_in_stock_picking': fields.function(_vals_get_claim, method=True, string='Chained Internal Picking from IN', type='boolean', readonly=True, multi='get_vals_claim')}

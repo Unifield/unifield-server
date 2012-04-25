@@ -161,6 +161,19 @@ class fields_tools(osv.osv):
         res = company_obj.read(cr, uid, [company_id], [field], context=context)[0][field]
         return res
     
+    def get_selection_name(self, cr, uid, object=False, field=False, key=False, context=None):
+        '''
+        return the name from the key of selection field
+        '''
+        if not object or not field or not key:
+            return False
+        # get the selection values list
+        if isinstance(object, str):
+            object = self.pool.get(object)
+        list = object._columns[field].selection
+        name = [x[1] for x in list if x[0] == key][0]
+        return name
+    
 fields_tools()
     
 
@@ -201,6 +214,12 @@ class data_tools(osv.osv):
         # input location
         input_id = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         context['common']['input_id'] = input_id
+        # quarantine analyze
+        quarantine_anal = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_analyze')[1]
+        context['common']['quarantine_anal'] = quarantine_anal
+        # quarantine before scrap
+        quarantine_scrap = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_scrap')[1]
+        context['common']['quarantine_scrap'] = quarantine_scrap
         
         return True
 

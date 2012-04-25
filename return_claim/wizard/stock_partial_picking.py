@@ -29,8 +29,10 @@ class stock_partial_picking(osv.osv_memory):
     '''
     _inherit = "stock.partial.picking"
     _columns = {'register_a_claim_partial_picking': fields.boolean(string='Register a Claim to Supplier'),
-                'claim_type_partial_picking' : fields.selection(lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_event_type(), string='Claim Type')}
-    
+                'claim_type_partial_picking' : fields.selection(lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_event_type(), string='Claim Type'),
+                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected for Return Claim?', help="An Incoming Shipment will be automatically created corresponding to returned products."),
+                'description_partial_picking': fields.text(string='Claim Description')}
+
     _defaults = {'register_a_claim_partial_picking': False}
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
@@ -48,7 +50,9 @@ class stock_partial_picking(osv.osv_memory):
             if not partial.claim_type_partial_picking:
                 raise osv.except_osv(_('Warning !'), _('The type of claim must be selected.'))
             partial_datas.update({'register_a_claim_partial_picking': True,
-                                  'claim_type_partial_picking': partial.claim_type_partial_picking})
+                                  'claim_type_partial_picking': partial.claim_type_partial_picking,
+                                  'replacement_picking_expected_partial_picking': partial.replacement_picking_expected_partial_picking,
+                                  'description_partial_picking': partial.description_partial_picking})
         
         return partial_datas
     
@@ -68,7 +72,20 @@ class stock_partial_picking(osv.osv_memory):
         
         if register_ok:
             arch = result['arch']
-            arch = arch.replace('<separator string="" colspan="4" />', '<separator string="Register a Claim to the Supplier for selected products." colspan="4" /><field name="register_a_claim_partial_picking" /><group colspan="2" /><field name="claim_type_partial_picking" attrs="{\'readonly\': [(\'register_a_claim_partial_picking\', \'=\', False)]}"/><separator string="" colspan="4" />')
+            arch = arch.replace('<separator string="" colspan="4" />',
+                                '''
+                                <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
+                                <notebook colspan="4">
+                                <page string="Claim">
+                                <field name="register_a_claim_partial_picking"/><group colspan="2"/>
+                                <field name="claim_type_partial_picking" attrs="{\'readonly\': [(\'register_a_claim_partial_picking\', \'=\', False)]}"/>
+                                <field name="replacement_picking_expected_partial_picking" attrs="{\'invisible\': [(\'claim_type_partial_picking\', \'!=\', 'return')]}"/>
+                                </page>
+                                <page string="Claim Description">
+                                <field name="description_partial_picking" colspan="4" nolabel="True"/>
+                                </page>
+                                </notebook>
+                                <separator string="" colspan="4"/>''')
             result['arch'] = arch
         
         return result
