@@ -60,7 +60,7 @@
                         <separator string="Included fields" colspan="2"/>
                         <field name="included_fields_sel" nolabel="1" required="True" on_change="on_change_included_fields(included_fields_sel)" domain="[('model','=',model_id)]">
                             <tree string="Included fields">
-                                <field name="name"/>
+                                <field name="name" domain="[('model','=',parent.model_id),('ttype','not in',['one2many'])]"/>
                                 <field name="field_description"/>
                                 <field name="ttype"/>
                             </tree>
