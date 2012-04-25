@@ -353,7 +353,7 @@ class claim_event(osv.osv):
         '''
         process logic for quarantine event
         
-        - destination of picking becomes Quarantine (Analyze)
+        - destination of picking moves becomes Quarantine (Analyze)
         '''
         # objects
         move_obj = self.pool.get('stock.move')
@@ -367,14 +367,35 @@ class claim_event(osv.osv):
     def _do_process_scrap(self, cr, uid, obj, context=None):
         '''
         process logic for scrap event
+        
+        - destination of picking moves becomes Quarantine (before scrap)
         '''
-        print 'called' + str(obj.type_claim_event)
+        # objects
+        move_obj = self.pool.get('stock.move')
+        # load common datas
+        event_picking = obj.return_claim_id_claim_event.event_picking_id_return_claim
+        # update the destination location for each move
+        move_ids = [move.id for move in event_picking.move_lines]
+        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_scrap']}, context=context)
+        return True
         
     def _do_process_return(self, cr, uid, obj, context=None):
         '''
         process logic for return event
+        
+        - destination of picking moves becomes original Supplier
+        - type of picking becomes 'out'
+        - name of picking becomes in-return/XXXX according to original IN picking name
+        - (is not set to done - defined in _picking_done_cond)
         '''
-        print 'called' + str(obj.type_claim_event)
+        # objects
+        move_obj = self.pool.get('stock.move')
+        # load common datas
+        event_picking = obj.return_claim_id_claim_event.event_picking_id_return_claim
+        # update the destination location for each move
+        move_ids = [move.id for move in event_picking.move_lines]
+        move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_scrap']}, context=context)
+        return True
     
     def do_process_event(self, cr, uid, ids, from_picking, context=None):
         '''
