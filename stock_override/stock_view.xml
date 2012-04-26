@@ -141,9 +141,6 @@
             <field name="inherit_id" ref="purchase.stock_picking_in_inherit_purchase" />
             <field name="arch" type="xml">
             	<data>
-            		<xpath expr="/form//field[@name='backorder_id']" position="after">
-            			<field name="warehouse_id" widget="selection" />
-            		</xpath>
 	                <xpath expr="/form/group/group/field[@name='origin']" position="attributes">
 	                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
 	                </xpath>

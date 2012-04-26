@@ -192,6 +192,7 @@
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
                                 <field name="reason_type_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+            					<field name="warehouse_id" widget="selection" />
                         </xpath>
 
                         <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
