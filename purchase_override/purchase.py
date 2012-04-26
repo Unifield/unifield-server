@@ -998,6 +998,10 @@ class purchase_order_line(osv.osv):
                 
         # Set the unit price with cost price if the product has no staged pricelist
         if product and qty != 0.00: 
+            res['value'].update({'comment': False, 'nomen_manda_0': False, 'nomen_manda_1': False,
+                                 'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False, 
+                                 'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
+                                 'nomen_sub_4': False, 'nomen_sub_5': False})
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
         
             if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
