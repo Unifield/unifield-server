@@ -443,6 +443,7 @@
             		
             		<xpath expr="//tree[@string='Pricelist']/field[@name='valid_from']" position="after">
             			<field name="valid_till" />
+            			<field name="comment" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />
             			<field name="purchase_order_line_id" />
