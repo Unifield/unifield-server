@@ -202,6 +202,9 @@ class product_product(osv.osv):
             suppinfo_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
                                                          ('product_id', '=', product.product_tmpl_id.id),
                                                          ('catalogue_id.currency_id', '=', currency_id),
+                                                         '|', '|', ('catalogue_id.period_to', '>=', order_date),
+                                                         ('catalogue_id.period_to', '=', False),
+                                                         ('catalogue_id', '=', False),
                                                          '|', ('catalogue_id.period_from', '<=', order_date),
                                                          ('catalogue_id', '=', False)],
                                                order='sequence asc', limit=1, context=context) 
