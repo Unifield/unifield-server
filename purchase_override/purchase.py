@@ -956,6 +956,8 @@ class purchase_order_line(osv.osv):
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False, state=False, old_price_unit=False, fake_id=False, context=None):
         all_qty = qty
+        suppinfo_obj = self.pool.get('product.supplierinfo')
+        catalogue_obj = self.pool.get('supplier.catalogue')
         
         if context and context.get('purchase_id') and state == 'draft':
             domain = [('product_id', '=', product), 
@@ -984,10 +986,17 @@ class purchase_order_line(osv.osv):
         res['value'].update({'product_qty': qty})
         if not res.get('value', {}).get('price_unit', False) and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
+            currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
+            catalogue_ids = catalogue_obj.search(cr, uid, [('partner_id', '=', partner_id),
+                                                        ('period_from', '<=', date_order),
+                                                        ('currency_id', '=', currency_id),
+                                                        '|', ('period_to', '>=', date_order),
+                                                        ('period_to', '=', False)], context=context)
             suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), 
-                                                                              ('product_id', '=', product)])
+                                                                              ('product_id', '=', product),
+                                                                              '|', ('catalogue_id', 'in', catalogue_ids),
+                                                                              ('catalogue_id', '=', False)])
             if suppinfo_ids:
-                currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
                 pricelist_ids = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('currency_id', '=', currency_id),
                                                                                         ('suppinfo_id', 'in', suppinfo_ids),
                                                                                         ('uom_id', '=', uom),
