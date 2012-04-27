@@ -150,6 +150,17 @@ class pricelist_partnerinfo(osv.osv):
         
         return new_res
     
+    def _check_min_quantity(self, cr, uid, ids, context=None):
+        '''
+        Check if the min_qty field is set
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.min_quantity <= 0.00:
+                raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
+                return False
+            
+        return True
+    
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
@@ -157,6 +168,10 @@ class pricelist_partnerinfo(osv.osv):
         'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
         'valid_from': fields.date(string='Valid from'),
     }
+    
+    _constraints = [
+        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
+    ]
     
 pricelist_partnerinfo()
 

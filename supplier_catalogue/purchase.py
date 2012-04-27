@@ -63,8 +63,9 @@ class purchase_order_line(osv.osv):
             
             if info.min_order_qty and product_qty < info.min_order_qty:
                 product_qty = info.min_order_qty
-                res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal ' \
-                                                                            'quantity set to %s, you cannot purchase less.') % product_qty}})
+                res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set for a minimal quantity of %s '\
+                                                                            '(the min quantity of the price list), it might change at the '\
+                                                                            'supplier confirmation.') % product_qty}})
                 
             if info.rounding and product_qty%info.rounding != 0:
                 if not res.get('warning', {}).get('message', False):

@@ -460,6 +460,17 @@ class supplier_catalogue_line(osv.osv):
         
         return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
     
+    def _check_min_quantity(self, cr, uid, ids, context=None):
+        '''
+        Check if the min_qty field is set
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.min_qty <= 0.00:
+                raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
+                return False
+            
+        return True
+    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
@@ -475,6 +486,10 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
     }
+    
+    _constraints = [
+        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
+    ]
     
     def product_change(self, cr, uid, ids, product_id, context=None):
         '''
