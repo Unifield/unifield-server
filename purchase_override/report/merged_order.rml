@@ -211,8 +211,8 @@
     <para style="terp_default_9">
       <font color="white"> </font>
     </para>
-    <para style="terp_header">[[ o.state=='draft' and removeParentNode('para') ]] Purchase Order Confirmation N° [[ o.name ]]</para>
-    <para style="terp_header">[[ o.state&lt;&gt;'draft' and removeParentNode('para') ]] Request for Quotation N° [[ o.name ]]</para>
+    <para style="terp_header">[[ o.rfq_ok==True and removeParentNode('para') ]] Purchase Order N° [[ o.name ]]</para>
+    <para style="terp_header">[[ o.rfq_ok==False and removeParentNode('para') ]] Request for Quotation N° [[ o.name ]]</para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
@@ -327,12 +327,11 @@
           </td>
         </tr>
       </blockTable>
-    </section>
     <blockTable colWidths="375.0,60.0,100.0" style="Table_All_Total_Detail">
       <tr>
         <td>
           <para style="terp_default_9">
-            <font color="white"> </font>
+            <font color="white">[[ o.merged_line_ids[-1].id == line.id and ' ' or removeParentNode('blockTable') ]] </font>
           </para>
         </td>
         <td>
@@ -369,13 +368,14 @@
         </td>
       </tr>
     </blockTable>
+    </section>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="535.0" style="Table_Outer_Notes">
       <tr>
         <td>
-          <para style="terp_default_9">[[ format(o.notes or '') ]]</para>
+          <para style="terp_default_9">[[ o.notes and format(o.notes) or removeParentNode('blockTable') ]]</para>
         </td>
       </tr>
     </blockTable>

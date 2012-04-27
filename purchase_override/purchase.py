@@ -954,8 +954,20 @@ class purchase_order_line(osv.osv):
     
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False, state=False, old_price_unit=False):
-        res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+            name=False, price_unit=False, notes=False, state=False, old_price_unit=False, fake_id=False, context=None):
+        all_qty = qty
+        
+        if context and context.get('purchase_id') and state == 'draft':
+            domain = [('product_id', '=', product), 
+                      ('product_uom', '=', uom), 
+                      ('order_id', '=', context.get('purchase_id'))]
+            if fake_id and fake_id != 0:
+                domain.append(('id', '!=', fake_id))
+            other_lines = self.search(cr, uid, domain)
+            for l in self.browse(cr, uid, other_lines):
+                all_qty += l.product_qty 
+        
+        res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
                                                                  partner_id, date_order, fiscal_position, 
                                                                  date_planned, name, price_unit, notes)
         
