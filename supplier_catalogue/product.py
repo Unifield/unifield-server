@@ -155,6 +155,7 @@ class pricelist_partnerinfo(osv.osv):
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                  help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
+        'valid_from': fields.date(string='Valid from'),
     }
     
 pricelist_partnerinfo()

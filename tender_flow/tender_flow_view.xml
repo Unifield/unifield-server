@@ -441,7 +441,7 @@
             			<field name="currency_id" />
             		</xpath>
             		
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='min_order_qty']" position="after">
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='valid_from']" position="after">
             			<field name="valid_till" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />

@@ -169,6 +169,7 @@ class supplier_catalogue(osv.osv):
             
             # Change pricelist data according to new data
             new_price_vals = {'valid_till': vals.get('period_to', None),
+                              'valid_from': vals.get('period_from', catalogue.period_from),
                               'currency_id': vals.get('currency_id', catalogue.currency_id.id),
                               'name': vals.get('name', catalogue.name),}
                 
@@ -377,6 +378,7 @@ class supplier_catalogue_line(osv.osv):
                                               'rounding': vals.get('rounding', 1.00),
                                               'min_order_qty': vals.get('min_order_qty', 0.00),
                                               'currency_id': catalogue.currency_id.id,
+                                              'valid_from': catalogue.period_from,
                                               'valid_till': catalogue.period_to,}, 
                                               context=context)
         
