@@ -1003,7 +1003,7 @@ class purchase_order_line(osv.osv):
                                                                                         '|', ('valid_from', '<=', date_order),
                                                                                         ('valid_from', '=', False),
                                                                                         '|', ('valid_till', '=', False),
-                                                                                        ('valid_till', '>=', date_order)], order='min_quantity')
+                                                                                        ('valid_till', '>=', date_order)], order='valid_till asc, min_quantity desc, id desc')
                 if pricelist_ids:
                     pricelist = self.pool.get('pricelist.partnerinfo').browse(cr, uid, pricelist_ids[0])
                     res['value'].update({'old_price_unit': pricelist.price, 'price_unit': pricelist.price})

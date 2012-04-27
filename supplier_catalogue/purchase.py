@@ -68,7 +68,7 @@ class purchase_order_line(osv.osv):
                                                     ('valid_from', '=', False),
                                                     '|', ('valid_till', '>=', order_date),
                                                     ('valid_till', '=', False)],
-                                                    order='valid_till asc, min_quantity desc', limit=1, context=context)
+                                                    order='valid_till asc, min_quantity desc, id desc', limit=1, context=context)
             
         if info_price:
             info = partner_price.browse(cr, uid, info_price, context=context)[0]
