@@ -991,6 +991,8 @@ class purchase_order_line(osv.osv):
                 pricelist_ids = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('currency_id', '=', currency_id),
                                                                                         ('suppinfo_id', 'in', suppinfo_ids),
                                                                                         ('uom_id', '=', uom),
+                                                                                        '|', ('valid_from', '<=', date_order),
+                                                                                        ('valid_from', '=', False),
                                                                                         '|', ('valid_till', '=', False),
                                                                                         ('valid_till', '>=', date_order)], order='min_quantity')
                 if pricelist_ids:
