@@ -47,4 +47,26 @@ class hq_entries_validation_wizard(osv.osv_memory):
         return res
 
 hq_entries_validation_wizard()
+
+class hq_entries(osv.osv):
+    _name = 'hq.entries'
+    _description = 'HQ Entries'
+
+    _columns = {
+        'account_id': fields.many2one('account.account', "Account", required=True),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True),
+        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True),
+        'free_1_id': fields.many2one('account.analytic.account', "Free 1"),
+        'free_2_id': fields.many2one('account.analytic.account', "Free 2"),
+        'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
+        'date': fields.date("Posting Date"),
+        'partner_id': fields.many2one("res.partner", "Third Party"),
+        'period_id': fields.many2one("account.period", "Period"),
+    }
+
+    _defaults = {
+        'user_validated': lambda *a: False,
+    }
+
+hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

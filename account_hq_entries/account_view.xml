@@ -2,69 +2,89 @@
 <openerp>
     <data>
 
-    <!-- HQ Entries search view -->
-    <record id="hq_entries_filter" model="ir.ui.view">
-        <field name="name">HQ Entries</field>
-        <field name="model">account.move.line</field>
-        <field name="type">search</field>
-        <field name="arch" type="xml">
-            <search string="Search HQ Entries">
-                <group col='10' colspan='4'>
-                    <filter icon="gtk-new" string="To validate" domain="[('user_validated', '=', False)]" help="Non validated entries" name="non_validated"/>
-                    <filter icon="gtk-apply" string="Validated" domain="[('user_validated', '=', True)]" help="Validated entries" name="validated"/>
-                    <separator orientation="vertical"/>
-                    <field name="move_id" select="1" string="Number (Move)"/>
-                    <field name="date" select='1'/>
-                    <field name="account_id" select='1'/>
-                    <field name="partner_id" select='1'>
-                        <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
-                    </field>
-                </group>
-                <newline/>
-                <group col="10" colspan="4">
-                    <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
-                    <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
-                </group>
-                <newline/>
-                <group expand="0" string="Extended Filters...">
-                    <field name="ref" select="1" string="Reference"/>
-                    <field name="name" select="1"/>
-                    <field name="narration" select="1"/>
-                    <field name="balance" string="Debit/Credit" select='1'/>
-                </group>
-                <newline/>
-                <group expand="0" string="Group By..." colspan="12" col="10">
-                    <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                    <separator orientation="vertical"/>
-                    <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
-                    <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
-                    <separator orientation="vertical"/>
-                    <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
-                </group>
-                <newline/>
-            </search>
-        </field>
-    </record>
-
-    <!-- Actions -->
-        <record model="ir.actions.act_window" id="action_hq_entries_tree">
-            <field name="name">HQ Entries</field>
-            <field name="res_model">account.move.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="account_corrections.inherit_view_move_line_tree"/>
-            <field name="search_view_id" ref="hq_entries_filter"/>
-            <field name="domain">[('account_id.user_type.code', '=', 'expense'), ('journal_id.type', '=', 'hq')]</field>
-            <field name="context">{'from': 'hq_entries'}</field>
+    <!-- HQ Entries tree view -->
+        <record id="hq_entries_tree" model="ir.ui.view">
+            <field name="name">HQ Entries List</field>
+            <field name="model">hq.entries</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="HQ Entries List">
+                    <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
+                    <field name="cost_center_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
+                    <field name="free_1_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]"/>
+                    <field name="free_2_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="period_id" invisible="1"/>
+                    <field name="date"/>
+                    <field name="user_validated"/>
+                </tree>
+            </field>
         </record>
 
-        <record model="ir.actions.act_window" id="action_hq_analytic_entries_tree">
-            <field name="name">HQ Analytic Entries</field>
-            <field name="res_model">account.analytic.line</field>
+    <!-- HQ Entries search view -->
+        <record id="hq_entries_filter" model="ir.ui.view">
+            <field name="name">HQ Entries</field>
+            <field name="model">hq.entries</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search HQ Entries">
+                    <group col='10' colspan='4'>
+                        <filter icon="gtk-new" string="To validate" domain="[('user_validated', '=', False)]" help="Non validated entries" name="non_validated"/>
+                        <filter icon="gtk-apply" string="Validated" domain="[('user_validated', '=', True)]" help="Validated entries" name="validated"/>
+                        <separator orientation="vertical"/>
+                        <field name="date" select='1'/>
+                        <field name="account_id" select='1'/>
+                        <field name="partner_id" select='1'/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="12" col="10">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+        <record id="hq_entries_import_wizard" model="ir.ui.view">
+            <field name="name">hq.entries.import.wizard</field>
+            <field name="model">hq.entries.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import HQ Entries">
+                    <label string="This will import HQ entries from a csv file." colspan="4"/>
+                    <newline/>
+                    <field name="file"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Actions -->
+        <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import HQ Entries</field>
+            <field name="res_model">hq.entries.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hq_entries_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_hq_entries_tree">
+            <field name="name">HQ Entries</field>
+            <field name="res_model">hq.entries</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('journal_id.type', '=', 'hq')]</field>
-            <field name="context">{'from': 'hq_analytic_entries'}</field>
+            <field name="view_id" ref="hq_entries_tree"/>
+            <field name="search_view_id" ref="hq_entries_filter"/>
+            <field name="context">{'search_default_non_validated': 1}</field>
         </record>
 
     <!-- Action: lines validation -->
@@ -77,7 +97,7 @@
         
         <record id="ir_validate_hq_entries" model="ir.values">
             <field name="key2">client_action_multi</field>
-            <field name="model">account.move.line</field>
+            <field name="model">hq.entries</field>
             <field name="name">Validation</field>
             <field eval="'ir.actions.server,%d'%action_hq_entries_validation" name="value"/>
             <field eval="True" name="object"/>
@@ -85,8 +105,9 @@
 
     <!-- Menu -->
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="5"/>
-        <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="1"/>
-        <menuitem name="HQ Analytic Entries" action="action_hq_analytic_entries_tree" id="menu_hq_analytic_entries" parent="menu_hq" sequence="2"/>
+        <menuitem name="HQ Import" action="action_hq_entries_import_wizard" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
+        <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="2"/>
+        
 
     </data>
 </openerp>
