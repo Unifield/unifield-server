@@ -58,7 +58,7 @@
                 <form string="Registration Status" col="6" >
                     <field name="state" invisible="1"/>
                     <group states="data_needed" width="700" height="200" col="1" colspan="6">
-                        <button type="object" string="Retreive children entity data from server" name="retreive" icon="gtk-ok"/>
+                        <button type="object" string="Retrieve instance information" name="retreive" icon="gtk-ok"/>
                     </group>
                     <group states="ready" colspan="4" col="6">
                         <field name="name"/>
@@ -78,7 +78,7 @@
             <field name="model">sync.client.child_entity</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Children Instances" colors="red:validate==False" >
+                <tree string="Children Instances">
                     <field name="name"/>
                     <field name="identifier"/>
                     <field name="email" />

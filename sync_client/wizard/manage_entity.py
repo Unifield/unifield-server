@@ -31,12 +31,12 @@ class entity_manager(osv.osv_memory):
     _columns = {
         'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),
         'state' : fields.selection([('data_needed','Need Data'),('ready','Ready')], 'State', required=True),
-        'entity_status' : fields.char("Instance Status", size=64),
-        'group' : fields.char("Groups", size=2048),
-        'email' : fields.char("Contact E-mail", size=64),
-        'parent' : fields.char("Parent", size=64),
-        'identifier' : fields.char("Identifier", size=64),
-        'name' : fields.char("Identifier", size=64),
+        'entity_status' : fields.char("Instance Status", size=64, readonly=True),
+        'group' : fields.char("Groups", size=2048, readonly=True),
+        'email' : fields.char("Contact E-mail", size=64, readonly=True),
+        'parent' : fields.char("Parent", size=64, readonly=True),
+        'identifier' : fields.char("Identifier", size=64, readonly=True),
+        'name' : fields.char("Identifier", size=64, readonly=True),
     }
     
     def retreive(self, cr, uid, ids, context=None):
