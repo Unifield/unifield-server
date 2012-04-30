@@ -30,13 +30,24 @@ class stock_partial_picking(osv.osv_memory):
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
-        add hook to do_partial
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>wizard>stock_partial_picking.py>stock_partial_picking
+        
+        - allow to modify partial_datas
         '''
         partial_datas = kwargs.get('partial_datas')
         assert partial_datas, 'partial_datas missing'
         
         return partial_datas
     
+    def return_hook_do_partial(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>wizard>stock_partial_picking.py>stock_partial_picking
+        
+        - allow to modify returned value from button method
+        '''
+        return {'type': 'ir.actions.act_window_close'}
 
     # @@@override stock>wizard>stock_partial_picking.py>stock_partial_picking
     def do_partial(self, cr, uid, ids, context=None):
@@ -99,8 +110,8 @@ class stock_partial_picking(osv.osv_memory):
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context=context, move=move, partial_datas=partial_datas, pick=pick, partial=partial)
             
-        pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        res = pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
+        return self.return_hook_do_partial(cr, uid, context=context, partial_datas=partial_datas, res=res)
     #@@@override end
 
 stock_partial_picking()

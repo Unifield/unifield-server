@@ -97,6 +97,42 @@ class stock_partial_picking(osv.osv_memory):
         
         return partial_datas
     
+    def return_hook_do_partial(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>wizard>stock_partial_picking.py>stock_partial_picking
+        
+        - allow to modify returned value from button method
+        '''
+        # depending on the claim, we return a different view
+        # return claim to supplier: standard out view
+        # we do not need to test the claim type (supplier, customer, tranpsport), as
+        # only supplier claims can be registered from picking wizard
+        # objects
+        obj_data = self.pool.get('ir.model.data')
+        # get partial datas
+        partial_datas = kwargs['partial_datas']
+        # res
+        res = kwargs['res']
+        if partial_datas['register_a_claim_partial_picking']:
+            if partial_datas['claim_type_partial_picking'] == 'return':
+                view_id = obj_data.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
+                view_id = view_id and view_id[1] or False
+                # id of treated picking (can change according to backorder or not)
+                pick_id = res.values()[0]['delivered_picking']
+                return {'name': _('Delivery Orders'),
+                        'view_mode': 'form,tree',
+                        'view_id': [view_id],
+                        'view_type': 'form',
+                        'res_model': 'stock.picking',
+                        'res_id': pick_id,
+                        'type': 'ir.actions.act_window',
+                        'target': 'crash',
+                        'domain': '[]',
+                        'context': context}
+        
+        return {'type': 'ir.actions.act_window_close'}
+    
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
 

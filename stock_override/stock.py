@@ -399,7 +399,7 @@ class stock_picking(osv.osv):
             if new_picking:
                 wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
                 # custom code execution
-                self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=new_picking)
+                self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=self.browse(cr, uid, new_picking, context=context))
                 # Then we finish the good picking
                 self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
                 if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):

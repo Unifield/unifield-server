@@ -403,7 +403,9 @@ class claim_event(osv.osv):
         # new name, previous name + -return
         new_name = origin_picking.name + '-return'
         # get the picking values and move values according to claim type
-        picking_values = {'name': new_name}
+        picking_values = {'name': new_name,
+                          'partner_id': claim.partner_id_return_claim.id, # both partner needs to be filled??
+                          'partner_id2': claim.partner_id_return_claim.id}
         move_values = {}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
@@ -449,6 +451,8 @@ class claim_event(osv.osv):
             # log process message
             event_type_name = fields_tools.get_selection_name(cr, uid, object=self, field='type_claim_event', key=obj.type_claim_event, context=context)
             event_obj.log(cr, uid, obj.id, _('%s Event %s has been processed.')%(event_type_name, obj.name))
+            # we force the state of claim to in_progress
+            obj.return_claim_id_claim_event.write({'state': 'in_progress'}, context=context)
         return True
     
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
@@ -463,15 +467,16 @@ class claim_event(osv.osv):
         # results
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
             # associated location
             dest_loc_id = self.get_location_for_event_type(cr, uid, context=context,
                                                            event_type=obj.type_claim_event,
                                                            claim_partner_id=obj.return_claim_id_claim_event.partner_id_return_claim.id,
                                                            claim_type=obj.return_claim_id_claim_event.type_return_claim,
                                                            claim_picking=obj.return_claim_id_claim_event.picking_id_return_claim)
-            result[obj.id] = {'location_id_claim_event': dest_loc_id}
+            result[obj.id].update({'location_id_claim_event': dest_loc_id})
             # hidden state (attrs in tree view)
-            result[obj.id] = {'hidden_state': obj.state}
+            result[obj.id].update({'hidden_state': obj.state})
             
         return result
     
@@ -613,7 +618,6 @@ class stock_picking(osv.osv):
         '''
         partial_datas = kwargs['partial_datas']
         assert partial_datas is not None, 'missing partial_datas'
-        
         # if a claim is needed:
         # if return claim: we do not close the processed picking, it is now an out picking which need to be processed
         if partial_datas['register_a_claim_partial_picking']:
