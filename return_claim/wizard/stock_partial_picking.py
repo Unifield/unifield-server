@@ -119,7 +119,8 @@ class stock_partial_picking(osv.osv_memory):
                                 <notebook colspan="4">
                                 <page string="Claim">
                                 <field name="register_a_claim_partial_picking"/><field name="in_has_partner_id_partial_picking" invisible="True" />
-                                <field name="partner_id_partial_picking" attrs="{\'readonly\': ['|', (\'register_a_claim_partial_picking\', \'=\', False), (\'in_has_partner_id_partial_picking\', \'=\', True)]}"/>
+                                <field name="partner_id_partial_picking" attrs="{\'readonly\': ['|', (\'register_a_claim_partial_picking\', \'=\', False), (\'in_has_partner_id_partial_picking\', \'=\', True)]}"
+                                        context="{'search_default_supplier': True}"/>
                                 <field name="claim_type_partial_picking" attrs="{\'readonly\': [(\'register_a_claim_partial_picking\', \'=\', False)]}"/>
                                 <field name="replacement_picking_expected_partial_picking" attrs="{\'invisible\': [(\'claim_type_partial_picking\', \'!=\', 'return')]}"/>
                                 </page>

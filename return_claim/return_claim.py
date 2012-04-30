@@ -394,12 +394,14 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         # event picking object
         event_picking = obj.return_claim_id_claim_event.event_picking_id_return_claim
+        # origin picking in/out
+        origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
         # claim
         claim = obj.return_claim_id_claim_event
         # claim type
         claim_type = claim.type_return_claim
         # new name, previous name + -return
-        new_name = event_picking.name + '-return'
+        new_name = origin_picking.name + '-return'
         # get the picking values and move values according to claim type
         picking_values = {'name': new_name}
         move_values = {}
