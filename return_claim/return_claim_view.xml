@@ -65,6 +65,20 @@
                     	</page>
                     	<page string="Products">
                     		<field name="default_src_location_id_return_claim" />
+                    		<field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
+                    			<tree string="Products" editable="top">
+				            		<field name="name" />
+	           						<field name="product_id_claim_product_line" />
+	           						<field name="asset_id_claim_product_line" />
+	           						<field name="composition_list_id_claim_product_line" />
+	           						<field name="qty_claim_product_line" />
+	           						<field name="uom_id_claim_product_line" />
+	           						<field name="lot_id_claim_product_line" />
+	           						<field name="expiry_date_claim_product_line" />
+	           						<field name="src_location_id_claim_product_line" />
+	           						<field name="stock_move_id_claim_product_line" invisible="False" />
+				            	</tree>
+                    		</field>
                     	</page>
                     	<page string="Description">
                     		<field name="description_return_claim" nolabel="True" />

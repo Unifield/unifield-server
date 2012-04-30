@@ -28,12 +28,50 @@ class stock_partial_picking(osv.osv_memory):
     new field for claim selection
     '''
     _inherit = "stock.partial.picking"
+    
+    def _get_default_supplier(self, cr, uid, context=None):
+        '''
+        try to find the suppier of corresponding IN for chained picking
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        
+        if not context.get('active_ids'):
+            return False
+        
+        picking_ids = context['active_ids']
+        for obj in pick_obj.browse(cr, uid, picking_ids, context=context):
+            if obj.chained_from_in_stock_picking:
+                return obj.corresponding_in_picking_stock_picking.partner_id2.id
+            
+    def _get_has_supplier(self, cr, uid, context=None):
+        '''
+        try to find the suppier of corresponding IN for chained picking
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        
+        if not context.get('active_ids'):
+            return False
+        
+        picking_ids = context['active_ids']
+        for obj in pick_obj.browse(cr, uid, picking_ids, context=context):
+            if obj.chained_from_in_stock_picking:
+                if obj.corresponding_in_picking_stock_picking.partner_id2:
+                    return True
+                else:
+                    return False
+    
     _columns = {'register_a_claim_partial_picking': fields.boolean(string='Register a Claim to Supplier'),
+                'in_has_partner_id_partial_picking': fields.boolean(string='IN has Partner specified.', readonly=True),
+                'partner_id_partial_picking': fields.many2one('res.partner', string='Supplier', required=True),
                 'claim_type_partial_picking' : fields.selection(lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_event_type(), string='Claim Type'),
                 'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected for Return Claim?', help="An Incoming Shipment will be automatically created corresponding to returned products."),
                 'description_partial_picking': fields.text(string='Claim Description')}
 
-    _defaults = {'register_a_claim_partial_picking': False}
+    _defaults = {'register_a_claim_partial_picking': False,
+                 'partner_id_partial_picking': _get_default_supplier,
+                 'in_has_partner_id_partial_picking': _get_has_supplier}
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
@@ -49,7 +87,10 @@ class stock_partial_picking(osv.osv_memory):
         if partial.register_a_claim_partial_picking:
             if not partial.claim_type_partial_picking:
                 raise osv.except_osv(_('Warning !'), _('The type of claim must be selected.'))
+            if not partial.partner_id_partial_picking:
+                raise osv.except_osv(_('Warning !'), _('The partner of claim must be selected.'))
             partial_datas.update({'register_a_claim_partial_picking': True,
+                                  'partner_id_partial_picking': partial.partner_id_partial_picking.id,
                                   'claim_type_partial_picking': partial.claim_type_partial_picking,
                                   'replacement_picking_expected_partial_picking': partial.replacement_picking_expected_partial_picking,
                                   'description_partial_picking': partial.description_partial_picking})
@@ -77,7 +118,8 @@ class stock_partial_picking(osv.osv_memory):
                                 <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
                                 <notebook colspan="4">
                                 <page string="Claim">
-                                <field name="register_a_claim_partial_picking"/><group colspan="2"/>
+                                <field name="register_a_claim_partial_picking"/><field name="in_has_partner_id_partial_picking" invisible="True" />
+                                <field name="partner_id_partial_picking" attrs="{\'readonly\': ['|', (\'register_a_claim_partial_picking\', \'=\', False), (\'in_has_partner_id_partial_picking\', \'=\', True)]}"/>
                                 <field name="claim_type_partial_picking" attrs="{\'readonly\': [(\'register_a_claim_partial_picking\', \'=\', False)]}"/>
                                 <field name="replacement_picking_expected_partial_picking" attrs="{\'invisible\': [(\'claim_type_partial_picking\', \'!=\', 'return')]}"/>
                                 </page>
