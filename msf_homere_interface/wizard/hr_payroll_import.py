@@ -57,7 +57,7 @@ class hr_payroll_import(osv.osv_memory):
 
     def update_payroll_entries(self, cr, uid, data='', field='', context=None):
         """
-        Import payroll entries regarding 
+        Import payroll entries regarding all elements given in "data"
         """
         # Some verifications
         if not context:

@@ -39,9 +39,79 @@ class hq_entries_import_wizard(osv.osv_memory):
         'file': fields.binary(string="File", filters="*.csv", required=True),
     }
 
+    def update_hq_entries(self, cr, uid, line):
+        """
+        Import hq entry regarding all elements given in "line"
+        """
+        return False
+
     def button_validate(self, cr, uid, ids, context=None):
-        pass
-        return True
+        """
+        Take a CSV file and fetch some informations for HQ Entries
+        """
+        # Do verifications
+        if not context:
+            context = {}
+        
+        # Verify that an HQ journal exists
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq')])
+        if not journal_ids:
+            raise osv.except_osv(_('Error'), _('You cannot import HQ entries because no HQ Journal exists.'))
+        
+        # Prepare some values
+        file_ext_separator = '.'
+        file_ext = "csv"
+        message = _("HQ Entries import failed.")
+        res = False
+        created = 0
+        processed = 0
+        
+        # Browse all given wizard
+        for wiz in self.browse(cr, uid, ids):
+            # Decode file string
+            fileobj = NamedTemporaryFile('w+')
+            fileobj.write(decodestring(wiz.file))
+            # now we determine the file format
+            fileobj.seek(0)
+            # Read CSV file
+            try:
+                reader = csv.reader(fileobj, delimiter=',')
+            except:
+                fileobj.close()
+                raise osv.except_osv(_('Error'), _('Problem to read given file.'))
+            res = True
+            res_amount = 0.0
+            amount = 0.0
+            for line in reader:
+                processed += 1
+                update = self.update_hq_entries(cr, uid, line)
+                if update:
+                    created += 1
+            fileobj.close()
+        
+        if res:
+            message = _("Payroll import successful")
+        context.update({'message': message})
+        
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+        view_id = view_id and view_id[1] or False
+        
+        # This is to redirect to HQ Entries Tree View
+        context.update({'from': 'hq_entries_import'})
+        
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed, 'state': 'hq'})
+        
+        return {
+            'name': 'HQ Entries Import Confirmation',
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.payroll.import.confirmation',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'view_id': [view_id],
+            'res_id': res_id,
+            'target': 'new',
+            'context': context,
+        }
 
 hq_entries_import_wizard()
 
