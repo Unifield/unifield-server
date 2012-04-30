@@ -30,14 +30,20 @@ import tools
 import time
 import sys
 import traceback
+import logging
+import StringIO
 
 from threading import Thread
 import pooler
+from datetime import datetime
 
 class entity(osv.osv, Thread):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
+    
+    __logger = logging.getLogger('sync.client')
+
 
     def _auto_init(self,cr,context=None):
         res = super(entity,self)._auto_init(cr,context=context)
@@ -99,7 +105,7 @@ class entity(osv.osv, Thread):
     }
     
     _constraints = [
-        (_entity_unique,_('The entity is unique, you cannot create a new one'), ['name','identifier'])
+        (_entity_unique,_('The Instance is unique, you cannot create a new one'), ['name','identifier'])
     ]
 
     _defaults = {
@@ -117,33 +123,52 @@ class entity(osv.osv, Thread):
         
     def get_uuid(self, cr, uid, context=None):
         return self._get_entity(cr, uid, context=context).identifier
-    
+
+    def _handle_error(self, e):
+        try:
+            msg = list(e)
+            if e[-1] != "\n": e.append("\n")
+            return "".join(e)
+        except: return str(e) + "\n"
+   
+    def _log_error(self, log, e):
+        tb = StringIO.StringIO()
+        traceback.print_exc(file=tb)
+        log['error'] = "Push update: " + self._handle_error(e) + tb.getvalue() 
+        log['data_push'] = 'failed'
+        self.__logger.debug(log['error'])
+        return log
+       
     """
         Push Update
     """
-    def push_update(self, cr, uid, context=None):
-        if not context:
-            context = {}
+    def push_update(self, cr, uid, log=None, context=None):
+        log = log or {}
+        context = context or {}
         entity = self.get_entity(cr, uid, context)
-        if not entity.state in ['init', 'update_send', 'update_validate']:
+        
+        if entity.state not in ['init', 'update_send', 'update_validate']: 
+            log['error'] += 'Push data: ' + "Not a valid state to push data: " + entity.state
+            log['data_push'] = 'null'
             return False
         
-        c = False
-        try:
-            if c or entity.state == 'init':
+        try :
+            cont = False
+            if cont or entity.state == 'init':
                 self.create_update(cr, uid, context=context)
-                c = True
-            if c or entity.state == 'update_send':
+                cont = True
+                print "init"
+            if cont or entity.state == 'update_send':
                 self.send_update(cr, uid, context=context)
-                c = True
-            if c or entity.state == 'update_validate':
+                cont = True
+                print "sent update"
+            if cont or entity.state == 'update_validate':
                 self.validate_update(cr, uid, context=context)
+                print "validate update"
+            log['data_push'] = 'ok'
         except Exception, e:
-            cr.commit()
-            traceback.print_exc(file=sys.stdout)
-            raise osv.except_osv(_('Connection error !'), str(e))
-            
-        return True 
+            log = self._log_error(log, e)
+        return True
         #init => init 
     
     def create_update(self, cr, uid, context=None):
@@ -156,8 +181,7 @@ class entity(osv.osv, Thread):
             if res and res[0]:
                 self.pool.get('sync.client.rule').save(cr, uid, res[2], context=context)
                 self.write(cr, uid, [id], {'session_id' : res[1]})
-            elif res and not res[0]:
-                raise osv.except_osv(res[1], _('Error') )
+            elif res and not res[0]: raise Exception, res[1]
             return True
         
         def prepare_update(id):
@@ -186,7 +210,7 @@ class entity(osv.osv, Thread):
                 if res and res[0]:
                     self.pool.get('sync.client.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
                 elif res and not res[0]:
-                    raise osv.except_osv(res[1], _('Error') )
+                    raise Exception, res[1]
                 return True
             return False
         
@@ -202,12 +226,10 @@ class entity(osv.osv, Thread):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.confirm_update(entity.identifier, session_id, context)
         if res and res[0]:
-            print "Push finished" #TODO log
-            
             update_obj.sync_finished(cr, uid, update_ids, context=context)
             self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
-        elif res and not res[0]:   
-            raise osv.except_osv(res[1], _('Error') )
+        elif res and not res[0]:
+            raise Exception, res[1]
         #state update validate => init 
     
     
@@ -215,23 +237,27 @@ class entity(osv.osv, Thread):
     """
         Pull update
     """
-    def pull_update(self, cr, uid, recover=False, context=None):
-        if not context:
-            context = {}
+    def pull_update(self, cr, uid, log=None, context=None, recover=False):
+        log = log or {}
+        context = context or {}
         entity = self.get_entity(cr, uid, context)
-        if not entity.state in ['init', 'update_pull']:
+        if entity.state not in ['init', 'update_pull']: 
+            log['data_pull'] = 'null'
+            log['error'] += 'Push data: ' + "Not a valid state to pull data: "+entity.state
             return False
+        
         try:
-            if entity.state == 'init':
+            if entity.state == 'init': 
                 self.set_last_sequence(cr, uid, context)
             self.retreive_update(cr, uid, recover=recover, context=context)
             cr.commit()
             self.execute_update(cr, uid, context)
+            log['data_pull'] = 'ok'
         except Exception, e:
-            cr.commit()
-            traceback.print_exc(file=sys.stdout)
-            raise osv.except_osv(_('Connection error !'), str(e))
+            log = self._log_error(log, e)
+        
         return True
+    
 
     def set_last_sequence(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -240,7 +266,7 @@ class entity(osv.osv, Thread):
         if res and res[0]:
             self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
-            raise osv.except_osv(res[1], _('Error') )
+            raise Exception, res[1]
 
     def retreive_update(self, cr, uid, recover=False, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -264,9 +290,8 @@ class entity(osv.osv, Thread):
                 offset += nb_upate
                 self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
-                raise osv.except_osv(res[1], _('Error') )
+                raise Exception, res[1]
         
-        print 'update', 'all' if all else '','finished'
         self.write(cr, uid, entity.id, {'update_offset' : 0, 
                                         'max_update' : 0, 
                                         'update_last' : max_seq}, context=context) 
@@ -278,21 +303,27 @@ class entity(osv.osv, Thread):
     """
         Push message
     """
-    def push_message(self, cr, uid, context=None):
-        if not context:
-            context = {}
+    def push_message(self, cr, uid, log=None, context=None):
+        log = log or {}
+        context = context or {}
         entity = self.get_entity(cr, uid, context)
-        if not entity.state in ['init', 'msg_push']:
+        
+        if entity.state not in ['init', 'msg_push']: 
+            log['error'] += 'Push message: ' + "Not a valid state to push message: "+entity.state
+            log['msg_push'] = 'null'
             return False
+        
         try:
             if entity.state == 'init':
                 self.create_message(cr, uid, context)
             self.send_message(cr, uid, context)
+            log['msg_push'] = 'ok'
         except Exception, e:
-            cr.commit()
-            traceback.print_exc(file=sys.stdout)
-            raise osv.except_osv(_('Connection error !'), str(e))
-        print "push message Finished"
+            log = self._log_error(log, e)
+            
+        #except Exception, e:
+            #log['error'] += "Push message: " + self._handle_error(e)
+            #log['msg_push'] = 'failed'
         return True
         #init => init
         
@@ -300,9 +331,7 @@ class entity(osv.osv, Thread):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
         res = proxy.get_message_rule(uuid)
-        if res and not res[0]:
-            #print 'create_message', res
-            raise osv.except_osv(res[1],_('Error !'))
+        if res and not res[0]: raise Exception, res[1]
         self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
         
         rule_obj = self.pool.get("sync.client.message_rule")
@@ -321,11 +350,8 @@ class entity(osv.osv, Thread):
             message_obj = self.pool.get('sync.client.message_to_send')
             packet = message_obj.get_message_packet(cr, uid, max_packet_size, context=context)
             if packet:
-                #print 'send message packet'
-                
                 res = proxy.send_message(uuid, packet)
-                if res and not res[0]:
-                    raise osv.except_osv(res[1], _('Error') )
+                if res and not res[0]: raise Exception, res[1]
                 message_obj.packet_sent(cr, uid, packet, context=context)
         return True
         #message_push => init
@@ -334,28 +360,23 @@ class entity(osv.osv, Thread):
     """ 
         Pull message
     """
-    def pull_message(self, cr, uid, context):
-        if not context:
-            context = {}
+    def pull_message(self, cr, uid, log=None, context=None):
+        log = log or {}
+        context = context or {}
         entity = self.get_entity(cr, uid, context)
+
         if not entity.state in ['init']:
+            log['error'] += 'Push message: ' + "Not a valid state to push message: " + entity.state
+            log['msg_push'] = 'null'
             return False
         
-        try:
-            self.get_message(cr, uid, context)
-            
-        except Exception, e:
-            cr.commit()
-            traceback.print_exc(file=sys.stdout)
-            raise osv.except_osv(_('Connection error !'), str(e))
-        
         try: 
+            self.get_message(cr, uid, context)
             self.execute_message(cr, uid, context)
+            log['msg_pull'] = 'ok'
         except Exception, e:
-            cr.commit()
-            traceback.print_exc(file=sys.stdout)
-            raise osv.except_osv(_('Execution error !'), str(e))
-        print "pull message finished"
+            log = self._log_error(log, e)
+        
         return True
         #init => init
         
@@ -363,7 +384,7 @@ class entity(osv.osv, Thread):
         def _ack_message(proxy, uuid, message_uuid):
             res = proxy.message_received(uuid, message_uuids)
             if res and not res[0]:
-                raise osv.except_osv(res[1], _('Error') )
+                raise Exception, res[1]
              
         packet = True
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
@@ -372,7 +393,7 @@ class entity(osv.osv, Thread):
         while packet:
             res = proxy.get_message(uuid, max_packet_size)
             if res and not res[0]:
-                    raise osv.except_osv(res[1], _('Error') )
+                raise Exception, res[1]
                 
             if res and res[1]:
                 packet = res[1]
@@ -382,7 +403,6 @@ class entity(osv.osv, Thread):
                 
             else:
                 packet = False
-                
         return True
             
     def execute_message(self, cr, uid, context):
@@ -393,37 +413,56 @@ class entity(osv.osv, Thread):
         SYNC process : usefull for scheduling 
     """
     def sync_threaded(self, cr, uid, context=None):
+        context = context or {}
         #TODO thread
-        if not context:
-            context = {}
-            
         self.data = [cr, uid, context]
         Thread.__init__(self)
         self.start()
-        
         return True
         
+    
+
     def sync(self, cr, uid, context=None):
-        if not context:
-            context = {}
-            
-        self.pull_update(cr, uid, context)
-        self.pull_message(cr, uid, context)
-        self.push_update(cr, uid, context)
-        self.push_message(cr, uid, context)
+        context = context or {}
+        # Init log dict for sync.monitor
+        log = {'error':'','data_pull':'null','status':'in-progress',
+            'msg_pull':'null','data_push':'null','msg_push':'null',}
+        log_id = self.pool.get('sync.monitor').create(cr, uid, log)
+        cr.commit()
+        # Start pulling data
+        
+        log['data_pull'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.pull_update(cr, uid, log, context=context)
+        # Start pulling message
+        
+        log['msg_pull'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.pull_message(cr, uid, log, context=context)
+        # Start pushing data
+        log['data_push'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.push_update(cr, uid, log, context=context)
+        # Start pushing message
+        log['msg_push'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.push_message(cr, uid, log, context=context)
+        # Determine final status
+        log.update({'end':datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'status': 'failed' if 'failed' in list(v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull'))  else 'ok'})
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
         
     def run(self):
-        print "start synchro in thread"
         cr = self.data[0]
         uid = self.data[1]
         context = self.data[2]
         cr = pooler.get_db(cr.dbname).cursor()
-        self.pull_update(cr, uid, context)
-        self.pull_message(cr, uid, context)
-        self.push_update(cr, uid, context)
-        self.push_message(cr, uid, context)
-        print "thread finished"
-        cr.commit()
+        self.sync(cr, uid, context)
         cr.close()
 entity()
 
@@ -447,19 +486,25 @@ class sync_server_connection(osv.osv):
     def _get_state(self, cr, uid, ids, name, arg, context=None):
         res = {}
         for connection in self.browse(cr, uid, ids, context=context):
-            if connection.uid:
-                res[connection.id] = "Connected"
-            else:
-                res[connection.id] = "Disconnected"
+            ## Make sure we get an integer (xmlrpc bug fixed in 6.1 server)
+            res[connection.id] = "Connected" if int(connection.uid) else "Disconnected"
         return res
  
     _password = {}
+    _uid = {}
 
     def _get_password(self, cr, uid, ids, field, arg, context):
         return dict.fromkeys(ids, self._password.get(cr.dbname))
 
     def _set_password(self, cr, uid, ids, field, password, arg, context):
         self._password[cr.dbname] = password
+
+    def _get_uid(self, cr, user, ids, field, arg, context):
+        return dict.fromkeys(ids, self._uid.get(cr.dbname, 0))
+
+    def _set_uid(self, cr, user, ids, field, uid, arg, context):
+        ## Make sure we put an integer
+        self._uid[cr.dbname] = int(uid)
 
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
@@ -471,9 +516,9 @@ class sync_server_connection(osv.osv):
         'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
-        'uid': fields.integer('Uid on synchro server', readonly=True),
+        'uid': fields.function(_get_uid, fnct_inv=_set_uid, string='Uid on synchro server', type='integer', method=True, readonly=True, store=False),
         'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
-        'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
+        'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True, store=False),
         'max_size' : fields.integer("Max Packet Size"),
     }
     
@@ -535,8 +580,6 @@ class sync_server_connection(osv.osv):
     ]
 
 sync_server_connection()
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
