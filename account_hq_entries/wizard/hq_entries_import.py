@@ -30,6 +30,7 @@ import csv
 from tools.misc import ustr
 from tools.translate import _
 import time
+import locale
 
 class hq_entries_import_wizard(osv.osv_memory):
     _name = 'hq.entries.import'
@@ -43,6 +44,56 @@ class hq_entries_import_wizard(osv.osv_memory):
         """
         Import hq entry regarding all elements given in "line"
         """
+        # Seems that some line could be empty
+        if line.count('') == 16:
+            return False
+        # Prepare some values
+        vals = {
+            'user_validated': False,
+        }
+        sequence, date, period, mission_name, mission_code, unknown_number, account_description, booking_currency, booking_amount, \
+        amount, unknown_rate, unknown_rate_date, unknown_code, unknown_number2, description, unknown_code = zip(line)
+        # Set locale 'C' because of period
+        locale.setlocale(locale.LC_ALL, 'C')
+        # Check period
+        if not date and not date[0]:
+            raise osv.except_osv(_('Warning'), _('A date is missing!'))
+        try:
+            line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], '%d-%b-%y'))
+        except ValueError, e:
+            raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date[0], e))
+        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
+        if not period_ids:
+            raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (line_date,))
+        if len(period_ids) > 1:
+            raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (line_date,))
+        period_id = period_ids[0]
+        vals.update({'period_id': period_id, 'date': line_date})
+        # Retrive account
+        if account_description and account_description[0]:
+            account_data = account_description[0].split(' ')
+            account_code = account_data and account_data[0] or False
+            if not account_code:
+                raise osv.except_osv(_('Error'), _('No account code found!'))
+            account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
+            if not account_ids:
+                raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist!') % (account_code,))
+            vals.update({'account_id': account_ids[0]})
+        # Retrieve Cost Center and Funding Pool
+        try:
+            oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+        except ValueError:
+            oc_id = 0
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        vals.update({'cost_center_id': oc_id, 'analytic_id': fp_id,})
+        if description and description[0]:
+            vals.update({'name': description[0]})
+        res = self.pool.get('hq.entries').create(cr, uid, vals)
+        if res:
+            return True
         return False
 
     def button_validate(self, cr, uid, ids, context=None):

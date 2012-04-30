@@ -62,6 +62,7 @@ class hq_entries(osv.osv):
         'date': fields.date("Posting Date"),
         'partner_id': fields.many2one("res.partner", "Third Party"),
         'period_id': fields.many2one("account.period", "Period"),
+        'name': fields.char('Description', size=255),
     }
 
     _defaults = {
