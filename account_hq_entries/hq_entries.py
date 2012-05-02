@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from time import strftime
+from tools.translate import _
 
 class hq_entries_validation_wizard(osv.osv_memory):
     _name = 'hq.entries.validation.wizard'
@@ -103,7 +104,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 res = True
         return res
 
-    def validate(self, cr, uid, ids, context={}):
+    def validate(self, cr, uid, ids, context=None):
         """
         Validate all given lines (in context)
         """
@@ -161,6 +162,14 @@ class hq_entries(osv.osv):
         'user_validated': lambda *a: False,
         'amount': lambda *a: 0.0,
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Do not permit user to delete HQ Entries lines
+        """
+        if not context.get('from', False) or context.get('from') != 'code':
+            raise osv.except_osv(_('Error'), _('You cannot delete HQ Entries lines!'))
+        return super(hq_entries, self).unlink(cr, uid, ids, context)
 
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
