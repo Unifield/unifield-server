@@ -131,17 +131,21 @@ class purchase_report(osv.osv):
                     extract(epoch from age(s.date_approve,s.date_order))/(24*60*60)::decimal(16,2) as delay,
                     extract(epoch from age(l.date_planned,s.date_order))/(24*60*60)::decimal(16,2) as delay_pass,
                     count(*) as nbr,
-                    (l.price_unit*l.product_qty*u.factor)::decimal(16,2) as price_total,
-                    avg(100.0 * (l.price_unit*l.product_qty*u.factor) / NULLIF(t.standard_price*l.product_qty*u.factor, 0.0))::decimal(16,2) as negociation,
+                    (l.price_unit*l.product_qty*u.factor*(rcr_to.rate/rcr_fr.rate))::decimal(16,2) as price_total,
+                    avg(100.0 * (l.price_unit*l.product_qty*u.factor*(rcr_to.rate/rcr_fr.rate)) / NULLIF(t.standard_price*l.product_qty*u.factor, 0.0))::decimal(16,2) as negociation,
 
-                    sum(t.standard_price*l.product_qty*u.factor)::decimal(16,2) as price_standard,
-                    (sum(l.product_qty*l.price_unit)/NULLIF(sum(l.product_qty*u.factor),0.0))::decimal(16,2) as price_average
+                    sum(t.standard_price*l.product_qty*u.factor*(rcr_to.rate/rcr_fr.rate))::decimal(16,2) as price_standard,
+                    (sum(l.product_qty*l.price_unit*(rcr_to.rate/rcr_fr.rate))/NULLIF(sum(l.product_qty*u.factor*(rcr_to.rate/rcr_fr.rate)),0.0))::decimal(16,2) as price_average
                 from purchase_order s
                     left join purchase_order_line l on (s.id=l.order_id)
                         left join product_product p on (l.product_id=p.id)
                             left join product_template t on (p.product_tmpl_id=t.id)
                     left join product_uom u on (u.id=l.product_uom)
-                where l.product_id is not null
+                    left join product_pricelist ppl on (ppl.id = s.pricelist_id)
+                    left join res_currency_rate rcr_fr on (rcr_fr.currency_id = ppl.currency_id)
+                    left join res_company rc on (s.company_id = rc.id)
+                    left join res_currency_rate rcr_to on (rcr_to.currency_id = rc.currency_id)
+                where l.product_id is not null and rcr_to.name <= s.date_order and rcr_fr.name <= s.date_order
                 group by
                     s.company_id,
                     s.create_uid,
@@ -172,7 +176,9 @@ class purchase_report(osv.osv):
                     s.name,
                     s.order_type,
                     s.priority,
-                    s.categ
+                    s.categ,
+                    rcr_to.rate,
+                    rcr_fr.rate
 
             )
         """)
