@@ -31,21 +31,6 @@ class stock_location(osv.osv):
     _columns = {'cross_docking_location_ok': fields.boolean(string='Cross Docking Location', readonly=True, help="There is only one Cross Docking Location"),
                 }
     
-    def _check_unique_cross_docking_location(self, cr, uid, ids, context=None):
-        """ Checks if Cross Docking Location is unique
-        @return: True or False
-        """
-        cross_docking_location = self.search_count(cr, uid, [('cross_docking_location_ok','=', True)], context=context)
-        if cross_docking_location > 1:
-            return False
-        return True
-    
-    #Check that the location cross docking exists only once
-    _constraints = [(_check_unique_cross_docking_location,
-                     'Cross Docking Location must be unique.',
-                     ['cross_docking_location_ok'],),
-                    ]
-    
     def unlink(self, cr, uid, ids, context=None):
         cross_docking_location = self.search(cr, uid, [('name', 'ilike', 'Cross docking'), ('cross_docking_location_ok', '=', True) ], context=context)[0]
         if self.read(cr,uid, ids, ['id'], context=context)[0]['id'] == cross_docking_location:
