@@ -54,19 +54,26 @@ class report_contract_list(report_sxw.rml_parse):
             for cost_center in contract.cost_center_ids:
                 cost_centers += cost_center.code
                 cost_centers += ", "
+            # remove last comma
+            if len(earmarked_funding_pools) > 2:
+                earmarked_funding_pools = earmarked_funding_pools[:-2]
+            if len(total_project_funding_pools) > 2:
+                total_project_funding_pools = total_project_funding_pools[:-2]
+            if len(cost_centers) > 2:
+                cost_centers = cost_centers[:-2]
                     
             values = {'code': contract.code,
                       'name': contract.name,
                       'donor_grant_reference': contract.donor_grant_reference,
                       'hq_grant_reference': contract.hq_grant_reference,
-                      'cost_centers': cost_centers[:-2],
+                      'cost_centers': cost_centers,
                       'eligibility_from_date': contract.eligibility_from_date,
                       'eligibility_to_date': contract.eligibility_to_date,
                       'grant_amount': contract.grant_amount,
                       'reporting_currency': contract.reporting_currency.name,
                       'reporting_type': reporting_types[contract.reporting_type],
-                      'earmarked_funding_pools': earmarked_funding_pools[:-2],
-                      'total_project_funding_pools': total_project_funding_pools[:-2]}
+                      'earmarked_funding_pools': earmarked_funding_pools,
+                      'total_project_funding_pools': total_project_funding_pools}
             result.append(values)
         return result
         
