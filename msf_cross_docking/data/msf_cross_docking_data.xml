@@ -2,6 +2,9 @@
     <data noupdate="1">
         <record id="stock_location_cross_docking" model="stock.location">
             <field name="name">Cross docking</field>
+            <field name="usage">internal</field>
+            <field name="cross_docking_location_ok" eval="True"/>
+            <field name="location_id" ref="stock.stock_location_locations"/>
         </record>
         <record id="stock_location_input" model="stock.location">
             <field name="name">Input</field>

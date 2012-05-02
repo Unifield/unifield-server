@@ -27,8 +27,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
-                        <field name="cross_docking_ok" attrs="{'readonly':[('categ','in', ['service', 'transport'] )]}" 
-                        on_change="onchange_cross_docking_ok(cross_docking_ok)"
+                        <field name="cross_docking_ok" attrs="{'readonly':['|', ('categ','in', ['service', 'transport']), ('state', '!=', 'draft')]}" 
+                        on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id)"
                         />
                     </xpath>
                     <field name="location_id" position= "replace">
@@ -132,6 +132,21 @@
                         attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}" />
                         <field name="cross_docking_ok" invisible='1' />
                     </xpath>
+                </data>
+            </field>
+        </record>
+         
+        <!-- We update the form view of stock.location to display the boolean "cross_docking" for cross_docking location-->
+        <record id="view_location_form" model="ir.ui.view">
+            <field name="name">stock.location.form</field>
+            <field name="model">stock.location</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_location_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <field name="scrap_location" position="after">
+                        <field name="cross_docking_location_ok" />
+                    </field>
                 </data>
             </field>
         </record>
