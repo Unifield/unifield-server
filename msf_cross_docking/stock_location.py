@@ -24,15 +24,27 @@ from tools.translate import _
 class stock_location(osv.osv):
     '''
     override stock location to add:
-    - cross_docking location (checkbox - boolean)
+    - cross_docking_location_ok (checkbox - boolean)
     '''
     _inherit = 'stock.location'
     
     _columns = {'cross_docking_location_ok': fields.boolean(string='Cross Docking Location', readonly=True, help="There is only one Cross Docking Location"),
                 }
     
+    def _check_unique_cross_docking_location(self, cr, uid, ids, context=None):
+        """ Checks if Cross Docking Location is unique
+        @return: True or False
+        """
+        cross_docking_location = self.search(cr, uid, [('cross_docking_location_ok','=', True)])
+        if cross_docking_location > 1:
+            return True
+        return False
+    
     #Check that the location cross docking exists only once
-    _sql_constraints = [('unique_cross_docking', 'unique(cross_docking_location_ok)','Cross docking location must be unique')]
+    _constraints = [(_check_unique_cross_docking_location,
+                     'Cross Docking Location must be unique.',
+                     ['cross_docking_location_ok'],),
+                    ]
     
     def unlink(self, cr, uid, ids, context=None):
         cross_docking_location = self.search(cr, uid, [('name', 'ilike', 'Cross docking'), ('cross_docking_location_ok', '=', True) ], context=context)[0]
