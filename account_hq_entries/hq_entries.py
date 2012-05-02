@@ -58,7 +58,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             })
             total_amount = 0
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['account_id', 'period_id', 'analytic_id', 'cost_center_id', 'date', 
-                'free_1_id', 'free_2_id']):
+                'free_1_id', 'free_2_id', 'currency_id', 'name']):
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
@@ -69,7 +69,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 if distrib_id:
                     common_vals = {
                         'distribution_id': distrib_id,
-#                        'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
+                        'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
@@ -86,12 +86,13 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
                 vals = {
-                    'account_id': line.get('account_id', False),
-                    'period_id': line.get('period_id', False),
+                    'account_id': line.get('account_id', False) and line.get('account_id')[0] or False,
+                    'period_id': line.get('period_id', False) and line.get('period_id')[0] or False,
                     'journal_id': journal_id,
                     'date': line.get('date'),
                     'move_id': move_id,
                     'analytic_distribution_id': distrib_id,
+                    'name': line.get('name', ''),
                 }
                 self.pool.get('account.move.line').create(cr, uid, vals, context={}, check=False)
                 # total_amount += line.get('amount')
@@ -116,8 +117,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
         to_write = []
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
             if not line.user_validated:
-                # FIXME: Determine an account as Expat Salaries in Company
-                if line.account_id.code == '61200':
+                if line.account_id.id != line.account_id_first_value.id or line.cost_center_id.id != line.cost_center_id_first_value.id \
+                    or line.analytic_id.id != line.analytic_id_first_value.id:
                     self.create_move(cr, uid, line.id)
                     self.pool.get('hq.entries').write(cr, uid, [line.id], {'user_validated': True}, context=context)
                     continue
