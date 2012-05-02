@@ -57,9 +57,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 'journal_id': journal_id,
                 'period_id': period_id,
             })
-            total_amount = 0
+            total_debit = 0
+            total_credit = 0
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['account_id', 'period_id', 'analytic_id', 'cost_center_id', 'date', 
-                'free_1_id', 'free_2_id', 'currency_id', 'name']):
+                'free_1_id', 'free_2_id', 'currency_id', 'name', 'amount']):
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
@@ -95,9 +96,38 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     'analytic_distribution_id': distrib_id,
                     'name': line.get('name', ''),
                 }
+                # Fetch debit/credit
+                debit = 0.0
+                credit = 0.0
+                amount = line.get('amount', 0.0)
+                if amount < 0.0:
+                    credit = abs(amount)
+                else:
+                    debit = abs(amount)
+                vals.update({'debit': debit, 'credit': credit,})
                 self.pool.get('account.move.line').create(cr, uid, vals, context={}, check=False)
-                # total_amount += line.get('amount')
-            # FIXME: write an account move line with total_amount
+                total_debit += debit
+                total_credit += credit
+            # counterpart line
+            counterpart_vals = {}
+            account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', '4000')])
+            if account_ids:
+                counterpart_vals.update({'account_id': account_ids[0],})
+            counterpart_vals.update({
+                'period_id': period_id,
+                'journal_id': journal_id,
+                'move_id': move_id,
+                'date': current_date,
+                'name': 'HQ Entry Counterpart',
+            })
+            counterpart_debit = 0.0
+            counterpart_credit = 0.0
+            if (total_debit - total_credit) < 0:
+                counterpart_debit = abs(total_debit - total_credit)
+            else:
+                counterpart_credit = abs(total_debit - total_credit)
+            counterpart_vals.update({'debit': counterpart_debit, 'credit': counterpart_credit,})
+            self.pool.get('account.move.line').create(cr, uid, counterpart_vals, context={}, check=False)
             # Post move
             post = self.pool.get('account.move').post(cr, uid, [move_id])
             if post:
@@ -169,9 +199,11 @@ class hq_entries(osv.osv):
         """
         if not context:
             context={}
-        for line in self.browse(cr, uid, ids):
-            if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.code == '61200':
-                raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
+        if 'account_id' in vals:
+            account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
+            for line in self.browse(cr, uid, ids):
+                if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.code == '61200' and account.code != '61200':
+                    raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         return super(hq_entries, self).write(cr, uid, ids, vals, context)
 
     def unlink(self, cr, uid, ids, context=None):
