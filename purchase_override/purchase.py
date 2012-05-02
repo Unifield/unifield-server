@@ -113,6 +113,7 @@ class purchase_order(osv.osv):
         'from_yml_test': lambda *a: False,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
+        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery']
     }
 
     def _check_user_company(self, cr, uid, company_id, context=None):
@@ -142,7 +143,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False):
         '''
         Changes the invoice method of the purchase order according to
         the choosen order type
@@ -167,19 +168,30 @@ class purchase_order(osv.osv):
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
+        
+        if order_type == 'direct' and dest_partner_id:
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
+            v.update({'dest_address_id': cp_address_id})
+            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+        elif order_type == 'direct':
+            v.update({'dest_address_id': False})
+            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
+        else:
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id, ['delivery'])['delivery']
+            v.update({'dest_address_id': cp_address_id})
+            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
             if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
             elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
-                v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False})
+                v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
                 d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
                 w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
                           'title': 'An error has occured !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
             v['partner_id'] = None
-            v['dest_address_id'] = None
             v['partner_address_id'] = None
             v['pricelist_id'] = None
             
@@ -188,7 +200,6 @@ class purchase_order(osv.osv):
                 partner = self.pool.get('res.partner').browse(cr, uid, local_market)
                 v['partner_id'] = partner.id
                 if partner.address:
-                    v['dest_address_id'] = partner.address[0].id
                     v['partner_address_id'] = partner.address[0].id
                 if partner.property_product_pricelist_purchase:
                     v['pricelist_id'] = partner.property_product_pricelist_purchase.id
@@ -212,6 +223,22 @@ class purchase_order(osv.osv):
         
         return res
     
+    # Be careful during integration, the onchange_warehouse_id method is also defined on UF-965
+    def onchange_warehouse_id(self, cr, uid, ids, warehouse_id):
+        '''
+        Change the destination address to the destination address of the company if False
+        '''
+        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids, warehouse_id)
+        
+        if not res.get('value', {}).get('dest_address_id'):
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id, ['delivery'])['delivery']
+            if 'value' in res:
+                res['value'].update({'dest_address_id': cp_address_id})
+            else:
+                res.update({'value': {'dest_address_id': cp_address_id}})
+        
+        return res
+    
     def on_change_dest_partner_id(self, cr, uid, ids, dest_partner_id, context=None):
         '''
         Fill automatically the destination address according to the destination partner
@@ -222,14 +249,16 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
         
+        company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.id
+        
         if not dest_partner_id:
             v.update({'dest_address_id': False})
-            d.update({'dest_address_id': []})
+            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
+        else:
+            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         
-        d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
-        
-        delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
-        v.update({'dest_address_id': delivery_addr['delivery']})
+            delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
+            v.update({'dest_address_id': delivery_addr['delivery']})
         
         return {'value': v, 'domain': d}
 
