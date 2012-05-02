@@ -284,7 +284,7 @@ class supplier_catalogue(osv.osv):
         
         context.update({'search_default_partner_id': cat.partner_id.id,})
         
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'supplier_catalogue_line_tree_view')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'non_edit_supplier_catalogue_line_tree_view')[1]
         
         return {'type': 'ir.actions.act_window',
                 'name': name,
