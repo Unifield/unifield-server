@@ -91,6 +91,22 @@
             </field>
         </record>
 
+        <record id="hq_reallocation_wizard" model="ir.ui.view">
+            <field name="name">hq.reallocation.wizard</field>
+            <field name="model">hq.reallocation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Reallocation">
+                    <field name="account_id" colspan="2"/>
+                    <label string="" colspan="2"/>
+                    <group colspan="6" col="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     <!-- Actions: Menu actions -->
         <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
             <field name="name">Import HQ Entries</field>
@@ -127,7 +143,7 @@
             <field eval="True" name="object"/>
         </record>
 
-    <!-- Mass reallocation wizard for HQ Entries -->
+    <!-- Mass analytic reallocation wizard for HQ Entries -->
         <act_window id="action_hq_analytic_reallocation"
             name="Analytic reallocation"
             res_model="hq.analytic.reallocation"
@@ -137,6 +153,17 @@
             view_type="form"
             target="new"
             view_id="analytic_hq_reallocation_wizard"/>
+
+    <!-- Mass reallocation wizard for HQ Entries -->
+        <act_window id="action_hq_reallocation"
+            name="Change Account"
+            res_model="hq.reallocation"
+            src_model="hq.entries"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="hq_reallocation_wizard"/>
 
     <!-- Menu -->
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="5"/>

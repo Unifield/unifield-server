@@ -95,4 +95,32 @@ class hq_analytic_reallocation(osv.osv_memory):
         return { 'type': 'ir.actions.act_window_close', 'context': context}
 
 hq_analytic_reallocation()
+
+class hq_reallocation(osv.osv_memory):
+    _name = 'hq.reallocation'
+    _description = 'HQ reallocation wizard'
+
+    _columns = {
+        'account_id': fields.many2one('account.account', string="Account", required=True, domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"),
+    }
+
+    def button_validate(self, cr, uid ,ids, context=None):
+        """
+        Give all lines the given account
+        """
+        if not context:
+            raise osv.except_osv(_('Error'), _('Unknown error'))
+        model = context.get('active_model')
+        if not model:
+            raise osv.except_osv(_('Error'), _('Unknown error. Please contact an administrator to resolve this problem. This is probably due to Web server error.'))
+        line_ids = context.get('active_ids', [])
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wiz = self.browse(cr, uid, ids[0])
+        self.pool.get(model).write(cr, uid, line_ids, {'account_id': wiz.account_id and wiz.account_id.id or False,})
+        return { 'type': 'ir.actions.act_window_close', 'context': context}
+
+hq_reallocation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
