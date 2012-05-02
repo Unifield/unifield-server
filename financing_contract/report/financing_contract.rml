@@ -72,6 +72,7 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table5">
       <blockAlignment value="LEFT"/>
@@ -249,13 +250,16 @@
     </section>
     <pageBreak/>
     <para style="P7">Reporting lines:</para>
-    <blockTable colWidths="100.0,100.0,150.0,162.0" repeatRows="1" style="Table4">
+    <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" repeatRows="1" style="Table4">
       <tr>
         <td>
           <para style="P15" alignment="LEFT">Code</para>
         </td>
         <td>
           <para style="P16" alignment="LEFT">Name</para>
+        </td>
+        <td>
+          <para style="P16" alignment="LEFT">Line Type</para>
         </td>
         <td>
           <para style="P16" alignment="RIGHT">Funded - Budget</para>
@@ -266,24 +270,58 @@
       </tr>
     </blockTable>
     <section>
-      <para style="P21">[[repeatIn(o.actual_line_ids,'line')]]</para>
-      <blockTable colWidths="100.0,100.0,150.0,162.0" style="Table5">
+      <para style="P21">[[repeatIn(process(o.actual_line_ids),'line')]]</para>
+      <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" style="Table5">
         <tr>
           <td>
-            <para style="P19" alignment="LEFT">[[ line.code ]]</para>
+            <para style="P19" alignment="LEFT">[[ line['code'] ]]</para>
           </td>
           <td>
-            <para style="P12" alignment="LEFT">[[ line.name ]]</para>
+            <para style="P12" alignment="LEFT">[[ line['name'] ]]</para>
           </td>
           <td>
-            <para style="P12" alignment="RIGHT">[[ locale.format('%.0f', line.allocated_budget, True) ]] </para>
+            <para style="P12" alignment="LEFT">[[ line['line_type'] ]]</para>
           </td>
           <td>
-            <para style="P18" alignment="RIGHT">[[ locale.format('%.0f', line.project_budget, True) ]]</para>
+            <para style="P12" alignment="RIGHT">[[ locale.format('%.0f', line['allocated_budget'], True) ]] </para>
+          </td>
+          <td>
+            <para style="P18" alignment="RIGHT">[[ locale.format('%.0f', line['project_budget'], True) ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+      <blockTable colWidths="80.0,402.0" style="Table5">
+        <tr>
+          <td>
+            <para style="P12" alignment="LEFT">  Accounts:</para>
+          </td>
+          <td>
+            <para style="P12" alignment="LEFT">[[ line['account_list'] ]]</para>
           </td>
         </tr>
       </blockTable>
     </section>
+    <section>
+     <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" style="Table5">
+	    <tr>
+	      <td>
+	      	<para style="P15" alignment="LEFT">Total</para>
+	      </td>
+          <td>
+          
+          </td>
+          <td>
+             
+          </td>
+	      <td>
+	        <para style="P15" alignment="RIGHT">[[ locale.format('%.0f', get_totals(o.actual_line_ids)[0], True) ]] </para>
+	      </td>
+	      <td>
+	        <para style="P15" alignment="RIGHT">[[ locale.format('%.0f', get_totals(o.actual_line_ids)[1], True) ]]</para>
+	      </td>
+	    </tr>
+	  </blockTable>
+  </section>
     <para style="P5">
       <font color="white"> </font>
     </para>
