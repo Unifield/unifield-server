@@ -35,7 +35,7 @@ class stock_location(osv.osv):
         """ Checks if Cross Docking Location is unique
         @return: True or False
         """
-        cross_docking_location = self.search(cr, uid, [('cross_docking_location_ok','=', True)])
+        cross_docking_location = self.search_count(cr, uid, [('cross_docking_location_ok','=', True)], context=context)
         if cross_docking_location > 1:
             return True
         return False
