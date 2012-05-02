@@ -59,6 +59,9 @@ class product_supplierinfo(osv.osv):
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
         
+        if count:
+            return res
+        
         if isinstance(res, (int, long)):
             res = [res]
         
