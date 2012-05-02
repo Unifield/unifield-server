@@ -225,6 +225,10 @@ class purchase_order(osv.osv):
             context = {}
         if not 'active_id' in context:
             raise osv.except_osv(_('Error'), _('No active purchase order found !'))
+
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.rfq_ok:
+                raise osv.except_osv(_('Error'), _('The document %s is a Request for Quotation, you cannot have an allocation report on RfQ !') % order.name)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_allocation_report', 'purchase_order_allocation_line_report_from_po')
         
