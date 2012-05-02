@@ -21,6 +21,7 @@
 
 from osv import osv
 from osv import fields
+import sync_common.common
 
 from datetime import datetime
 
@@ -45,6 +46,26 @@ class forced_values(osv.osv):
     }
 
 forced_values()
+
+class fallback_values(osv.osv):
+    _name = "sync_server.sync_rule.fallback_values"
+
+    def _get_fallback_value(self, cr, uid, context=None):
+        return []
+        obj = self.pool.get('ir.model')
+        import ipdb
+        ipdb.set_trace()
+        ids = obj.search(cr, uid, sync_common.MODELS_TO_IGNORE)
+        res = obj.read(cr, uid, ids, ['model', 'id'], context)
+        return [(str(r['id']), r['model']) for r in res]
+
+    _columns = {
+        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
+        'value' : fields.reference("Value", selection = _get_fallback_value, size = 128, required = True),
+        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
+    }
+
+fallback_values()
 
 class sync_rule_validation(osv.osv_memory):
     _name = "sync_server.sync_rule.validation"
@@ -86,6 +107,7 @@ class sync_rule(osv.osv):
         'included_fields':fields.text('Fields to include', required = True, readonly = True),
         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
         'forced_values':fields.text('Values to force', required = False, readonly = True),
+        'fallback_values_sel': fields.one2many('sync_server.sync_rule.fallback_values', 'sync_rule_id', 'Select Fallback Values'),
         'fallback_values':fields.text('Fallback values', required = False),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
@@ -239,6 +261,24 @@ class sync_rule(osv.osv):
         self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid'}, context=context)
         return {}
 
+    def on_change_fallback_values(self, cr, uid, ids, values, context=None):
+        sel = {}
+        errors = []
+        for value in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'fallback_values_sel', values, context=context):
+            field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name','model','ttype'])
+            try: value = eval(value['value'])
+            except: value = eval('"""'+value['value']+'"""')
+            name = str(field['name'])
+            if field['ttype'] == 'many2one': name += '/id'
+            else: sel[name] = value
+        res = {'value' : {'fallback_values' : (str(sel) if sel else '')}}
+        if errors:
+            res['warning'] = {
+                'title' : 'Error!',
+                'message' : "\n".join(errors),
+            }
+        return res
+
     def validate(self, cr, uid, ids, context=None):
         error = False
         message = ''
@@ -352,11 +392,11 @@ class message_rule(osv.osv):
 
     _order = 'sequence_number asc,model_id asc'
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(message_rule, self).default_get(cr, uid, fields, context=context)
-        import ipdb
-        ipdb.set_trace()
-        return res
+    #def default_get(self, cr, uid, fields, context=None):
+    #    res = super(message_rule, self).default_get(cr, uid, fields, context=context)
+    #    import ipdb
+    #    ipdb.set_trace()
+    #    return res
 
     def _get_message_rule(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules(cr, uid, entity, context)
