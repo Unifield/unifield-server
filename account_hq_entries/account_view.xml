@@ -52,6 +52,9 @@
             </field>
         </record>
 
+    <!--
+        Wizard
+    -->
         <record id="hq_entries_import_wizard" model="ir.ui.view">
             <field name="name">hq.entries.import.wizard</field>
             <field name="model">hq.entries.import</field>
@@ -69,7 +72,26 @@
             </field>
         </record>
 
-    <!-- Actions -->
+        <record id="analytic_hq_reallocation_wizard" model="ir.ui.view">
+            <field name="name">analytic.hq.reallocation.wizard</field>
+            <field name="model">hq.analytic.reallocation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Reallocation">
+                    <field name="cost_center_id"/>
+                    <field name="funding_pool_id"/>
+                    <newline/>
+                    <field name="free1_id"/>
+                    <field name="free2_id"/>
+                    <group colspan="6" col="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Actions: Menu actions -->
         <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
             <field name="name">Import HQ Entries</field>
             <field name="res_model">hq.entries.import</field>
@@ -104,6 +126,17 @@
             <field eval="'ir.actions.server,%d'%action_hq_entries_validation" name="value"/>
             <field eval="True" name="object"/>
         </record>
+
+    <!-- Mass reallocation wizard for HQ Entries -->
+        <act_window id="action_hq_analytic_reallocation"
+            name="Analytic reallocation"
+            res_model="hq.analytic.reallocation"
+            src_model="hq.entries"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="analytic_hq_reallocation_wizard"/>
 
     <!-- Menu -->
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="5"/>
