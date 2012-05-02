@@ -85,6 +85,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'hq_entries_import':
                 result = ('hq_entries_tree', 'hq.entries', 'account_hq_entries')
                 domain = ""
+                context.update({'search_default_non_validated': 1})
             if result:
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, result[2] or 'msf_homere_interface', result[0])
                 if view_id:
