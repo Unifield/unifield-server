@@ -30,6 +30,8 @@ import tools
 import time
 import sys
 import traceback
+import logging
+import StringIO
 
 from threading import Thread
 import pooler
@@ -39,6 +41,9 @@ class entity(osv.osv, Thread):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
+    
+    __logger = logging.getLogger('sync.client')
+
 
     def _auto_init(self,cr,context=None):
         res = super(entity,self)._auto_init(cr,context=context)
@@ -126,28 +131,44 @@ class entity(osv.osv, Thread):
             return "".join(e)
         except: return str(e) + "\n"
    
+    def _log_error(self, log, e):
+        tb = StringIO.StringIO()
+        traceback.print_exc(file=tb)
+        log['error'] = "Push update: " + self._handle_error(e) + tb.getvalue() 
+        log['data_push'] = 'failed'
+        self.__logger.debug(log['error'])
+        return log
+       
     """
         Push Update
     """
-    def push_update(self, cr, uid, log, context=None):
+    def push_update(self, cr, uid, log=None, context=None):
+        log = log or {}
         context = context or {}
         entity = self.get_entity(cr, uid, context)
-        try:
-            if entity.state not in ['init', 'update_send', 'update_validate']: raise StandardError, "Not a valid state to push data: "+entity.state
-            if entity.state == 'init':
-                self.create_update(cr, uid, context=context)
-            elif entity.state == 'update_send':
-                self.send_update(cr, uid, context=context)
-            elif entity.state == 'update_validate':
-                self.validate_update(cr, uid, context=context)
-        except StandardError, e:
-            log['error'] += 'Push data: ' + self._handle_error(e)
+        
+        if entity.state not in ['init', 'update_send', 'update_validate']: 
+            log['error'] += 'Push data: ' + "Not a valid state to push data: " + entity.state
             log['data_push'] = 'null'
-        except Exception, e:
-            log['error'] += 'Push data: ' + self._handle_error(e)
-            log['data_push'] = 'failed'
-        else:
+            return False
+        
+        try :
+            cont = False
+            if cont or entity.state == 'init':
+                self.create_update(cr, uid, context=context)
+                cont = True
+                print "init"
+            if cont or entity.state == 'update_send':
+                self.send_update(cr, uid, context=context)
+                cont = True
+                print "sent update"
+            if cont or entity.state == 'update_validate':
+                self.validate_update(cr, uid, context=context)
+                print "validate update"
             log['data_push'] = 'ok'
+        except Exception, e:
+            log = self._log_error(log, e)
+        return True
         #init => init 
     
     def create_update(self, cr, uid, context=None):
@@ -216,23 +237,27 @@ class entity(osv.osv, Thread):
     """
         Pull update
     """
-    def pull_update(self, cr, uid, log, context=None, recover=False):
+    def pull_update(self, cr, uid, log=None, context=None, recover=False):
+        log = log or {}
         context = context or {}
         entity = self.get_entity(cr, uid, context)
+        if entity.state not in ['init', 'update_pull']: 
+            log['data_pull'] = 'null'
+            log['error'] += 'Push data: ' + "Not a valid state to pull data: "+entity.state
+            return False
+        
         try:
-            if entity.state not in ['init', 'update_pull']: raise StandardError, "Not a valid state to pull data: "+entity.state
-            if entity.state == 'init': self.set_last_sequence(cr, uid, context)
+            if entity.state == 'init': 
+                self.set_last_sequence(cr, uid, context)
             self.retreive_update(cr, uid, recover=recover, context=context)
             cr.commit()
             self.execute_update(cr, uid, context)
-        except StandardError, e:
-            log['error'] += 'Pull data: ' + self._handle_error(e)
-            log['data_pull'] = 'null'
-        except Exception, e:
-            log['error'] += "Pull data: " + self._handle_error(e)
-            log['data_pull'] = 'failed'
-        else:
             log['data_pull'] = 'ok'
+        except Exception, e:
+            log = self._log_error(log, e)
+        
+        return True
+    
 
     def set_last_sequence(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -278,22 +303,28 @@ class entity(osv.osv, Thread):
     """
         Push message
     """
-    def push_message(self, cr, uid, log, context=None):
+    def push_message(self, cr, uid, log=None, context=None):
+        log = log or {}
         context = context or {}
         entity = self.get_entity(cr, uid, context)
+        
+        if entity.state not in ['init', 'msg_push']: 
+            log['error'] += 'Push message: ' + "Not a valid state to push message: "+entity.state
+            log['msg_push'] = 'null'
+            return False
+        
         try:
-            if entity.state not in ['init', 'msg_push']: raise StandardError, "Not a valid state to push message: "+entity.state
             if entity.state == 'init':
                 self.create_message(cr, uid, context)
             self.send_message(cr, uid, context)
-        except StandardError, e:
-            log['error'] += 'Push message: ' + self._handle_error(e)
-            log['msg_push'] = 'null'
-        except Exception, e:
-            log['error'] += "Push message: " + self._handle_error(e)
-            log['msg_push'] = 'failed'
-        else:
             log['msg_push'] = 'ok'
+        except Exception, e:
+            log = self._log_error(log, e)
+            
+        #except Exception, e:
+            #log['error'] += "Push message: " + self._handle_error(e)
+            #log['msg_push'] = 'failed'
+        return True
         #init => init
         
     def create_message(self, cr, uid, context=None):
@@ -329,21 +360,24 @@ class entity(osv.osv, Thread):
     """ 
         Pull message
     """
-    def pull_message(self, cr, uid, log, context=None):
+    def pull_message(self, cr, uid, log=None, context=None):
+        log = log or {}
         context = context or {}
         entity = self.get_entity(cr, uid, context)
+
+        if not entity.state in ['init']:
+            log['error'] += 'Push message: ' + "Not a valid state to push message: " + entity.state
+            log['msg_push'] = 'null'
+            return False
+        
         try: 
-            if not entity.state in ['init']: raise StandardError, "Not a valid state to pull message: "+entity.state
             self.get_message(cr, uid, context)
             self.execute_message(cr, uid, context)
-        except StandardError, e:
-            log['error'] += 'Pull message: ' + self._handle_error(e)
-            log['msg_pull'] = 'null'
-        except Exception, e:
-            log['error'] += "Pull message: " + self._handle_error(e)
-            log['msg_pull'] = 'failed'
-        else:
             log['msg_pull'] = 'ok'
+        except Exception, e:
+            log = self._log_error(log, e)
+        
+        return True
         #init => init
         
     def get_message(self, cr, uid, context):
@@ -386,16 +420,23 @@ class entity(osv.osv, Thread):
         self.start()
         return True
         
+    
+
     def sync(self, cr, uid, context=None):
         context = context or {}
         # Init log dict for sync.monitor
-        log = {'error':'','data_pull':'in-progress','status':'in-progress',
+        log = {'error':'','data_pull':'null','status':'in-progress',
             'msg_pull':'null','data_push':'null','msg_push':'null',}
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()
         # Start pulling data
+        
+        log['data_pull'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
         self.pull_update(cr, uid, log, context=context)
         # Start pulling message
+        
         log['msg_pull'] = 'in-progress';
         self.pool.get('sync.monitor').write(cr, uid, log_id, log)
         cr.commit()

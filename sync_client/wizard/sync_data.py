@@ -146,10 +146,10 @@ class update_to_send(osv.osv):
         else:
             domain = []
             
-        print "domain", domain
+        #print "domain", domain
             
         ids = eval_poc_domain(obj, cr, uid, domain, context=context)
-        print "ids that match the domain salut", ids
+        #print "ids that match the domain salut", ids
         for id in ids:
             xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):

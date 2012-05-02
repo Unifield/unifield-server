@@ -180,15 +180,14 @@ class NetRPC:
         self.sock.close()
 
     def mysend(self, msg, exception=False, traceback=None):
-        self.__logger.debug("rpc message : %s", msg)
+        #self.__logger.debug("rpc message : %s", msg)
         msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
             raw_size = len(msg)
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
             gzipped_size = len(msg)
             saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
-                    raw_size, gzipped_size, saving)
+            #self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         size = len(msg)
         self.sock.send('%8d' % size)
         self.sock.send(exception and "1" or "0")
@@ -223,8 +222,7 @@ class NetRPC:
             msg = zlib.decompress(msg)
             raw_size = len(msg)
             saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
-                    raw_size, gzipped_size, saving)
+            #self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)
 
         if isinstance(res[0],Exception):
@@ -282,14 +280,14 @@ class Common(object):
         """
         :param method: The method for the linked object (search, read, write, unlink, create, ...)
         """
-        self.__logger.debug('method: %r', method)
+        #self.__logger.debug('method: %r', method)
         def proxy(*args):
             """
             :param args: A list of values for the method
             """
-            self.__logger.debug('args: %r', args)
+            #self.__logger.debug('args: %r', args)
             result = self.connector.send('common', method, *args)
-            self.__logger.debug('result: %r' % result)
+            #self.__logger.debug('result: %r' % result)
             return result
         return proxy
     
@@ -310,9 +308,9 @@ class Database(object):
             """
             :param args: A list of values for the method
             """
-            self.__logger.debug('args: %r', args)
+            #self.__logger.debug('args: %r', args)
             result = self.connector.send('db', method, *args)
-            self.__logger.debug('result: %r' % result)
+            #self.__logger.debug('result: %r' % result)
             return result
         return proxy
     
@@ -392,8 +390,8 @@ class Object(object):
         return proxy
 
     def __send__(self, method, *args):
-        self.__logger.debug('method: %r', method)
-        self.__logger.debug('args: %r', args)
+        #self.__logger.debug('method: %r', method)
+        #self.__logger.debug('args: %r', args)
         
         result = self.connection.connector.send('object', 'execute',
                                                 self.connection.database,
@@ -402,7 +400,7 @@ class Object(object):
                                                 self.model,
                                                 method,
                                                 *args)
-        self.__logger.debug('result: %r', result)
+        #self.__logger.debug('result: %r', result)
         return result
 
     def __add_context(self, arguments, context=None):

@@ -37,6 +37,7 @@
         'wizard/monitoring_view.xml',
         'fallback_values/demo.xml',
         'monitor_view.xml',
+        'data/cron.xml',
     ],
     'demo_xml': [
     ],

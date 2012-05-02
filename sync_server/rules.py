@@ -22,15 +22,16 @@
 from osv import osv
 from osv import fields
 
-_valid_types = {
-    'text' : ['str','unicode'],
-    'char' : ['str','unicode'],
-    'selection' : ['str','unicode'],
-    'integer' : ['int'],
-    'many2one' : ['int'],
-    'many2many' : ['int'],
-    'boolean' : ['bool'],
-    'float' : ['float','int'],
+from datetime import datetime
+
+_field2type = {
+    'text'      : 'str',
+    'char'      : 'str',
+    'selection' : 'str',
+    'integer'   : 'int',
+    'boolean'   : 'bool',
+    'float'     : 'float',
+    'datetime'  : 'str',
 }
 
 
@@ -54,9 +55,25 @@ class sync_rule(osv.osv):
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
 
+    def _get_model_id(self, cr, uid, ids, field, args, context=None):
+        res = {}
+        for rec in self.read(cr, uid, ids, ['model_ref'], context=context):
+            if not rec['model_ref']: continue
+            model = self.pool.get('ir.model').read(cr, uid, [rec['model_ref'][0]], ['model'])[0]
+            res[rec['id']] = model['model']
+        return res
+
+    def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
+        model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
+        if model_ids:
+            self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
+        return True
+
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
-        'model_id': fields.char('Model', size=128, required = True),
+        #'model_id': fields.char('Model', size=128, required = True),
+        'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
+        'model_ref': fields.many2one('ir.model', 'Model', required = True),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
@@ -66,9 +83,9 @@ class sync_rule(osv.osv):
         'domain':fields.text('Domain', required = False),
         'sequence_number': fields.integer('Sequence', required = True),
         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
-        'included_fields':fields.text('Fields to include', required = True),
+        'included_fields':fields.text('Fields to include', required = True, readonly = True),
         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
-        'forced_values':fields.text('Values to force', required = False),
+        'forced_values':fields.text('Values to force', required = False, readonly = True),
         'fallback_values':fields.text('Fallback values', required = False),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
@@ -170,15 +187,29 @@ class sync_rule(osv.osv):
         return rules_data
 
     def on_change_forced_values(self, cr, uid, ids, values, context=None):
+        self.invalidate(cr, uid, ids, context=context)
         sel = {}
         errors = []
         for value in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'forced_values_sel', values, context=context):
-            field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name','model','ttype'])
+            # Get field information
+            field = self.pool.get('ir.model.fields').read(cr, uid, \
+                (value['name'] if isinstance(value['name'], int) else value['name'][0]), \
+                ['name','model','ttype'])
+            # Try to evaluate value and stringify it on failed
             try: value = eval(value['value'])
-            except: value = eval('"""'+value['value']+'"""')
-            if type(value).__name__ not in _valid_types.get(field['ttype'], type(value).__name__):
-                errors.append(field['name']+": got "+type(value).__name__+" but "+" or ".join(_valid_types[field['ttype']])+" expected!")
-            else: sel[str(field['name'])] = value
+            except: value = '"""'+value['value']+'"""'
+            # Type checks
+            try:
+                if not (isinstance(value, bool) and value == False):
+                    # Cast value to the destination type
+                    if field['ttype'] in _field2type: value = eval('%s(%s)' % (_field2type[field['ttype']], value))
+                    # Evaluate date/datetime
+                    if field['ttype'] == 'date': datetime.strptime(value, '%Y-%m-%d')
+                    if field['ttype'] == 'datetime': datetime.strptime(value, '%Y-%m-%d %H:%M')
+            except:
+                errors.append("%s: type %s incompatible with field of type %s" % (field['name'], type(value).__name__, field['ttype']))
+                continue
+            sel[str(field['name'])] = value
         res = {'value' : {'forced_values' : (str(sel) if sel else '')}}
         if errors:
             res['warning'] = {
@@ -188,12 +219,13 @@ class sync_rule(osv.osv):
         return res
 
     def on_change_included_fields(self, cr, uid, ids, fields, context=None):
+        self.invalidate(cr, uid, ids, context=context)
         sel = []
         #errors = []
         #for field in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'forced_values_sel', fields, context=context):
         for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model','ttype']):
             name = str(field['name'])
-            if field['ttype'] == 'many2one': name += '/id'
+            if field['ttype'] in ('many2one','one2many',): name += '/id'
             sel.append(name)
         res = {'value': {'included_fields' : (str(sel) if sel else '')}}
         #if errors:
@@ -203,6 +235,10 @@ class sync_rule(osv.osv):
         #    }
         return res
             
+    def invalidate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid'}, context=context)
+        return {}
+
     def validate(self, cr, uid, ids, context=None):
         error = False
         message = ''
@@ -219,12 +255,24 @@ class sync_rule(osv.osv):
             # Check field syntax
             message += "* Included fields syntax... "
             try:
-                eval(rec.included_fields)
+                included_fields = eval(rec.included_fields)
+                for field in included_fields:
+                    base_field = field.split('/')[0]
+                    if not isinstance(field, str): raise TypeError
+                    if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): raise KeyError
+            except TypeError:
+                message += "failed (not a list of str)!\n"
+                error = True
+            except KeyError:
+                message += "failed (check fields existence)!\n"
+                error = True
             except:
                 message += "failed!\n"
                 error = True
             else:
                 message += "pass.\n"
+            finally:
+                if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
             # Check force values syntax (can be empty)
             message += "* Forced values syntax... "
             try:
@@ -266,9 +314,24 @@ class message_rule(osv.osv):
     _name = "sync_server.message_rule"
     _description = "Message Rule"
 
+    def _get_model_id(self, cr, uid, ids, field, args, context=None):
+        res = {}
+        for rec in self.read(cr, uid, ids, ['model_ref'], context=context):
+            if not rec['model_ref']: continue
+            model = self.pool.get('ir.model').read(cr, uid, [rec['model_ref'][0]], ['model'])[0]
+            res[rec['id']] = model['model']
+        return res
+
+    def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
+        model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
+        if model_ids:
+            self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
+        return True
+
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
-        'model_id': fields.char('Model', size=128, required = True),
+        'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True, required = True),
+        'model_ref': fields.many2one('ir.model', 'Model', required = True),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
@@ -276,7 +339,7 @@ class message_rule(osv.osv):
         'sequence_number': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
-        'destination_name': fields.char('Fields to extract destination', size=256, required = True),
+        'destination_name': fields.char('Field to extract destination', size=256, required = True),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
     }
@@ -288,6 +351,12 @@ class message_rule(osv.osv):
     }
 
     _order = 'sequence_number asc,model_id asc'
+
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(message_rule, self).default_get(cr, uid, fields, context=context)
+        import ipdb
+        ipdb.set_trace()
+        return res
 
     def _get_message_rule(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules(cr, uid, entity, context)
@@ -322,14 +391,28 @@ class message_rule(osv.osv):
             rules_data.append(data)
         return rules_data
 
+    def invalidate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid'}, context=context)
+        return {}
+
     def validate(self, cr, uid, ids, context=None):
         error = False
         message = ''
         for rec in self.browse(cr, uid, ids, context=context):
+            # Check destination_name
+            try:
+                field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
+                if not field_ids: raise StandardError
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
             # Check domain syntax
             message += "* Domain syntax... "
             try:
-                eval(rec.domain)
+                domain = eval(rec.domain)
+                self.pool.get(rec.model_id).search(cr, uid, domain, context=context)
             except:
                 message += "failed!\n"
                 error = True
@@ -351,17 +434,26 @@ class message_rule(osv.osv):
                 message += "failed (missing "+call_class+")!\n"
                 error = True
             # Arguments of the call syntax and existence
-            message += "* Arugments syntax... "
+            message += "* Checking arguments... "
             try:
                 arguments = eval(rec.arguments)
+                for arg in arguments:
+                    base_arg = arg.split('/')[0]
+                    if not isinstance(arg, str): raise TypeError
+                    if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_arg)], context=context)): raise KeyError
+            except TypeError:
+                message += "failed (not a list of str)!\n"
+                error = True
+            except KeyError:
+                message += "failed (check fields existence)!\n"
+                error = True
             except:
-                message += "failed!\n"
+                message += "failed (syntax error)!\n"
                 error = True
             else:
                 message += "pass.\n"
-                for arg in arguments:
-                    # TODO : arguments existence
-                    pass
+            finally:
+                if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
             # Sequence is unique
             message += "* Sequence is unique... "
             if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
