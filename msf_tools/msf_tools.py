@@ -220,6 +220,15 @@ class data_tools(osv.osv):
         # quarantine before scrap
         quarantine_scrap = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_scrap')[1]
         context['common']['quarantine_scrap'] = quarantine_scrap
+        # reason type goods return
+        rt_goods_return = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        context['common']['rt_goods_return'] = rt_goods_return
+        # reason type goods replacement
+        rt_goods_replacement = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+        context['common']['rt_goods_replacement'] = rt_goods_replacement
+        # reason type goods replacement
+        rt_internal_supply = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+        context['common']['rt_internal_supply'] = rt_internal_supply
         
         return True
 

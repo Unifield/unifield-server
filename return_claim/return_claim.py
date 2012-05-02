@@ -34,6 +34,9 @@ from order_types import ORDER_CATEGORY
 CLAIM_TYPE = [('supplier', 'Supplier'),
               ('customer', 'Customer'),
               ('transport', 'Transport')]
+
+CLAIM_TYPE_RELATION = {'in': 'supplier',
+                       'out': 'customer'}
 # claim state
 CLAIM_STATE = [('draft', 'Draft'),
                ('in_progress', 'In Progress'),
@@ -172,8 +175,30 @@ class return_claim(osv.osv):
         '''
         origin on change function
         '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        result = {'value': {'partner_id_return_claim': False,
+                            'type_return_claim': False,
+                            'category_return_claim': False,
+                            'po_so_return_claim': False}}
+        if picking_id:
+            # partner from picking
+            data = pick_obj.read(cr, uid, picking_id, ['partner_id2', 'type', 'order_category', 'origin'], context=context)
+            partner_id = data['partner_id2']
+            type = data['type']
+            # convert the picking type for the corresponding claim type
+            type = CLAIM_TYPE_RELATION.get(type, False)
+            # category
+            category = data['order_category']
+            # origin
+            origin = data['origin']
+            # update result dictionary
+            result['value'].update({'partner_id_return_claim': partner_id,
+                                    'type_return_claim': type,
+                                    'category_return_claim': category,
+                                    'po_so_return_claim': origin})
         
-        result = {'value': }
+        return result
     
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -284,6 +309,8 @@ class return_claim(osv.osv):
         return claim_event_type
         '''
         return CLAIM_EVENT_TYPE
+    
+    _order = 'name desc'
     
 return_claim()
 
@@ -428,9 +455,24 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
         move_obj.write(cr, uid, move_ids, move_values, context=context)
+        # do we need replacement?
+        if obj.replacement_picking_expected_claim_event:
+            # we create the replacement picking object
+            replacement_values = {}
+            if claim_type == 'supplier':
+                replacement_values.update({})
+            elif claim_type == 'customer':
+                replacement_values.update({})
+                
         return True
+    
+    def do_process_event(self, cr, uid, ids, context=None):
+        '''
+        button function call - from_picking is False
+        '''
+        return self._do_process_event(cr, uid, ids, from_picking=False, context=context)
         
-    def do_process_event(self, cr, uid, ids, from_picking, context=None):
+    def _do_process_event(self, cr, uid, ids, from_picking=False, context=None):
         '''
         process the events
         
@@ -445,14 +487,27 @@ class claim_event(osv.osv):
         event_obj = self.pool.get('claim.event')
         fields_tools = self.pool.get('fields.tools')
         data_tools = self.pool.get('data.tools')
+        pick_obj = self.pool.get('stock.picking')
         # load common data
         data_tools.load_common_data(cr, uid, ids, context=context)
-        # create picking object if not coming from chained IN picking process
-        if not from_picking:
-            raise osv.except_osv(_('Warning !'), _('Not Implemented.'))
         # base of function names
         base_func = '_do_process_'
         for obj in self.browse(cr, uid, ids, context=context):
+            # create picking object if not coming from chained IN picking process
+            if not from_picking:
+                # we use default values as if the picking was from chained creation (so type is 'internal')
+                # different values need according to event type is then replaced during specific do_process functions
+                claim = obj.return_claim_id_claim_event
+                event_picking_values = {'type': 'internal',
+                                        'partner_id2': claim.partner_id_return_claim.id,
+                                        'origin': claim.po_so_return_claim,
+                                        'order_category': claim.category_return_claim,
+                                        'reason_type_id': context['common']['rt_internal_supply'],
+                                        }
+                # create picking
+                new_event_picking_id = pick_obj.create(cr, uid, event_picking_values, context=context)
+                # update the claim setting the link to created event picking
+                claim.write({'event_picking_id_return_claim': new_event_picking_id}, context=context)
             result = getattr(self, base_func + obj.type_claim_event)(cr, uid, obj, context=context)
             # event is done
             obj.write({'state': 'done'}, context=context)
@@ -732,7 +787,7 @@ class stock_picking(osv.osv):
             event_type_name = fields_tools.get_selection_name(cr, uid, object='claim.event', field='type_claim_event', key=selected_event_type, context=context)
             event_obj.log(cr, uid, new_event_id, _('The new %s Event %s has been created.')%(event_type_name, claim_name))
             # we process the event
-            event_obj.do_process_event(cr, uid, [new_event_id], from_picking=True, context=context)
+            event_obj._do_process_event(cr, uid, [new_event_id], from_picking=True, context=context)
         
 #        raise osv.except_osv(_('Warning !'), _('End'))
         return True
