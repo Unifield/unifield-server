@@ -202,44 +202,28 @@ class product_product(osv.osv):
             one_product = product_ids
             product_ids = [product_ids]
             
-        for product in prod_obj.browse(cr, uid, product_ids, context=context):
-            catalogue_ids = catalogue_obj.search(cr, uid, [('partner_id', '=', partner_id),
-                                                           ('period_from', '<=', order_date),
-                                                           ('currency_id', '=', currency_id),
-                                                           '|', ('period_to', '>=', order_date),
-                                                           ('period_to', '=', False)], context=context)
-            
-            info_prices = partner_price.search(cr, uid, [('suppinfo_id.name', '=', partner_id),
-                                                    ('suppinfo_id.product_id', '=', product.product_tmpl_id.id),
-                                                    '|', ('suppinfo_id.catalogue_id', 'in', catalogue_ids),
-                                                    ('suppinfo_id.catalogue_id', '=', False),
-                                                    ('min_quantity', '<=', product_qty),
-                                                    ('uom_id', '=', product_uom_id),
-                                                    ('currency_id', '=', currency_id),
-                                                    '|', ('valid_from', '<=', order_date),
-                                                    ('valid_from', '=', False),
-                                                    '|', ('valid_till', '>=', order_date),
-                                                    ('valid_till', '=', False)],
-                                                    order='min_quantity desc, valid_till asc, id desc', context=context)
-        
-            min_seq = False
-            info_price = False
-            min_qty = False
-            for price in partner_price.browse(cr, uid, info_prices, context=context):
-                if min_seq == False and min_seq != 0:
-                    min_seq = price.suppinfo_id.sequence
-                    info_price = price
-                    min_qty = price.min_quantity
-                if price.suppinfo_id.sequence < min_seq:
-                    info_price = price
-                    min_qty = price.min_quantity
-                if price.suppinfo_id.sequence == min_seq and price.min_quantity > min_qty:
-                    info_price = price
-                    min_qty = price.min_quantity
+        for product in prod_obj.browse(cr, uid, product_ids, context=context):            
+            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
+                                                         ('product_id', '=', product.product_tmpl_id.id)], 
+                                                         order='sequence asc', limit=1, context=context)
                 
-            if info_price:
+            domain = [('min_quantity', '<=', product_qty),
+                      ('uom_id', '=', product_uom_id),
+                      ('currency_id', '=', currency_id),
+                      '|', ('valid_from', '<=', order_date),
+                      ('valid_from', '=', False),
+                      '|', ('valid_till', '>=', order_date),
+                      ('valid_till', '=', False)]
+            
+            if sequence_ids:
+                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
+                domain.append(('suppinfo_id.sequence', '=', min_seq))
+            
+            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                
+            if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
-                info = info_price
+                info = partner_price.browse(cr, uid, info_prices[0], context=context)
                 res[product.id] = (info.price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)

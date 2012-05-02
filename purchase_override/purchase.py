@@ -957,7 +957,7 @@ class purchase_order_line(osv.osv):
             name=False, price_unit=False, notes=False, state=False, old_price_unit=False, fake_id=False, context=None):
         all_qty = qty
         suppinfo_obj = self.pool.get('product.supplierinfo')
-        catalogue_obj = self.pool.get('supplier.catalogue')
+        partner_price = self.pool.get('pricelist.partnerinfo')
         
         if context and context.get('purchase_id') and state == 'draft':
             domain = [('product_id', '=', product), 
@@ -987,41 +987,25 @@ class purchase_order_line(osv.osv):
         if not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
-            catalogue_ids = catalogue_obj.search(cr, uid, [('partner_id', '=', partner_id),
-                                                        ('period_from', '<=', date_order),
-                                                        ('currency_id', '=', currency_id),
-                                                        '|', ('period_to', '>=', date_order),
-                                                        ('period_to', '=', False)], context=context)
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
-            info_prices = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id.name', '=', partner_id),
-                                                    ('suppinfo_id.product_id', '=', tmpl_id),
-                                                    '|', ('suppinfo_id.catalogue_id', 'in', catalogue_ids),
-                                                    ('suppinfo_id.catalogue_id', '=', False),
-                                                    ('uom_id', '=', uom),
-                                                    ('currency_id', '=', currency_id),
-                                                    '|', ('valid_from', '<=', date_order),
-                                                    ('valid_from', '=', False),
-                                                    '|', ('valid_till', '>=', date_order),
-                                                    ('valid_till', '=', False)],
-                                                    order='min_quantity desc, valid_till asc, id desc', context=context)
+            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
+                                                     ('product_id', '=', tmpl_id)], 
+                                                     order='sequence asc', limit=1, context=context)
+            domain = [('uom_id', '=', uom),
+                      ('currency_id', '=', currency_id),
+                      '|', ('valid_from', '<=', date_order),
+                      ('valid_from', '=', False),
+                      '|', ('valid_till', '>=', date_order),
+                      ('valid_till', '=', False)]
         
-            min_seq = False
-            info_price = False
-            min_qty = False
-            for price in self.pool.get('pricelist.partnerinfo').browse(cr, uid, info_prices, context=context):
-                if min_seq is False:
-                    min_seq = price.suppinfo_id.sequence
-                    min_qty = price.min_quantity
-                    info_price = price
-                if price.suppinfo_id.sequence < min_seq:
-                    info_price = price
-                    min_qty = price.min_quantity
-                # Get the minimal qty to order
-                if price.suppinfo_id.sequence == min_seq and price.min_quantity < min_qty:
-                    info_price = price
-                    min_qty = price.min_quantity
+            if sequence_ids:
+                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
+                domain.append(('suppinfo_id.sequence', '=', min_seq))
+        
+            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
                 
-            if info_price:
+            if info_prices:
+                info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
                 res['value'].update({'old_price_unit': info_price.price, 'price_unit': info_price.price})
                 res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal ' \
                                                                                 'quantity set to %s, you cannot purchase less.') % info_price.min_quantity}})
