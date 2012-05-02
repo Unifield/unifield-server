@@ -151,6 +151,9 @@ class hq_entries(osv.osv):
         'name': fields.char('Description', size=255, readonly=True),
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
         'amount': fields.float('Amount', readonly=True),
+        'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
+        'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=True, readonly=True),
+        'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
     }
 
     _defaults = {
