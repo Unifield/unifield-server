@@ -14,6 +14,7 @@
 	                        <field name="po_so_return_claim" />
 	                        <field name="picking_id_return_claim"
 	                        	domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
+	                        	on_change="on_change_origin(picking_id_return_claim,context)"
 	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
 	                        <field name="partner_id_return_claim"
 	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />

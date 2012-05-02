@@ -168,6 +168,13 @@ class return_claim(osv.osv):
                               'claim_type': claim_type}
         return result
     
+    def on_change_origin(self, cr, uid, ids, picking_id, context=None):
+        '''
+        origin on change function
+        '''
+        
+        result = {'value': }
+    
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -389,6 +396,7 @@ class claim_event(osv.osv):
         - name of picking becomes IN/0001 -> IN/0001-return type 'out' for supplier
         - name of picking becomes OUT/0001 -> OUT/0001-return type 'in' for customer
         - (is not set to done - defined in _picking_done_cond)
+        - if replacement is needed, we create a new picking
         '''
         # objects
         move_obj = self.pool.get('stock.move')
@@ -657,9 +665,21 @@ class stock_picking(osv.osv):
             for move in concerned_picking.move_lines:
                 src_move_ids = move_obj.search(cr, uid, [('move_dest_id', '=', move.id)], context=context)
                 if not src_move_ids:
-                    # cannot find corresponding stock move in incoming shipment
-                    raise osv.except_osv(_('Warning !'), _('Corresponding Incoming Shipment cannot be found. Registration of claim cannot be processed.'))
-                in_move_id = src_move_ids[0]
+                    # we try to find the incoming shipment with by backorder link
+                    back_ids = self.search(cr, uid, [('backorder_id', '=', concerned_picking.id)], context=context)
+                    if len(back_ids) != 1:
+                        # cannot find corresponding stock move in incoming shipment
+                        raise osv.except_osv(_('Warning !'), _('Corresponding Incoming Shipment cannot be found. Registration of claim cannot be processed. (no back order)'))
+                    else:
+                        # we try with the backorder
+                        for b_move in self.browse(cr, uid, back_ids[0], context=context).move_lines:
+                            b_src_move_ids = move_obj.search(cr, uid, [('move_dest_id', '=', b_move.id)], context=context)
+                            if not b_src_move_ids:
+                                raise osv.except_osv(_('Warning !'), _('Corresponding Incoming Shipment cannot be found. Registration of claim cannot be processed. (no IN for back order moves)'))
+                            else:
+                                in_move_id = b_src_move_ids[0]
+                else:
+                    in_move_id = src_move_ids[0]
             # get corresponding stock move browse
             in_move = move_obj.browse(cr, uid, in_move_id, context=context)
             # check that corresponding picking is incoming shipment
