@@ -52,6 +52,15 @@ class stock_fill_inventory(osv.osv_memory):
             if stock.state == 'done':
                 raise osv.except_osv(_('Warning!'), _('Stock Inventory is already Validated.'))
         return True
+    
+    def _hook_fill_datas(self, cr, uid, *args, **kwargs):
+        '''
+        Hook to add data values in fill inventory line data
+        '''
+        if 'datas' in kwargs:
+            return kwargs['datas']
+        else:
+            return {}
 
     def fill_inventory(self, cr, uid, ids, context=None):
         """ To Import stock inventory according to products available in the selected locations.
@@ -97,6 +106,7 @@ class stock_fill_inventory(osv.osv_memory):
                     qty += datas[(prod_id, lot_id)]['product_qty']
                 
                 datas[(prod_id, lot_id)] = {'product_id': prod_id, 'location_id': location, 'product_qty': qty, 'product_uom': move.product_id.uom_id.id, 'prod_lot_id': lot_id}
+                datas[(prod_id, lot_id)] = self._hook_fill_datas(cr, uid, fill_inventory=fill_inventory, datas=datas[(prod_id, lot_id)], context=context)
             
             if datas:
                 flag = True
