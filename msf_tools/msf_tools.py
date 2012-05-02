@@ -29,6 +29,8 @@ from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
+import netsvc
+
 class lang(osv.osv):
     '''
     define getter for date / time / datetime formats
@@ -205,9 +207,10 @@ class data_tools(osv.osv):
         # default company id
         company_id = comp_obj._company_default_get(cr, uid, 'stock.picking', context=context)
         context['common']['company_id'] = company_id
-        # kit reason type
-        reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
-        context['common']['reason_type_id'] = reason_type_id
+        
+        # stock location
+        stock_id = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        context['common']['stock_id'] = stock_id
         # kitting location
         kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
         context['common']['kitting_id'] = kitting_id
@@ -220,13 +223,17 @@ class data_tools(osv.osv):
         # quarantine before scrap
         quarantine_scrap = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_scrap')[1]
         context['common']['quarantine_scrap'] = quarantine_scrap
+        
+        # kit reason type
+        reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
+        context['common']['reason_type_id'] = reason_type_id
         # reason type goods return
         rt_goods_return = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
         context['common']['rt_goods_return'] = rt_goods_return
         # reason type goods replacement
         rt_goods_replacement = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         context['common']['rt_goods_replacement'] = rt_goods_replacement
-        # reason type goods replacement
+        # reason type internal supply
         rt_internal_supply = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
         context['common']['rt_internal_supply'] = rt_internal_supply
         
@@ -279,6 +286,88 @@ class sequence_tools(osv.osv):
         return seq_pool.create(cr, uid, seq)
     
 sequence_tools()
+
+
+class picking_tools(osv.osv):
+    '''
+    picking related tools
+    '''
+    _name = 'picking.tools'
+    
+    def confirm(self, cr, uid, ids, context=None):
+        '''
+        confirm the picking
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        pick_obj.draft_force_assign(cr, uid, ids, context)
+        return True
+        
+    def check_assign(self, cr, uid, ids, context=None):
+        '''
+        check assign the picking
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        pick_obj.action_assign(cr, uid, ids, context)
+        return True
+    
+    def force_assign(self, cr, uid, ids, context=None):
+        '''
+        force assign the picking
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        pick_obj.force_assign(cr, uid, ids, context)
+        return True
+        
+    def validate(self, cr, uid, ids, context=None):
+        '''
+        validate the picking
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        wf_service = netsvc.LocalService("workflow")
+        # trigger standard workflow for validated picking ticket
+        for id in ids:
+            self.action_move(cr, uid, [id])
+            wf_service.trg_validate(uid, 'stock.picking', id, 'button_done', cr)
+        return True
+        
+    def all(self, cr, uid, ids, context=None):
+        '''
+        confirm - check - validate
+        '''
+        self.confirm(cr, uid, ids, context=context)
+        self.check_assign(cr, uid, ids, context=context)
+        self.validate(cr, uid, ids, context=context)
+        return True
+    
+picking_tools()
 
 
 def check_none(pos):

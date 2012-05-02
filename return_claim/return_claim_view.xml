@@ -56,7 +56,7 @@
 				            		<field name="creation_date_claim_event" />
 				            		<field name="state" />
 				            		<field name="hidden_state" invisible="True" />
-				            		<button name="do_process_event" type="object" string="Add an Event" icon="gtk-go-forward"
+				            		<button name="do_process_event" type="object" string="Process Event" icon="gtk-go-forward"
 										attrs="{'invisible': [('hidden_state', '=', 'done')]}" />
 				            	</tree>
                     		</field>
