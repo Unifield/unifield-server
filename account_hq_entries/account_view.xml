@@ -8,15 +8,17 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries List">
+                <tree string="HQ Entries List" editable="top" noteditable="1">
                     <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
                     <field name="cost_center_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                     <field name="free_1_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]"/>
                     <field name="free_2_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]"/>
-                    <field name="partner_id" invisible="1"/>
-                    <field name="period_id" invisible="1"/>
+                    <field name="partner_id"/>
+                    <field name="period_id"/>
                     <field name="date"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
                     <field name="user_validated"/>
                 </tree>
             </field>

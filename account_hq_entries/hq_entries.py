@@ -145,14 +145,17 @@ class hq_entries(osv.osv):
         'free_1_id': fields.many2one('account.analytic.account', "Free 1"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2"),
         'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
-        'date': fields.date("Posting Date"),
-        'partner_id': fields.many2one("res.partner", "Third Party"),
-        'period_id': fields.many2one("account.period", "Period"),
-        'name': fields.char('Description', size=255),
+        'date': fields.date("Posting Date", readonly=True),
+        'partner_id': fields.many2one("res.partner", "Third Party", readonly=True),
+        'period_id': fields.many2one("account.period", "Period", readonly=True),
+        'name': fields.char('Description', size=255, readonly=True),
+        'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
+        'amount': fields.float('Amount', readonly=True),
     }
 
     _defaults = {
         'user_validated': lambda *a: False,
+        'amount': lambda *a: 0.0,
     }
 
 hq_entries()

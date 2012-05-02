@@ -89,8 +89,20 @@ class hq_entries_import_wizard(osv.osv_memory):
         except ValueError:
             fp_id = 0
         vals.update({'cost_center_id': oc_id, 'analytic_id': fp_id,})
+        # Fetch description
         if description and description[0]:
             vals.update({'name': description[0]})
+        # Fetch currency
+        if booking_currency and booking_currency[0]:
+            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency[0]), ('active', 'in', [False, True])])
+            if not currency_ids:
+                raise osv.except_osv(_('Error'), _('This currency was not found or is not active: %s') % (booking_currency[0],))
+            if currency_ids and currency_ids[0]:
+                vals.update({'currency_id': currency_ids[0],})
+        # Fetch amount
+        if booking_amount and booking_amount[0]:
+            vals.update({'amount': booking_amount[0],})
+        # Line creation
         res = self.pool.get('hq.entries').create(cr, uid, vals)
         if res:
             return True
