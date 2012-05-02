@@ -163,6 +163,17 @@ class hq_entries(osv.osv):
         'amount': lambda *a: 0.0,
     }
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Change Expat salary account (61200) is not allowed
+        """
+        if not context:
+            context={}
+        for line in self.browse(cr, uid, ids):
+            if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.code == '61200':
+                raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
+        return super(hq_entries, self).write(cr, uid, ids, vals, context)
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Do not permit user to delete HQ Entries lines
