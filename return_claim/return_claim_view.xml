@@ -10,8 +10,8 @@
             	<form string="Claim">
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
-	                        <field name="name" />
-	                        <field name="po_so_return_claim" />
+	                        <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="po_so_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="picking_id_return_claim"
 	                        	domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
 	                        	on_change="on_change_origin(picking_id_return_claim,context)"
@@ -20,15 +20,33 @@
 	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
 	                        <field name="type_return_claim"
 	                        	attrs="{'readonly': [('contains_event_return_claim', '=', True)]}" />
-	                        <field name="category_return_claim" />
+	                        <field name="category_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         </group>
                         <group col="2" colspan="1">
-                        	<field name="creation_date_return_claim" />
+                        	<field name="creation_date_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         	<field name="from_picking_wizard_return_claim" />
                         	<field name="contains_event_return_claim" />
                         </group>
                     </group>
                     <notebook colspan="4">
+                    	<page string="Products">
+                    		<field name="default_src_location_id_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    		<field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
+                    			attrs="{'readonly': [('state', '!=', 'draft')]}">
+                    			<tree string="Products" editable="top">
+				            		<field name="name" invisible="True" />
+	           						<field name="product_id_claim_product_line" />
+	           						<field name="asset_id_claim_product_line" />
+	           						<field name="composition_list_id_claim_product_line" />
+	           						<field name="qty_claim_product_line" />
+	           						<field name="uom_id_claim_product_line" />
+	           						<field name="lot_id_claim_product_line" />
+	           						<field name="expiry_date_claim_product_line" />
+	           						<field name="src_location_id_claim_product_line" />
+	           						<field name="stock_move_id_claim_product_line" invisible="False" />
+				            	</tree>
+                    		</field>
+                    	</page>
                     	<page string="Events">
                     		<field name="event_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
                     			<form string="Event">
@@ -63,23 +81,6 @@
                     		<group colspan="3" col="3" />
                     		<button name="add_event" type="object" string="Add an Event" icon="gtk-add"
                     			attrs="{'readonly': [('type_return_claim', '=', 'transport')]}" />
-                    	</page>
-                    	<page string="Products">
-                    		<field name="default_src_location_id_return_claim" />
-                    		<field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
-                    			<tree string="Products" editable="top">
-				            		<field name="name" invisible="True" />
-	           						<field name="product_id_claim_product_line" />
-	           						<field name="asset_id_claim_product_line" />
-	           						<field name="composition_list_id_claim_product_line" />
-	           						<field name="qty_claim_product_line" />
-	           						<field name="uom_id_claim_product_line" />
-	           						<field name="lot_id_claim_product_line" />
-	           						<field name="expiry_date_claim_product_line" />
-	           						<field name="src_location_id_claim_product_line" />
-	           						<field name="stock_move_id_claim_product_line" invisible="False" />
-				            	</tree>
-                    		</field>
                     	</page>
                     	<page string="Description">
                     		<field name="description_return_claim" nolabel="True" />

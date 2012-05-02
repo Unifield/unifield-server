@@ -507,6 +507,9 @@ class claim_event(osv.osv):
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # get the move values according to claim type
             move_obj.write(cr, uid, replacement_move_ids, replacement_move_values, context=context)
+            # confirm and check availability of replacement picking
+            picking_tools.confirm(cr, uid, replacement_id, context=context)
+            picking_tools.check_assign(cr, uid, replacement_id, context=context)
                 
         return True
     
@@ -622,12 +625,12 @@ class claim_event(osv.osv):
             
         return result
     
-    _columns = {'return_claim_id_claim_event': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
-                'creation_date_claim_event': fields.date(string='Creation Date', required=True), # default value
+    _columns = {'return_claim_id_claim_event': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade', readonly=True),
+                'creation_date_claim_event': fields.date(string='Creation Date', required=True, readonly=True), # default value
                 'type_claim_event': fields.selection(CLAIM_EVENT_TYPE, string='Type', required=True),
                 'replacement_picking_expected_claim_event': fields.boolean(string='Replacement expected for Return Claim?', help="An Incoming Shipment will be automatically created corresponding to returned products."),
                 'description_claim_event': fields.text(string='Description'),
-                'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=False), # default value
+                'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=True), # default value
                 # auto fields from create function
                 'name': fields.char(string='Reference', size=1024, readonly=True), # from create function
                 'order_claim_event': fields.integer(string='Creation Order', readonly=True), # from create function
@@ -671,6 +674,23 @@ class claim_product_line(osv.osv):
             vals.update({'name': data['name']})
         
         return super(claim_product_line, self).create(cr, uid, vals, context=context)
+    
+    def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # results
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            result[obj.id].update({'claim_state_claim_product_line': obj.claim_id_claim_product_line.state})
+            
+        return result
         
     _columns = {'name': fields.char(string='Name', size=1024), # auto data from create/write
                 'qty_claim_product_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
@@ -684,6 +704,8 @@ class claim_product_line(osv.osv):
                 'composition_list_id_claim_product_line': fields.many2one('composition.kit', string='Kit'),
                 'src_location_id_claim_product_line': fields.many2one('stock.location', string='Src Location', required=True),
                 'stock_move_id_claim_product_line': fields.many2one('stock.move', string='Corresponding IN stock move'),
+                # functions
+                'claim_state_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim State', type='selection', selection=CLAIM_STATE, readonly=True, multi='get_vals_claim'),
                 }
     
 claim_product_line()
