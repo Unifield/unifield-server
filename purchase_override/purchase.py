@@ -24,9 +24,27 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
 from mx.DateTime import *
+import time
 
 from workflow.wkf_expr import _eval_expr
 import logging
+
+
+class purchase_order_confirm_wizard(osv.osv):
+    _name = 'purchase.order.confirm.wizard'
+    
+    _columns = {
+            'order_id': fields.many2one('purchase.order', string='Purchase Order', readonly=True),
+            'errors': fields.text(string='Error message', readonly=True),
+        }
+    
+    def validate_order(self, cr, uid, ids, context=None):
+        wf_service = netsvc.LocalService("workflow")
+        for wiz in self.browse(cr, uid, ids, context=context):
+            wf_service.trg_validate(uid, 'purchase.order', wiz.order_id.id, 'purchase_approve', cr)
+        return {'type': 'ir.actions.act_window_close'}
+    
+purchase_order_confirm_wizard()
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -244,6 +262,61 @@ class purchase_order(osv.osv):
             return _("Purchase order '%s' is validated.") % (po.name,)
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
+        
+    def purchase_approve(self, cr, uid, ids, context=None):
+        '''
+        If the PO is a DPO, check the state of the stock moves
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        wf_service = netsvc.LocalService("workflow")
+        move_obj = self.pool.get('stock.move')
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            todo = []
+            todo2 = []
+            todo3 = []
+            
+            if order.order_type == 'direct':
+                for line in order.order_line:
+                    if line.procurement_id: todo.append(line.procurement_id.id)
+                    
+            if todo:
+                todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
+            
+            if todo2:
+                sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
+                self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
+                error_moves = []
+                for move in move_obj.browse(cr, uid, sm_ids, context=context):
+                    backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
+                    if move.state == 'done' or backmove_ids:
+                        error_moves.append(move)
+                        
+                if error_moves:
+                    errors = '''You are trying to confirm a Direct Purchase Order.
+At Direct Purchase Order confirmation, the system tries to change the state of concerning OUT moves but for this DPO, the system has detected
+some stock moves which are already processed : \d'''
+                    for m in error_moves:
+                        errors = '%d \n %d' % (errors, '''
+        * Product : %s - Product Qty. : %s %s \n''' % (m.product_id.name, m.product_qty, m.product_uom.name))
+                        
+                    errors = '%d \n %d' % (errors, 'This is only a warning message, if you click on Validate, the system will validate the Direct Purchase Order without errors.')
+                        
+                    wiz_id = self.pool.get('purchase.order.confirm.wizard').create(cr, uid, {'order_id': order.id,
+                                                                                             'errors': errors})
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'purchase.order.confirm.wizard',
+                            'res_id': wiz_id,
+                            'view_type': 'form',
+                            'view_mode': 'form',
+                            'target': 'new'}
+            
+            # If no errors, validate the DPO
+            wf_service.trg_validate(uid, 'purchase.order', order.id, 'purchase_approve', cr)
+            
+        return True
     
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
@@ -258,10 +331,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        todo = []
-        todo2 = []
-        todo3 = []
         for order in self.browse(cr, uid, ids):
+            todo = []
+            todo2 = []
+            todo3 = []
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
@@ -275,18 +348,23 @@ class purchase_order(osv.osv):
                 for line in order.order_line:
                     if line.procurement_id: todo.append(line.procurement_id.id)
                     
-        if todo:
-            todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
-        
-        if todo2:
-            sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
-            move_obj.write(cr, uid, sm_ids, {'state': 'done'}, context=context)
-            for move in move_obj.browse(cr, uid, sm_ids, context=context):
-                if move.picking_id: todo3.append(move.picking_id.id)
-                
-        if todo3:
-            for pick_id in todo3:
-                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+            if todo:
+                todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
+            
+            if todo2:
+                sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
+                self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
+                for move in move_obj.browse(cr, uid, sm_ids, context=context):
+                    move_obj.write(cr, uid, sm_ids, {'dpo_id': order.id, 'state': 'done',
+                                                     'location_dest_id': move.location_id.id, 
+                                                     'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                    wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
+                    if move.picking_id: todo3.append(move.picking_id.id)             
+    
+            if todo3:
+                for pick_id in todo3:
+                    wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                    wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     

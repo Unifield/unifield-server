@@ -40,6 +40,7 @@
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'in', ('confirmed', 'done', 'cancel'))]}" />
                     </xpath>
+                    	
 
                 </data>
             </field>
@@ -211,6 +212,21 @@
 	                </xpath>
                	</data>
             </field>
+        </record>
+        
+        <record id="purchase_order_confirm_wizard" model="ir.ui.view">
+        	<field name="name">purchase.order.confirm.wizard</field>
+        	<field name="model">purchase.order.confirm.wizard</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Warning on confirmation">
+        			<separator colspan="4" string="Purchase Order" />
+        			<separator colspan="4" string="Warning" />
+        			<separator colspan="4" string="Actions" />
+        			<button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
+        			<button type="object" name="validate_order" icon="terp-validate" string="Confirm order" colspan="3" />
+        		</form>
+        	</field>
         </record>
         
 	<!-- Invoice control -->
