@@ -32,12 +32,13 @@ class hq_entries_validation_wizard(osv.osv_memory):
     def create_move(self, cr, uid, ids):
         """
         Create a move with given hq entries lines
+        Return created lines (except counterpart lines)
         """
         # Some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        res = False
+        res = []
         if ids:
             # prepare some values
             current_date = strftime('%Y-%m-%d')
@@ -59,12 +60,12 @@ class hq_entries_validation_wizard(osv.osv_memory):
             })
             total_debit = 0
             total_credit = 0
-            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['account_id', 'period_id', 'analytic_id', 'cost_center_id', 'date', 
-                'free_1_id', 'free_2_id', 'currency_id', 'name', 'amount']):
+            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['period_id', 'date', 'free_1_id', 'free_2_id', 'currency_id', 'name', 'amount', 
+                'account_id_first_value', 'cost_center_id_first_value', 'analytic_id_first_value']):
                 # create new distribution (only for expense accounts)
                 distrib_id = False
-                cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
-                fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
+                cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
+                fp_id = line.get('analytic_id_first_value', False) and line.get('analytic_id_first_value')[0] or False
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
                 f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
@@ -88,7 +89,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
                 vals = {
-                    'account_id': line.get('account_id', False) and line.get('account_id')[0] or False,
+                    'account_id': line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False,
                     'period_id': line.get('period_id', False) and line.get('period_id')[0] or False,
                     'journal_id': journal_id,
                     'date': line.get('date'),
@@ -105,7 +106,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 else:
                     debit = abs(amount)
                 vals.update({'debit': debit, 'credit': credit,})
-                self.pool.get('account.move.line').create(cr, uid, vals, context={}, check=False)
+                move_line_id = self.pool.get('account.move.line').create(cr, uid, vals, context={}, check=False)
+                res.append(move_line_id)
+                # Increment totals
                 total_debit += debit
                 total_credit += credit
             # counterpart line
@@ -130,8 +133,6 @@ class hq_entries_validation_wizard(osv.osv_memory):
             self.pool.get('account.move.line').create(cr, uid, counterpart_vals, context={}, check=False)
             # Post move
             post = self.pool.get('account.move').post(cr, uid, [move_id])
-            if post:
-                res = True
         return res
 
     def validate(self, cr, uid, ids, context=None):
@@ -146,11 +147,48 @@ class hq_entries_validation_wizard(osv.osv_memory):
             active_ids = [active_ids]
         # Tag active_ids as user validated
         to_write = []
+        current_date = strftime('%Y-%m-%d')
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
             if not line.user_validated:
-                if line.account_id.id != line.account_id_first_value.id or line.cost_center_id.id != line.cost_center_id_first_value.id \
-                    or line.analytic_id.id != line.analytic_id_first_value.id:
-                    self.create_move(cr, uid, line.id)
+                if line.account_id.id != line.account_id_first_value.id or line.cost_center_id.id != line.cost_center_id_first_value.id:
+                    move_result = self.create_move(cr, uid, line.id)
+                    # Reverse line
+                    self.pool.get('account.move.line').correct_account(cr, uid, move_result, current_date, line.account_id.id)
+                    corrected_ids = self.pool.get('account.move.line').search(cr, uid, [('corrected_line_id', '=', move_result)])
+                    for new_line in self.pool.get('account.move.line').browse(cr, uid, corrected_ids):
+                        if line.cost_center_id.id != line.cost_center_id_first_value.id:
+                            # Delete old distribution
+                            self.pool.get('account.move.line').write(cr, uid, [new_line.id], {'analytic_distribution_id': False})
+                            self.pool.get('analytic.distribution').unlink(cr, uid, new_line.analytic_distribution_id.id)
+                            # create new distribution
+                            distrib_id = False
+                            cc_id = line.cost_center_id and line.cost_center_id.id or False
+                            fp_id = line.analytic_id and line.analytic_id.id or False
+                            f1_id = line.free_1_id and line.free_1_id.id or False
+                            f2_id = line.free_2_id and line.free_2_id.id or False
+                            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                            if distrib_id:
+                                common_vals = {
+                                    'distribution_id': distrib_id,
+                                    'currency_id': line.currency_id and line.currency_id.id or False,
+                                    'percentage': 100.0,
+                                    'date': line.date or current_date,
+                                    'source_date': line.date or current_date,
+                                }
+                                common_vals.update({'analytic_id': cc_id,})
+                                cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                                common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id,})
+                                fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                                del common_vals['cost_center_id']
+                                if f1_id:
+                                    common_vals.update({'analytic_id': f1_id,})
+                                    self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
+                                if f2_id:
+                                    common_vals.update({'analytic_id': f2_id})
+                                    self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+                            # Attache distribution to the line
+                            self.pool.get('account.move.line').write(cr, uid, [new_line.id], {'analytic_distribution_id': distrib_id,})
+                    # Validate HQ Entry
                     self.pool.get('hq.entries').write(cr, uid, [line.id], {'user_validated': True}, context=context)
                     continue
                 to_write.append(line.id)
