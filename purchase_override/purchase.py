@@ -292,8 +292,11 @@ class purchase_order(osv.osv):
                 error_moves = []
                 for move in move_obj.browse(cr, uid, sm_ids, context=context):
                     backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
-                    if move.state == 'done' or backmove_ids:
+                    if move.state == 'done':
                         error_moves.append(move)
+                    if backmove_ids:
+                        for bmove in move_obj.browse(cr, uid, backmove_ids):
+                            error_moves.append(bmove)
                         
                 if error_moves:
                     errors = '''You are trying to confirm a Direct Purchase Order.
@@ -301,7 +304,7 @@ At Direct Purchase Order confirmation, the system tries to change the state of c
 stock moves which are already processed : '''
                     for m in error_moves:
                         errors = '%s \n %s' % (errors, '''
-        * Product : %s - Product Qty. : %s %s \n''' % (m.product_id.name, m.product_qty, m.product_uom.name))
+        * Picking : %s - Product : %s - Product Qty. : %s %s \n''' % (m.picking_id.name, m.product_id.name, m.product_qty, m.product_uom.name))
                         
                     errors = '%s \n %s' % (errors, 'This warning is only for informational purpose. The stock moves already processed will not be modified by this confirmation.')
                         
@@ -356,11 +359,14 @@ stock moves which are already processed : '''
                 sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
                 self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
                 for move in move_obj.browse(cr, uid, sm_ids, context=context):
-                    move_obj.write(cr, uid, sm_ids, {'dpo_id': order.id, 'state': 'done',
-                                                     'location_dest_id': move.location_id.id, 
-                                                     'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-                    wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
-                    if move.picking_id: todo3.append(move.picking_id.id)             
+                    # Search if this move has been processed
+                    backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
+                    if move.state != 'done' and not backmove_ids and not move.backmove_id:
+                        move_obj.write(cr, uid, sm_ids, {'dpo_id': order.order_line[0].id, 'state': 'done',
+                                                         'location_dest_id': move.location_id.id, 
+                                                         'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                        wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
+                        if move.picking_id: todo3.append(move.picking_id.id)             
     
             if todo3:
                 for pick_id in todo3:
