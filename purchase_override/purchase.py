@@ -316,7 +316,7 @@ At Direct Purchase Order confirmation, the system tries to change the state of c
 stock moves which are already processed : '''
                     for m in error_moves:
                         errors = '%s \n %s' % (errors, '''
-        * Picking : %s - Product : %s - Product Qty. : %s %s \n''' % (m.picking_id.name, m.product_id.name, m.product_qty, m.product_uom.name))
+        * Picking : %s - Product : [%s] %s - Product Qty. : %s %s \n''' % (m.picking_id.name, m.product_id.default_code, m.product_id.name, m.product_qty, m.product_uom.name))
                         
                     errors = '%s \n %s' % (errors, 'This warning is only for informational purpose. The stock moves already processed will not be modified by this confirmation.')
                         
