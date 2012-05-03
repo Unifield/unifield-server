@@ -374,7 +374,7 @@ stock moves which are already processed : '''
                     # Search if this move has been processed
                     backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
                     if move.state != 'done' and not backmove_ids and not move.backmove_id:
-                        move_obj.write(cr, uid, sm_ids, {'dpo_id': order.order_line[0].id, 'state': 'done',
+                        move_obj.write(cr, uid, sm_ids, {'dpo_id': order.id, 'state': 'done',
                                                          'location_dest_id': move.location_id.id, 
                                                          'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                         wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
