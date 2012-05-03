@@ -657,9 +657,34 @@ class claim_product_line(osv.osv):
         set the name
         '''
         # objects
-        product_obj = self.pool.get('product.product')
-        data = product_obj.read(cr, uid, vals.get('product_id_claim_product_line'), ['name'], context=context)
-        vals.update({'name': data['name']})
+        prod_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        
+        if 'product_id_claim_product_line' in vals:
+            if vals['product_id_claim_product_line']:
+                product_id = vals['product_id_claim_product_line']
+                data = prod_obj.read(cr, uid, [product_id], ['name', 'perishable', 'batch_management'], context=context)[0]
+                # update the name of the line
+                name = data['name']
+                vals.update({'name': name})
+                # batch management
+                management = data['batch_management']
+                # perishable
+                perishable = data['perishable']
+                # if management and we have a lot_id, we fill the expiry date
+                if management and vals.get('lot_id_claim_product_line'):
+                    data = prodlot_obj.read(cr, uid, [vals.get('lot_id_claim_product_line')], ['life_date'], context=context)
+                    expired_date = data[0]['life_date']
+                    vals.update({'expiry_date_claim_product_line': expired_date})
+                elif perishable:
+                    # nothing special here
+                    pass
+                else:
+                    # not perishable nor management, exp and lot are False
+                    vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
+            else:
+                # product is False, exp and lot are set to False
+                vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
         
         return super(claim_product_line, self).create(cr, uid, vals, context=context)
     
@@ -668,12 +693,34 @@ class claim_product_line(osv.osv):
         set the name
         '''
         # objects
-        product_obj = self.pool.get('product.product')
-        if vals.get('product_id_claim_product_line'):
-            data = product_obj.read(cr, uid, vals.get('product_id_claim_product_line'), ['name'], context=context)
-            vals.update({'name': data['name']})
+        prod_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if 'product_id_claim_product_line' in vals:
+            if vals['product_id_claim_product_line']:
+                product_id = vals['product_id_claim_product_line']
+                data = prod_obj.read(cr, uid, [product_id], ['name', 'perishable', 'batch_management'], context=context)[0]
+                # update the name
+                vals.update({'name': data['name']})
+                # batch management
+                management = data['batch_management']
+                # perishable
+                perishable = data['perishable']
+                # if management and we have a lot_id, we fill the expiry date
+                if management and vals.get('lot_id_claim_product_line'):
+                    data = prodlot_obj.read(cr, uid, [vals.get('lot_id_claim_product_line')], ['life_date'], context=context)
+                    expired_date = data[0]['life_date']
+                    vals.update({'expiry_date_claim_product_line': expired_date})
+                elif perishable:
+                    # nothing special here
+                    pass
+                else:
+                    # not perishable nor management, exp and lot are False
+                    vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
+            else:
+                # product is False, exp and lot are set to False
+                vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
         
-        return super(claim_product_line, self).create(cr, uid, vals, context=context)
+        return super(claim_product_line, self).write(cr, uid, ids, vals, context=context)
     
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -688,11 +735,17 @@ class claim_product_line(osv.osv):
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
+            # claim state
             result[obj.id].update({'claim_state_claim_product_line': obj.claim_id_claim_product_line.state})
+            # batch management
+            result[obj.id].update({'hidden_batch_management_mandatory_claim_product_line': obj.product_id_claim_product_line.batch_management})
+            # perishable
+            result[obj.id].update({'hidden_perishable_mandatory_claim_product_line': obj.product_id_claim_product_line.perishable})
             
         return result
         
-    _columns = {'name': fields.char(string='Name', size=1024), # auto data from create/write
+    _columns = {'integrity_status_claim_product_line': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+                'name': fields.char(string='Name', size=1024), # auto data from create/write
                 'qty_claim_product_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 # many2one
                 'claim_id_claim_product_line': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
@@ -704,9 +757,17 @@ class claim_product_line(osv.osv):
                 'composition_list_id_claim_product_line': fields.many2one('composition.kit', string='Kit'),
                 'src_location_id_claim_product_line': fields.many2one('stock.location', string='Src Location', required=True),
                 'stock_move_id_claim_product_line': fields.many2one('stock.move', string='Corresponding IN stock move'),
+                'type_check': fields.char(string='Type Check', size=1024,),
                 # functions
-                'claim_state_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim State', type='selection', selection=CLAIM_STATE, readonly=True, multi='get_vals_claim'),
+                'hidden_stock_available_claim_product_line': fields.float(string='Available Stock', digits_compute=dp.get_precision('Product UoM'), invisible=True),
+                'claim_state_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim State', type='selection', selection=CLAIM_STATE, store=False, readonly=True, multi='get_vals_claim'),
+                'hidden_perishable_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='Exp', store=False, readonly=True, multi='get_vals_claim'),
+                'hidden_batch_management_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='B.Num', store=False, readonly=True, multi='get_vals_claim'),
                 }
+    
+    _defaults = {'type_check': 'out',
+                 'integrity_status_claim_product_line': 'empty',
+                 }
     
 claim_product_line()
 
@@ -898,4 +959,61 @@ class stock_picking(osv.osv):
     
     
 stock_picking()
+
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+
+
+    def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        return false for all
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        res = {}
+        for id in ids:
+            res[id] = {}
+            for f in fields:
+                res[id].update({f:False})
+                  
+        return res
+    
+    def _search_picking_claim(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+            
+        # ids of products
+        ids = []
+            
+        for arg in args:
+            if arg[0] == 'picking_ids':
+                if arg[1] == '=' and arg[2]:
+                    picking = pick_obj.browse(cr, uid, int(arg[2]), context=context)
+                    for move in picking.move_lines:
+                        ids.append(move.product_id.id)
+                else:
+                    raise osv.except_osv(_('Error !'), _('Operator is not supported.'))
+            else:
+                return []
+            
+        return [('id', 'in', ids)]
+
+    _columns = {
+        'picking_ids': fields.function(_vals_get_claim, fnct_search=_search_picking_claim, 
+                                    type='boolean', method=True, string='Picking', multi='get_vals_claim'),
+    }
+
+product_product()
 
