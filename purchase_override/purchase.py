@@ -98,7 +98,7 @@ class purchase_order(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'details': fields.char(size=30, string='Details', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
+        'invoiced': fields.function(_invoiced, method=True, string='Invoiced', type='boolean', help="It indicates that an invoice has been generated"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -132,6 +132,18 @@ class purchase_order(osv.osv):
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
     }
+   
+    # Be careful during integration, the onchange_warehouse_id method is also defined on UF-966 
+    def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, order_type, dest_address_id):
+        '''
+        Don't change the destination address if it's set or the order type is DPO 
+        '''
+        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids, warehouse_id)
+        if order_type == 'direct' or dest_address_id:
+            if 'dest_address_id' in res.get('value', {}):
+                res['value'].pop('dest_address_id')
+        
+        return res
 
     def _check_user_company(self, cr, uid, company_id, context=None):
         '''
