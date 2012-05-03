@@ -25,11 +25,12 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
+from collections import defaultdict
 
 class hq_entries_validation_wizard(osv.osv_memory):
     _name = 'hq.entries.validation.wizard'
 
-    def create_move(self, cr, uid, ids):
+    def create_move(self, cr, uid, ids, period_id=False, currency_id=False):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -37,6 +38,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
         # Some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not period_id:
+            raise osv.except_osv(_('Error'), _('Period is missing!'))
+        if not currency_id:
+            raise osv.except_osv(_('Error'), _('Currency is missing!'))
         # Prepare some values
         res = []
         if ids:
@@ -46,12 +51,12 @@ class hq_entries_validation_wizard(osv.osv_memory):
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]
-            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, current_date)
-            if not period_ids:
-                raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (current_date,))
-            if len(period_ids) > 1:
-                raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (current_date,))
-            period_id = period_ids[0]
+#            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, current_date)
+#            if not period_ids:
+#                raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (current_date,))
+#            if len(period_ids) > 1:
+#                raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (current_date,))
+#            period_id = period_ids[0]
             # create move
             move_id = self.pool.get('account.move').create(cr, uid, {
                 'date': current_date,
@@ -60,8 +65,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
             })
             total_debit = 0
             total_credit = 0
-            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['period_id', 'date', 'free_1_id', 'free_2_id', 'currency_id', 'name', 'amount', 
-                'account_id_first_value', 'cost_center_id_first_value', 'analytic_id_first_value']):
+            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
+                'cost_center_id_first_value', 'analytic_id_first_value']):
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
@@ -72,7 +77,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 if distrib_id:
                     common_vals = {
                         'distribution_id': distrib_id,
-                        'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
+                        'currency_id': currency_id,
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
@@ -90,12 +95,13 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
                 vals = {
                     'account_id': line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False,
-                    'period_id': line.get('period_id', False) and line.get('period_id')[0] or False,
+                    'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.get('date'),
                     'move_id': move_id,
                     'analytic_distribution_id': distrib_id,
                     'name': line.get('name', ''),
+                    'currency_id': currency_id,
                 }
                 # Fetch debit/credit
                 debit = 0.0
@@ -120,8 +126,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 'period_id': period_id,
                 'journal_id': journal_id,
                 'move_id': move_id,
-                'date': current_date,
+                'date': self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id),
                 'name': 'HQ Entry Counterpart',
+                'currency_id': currency_id,
             })
             counterpart_debit = 0.0
             counterpart_credit = 0.0
@@ -146,12 +153,12 @@ class hq_entries_validation_wizard(osv.osv_memory):
         if isinstance(active_ids, (int, long)):
             active_ids = [active_ids]
         # Tag active_ids as user validated
-        to_write = []
+        to_write = defaultdict(list)
         current_date = strftime('%Y-%m-%d')
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
             if not line.user_validated:
                 if line.account_id.id != line.account_id_first_value.id or line.cost_center_id.id != line.cost_center_id_first_value.id:
-                    move_result = self.create_move(cr, uid, line.id)
+                    move_result = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id)
                     # Reverse line
                     self.pool.get('account.move.line').correct_account(cr, uid, move_result, current_date, line.account_id.id)
                     corrected_ids = self.pool.get('account.move.line').search(cr, uid, [('corrected_line_id', '=', move_result)])
@@ -191,11 +198,18 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     # Validate HQ Entry
                     self.pool.get('hq.entries').write(cr, uid, [line.id], {'user_validated': True}, context=context)
                     continue
-                to_write.append(line.id)
+                # If no changes, add line to those which would be written in a unique move
+                if not to_write.get(line.currency_id.id, False):
+                    to_write[line.currency_id.id] = defaultdict(list)
+                to_write[line.currency_id.id][line.period_id.id].append(line.id)
         # Write lines and validate them
-        write = self.create_move(cr, uid, to_write)
-        if write:
-            self.pool.get('hq.entries').write(cr, uid, to_write, {'user_validated': True}, context=context)
+        for currency in to_write:
+            for period in to_write[currency]:
+                write = False
+                lines = to_write[currency][period]
+                write = self.create_move(cr, uid, lines, period, currency)
+                if write:
+                    self.pool.get('hq.entries').write(cr, uid, lines, {'user_validated': True}, context=context)
         # Return HQ Entries Tree View in current view
         action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
         res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], [], context=context)
