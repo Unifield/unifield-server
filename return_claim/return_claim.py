@@ -186,6 +186,7 @@ class return_claim(osv.osv):
         # objects
         prod_obj = self.pool.get('product.product')
         lot_obj = self.pool.get('stock.production.lot')
+        move_obj = self.pool.get('stock.move')
         
         # errors
         errors = {'missing_src_location': False,
@@ -193,6 +194,8 @@ class return_claim(osv.osv):
                   'wrong_lot_type_need_standard': False,
                   'wrong_lot_type_need_internal': False,
                   'no_lot_needed': False,
+                  'not_exist_in_picking': False,
+                  'must_be_greater_than_0': False,
                   }
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.product_line_ids_return_claim:
@@ -204,6 +207,10 @@ class return_claim(osv.osv):
                 perishable = data['perishable']
                 asset = data['type'] == 'product' and data['subtype'] == 'asset'
                 kit = data['type'] == 'product' and data['subtype'] == 'kit'
+                # check qty
+                if item.qty_claim_product_line <= 0.0:
+                    errors.update(must_be_greater_than_0=True)
+                    item.write({'integrity_status_claim_product_line': 'must_be_greater_than_0'}, context=context)
                 # check the src location
                 if obj.type_return_claim == 'supplier':
                     if not item.src_location_id_claim_product_line:
@@ -240,6 +247,17 @@ class return_claim(osv.osv):
                     if item.lot_id_claim_product_line:
                         errors.update(no_lot_needed=True)
                         item.write({'integrity_status': 'no_lot_needed'}, context=context)
+                # verify existence in selected picking
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', obj.picking_id_return_claim.id),
+                                                     ('product_id', '=', item.product_id_claim_product_line.id),
+                                                     ('asset_id', '=', item.asset_id_claim_product_line.id),
+                                                     ('composition_list_id', '=', item.composition_list_id_claim_product_line.id),
+                                                     ('prodlot_id', '=', item.lot_id_claim_product_line.id),
+                                                     ('product_qty', '>=', item.qty_claim_product_line),
+                                                     ], context=context)
+                if not move_ids:
+                    errors.update(not_exist_in_picking=True)
+                    item.write({'integrity_status_claim_product_line': 'not_exist_in_picking'}, context=context)
                 
         # check the encountered errors
         return all([not x for x in errors.values()])
@@ -257,9 +275,34 @@ class return_claim(osv.osv):
         # objects
         product_line_obj = self.pool.get('claim.product.line')
         for obj in self.browse(cr, uid, ids, context=context):
-            for move in obj.move_lines:
+            # clear existing products
+            line_ids = product_line_obj.search(cr, uid, [('claim_id_claim_product_line', '=', obj.id)], context=context)
+            product_line_obj.unlink(cr, uid, line_ids, context=context)
+            # create new ones
+            for move in obj.picking_id_return_claim.move_lines:
                 # create corresponding product line
-                product_line_values = {}
+                product_line_values = {'qty_claim_product_line': move.product_qty,
+                                       'claim_id_claim_product_line': obj.id,
+                                       'product_id_claim_product_line': move.product_id.id,
+                                       'uom_id_claim_product_line': move.product_uom.id,
+                                       'lot_id_claim_product_line': move.prodlot_id.id,
+                                       'expiry_date_claim_product_line': move.expired_date,
+                                       'asset_id_claim_product_line' : move.asset_id.id,
+                                       'composition_list_id_claim_product_line': move.composition_list_id.id,
+                                       'src_location_id_claim_product_line': move.location_id.id}
+                
+                new_prod_id = product_line_obj.create(cr, uid, product_line_values, context=context)
+                
+            return {'name': _('Claim'),
+                    'view_mode': 'form,tree',
+                    'view_id': False,
+                    'view_type': 'form',
+                    'res_model': 'return.claim',
+                    'res_id': [obj.id],
+                    'type': 'ir.actions.act_window',
+                    'target': 'crash',
+                    'domain': '[]',
+                    'context': context}
     
     def on_change_origin(self, cr, uid, ids, picking_id, context=None):
         '''
@@ -308,7 +351,7 @@ class return_claim(osv.osv):
     
     _columns = {'name': fields.char(string='Reference', size=1024, required=True), # default value
                 'creation_date_return_claim': fields.date(string='Creation Date', required=True), # default value
-                'po_so_return_claim': fields.char(string='Order', size=1024),
+                'po_so_return_claim': fields.char(string='Origin', size=1024),
                 'type_return_claim': fields.selection(CLAIM_TYPE, string='Type', required=True),
                 'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category'),
                 'description_return_claim': fields.text(string='Description'),
@@ -320,7 +363,7 @@ class return_claim(osv.osv):
                 'partner_id_return_claim': fields.many2one('res.partner', string='Partner', required=True),
                 'po_id_return_claim': fields.many2one('purchase.order', string='Purchase Order'),
                 'so_id_return_claim': fields.many2one('sale.order', string='Sale Order'),
-                'picking_id_return_claim': fields.many2one('stock.picking', string='Origin', required=True), #origin
+                'picking_id_return_claim': fields.many2one('stock.picking', string='IN/OUT', required=True), #origin
                 'event_picking_id_return_claim': fields.many2one('stock.picking', string='Chained Picking from IN'), #chained picking from incoming shipment
                 'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True), # default value
                 # one2many
@@ -436,6 +479,7 @@ class claim_event(osv.osv):
         '''
         # objects
         obj_data = self.pool.get('ir.model.data')
+        partner_obj = self.pool.get('res.partner')
         # location_id
         location_id = False
         # event type
@@ -444,19 +488,21 @@ class claim_event(osv.osv):
         origin = kwargs['claim_picking']
         # claim type
         claim_type = kwargs['claim_type']
+        # partner
+        partner_id = kwargs['claim_partner_id']
         # not event type
         if not event_type or not origin:
             return False
         # treat each event type
         if event_type == 'return':
             if claim_type == 'supplier':
-                # take the source location of the first move of origin picking object
-                # property_stock_supplier
-                location_id = origin.move_lines[0].location_id.id
+                # property_stock_supplier from partner
+                data = partner_obj.read(cr, uid, partner_id, ['property_stock_supplier'], context=context)
+                location_id = data['property_stock_supplier'][0]
             elif claim_type == 'customer':
-                # take the destination location of the first move of origin picking object
-                # property_stock_customer
-                location_id = origin.move_lines[0].location_dest_id.id
+                # property_stock_customer from partner
+                data = partner_obj.read(cr, uid, partner_id, ['property_stock_customer'], context=context)
+                location_id = data['property_stock_customer'][0]
             else:
                 # should not be called for other types
                 pass

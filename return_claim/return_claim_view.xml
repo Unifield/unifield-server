@@ -72,7 +72,7 @@
                     		<group colspan="2" col="2" />
                     		<button name="check_product_lines_integrity" type="object" string="Check Integrity" icon="gtk-apply"
                     			attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    		<button name="load_products" type="object" string="Load Products from Origin" icon="gtk-add"
+                    		<button name="load_products" type="object" string="Load Products from IN/OUT" icon="gtk-add"
                     			attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     	</page>
                     	<page string="Events">
