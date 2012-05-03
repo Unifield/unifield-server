@@ -67,6 +67,7 @@ class add_event(osv.osv_memory):
                 'claim_picking_id': fields.many2one('stock.picking', string='Claim Origin', readonly=True),
                 'creation_date': fields.date(string='Creation Date', required=True),
                 'event_type': fields.selection(_get_types, string='Event Type', required=True),
+                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected for Return Claim?'),
                 # functions
                 'dest_location_id': fields.function(_vals_get_claim, method=True, string='Associated Location', type='many2one', relation='stock.location', readonly=True, multi='get_vals_claim'),
                 }
@@ -109,11 +110,17 @@ class add_event(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'), _('You need to specify a creation date.'))
             if not obj.event_type:
                 raise osv.except_osv(_('Warning !'), _('You need to specify an event type.'))
+            # reset replacement if not return
+            if obj.event_type != 'return':
+                replacement = False
+            else:
+                replacement = obj.replacement_picking_expected_partial_picking
             # event values
             event_values = {'return_claim_id_claim_event': obj.claim_id.id,
                             'creation_date_claim_event': obj.creation_date,
                             'type_claim_event': obj.event_type,
                             'description_claim_event': False,
+                            'replacement_picking_expected_claim_event': replacement,
                             }
             # create event
             event_id = event_obj.create(cr, uid, event_values, context=context)

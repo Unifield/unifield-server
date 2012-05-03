@@ -7,7 +7,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Add Event">
-            	<separator string="Specify the type of the new event." colspan="4"/>
+            	<separator string="Specify the type of the new event." colspan="4" />
             	<group colspan="4" col="6">
 	                <field name="claim_id" />
 	                <field name="claim_partner_id" />
@@ -15,6 +15,8 @@
 	                <field name="creation_date" />
 	                <field name="claim_picking_id" invisible="True" />
 	                <field name="event_type" on_change="on_change_event_type(event_type,claim_partner_id,claim_type,claim_picking_id,context)" />
+	                <field name="replacement_picking_expected_partial_picking"
+	                	attrs="{'readonly': [('event_type', '!=', 'return')]}" />
 	                <field name="dest_location_id" />
                 </group>
                 <group colspan="2" />

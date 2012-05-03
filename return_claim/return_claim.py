@@ -30,6 +30,8 @@ import decimal_precision as dp
 
 # category
 from order_types import ORDER_CATEGORY
+# integrity
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
 # claim type
 CLAIM_TYPE = [('supplier', 'Supplier'),
               ('customer', 'Customer'),
@@ -170,6 +172,94 @@ class return_claim(osv.osv):
                               'list': list,
                               'claim_type': claim_type}
         return result
+    
+    def check_product_lines_integrity(self, cr, uid, ids, context=None):
+        '''
+        integrity check on product lines
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        prod_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        
+        # errors
+        errors = {'missing_src_location': False,
+                  'missing_lot': False,
+                  'wrong_lot_type_need_standard': False,
+                  'wrong_lot_type_need_internal': False,
+                  'no_lot_needed': False,
+                  }
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in obj.product_line_ids_return_claim:
+                # reset the integrity status
+                item.write({'integrity_status_claim_product_line': 'empty'}, context=context)
+                # product management type
+                data = prod_obj.read(cr, uid, [item.product_id_claim_product_line.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
+                management = data['batch_management']
+                perishable = data['perishable']
+                asset = data['type'] == 'product' and data['subtype'] == 'asset'
+                kit = data['type'] == 'product' and data['subtype'] == 'kit'
+                # check the src location
+                if obj.type_return_claim == 'supplier':
+                    if not item.src_location_id_claim_product_line:
+                        # src location is missing and claim type is supplier
+                        errors.update(missing_src_location=True)
+                        item.write({'integrity_status_claim_product_line': 'missing_src_location'}, context=context)
+                # check management
+                if management:
+                    if not item.lot_id_claim_product_line:
+                        # lot is needed
+                        errors.update(missing_lot=True)
+                        item.write({'integrity_status': 'missing_lot'}, context=context)
+                    else:
+                        # we check the lot type is standard
+                        data = lot_obj.read(cr, uid, [item.lot_id_claim_product_line.id], ['life_date','name','type'], context=context)
+                        lot_type = data[0]['type']
+                        if lot_type != 'standard':
+                            errors.update(wrong_lot_type_need_standard=True)
+                            item.write({'integrity_status': 'wrong_lot_type_need_standard'}, context=context)
+                elif perishable:
+                    if not item.lot_id_claim_product_line:
+                        # lot is needed
+                        errors.update(missing_lot=True)
+                        item.write({'integrity_status': 'missing_lot'}, context=context)
+                    else:
+                        # we check the lot type is internal
+                        data = lot_obj.read(cr, uid, [item.lot_id_claim_product_line.id], ['life_date','name','type'], context=context)
+                        lot_type = data[0]['type']
+                        if lot_type != 'internal':
+                            errors.update(wrong_lot_type_need_internal=True)
+                            item.write({'integrity_status': 'wrong_lot_type_need_internal'}, context=context)
+                else:
+                    # no lot needed - no date needed
+                    if item.lot_id_claim_product_line:
+                        errors.update(no_lot_needed=True)
+                        item.write({'integrity_status': 'no_lot_needed'}, context=context)
+                
+        # check the encountered errors
+        return all([not x for x in errors.values()])
+    
+    def load_products(self, cr, uid, ids, context=None):
+        '''
+        load products data from selected origin
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        product_line_obj = self.pool.get('claim.product.line')
+        for obj in self.browse(cr, uid, ids, context=context):
+            for move in obj.move_lines:
+                # create corresponding product line
+                product_line_values = {}
     
     def on_change_origin(self, cr, uid, ids, picking_id, context=None):
         '''
@@ -361,9 +451,11 @@ class claim_event(osv.osv):
         if event_type == 'return':
             if claim_type == 'supplier':
                 # take the source location of the first move of origin picking object
+                # property_stock_supplier
                 location_id = origin.move_lines[0].location_id.id
             elif claim_type == 'customer':
                 # take the destination location of the first move of origin picking object
+                # property_stock_customer
                 location_id = origin.move_lines[0].location_dest_id.id
             else:
                 # should not be called for other types
@@ -553,6 +645,11 @@ class claim_event(osv.osv):
         # base of function names
         base_func = '_do_process_'
         for obj in self.browse(cr, uid, ids, context=context):
+            # integrity check on product lines for corresponding claim
+            integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
+            if not integrity_check:
+                # return False
+                return False
             # create picking object if not coming from chained IN picking process
             if not obj.return_claim_id_claim_event.from_picking_wizard_return_claim:
                 # we use default values as if the picking was from chained creation (so type is 'internal')
@@ -652,45 +749,9 @@ class claim_product_line(osv.osv):
     '''
     _name = 'claim.product.line'
     
-    def create(self, cr, uid, vals, context=None):
+    def _orm_checks(self, cr, uid, vals, context=None):
         '''
-        set the name
-        '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        prodlot_obj = self.pool.get('stock.production.lot')
-        
-        if 'product_id_claim_product_line' in vals:
-            if vals['product_id_claim_product_line']:
-                product_id = vals['product_id_claim_product_line']
-                data = prod_obj.read(cr, uid, [product_id], ['name', 'perishable', 'batch_management'], context=context)[0]
-                # update the name of the line
-                name = data['name']
-                vals.update({'name': name})
-                # batch management
-                management = data['batch_management']
-                # perishable
-                perishable = data['perishable']
-                # if management and we have a lot_id, we fill the expiry date
-                if management and vals.get('lot_id_claim_product_line'):
-                    data = prodlot_obj.read(cr, uid, [vals.get('lot_id_claim_product_line')], ['life_date'], context=context)
-                    expired_date = data[0]['life_date']
-                    vals.update({'expiry_date_claim_product_line': expired_date})
-                elif perishable:
-                    # nothing special here
-                    pass
-                else:
-                    # not perishable nor management, exp and lot are False
-                    vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
-            else:
-                # product is False, exp and lot are set to False
-                vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
-        
-        return super(claim_product_line, self).create(cr, uid, vals, context=context)
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        set the name
+        common checks for create/write
         '''
         # objects
         prod_obj = self.pool.get('product.product')
@@ -698,7 +759,7 @@ class claim_product_line(osv.osv):
         if 'product_id_claim_product_line' in vals:
             if vals['product_id_claim_product_line']:
                 product_id = vals['product_id_claim_product_line']
-                data = prod_obj.read(cr, uid, [product_id], ['name', 'perishable', 'batch_management'], context=context)[0]
+                data = prod_obj.read(cr, uid, [product_id], ['name', 'perishable', 'batch_management', 'type', 'subtype'], context=context)[0]
                 # update the name
                 vals.update({'name': data['name']})
                 # batch management
@@ -716,11 +777,165 @@ class claim_product_line(osv.osv):
                 else:
                     # not perishable nor management, exp and lot are False
                     vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
+                # check asset
+                asset_check = data['type'] == 'product' and data['subtype'] == 'asset'
+                if not asset_check:
+                    vals.update(asset_id_claim_product_line=False)
+                # kit check
+                kit_check = data['type'] == 'product' and data['subtype'] == 'kit'
+                if not kit_check:
+                    vals.update(composition_list_id_claim_product_line=False)
             else:
                 # product is False, exp and lot are set to False
-                vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False)
+                vals.update(lot_id_claim_product_line=False, expiry_date_claim_product_line=False,
+                            asset_id_claim_product_line=False, composition_list_id_claim_product_line=False)
         
+        return True
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        set the name
+        '''
+        # common check
+        self._orm_checks(cr, uid, vals, context=context)
+        return super(claim_product_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        set the name
+        '''
+        # common check
+        self._orm_checks(cr, uid, vals, context=context)
         return super(claim_product_line, self).write(cr, uid, ids, vals, context=context)
+    
+    def common_on_change(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, result=None, context=None):
+        '''
+        commmon qty computation
+        '''
+        if context is None:
+            context = {}
+        if result is None:
+            result = {}
+        if not product_id or not location_id:
+            result.setdefault('value', {}).update({'qty_claim_product_line': 0.0, 'hidden_stock_available_claim_product_line': 0.0})
+            return result
+        
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        prod_obj = self.pool.get('product.product')
+        # corresponding product object
+        product_obj = prod_obj.browse(cr, uid, product_id, context=context)
+        # uom from product is taken by default if needed
+        uom_id = uom_id or product_obj.uom_id.id
+        # we do not want the children location
+        stock_context = dict(context, compute_child=False)
+        # we check for the available qty (in:done, out: assigned, done)
+        res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
+        if prodlot_id:
+            # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
+            qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
+        else:
+            # otherwise we take total according to the location
+            qty = res[location_id]['total']
+        # update the result
+        result.setdefault('value', {}).update({'qty_claim_product_line': qty,
+                                               'uom_id_claim_product_line': uom_id,
+                                               'hidden_stock_available_claim_product_line': qty,
+                                               })
+        return result
+    
+    def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+        '''
+        prod lot changes, update the expiry date
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        # reset expiry date or fill it
+        if prodlot_id:
+            result['value'].update(expiry_date_claim_product_line=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+        else:
+            result['value'].update(expiry_date_claim_product_line=False)
+        # compute qty
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        return result
+    
+    def change_expiry(self, cr, uid, ids, expiry_date, product_id, type_check, location_id, prodlot_id, uom_id, context=None):
+        '''
+        expiry date changes, find the corresponding internal prod lot
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        
+        if expiry_date and product_id:
+            prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', product_id)], context=context)
+            if not prod_ids:
+                if type_check == 'in':
+                    # the corresponding production lot will be created afterwards
+                    result['warning'] = {'title': _('Info'),
+                                         'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                    # clear prod lot
+                    result['value'].update(lot_id_claim_product_line=False)
+                else:
+                    # display warning
+                    result['warning'] = {'title': _('Error'),
+                                         'message': _('The selected Expiry Date does not exist in the system.')}
+                    # clear date
+                    result['value'].update(expiry_date_claim_product_line=False, lot_id_claim_product_line=False)
+            else:
+                # return first prodlot
+                prodlot_id = prod_ids[0]
+                result['value'].update(lot_id_claim_product_line=prodlot_id)
+        else:
+            # clear expiry date, we clear production lot
+            result['value'].update(lot_id_claim_product_line=False,
+                                   expiry_date_claim_product_line=False,
+                                   )
+        # compute qty
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        return result
+    
+    def on_change_location_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+        """ 
+        location changes
+        """
+        result = {}
+        # compute qty
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        return result
+    
+    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+        '''
+        the product changes, set the hidden flag if necessary
+        '''
+        result = {}
+        # product changes, prodlot is always cleared
+        result.setdefault('value', {})['lot_id_claim_product_line'] = False
+        result.setdefault('value', {})['expiry_date_claim_product_line'] = False
+        # clear uom
+        result.setdefault('value', {})['uom_id_claim_product_line'] = False
+        # reset the hidden flags
+        result.setdefault('value', {})['hidden_batch_management_mandatory_claim_product_line'] = False
+        result.setdefault('value', {})['hidden_perishable_mandatory_claim_product_line'] = False
+        result.setdefault('value', {})['hidden_asset_claim_product_line'] = False
+        result.setdefault('value', {})['hidden_kit_claim_product_line'] = False
+        
+        if product_id:
+            product_obj = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            # set the default uom
+            uom_id = product_obj.uom_id.id
+            result.setdefault('value', {})['uom_id_claim_product_line'] = uom_id
+            result.setdefault('value', {})['hidden_batch_management_mandatory_claim_product_line'] = product_obj.batch_management
+            result.setdefault('value', {})['hidden_perishable_mandatory_claim_product_line'] = product_obj.perishable
+            asset_check = product_obj.type == 'product' and product_obj.subtype == 'asset'
+            result.setdefault('value', {})['hidden_asset_claim_product_line'] = asset_check
+            kit_check = product_obj.type == 'product' and product_obj.subtype == 'kit'
+            result.setdefault('value', {})['hidden_kit_claim_product_line'] = kit_check
+            
+        # compute qty
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        return result
     
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -737,10 +952,18 @@ class claim_product_line(osv.osv):
             result[obj.id] = {}
             # claim state
             result[obj.id].update({'claim_state_claim_product_line': obj.claim_id_claim_product_line.state})
+            # claim_type_claim_product_line
+            result[obj.id].update({'claim_type_claim_product_line': obj.claim_id_claim_product_line.type_return_claim})
             # batch management
             result[obj.id].update({'hidden_batch_management_mandatory_claim_product_line': obj.product_id_claim_product_line.batch_management})
             # perishable
             result[obj.id].update({'hidden_perishable_mandatory_claim_product_line': obj.product_id_claim_product_line.perishable})
+            # hidden_asset_claim_product_line
+            asset_check = obj.product_id_claim_product_line.type == 'product' and obj.product_id_claim_product_line.subtype == 'asset'
+            result[obj.id].update({'hidden_asset_claim_product_line': asset_check})
+            # hidden_kit_claim_product_line
+            kit_check = obj.product_id_claim_product_line.type == 'product' and obj.product_id_claim_product_line.subtype == 'kit'
+            result[obj.id].update({'hidden_kit_claim_product_line': kit_check})
             
         return result
         
@@ -755,18 +978,23 @@ class claim_product_line(osv.osv):
                 'expiry_date_claim_product_line': fields.many2one('stock.production.lot', string='Exp'),
                 'asset_id_claim_product_line' : fields.many2one('product.asset', string='Asset'),
                 'composition_list_id_claim_product_line': fields.many2one('composition.kit', string='Kit'),
-                'src_location_id_claim_product_line': fields.many2one('stock.location', string='Src Location', required=True),
-                'stock_move_id_claim_product_line': fields.many2one('stock.move', string='Corresponding IN stock move'),
-                'type_check': fields.char(string='Type Check', size=1024,),
+                'src_location_id_claim_product_line': fields.many2one('stock.location', string='Src Location'),
+                'stock_move_id_claim_product_line': fields.many2one('stock.move', string='Corresponding IN stock move'), # value from wizard process
+                'type_check': fields.char(string='Type Check', size=1024,), # default value
                 # functions
+                'claim_type_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim Type', type='selection', selection=CLAIM_TYPE, store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_stock_available_claim_product_line': fields.float(string='Available Stock', digits_compute=dp.get_precision('Product UoM'), invisible=True),
                 'claim_state_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim State', type='selection', selection=CLAIM_STATE, store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_perishable_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='Exp', store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_batch_management_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='B.Num', store=False, readonly=True, multi='get_vals_claim'),
+                'hidden_asset_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='Asset Check', store=False, readonly=True, multi='get_vals_claim'),
+                'hidden_kit_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='Kit Check', store=False, readonly=True, multi='get_vals_claim'),
                 }
     
     _defaults = {'type_check': 'out',
                  'integrity_status_claim_product_line': 'empty',
+                 'claim_type_claim_product_line': lambda obj, cr, uid, c: c.get('claim_type', False),
+                 'src_location_id_claim_product_line': lambda obj, cr, uid, c: c.get('claim_type', False) in ['supplier', 'transport'] and c.get('default_src', False) or False,
                  }
     
 claim_product_line()
