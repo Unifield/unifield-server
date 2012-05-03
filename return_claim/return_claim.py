@@ -37,6 +37,8 @@ CLAIM_TYPE = [('supplier', 'Supplier'),
               ('customer', 'Customer'),
               ('transport', 'Transport')]
 
+TYPES_FOR_SRC_LOCATION = ['supplier', 'transport']
+
 CLAIM_TYPE_RELATION = {'in': 'supplier',
                        'out': 'customer'}
 # claim state
@@ -281,6 +283,10 @@ class return_claim(osv.osv):
             # create new ones
             for move in obj.picking_id_return_claim.move_lines:
                 # create corresponding product line
+                if obj.type_return_claim not in TYPES_FOR_SRC_LOCATION:
+                    src_location_id = False
+                else:
+                    src_location_id = obj.default_src_location_id_return_claim.id
                 product_line_values = {'qty_claim_product_line': move.product_qty,
                                        'claim_id_claim_product_line': obj.id,
                                        'product_id_claim_product_line': move.product_id.id,
@@ -289,7 +295,7 @@ class return_claim(osv.osv):
                                        'expiry_date_claim_product_line': move.expired_date,
                                        'asset_id_claim_product_line' : move.asset_id.id,
                                        'composition_list_id_claim_product_line': move.composition_list_id.id,
-                                       'src_location_id_claim_product_line': move.location_id.id}
+                                       'src_location_id_claim_product_line': src_location_id}
                 
                 new_prod_id = product_line_obj.create(cr, uid, product_line_values, context=context)
                 
