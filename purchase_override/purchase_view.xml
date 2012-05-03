@@ -221,10 +221,12 @@
         	<field name="arch" type="xml">
         		<form string="Warning on confirmation">
         			<separator colspan="4" string="Purchase Order" />
+        			<field name="order_id" colspan="4" />
         			<separator colspan="4" string="Warning" />
+        			<field name="errors" colspan="4" nolabel="1" />
         			<separator colspan="4" string="Actions" />
         			<button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
-        			<button type="object" name="validate_order" icon="terp-validate" string="Confirm order" colspan="3" />
+        			<button type="object" name="validate_order" icon="terp-check" string="Approved" colspan="3" />
         		</form>
         	</field>
         </record>

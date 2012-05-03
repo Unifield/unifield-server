@@ -274,6 +274,8 @@ class purchase_order(osv.osv):
         move_obj = self.pool.get('stock.move')
             
         for order in self.browse(cr, uid, ids, context=context):
+            if not order.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             todo = []
             todo2 = []
             todo3 = []
@@ -287,7 +289,6 @@ class purchase_order(osv.osv):
             
             if todo2:
                 sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
-                self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
                 error_moves = []
                 for move in move_obj.browse(cr, uid, sm_ids, context=context):
                     backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
@@ -296,13 +297,13 @@ class purchase_order(osv.osv):
                         
                 if error_moves:
                     errors = '''You are trying to confirm a Direct Purchase Order.
-At Direct Purchase Order confirmation, the system tries to change the state of concerning OUT moves but for this DPO, the system has detected
-some stock moves which are already processed : \d'''
+At Direct Purchase Order confirmation, the system tries to change the state of concerning OUT moves but for this DPO, the system has detected 
+stock moves which are already processed : '''
                     for m in error_moves:
-                        errors = '%d \n %d' % (errors, '''
+                        errors = '%s \n %s' % (errors, '''
         * Product : %s - Product Qty. : %s %s \n''' % (m.product_id.name, m.product_qty, m.product_uom.name))
                         
-                    errors = '%d \n %d' % (errors, 'This is only a warning message, if you click on Validate, the system will validate the Direct Purchase Order without errors.')
+                    errors = '%s \n %s' % (errors, 'This warning is only for informational purpose. The stock moves already processed will not be modified by this confirmation.')
                         
                     wiz_id = self.pool.get('purchase.order.confirm.wizard').create(cr, uid, {'order_id': order.id,
                                                                                              'errors': errors})
