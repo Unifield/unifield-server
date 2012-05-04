@@ -8,7 +8,7 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries List" editable="top" hide_delete_button="1" hide_new_button="1">
+                <tree string="HQ Entries List" editable="top" hide_delete_button="1" hide_new_button="1" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')">
                     <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
                     <field name="cost_center_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
@@ -20,6 +20,7 @@
                     <field name="amount"/>
                     <field name="currency_id"/>
                     <field name="user_validated"/>
+                    <field name="analytic_state" invisible="1"/>
                 </tree>
             </field>
         </record>

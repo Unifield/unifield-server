@@ -220,6 +220,40 @@ class hq_entries(osv.osv):
     _name = 'hq.entries'
     _description = 'HQ Entries'
 
+    def _get_analytic_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the line, then "valid"
+         - if no distribution on the line, then "none"
+         - all other case are "invalid"
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Search MSF Private Fund element, because it's valid with all accounts
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = 'invalid'
+            if line.cost_center_id and line.analytic_id:
+                if line.analytic_id.id == fp_id:
+                    res[line.id] = 'valid'
+                    continue
+                if line.account_id.id in [x.id for x in line.analytic_id.account_ids] and line.cost_center_id.id in [x.id for x in line.analytic_id.cost_center_ids]:
+                    res[line.id] = 'valid'
+                    continue
+            elif line.cost_center_id and not line.analytic_id:
+                res[line.id] = 'valid'
+                continue
+            else:
+                res[line.id] = 'none'
+        return res
+
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True),
@@ -236,6 +270,8 @@ class hq_entries(osv.osv):
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=True, readonly=True),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
+        'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
     }
 
     _defaults = {
