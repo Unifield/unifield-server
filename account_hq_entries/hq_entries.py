@@ -163,7 +163,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     for new_line in self.pool.get('account.move.line').browse(cr, uid, corrected_ids):
                         if line.cost_center_id.id != line.cost_center_id_first_value.id:
                             # Delete old distribution
-                            self.pool.get('account.move.line').write(cr, uid, [new_line.id], {'analytic_distribution_id': False})
+                            self.pool.get('account.move.line').write(cr, uid, [new_line.id], {'analytic_distribution_id': False}, check=False)
                             self.pool.get('analytic.distribution').unlink(cr, uid, new_line.analytic_distribution_id.id)
                             # create new distribution
                             distrib_id = False
@@ -192,7 +192,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                                     common_vals.update({'analytic_id': f2_id})
                                     self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
                             # Attache distribution to the line
-                            self.pool.get('account.move.line').write(cr, uid, [new_line.id], {'analytic_distribution_id': distrib_id,})
+                            self.pool.get('account.move.line').write(cr, uid, [new_line.id], {'analytic_distribution_id': distrib_id,}, check=False)
                     # Validate HQ Entry
                     self.pool.get('hq.entries').write(cr, uid, [line.id], {'user_validated': True}, context=context)
                     continue
