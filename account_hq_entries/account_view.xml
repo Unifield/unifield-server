@@ -80,10 +80,10 @@
             <field name="arch" type="xml">
                 <form string="Analytic Reallocation">
                     <field name="cost_center_id"/>
-                    <field name="funding_pool_id"/>
+                    <field name="analytic_id"/>
                     <newline/>
-                    <field name="free1_id"/>
-                    <field name="free2_id"/>
+                    <field name="free_1_id"/>
+                    <field name="free_2_id"/>
                     <group colspan="6" col="4">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>

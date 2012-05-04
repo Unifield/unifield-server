@@ -32,9 +32,9 @@ class hq_analytic_reallocation(osv.osv_memory):
 
     _columns = {
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'analytic_id': fields.many2one('account.analytic.account', string="Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -83,11 +83,11 @@ class hq_analytic_reallocation(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0])
         vals = {
             'cost_center_id': False,
-            'funding_pool_id': False,
-            'free1_id': False,
-            'free2_id': False,
+            'analytic_id': False,
+            'free_1_id': False,
+            'free_2_id': False,
         }
-        for el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
+        for el in ['cost_center_id', 'analytic_id', 'free_1_id', 'free_2_id']:
             obj = getattr(wiz, el, None)
             if obj:
                 vals.update({el: getattr(obj, 'id', None)})
