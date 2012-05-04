@@ -267,7 +267,7 @@
                         <field name="partner_ref"/>
                         <field name="shipped"/>
                         <!-- purchase_override > purchase_view.xml -->
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
@@ -356,7 +356,7 @@
                         <field name="partner_ref"/>
                         <field name="shipped"/>
                         <!-- purchase_override > purchase_view.xml -->
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
@@ -443,6 +443,7 @@
             		
             		<xpath expr="//tree[@string='Pricelist']/field[@name='min_order_qty']" position="after">
             			<field name="valid_till" />
+            			<field name="comment" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />
             			<field name="purchase_order_line_id" />

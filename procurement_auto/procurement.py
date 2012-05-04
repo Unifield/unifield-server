@@ -177,7 +177,7 @@ class stock_warehouse_automatic_supply(osv.osv):
             default = {}
         obj = self.read(cr, uid, id, ['frequence_id'])
         if obj['frequence_id']:
-            default['frequence_id'] = self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context)
+            default['frequence_id'] = int(self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context))
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.automatic.supply') or '',
             'procurement_id': False,
