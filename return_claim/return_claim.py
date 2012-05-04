@@ -94,13 +94,22 @@ class return_claim(osv.osv):
         '''
         open add event wizard
         '''
+        # objects
+        fields_tools = self.pool.get('fields.tools')
         # we test if new event are allowed
         data = self.allow_new_event(cr, uid, ids, context=context)
         if not all(x['allow'] for x in data.values()):
+            # we get an event type and new event are not allowed, the specified type does not allow further events
             event_type_name = [x['last_type'][1] for x in data.values() if (not x['allow'] and x['last_type'])]
+            # we get a state, the state of the previous event does not allow further events
+            state = [x['state'] for x in data.values() if not x['allow']]
             if event_type_name:
                 # not allowed previous event (last_type is present)
                 raise osv.except_osv(_('Warning !'), _('Previous event (%s) does not allow further event.')%event_type_name[0])
+            elif state:
+                # not allowed because of state of last event
+                state_name = fields_tools.get_selection_name(cr, uid, object='claim.event', field='state', key=state[0], context=context)
+                raise osv.except_osv(_('Warning !'), _('State of previous event (%s) does not allow further event.')%state_name)
             else:
                 # not allowed claim type (no last_type)
                 claim_type_name = [x['claim_type'][1] for x in data.values()][0]
@@ -145,6 +154,8 @@ class return_claim(osv.osv):
             list = []
             # claim type (key, name)
             claim_type = (obj.type_return_claim, [x[1] for x in self.get_claim_type() if x[0] == obj.type_return_claim][0])
+            # state of last event
+            state = False
             # we first check if the claim type supports events
             if self.get_claim_type_rules().get(claim_type[0]):
                 # order by order_claim_event, so we can easily get the last event
@@ -155,24 +166,29 @@ class return_claim(osv.osv):
                     list = self.get_claim_event_type()
                 else:
                     # we are interested in the last value of returned list -> -1
-                    data = event_obj.read(cr, uid, ids[-1], ['type_claim_event'], context=context)
-                    # event type key
-                    last_event_type_key = data['type_claim_event']
-                    # event type name
-                    event_type = self.get_claim_event_type()
-                    last_event_type_name = [x[1] for x in event_type if x[0] == last_event_type_key][0]
-                    last_event_type = (last_event_type_key, last_event_type_name)
-                    # get available selection
-                    claim_rules = self.get_claim_rules()
-                    available_list = claim_rules.get(last_event_type_key, False)
-                    if available_list:
-                        allow = True
-                        list = [(x, y[1]) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
+                    data = event_obj.read(cr, uid, ids[-1], ['type_claim_event', 'state'], context=context)
+                    # check event state, if not done, allow is False, and list empty
+                    if data['state'] != 'done':
+                        state = data['state']
+                    else:
+                        # event type key
+                        last_event_type_key = data['type_claim_event']
+                        # event type name
+                        event_type = self.get_claim_event_type()
+                        last_event_type_name = [x[1] for x in event_type if x[0] == last_event_type_key][0]
+                        last_event_type = (last_event_type_key, last_event_type_name)
+                        # get available selection
+                        claim_rules = self.get_claim_rules()
+                        available_list = claim_rules.get(last_event_type_key, False)
+                        if available_list:
+                            allow = True
+                            list = [(x, y[1]) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
             # update result
             result[obj.id] = {'allow': allow,
                               'last_type': last_event_type,
                               'list': list,
-                              'claim_type': claim_type}
+                              'claim_type': claim_type,
+                              'state': state}
         return result
     
     def check_product_lines_integrity(self, cr, uid, ids, context=None):
@@ -697,6 +713,9 @@ class claim_event(osv.osv):
         # base of function names
         base_func = '_do_process_'
         for obj in self.browse(cr, uid, ids, context=context):
+            # event must be draft
+            if obj.state != 'draft':
+                raise osv.except_osv(_('Warning !'), _('Only events in state draft can be processed.'))
             # integrity check on product lines for corresponding claim
             integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
             if not integrity_check:
