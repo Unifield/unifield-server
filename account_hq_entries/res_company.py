@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,19 @@
 #
 ##############################################################################
 
-import res_company
-import hq_entries
-import wizard
+from osv import osv
+from osv import fields
 
+class res_company(osv.osv):
+    _name = 'res.company'
+    _inherit = 'res.company'
+
+    _columns = {
+        'expat_salaries_default_account': fields.many2one('account.account', string="Expat Salaries", 
+            help="Account not allowed to be changed in HQ entries import."),
+        'counterpart_hq_entries_default_account': fields.many2one('account.account', string="Default counterpart", 
+            help="Account that will be used as counterpart for HQ Validated Entries."),
+    }
+
+res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

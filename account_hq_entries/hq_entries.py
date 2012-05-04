@@ -44,6 +44,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Currency is missing!'))
         # Prepare some values
         res = []
+        counterpart_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account and \
+            self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account.id or False
+        if not counterpart_account_id:
+            raise osv.except_osv(_('Warning'), _('Default counterpart for HQ Entries is not set. Please configure it to Company Settings.'))
         if ids:
             # prepare some values
             current_date = strftime('%Y-%m-%d')
@@ -51,12 +55,6 @@ class hq_entries_validation_wizard(osv.osv_memory):
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]
-#            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, current_date)
-#            if not period_ids:
-#                raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (current_date,))
-#            if len(period_ids) > 1:
-#                raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (current_date,))
-#            period_id = period_ids[0]
             # create move
             move_id = self.pool.get('account.move').create(cr, uid, {
                 'date': current_date,
@@ -119,7 +117,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 total_credit += credit
             # counterpart line
             counterpart_vals = {}
-            account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', '4000')])
+            account_ids = self.pool.get('account.account').search(cr, uid, [('id', '=', counterpart_account_id)])
             if account_ids:
                 counterpart_vals.update({'account_id': account_ids[0],})
             counterpart_vals.update({
@@ -247,14 +245,18 @@ class hq_entries(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        Change Expat salary account (61200) is not allowed
+        Change Expat salary account is not allowed
         """
         if not context:
             context={}
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
+            expat_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account and \
+                self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account.id or False
+            if not expat_account_id:
+                raise osv.except_osv(_('Warning'), _('Expat Salaries account is not set. Please configure it to Company Settings.'))
             for line in self.browse(cr, uid, ids):
-                if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.code == '61200' and account.code != '61200':
+                if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.id == expat_account_id and account.id != expat_account_id:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         return super(hq_entries, self).write(cr, uid, ids, vals, context)
 

@@ -1450,6 +1450,16 @@
             <field name="user_type" ref="account.account_type_expense" />
         </record>
 
+        <record model="account.account" id="msf_chart_of_account.61200">
+            <field name="code">61200</field>
+            <field name="type_for_register">none</field>
+            <field name="type">other</field>
+            <field name="name">Expat Salary</field>
+            <field name="parent_id" ref="msf_chart_of_account.61" />
+            <field name="reconcile" eval="False" />
+            <field name="user_type" ref="account.account_type_expense" />
+        </record>
+
         <record model="account.account" id="msf_chart_of_account.6111">
             <field name="code">6111</field>
             <field name="type_for_register">none</field>
