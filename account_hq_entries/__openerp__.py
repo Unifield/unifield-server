@@ -33,9 +33,7 @@
         'res_company_view.xml',
         'account_view.xml',
     ],
-    "demo_xml" : [
-        'account_journal_demo.xml',
-    ],
+    "demo_xml" : [],
     "test": [],
     "installable": True,
     "active": False

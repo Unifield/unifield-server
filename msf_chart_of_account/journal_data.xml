@@ -60,22 +60,28 @@
             <field name="analytic_journal_id" ref="od_analytic_journal"/>
         </record>
 
+        <record id="hq_analytic_journal" model="account.analytic.journal">
+            <field name="name">Analytic HQ</field>
+            <field name="code">AHQ</field>
+            <field name="type">hq</field>
+        </record>
         <record id="hq_journal" model="account.journal">
             <field name="name">HQ</field>
             <field name="code">HQ</field>
             <field name="type">hq</field>
+            <field name="analytic_journal_id" ref="hq_analytic_journal"/>
         </record>
 
-        <record id="account_hq_entries.hq_analytic_journal" model="account.analytic.journal">
+        <record id="hq_analytic_journal_fields" model="account.analytic.journal">
             <field name="name">HQ - Field expenses</field>
-            <field name="code">HQ-Exp</field>
+            <field name="code">AHQ-Exp</field>
             <field name="type">hq</field>
         </record>
-        <record id="account_hq_entries.hq_journal" model="account.journal">
+        <record id="hq_journal_fields" model="account.journal">
             <field name="name">HQ - Field expenses</field>
             <field name="code">HQ-Exp</field>
             <field name="type">hq</field>
-            <field name="analytic_journal_id" ref="account_hq_entries.hq_analytic_journal"/>
+            <field name="analytic_journal_id" ref="hq_analytic_journal_fields"/>
         </record>
 
         <record id="hr_analytic_journal" model="account.analytic.journal">
