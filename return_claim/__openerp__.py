@@ -45,6 +45,7 @@
     'demo_xml': [
     ],
     'test': ['test/return_claim_data.yml',
+#             'test/return_claim_so_po_in.yml',
              'test/return_claim.yml'],
     'installable': True,
     'active': False,

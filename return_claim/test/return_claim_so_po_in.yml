@@ -42,9 +42,6 @@
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'sale.order', ref("so_001_claim"), 'order_confirm', cr)
-    # save sale order name
-    data = self.read(cr, uid, ref("so_001_claim"), ['name'], context=context)
-    context.update({'so_name_claim': data['name']}) 
 -
   Run the scheduler
 -
@@ -56,7 +53,6 @@
   !python {model: purchase.order}: |
     proc_obj = self.pool.get('procurement.order')
     sol_obj = self.pool.get('sale.order.line')
-    po_obj = self.pool.get('purchase.order')
     # get the corresponding procurement order
     data = sol_obj.read(cr, uid, [ref("sol_001-1_claim")], ['procurement_id'], context=context)[0]
     proc_id = data['procurement_id'][0]
@@ -64,10 +60,8 @@
     context.update({'proc_id_claim': proc_id})
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
-    po_data = po_obj.read(cr, uid, po_id, ['name'], context=context)
-    po_name = po_data['name']
     # save po id into context
-    context.update({'po_id_claim': po_id, 'po_name_claim': po_name})
+    context.update({'po_id_claim': po_id})
     # change Invoicing control to From Picking
     self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
     import netsvc
@@ -121,8 +115,6 @@
     a_qty = [10.0]
     b_qty = [5.0]
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_001_claim"))], context=context)
-    # save out into the context
-    context.update({'out_id_claim': out_ids[0]})
     # only one OUT for the sale order
     assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
     for obj in self.browse(cr, uid, out_ids, context=context):
@@ -134,85 +126,4 @@
     # all qty must be empty
     assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
     assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
--
-  I create a claim 001 from scratch
-- 
-  !python {model: return.claim}: |
-    # get data from on change function
-    data_claim = self.on_change_origin(cr, uid, [], context['in_id_claim'], context=context)
-    claim_values = {'partner_id_return_claim': data_claim['value']['partner_id_return_claim'],
-                    'category_return_claim': data_claim['value']['category_return_claim'],
-                    'type_return_claim': data_claim['value']['type_return_claim'],
-                    'picking_id_return_claim': context['in_id_claim'],
-                    'po_so_return_claim': data_claim['value']['po_so_return_claim'],
-                    }
     
-    claim_id = self.create(cr, uid, claim_values, context=context)
-    # save claim id into context
-    context.update({'claim_id_claim': claim_id})
--
-  I load the products from origin
--
-  !python {model: return.claim}: |
-    self.load_products(cr, uid, context['claim_id_claim'], context=context)
--
-  I do an integrity check
--
-  !python {model: return.claim}: |
-    self.check_product_lines_integrity(cr, uid, context['claim_id_claim'], context=context)
--
-  I open the add event wizard
--
-  !python {model: return.claim}: |
-    res = self.add_event(cr, uid, context['claim_id_claim'], context=context)
-    model = res['res_model']
-    id = res['res_id']
-    c = res['context']
-    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
--
-  I select the new event type
--
-  !python {model: add.event}: |
-    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context):
-      obj.write({'event_type': 'quarantine'}, context=context)
--
-  I test on change function of add event wizard
--
-  !python {model: add.event}: |
-    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context):
-      self.on_change_event_type(cr, uid, obj.id, obj.event_type, obj.claim_partner_id.id, obj.claim_type, obj.claim_picking_id.id, context=context)
--
-  I create the new event
--
-  !python {model: add.event}: |
-    self.do_add_event(cr, uid, context['wizard']['ids'], context=context)
--
-  I get the last event in the claim
--
-  !python {model: return.claim}: |
-    last_id = self.get_last_event(cr, uid, context['claim_id_claim'], context=context)[context['claim_id_claim']]
-    # save last event id in context
-    context.update({'event_id_claim': last_id})
--
-  I process the last event
--
-  !python {model: claim.event}: |
-    self.do_process_event(cr, uid, context['event_id_claim'], context=dict(context,active_ids=[context['claim_id_claim']]))
--
-  I check that an internal picking has been created to quarantine
--
-  !python {model: stock.picking}: |
-    #objects
-    data_tools_obj = self.pool.get('data.tools')
-    # load common data to get location ids
-    data_tools_obj.load_common_data(cr, uid, [], context=context)
-    
-    internal_claim_picking_ids = self.search(cr, uid, [('type', '=', 'internal'), ('origin', '=', context['po_name_claim'] + ':' + context['so_name_claim'])], context=context)
-    for obj in self.browse(cr, uid, internal_claim_picking_ids, context=context):
-      # state must be done
-      assert obj.state == 'done', 'state of internal picking to analyze quarantine is not done - %s'%obj.state
-      for move in obj.move_lines:
-        assert move.location_dest_id.id == context['common']['quarantine_anal'], 'destination of stock move is wrong - %s - %s'%(move.location_dest_id.id,context['common']['quarantine_anal'])
-        
-    
-

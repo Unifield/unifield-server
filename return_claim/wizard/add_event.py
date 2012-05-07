@@ -36,7 +36,10 @@ class add_event(osv.osv_memory):
         '''
         filter available types according to existing events
         '''
-        claim_id = context['claim_id']
+        claim_id = context.get('claim_id', False)
+        # when coming from unique_fields_views.yml, inherited_views.yml, we do not have corresponding claim_id in context
+        if not claim_id:
+            return []
         available_list = context['data'][claim_id]['list']
         return available_list
     
@@ -104,8 +107,9 @@ class add_event(osv.osv_memory):
             ids = [ids]
         # objects
         event_obj = self.pool.get('claim.event')
-        claim_ids = context['active_ids']
+        claim_id = False
         for obj in self.browse(cr, uid, ids, context=context):
+            claim_id = obj.claim_id.id
             if not obj.creation_date:
                 raise osv.except_osv(_('Warning !'), _('You need to specify a creation date.'))
             if not obj.event_type:
@@ -129,7 +133,7 @@ class add_event(osv.osv_memory):
                 'res_model': 'return.claim',
                 'view_type': 'form',
                 'view_mode': 'form,tree',
-                'res_id': claim_ids[0],
+                'res_id': claim_id,
                 'target': 'crunch',
                 'context': context}
     

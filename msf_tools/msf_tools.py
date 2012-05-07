@@ -354,7 +354,7 @@ class picking_tools(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         # trigger standard workflow for validated picking ticket
         for id in ids:
-            self.action_move(cr, uid, [id])
+            pick_obj.action_move(cr, uid, [id])
             wf_service.trg_validate(uid, 'stock.picking', id, 'button_done', cr)
         return True
         
