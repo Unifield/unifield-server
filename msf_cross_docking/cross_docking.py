@@ -40,6 +40,21 @@ class purchase_order(osv.osv):
     _defaults = {
         'cross_docking_ok': False,
     }
+    
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
+        '''
+        Changes destination location
+        '''
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id)
+        if order_type == 'direct':
+            location_id = self.onchange_cross_docking_ok(cr, uid, ids, False)['value']['location_id']
+        
+            if 'value' in res:
+                res['value'].update({'location_id': location_id})
+            else:
+                res.update({'value': {'location_id': location_id}})
+            
+        return res
 
     def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, context=None):
         """ Finds location id for changed cross_docking_ok.
@@ -78,7 +93,11 @@ class purchase_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         bool_value = None
         defined_location = None
-        cross_docking_value = self.browse(cr, uid, ids, context=context)[0].cross_docking_ok
+        order = self.browse(cr, uid, ids, context=context)[0]
+        type_value = vals.get('order_type', order.order_type)
+        if type_value == 'direct':
+            vals.update({'cross_docking_ok': False})
+        cross_docking_value = order.cross_docking_ok
         cross_docking_ok = vals.get('cross_docking_ok')
         if cross_docking_ok or cross_docking_value:
             if not vals.get('categ') in ['service', 'transport']:
@@ -92,6 +111,8 @@ class purchase_order(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         obj_data = self.pool.get('ir.model.data')
+        if vals.get('order_type') == 'direct':
+            vals.update({'cross_docking_ok': False})
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
         elif vals.get('cross_docking_ok') == False:

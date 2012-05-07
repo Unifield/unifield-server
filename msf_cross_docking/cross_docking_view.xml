@@ -27,7 +27,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
-                        <field name="cross_docking_ok" attrs="{'readonly':[('categ','in', ['service', 'transport'] )]}" 
+                        <field name="cross_docking_ok" attrs="{'readonly':['|', ('order_type', '=', 'direct'), ('categ','in', ['service', 'transport'] )]}" 
                         on_change="onchange_cross_docking_ok(cross_docking_ok)"
                         />
                     </xpath>
