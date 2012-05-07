@@ -22,16 +22,59 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 from time import strftime
 from tools.translate import _
+import re
+from lxml import etree as ET
 
-class hr_payroll_validation(osv.osv):
+class hr_payroll_validation(osv.osv_memory):
     _name = 'hr.payroll.validation'
     _description = 'Payroll entries validation wizard'
 
+    def fields_get(self, cr, uid, fields=None, context=None):
+        """
+        Fields ' description
+        """
+        if not context:
+            context = {}
+        res = super(hr_payroll_validation, self).fields_get(cr, uid, fields, context)
+        hrp = self.pool.get('hr.payroll.msf')
+        search_lines_ids = hrp.search(cr, uid, [('account_id.user_type.code', '!=', 'expense')])
+        for line in hrp.read(cr, uid, search_lines_ids, ['account_id']):
+            # Add line description
+            field_name = 'entry%s' % line.get('id')
+            res.update({field_name: {'selectable': True, 'type': 'char', 'size': 255, 'string': '', 'readonly': 1}})
+            # Add third party field
+            third_name = 'third%s' % line.get('id')
+            account = self.pool.get('account.account').read(cr, uid, line.get('account_id')[0], ['type_for_register'])
+            third_name_required = False
+            if account.get('type_for_register', False) and account.get('type_for_register') == 'payroll':
+                third_name_required = True
+            res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner', 'required': third_name_required}})
+        return res
+
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        Fields ' value
+        """
+        if not context:
+            context = {}
+        res = super(hr_payroll_validation, self).default_get(cr, uid, fields, context)
+        pattern = re.compile('^entry(.*)$')
+        for field in fields:
+            res[field] = ''
+#            m = re.match(pattern, field)
+#            if m and m.groups() and m.groups()[0]:
+#                data = self.pool.get('hr.payroll.msf').read(cr, uid, int(m.groups()[0]), ['name'])
+#                if data and data.get('name', False):
+#                    res[field] = data.get('name')
+        return res
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Verify that all lines have an analytic distribution
+        Verify that all lines have an analytic distribution.
+        Create all non-expense lines to give a third parties
         """
         if not context:
             context = {}
@@ -41,6 +84,15 @@ class hr_payroll_validation(osv.osv):
         for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
             if line.account_id and line.account_id.user_type.code == 'expense' and line.analytic_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
+        if view_type == 'form':
+            form = ET.fromstring(res['arch'])
+            field = form.find('.//label')
+            parent = field.getparent()
+            for el in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
+                if el.account_id and el.account_id.user_type.code != 'expense':
+                    third = 'third' + str(el.id)
+                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4"> <label string="%s"/><field name="%s"/></group>' % (str(el.name), third)))
+            res['arch'] = ET.tostring(form)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
