@@ -97,6 +97,7 @@
     <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P121" fontName="Helvetica-Oblique" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P14" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P15" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -274,29 +275,35 @@
       <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" style="Table5">
         <tr>
           <td>
-            <para style="P19" alignment="LEFT">[[ line['code'] ]]</para>
+          	<para style="P12" alignment="LEFT">[[ (line['line_type'] != 'View' and line['code']) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['code']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P12" alignment="LEFT">[[ line['name'] ]]</para>
+          	<para style="P12" alignment="LEFT">[[ (line['line_type'] != 'View' and line['name']) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['name']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P12" alignment="LEFT">[[ line['line_type'] ]]</para>
+          	<para style="P12" alignment="LEFT">[[ (line['line_type'] != 'View' and line['line_type']) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['line_type']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P12" alignment="RIGHT">[[ locale.format('%.0f', line['allocated_budget'], True) ]] </para>
+          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and locale.format('%.0f', line['allocated_budget'], True)) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and locale.format('%.0f', line['allocated_budget'], True)) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P18" alignment="RIGHT">[[ locale.format('%.0f', line['project_budget'], True) ]]</para>
+          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and locale.format('%.0f', line['project_budget'], True)) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and locale.format('%.0f', line['project_budget'], True)) or removeParentNode('para') ]]</para>
+            
           </td>
         </tr>
       </blockTable>
       <blockTable colWidths="80.0,402.0" style="Table5">
         <tr>
           <td>
-            <para style="P12" alignment="LEFT">  Accounts:</para>
+            <para style="P121" alignment="LEFT">  Accounts:</para>
           </td>
           <td>
-            <para style="P12" alignment="LEFT">[[ line['account_list'] ]]</para>
+            <para style="P121" alignment="LEFT">[[ line['account_list'] ]]</para>
           </td>
         </tr>
       </blockTable>
