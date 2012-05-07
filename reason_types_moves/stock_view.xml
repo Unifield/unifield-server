@@ -206,6 +206,10 @@
 						<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
         	                <field name="location_dest_id" domain="[('usage','=','internal')]" on_change="location_dest_change(location_dest_id)" />
 	                	</xpath>
+	                	
+	                	<xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
+                       		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
+                       </xpath>
 			
                 </data>
             </field>
@@ -234,6 +238,10 @@
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
                                 <field name="location_dest_id" domain="[('usage','in',('internal', 'inventory', 'procurement', 'production'))]" on_change="location_dest_change(location_dest_id)" />
                         </xpath>
+                        
+                        <xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
+                       		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
+                       </xpath>
                         
                         <!-- MOVED TO SPECIFIC_RULES
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="replace">
@@ -264,6 +272,9 @@
 
                        <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
                                 <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                       </xpath>
+                       <xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
+                       		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
                        </xpath>
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
                                 <field name="location_dest_id" domain="['|', '|', ('id', '=', location_output_id), ('location_id', '=', location_virtual_id), ('usage','=','customer')]" on_change="location_dest_change(location_dest_id)" />

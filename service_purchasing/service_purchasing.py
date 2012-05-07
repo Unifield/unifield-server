@@ -104,21 +104,22 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False):
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False):
         '''
         if the product is "service with reception" or "service", the destination location is Service
         '''
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id)
+        service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
         
-        if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service'):
-            service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service') and parent_type == 'in':
             if service_loc:
                 result.setdefault('value', {}).update(location_dest_id=service_loc[0])
                 result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
         else:
-            result.setdefault('value', {}).update(location_dest_id=False)
+            if loc_dest_id == service_loc: 
+                result.setdefault('value', {}).update(location_dest_id=False)
             result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
             
         
