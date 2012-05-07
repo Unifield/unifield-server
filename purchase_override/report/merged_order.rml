@@ -284,7 +284,7 @@
       <blockTable colWidths="85.0,130.0,50.0,60.0,80.0,60.0,70.0" style="Table_Order_Pur_line_Content">
         <tr>
           <td>
-            <para style="terp_default_9">[[ line.product_id and line.product_id.default_code or line.name ]]</para>
+            <para style="terp_default_9">[[ line.product_id and line.product_id.default_code or '' ]]</para>
           </td>
           <td>
             <para style="terp_default_9">[[ line.product_id and line.product_id.name or line.name ]]</para>
