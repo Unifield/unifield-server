@@ -349,6 +349,16 @@ class sourcing_line(osv.osv):
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
+    def onChangePoCft(self, cr, uid, id, po_cft, company_id, context=None):
+        '''
+        if po_cft == 'direct', add a domain on supplier
+        '''
+        domain = {}
+        if po_cft == 'dpo':
+            domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
+    
+        return {'domain': domain}
+    
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
         if type == make to stock, change pocft to False
