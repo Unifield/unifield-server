@@ -116,6 +116,11 @@ class stock_move(osv.osv):
             service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
             if service_loc:
                 result.setdefault('value', {}).update(location_dest_id=service_loc[0])
+                result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
+        else:
+            result.setdefault('value', {}).update(location_dest_id=False)
+            result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
+            
         
         return result
     
