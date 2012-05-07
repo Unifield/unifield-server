@@ -124,14 +124,14 @@ class hr_payroll_import(osv.osv_memory):
         is_payroll_rounding = False
         if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE':
             is_payroll_rounding = True
-        # Check if it's a Cash Difference line
-        is_cash_difference = False
-        if third and third[0] and ustr(third[0]) == 'CASH_DIFFERENCE':
-            is_cash_difference = True
+        # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
+        is_counterpart = False
+        if third and third[0] and third[0] != '':
+            is_counterpart = True
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
             if second_description and second_description[0] and not is_payroll_rounding:
-                if not is_cash_difference:
+                if not is_counterpart:
                     # fetch employee ID
                     employee_identification_id = ustr(second_description[0]).split(' ')[-1]
                     employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
