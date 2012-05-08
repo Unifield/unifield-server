@@ -182,11 +182,13 @@ class wizard_budget_import(osv.osv_memory):
                                                                         AND name = %s \
                                                                         AND fiscalyear_id = %s \
                                                                         AND cost_center_id = %s \
+                                                                        AND decision_moment = %s \
                                                                         ORDER BY version DESC LIMIT 1",
                                                                        (budget_vals['code'],
                                                                         budget_vals['name'],
                                                                         budget_vals['fiscalyear_id'],
-                                                                        budget_vals['cost_center_id']))
+                                                                        budget_vals['cost_center_id'],
+                                                                        budget_vals['decision_moment']))
                     
                 
                 if not cr.rowcount:

@@ -73,7 +73,8 @@ class msf_budget(osv.osv):
             parent_budget_ids = self.search(cr,
                                             uid,
                                             [('fiscalyear_id','=',budget.fiscalyear_id.id),
-                                             ('cost_center_id','=',parent_cost_center.id)])
+                                             ('cost_center_id','=',parent_cost_center.id),
+                                             ('decision_moment','=',budget.decision_moment)])
             if len(parent_budget_ids) == 0:
                 parent_budget_id = self.create(cr,
                                                uid,
@@ -81,6 +82,7 @@ class msf_budget(osv.osv):
                                                 'code': "BU" + budget.fiscalyear_id.code[4:6] + " - " + parent_cost_center.code,
                                                 'fiscalyear_id': budget.fiscalyear_id.id,
                                                 'cost_center_id': budget.cost_center_id.parent_id.id,
+                                                'decision_moment': budget.decision_moment,
                                                 'type': 'view'}, context=context)
                 # Create all lines for all accounts (no budget values, those are retrieved)
                 expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
