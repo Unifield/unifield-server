@@ -317,7 +317,7 @@ class stock_picking(osv.osv):
 
 
             # UF-993: pass the order type as parameter for creating the asset event when validating the OUT        
-            if pick.sale_id:
+            if pick.sale_id and pick.origin:
                 partial_datas['order_type'] = pick.sale_id.order_type
             # and also location of the receiver of this OUT     
             partial_datas['location'] = pick.partner_id2.name     
