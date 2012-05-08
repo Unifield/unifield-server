@@ -499,13 +499,6 @@ class sync_server_connection(osv.osv):
     def _set_password(self, cr, uid, ids, field, password, arg, context):
         self._password[cr.dbname] = password
 
-    def _get_uid(self, cr, user, ids, field, arg, context):
-        return dict.fromkeys(ids, self._uid.get(cr.dbname, 0))
-
-    def _set_uid(self, cr, user, ids, field, uid, arg, context):
-        ## Make sure we put an integer
-        self._uid[cr.dbname] = int(uid)
-
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
     _rec_name = 'host'
@@ -516,7 +509,7 @@ class sync_server_connection(osv.osv):
         'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
-        'uid': fields.function(_get_uid, fnct_inv=_set_uid, string='Uid on synchro server', type='integer', method=True, readonly=True, store=False),
+        'uid': fields.integer('Uid on synchro server', readonly=True),
         'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True, store=False),
         'max_size' : fields.integer("Max Packet Size"),
