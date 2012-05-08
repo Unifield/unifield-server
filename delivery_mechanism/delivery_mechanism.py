@@ -25,7 +25,7 @@ import time
 
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
-from datetime import datetime
+import datetime
 
 import netsvc
 
@@ -352,6 +352,7 @@ class stock_picking(osv.osv):
                                               'price_currency_id': product_currency}
                     # the quantity
                     count = count + partial['product_qty']
+                    asset_id = partial['asset_id']
                     if first:
                         first = False
                         # update existing move
@@ -361,7 +362,7 @@ class stock_picking(osv.osv):
                                   'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'product_uom': partial['product_uom'],
-                                  'asset_id': partial['asset_id'],
+                                  'asset_id': asset_id,
                                   'change_reason': partial['change_reason'],
                                   }
                         # average computation - empty if not average
@@ -387,7 +388,7 @@ class stock_picking(osv.osv):
                                   'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'product_uom': partial['product_uom'],
-                                  'asset_id': partial['asset_id'],
+                                  'asset_id': asset_id,
                                   'change_reason': partial['change_reason'],
                                   'state': 'assigned',
                                   }
@@ -397,6 +398,18 @@ class stock_picking(osv.osv):
                         done_moves.append(new_move)
                         if out_move_id:
                             new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
+                    
+                    if asset_id:
+                        # UF-993: generate an asset event when validating an IN        
+                        asset_event_obj = self.pool.get('product.asset.event')
+                        asset_event_values = {
+                            'date': move.date, # actual delivery date
+                            'location': pick.company_id.name,
+                            'event_type': 'reception', # always 'reception' for an IN
+                            'asset_id': asset_id,
+                            }
+                        asset_event_obj.create(cr, uid, asset_event_values, context=context)
+                    
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity

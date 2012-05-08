@@ -277,6 +277,7 @@ class product_asset_event(osv.osv):
                        'serial_nb': asset.serial_nb, 
                        'brand': asset.brand,
                        'model': asset.model,
+                       'proj_code': asset.orig_mission_code,
                     })
         
         return result
@@ -507,6 +508,26 @@ class stock_picking(osv.osv):
         assetId = partial_datas.get('move%s'%(move.id), False).get('asset_id')
         if assetId:
             defaults.update({'asset_id': assetId})
+            
+            # UF-993: generate an asset event when validating an OUT        
+            asset_event_obj = self.pool.get('product.asset.event')
+
+            order_type = partial_datas.get('order_type', False)
+            event_type = 'other' # if the OUT is manually created --> set type to 'other'
+            if order_type == 'regular':
+                event_type = 'transfer'
+            elif order_type == 'donation_exp':
+                event_type = 'donation'
+            elif order_type == 'loan':
+                event_type = 'loaning'
+            
+            asset_event_values = {
+                'date': move.date, # date of actual delivery
+                'location': partial_datas.get('location', False),  # location of the receiver
+                'event_type': event_type,
+                'asset_id': assetId,
+                }
+            asset_event_obj.create(cr, uid, asset_event_values, context=context)
         
         return defaults
 
