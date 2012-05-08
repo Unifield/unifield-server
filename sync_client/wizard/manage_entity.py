@@ -26,7 +26,7 @@ from tools.translate import _
 
 class entity_manager(osv.osv_memory):
     _name = "sync.client.entity_manager"
-    _description = "Wizard to manage children instance, validate, invalidate and more"
+    _description = "Wizard invalidate and more"
     
     _columns = {
         'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),
