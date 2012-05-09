@@ -367,15 +367,23 @@ class update_received(osv.osv):
         ir_model_data_obj = self.pool.get('ir.model.data')
         for i in xrange(0, len(fields)):
             if '/id' in fields[i]:
-                xml_id = values[i]
-                if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
-                    fb = fallback.get(fields[i])
-                    if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
-                        message.append('Missing record %s replace by %s' % (fields[i], fb))
-                        values[i] = fb
+                xml_id_raw = values[i]
+                res_val = []
+                xml_ids = xml_id_raw.split(',')
+                for xml_id in xml_ids:
+                    if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
+                        fb = fallback.get(fields[i])
+                        if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
+                            message.append('Missing record %s replace by %s' % (fields[i], fb))
+                            res_val.append(fb)
+                        else:
+                            message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
                     else:
-                        message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
-                        values[i] = False
+                        res_val.append(xml_id)
+                if not res_val:
+                    values[i] = False
+                else:
+                    values[i] = ','.join(res_val)
         return values
                  
         
