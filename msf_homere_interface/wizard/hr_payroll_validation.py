@@ -48,10 +48,7 @@ class hr_payroll_validation(osv.osv_memory):
             # Add third party field
             third_name = 'third%s' % line.get('id')
             account = self.pool.get('account.account').read(cr, uid, line.get('account_id')[0], ['type_for_register'])
-            third_name_required = False
-            if account.get('type_for_register', False) and account.get('type_for_register') == 'payroll':
-                third_name_required = True
-            res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner', 'required': third_name_required}})
+            res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner'}})
         return res
 
     def default_get(self, cr, uid, fields, context=None):
@@ -86,7 +83,10 @@ class hr_payroll_validation(osv.osv_memory):
             for el in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
                 if el.account_id and el.account_id.user_type.code != 'expense':
                     third = 'third' + str(el.id)
-                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4"> <label string="%s"/><field name="%s"/></group>' % (str(el.name), third)))
+                    is_required = False
+                    if el.account_id.type_for_register and el.account_id.type_for_register == 'payroll':
+                        is_required = True
+                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><field name="%s" required="%s"/></group>' % (not is_required, str(el.name), third, is_required)))
             res['arch'] = ET.tostring(form)
         return res
 
