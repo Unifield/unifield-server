@@ -35,41 +35,6 @@ _field2type = {
     'datetime'  : 'str',
 }
 
-
-class forced_values(osv.osv):
-    _name = "sync_server.sync_rule.forced_values"
-
-    _columns = {
-        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
-        'value' : fields.char("Value", size = 1024, required = True),
-        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
-    }
-
-forced_values()
-
-class fallback_values(osv.osv):
-    _name = "sync_server.sync_rule.fallback_values"
-
-    def _get_fallback_value(self, cr, uid, context=None):
-        return []
-        obj = self.pool.get('ir.model')
-        import ipdb
-        ipdb.set_trace()
-        ids = obj.search(cr, uid, sync_common.MODELS_TO_IGNORE)
-        res = obj.read(cr, uid, ids, ['model', 'id'], context)
-        return [(str(r['id']), r['model']) for r in res]
-
-    _columns = {
-        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
-        'value' : fields.reference("Value", selection = _get_fallback_value, size = 128, required = True),
-        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
-    }
-
-fallback_values()
-
-class sync_rule_validation(osv.osv_memory):
-    _name = "sync_server.sync_rule.validation"
-
 class sync_rule(osv.osv):
     """ Synchronization Rule """
 
@@ -511,6 +476,40 @@ class message_rule(osv.osv):
         return {'type': 'ir.actions.act_window_close',}
 
 message_rule()
+
+class forced_values(osv.osv):
+    _name = "sync_server.sync_rule.forced_values"
+
+    _columns = {
+        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
+        'value' : fields.char("Value", size = 1024, required = True),
+        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
+    }
+
+forced_values()
+
+class fallback_values(osv.osv):
+    _name = "sync_server.sync_rule.fallback_values"
+
+    def _get_fallback_value(self, cr, uid, context=None):
+        return []
+        obj = self.pool.get('ir.model')
+        import ipdb
+        ipdb.set_trace()
+        ids = obj.search(cr, uid, sync_common.MODELS_TO_IGNORE)
+        res = obj.read(cr, uid, ids, ['model', 'id'], context)
+        return [(str(r['id']), r['model']) for r in res]
+
+    _columns = {
+        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
+        'value' : fields.reference("Value", selection = _get_fallback_value, size = 128, required = True),
+        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
+    }
+
+fallback_values()
+
+class sync_rule_validation(osv.osv_memory):
+    _name = "sync_server.sync_rule.validation"
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
