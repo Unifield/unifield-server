@@ -64,11 +64,6 @@ class hr_payroll_validation(osv.osv_memory):
         pattern = re.compile('^entry(.*)$')
         for field in fields:
             res[field] = ''
-#            m = re.match(pattern, field)
-#            if m and m.groups() and m.groups()[0]:
-#                data = self.pool.get('hr.payroll.msf').read(cr, uid, int(m.groups()[0]), ['name'])
-#                if data and data.get('name', False):
-#                    res[field] = data.get('name')
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -93,6 +88,28 @@ class hr_payroll_validation(osv.osv_memory):
                     third = 'third' + str(el.id)
                     parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4"> <label string="%s"/><field name="%s"/></group>' % (str(el.name), third)))
             res['arch'] = ET.tostring(form)
+        return res
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Get non-expense lines
+        """
+        if not context:
+            context = {}
+        # Delete non-working fields (third*)
+        pattern = re.compile('^(third(.*))$')
+        to_delete = []
+        for field in vals:
+            m = re.match(pattern, field)
+            if m:
+                to_delete.append(field)
+                # Write changes to lines
+                if m.groups() and m.groups()[0] and m.groups()[1]:
+                    self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], {'partner_id': vals.get(m.groups()[0])})
+        for field in to_delete:
+            del vals[field]
+        # Return default behaviour
+        res = super(hr_payroll_validation, self).create(cr, uid, vals, context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
