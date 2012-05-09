@@ -22,8 +22,8 @@
 	            <field name="view_mode">form</field>
 	            <field name="target">new</field>
 	  	</record>
-	   	<menuitem name="Test" parent="sync_client.sync_menu"
-	            id="sync_test_menu" /> 
+	   	<menuitem name="Test" parent="sync_client.main_menu"
+	            id="sync_test_menu" sequence="1000"/> 
 	            
 	    <menuitem name="Create Records" parent="sync_test_menu"
 	            id="sync_create_menu"

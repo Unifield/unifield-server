@@ -31,12 +31,12 @@ def check_validated(f):
         entity_pool = self.pool.get("sync.server.entity")
         id = entity_pool.get(cr, uid, uuid=uuid)
         if not id:
-            return (False, "Error: entity does not exist in the server database")
+            return (False, "Error: Instance does not exist in the server database")
         entity = entity_pool.browse(cr, uid, id)[0]
         if entity.state == 'updated':
-            return (False, 'This entity has been updated and the update procedure has to be launched at your side')
-        if not (entity.state == 'validated' and entity.user_id.id == uid):
-            return (False, "Error: entity has not been validated yet by the parent")
+            return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
+        if not (entity.state == 'validated' and entity.user_id.id == int(uid)):
+            return (False, "Error: Instance has not been validated yet by the parent")
         return f(self, cr, uid, entity, *args, **kargs)
         
     return check

@@ -226,7 +226,7 @@
 
         <menuitem name="Registration Status" parent="mon_menu"
             id="manage_child_wiz_menu"
-            action="manage_children_wizard_action" sequence="1"/>
+            action="manage_children_wizard_action" sequence="10"/>
 
         <menuitem name="Manual" parent="sync_menu"
             id="sync_wiz_menu"
