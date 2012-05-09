@@ -185,7 +185,13 @@ class ir_model_data_sync(osv.osv):
             return False
         model = ir_record.model
         id = ir_record.res_id
-        ids = self.pool.get(model).search(cr, uid, [('id', '=', id)], context=context)
+        obj = self.pool.get(model)
+        fields_ref = obj.fields_get(cr, uid, context=context)
+        if fields_ref.get('active'):
+            domain = [('id', '=', id), '|', ('active', '=', True), ('active', '=', False)]
+        else:
+            domain = [('id', '=', id)]
+        ids = obj.search(cr, uid, domain, context=context)
         return ids and ids[0] or False
         
     

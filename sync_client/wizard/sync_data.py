@@ -317,7 +317,8 @@ class update_received(osv.osv):
                     cr.execute("RELEASE SAVEPOINT exec_update")
             except Exception, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_update")
-                
+        return True
+        
     def _check_fields(self, cr, uid, model, fields, context=None):
         """
             @return  : the list of unknown fields or unautorized field
