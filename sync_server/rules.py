@@ -69,7 +69,7 @@ class sync_rule(osv.osv):
         'domain':fields.text('Domain', required = False),
         'sequence_number': fields.integer('Sequence', required = True),
         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
-        'included_fields':fields.text('Fields to include', required = True, readonly = True),
+        'included_fields':fields.text('Fields to include', required = False, readonly = True),
         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
         'forced_values':fields.text('Values to force', required = False, readonly = True),
         'fallback_values_sel': fields.one2many('sync_server.sync_rule.fallback_values', 'sync_rule_id', 'Select Fallback Values'),
@@ -335,7 +335,7 @@ class message_rule(osv.osv):
 
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
-        'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True, required = True),
+        'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
         'model_ref': fields.many2one('ir.model', 'Model', required = True),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
