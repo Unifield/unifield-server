@@ -97,6 +97,7 @@
                         				context="{'product_id':product_id_claim_product_line,'prodlot_id':lot_id_claim_product_line,'specific_rules_tree_view':True,'compute_child':False}" />
 	           						<field name="qty_claim_product_line" />
 	           						<field name="uom_id_claim_product_line" />
+	           						<field name="hidden_stock_available_claim_product_line" invisible="False" />
 	           						<field name="stock_move_id_claim_product_line" invisible="True" />
 	           						
 	           						<field name="type_check" invisible="True" />
@@ -105,7 +106,6 @@
 	                				<field name="hidden_kit_claim_product_line" invisible="True" string="Kit" />
 	                				<field name="hidden_asset_claim_product_line" invisible="True" string="Asset" />
 	                				<field name="integrity_status_claim_product_line" />
-	                				<field name="hidden_stock_available_claim_product_line" invisible="True" />
 				            	</tree>
                     		</field>
                     		<group colspan="2" col="2" />

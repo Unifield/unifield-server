@@ -223,6 +223,12 @@ class data_tools(osv.osv):
         # quarantine before scrap
         quarantine_scrap = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_scrap')[1]
         context['common']['quarantine_scrap'] = quarantine_scrap
+        # log
+        log = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_logistic')[1]
+        context['common']['log'] = log
+        # cross docking
+        cross_docking = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        context['common']['cross_docking'] = cross_docking
         
         # kit reason type
         reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]

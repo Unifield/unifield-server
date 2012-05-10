@@ -231,13 +231,14 @@ class return_claim(osv.osv):
         move_obj = self.pool.get('stock.move')
         
         # errors
-        errors = {'missing_src_location': False,
-                  'missing_lot': False,
-                  'wrong_lot_type_need_standard': False,
-                  'wrong_lot_type_need_internal': False,
-                  'no_lot_needed': False,
-                  'not_exist_in_picking': False,
-                  'must_be_greater_than_0': False,
+        errors = {'missing_src_location': False, # source location is missing
+                  'missing_lot': False, # production lot is missing for product with batch management or perishable
+                  'wrong_lot_type_need_standard': False, # the selected production lot type is wrong
+                  'wrong_lot_type_need_internal': False, # the selected production lot type is wrong
+                  'no_lot_needed': False, # this line should not have production lot
+                  'not_exist_in_picking': False, # corresponding product does not exist in the selected origin picking
+                  'must_be_greater_than_0': False, # the selected quantity must be greater than 0.0
+                  'not_available': False, # the selected quantity is not available for selected product and lot from the selected location
                   }
         for obj in self.browse(cr, uid, ids, context=context):
             # products must not be empty
@@ -256,6 +257,10 @@ class return_claim(osv.osv):
                 if item.qty_claim_product_line <= 0.0:
                     errors.update(must_be_greater_than_0=True)
                     item.write({'integrity_status_claim_product_line': 'must_be_greater_than_0'}, context=context)
+                # check availability
+                if item.qty_claim_product_line > item.hidden_stock_available_claim_product_line:
+                    errors.update(not_available=True)
+                    item.write({'integrity_status_claim_product_line': 'not_available'}, context=context)
                 # check the src location
                 if obj.type_return_claim == 'supplier':
                     if not item.src_location_id_claim_product_line:
@@ -791,8 +796,10 @@ class claim_event(osv.osv):
             # event must be draft
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _('Only events in state draft can be processed.'))
-            # integrity check on product lines for corresponding claim
-            integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
+            # integrity check on product lines for corresponding claim - only for first event
+            integrity_check = True
+            if len(obj.return_claim_id_claim_event.event_ids_return_claim) == 1:
+                integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
             if not integrity_check:
                 # return False
                 return False
@@ -1136,6 +1143,9 @@ class claim_product_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        # objects
+        loc_obj = self.pool.get('stock.location')
         # results
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -1154,6 +1164,19 @@ class claim_product_line(osv.osv):
             # hidden_kit_claim_product_line
             kit_check = obj.product_id_claim_product_line.type == 'product' and obj.product_id_claim_product_line.subtype == 'kit'
             result[obj.id].update({'hidden_kit_claim_product_line': kit_check})
+            # product availability
+            data = loc_obj.compute_availability(cr, uid, ids=obj.src_location_id_claim_product_line.id, consider_child_locations=False, product_id=obj.product_id_claim_product_line.id, uom_id=obj.uom_id_claim_product_line.id, context=context)
+            # if we get a production lot, we take the available quantity corresponding to this lot
+            location_id = obj.src_location_id_claim_product_line.id
+            prodlot_id = obj.lot_id_claim_product_line.id
+            # if the product has a production lot and the production lot exist in the specified location, we take corresponding stock
+            available_qty = 0.0
+            if prodlot_id and prodlot_id in data[location_id]:
+                available_qty = data[location_id][prodlot_id]['total']
+            else:
+                # otherwise we take the total quantity for the selected location - no lot for this product
+                available_qty = data[location_id]['total']
+            result[obj.id].update({'hidden_stock_available_claim_product_line': available_qty})
             
         return result
         
@@ -1173,7 +1196,7 @@ class claim_product_line(osv.osv):
                 'type_check': fields.char(string='Type Check', size=1024,), # default value
                 # functions
                 'claim_type_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim Type', type='selection', selection=CLAIM_TYPE, store=False, readonly=True, multi='get_vals_claim'),
-                'hidden_stock_available_claim_product_line': fields.float(string='Available Stock', digits_compute=dp.get_precision('Product UoM'), invisible=True),
+                'hidden_stock_available_claim_product_line': fields.function(_vals_get_claim, method=True, string='Available Stock', type='float', digits_compute=dp.get_precision('Product UoM'), store=False, readonly=True, multi='get_vals_claim'),
                 'claim_state_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim State', type='selection', selection=CLAIM_STATE, store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_perishable_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='Exp', store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_batch_management_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='B.Num', store=False, readonly=True, multi='get_vals_claim'),

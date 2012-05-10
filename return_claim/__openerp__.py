@@ -27,6 +27,7 @@
                 "stock",
                 "product_attributes", # for product menu
                 "delivery_mechanism", # for do_incoming function
+                "kit", # for compute availability with production lots
                 ],
     "author": "MSF",
     "website": "",
@@ -46,7 +47,8 @@
     ],
     'test': ['test/return_claim_data.yml',
 #             'test/return_claim_so_po_in.yml',
-             'test/return_claim.yml'],
+             'test/return_claim_from_scratch.yml',
+             'test/return_claim_wizard_process.yml'],
     'installable': True,
     'active': False,
 }

@@ -71,7 +71,8 @@ class stock_partial_picking(osv.osv_memory):
 
     _defaults = {'register_a_claim_partial_picking': False,
                  'partner_id_partial_picking': _get_default_supplier,
-                 'in_has_partner_id_partial_picking': _get_has_supplier}
+                 'in_has_partner_id_partial_picking': _get_has_supplier,
+                 'replacement_picking_expected_partial_picking': False}
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
