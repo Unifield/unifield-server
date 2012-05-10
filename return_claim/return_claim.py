@@ -859,13 +859,14 @@ class claim_event(osv.osv):
                                            'reason_type_id': context['common']['rt_internal_supply']}) for x in claim.product_line_ids_return_claim]
                 # update the created picking with stock moves
                 pick_obj.write(cr, uid, [new_event_picking_id], {'move_lines': moves_lines}, context=context)
-                # confirm the picking + check availability
+                # confirm the picking
                 picking_tools.confirm(cr, uid, new_event_picking_id, context=context)
-                picking_tools.check_assign(cr, uid, new_event_picking_id, context=context)
                 # update the claim setting the link to created event picking
                 self.write(cr, uid, [obj.id], {'event_picking_id_claim_event': new_event_picking_id}, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
+            # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
+            picking_tools.check_assign(cr, uid, obj.event_picking_id_claim_event.id, context=context)
             # we start a new loop in order to have browse object reloaded, taking into account possible previous modification to claim object
             result = getattr(self, base_func + obj.type_claim_event)(cr, uid, obj, context=context)
             # event is done

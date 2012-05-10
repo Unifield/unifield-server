@@ -213,7 +213,7 @@
     internal_claim_picking_ids = [context['chained_id_claim']]
     for obj in self.browse(cr, uid, internal_claim_picking_ids, context=context):
       # state must be done
-      assert obj.state != 'done', 'state of internal picking to analyze quarantine is not done - %s'%obj.state
+      assert obj.state == 'done', 'state of internal picking to analyze quarantine is not done - %s'%obj.state
       for move in obj.move_lines:
         assert move.location_dest_id.id == context['common']['quarantine_anal'], 'destination of stock move is wrong - %s (%s) - %s'%(move.location_dest_id.id,move.location_dest_id.name,context['common']['quarantine_anal'])
 -
@@ -259,22 +259,10 @@
     event_state = data_event['state']
     assert event_state == 'done', 'the state of the event is not done - %s'%event_state
 -
-  check stock moves
--
-  !python {model: stock.move}: |
-    move_ids = self.search(cr, uid, ['|', ('location_id', '=', context['common']['quarantine_anal']),('location_dest_id', '=', context['common']['quarantine_anal'])], context=context)
-    for move in self.browse(cr, uid, move_ids, context=context):
-      print move.product_qty
-      print move.location_id.name
-      print move.location_dest_id.name
--
   I check that an internal picking has been created to supplier - type is out
 -
   !python {model: stock.picking}: |
     internal_claim_picking_ids = self.search(cr, uid, [('type', '=', 'out'), ('origin', '=', context['po_name_claim'] + ':' + context['so_name_claim'])], context=context)
     for obj in self.browse(cr, uid, internal_claim_picking_ids, context=context):
-      for move in obj.move_lines:
-        print move.location_id.name
-        print move.location_dest_id.name
       # state must be assigned
       assert obj.state == 'assigned', 'state of internal picking to supplier is not assigned - %s'%obj.state
