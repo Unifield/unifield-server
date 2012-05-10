@@ -69,6 +69,8 @@
     context.update({'proc_id_claim': proc_id})
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
+    # change cross docking to False
+    self.write(cr, uid, [po_id], {'cross_docking_ok': False}, context=context)
     po_data = po_obj.read(cr, uid, po_id, ['name'], context=context)
     po_name = po_data['name']
     # save po id into context
@@ -124,6 +126,8 @@
     b_qty = [5.0]
     for obj in self.browse(cr, uid, in_ids, context=context):
       for move in obj.move_lines:
+        # save move id
+        context['in_move_id_claim'] = move.id
         if move.product_id.id == ref("claim_product_A"):
           a_qty.remove(move.product_qty)
         if move.product_id.id == ref("claim_product_B"):
@@ -149,17 +153,23 @@
     assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
     assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
 -
+  I find the chained picking id
+-
+  !python {model: stock.move}: |
+    move_id = self.read(cr, uid, context['in_move_id_claim'], ['move_dest_id'], context=context)['move_dest_id'][0]
+    chained_id = self.read(cr, uid, move_id, ['picking_id'], context=context)['picking_id'][0]
+    # save the chained id
+    context.update({'chained_id_claim': chained_id})
+-
   I open the process chained picking wizard
 -
   !python {model: stock.picking}: |
-    chained_id = max(self.search(cr, uid, [('type', '=', 'internal')], context=context))
-    # save the chained id in the context
-    context.update({'chained_id_claim': chained_id})
+    chained_id = context['chained_id_claim']
     # the register_ok must be True
     chained = self.browse(cr, uid, chained_id, context=context)
     register_ok = chained.chained_from_in_stock_picking
     # assert register is True
-    assert not register_ok, 'register_ok is False, the picking is not chained from incoming shipment to input'
+    assert register_ok, 'register_ok is %s, the picking is not chained from incoming shipment to input'%register_ok
     res = self.action_process(cr, uid, [chained_id], context=context)
     model = res['res_model']
     id = res['res_id']
@@ -171,95 +181,38 @@
   !python {model: stock.partial.picking}: |
     wizard = self.browse(cr, uid, context['wizard']['id'], context=context)
     self.write(cr, uid, context['wizard']['ids'], {'register_a_claim_partial_picking': True,
-                                                   'claim_type_partial_picking': 'quarantine'}, context=context)
+                                                   'claim_type_partial_picking': 'quarantine'}, context=context['wizard']['c'])
+    # We must complete the production lots, because the creation of chained picking does not copy them
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    # complete production lots
+    for obj in wiz_obj.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
+      for mem_move in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
+        if mem_move.product_id.id == ref('claim_product_A'):
+          mem_move.write({'prodlot_id': ref('claim_lot_As')}, context=context)
     # in_has_partner_id_partial_picking must be True
-    assert not wizard.in_has_partner_id_partial_picking, 'the partner check is False in the chained processing wizard'
-    assert not wizard.partner_id_partial_picking, 'the partner is missing in the chained processing wizard'
+    assert wizard.in_has_partner_id_partial_picking, 'the partner check is False in the chained processing wizard'
+    assert wizard.partner_id_partial_picking, 'the partner is missing in the chained processing wizard'
     # process the picking
-    self.do_partial(cr, uid, context['wizard']['ids'], context=context)
+    self.do_partial(cr, uid, context['wizard']['ids'], context=dict(context['wizard']['c'],active_ids=[context['chained_id_claim']]))
 -
-  I create a claim 001 from scratch
+  I find the claim 002 from wizard
 - 
   !python {model: return.claim}: |
     # get data from on change function
-    data_claim = self.on_change_origin(cr, uid, [], context['in_id_claim'], context=context)
-    claim_values = {'partner_id_return_claim': data_claim['value']['partner_id_return_claim'],
-                    'category_return_claim': data_claim['value']['category_return_claim'],
-                    'type_return_claim': data_claim['value']['type_return_claim'],
-                    'picking_id_return_claim': context['in_id_claim'],
-                    'po_so_return_claim': data_claim['value']['po_so_return_claim'],
-                    }
-    
-    claim_id = self.create(cr, uid, claim_values, context=context)
+    claim_id = self.search(cr, uid, [('picking_id_return_claim', '=', context['in_id_claim'])], context=context)[0]
     # save claim id into context
     context.update({'claim_id_claim': claim_id})
--
-  I change the default source location to cros docking, so the products from incoming shipment are taken into account
--
-  !python {model: return.claim}: |
-    self.write(cr, uid, [context['claim_id_claim']], {'default_src_location_id_return_claim': context['common']['cross_docking']}, context=context)
--
-  I load the products from origin
--
-  !python {model: return.claim}: |
-    self.load_products(cr, uid, context['claim_id_claim'], context=context)
--
-  I do an integrity check
--
-  !python {model: return.claim}: |
-    self.check_product_lines_integrity(cr, uid, context['claim_id_claim'], context=context)
--
-  I open the add event wizard
--
-  !python {model: return.claim}: |
-    res = self.add_event(cr, uid, context['claim_id_claim'], context=context)
-    model = res['res_model']
-    id = res['res_id']
-    c = res['context']
-    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
--
-  I select the new event type
--
-  !python {model: add.event}: |
-    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context):
-      obj.write({'event_type': 'quarantine'}, context=context)
--
-  I test on change function of add event wizard
--
-  !python {model: add.event}: |
-    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context):
-      self.on_change_event_type(cr, uid, obj.id, obj.event_type, obj.claim_partner_id.id, obj.claim_type, obj.claim_picking_id.id, context=context)
--
-  I create the new event
--
-  !python {model: add.event}: |
-    self.do_add_event(cr, uid, context['wizard']['ids'], context=context)
--
-  I get the last event in the claim
--
-  !python {model: return.claim}: |
-    last_id = self.get_last_event(cr, uid, context['claim_id_claim'], context=context)[context['claim_id_claim']]
-    # save last event id in context
-    context.update({'event_id_claim': last_id})
--
-  I process the last event
--
-  !python {model: claim.event}: |
-    self.do_process_event(cr, uid, context['event_id_claim'], context=dict(context,active_ids=[context['claim_id_claim']]))
-    # event must be done
-    data_event = self.read(cr, uid, context['event_id_claim'], ['state'], context=context)
-    event_state = data_event['state']
-    assert event_state == 'done', 'the state of the event is not done - %s'%event_state
 -
   I check that an internal picking has been created to quarantine
 -
   !python {model: stock.picking}: |
-    internal_claim_picking_ids = self.search(cr, uid, [('type', '=', 'internal'), ('origin', '=', context['po_name_claim'] + ':' + context['so_name_claim'])], context=context)
+    internal_claim_picking_ids = [context['chained_id_claim']]
     for obj in self.browse(cr, uid, internal_claim_picking_ids, context=context):
       # state must be done
-      assert obj.state == 'done', 'state of internal picking to analyze quarantine is not done - %s'%obj.state
+      assert obj.state != 'done', 'state of internal picking to analyze quarantine is not done - %s'%obj.state
       for move in obj.move_lines:
-        assert move.location_dest_id.id == context['common']['quarantine_anal'], 'destination of stock move is wrong - %s - %s'%(move.location_dest_id.id,context['common']['quarantine_anal'])
+        assert move.location_dest_id.id == context['common']['quarantine_anal'], 'destination of stock move is wrong - %s (%s) - %s'%(move.location_dest_id.id,move.location_dest_id.name,context['common']['quarantine_anal'])
 -
   I create a return event in the same claim, open the add event wizard
 -

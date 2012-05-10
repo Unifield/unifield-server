@@ -796,9 +796,10 @@ class claim_event(osv.osv):
             # event must be draft
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _('Only events in state draft can be processed.'))
-            # integrity check on product lines for corresponding claim - only for first event
+            # integrity check on product lines for corresponding claim - only for first event - only if from scratch - if from wizard, the checks must be done from the wizard logic
+            events = obj.return_claim_id_claim_event.event_ids_return_claim
             integrity_check = True
-            if len(obj.return_claim_id_claim_event.event_ids_return_claim) == 1:
+            if len(events) == 1 and not events[0].from_picking_wizard_claim_event:
                 integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
             if not integrity_check:
                 # return False
