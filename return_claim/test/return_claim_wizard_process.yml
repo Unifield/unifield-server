@@ -165,8 +165,12 @@
 -
   !python {model: stock.picking}: |
     chained_id = context['chained_id_claim']
-    # the register_ok must be True
     chained = self.browse(cr, uid, chained_id, context=context)
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, chained, context=context)
+    # save the picking type
+    context['picking_type_claim'] = picking_type
+    # the register_ok must be True
     register_ok = chained.chained_from_in_stock_picking
     # assert register is True
     assert register_ok, 'register_ok is %s, the picking is not chained from incoming shipment to input'%register_ok
@@ -183,10 +187,9 @@
     self.write(cr, uid, context['wizard']['ids'], {'register_a_claim_partial_picking': True,
                                                    'claim_type_partial_picking': 'quarantine'}, context=context['wizard']['c'])
     # We must complete the production lots, because the creation of chained picking does not copy them
-    # get the weird openERP picking type
-    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    picking_type = context['picking_type_claim']
     # complete production lots
-    for obj in wiz_obj.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
+    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
       for mem_move in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         if mem_move.product_id.id == ref('claim_product_A'):
           mem_move.write({'prodlot_id': ref('claim_lot_As')}, context=context)
@@ -256,10 +259,22 @@
     event_state = data_event['state']
     assert event_state == 'done', 'the state of the event is not done - %s'%event_state
 -
+  check stock moves
+-
+  !python {model: stock.move}: |
+    move_ids = self.search(cr, uid, ['|', ('location_id', '=', context['common']['quarantine_anal']),('location_dest_id', '=', context['common']['quarantine_anal'])], context=context)
+    for move in self.browse(cr, uid, move_ids, context=context):
+      print move.product_qty
+      print move.location_id.name
+      print move.location_dest_id.name
+-
   I check that an internal picking has been created to supplier - type is out
 -
   !python {model: stock.picking}: |
     internal_claim_picking_ids = self.search(cr, uid, [('type', '=', 'out'), ('origin', '=', context['po_name_claim'] + ':' + context['so_name_claim'])], context=context)
     for obj in self.browse(cr, uid, internal_claim_picking_ids, context=context):
+      for move in obj.move_lines:
+        print move.location_id.name
+        print move.location_dest_id.name
       # state must be assigned
       assert obj.state == 'assigned', 'state of internal picking to supplier is not assigned - %s'%obj.state
