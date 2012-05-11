@@ -95,6 +95,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="posz">1</field>
     </record>
     
     <record id="stock_location_unalloc_medical" model="stock.location">
@@ -105,6 +106,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="posz">11</field>
     </record>
 
     <record id="stock_location_logistic" model="stock.location">
@@ -115,6 +117,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="posz">2</field>
     </record>
     
     <record id="stock_location_unalloc_logistic" model="stock.location">
@@ -125,6 +128,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="posz">12</field>
     </record>
 
     <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
@@ -198,7 +202,7 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="quarantine_location">True</field>
-        <field name="posz">2</field>
+        <field name="posz">3</field>
     </record>
 
     <record id="stock_location_quarantine_analyze" model="stock.location">
@@ -295,7 +299,7 @@
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
         <field name="optional_loc" eval="True" />
-        <field name="posz">3</field>
+        <field name="posz">2</field>
     </record>
 
     <record id="stock_location_intermediate_client_view" model="stock.location">
