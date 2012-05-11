@@ -3,7 +3,7 @@
 	<data>
 
                 <!-- Override the stock location tree view -->
-                <record id="stock_location_view_location_tree" model="ir.ui.view">
+<!--                <record id="stock_location_view_location_tree" model="ir.ui.view">
                     <field name="name">stock.location.view.location.tree</field>
                     <field name="model">stock.location</field>
                     <field name="type">tree</field>
@@ -13,7 +13,7 @@
                             <field name="name" />
                         </xpath>
                     </field>
-                </record>
+                </record>-->
 		
 		<record id="stock_location_configuration_wizard" model="ir.ui.view">
 			<field name="name">stock.location.configuration.wizard</field>
