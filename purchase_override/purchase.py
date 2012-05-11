@@ -296,7 +296,16 @@ class purchase_order(osv.osv):
             sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
             move_obj.write(cr, uid, sm_ids, {'state': 'done'}, context=context)
             for move in move_obj.browse(cr, uid, sm_ids, context=context):
-                if move.picking_id: todo3.append(move.picking_id.id)
+                if move.picking_id: 
+                    all_move_closed = True
+                    # Check if the picking should be updated
+                    if move.picking_id.subtype == 'picking':
+                        for m in move.picking_id.move_lines:
+                            if m.id not in sm_ids and m.state != 'done':
+                                all_move_closed = False
+                    # If all stock moves of the picking is done, trigger the workflow
+                    if all_move_closed:
+                        todo3.append(move.picking_id.id)
                 
         if todo3:
             for pick_id in todo3:
