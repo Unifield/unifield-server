@@ -1921,7 +1921,10 @@ class stock_picking(osv.osv):
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
             # if corresponding sale order, date and date_expected are updated to rts + shipment lt
             for move in obj.move_lines:
-                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,}
+                vals = {}
+                # If the move comes from a DPO, don't change the destination location
+                if not move.dpo_id:
+                    vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id,})
                 if obj.sale_id:
                     # compute date
                     shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
