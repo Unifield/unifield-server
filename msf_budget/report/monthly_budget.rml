@@ -148,7 +148,7 @@
     <para style="P10">Budget code/name: [[ o.code ]]/[[ o.name ]]</para>
     <para style="P10">Fiscal year: [[ (o.fiscalyear_id and o.fiscalyear_id.code) or '' ]]</para>
     <para style="P10">Cost Center: [[ (o.cost_center_id and o.cost_center_id.code) or '' ]]</para>
-    <para style="P10">Decision moment: [[ o.decision_moment ]]</para>
+    <para style="P10">Decision moment: [[ (o.decision_moment_id and o.decision_moment_id.name) or '' ]]</para>
     <para style="P10">Version: [[ o.version ]]</para>
     <para style="P5">
       <font color="white"> </font>

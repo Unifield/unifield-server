@@ -76,10 +76,12 @@ class msf_budget_summary(osv.osv_memory):
                 for child_cc in budget.cost_center_id.child_ids:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                             AND cost_center_id = %s \
+                                                            AND decision_moment_id = %s \
                                                             AND state != 'draft' \
                                                             ORDER BY version DESC LIMIT 1",
                                                            (budget.fiscalyear_id.id,
-                                                            child_cc.id))
+                                                            child_cc.id,
+                                                            budget.decision_moment_id.id))
                     if cr.rowcount:
                         child_budget_id = cr.fetchall()[0][0]
                         child_line_id = self.create(cr, uid, {'budget_id': child_budget_id,
