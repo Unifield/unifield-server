@@ -380,7 +380,7 @@ stock moves which are already processed : '''
                     
             if todo:
                 todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
-            
+        
             if todo2:
                 sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
                 self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
@@ -392,8 +392,17 @@ stock moves which are already processed : '''
                                                          'location_dest_id': move.location_id.id, 
                                                          'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                         wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
-                        if move.picking_id: todo3.append(move.picking_id.id)             
-    
+                        if move.picking_id: 
+                            all_move_closed = True
+                            # Check if the picking should be updated
+                            if move.picking_id.subtype == 'picking':
+                                for m in move.picking_id.move_lines:
+                                    if m.id not in sm_ids and m.state != 'done':
+                                        all_move_closed = False
+                            # If all stock moves of the picking is done, trigger the workflow
+                            if all_move_closed:
+                                todo3.append(move.picking_id.id)
+                
             if todo3:
                 for pick_id in todo3:
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
