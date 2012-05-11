@@ -65,7 +65,7 @@
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">in</field>
-        <field name="posz">2</field>
+        <field name="posz">1</field>
     </record>
     
     <record id="stock_location_view_all_stock" model="stock.location">
@@ -73,7 +73,7 @@
     	<field name="location_category">other</field>
     	<field name="usage">view</field>
     	<field name="location_id" ref="stock.stock_location_company" />
-    	<field name="posz">1</field>
+    	<field name="posz">2</field>
     </record>
 
     <record id="stock.stock_location_stock" model="stock.location">

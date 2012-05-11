@@ -24,7 +24,7 @@
     'category': 'Stock',
     'author': 'MSF, TeMPO Consulting, Smile',
     'developer': 'Matthieu Choplin',
-    'depends': ['purchase_msf','delivery_mechanism', 'stock'],
+    'depends': ['purchase_msf','delivery_mechanism', 'stock','msf_config_locations'],
     'description': '''
         Cross Docking Management.
         We enable the user to change the stock location (on input and output) to "cross docking":
