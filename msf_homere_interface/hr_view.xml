@@ -22,7 +22,7 @@
                         <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local')]}"/>
                         <newline/>
                         <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local')]}"/>
-                        <field name="parent_id" attrs="{'readonly': [('employee_type', '=', 'local')]}"/>
+                        <field name="parent_id"/>
                     </group>
                     <group colspan="2" col="1">
                         <field name="photo" widget='image' nolabel="1" attrs="{'readonly': [('employee_type', '=', 'local')]}"/>
