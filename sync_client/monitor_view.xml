@@ -9,7 +9,7 @@
     	<record model="ir.sequence" id="sync_client_order_sequence">
 	        <field name="name">Sync Monitor Sequence</field>
 	        <field name="code">sync.monitor</field>
-	        <field name="prefix">SYNC_</field>
+	        <field name="prefix"></field>
 	        <field name="padding">1</field>
 	    </record>
     	

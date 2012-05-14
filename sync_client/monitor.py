@@ -31,7 +31,7 @@ class sync_monitor(osv.osv):
 
     _columns = {
         #TODO: auto increment
-        'sequence' : fields.char("Sequence", size=64, readonly=True, required=True),
+        'sequence' : fields.integer("Sequence",  readonly=True, required=True),
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),
         'data_pull' : _field_status("Data Pull", readonly=True),
@@ -43,7 +43,7 @@ class sync_monitor(osv.osv):
     }
 
     def _get_default_sequence(self, cr, uid, context=None):
-        return self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor')
+        return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
         
     _defaults = {
         'start' : lambda *a : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
