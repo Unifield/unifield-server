@@ -221,11 +221,13 @@ class account_commitment(osv.osv):
 
     def get_engagement_lines(self, cr, uid, ids, context=None):
         """
-        Return all engagement lines from given commitments
+        Return all engagement lines from given commitments (in context)
         """
         # Some verifications
         if not context:
             context = {}
+        if context.get('active_ids', False):
+            ids = context.get('active_ids')
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
@@ -236,9 +238,9 @@ class account_commitment(osv.osv):
                 if line.analytic_lines:
                     valid_ids.append([x.id for x in line.analytic_lines])
         valid_ids = flatten(valid_ids)
-        domain = [('id', 'in', valid_ids)]
+        domain = [('id', 'in', valid_ids), ('account_id.category', '=', 'FUNDING')]
         # Permit to only display engagement lines
-        context.update({'search_default_engagements': 1})
+        context.update({'search_default_engagements': 1, 'display_fp': True})
         return {
             'name': 'Analytic Entries',
             'type': 'ir.actions.act_window',

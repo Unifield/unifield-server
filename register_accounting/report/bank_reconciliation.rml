@@ -219,7 +219,7 @@
     <para style="P27">
       <font color="white"> </font>
     </para>
-    <para style="P7">State: [[ o.state ]]</para>
+    <para style="P7">State: [[ get_selection(o.state) ]]</para>
     <para style="P7">Report date: [[ time.strftime('%d/%m/%Y %H:%M') ]]</para>
     <para style="P6">
       <font color="white"> </font>

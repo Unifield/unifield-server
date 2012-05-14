@@ -295,12 +295,13 @@ class tender(osv.osv):
                     new_info_id = info_obj.create(cr, uid, values, context=context)
                     # price lists creation - 'pricelist.partnerinfo
                     values = {'suppinfo_id': new_info_id,
-                              'min_quantity': line.qty,
+                              'min_quantity': 1.00,
                               'price': line.price_unit,
                               'uom_id': line.product_uom.id,
                               'currency_id': line.purchase_order_line_id.currency_id.id,
                               'valid_till': line.purchase_order_id.valid_till,
                               'purchase_order_line_id': line.purchase_order_line_id.id,
+                              'comment': 'RfQ original quantity for price : %s' % line.qty,
                               }
                     new_pricelist_id = pricelist_info_obj.create(cr, uid, values, context=context)
             
@@ -789,6 +790,7 @@ class pricelist_partnerinfo(osv.osv):
     _inherit = 'pricelist.partnerinfo'
     _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
                 'valid_till': fields.date(string="Valid Till",),
+                'comment': fields.char(size=128, string='Comment'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),

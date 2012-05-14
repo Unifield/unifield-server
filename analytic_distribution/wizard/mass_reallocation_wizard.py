@@ -54,7 +54,27 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'nb_error': fields.function(_get_total, string="Lines in error", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_process': fields.function(_get_total, string="Allocatable lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'display_fp': fields.boolean('Display FP'),
     }
+
+    _default = {
+        'display_fp': lambda *a: False,
+    }
+
+    def default_get(self, cr, uid, fields=None, context=None):
+        """
+        Fetch display_fp in context
+        """
+        if fields is None:
+            fields = []
+        # Some verifications
+        if not context:
+            context = {}
+        # Default behaviour
+        res = super(mass_reallocation_verification_wizard, self).default_get(cr, uid, fields, context=context)
+        # Populate line_ids field
+        res['display_fp'] = context.get('display_fp', False)
+        return res
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -96,10 +116,12 @@ class mass_reallocation_wizard(osv.osv_memory):
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
+        'display_fp': fields.boolean('Display FP'),
     }
 
     _default = {
         'state': lambda *a: 'normal',
+        'display_fp': lambda *a: False,
     }
 
     def default_get(self, cr, uid, fields=None, context=None):
@@ -119,6 +141,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
+        res['display_fp'] = context.get('display_fp', False)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -134,6 +157,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         error_ids = []
         non_supported_ids = []
         process_ids = []
+        account_id = False
         # Browse given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             to_process = [x.id for x in wiz.line_ids] or []

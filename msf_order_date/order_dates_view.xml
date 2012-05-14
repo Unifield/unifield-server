@@ -100,7 +100,7 @@
                     </xpath>
                     
                     <xpath expr="/form/group/field[@name='date_order']" position="replace">
-                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        <field name="date_order"
                         	on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
                     </xpath>
                                        

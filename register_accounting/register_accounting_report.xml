@@ -28,6 +28,14 @@
         auto="True"
         menu="True"/>
         
+        <report id="open_advances"
+        string="Open Advances"
+        model="account.bank.statement"
+        name="open.advances"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+        
         <report id="liquidity_position"
         string="Liquidity Position"
         model="account.bank.statement"

@@ -127,6 +127,7 @@
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="account.invoice_tree"/>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <xpath expr="/tree/button[@name='invoice_open']" position="replace">
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
@@ -139,10 +140,14 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="priority">50</field>
             <field name="arch" type="xml">
-                <button name='invoice_open' position="replace">
-                    <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
-                </button>
+                <data>
+                    <button name="action_cancel_draft" position="replace"/>
+                    <button name='invoice_open' position="replace">
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                    </button>
+                </data>
             </field>
         </record>
             
@@ -151,8 +156,10 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="priority">55</field>
             <field name="arch" type="xml">
                 <data>
+                    <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                     </button>

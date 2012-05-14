@@ -100,6 +100,10 @@ class stock_partial_picking(osv.osv_memory):
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('You want to receive the IN on Cross Docking but "Cross docking" was not checked.')}
+            elif pick.purchase_id and dest_type == 'to_cross_docking' and pick.purchase_id.categ in ['service', 'transport'] :
+                    # display warning
+                    result['warning'] = {'title': _('Error'),
+                                         'message': _('The option "Cross docking" is not convenient for a purchase order which the category is "Service" or "Transport".')}
             return result
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

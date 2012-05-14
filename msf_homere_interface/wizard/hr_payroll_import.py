@@ -146,6 +146,9 @@ class hr_payroll_import(osv.osv_memory):
             name = description and description[0] and ustr(description[0]) or ''
         if is_payroll_rounding:
             name = 'Payroll rounding'
+        if not employee_id:
+            if second_description and second_description[0]:
+                ref = ustr(second_description[0])
         # Check if currency exists
         if not currency and not currency[0]:
             raise osv.except_osv(_('Warning'), _('One currency is missing!'))

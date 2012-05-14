@@ -63,6 +63,43 @@ class account_move_line(osv.osv):
         """
         return super(account_move_line, self)._get_move_lines(cr, uid, ids, context=context)
 
+    def _get_reference(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Give reference field content from account_move_line first. Then search move_id.reference field, otherwise display ''.
+        """
+        res = {}
+        for line in self.browse(cr, uid, ids):
+            res[line.id] = ''
+            if line.reference:
+                res[line.id] = line.reference
+                continue
+            elif line.move_id and line.move_id.ref:
+                res[line.id] = line.move_id.ref
+                continue
+        return res
+
+    def _set_fake_reference(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+        """
+        Just used to not break default OpenERP behaviour
+        """
+        if name and value:
+            sql = "UPDATE %s SET %s = %s WHERE id = %s" % (self._table, 'ref', value, id)
+            cr.execute(sql)
+        return True
+
+    def _search_reference(self, cr, uid, obj, name, args, context):
+        """
+        Account MCDB (Selector) seems to be the only one that search on this field.
+        It use 'ilike' operator
+        """
+        if not context:
+            context = {}
+        if not args:
+            return []
+        if args[0][2]:
+            return [('move_id.reference', '=', args[0][2])]
+        return []
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
@@ -82,6 +119,8 @@ class account_move_line(osv.osv):
                 }),
         'is_write_off': fields.boolean('Is a write-off line?', readonly=True, 
             help="This inform that no correction is possible for a line that come from a write-off!"),
+        'reference': fields.char(string='Reference', size=64),
+        'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True),
     }
 
     _defaults = {

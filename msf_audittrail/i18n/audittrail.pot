@@ -79,7 +79,7 @@ msgstr ""
 
 #. module: audittrail
 #: model:ir.actions.act_window,name:audittrail.action_audittrail_view_log
-msgid "View log"
+msgid "Track changes"
 msgstr ""
 
 #. module: audittrail

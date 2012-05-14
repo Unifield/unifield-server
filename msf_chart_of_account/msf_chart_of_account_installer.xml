@@ -22,6 +22,7 @@
                 <group string="res_config_contents" position="replace">
                   <field name="create"/>
                   <newline/>
+                  <field name="import_invoice_default_account" />
                 </group>
               </data>
             </field>

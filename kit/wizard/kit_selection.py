@@ -25,6 +25,7 @@ import decimal_precision as dp
 
 import netsvc
 
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 class kit_selection(osv.osv_memory):
     '''
@@ -34,7 +35,12 @@ class kit_selection(osv.osv_memory):
     _columns = {'product_id': fields.many2one('product.product', string='Kit Product', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Theoretical Kit'),
                 'order_line_id_kit_selection': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+                # one2many
                 'product_ids_kit_selection': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_line', string='Replacement Products'),
+                # related fields
+                'partner_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'partner_id', string='Partner', type='many2one', relation='res.partner', readonly=True),
+                'pricelist_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'pricelist_id', string='PriceList', type='many2one', relation='product.pricelist', readonly=True),
+                'warehouse_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'warehouse_id', string='Warehouse', type='many2one', relation='stock.warehouse', readonly=True),
                 }
     
     _defaults = {'product_id': lambda s, cr, uid, c: c.get('product_id', False),
@@ -47,10 +53,14 @@ class kit_selection(osv.osv_memory):
         '''
         # objects
         line_obj = self.pool.get('kit.selection.line')
+        # purchase order line id
+        pol_ids = context['active_ids']
         
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.kit_id:
                 raise osv.except_osv(_('Warning !'), _('A theoretical version should be selected.'))
+            if obj.kit_id.state != 'completed':
+                raise osv.except_osv(_('Warning !'), _('The theoretical version must be completed.'))
             for item in obj.kit_id.composition_item_ids:
                 values = {'order_line_id_kit_selection_line': obj.order_line_id_kit_selection.id,
                           'wizard_id_kit_selection_line': obj.id,
@@ -58,8 +68,41 @@ class kit_selection(osv.osv_memory):
                           'qty_kit_selection_line': item.item_qty,
                           'uom_id_kit_selection_line': item.item_uom_id.id,
                           }
-                line_obj.create(cr, uid, values, context=context)
-        return True
+                line_obj.create(cr, uid, values, context=dict(context, pol_ids=context['active_ids']))
+        return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
+    
+    def validate_lines(self, cr, uid, ids, context=None):
+        '''
+        validate the lines
+        
+        - qty > 0.0 (must_be_greater_than_0)
+        - unit price > 0.0
+        
+        return True or False
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        # errors
+        errors = {'must_be_greater_than_0': False,
+                  'price_must_be_greater_than_0': False,
+                  }
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in obj.product_ids_kit_selection:
+                # reset the integrity status
+                item.write({'integrity_status': 'empty'}, context=context)
+                # qty
+                if item.qty_kit_selection_line <= 0.0:
+                    # qty is needed
+                    errors.update(must_be_greater_than_0=True)
+                    item.write({'integrity_status': 'must_be_greater_than_0'}, context=context)
+                # unit price
+                if item.price_unit_kit_selection_line <= 0.0:
+                    # unit price is needed
+                    errors.update(price_must_be_greater_than_0=True)
+                    item.write({'integrity_status': 'price_must_be_greater_than_0'}, context=context)
+        # check the encountered errors
+        return all([not x for x in errors.values()])
 
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
@@ -72,39 +115,41 @@ class kit_selection(osv.osv_memory):
         # objects
         pol_obj = self.pool.get('purchase.order.line')
         # id of corresponding purchase order line
+        pol_ids = context['active_ids']
         pol_id = context['active_ids'][0]
         pol = pol_obj.browse(cr, uid, pol_id, context=context)
+        # integrity constraint
+        integrity_check = self.validate_lines(cr, uid, ids, context=context)
+        if not integrity_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
+        # process
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.product_ids_kit_selection):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items must be selected.'))
             # for each item from the product_ids_kit_selection
             for item_v in obj.product_ids_kit_selection:
+                # price unit is mandatory
+                if item_v.price_unit_kit_selection_line <= 0.0:
+                    raise osv.except_osv(_('Warning !'), _('Unit Price must be specified for each line.'))
                 # selected product_id
                 product_id = item_v.product_id_kit_selection_line.id
                 # selected qty
                 qty = item_v.qty_kit_selection_line
+                if qty <= 0.0:
+                    raise osv.except_osv(_('Warning !'), _('Quantity must be greater than 0.0.'))
                 # selected uom
                 uom_id = item_v.uom_id_kit_selection_line.id
-                # pricelist from purchase order
-                pricelist_id = pol.order_id.pricelist_id.id
-                # partner_id from purchase order
-                partner_id = pol.order_id.partner_id.id
-                # date_order from purchase order
-                date_order = pol.order_id.date_order
-                # fiscal_position from purchase order
-                fiscal_position_id = pol.order_id.fiscal_position.id
-                # date_planned from purchase order line
-                date_planned = pol.date_planned
-                # gather default values
-                data = pol_obj.product_id_change(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
-                                                 partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
-                                                 name=False, price_unit=0.0, notes=False)
-                # copy original purchase order line # deprecated
-                data['value'].update({'product_id': product_id, 'product_qty': pol.product_qty*qty})
+                # price unit
+                price_unit = item_v.price_unit_kit_selection_line
+                # call purchase order line on change function
+                data = self.pool.get('kit.selection.line')._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit,
+                                                                               type='product_id_change',
+                                                                               context=dict(context, pol_ids=context['active_ids']))
                 # create a new pol
                 p_values = {'product_id': product_id,
                             'product_qty': pol.product_qty*qty,
-                            'price_unit': data['value']['price_unit'],
+                            'price_unit': item_v.price_unit_kit_selection_line,
                             'product_uom': uom_id,
                             'default_code': data['value']['default_code'],
                             'name': data['value']['name'],
@@ -135,26 +180,144 @@ class kit_selection_line(osv.osv_memory):
     '''
     _name = 'kit.selection.line'
     
-    def on_change_product_id(self, cr, uid, ids, product_id, context=None):
+    def create(self, cr, uid, vals, context=None):
         '''
-        on change
+        default price unit from pol on_change function
         '''
         # objects
+        pol_obj = self.pool.get('purchase.order.line')
+        # id of corresponding purchase order line
+        pol_id = context.get('active_ids', False) and context['active_ids'][0]
+        if pol_id and ('price_unit_kit_selection_line' not in vals or vals.get('price_unit_kit_selection_line') == 0.0):
+            pol = pol_obj.browse(cr, uid, pol_id, context=context)
+            # selected product_id
+            product_id = vals.get('product_id_kit_selection_line', False)
+            # selected qty
+            qty = vals.get('qty_kit_selection_line', 0.0)
+            # selected uom
+            uom_id = vals.get('uom_id_kit_selection_line', False)
+            # price unit
+            price_unit = vals.get('price_unit_kit_selection_line', 0.0)
+            # gather default values
+            data = self._call_pol_on_change(cr, uid, context['active_ids'],
+                                            product_id, qty, uom_id, price_unit, type='product_id_on_change',
+                                            context=dict(context, pol_ids=context['active_ids']))
+            # update price_unit value
+            vals.update({'price_unit_kit_selection_line': data['value']['price_unit']})
+        return super(kit_selection_line, self).create(cr, uid, vals, context=context)
+    
+    def _call_pol_on_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, type, context=None):
+        '''
+        core function from purchase order line
+        
+        def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        # quick integrity check
+        assert context, 'No context defined, problem on method call'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
-        # default value
-        result = {'value': {'qty_kit_selection_line': 0.0, 'uom_id_kit_selection_line': False}}
+        # id of corresponding purchase order line
+        pol_id = context['pol_ids'][0]
+        pol = pol_obj.browse(cr, uid, pol_id, context=context)
+        # pricelist from purchase order
+        pricelist_id = pol.order_id.pricelist_id.id
+        # partner_id from purchase order
+        partner_id = pol.order_id.partner_id.id
+        # date_order from purchase order
+        date_order = pol.order_id.date_order
+        # fiscal_position from purchase order
+        fiscal_position_id = pol.order_id.fiscal_position.id
+        # date_planned from purchase order line
+        date_planned = pol.date_planned
+        # name
+        name = False
         if product_id:
-            uom_id = prod_obj.browse(cr, uid, product_id, context=context).uom_id.id
-            result['value'].update({'uom_id_kit_selection_line': uom_id})
+            name = prod_obj.read(cr, uid, product_id, ['name'], context=context)['name']
+        # notes
+        notes = pol.notes
+        # state
+        state = pol.order_id.state
+        # gather default values
+        if type in ['product_id_change', 'product_uom_change']:
+            data = getattr(pol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty, uom=uom_id,
+                                          partner_id=partner_id, date_order=date_order, fiscal_position=fiscal_position_id, date_planned=date_planned,
+                                          name=name, price_unit=price_unit, notes=notes)
+        elif type == 'product_id_on_change':
+            data = getattr(pol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id,
+                                          qty=qty, uom=uom_id, partner_id=partner_id, date_order=date_order,
+                                          fiscal_position=fiscal_position_id, date_planned=date_planned, name=name,
+                                          price_unit=price_unit, notes=notes, state=state, old_price_unit=False)
+        return data
+    
+    def on_product_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
+        '''
+        core function from purchase order line
+        
+        def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        # quick integrity check
+        assert context, 'No context defined, problem on method call'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # result
+        result = {'value': {'qty_kit_selection_line': 0.0,
+                            'uom_id_kit_selection_line': False,
+                            'price_unit_kit_selection_line': 0.0}}
+        # gather default values
+#        data = self._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_change', context=context)
+        data = self._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_on_change', context=context)
+        # update result price_unit and default uom
+        result['value'].update({'price_unit_kit_selection_line': 'price_unit' in data['value'] and data['value']['price_unit'] or 0.0,
+                                'qty_kit_selection_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0,
+                                'uom_id_kit_selection_line': 'product_uom' in data['value'] and data['value']['product_uom'] or False})
+        # return result
         return result
     
-    _columns = {'order_line_id_kit_selection_line': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+    def on_uom_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
+        '''
+        core function from purchase order line
+        
+        def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        # quick integrity check
+        assert context, 'No context defined, problem on method call'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # result
+        result = {'value': {'qty_kit_selection_line': 0.0,
+                            'price_unit_kit_selection_line': 0.0}}
+        # gather default values
+        data = self._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_uom_change', context=context)
+        # update result price_unit - qty
+        result['value'].update({'price_unit_kit_selection_line': 'price_unit' in data['value'] and data['value']['price_unit'] or 0.0,
+                                'qty_kit_selection_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0})
+        # return result
+        return result
+    
+    _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+                'order_line_id_kit_selection_line': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
                 'wizard_id_kit_selection_line': fields.many2one('kit.selection', string='Kit Selection wizard'),
                 # data
                 'product_id_kit_selection_line': fields.many2one('product.product', string='Product', required=True),
                 'qty_kit_selection_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_kit_selection_line': fields.many2one('product.uom', string='UoM', required=True),
+                'price_unit_kit_selection_line': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price')),
                 }
+    
+    _defaults = {'integrity_status': 'empty',
+                 }
     
 kit_selection_line()
 
