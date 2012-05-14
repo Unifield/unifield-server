@@ -9,17 +9,17 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="HQ Entries List" editable="top" hide_delete_button="1" hide_new_button="1" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')">
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="partner_id"/>
                     <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
                     <field name="cost_center_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                     <field name="free_1_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]"/>
                     <field name="free_2_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]"/>
-                    <field name="partner_id"/>
-                    <field name="period_id"/>
-                    <field name="date"/>
-                    <field name="amount"/>
-                    <field name="currency_id"/>
-                    <field name="user_validated"/>
+                    <field name="user_validated" invisible="1"/>
                     <field name="analytic_state" invisible="1"/>
                 </tree>
             </field>
