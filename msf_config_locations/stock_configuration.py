@@ -214,6 +214,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
         
         if return_view_id:
             return {'type': 'ir.actions.act_window',
+                    'name': 'Locations Structure',
                     'res_model': 'stock.location',
                     'domain': [('location_id','=',False)],
                     'view_type': 'tree',

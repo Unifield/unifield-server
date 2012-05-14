@@ -64,7 +64,7 @@
         <field name="chained_location_type">fixed</field>
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
-        <field name="chained_picking_type">in</field>
+        <field name="chained_picking_type">internal</field>
         <field name="posz">2</field>
     </record>
     
