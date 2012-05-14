@@ -40,8 +40,15 @@ class message(osv.osv):
         'arguments': fields.text('Arguments of the method', required = True), 
         'destination': fields.many2one('sync.server.entity', string="Destination Instance"),
         'source': fields.many2one('sync.server.entity', string="Source Instance"), 
+        'sequence': fields.integer('Sequence', required = True),
     }
     
+    _order = 'sequence, create_date desc'
+
+    _defaults = {
+        'sequence' : lambda self, cr, uid, *a: int(self.pool.get('ir.sequence').get(cr, uid, 'sync.message')),
+    }
+
     def unfold_package(self, cr, uid, entity, package, context=None):
         for data in package:
             
@@ -57,6 +64,7 @@ class message(osv.osv):
                 'identifier': data['id'],
                 'remote_call': data['call'],
                 'arguments': data['args'],
+                'sequence': data['sequence'],
                 'destination': destination,
                 'source': entity.id,
             }, context=context)
@@ -90,6 +98,15 @@ class message(osv.osv):
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
+        return True
+        
+    def recovery(self, cr, uid, entity, start_seq, context=None):
+        ids = self.search(cr, uid, [('sequence', '>=', start_seq), ('destination', '=', entity.id)], context=context)
+        if ids:
+            self.write(cr, uid, ids, {'sent' : False}, context=context)
+            print "These ids will be recovered: "+", ".join(ids)
+        else:
+            print "No ids to be recover! domain="+str([('sequence', '>=', start_seq), ('destination', '=', entity.id)])
         return True
         
 message()

@@ -178,8 +178,9 @@
 	                    </group>
 	                </group>
 	                <separator string="Recover After Backup" colspan="4"/>
-	                <group colspan="4" col="2" >
+	                <group colspan="4" col="1" >
                     	<button type="object" string="Pull all updates" name="pull_all_data" states="init"/>
+                    	<button type="object" string="Recover Messages" name="recover_message" states="init"/>
                     </group>
                     <group colspan="4" col="3">
                     	<label string="" />

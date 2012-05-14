@@ -47,7 +47,7 @@ class sync_manager(osv.osv_memory):
                                     ('update_send','Sending Data'), 
                                     ('update_validate','Validating Data'), 
                                     ('update_pull','Receiving Data'),
-                                    ('corrupted', 'Corrupted')], 'State', required=True),
+                                    ('corrupted', 'Corrupted')], 'State', required=True, readonly=True),
     }
     
     _defaults = {
@@ -89,6 +89,12 @@ class sync_manager(osv.osv_memory):
         
     def pull_message(self, cr, uid, ids, context=None):
         res = self.pool.get('sync.client.entity').pull_message(cr, uid, context=context)
+        if not res:
+            raise osv.except_osv(_('Error !'), 'You cannot perform this action now.')
+        return {'type': 'ir.actions.act_window_close'}
+
+    def recover_message(self, cr, uid, ids, context=None):
+        res = self.pool.get('sync.client.entity').recover_message(cr, uid, context=context)
         if not res:
             raise osv.except_osv(_('Error !'), 'You cannot perform this action now.')
         return {'type': 'ir.actions.act_window_close'}

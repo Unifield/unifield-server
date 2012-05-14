@@ -199,6 +199,16 @@
             <field name="context">{}</field>
         </record>
 
+        <record model="ir.sequence.type" id="sync_server_message_order_type">
+            <field name="name">Sync Monitor Sequence</field>
+            <field name="code">sync.message</field>
+        </record>
+
+        <record model="ir.sequence" id="sync_server_message_order_sequence">
+            <field name="name">Sync Monitor Sequence</field>
+            <field name="code">sync.message</field>
+        </record>
+
 
 
         <menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration" sequence="0"/>

@@ -163,6 +163,7 @@ class message_received(osv.osv):
 
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
+        'sequence': fields.integer('Sequence', readonly = True),
         'remote_call':fields.text('Method to call', required = True),
         'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
@@ -183,6 +184,7 @@ class message_received(osv.osv):
                 'identifier' : data['id'],
                 'remote_call' : data['call'],
                 'arguments' : data['args'],
+                'sequence' : data['sequence'],
                 'source' : data['source'] }, context=context)
 
     def get_model_and_method(self, remote_call):
