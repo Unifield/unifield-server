@@ -83,7 +83,7 @@
         <field name="location_id" ref="stock_location_view_all_stock" />
         <field name="chained_location_type">nomenclature</field>
         <field name="chained_auto_packing">transparent</field>
-        <field name="chained_picking_type">in</field>
+        <field name="chained_picking_type">internal</field>
         <field name="posz">1</field>
     </record>
 
