@@ -43,7 +43,6 @@
         "wizard/split_order_line_view.xml",
         "report/purchase_report_view.xml",
         "security/ir.model.access.csv",
-        "board_purchase_view.xml",
     ],
     "demo_xml": [
     ],
