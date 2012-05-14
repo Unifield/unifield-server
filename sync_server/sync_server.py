@@ -274,6 +274,17 @@ class entity(osv.osv):
                 return (False, "Registration failed!")
     
     @check_validated
+    def get_entity(self, cr, uid, entity, context=None):
+        return (True, {
+            'name': entity.name,
+            'identifier': entity.identifier,
+            'parent': entity.parent_id.name,
+            'email': entity.email,
+            'entity_status': entity.state,
+            'group': ', '.join([group.name for group in entity.group_ids]),
+        })
+
+    @check_validated
     def get_children(self, cr, uid, entity, context=None):
         res = []
         for child in self.browse(cr, uid, self._get_all_children(cr, uid, entity.id), context=context):

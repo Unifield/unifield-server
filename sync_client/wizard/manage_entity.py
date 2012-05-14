@@ -30,19 +30,29 @@ class entity_manager(osv.osv_memory):
     
     _columns = {
         'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),
-        'state' : fields.selection([('data_needed','Need Data'),('ready','Ready')], 'State', required=True)
+        'state' : fields.selection([('data_needed','Need Data'),('ready','Ready')], 'State', required=True),
+        'entity_status' : fields.char("Instance Status", size=64, readonly=True),
+        'group' : fields.char("Groups", size=2048, readonly=True),
+        'email' : fields.char("Contact E-mail", size=64, readonly=True),
+        'parent' : fields.char("Parent", size=64, readonly=True),
+        'identifier' : fields.char("Identifier", size=64, readonly=True),
+        'name' : fields.char("Identifier", size=64, readonly=True),
     }
     
     def retreive(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
-        res = proxy.get_children(uuid, context)
-        if res and res[0]:
-            create_and_link = [(0,0, data) for data in res[1]]
-            self.write(cr, uid, ids, {'entity_ids' : create_and_link, 'state' : 'ready' }, context=context)
-        elif res and not res[0]:
+        try:
+            res = proxy.get_entity(uuid, context)
+            if res and not res[0]: raise StandardError, res[1]
+            my_infos = res[1]
+            res = proxy.get_children(uuid, context)
+            if res and not res[0]: raise StandardError, res[1]
+            my_infos.update({'entity_ids' : [(0,0, data) for data in res[1]], 'state' : 'ready' })
+        except StandardError, e:
             raise osv.except_osv(_('Error !'), res[1])
-        
+        else:
+            self.write(cr, uid, ids, my_infos, context=context)
         return True 
         
     _defaults = { 

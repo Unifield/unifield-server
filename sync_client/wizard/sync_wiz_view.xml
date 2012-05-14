@@ -55,13 +55,19 @@
             <field name="model">sync.client.entity_manager</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Manage children entities" col="4" >
-                    <field name="state" invisible="1" />
-                    <group states="data_needed" width="700" height="200" col="2" colspan="4">
-                        <button type="object" string="Retreive children entity data from server" name="retreive" icon="gtk-ok"/>
+                <form string="Registration Status" col="6" >
+                    <field name="state" invisible="1"/>
+                    <group states="data_needed" width="700" height="200" col="1" colspan="6">
+                        <button type="object" string="Retrieve instance information" name="retreive" icon="gtk-ok"/>
                     </group>
-                    <group states="ready">
-                        <field name="entity_ids" nolabel="1" colspan="4" width="700" height="200"/>
+                    <group states="ready" colspan="4" col="6">
+                        <field name="name"/>
+                        <field name="parent"/>
+                        <field name="identifier"/>
+                        <field name="entity_status"/>
+                        <field name="email"/>
+                        <field name="group"/>
+                        <field name="entity_ids" nolabel="1" colspan="6" width="700" height="200"/>
                     </group>
                 </form>
                </field>
@@ -72,7 +78,7 @@
             <field name="model">sync.client.child_entity</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="children entities" colors="red:validate==False" >
+                <tree string="Children Instances"  colors="red:state=='invalidated';blue:state in ('updated', 'pending')">
                     <field name="name"/>
                     <field name="identifier"/>
                     <field name="email" />
@@ -198,7 +204,7 @@
         </record>
 
         <record model="ir.actions.act_window" id="manage_children_wizard_action">
-            <field name="name">Manage Children</field>
+            <field name="name">Registration Status</field>
             <field name="res_model">sync.client.entity_manager</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
