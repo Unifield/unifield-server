@@ -112,14 +112,17 @@ class stock_move(osv.osv):
         location_obj = self.pool.get('stock.location')
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id)
         service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        if service_loc:
+            service_loc = service_loc[0]
         
         if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service') and parent_type == 'in':
             if service_loc:
-                result.setdefault('value', {}).update(location_dest_id=service_loc[0])
+                prod_type = prod_obj.browse(cr, uid, prod_id).type
+                result.setdefault('value', {}).update(location_dest_id=service_loc, product_type=prod_type)
                 result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
         else:
             if loc_dest_id == service_loc: 
-                result.setdefault('value', {}).update(location_dest_id=False)
+                result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
             result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
             
         

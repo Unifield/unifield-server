@@ -339,9 +339,18 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
     
+    def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = move.product_id.type
+        
+        return res
+    
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
+        'product_type': fields.function(_get_product_type, method=True, type='char', string='Product type', store=False),
     }
     
     _defaults = {
