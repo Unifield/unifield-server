@@ -30,6 +30,7 @@
     "depends" : ["base", "account", "analytic", "account_journal", "account_corrections", "analytic_distribution"],
     "init_xml" : [],
     "update_xml" : [
+        'security/ir.model.access.csv',
         'res_company_view.xml',
         'account_view.xml',
     ],
