@@ -33,7 +33,7 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_automatic_supply(self, cr, uid, use_new_cursor=False, context=None):
+    def run_automatic_supply(self, cr, uid, use_new_cursor=False, batch_id=False, context=None):
         '''
         Create procurement on fixed date
         '''
@@ -45,8 +45,8 @@ class procurement_order(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         freq_obj = self.pool.get('stock.frequence')
 
-        start_date = datetime.now()
-        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '<=', start_date.strftime('%Y-%m-%d'))])
+        start_date = time.strftime('%Y-%m-%d %H:%M:%S')
+        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '<=', datetime.now())])
         
         created_proc = []
         report = []
@@ -72,8 +72,10 @@ class procurement_order(osv.osv):
                     created_proc.append(proc_id)
             
             if auto_sup.frequence_id:
-                freq_obj.write(cr, uid, auto_sup.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
+                freq_obj.write(cr, uid, auto_sup.frequence_id.id, {'last_run': datetime.now()})
 
+        created_doc = '''################################
+Created documents : \n'''
                     
         for proc in proc_obj.browse(cr, uid, created_proc):
             if proc.state == 'exception':
@@ -81,8 +83,10 @@ class procurement_order(osv.osv):
                                (proc.id, proc.product_qty, proc.product_uom.name,
                                 proc.product_id.name,))
                 report_except += 1
+            elif proc.purchase_id:
+                created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)
                 
-        end_date = datetime.now()
+        end_date = time.strftime('%Y-%m-%d %H:%M:%S')
                 
         summary = '''Here is the procurement scheduling report for Automatic Supplies
 
@@ -90,16 +94,24 @@ class procurement_order(osv.osv):
         End Time: %s
         Total Procurements processed: %d
         Procurements with exceptions: %d
-        \n'''% (start_date, end_date, len(created_proc), report_except)
+        
+        \n %s \n  Exceptions: \n'''% (start_date, end_date, len(created_proc), report_except, len(created_proc) > 0 and created_doc or '')
+        
         summary += '\n'.join(report)
+        if batch_id:
+            self.pool.get('procurement.batch.cron').write(cr, uid, batch_id, {'last_run_on': time.strftime('%Y-%m-%d %H:%M:%S')})
+            old_request = request_obj.search(cr, uid, [('batch_id', '=', batch_id), ('name', '=', 'Procurement Processing Report (Automatic supplies).')])
+            request_obj.write(cr, uid, old_request, {'batch_id': False})
         req_id = request_obj.create(cr, uid,
-                {'name': "Procurement Processing Report.",
+                {'name': "Procurement Processing Report (Automatic supplies).",
                  'act_from': uid,
                  'act_to': uid,
+                 'batch_id': batch_id,
                  'body': summary,
                 })
-        if req_id:
-            request_obj.request_send(cr, uid, [req_id])
+        # UF-952 : Requests should be in consistent state
+#        if req_id:
+#            request_obj.request_send(cr, uid, [req_id])
 
         if use_new_cursor:
             cr.commit()
