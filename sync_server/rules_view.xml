@@ -59,14 +59,14 @@
                         <separator string="Domain" colspan="2"/>
                         <field name="domain" on_change="invalidate()" colspan="2" nolabel="1"/>
                         <separator string="Included fields (required)" colspan="2"/>
-                        <field name="included_fields_sel" nolabel="1" required="True" on_change="on_change_included_fields(included_fields_sel)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
+                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
                             <tree string="Included fields">
                                 <field name="name"/>
                                 <field name="field_description"/>
                                 <field name="ttype"/>
                             </tree>
                         </field>
-                        <field name="included_fields" nolabel="1" required="True"/>
+                        <field name="included_fields" nolabel="1"/>
                         <separator string="Values to be forced" colspan="2"/>
                         <field name="forced_values_sel" nolabel="1" required="True"
                             on_change="on_change_forced_values(forced_values_sel)">

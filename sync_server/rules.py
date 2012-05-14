@@ -214,6 +214,7 @@ class sync_rule(osv.osv):
             name = str(field['name'])
             if field['ttype'] in ('many2one','one2many',): name += '/id'
             sel.append(name)
+        self.write(cr, uid, ids, {'included_fields' : (str(sel) if sel else '')}, context=context)
         res = {'value': {'included_fields' : (str(sel) if sel else '')}}
         #if errors:
         #    res['warning'] = {
