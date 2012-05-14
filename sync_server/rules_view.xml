@@ -23,11 +23,12 @@
                 	<field name="active" />
                     <field name="sequence_number"/>
                     <field name="name"/>
-                    <field name="model_id"/>
+                    <field name="model_ref"/>
                     <field name="applies_to_type"/>
                     <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)]}"/>
                     <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)]}" />
                     <field name="direction"/>
+                    <field name="status"/>
                 </tree>
             </field>
         </record>
@@ -41,7 +42,8 @@
                     <group colspan="4" col="6">
                         
                         <field name="name"/>
-                        <field name="model_id" />
+                        <field name="model_ref" on_change="invalidate()"/>
+                        <field name="model_id" invisible="1"/>
                         <field name="sequence_number"/>
                         
                         <field name="direction" />
@@ -51,17 +53,47 @@
                             <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}"/>
                             <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)], 'required':[('applies_to_type','=',True)]}" widget="selection"/>
                         </group>
-                        <field name="active" />
+                        <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
                     </group>
-                    <group colspan="4" col="1">
-                        <separator string="Domain" />
-                        <field name="domain" nolabel="1"/>
-                        <separator string="Included fields" />
-                        <field name="included_fields" nolabel="1" required="True"/>
-                        <separator string="Values to force" />
+                    <group colspan="4" col="2">
+                        <separator string="Domain" colspan="2"/>
+                        <field name="domain" on_change="invalidate()" colspan="2" nolabel="1"/>
+                        <separator string="Included fields (required)" colspan="2"/>
+                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
+                            <tree string="Included fields">
+                                <field name="name"/>
+                                <field name="field_description"/>
+                                <field name="ttype"/>
+                            </tree>
+                        </field>
+                        <field name="included_fields" nolabel="1"/>
+                        <separator string="Values to be forced" colspan="2"/>
+                        <field name="forced_values_sel" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="name" domain="[('model','=',parent.model_id),('ttype','not in',['one2many','many2one','many2many'])]"/>
+                                <field name="value"/>
+                            </tree>
+                        </field>
                         <field name="forced_values" nolabel="1"/>
-                        <separator string="Fallback Values" />
-                        <field name="fallback_values" nolabel="1"/>
+                        <button string="Compute Forced Values" colspan="4" type="object" name="compute_forced_value" />
+                        <separator string="Fallback Values" colspan="2"/>
+                        <field name="fallback_values_sel" nolabel="1" >
+                            <tree editable="bottom">
+                                <field name="name" domain="[('model','=',parent.model_id),('ttype','in',['many2one'])]"/>
+                                <field name="value"/>
+                            </tree>
+                        </field>
+                        <field name="fallback_values" nolabel="1" readonly="1"/>
+                        <button string="Compute Fallback Values" colspan="4" type="object" name="compute_fallback_value" />
+                    </group>
+                    <separator string="" colspan="4"/>
+                    <group colspan="4" col="6">
+                        <label string="" colspan="6"/>
+                        <label string="" colspan="6"/>
+                        <label string="" colspan="6"/>
+                        <label string="" colspan="3"/>
+                        <field name="status"/>
+                        <button type="object" string="Validate" name="validate"/>
                     </group>
                 </form>
             </field>
@@ -90,9 +122,10 @@
                 	<field name="active" />
                     <field name="sequence_number"/>
                     <field name="name"/>
-                    <field name="model_id"/>
+                    <field name="model_ref"/>
                     <field name="remote_call"/>
                     <field name="type_id"/>
+                    <field name="status"/>
                 </tree>
             </field>
         </record>
@@ -105,12 +138,12 @@
             <field name="arch" type="xml">
                 <form string="Sync Rule Form">
                     <group colspan="4" col="6">
-                        
                         <field name="name"/>
-                        <field name="model_id" />
+                        <field name="model_ref" on_change="invalidate()"/>
+                        <field name="model_id" invisible="1"/>
                         <field name="sequence_number"/>
-                        <field name="destination_name"/>
-                        <field name="active" />
+                        <field name="destination_name" on_change="invalidate()"/>
+                        <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
                         
                         <field name="applies_to_type" invisible="1"/>
                         <group colspan="2" col="4">
@@ -120,11 +153,16 @@
                     </group>
                     <group colspan="4" col="1">
                         <separator string="Domain" />
-                        <field name="domain" nolabel="1"/>
+                        <field name="domain" on_change="invalidate()" nolabel="1"/>
                         <separator string="Remote Call" />
-                        <field name="remote_call" nolabel="1" required="True"/>
+                        <field name="remote_call" on_change="invalidate()" nolabel="1" required="True"/>
                         <separator string="Arguments of the call" />
-                        <field name="arguments" nolabel="1" />
+                        <field name="arguments" on_change="invalidate()" nolabel="1" />
+                    </group>
+                    <group colspan="4" col="6">
+                        <label string="" colspan="3"/>
+                        <field name="status"/>
+                        <button type="object" string="Validate" name="validate"/>
                     </group>
                 </form>
             </field>
@@ -154,6 +192,21 @@
                 
         <menuitem id="message_rule_menu" name="Messages Rules" parent="rules_menu"
                 action="message_rule_action" /> 
+                
+                
+       <record model="ir.ui.view" id="rule_validation_view">
+       		<field name="name">sync_server.rule.validation.message.form</field>
+            <field name="model">sync_server.rule.validation.message</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+       			<form>
+       				<separator string="Validation Message" colspan="4" />
+       				<field name="message" colspan="4" nolabel="1" readonly="1" />
+       				<field name="state" string="The rule is" />
+       				<button name="validate" string="Ok" type="object" />
+       			</form>
+       		</field>
+       </record>
         
     </data>
 </openerp>

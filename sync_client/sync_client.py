@@ -456,6 +456,7 @@ class entity(osv.osv, Thread):
             'status': 'failed' if 'failed' in list(v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull'))  else 'ok'})
         self.pool.get('sync.monitor').write(cr, uid, log_id, log)
         cr.commit()
+        return log['status'] == 'ok'
         
     def run(self):
         cr = self.data[0]

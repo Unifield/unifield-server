@@ -21,27 +21,17 @@
 
 
 {
-    'name': 'Testing module for Synchronization Utility Server',
+    'name': 'Synchronization Utility Server - Common Files',
     'version': '0.1',
     'category': 'Tools',
     'description': """
-        
+        Common files needed for sync_client and sync_server modules
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
+    'depends': ['base'],
     'init_xml': [],
     'data': [
-        'res.users.csv',
-        'sync.server.group_type.csv',
-        'sync.server.entity_group.csv',
-        'sync.server.entity.csv',
-        'sync_server.sync_rule.csv',
-        'sync_server.message_rule.csv',
-    ],
-    'demo_xml': [
-    ],
-    'test':[
     ],
     'installable': True,
 }

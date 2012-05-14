@@ -21,6 +21,19 @@
 
 from osv import osv
 from osv import fields
+import sync_common.common
+
+from datetime import datetime
+
+_field2type = {
+    'text'      : 'str',
+    'char'      : 'str',
+    'selection' : 'str',
+    'integer'   : 'int',
+    'boolean'   : 'bool',
+    'float'     : 'float',
+    'datetime'  : 'str',
+}
 
 class sync_rule(osv.osv):
     """ Synchronization Rule """
@@ -28,9 +41,25 @@ class sync_rule(osv.osv):
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
 
+    def _get_model_id(self, cr, uid, ids, field, args, context=None):
+        res = {}
+        for rec in self.read(cr, uid, ids, ['model_ref'], context=context):
+            if not rec['model_ref']: continue
+            model = self.pool.get('ir.model').read(cr, uid, [rec['model_ref'][0]], ['model'])[0]
+            res[rec['id']] = model['model']
+        return res
+
+    def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
+        model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
+        if model_ids:
+            self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
+        return True
+
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
-        'model_id': fields.char('Model', size=128, required = True),
+        #'model_id': fields.char('Model', size=128, required = True),
+        'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
+        'model_ref': fields.many2one('ir.model', 'Model', required = True),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
@@ -39,12 +68,21 @@ class sync_rule(osv.osv):
                     'Directionality',required = True,),
         'domain':fields.text('Domain', required = False),
         'sequence_number': fields.integer('Sequence', required = True),
-        'included_fields':fields.text('Fields to include', required = True),
-        'forced_values':fields.text('Values to force', required = False),
+        'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
+        'included_fields':fields.text('Fields to include', required = False, readonly = True),
+        'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
+        'forced_values':fields.text('Values to force', required = False, readonly = True),
+        'fallback_values_sel': fields.one2many('sync_server.sync_rule.fallback_values', 'sync_rule_id', 'Select Fallback Values'),
         'fallback_values':fields.text('Fallback values', required = False),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
     }
-        
+
+    _defaults = {
+        'active': False,
+        'status': 'invalid',
+    }
+
     _order = 'sequence_number asc,model_id asc'
     
     #TODO add a last update to send only rule that were updated before => problem of dates
@@ -134,7 +172,177 @@ class sync_rule(osv.osv):
             }
             rules_data.append(data)
         return rules_data
+
+    def compute_forced_value(self, cr, uid, ids, context=None):
+        self.invalidate(cr, uid, ids, context=context)
+        sel = {}
+        errors = []
+        for rule in self.browse(cr, uid, ids, context=context):
+            for value in rule.forced_values_sel:
+                
+                print value
+                # Get field information
+                field = self.pool.get('ir.model.fields').read(cr, uid, value.name.id, ['name','model','ttype'])
+                # Try to evaluate value and stringify it on failed
+                try: value = eval(value.value)
+                except: value = '"""'+ value.value +'"""'
+                # Type checks
+                try:
+                    if not (isinstance(value, bool) and value == False):
+                        # Cast value to the destination type
+                        if field['ttype'] in _field2type: value = eval('%s(%s)' % (_field2type[field['ttype']], value))
+                        # Evaluate date/datetime
+                        if field['ttype'] == 'date': datetime.strptime(value, '%Y-%m-%d')
+                        if field['ttype'] == 'datetime': datetime.strptime(value, '%Y-%m-%d %H:%M')
+                except:
+                    errors.append("%s: type %s incompatible with field of type %s" % (field['name'], type(value).__name__, field['ttype']))
+                    continue
+                sel[str(field['name'])] = value
+            self.write(cr, uid, rule.id, {'forced_values' : (str(sel) if sel else '')}, context=context)
+        if errors:
+            raise osv.except_osv(_("Warning"), "\n".join(errors))
+        
+        return True
+
+    def on_change_included_fields(self, cr, uid, ids, fields, context=None):
+        self.invalidate(cr, uid, ids, context=context)
+        sel = []
+        for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model','ttype']):
+            name = str(field['name'])
+            if field['ttype'] in ('many2one','one2many',): name += '/id'
+            sel.append(name)
+        self.write(cr, uid, ids, {'included_fields' : (str(sel) if sel else '')}, context=context)
+        return {'value': {'included_fields' : (str(sel) if sel else '')}}
+        
+    def invalidate(self, cr, uid, ids, context=None):
+        return { 'values' : {'active' : False, 'status' : 'invalid'} }
+
+    def compute_fallback_value(self, cr, uid, ids, context=None):
+        self.invalidate(cr, uid, ids, context=context)
+        sel = {}
+        errors = []
+        print "compute fallback value"
+        for rule in self.browse(cr, uid, ids, context=context):
+            for value in rule.fallback_values_sel:
+                field = self.pool.get('ir.model.fields').read(cr, uid, value.name.id, ['name','model','ttype'], context=context)
+                
+                xml_ids = value.value.get_xml_id(context=context)
+                name = str(field['name'])
+                if field['ttype'] == 'many2one': 
+                    name += '/id'
+                sel[name] = xml_ids[value.value.id]
+
+            self.write(cr, uid, rule.id, {'fallback_values' : (str(sel) if sel else '')}, context=context)
+        if errors:
+            raise osv.except_osv(_("Warning"), "\n".join(errors))
+        
+        return True 
+    
+    def on_change_fallback_values(self, cr, uid, ids, values, context=None):
+        self.invalidate(cr, uid, ids, context=context)
+        return {}
+        sel = {}
+        errors = []
+        for value in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'fallback_values_sel', values, context=context):
+            field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name','model','ttype'])
+            try: value = eval(value.value)
+            except: value = eval('"""'+value.value+'"""')
             
+            name = str(field['name'])
+            if field['ttype'] == 'many2one': 
+                name += '/id'
+            else: 
+                sel[name] = value
+            
+        res = {'value' : {'fallback_values' : (str(sel) if sel else '')}}
+        if errors:
+            res['warning'] = {
+                'title' : 'Error!',
+                'message' : "\n".join(errors),
+            }
+        return res
+
+    def validate(self, cr, uid, ids, context=None):
+        error = False
+        message = ''
+        for rec in self.browse(cr, uid, ids, context=context):
+            # Check domain syntax
+            message += "* Domain syntax... "
+            try:
+                domain = eval(rec.domain)
+                obj = self.pool.get(rec.model_id)
+                sync_common.common.eval_poc_domain(obj, cr, uid, domain, context=None)
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            finally:
+                if error: message += "Example: ['|', ('name', 'like', 'external_'), ('supplier', '=', True)]\n"
+            # Check field syntax
+            message += "* Included fields syntax... "
+            try:
+                included_fields = eval(rec.included_fields)
+                for field in included_fields:
+                    base_field = field.split('/')[0]
+                    if not isinstance(field, str): raise TypeError
+                    if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): raise KeyError
+            except TypeError:
+                message += "failed (not a list of str)!\n"
+                error = True
+            except KeyError:
+                message += "failed (check fields existence)!\n"
+                error = True
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            finally:
+                if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            # Check force values syntax (can be empty)
+            message += "* Forced values syntax... "
+            try:
+                eval(rec.forced_values or '1')
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Check fallback values syntax (can be empty)
+            message += "* Fallback values syntax... "
+            try:
+                eval(rec.fallback_values or '1')
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Sequence is unique
+            message += "* Sequence is unique... "
+            if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            
+            message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
+            message_data = {'state': 'valid' if not error else 'invalid',
+                            'message' : message_header + message,
+                            'sync_rule' : rec.id}
+            print message_data
+        wiz_id = self.pool.get('sync_server.rule.validation.message').create(cr, uid, message_data, context=context)
+        return {
+            'name': 'Rule Validation Message',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sync_server.rule.validation.message',
+            'res_id' : wiz_id,
+            'type': 'ir.actions.act_window',
+            'context' : context,
+            'target' : 'new',
+            }
+
 sync_rule()
 
 class message_rule(osv.osv):
@@ -143,9 +351,24 @@ class message_rule(osv.osv):
     _name = "sync_server.message_rule"
     _description = "Message Rule"
 
+    def _get_model_id(self, cr, uid, ids, field, args, context=None):
+        res = {}
+        for rec in self.read(cr, uid, ids, ['model_ref'], context=context):
+            if not rec['model_ref']: continue
+            model = self.pool.get('ir.model').read(cr, uid, [rec['model_ref'][0]], ['model'])[0]
+            res[rec['id']] = model['model']
+        return res
+
+    def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
+        model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
+        if model_ids:
+            self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
+        return True
+
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
-        'model_id': fields.char('Model', size=128, required = True),
+        'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
+        'model_ref': fields.many2one('ir.model', 'Model', required = True),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
@@ -153,10 +376,25 @@ class message_rule(osv.osv):
         'sequence_number': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
-        'destination_name': fields.char('Fields to extract destination', size=256, required = True),
+        'destination_name': fields.char('Field to extract destination', size=256, required = True),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
     }
-    
+
+    _defaults = {
+        'active': False,
+        'status': 'invalid',
+        'applies_to_type' : True,
+    }
+
+    _order = 'sequence_number asc,model_id asc'
+
+    #def default_get(self, cr, uid, fields, context=None):
+    #    res = super(message_rule, self).default_get(cr, uid, fields, context=context)
+    #    import ipdb
+    #    ipdb.set_trace()
+    #    return res
+
     def _get_message_rule(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules(cr, uid, entity, context)
         rules_data = self._serialize_rule(cr, uid, rules_ids, context)
@@ -189,12 +427,141 @@ class message_rule(osv.osv):
             }
             rules_data.append(data)
         return rules_data
-        
-    _order = 'sequence_number asc,model_id asc'
-    
-    _defaults = {
-          'applies_to_type' : True,       
-    }
+
+    def invalidate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid'}, context=context)
+        return {}
+
+    def validate(self, cr, uid, ids, context=None):
+        error = False
+        message = ''
+        for rec in self.browse(cr, uid, ids, context=context):
+            # Check destination_name
+            try:
+                field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
+                if not field_ids: raise StandardError
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Check domain syntax
+            message += "* Domain syntax... "
+            try:
+                domain = eval(rec.domain)
+                self.pool.get(rec.model_id).search(cr, uid, domain, context=context)
+            except:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            # Remote Call Possible
+            call_tree = rec.remote_call.split('.')
+            call_class = '.'.join(call_tree[:-1])
+            call_funct = call_tree[-1]
+            message += "* Remote call exists... "
+            try:
+                ##TODO doesn't work because sync_so needed but it needs sync_client to be installed
+                if not hasattr(self.pool.get(call_class), call_funct):
+                    message += "failed!\n"
+                    error = True
+                else:
+                    message += "pass.\n"
+            except AttributeError:
+                message += "failed (missing "+call_class+")!\n"
+                error = True
+            # Arguments of the call syntax and existence
+            message += "* Checking arguments... "
+            try:
+                arguments = eval(rec.arguments)
+                for arg in arguments:
+                    base_arg = arg.split('/')[0]
+                    if not isinstance(arg, str): raise TypeError
+                    if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_arg)], context=context)): raise KeyError
+            except TypeError:
+                message += "failed (not a list of str)!\n"
+                error = True
+            except KeyError:
+                message += "failed (check fields existence)!\n"
+                error = True
+            except:
+                message += "failed (syntax error)!\n"
+                error = True
+            else:
+                message += "pass.\n"
+            finally:
+                if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            # Sequence is unique
+            message += "* Sequence is unique... "
+            if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
+                message += "failed!\n"
+                error = True
+            else:
+                message += "pass.\n"
+        self.write(cr, uid, ids, {'status': ('valid' if not error else 'invalid')})
+        ## FIXME replace the following two-three lines.
+        ##       (How to simply print a message box?)
+        cr.commit()
+        if error:
+            raise osv.except_osv('Unable to comply',
+                'This rule cannot be validated for the following reason:\n\n'+message)
+        return {'type': 'ir.actions.act_window_close',}
 
 message_rule()
+
+class forced_values(osv.osv):
+    _name = "sync_server.sync_rule.forced_values"
+
+    _columns = {
+        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
+        'value' : fields.char("Value", size = 1024, required = True),
+        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
+    }
+
+forced_values()
+
+class fallback_values(osv.osv):
+    _name = "sync_server.sync_rule.fallback_values" 
+
+    def _get_fallback_value(self, cr, uid, context=None):
+        obj = self.pool.get('ir.model')
+        ids = obj.search(cr, uid, sync_common.common.MODELS_TO_IGNORE)
+        res = obj.read(cr, uid, ids, ['model'], context)
+        return [(r['model'], r['model']) for r in res]
+
+    _columns = {
+        'name' : fields.many2one('ir.model.fields', 'Field Name', required = True),
+        'value' : fields.reference("Value", selection = _get_fallback_value, size = 128, required = True),
+        'sync_rule_id': fields.many2one('sync_server.sync_rule','Sync Rule', required = True),
+    }
+
+fallback_values()
+   
+    
+class validation_message(osv.osv):
+    _name = 'sync_server.rule.validation.message'
+    
+    _rec_name = 'state'
+    
+    _columns = {
+                'message' : fields.text('Message'),
+                'sync_rule' : fields.many2one('sync_server.sync_rule', 'Sync Rule'),
+                'message_rule' : fields.many2one('sync_server.message_rule', 'Mesage Rule'),
+                'state' : fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
+    }
+    
+    def validate(self, cr, uid, ids, context=None):
+        for wizard in self.browse(cr, uid, ids, context=context):
+            if wizard.sync_rule:
+                self.pool.get('sync_server.sync_rule').write(cr, uid, wizard.sync_rule.id, {'status' : wizard.state }, context=context)
+            if wizard.message_rule:
+                self.pool.get('sync_server.message_rule').write(cr, uid, wizard.message_rule.id, {'status' : wizard.state }, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+            
+validation_message()      
+    
+    
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
