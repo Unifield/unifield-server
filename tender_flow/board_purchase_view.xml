@@ -8,43 +8,22 @@
             parent="base.next_id_73" sequence="0"/>
 
         <record id="purchase_draft" model="ir.actions.act_window">
-            <field name="name">Draft Purchase Orders</field>
+            <field name="name">Request for Quotations</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','=','draft'), ('rfq_ok', '=', False)]</field>
+            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','=','draft')]</field>
             <field name="search_view_id" ref="purchase.purchase_order_tree"/>
         </record>
-        
         <record id="purchase_waiting" model="ir.actions.act_window">
             <field name="name">Purchase Order Waiting Approval</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('wait','confirmed')), ('rfq_ok', '=', False)]</field>
+            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('wait','confirmed'))]</field>
             <field name="search_view_id" ref="purchase.purchase_order_tree"/>
-        </record>
-        
-        <record id="rfq_draft" model="ir.actions.act_window">
-            <field name="name">Draft Requests for Quotation</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">purchase.order</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','=','draft'), ('rfq_ok', '=', True)]</field>
-            <field name="search_view_id" ref="tender_flow.view_rfq_tree"/>
-        </record>
-        
-        <record id="rfq_waiting" model="ir.actions.act_window">
-            <field name="name">Requests for Quotation Waiting Approval</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">purchase.order</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('rfq_sent','rfq_updated')), ('rfq_ok', '=', True)]</field>
-            <field name="search_view_id" ref="tender_flow.view_rfq_tree"/>
         </record>
 
 		<record model="ir.ui.view" id="view_purchase_order_monthly_categ_tree">
@@ -158,10 +137,8 @@
                             <action colspan="4" height="220" name="%(purchase.action_current_purchases)d" string="Current purchases"  width="510"/>
                             <action colspan="4" height="220" name="%(purchase.action_po_per_month_tree)d" string="Purchase order per month"  width="510"/>
                         -->
-                        	<action colspan="4" height="220" name="%(purchase_draft)d" string="Draft Purchase Orders"  width="510"/>
+                        	<action colspan="4" height="220" name="%(purchase_draft)d" string="Request for Quotations"  width="510"/>
                         	<action colspan="4" height="220" name="%(purchase_waiting)d" string="Purchase Order Waiting Approval"  width="510"/>
-                        	<action colspan="4" height="220" name="%(rfq_draft)d" string="Draft Requests for Quotation"  width="510"/>
-                        	<action colspan="4" height="220" name="%(rfq_waiting)d" string="Requests for Quotation Waiting Approval"  width="510"/>
                         </child1>
                         <child2>
                         	<action colspan="4" height="220" name="%(action_purchase_order_monthly_categ_graph)d" string="Monthly Purchase by Category"  />

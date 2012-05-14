@@ -141,7 +141,7 @@ class purchase_report(osv.osv):
                         left join product_product p on (l.product_id=p.id)
                             left join product_template t on (p.product_tmpl_id=t.id)
                     left join product_uom u on (u.id=l.product_uom)
-                where l.product_id is not null
+                where l.product_id is not null and s.rfq_ok = False
                 group by
                     s.company_id,
                     s.create_uid,
