@@ -128,7 +128,7 @@ class add_event(osv.osv_memory):
                             }
             # create event
             event_id = event_obj.create(cr, uid, event_values, context=context)
-            
+#        return {'type': 'ir.actions.act_window_close'}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'return.claim',
                 'view_type': 'form',

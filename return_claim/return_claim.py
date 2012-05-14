@@ -1480,3 +1480,25 @@ class product_product(osv.osv):
 
 product_product()
 
+
+class res_partner(osv.osv):
+    '''
+    add a link to claims
+    '''
+    _inherit = 'res.partner'
+    
+    _columns = {'claim_ids_res_partner': fields.one2many('return.claim', 'partner_id_return_claim', string='Claims')}
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase claim_ids
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        default.update({'claim_ids_res_partner': []})
+        res = super(res_partner, self).copy_data(cr, uid, id, default=default, context=context)
+        return res
+    
+res_partner()

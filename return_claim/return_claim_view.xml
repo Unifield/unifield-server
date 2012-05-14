@@ -2,6 +2,31 @@
 <openerp>
     <data>
     
+    	<record id="view_partner_form" model="ir.ui.view">
+            <field name="name">res.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+	                <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="after">
+	                    <page string="Claims">
+	                    	<field name="claim_ids_res_partner" nolabel="1" colspan="4" mode="tree,form" readonly="True" />
+	                    		<!--<tree string="Claims" hide_new_button="1" editable="top" noteditable="1" />
+	                    			<button name="edit_catalogue" type="object" string="Edit catalogue" icon="gtk-edit" />
+	                    			<field name="name" />
+	                    			<field name="period_from" />
+	                    			<field name="period_to" />
+	                    			<field name="currency_id" />
+	                    			<button name="open_lines" type="object" string="Open catalogue" icon="terp-stock_zoom" />
+	                    		</tree>
+	                    	</field> -->
+	                    </page>
+	                </xpath>
+                </data>
+            </field>
+        </record>
+    
     	<record id="view_return_claim_form" model="ir.ui.view">
             <field name="name">return.claim.form</field>
             <field name="model">return.claim</field>
