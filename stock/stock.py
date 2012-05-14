@@ -1958,6 +1958,7 @@ class stock_move(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
                 # Make the stock moves available
                 picking_obj.action_assign(cr, uid, [pickid], context=context)
+                picking_obj.log_picking(cr, uid, [pickid], context=context)
         if new_moves:
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
