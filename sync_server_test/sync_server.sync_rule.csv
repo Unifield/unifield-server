@@ -1,13 +1,13 @@
-id,sequence_number,name,model_id,applies_to_type,type_id/id,direction,domain,included_fields,active,status
-fiscal_year,10,Finance Base Data: Fiscal Year,account.fiscalyear,True,type_sec_id,Down,[],"['name','code','date_start','date_stop','state']",0,valid
-currency,20,Finance Base Data: Currency,res.currency,True,type_sec_id,Down,[],"['name','symbol','rounding','accuracy']",0,valid
-currency_rate,21,Finance Base Data: Currency rate,res.currency.rate,True,type_sec_id,Down,[],"['name','rate','currency_id/id']",0,valid
-gl_account_type,30,Finance Base Data: GL account type,account.account.type,True,type_sec_id,Down,[],"['name','code','report_type','close_method','note']",0,valid
-gl_accounts,31,Finance Base Data: GL accounts,account.account,True,type_sec_id,Down,[],"['name','code','type','user_type/id','type_for_register','reconcile','note']",0,valid
-gl_accounts_tree,32,Finance Base Data: GL accounts tree,account.account,True,type_sec_id,Down,[],['parent_id/id'],0,valid
-analytical_journal,40,Finance Base Data: Analytical journal,account.analytic.journal,True,type_sec_id,Up,[],"['name','type','code','active']",0,valid
-gl_journal,50,Finance Base Data: GL journal,account.journal,True,type_sec_id,Up,[],"['name','code','type','default_debit_account_id/id','default_credit_account_id/id','currency/id','analytic_journal_id/id']",0,valid
-register,60,Finance Base Data: Register,account.bank.statement,True,type_co_id,Up,[],"['name','period_id/id','journal_id/id','state date','closing_date','code','balance_start','balance_end_real','balance_end balance_end_cash','open_advance_amount','total_entry_encoding comments']",0,valid
-cost_center,80,Finance Base Data: Cost center,account.analytic.account,True,type_sec_id,Down,"[('category','!=','FUNDING')]","['name','code','category','type','date_start','date','description']",0,valid
-funding_pool,81,Finance Base Data: Funding Pool,account.analytic.account,True,type_sec_id,Down,"[('category','=','FUNDING')]","['name','code','category','type','date_start','date','description','accounts_ids/id','cost_center_ids/id']",0,valid
-cc_fp_tree,82,Finance Base Data: CC & FP tree,account.analytic.account,True,type_sec_id,Down,[],['parent_id/id'],0,valid
+"id","sequence_number","name","model_id","applies_to_type","type_id/id","direction","domain","included_fields","active","status"
+"fiscal_year",10,"Finance Base Data: Fiscal Year","account.fiscalyear","True","sd.type_sec_id","Down","[]","['name','code','date_start','date_stop','state']",0,"valid"
+"currency",20,"Finance Base Data: Currency","res.currency","True","sd.type_sec_id","Down","[]","['name','symbol','rounding','accuracy']",0,"valid"
+"currency_rate",21,"Finance Base Data: Currency rate","res.currency.rate","True","sd.type_sec_id","Down","[]","['name','rate','currency_id/id']",0,"valid"
+"gl_account_type",30,"Finance Base Data: GL account type","account.account.type","True","sd.type_sec_id","Down","[]","['name','code','report_type','close_method','note']",0,"valid"
+"gl_accounts",31,"Finance Base Data: GL accounts","account.account","True","sd.type_sec_id","Down","[]","['name','code','type','user_type/id','type_for_register','reconcile','note']",0,"valid"
+"gl_accounts_tree",32,"Finance Base Data: GL accounts tree","account.account","True","sd.type_sec_id","Down","[]","['parent_id/id']",0,"valid"
+"analytical_journal",40,"Finance Base Data: Analytical journal","account.analytic.journal","True","sd.type_sec_id","Up","[]","['name','type','code','active']",0,"valid"
+"gl_journal",50,"Finance Base Data: GL journal","account.journal","True","sd.type_sec_id","Up","[]","['name','code','type','default_debit_account_id/id','default_credit_account_id/id','currency/id','analytic_journal_id/id']",0,"valid"
+"register",60,"Finance Base Data: Register","account.bank.statement","True","sd.type_co_id","Up","[]","['name','period_id/id','journal_id/id','state date','closing_date','code','balance_start','balance_end_real','balance_end balance_end_cash','open_advance_amount','total_entry_encoding comments']",0,"valid"
+"cost_center",80,"Finance Base Data: Cost center","account.analytic.account","True","sd.type_sec_id","Down","[('category','!=','FUNDING')]","['name','code','category','type','date_start','date','description']",0,"valid"
+"funding_pool",81,"Finance Base Data: Funding Pool","account.analytic.account","True","sd.type_sec_id","Down","[('category','=','FUNDING')]","['name','code','category','type','date_start','date','description','accounts_ids/id','cost_center_ids/id']",0,"valid"
+"cc_fp_tree",82,"Finance Base Data: CC & FP tree","account.analytic.account","True","sd.type_sec_id","Down","[]","['parent_id/id']",0,"valid"
