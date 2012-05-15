@@ -64,7 +64,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_debit = 0
             total_credit = 0
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id_first_value']):
+                'cost_center_id_first_value', 'analytic_id_first_value', 'partner_txt']):
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
@@ -100,6 +100,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     'analytic_distribution_id': distrib_id,
                     'name': line.get('name', ''),
                     'currency_id': currency_id,
+                    'partner_txt': line.get('partner_txt', ''),
                 }
                 # Fetch debit/credit
                 debit = 0.0
@@ -262,7 +263,7 @@ class hq_entries(osv.osv):
         'free_2_id': fields.many2one('account.analytic.account', "Free 2"),
         'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
         'date': fields.date("Posting Date", readonly=True),
-        'partner_id': fields.many2one("res.partner", "Third Party", readonly=True),
+        'partner_txt': fields.char("Third Party", size=255, readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
         'name': fields.char('Description', size=255, readonly=True),
         'ref': fields.char('Reference', size=255, readonly=True),

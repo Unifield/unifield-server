@@ -15,7 +15,7 @@
                     <field name="document_date"/>
                     <field name="period_id"/>
                     <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
-                    <field name="partner_id"/>
+                    <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
                     <field name="cost_center_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
@@ -41,11 +41,11 @@
                         <separator orientation="vertical"/>
                         <field name="date" select='1'/>
                         <field name="account_id" select='1'/>
-                        <field name="partner_id" select='1'/>
+                        <field name="partner_txt" select='1'/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
-                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_txt'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
                         <separator orientation="vertical"/>

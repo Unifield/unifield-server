@@ -106,6 +106,9 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Fetch reference
         if reference and reference[0]:
             vals.update({'ref': reference[0]})
+        # Fetch 3rd party
+        if third_party and third_party[0]:
+            vals.update({'partner_txt': third_party[0]})
         # Fetch currency
         if booking_currency and booking_currency[0]:
             currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency[0]), ('active', 'in', [False, True])])
