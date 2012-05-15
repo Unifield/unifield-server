@@ -213,6 +213,29 @@
             </field>
         </record>
         
+        <!-- Modify the view of the merge PO wizard -->
+        <record id="inherit_view_purchase_order_group" model="ir.ui.view">
+            <field name="name">Merger Purchase Orders</field>
+            <field name="model">purchase.order.group</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_group" />
+            <field name="arch" type="xml">
+            	
+            	<xpath expr="/form//label" position="replace">
+            		<group colspan="4">
+	            		<html>
+	            			<p>Please note that: </p>
+<p style="margin-left:10px">Orders will only be merged if: </p>
+<p style="margin-left:20px">* Purchase Orders are in draft</p>
+<p style="margin-left:20px">* Purchase Orders belong to the same supplier </p>
+<p style="margin-left:20px">* Purchase Orders are have same stock location, same pricelist </p>
+	            		</html>
+	            	</group>
+            	</xpath>
+            	
+            </field>
+        </record>
+        
 	<!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_pending_invoice" model="ir.ui.menu" />
