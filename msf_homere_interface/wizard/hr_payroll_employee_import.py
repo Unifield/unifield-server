@@ -164,10 +164,15 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
         if staffcode_ids:
+            message = "More than 1 employee have the same unique identification code: "
+            employee_error_list = []
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
                 if employee.homere_codeterrain != missioncode or str(employee.homere_id_staff) != staff_id or employee.homere_id_unique != uniq_id:
-                    self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': _("More than 1 employee have the same unique identification number: %s.") % (employee_name,)})
-                    return False
+                    employee_error_list.append(employee.name)
+            if employee_error_list:
+                message += ' ; '.join([employee_name] + employee_error_list)
+                self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
+                return False
         return True
 
     def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None):
