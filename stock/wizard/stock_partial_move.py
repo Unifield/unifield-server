@@ -59,7 +59,9 @@ class stock_partial_move(osv.osv_memory):
         'product_moves_out' : fields.one2many('stock.move.memory.out', 'wizard_id', 'Moves'),
         'product_moves_in' : fields.one2many('stock.move.memory.in', 'wizard_id', 'Moves'),
      }
-    
+
+    def _is_incoming_move(self, move):
+        return (move.location_id.usage not in ('internal','view') and move.location_dest_id.usage == 'internal')
     
     def __is_in(self,cr, uid, move_ids):
         """
@@ -72,7 +74,7 @@ class stock_partial_move(osv.osv_memory):
         move_ids = move_obj.search(cr, uid, [('id','in',move_ids)])
        
         for move in move_obj.browse(cr, uid, move_ids):
-            if move.picking_id.type == 'in' and move.product_id.cost_method == 'average':
+            if self._is_incoming_move(move) and move.product_id.cost_method == 'average':
                 return True
         return False
     
@@ -104,7 +106,7 @@ class stock_partial_move(osv.osv_memory):
             'move_id' : move.id,
         }
     
-        if move.picking_id.type == 'in':
+        if self._is_incoming_move(move):
             move_memory.update({
                 'cost' : move.product_id.standard_price,
                 'currency' : move.product_id.company_id and move.product_id.company_id.currency_id and move.product_id.company_id.currency_id.id or False,
@@ -217,7 +219,7 @@ class stock_partial_move(osv.osv_memory):
             }
             
             moves_ids_final.append(move.id)
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
+            if self._is_incoming_move(move) and move.product_id.cost_method == 'average':
                 partial_datas['move%s' % (move.id)].update({
                     'product_price' : p_moves[move.id].cost,
                     'product_currency': p_moves[move.id].currency.id,
