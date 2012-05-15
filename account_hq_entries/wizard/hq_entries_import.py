@@ -45,7 +45,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         Import hq entry regarding all elements given in "line"
         """
         # Seems that some line could be empty
-        if line.count('') == 16:
+        if line.count('') == 12:
             return False
         # Prepare some values
         vals = {
