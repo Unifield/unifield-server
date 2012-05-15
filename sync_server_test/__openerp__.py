@@ -32,7 +32,6 @@
     'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
     'init_xml': [],
     'data': [
-        'res.users.csv',
         'sync.server.group_type.csv',
         'sync.server.entity_group.csv',
         'sync.server.entity.csv',
