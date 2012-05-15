@@ -34,14 +34,14 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     _columns = {
-        'cross_docking_ok': fields.boolean('Cross docking', readonly=True, states={'draft': [('readonly', False)]}),
+        'cross_docking_ok': fields.boolean('Cross docking'),
     }
 
     _defaults = {
         'cross_docking_ok': False,
     }
 
-    def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, context=None):
+    def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, warehouse_id, context=None):
         """ Finds location id for changed cross_docking_ok.
         @param cross_docking_ok: Changed value of cross_docking_ok.
         @return: Dictionary of values.
@@ -49,10 +49,9 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
+        l = self.pool.get('stock.warehouse').read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
         if cross_docking_ok:
             l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        elif cross_docking_ok == False:
-            l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         return {'value': {'location_id': l}}
     
     def onchange_categ(self, cr, uid, ids, categ, context=None):
@@ -68,8 +67,6 @@ class purchase_order(osv.osv):
         if categ in ['service', 'transport']:
             bool_value = False
             defined_location = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
-        elif categ in ['medical', 'log', 'other']:
-            defined_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -84,9 +81,7 @@ class purchase_order(osv.osv):
             if not vals.get('categ') in ['service', 'transport']:
                 vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]})
         elif not cross_docking_ok:
-            if not vals.get('categ') in ['service', 'transport']:
-                vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]})
-            elif vals.get('categ') in ['service', 'transport']:
+            if vals.get('categ') in ['service', 'transport']:
                 vals.update({'cross_docking_ok': False, 'location_id': obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]})
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
@@ -94,8 +89,6 @@ class purchase_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
-        elif vals.get('cross_docking_ok') == False:
-            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1], })
         return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def _check_cross_docking(self, cr, uid, ids, context=None):
