@@ -159,3 +159,120 @@ def eval_poc_domain(obj, cr, uid, domain, context=None):
         else:
             domain_new.append(tp)
     return obj.search(cr, uid, domain_new, context=context)
+
+class check_common(osv.osv):
+    _name = 'sync.check_common'
+    
+    def _check_domain(self, cr, uid, rec, context=None):
+        error = False
+        message = "* Domain syntax... "
+        try:
+            domain = eval(rec.domain)
+            obj = self.pool.get(rec.model_id)
+            eval_poc_domain(obj, cr, uid, domain, context=None)
+        except:
+            message += "failed!\n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Example: ['|', ('name', 'like', 'external_'), ('supplier', '=', True)]\n"
+        return (message, error)
+    
+    def _check_fields(self, cr, uid, rec, title="", context=None):
+        message = title
+        error = False
+        try:
+            print rec.included_fields
+            included_fields = eval(rec.included_fields)
+            print included_fields
+            for field in included_fields:
+                base_field = field.split('/')[0]
+                if not isinstance(field, str): raise TypeError
+                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): raise KeyError
+        except TypeError:
+            message += "failed (Fields list should be a list of string)!\n"
+            error = True
+        except KeyError:
+            message += "failed (Field doesn't exist for the selected model/object)!\n"
+            error = True
+        except:
+            message += "failed! (Syntax Error : not a python expression) \n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            
+        return (message, error)
+    
+    def _check_arguments(self, cr, uid, rec, title="", context=None):
+        message = title
+        error = False
+        print "check fields"
+        try:
+            field_error = False
+            print rec.arguments
+            arguments = eval(rec.arguments)
+            print arguments
+            for field in arguments:
+                base_field = field.split('/')[0]
+                if not isinstance(field, str): raise TypeError
+                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): 
+                    field_error = field
+                    raise KeyError
+        except TypeError:
+            message += "failed (Fields list should be a list of string)!\n"
+            error = True
+        except KeyError:
+            message += "failed (Field %s doesn't exist for the selected model/object)!\n" % field_error
+            error = True
+        except:
+            message += "failed! (Syntax Error : not a python expression) \n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            
+        return (message, error)
+    
+    def _check_forced_values(self, cr, uid, rec, context=None):
+        error = False
+        message = "* Forced values syntax... "
+        try:
+            forced_value = eval(rec.forced_values or '1')
+            if not isinstance(forced_value, dict): raise TypeError
+        except TypeError:
+            message += "failed (Forced values should be a dictionnary)!\n"
+            error = True
+        except:
+            message += "failed! (Syntax error) \n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Example: {'field_name' : 'str_value', 'field_name' : 10, 'field_name' : True}\n"
+            
+        return (message, error)
+    
+    def _check_fallback_values(self, cr, uid, rec, context=None):
+        error = False
+        message = "* Fallback values syntax... "
+        try:
+            fallback_value = eval(rec.fallback_values or '1')
+            if not isinstance(fallback_value, dict): raise TypeError
+        except TypeError:
+            message += "failed (Fallback values should be a dictionnary)!\n"
+            error = True
+        except:
+            message += "failed!\n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Example: {'field_name/id' : 'sd.xml_id'}\n"
+            # Sequence is unique
+        return (message, error)
+            
+check_common()

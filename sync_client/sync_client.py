@@ -95,6 +95,7 @@ class entity(osv.osv, Thread):
         'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
+        'message_last': fields.integer('Last message', required=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
         
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
@@ -111,7 +112,8 @@ class entity(osv.osv, Thread):
     _defaults = {
         'name' :  lambda self, cr, uid, c={}: cr.dbname,
         'update_last' : 0,
-        'update_offset' : 0
+        'update_offset' : 0,
+        'message_last' : 0,
     }
     
     def get_entity(self, cr, uid, context=None):
@@ -388,27 +390,36 @@ class entity(osv.osv, Thread):
              
         packet = True
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
-        uuid = self.get_entity(cr, uid, context=context).identifier
+        entity = self.get_entity(cr, uid, context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         while packet:
-            res = proxy.get_message(uuid, max_packet_size)
+            res = proxy.get_message(entity.identifier, max_packet_size)
             if res and not res[0]:
                 raise Exception, res[1]
-                
+
             if res and res[1]:
                 packet = res[1]
                 self.pool.get('sync.client.message_received').unfold_package(cr, uid, packet, context=context)
                 message_uuids = [data['id'] for data in packet]
-                _ack_message(proxy, uuid, message_uuids)
+                _ack_message(proxy, entity.identifier, message_uuids)
                 
             else:
                 packet = False
+
         return True
             
     def execute_message(self, cr, uid, context):
         return self.pool.get('sync.client.message_received').execute(cr, uid, context=context)
       
-      
+    """
+        Backup after recovery : set all message after seq as not send, then pull message
+    """
+    def recover_message(self, cr, uid, context=None):
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        entity = self.get_entity(cr, uid, context)
+        proxy.message_recover_from_seq(entity.identifier, entity.message_last + 1, context)
+        return self.pull_message(cr, uid, context=context)
+
     """
         SYNC process : usefull for scheduling 
     """
@@ -518,7 +529,7 @@ class sync_server_connection(osv.osv):
     
     _defaults = {
         'host' : 'localhost',
-        'port' : 10070,
+        'port' : 8070,
         'protocol': 'netrpc',
         'login' : 'admin',
         'max_size' : 5,
@@ -570,7 +581,7 @@ class sync_server_connection(osv.osv):
         return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
     
     _constraints = [
-        (_entity_connection,_('The connection parameter is unique, you cannot create a new one'), ['host'])
+        (_entity_connection, _('The connection parameter is unique, you cannot create a new one'), ['host'])
     ]
 
 sync_server_connection()

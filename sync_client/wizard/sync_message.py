@@ -52,6 +52,7 @@ class local_message_rule(osv.osv):
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
         for data in data_list:
+            print "rules_data", data
             model_name = data.get('model')
             model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
             if not model_id:
@@ -163,6 +164,7 @@ class message_received(osv.osv):
 
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
+        'sequence': fields.integer('Sequence', readonly = True),
         'remote_call':fields.text('Method to call', required = True),
         'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
@@ -183,7 +185,12 @@ class message_received(osv.osv):
                 'identifier' : data['id'],
                 'remote_call' : data['call'],
                 'arguments' : data['args'],
+                'sequence' : data['sequence'],
                 'source' : data['source'] }, context=context)
+            
+            entity_obj = self.pool.get( "sync.client.entity")
+            entity = entity_obj.get_entity(cr, uid, context=context)
+            entity_obj.write(cr, uid, entity.id, {'message_last' :data['sequence']}, context=context)
 
     def get_model_and_method(self, remote_call):
         remote_call = remote_call.strip()

@@ -24,6 +24,7 @@ from osv import fields
 import uuid
 import tools
 import pprint
+import logging
 pp = pprint.PrettyPrinter(indent=4)
 
 def check_validated(f):
@@ -630,6 +631,10 @@ class sync_manager(osv.osv):
               
         """
         return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids, context=context))
+
+    @check_validated
+    def message_recover_from_seq(self, cr, uid, entity, start_seq, context=None):
+        return (True, self.pool.get('sync.server.message').recovery(cr, 1, entity, start_seq, context=context))
 
 sync_manager()
 
