@@ -44,6 +44,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             required=True, readonly=True),
         'error_line_ids': fields.many2many("hr.payroll.employee.import.errors", "employee_import_error_relation", "wizard_id", "error_id", "Error list", 
             readonly=True),
+        'errors': fields.integer(string="Errors", size=64, readonly=True),
     }
 
     _defaults = {
@@ -51,6 +52,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'created': lambda *a: 0,
         'total': lambda *a: 0,
         'state': lambda *a: 'none',
+        'errors': lambda *a: 0,
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -65,7 +67,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 wiz_ids = [wiz_ids]
             line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
             if line_ids:
-                vals.update({'error_line_ids': [(6, 0, line_ids)]})
+                vals.update({'error_line_ids': [(6, 0, line_ids)], 'errors': len(line_ids) or 0})
         return super(hr_payroll_import_confirmation, self).create(cr, uid, vals, context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
