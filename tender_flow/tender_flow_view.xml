@@ -52,7 +52,8 @@
                             </field>
                         </page>
                         <page string="RfQs">
-                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
+                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        		context="{'rfq_ok': True}" >
                                 <tree string="RfQs">
                                     <field name="name" />
                                     <field name="partner_id" />
@@ -428,8 +429,8 @@
                 </form>
             </field>
         </record>
-       	
-       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
+       
+       <record id="product_supplierinfo_form_view" model="ir.ui.view">
             <field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
