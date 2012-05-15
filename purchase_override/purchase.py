@@ -384,12 +384,14 @@ stock moves which are already processed : '''
             if todo2:
                 sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
                 self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
+                stock_location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
                 for move in move_obj.browse(cr, uid, sm_ids, context=context):
                     # Search if this move has been processed
                     backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
                     if move.state != 'done' and not backmove_ids and not move.backmove_id:
                         move_obj.write(cr, uid, sm_ids, {'dpo_id': order.id, 'state': 'done',
-                                                         'location_dest_id': move.location_id.id, 
+                                                         'location_id': stock_location_id,
+                                                         'location_dest_id': stock_location_id, 
                                                          'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                         wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
                         if move.picking_id: todo3.append(move.picking_id.id)             
