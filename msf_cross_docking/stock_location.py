@@ -28,13 +28,22 @@ class stock_location(osv.osv):
     '''
     _inherit = 'stock.location'
     
-    _columns = {'cross_docking_location_ok': fields.boolean(string='Cross Docking Location', readonly=True, help="There is only one Cross Docking Location"),
-                }
+    _columns = {
+        'cross_docking_location_ok': fields.boolean(string='Cross Docking Location', readonly=True, help="There is only one Cross Docking Location"),
+    }
     
+    def get_cross_docking_location(self, cr, uid, context=None):
+        ids = self.search(cr, uid, [('cross_docking_location_ok', '=', True)])
+        if not ids:
+            raise osv.except_osv(_('Error'), _('You must have a "Cross Docking Location".'))
+        return ids[0]
+
     def unlink(self, cr, uid, ids, context=None):
-        cross_docking_location = self.search(cr, uid, [('name', 'ilike', 'Cross docking'), ('cross_docking_location_ok', '=', True) ], context=context)[0]
-        if self.read(cr,uid, ids, ['id'], context=context)[0]['id'] == cross_docking_location:
-            raise osv.except_osv(_('Warning !'), _('You cannot delete this cross docking location because it should be the only one that exists.'))
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cross_docking_location = self.search(cr, uid, [('cross_docking_location_ok', '=', True), ('id', 'in', ids)], context=context)
+        if cross_docking_location:
+            raise osv.except_osv(_('Warning !'), _('You cannot delete the cross docking location.'))
         return super(stock_location, self).unlink(cr, uid, ids, context)
 
 stock_location()

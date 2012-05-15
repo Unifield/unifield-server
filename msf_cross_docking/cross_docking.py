@@ -51,7 +51,7 @@ class purchase_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         l = self.pool.get('stock.warehouse').read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
         if cross_docking_ok:
-            l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+            l = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         return {'value': {'location_id': l}}
     
     def onchange_categ(self, cr, uid, ids, categ, context=None):
@@ -66,7 +66,7 @@ class purchase_order(osv.osv):
         defined_location = None
         if categ in ['service', 'transport']:
             bool_value = False
-            defined_location = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
+            defined_location = self.pool.get('stock.location').get_service_location(cr, uid)
         return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -79,16 +79,16 @@ class purchase_order(osv.osv):
         cross_docking_ok = vals.get('cross_docking_ok')
         if cross_docking_ok or cross_docking_value:
             if not vals.get('categ') in ['service', 'transport']:
-                vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]})
+                vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         elif not cross_docking_ok:
             if vals.get('categ') in ['service', 'transport']:
-                vals.update({'cross_docking_ok': False, 'location_id': obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]})
+                vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
         obj_data = self.pool.get('ir.model.data')
         if vals.get('cross_docking_ok'):
-            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
+            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def _check_cross_docking(self, cr, uid, ids, context=None):
@@ -100,7 +100,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for purchase in self.browse(cr, uid, ids, context=context):
             if purchase.cross_docking_ok and purchase.location_id.id != cross_docking_location:
                 raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
@@ -133,7 +133,7 @@ class procurement_order(osv.osv):
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if len(ids):
-            values.update({'cross_docking_ok': True, 'location_id' : obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
+            values.update({'cross_docking_ok': True, 'location_id' : self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return values  
 
 procurement_order()
@@ -166,7 +166,6 @@ class stock_picking(osv.osv):
     do_partial(=function which is originally called from delivery_mechanism) modification 
     for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
     '''
-    _inherit = 'stock.picking'
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -179,7 +178,7 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
@@ -204,7 +203,7 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
@@ -228,14 +227,13 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        move_obj.write(cr, uid, [move_ids], {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+                        move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
@@ -265,7 +263,7 @@ class stock_picking(osv.osv):
 
 # ------ referring to locations 'cross docking' and 'stock' ------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
 # ----------------------------------------------------------------------------------------------------------------
         partial_picking_obj = self.pool.get('stock.partial.picking')
@@ -281,16 +279,15 @@ class stock_picking(osv.osv):
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 if product_type not in ('service_recep', 'service'):
                     # treat moves towards CROSS DOCKING if NOT SERVICE
-                    values.update({'location_dest_id':cross_docking_location,})
+                    values.update({'location_dest_id': cross_docking_location})
             elif var.dest_type == 'to_stock' :
                 var.source_type = None
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is "default"and we do not want that info on INCOMING shipment
-                var.source_type = None
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 if product_type not in ('service_recep', 'service'):
                     # treat moves towards STOCK if NOT SERVICE
-                    values.update({'location_dest_id':stock_location_input,})
+                    values.update({'location_dest_id': stock_location_input})
         return values
     
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -346,7 +343,7 @@ class stock_move(osv.osv):
         purchase_browse = self.pool.get('purchase.order').browse(cr, uid, purchase_id, context=context)
         # If the purchase order linked has the option cross docking then the new created stock move should have the destination location to cross docking
         if purchase_browse.cross_docking_ok:
-            default_data.update({'location_dest_id' : obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
+            default_data.update({'location_dest_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return default_data
     
     def button_cross_docking (self, cr, uid, ids, context=None):
@@ -358,7 +355,7 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         return self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
 
     def button_stock (self, cr, uid, ids, context=None):
@@ -370,7 +367,8 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-        return self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+        for sm in self.browse(cr, uid, ids):
+            self.write(cr, uid, sm.id, {'location_id': sm.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+        return True
     
 stock_move()
