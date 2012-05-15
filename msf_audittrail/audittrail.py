@@ -442,7 +442,9 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'datetime':
             res = False
             if values:
-                date_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
+                # Display only the date on log line (Comment the next line and uncomment the next one if you want display the time)
+                date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+                #date_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
                 try:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
@@ -498,7 +500,11 @@ def create_log_line(self, cr, uid, model, lines=[]):
         new_value = line.get('new_value')
         method = line.get('method')
 
-        if old_value == new_value and method not in ('create', 'unlink'):
+#        if old_value == new_value and method not in ('create', 'unlink'):
+#            continue
+        
+        if method not in ('create', 'unlink') and ((field['ttype'] != 'datetime' and old_value == new_value) \
+           or (field['ttype'] == 'datetime' and old_value[:10] == new_value[:10])):
             continue
         
         res_id = line.get('res_id')
