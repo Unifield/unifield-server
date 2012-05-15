@@ -114,6 +114,21 @@ class res_partner(osv.osv):
         if not partner_type or partner_type in ('external', 'internal'):
             r.update({'po_by_project': 'all'})
         
+        if partner_type and partner_type in ('internal', 'section', 'esc'):
+            msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
+            if msf_customer:
+                r.update({'property_stock_customer': msf_customer[1]})
+            msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
+            if msf_supplier:
+                r.update({'property_stock_supplier': msf_supplier[1]})
+        else:
+            other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')
+            if other_customer:
+                r.update({'property_stock_customer': other_customer[1]})
+            other_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
+            if other_supplier:
+                r.update({'property_stock_supplier': other_supplier[1]}) 
+        
         return {'value': r}
     
     def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
