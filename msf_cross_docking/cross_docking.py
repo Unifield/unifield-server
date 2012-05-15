@@ -239,7 +239,9 @@ class stock_picking(osv.osv):
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+                        # Don't change done stock moves
+                        if move.state != 'done':
+                            move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
@@ -263,7 +265,9 @@ class stock_picking(osv.osv):
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        move_obj.write(cr, uid, [move_ids], {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+                        # Don't change done stock moves
+                        if move.state != 'done':
+                            move_obj.write(cr, uid, [move_ids], {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
@@ -387,7 +391,12 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        return self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+        todo = []
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state != 'done': todo.append(move.id)
+            
+        return self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+        
 
     def button_stock (self, cr, uid, ids, context=None):
         """
@@ -399,6 +408,10 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-        return self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+        todo = []
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state != 'done': todo.append(move.id)
+            
+        return self.write(cr, uid, todo, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
     
 stock_move()
