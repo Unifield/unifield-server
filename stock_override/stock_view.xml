@@ -365,7 +365,7 @@
             <field name="field_parent">child_ids</field>
             <field name="arch" type="xml">
                 <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
-                    <field name="complete_name"/>
+                    <field name="name"/>
                     <field name="usage"/>
                     <field name="stock_real" />
                     <field name="stock_virtual" />
