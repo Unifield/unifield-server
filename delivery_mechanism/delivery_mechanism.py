@@ -276,7 +276,10 @@ class stock_picking(osv.osv):
         create_picking_obj = self.pool.get('create.picking')
         # workflow
         wf_service = netsvc.LocalService("workflow")
-        
+       
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        ctx_avg = context.copy()
+        ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
             # corresponding backorder object - not necessarily created
             backorder_id = None
@@ -310,7 +313,7 @@ class stock_picking(osv.osv):
                     # original openERP logic - average price computation - To be validated by Matthias
                     # Average price computation
                     # selected product from wizard must be tested
-                    product = product_obj.browse(cr, uid, partial['product_id'], context=context)
+                    product = product_obj.browse(cr, uid, partial['product_id'], context=ctx_avg)
                     if (pick.type == 'in') and (product.cost_method == 'average'):
                         move_currency_id = move.company_id.currency_id.id
                         context['currency_id'] = move_currency_id
