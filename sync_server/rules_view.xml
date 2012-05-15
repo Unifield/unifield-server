@@ -42,9 +42,9 @@
                     <group colspan="4" col="6">
                         
                         <field name="name"/>
-                        <field name="model_ref" on_change="invalidate()"/>
+                        <field name="model_ref" on_change="invalidate(model_ref)"/>
                         <field name="model_id" invisible="1"/>
-                        <field name="sequence_number"/>
+                        <field name="sequence_number" on_change="invalidate(model_ref)"/>
                         
                         <field name="direction" />
                         <field name="applies_to_type"/>
@@ -57,9 +57,9 @@
                     </group>
                     <group colspan="4" col="2">
                         <separator string="Domain" colspan="2"/>
-                        <field name="domain" on_change="invalidate()" colspan="2" nolabel="1"/>
+                        <field name="domain" on_change="invalidate(model_ref)" colspan="2" nolabel="1"/>
                         <separator string="Included fields (required)" colspan="2"/>
-                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
+                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
                             <tree string="Included fields">
                                 <field name="name"/>
                                 <field name="field_description"/>
@@ -139,10 +139,10 @@
                 <form string="Sync Rule Form">
                     <group colspan="4" col="6">
                         <field name="name"/>
-                        <field name="model_ref" on_change="invalidate()"/>
+                        <field name="model_ref" on_change="invalidate(model_ref)"/>
                         <field name="model_id" invisible="1"/>
                         <field name="sequence_number"/>
-                        <field name="destination_name" on_change="invalidate()"/>
+                        <field name="destination_name" on_change="invalidate(model_ref)"/>
                         <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
                         
                         <field name="applies_to_type" invisible="1"/>
@@ -153,11 +153,11 @@
                     </group>
                     <group colspan="4" col="1">
                         <separator string="Domain" />
-                        <field name="domain" on_change="invalidate()" nolabel="1"/>
+                        <field name="domain" on_change="invalidate(model_ref)" nolabel="1"/>
                         <separator string="Remote Call" />
-                        <field name="remote_call" on_change="invalidate()" nolabel="1" required="True"/>
+                        <field name="remote_call" on_change="invalidate(model_ref)" nolabel="1" required="True"/>
                         <separator string="Arguments of the call" />
-                        <field name="arguments" on_change="invalidate()" nolabel="1" />
+                        <field name="arguments" on_change="invalidate(model_ref)" nolabel="1" />
                     </group>
                     <group colspan="4" col="6">
                         <label string="" colspan="3"/>

@@ -518,7 +518,7 @@ class sync_server_connection(osv.osv):
     
     _defaults = {
         'host' : 'localhost',
-        'port' : 10070,
+        'port' : 8070,
         'protocol': 'netrpc',
         'login' : 'admin',
         'max_size' : 5,
@@ -570,7 +570,7 @@ class sync_server_connection(osv.osv):
         return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
     
     _constraints = [
-        (_entity_connection,_('The connection parameter is unique, you cannot create a new one'), ['host'])
+        (_entity_connection, _('The connection parameter is unique, you cannot create a new one'), ['host'])
     ]
 
 sync_server_connection()

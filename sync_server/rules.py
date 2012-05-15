@@ -173,8 +173,27 @@ class sync_rule(osv.osv):
             rules_data.append(data)
         return rules_data
 
+    
+    """
+        Usability Part
+    """
+    
+    def on_change_included_fields(self, cr, uid, ids, fields, model_ref, context=None):
+        values = self.invalidate(cr, uid, ids, model_ref, context=context)['value']
+        sel = self._compute_included_field(cr, uid, ids, fields[0][2], context)
+        values.update( {'included_fields' : sel})
+        return {'value': values}
+    
+    def _compute_included_field(self, cr, uid, ids, fields, context=None):
+        sel = []
+        for field in self.pool.get('ir.model.fields').read(cr, uid, fields, ['name','model','ttype']):
+            name = str(field['name'])
+            if field['ttype'] in ('many2one','one2many',): name += '/id'
+            sel.append(name)
+        return (str(sel) if sel else '')
+    
     def compute_forced_value(self, cr, uid, ids, context=None):
-        self.invalidate(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid' }, context=context)
         sel = {}
         errors = []
         for rule in self.browse(cr, uid, ids, context=context):
@@ -204,21 +223,11 @@ class sync_rule(osv.osv):
         
         return True
 
-    def on_change_included_fields(self, cr, uid, ids, fields, context=None):
-        self.invalidate(cr, uid, ids, context=context)
-        sel = []
-        for field in self.pool.get('ir.model.fields').read(cr, uid, fields[0][2], ['name','model','ttype']):
-            name = str(field['name'])
-            if field['ttype'] in ('many2one','one2many',): name += '/id'
-            sel.append(name)
-        self.write(cr, uid, ids, {'included_fields' : (str(sel) if sel else '')}, context=context)
-        return {'value': {'included_fields' : (str(sel) if sel else '')}}
         
-    def invalidate(self, cr, uid, ids, context=None):
-        return { 'values' : {'active' : False, 'status' : 'invalid'} }
+   
 
     def compute_fallback_value(self, cr, uid, ids, context=None):
-        self.invalidate(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid' }, context=context)
         sel = {}
         errors = []
         print "compute fallback value"
@@ -238,99 +247,64 @@ class sync_rule(osv.osv):
         
         return True 
     
-    def on_change_fallback_values(self, cr, uid, ids, values, context=None):
-        self.invalidate(cr, uid, ids, context=context)
-        return {}
-        sel = {}
-        errors = []
-        for value in self.resolve_o2m_commands_to_record_dicts(cr, uid, 'fallback_values_sel', values, context=context):
-            field = self.pool.get('ir.model.fields').read(cr, uid, value['name'], ['name','model','ttype'])
-            try: value = eval(value.value)
-            except: value = eval('"""'+value.value+'"""')
-            
-            name = str(field['name'])
-            if field['ttype'] == 'many2one': 
-                name += '/id'
-            else: 
-                sel[name] = value
-            
-        res = {'value' : {'fallback_values' : (str(sel) if sel else '')}}
-        if errors:
-            res['warning'] = {
-                'title' : 'Error!',
-                'message' : "\n".join(errors),
-            }
-        return res
+    def invalidate(self, cr, uid, ids, model_ref, context=None):
+        print model_ref
+        model = ''
+        if model_ref:
+            model = self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model
+        
+        return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
+    
+    def write(self, cr, uid, ids, values, context=None):
+        if 'included_fields_sel' in values:
+            values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
+        
+        if not isinstance(ids, (list, tuple)):
+            ids = [ids]
+               
+        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields'], context=context):
+            dirty = False
+            for k in rule_data.keys():
+                if k in values and values[k] != rule_data[k]:
+                    dirty = True
+                    
+            if dirty:
+                values.update({'active' : False, 'status' : 'invalid'})
+        return super(sync_rule, self).write(cr, uid, ids, values, context=context)
 
     def validate(self, cr, uid, ids, context=None):
         error = False
-        message = ''
+        message = []
+        check_obj = self.pool.get('sync.check_common')
         for rec in self.browse(cr, uid, ids, context=context):
-            # Check domain syntax
-            message += "* Domain syntax... "
-            try:
-                domain = eval(rec.domain)
-                obj = self.pool.get(rec.model_id)
-                sync_common.common.eval_poc_domain(obj, cr, uid, domain, context=None)
-            except:
-                message += "failed!\n"
-                error = True
-            else:
-                message += "pass.\n"
-            finally:
-                if error: message += "Example: ['|', ('name', 'like', 'external_'), ('supplier', '=', True)]\n"
+            mess, err = check_obj._check_domain(cr, uid, rec, context)
+            error = err or error
+            message.append(mess)
             # Check field syntax
-            message += "* Included fields syntax... "
-            try:
-                included_fields = eval(rec.included_fields)
-                for field in included_fields:
-                    base_field = field.split('/')[0]
-                    if not isinstance(field, str): raise TypeError
-                    if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): raise KeyError
-            except TypeError:
-                message += "failed (not a list of str)!\n"
-                error = True
-            except KeyError:
-                message += "failed (check fields existence)!\n"
-                error = True
-            except:
-                message += "failed!\n"
-                error = True
-            else:
-                message += "pass.\n"
-            finally:
-                if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            mess, err = check_obj._check_fields(cr, uid, rec, title="* Included fields syntax... ", context=context)
+            error = err or error
+            message.append(mess)
             # Check force values syntax (can be empty)
-            message += "* Forced values syntax... "
-            try:
-                eval(rec.forced_values or '1')
-            except:
-                message += "failed!\n"
-                error = True
-            else:
-                message += "pass.\n"
+            mess, err = check_obj._check_forced_values(cr, uid, rec, context)
+            error = err or error
+            message.append(mess)
             # Check fallback values syntax (can be empty)
-            message += "* Fallback values syntax... "
-            try:
-                eval(rec.fallback_values or '1')
-            except:
-                message += "failed!\n"
-                error = True
-            else:
-                message += "pass.\n"
-            # Sequence is unique
-            message += "* Sequence is unique... "
+            mess, err = check_obj._check_fallback_values(cr, uid, rec, context)
+            error = err or error
+            message.append(mess)
+            
+            message.append("* Sequence is unique... ")
             if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
-                message += "failed!\n"
+                message.append("failed!\n")
                 error = True
             else:
-                message += "pass.\n"
+                message.append("pass.\n")
             
             message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
+            message_body = ' '.join(message)
             message_data = {'state': 'valid' if not error else 'invalid',
-                            'message' : message_header + message,
+                            'message' : message_header + message_body,
                             'sync_rule' : rec.id}
-            print message_data
         wiz_id = self.pool.get('sync_server.rule.validation.message').create(cr, uid, message_data, context=context)
         return {
             'name': 'Rule Validation Message',
@@ -428,84 +402,94 @@ class message_rule(osv.osv):
             rules_data.append(data)
         return rules_data
 
-    def invalidate(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid'}, context=context)
-        return {}
-
+    def invalidate(self, cr, uid, ids, model_ref, context=None):
+        model = ''
+        if model_ref:
+            model = self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model
+        
+        return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
+    
+    def write(self, cr, uid, ids, values, context=None):
+        if 'included_fields_sel' in values:
+            values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
+            
+        if not isinstance(ids, (list, tuple)):
+            ids = [ids]
+            
+        for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name'], context=context):
+            dirty = False
+            for k in rule_data.keys():
+                if k in values and values[k] != rule_data[k]:
+                    dirty = True
+            if dirty:
+                values.update({'active' : False, 'status' : 'invalid'})
+        return super(message_rule, self).write(cr, uid, ids, values, context=context)
+    
     def validate(self, cr, uid, ids, context=None):
         error = False
-        message = ''
+        message = []
+        check_obj = self.pool.get('sync.check_common')
         for rec in self.browse(cr, uid, ids, context=context):
             # Check destination_name
             try:
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
                 if not field_ids: raise StandardError
             except:
-                message += "failed!\n"
+                message.append("failed! Field %s doesn't exist\n" % rec.destination_name)
                 error = True
             else:
-                message += "pass.\n"
-            # Check domain syntax
-            message += "* Domain syntax... "
-            try:
-                domain = eval(rec.domain)
-                self.pool.get(rec.model_id).search(cr, uid, domain, context=context)
-            except:
-                message += "failed!\n"
-                error = True
-            else:
-                message += "pass.\n"
+                message.append("pass.\n")
+                
+                
+            mess, err = check_obj._check_domain(cr, uid, rec, context)
+            error = err or error
+            message.append(mess)
+            
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')
             call_class = '.'.join(call_tree[:-1])
             call_funct = call_tree[-1]
-            message += "* Remote call exists... "
-            try:
-                ##TODO doesn't work because sync_so needed but it needs sync_client to be installed
-                if not hasattr(self.pool.get(call_class), call_funct):
-                    message += "failed!\n"
-                    error = True
-                else:
-                    message += "pass.\n"
-            except AttributeError:
-                message += "failed (missing "+call_class+")!\n"
+            message.append("* Remote call exists... ")
+            ##TODO doesn't work because sync_so needed but it needs sync_client to be installed
+            obj = self.pool.get(call_class)
+            if not obj:
+                message.append("failed! Object %s does not exist \n" % call_class)
                 error = True
+            elif not hasattr(obj, call_funct):
+                message.append("failed! Call %s does not exist \n" % call_funct)
+                error = True
+            else:
+                message.append("pass.\n")
             # Arguments of the call syntax and existence
-            message += "* Checking arguments... "
-            try:
-                arguments = eval(rec.arguments)
-                for arg in arguments:
-                    base_arg = arg.split('/')[0]
-                    if not isinstance(arg, str): raise TypeError
-                    if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_arg)], context=context)): raise KeyError
-            except TypeError:
-                message += "failed (not a list of str)!\n"
-                error = True
-            except KeyError:
-                message += "failed (check fields existence)!\n"
-                error = True
-            except:
-                message += "failed (syntax error)!\n"
-                error = True
-            else:
-                message += "pass.\n"
-            finally:
-                if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            
+            mess, err = check_obj._check_arguments(cr, uid, rec, title="* Checking arguments..." , context=context)
+            error = err or error
+            message.append(mess)
+            
             # Sequence is unique
-            message += "* Sequence is unique... "
+            message.append("* Sequence is unique... ")
             if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
-                message += "failed!\n"
+                message.append("failed!\n")
                 error = True
             else:
-                message += "pass.\n"
-        self.write(cr, uid, ids, {'status': ('valid' if not error else 'invalid')})
-        ## FIXME replace the following two-three lines.
-        ##       (How to simply print a message box?)
-        cr.commit()
-        if error:
-            raise osv.except_osv('Unable to comply',
-                'This rule cannot be validated for the following reason:\n\n'+message)
-        return {'type': 'ir.actions.act_window_close',}
+                message.append("pass.\n")
+                
+            message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
+            message_body = ' '.join(message)
+            message_data = {'state': 'valid' if not error else 'invalid',
+                            'message' : message_header + message_body,
+                            'message_rule' : rec.id}
+        wiz_id = self.pool.get('sync_server.rule.validation.message').create(cr, uid, message_data, context=context)
+        return {
+            'name': 'Rule Validation Message',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sync_server.rule.validation.message',
+            'res_id' : wiz_id,
+            'type': 'ir.actions.act_window',
+            'context' : context,
+            'target' : 'new',
+            }
 
 message_rule()
 
