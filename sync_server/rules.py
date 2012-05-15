@@ -59,7 +59,7 @@ class sync_rule(osv.osv):
         'name': fields.char('Rule Name', size=64, required = True),
         #'model_id': fields.char('Model', size=128, required = True),
         'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
-        'model_ref': fields.many2one('ir.model', 'Model', required = True),
+        'model_ref': fields.many2one('ir.model', 'Model'),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
