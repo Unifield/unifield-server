@@ -28,7 +28,8 @@
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase", "stock", 
                  "partner_modification", "sourcing", 
-                 "msf_order_date", "supplier_catalogue",],
+                 "msf_order_date", "supplier_catalogue",
+                 "purchase_override"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
