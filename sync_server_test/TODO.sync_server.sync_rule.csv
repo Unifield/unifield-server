@@ -1,0 +1,14 @@
+sequence_number,name,model_id,applies_to_type,type_id/id,direction,domain,included_fields,active
+10,Fiscal Year,account.fiscalyear,True,type_sec_id,Down,,"['name','code','date_start','date_stop','state']",0
+20,Currency,res.currency,True,type_sec_id,Down,,"['name','symbol','currency_name','rounding accuracy']",0
+21,Currency rate,res.currency.rate,True,type_sec_id,Down,,"['name','rate currency_id/id']",0
+23,Currency table,res.currency.table,True,type_sec_id,Down,,"['name','code','currency_ids/id']",0
+30,GL account type,account.account.type,True,type_sec_id,Down,,"['name','code','report_type','close_method','note']",0
+31,GL accounts,account.account,True,type_sec_id,Down,,"['name','code','type','user_type/id','type_for_register','reconcile note']",0
+32,GL accounts tree,account.account,True,type_sec_id,Down,,['parent_id/id'],0
+40,Analytical journal,account.analytic.journal,True,type_sec_id,Up,,"['name','type','code','active']",0
+50,GL journal,account.journal,True,type_sec_id,Up,,"['name','code','type','default_debit_account_id/id','default_credit_account_id/id','currency/id','analytic_journal_id/id']",0
+60,Register,account.bank.statement,True,type_co_id,Up,,"['name','period_id/id','journal_id/id','state date','closing_date','code','balance_start','balance_end_real','balance_end balance_end_cash','open_advance_amount','total_entry_encoding comments']",0
+80,Cost center,account.analytic.account,True,type_sec_id,Down,"[('category','!=','FUNDING')]","['name','code','category','type','date_start','date','description']",0
+81,Funding Pool,account.analytic.account,True,type_sec_id,Down,"[('category','=','FUNDING')]","['name','code','category','type','date_start','date','description','accounts_ids/id','cost_center_ids/id']",0
+82,CC & FP tree,account.analytic.account,True,type_sec_id,Down,,['parent_id/id'],0

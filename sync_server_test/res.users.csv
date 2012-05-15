@@ -1,7 +1,0 @@
-"id","name","login","password","context_lang","groups_id/id"
-"msf_c1_user_id","msf_c1","msf_c1","msf","en_US","sync_server.sync_read_group"
-"msf_c2_user_id","msf_c2","msf_c2","msf","en_US","sync_server.sync_read_group"
-"msf_c3_user_id","msf_c3","msf_c3","msf","en_US","sync_server.sync_read_group"
-"msf_p1_user_id","msf_p1","msf_p1","msf","en_US","sync_server.sync_read_group"
-"msf_p2_user_id","msf_p2","msf_p2","msf","en_US","sync_server.sync_read_group"
-"msf_p3_user_id","msf_p3","msf_p3","msf","en_US","sync_server.sync_read_group"
