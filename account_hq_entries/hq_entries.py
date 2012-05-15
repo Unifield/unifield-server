@@ -265,6 +265,8 @@ class hq_entries(osv.osv):
         'partner_id': fields.many2one("res.partner", "Third Party", readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
         'name': fields.char('Description', size=255, readonly=True),
+        'ref': fields.char('Reference', size=255, readonly=True),
+        'document_date': fields.date("Document Date", readonly=True),
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
         'amount': fields.float('Amount', readonly=True),
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),

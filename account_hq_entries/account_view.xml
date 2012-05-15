@@ -9,10 +9,13 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="HQ Entries List" editable="top" hide_delete_button="1" hide_new_button="1" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" limit="50">
+                    <field name="name"/>
+                    <field name="ref"/>
                     <field name="date"/>
+                    <field name="document_date"/>
                     <field name="period_id"/>
-                    <field name="partner_id"/>
                     <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
+                    <field name="partner_id"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
                     <field name="cost_center_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>

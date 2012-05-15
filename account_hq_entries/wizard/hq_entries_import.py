@@ -51,15 +51,20 @@ class hq_entries_import_wizard(osv.osv_memory):
         vals = {
             'user_validated': False,
         }
-        sequence, date, period, mission_name, mission_code, unknown_number, account_description, booking_currency, booking_amount, \
-        amount, unknown_rate, unknown_rate_date, unknown_code, unknown_number2, description, unknown_code = zip(line)
-        # Set locale 'C' because of period
-        locale.setlocale(locale.LC_ALL, 'C')
+        date_format = '%d/%m/%y'
+        try:
+            description, reference, date, document_date, account_description, third_party, booking_amount, booking_currency, \
+                cost_center, funding_pool, free1, free2 = zip(line)
+        except ValueError, e:
+            raise osv.except_osv(_('Error'), _('Unknown format.'))
+        ### TO USE IF DATE HAVE some JAN or MAR or OCT instead of 01 ####
+        ### Set locale 'C' because of period
+        ## locale.setlocale(locale.LC_ALL, 'C')
         # Check period
         if not date and not date[0]:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
-            line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], '%d-%b-%y'))
+            line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], date_format))
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date[0], e))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
@@ -69,6 +74,12 @@ class hq_entries_import_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (line_date,))
         period_id = period_ids[0]
         vals.update({'period_id': period_id, 'date': line_date})
+        if document_date and document_date[0]:
+            try:
+                dd = time.strftime('%Y-%m-%d', time.strptime(document_date[0], date_format))
+                vals.update({'document_date': dd})
+            except ValueError, e:
+                raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date[0], e))
         # Retrive account
         if account_description and account_description[0]:
             account_data = account_description[0].split(' ')
@@ -92,6 +103,9 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Fetch description
         if description and description[0]:
             vals.update({'name': description[0]})
+        # Fetch reference
+        if reference and reference[0]:
+            vals.update({'ref': reference[0]})
         # Fetch currency
         if booking_currency and booking_currency[0]:
             currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency[0]), ('active', 'in', [False, True])])
@@ -145,6 +159,8 @@ class hq_entries_import_wizard(osv.osv_memory):
             res = True
             res_amount = 0.0
             amount = 0.0
+            # Omit first line that contains columns ' name
+            reader.next()
             for line in reader:
                 processed += 1
                 update = self.update_hq_entries(cr, uid, line)
