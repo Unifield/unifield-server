@@ -42,7 +42,7 @@
                     <group colspan="4" col="6">
                         
                         <field name="name"/>
-                        <field name="model_ref" on_change="invalidate(model_ref)"/>
+                        <field name="model_ref" on_change="invalidate(model_ref)" required="1"/>
                         <field name="model_id" invisible="1"/>
                         <field name="sequence_number" on_change="invalidate(model_ref)"/>
                         

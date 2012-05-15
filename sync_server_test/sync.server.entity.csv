@@ -1,7 +1,0 @@
-"id","name","parent_id/id","state","user_id/id","group_ids/id"
-"root_id","root",,"Validated","base.user_admin","i_id"
-"msf_c1_id","msf_c1","root_id","Updated","msf_c1_user_id","i_id,m1_id,s1_id"
-"msf_c2_id","msf_c2","root_id","Updated","msf_c2_user_id","i_id,m2_id,s1_id"
-"msf_c3_id","msf_c3","root_id","Updated","msf_c3_user_id","i_id,m3_id,s1_id"
-"msf_p1_id","msf_p1","msf_c1_id","Updated","msf_p1_user_id","i_id,m1_id,s1_id"
-"msf_p2_id","msf_p2","msf_c2_id","Updated","msf_p2_user_id","i_id,m2_id,s1_id"
