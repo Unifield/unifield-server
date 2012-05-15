@@ -3,3 +3,4 @@
 "access_hr_payroll_validation","hr.payroll.validation","model_hr_payroll_validation",,1,1,1,1
 "access_hr_payroll_deletion","hr.payroll.deletion","model_hr_payroll_deletion",,1,1,1,1
 "access_hr_payroll_import_period","hr.payroll.import.period","model_hr_payroll_import_period",,1,1,1,1
+"access_hr_payroll_employee_import_errors","hr.payroll.employee.import.errors","model_hr_payroll_employee_import_errors",,1,1,1,1

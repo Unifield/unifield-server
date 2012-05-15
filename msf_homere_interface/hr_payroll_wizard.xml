@@ -83,9 +83,14 @@
                         <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
                         <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
                     </group>
+                    <field name="error_line_ids" nolabel="1" colspan="4">
+                        <tree string="Error List">
+                            <field name="msg"/>
+                        </tree>
+                    </field>
                     <group colspan="4" col="2">
-                        <button name="button_validate" type="object" string="Ok" icon="gtk-ok"/>
                         <label string="" colspan="1"/>
+                        <button name="button_validate" type="object" string="Ok" icon="gtk-ok"/>
                     </group>
                     <field name="state" invisible="1"/>
                 </form>
