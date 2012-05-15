@@ -61,15 +61,6 @@
                          domain="[('date','&lt;=', (datetime.date.today() - relativedelta(day=31, months=1)).strftime('%%Y-%%m-%%d')),('date','&gt;=',(datetime.date.today() - relativedelta(day=1,months=1)).strftime('%%Y-%%m-%%d'))]"
                          help="Order in last month"/>
                 <separator orientation="vertical"/>
-                <filter icon="terp-document-new"
-                        string="Quotations"
-                        name="quotes"
-                        domain="[('state','=','draft')]"/>
-                <filter icon="terp-gtk-jump-to-rtl"
-                        string="Orders"
-                        name="orders"
-                        domain="[('state','&lt;&gt;','draft'),('state','&lt;&gt;','cancel')]"/>
-                <separator orientation="vertical"/>
 		        <field name="order_name" />
                 <field name="partner_id"/>
                 <field name="product_id"/>
