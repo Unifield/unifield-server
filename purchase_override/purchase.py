@@ -976,6 +976,8 @@ class purchase_order_line(osv.osv):
         res = super(purchase_order_line, self).product_uom_change(cr, uid, ids, pricelist, product, qty, uom,
                                                                   partner_id, date_order, fiscal_position, date_planned,
                                                                   name, price_unit, notes)
+        if not product:
+            return res
         res['value'].update({'product_qty': 0.00})
         res.update({'warning': {}})
         
@@ -983,7 +985,8 @@ class purchase_order_line(osv.osv):
     
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False, state=False, old_price_unit=False):
+            name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
+            nomen_manda_0=False, comment=False):
         res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
                                                                  partner_id, date_order, fiscal_position, 
                                                                  date_planned, name, price_unit, notes)
@@ -1024,6 +1027,10 @@ class purchase_order_line(osv.osv):
                 
         # Set the unit price with cost price if the product has no staged pricelist
         if product and qty != 0.00: 
+            res['value'].update({'comment': False, 'nomen_manda_0': False, 'nomen_manda_1': False,
+                                 'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False, 
+                                 'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
+                                 'nomen_sub_4': False, 'nomen_sub_5': False})
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
         
             if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
@@ -1036,7 +1043,7 @@ class purchase_order_line(osv.osv):
                 
         elif qty == 0.00:
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
-        elif not product:
+        elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})            
         
         return res
