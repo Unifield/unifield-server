@@ -535,7 +535,9 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+        # Call the super function but I don't know if there was a reason to don't do that 
+        return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
+        #return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def action_done(self, cr, uid, ids, context=None):
         """
@@ -546,7 +548,9 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        return self.write(cr, uid, ids, {'state':'done'}, context=context)
+        # Call the super function but I don't know if there was a reason to don't do that
+        return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+        #return self.write(cr, uid, ids, {'state':'done'}, context=context)
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
