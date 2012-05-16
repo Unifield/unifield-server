@@ -183,6 +183,10 @@
                         <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
                     </field>
+                    
+                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes">
+                    	<attribute name="string">Lines</attribute>
+                    </xpath>
 
                     <xpath expr="/form//field[@name='date_order']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
