@@ -205,7 +205,7 @@
 						<group colspan="2" col="2">
 							<field name="date"/>
 							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
-							<field name="min_date" string="Expected Pick Date" />
+							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
 							<field name="reason_type_id" widget="selection"/>
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" />
@@ -486,7 +486,7 @@
 						<group colspan="2" col="2">
 							<field name="date"/>
 							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
-							<field name="min_date" string="Expected Pack Date" />
+							<field name="min_date" string="Expected Pack Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
 							<field name="reason_type_id" widget="selection"/>
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" />
@@ -723,7 +723,7 @@
 						</group>
 						<group colspan="2" col="2">
 							<field name="date"/>
-							<field name="min_date" />
+							<field name="min_date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
 							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
 							<field name="reason_type_id" widget="selection"/>
 							<field name="sale_id" invisible="True" />
