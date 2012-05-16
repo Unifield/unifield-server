@@ -40,6 +40,7 @@
         					<field name="line_confirmed_date" />
         					<field name="line_shipped_rate" widget="progressbar" />
         					<field name="picking_id" />
+        					<button name="go_to_incoming" type="object" string="View Incoming shipment" icon="terp-stock_zoom" />
         					<field name="move_product_id" />
         					<field name="move_product_qty" />
         					<field name="move_uom_id" />
