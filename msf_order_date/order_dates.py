@@ -1313,41 +1313,50 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
         # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.purchase_id:
-                result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date,})
-            if obj.sale_id:
-                # rts is a mandatory field
-                if obj.subtype == 'standard':
-                    # rts + shipment lt
-                    shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
-                    rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
-                    rts = rts + relativedelta(days=shipment_lt or 0)
-                    rts = rts.strftime(db_date_format)
-                    result.setdefault(obj.id, {}).update({'min_date': rts,})
-                if obj.subtype == 'picking':
-                    # rts
-                    result.setdefault(obj.id, {}).update({'min_date': obj.sale_id.ready_to_ship_date,})
-                if obj.subtype == 'ppl':
-                    # today
-                    today = time.strftime(db_date_format)
-                    result.setdefault(obj.id, {}).update({'min_date': today,})
+            if obj.manual_min_date_stock_picking:
+                result.setdefault(obj.id, {}).update({'min_date': obj.manual_min_date_stock_picking})
+            else:
+                if obj.purchase_id:
+                    result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date})
+                if obj.sale_id:
+                    # rts is a mandatory field
+                    if obj.subtype == 'standard':
+                        # rts + shipment lt
+                        shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                        rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
+                        rts = rts + relativedelta(days=shipment_lt or 0)
+                        rts = rts.strftime(db_date_format)
+                        result.setdefault(obj.id, {}).update({'min_date': rts})
+                    elif obj.subtype == 'picking':
+                        # rts
+                        result.setdefault(obj.id, {}).update({'min_date': obj.sale_id.ready_to_ship_date})
+                    elif obj.subtype == 'ppl':
+                        # today
+                        today = time.strftime(db_date_format)
+                        result.setdefault(obj.id, {}).update({'min_date': today})
                     
         return result
     
     def _set_minimum_date(self, cr, uid, ids, name, value, arg, context=None):
         '''
-        call super
+        set the manual conterpart of min_date
         '''
         if context is None:
             context = {}
-        result = super(stock_picking, self)._set_minimum_date(cr, uid, ids, name, value, arg, context=context)
-        return result
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
+        return True
 
     _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
                 'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
                                             method=True, store=True, type='datetime', string='Expected Date', select=1,
                                             help="Expected date for the picking to be processed"),
+                'manual_min_date_stock_picking': fields.date(string='Manual Date'),
                 }
+    
+    _defaults = {'manual_min_date_stock_picking': False}
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
