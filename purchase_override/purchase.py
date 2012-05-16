@@ -548,9 +548,7 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Call the super function but I don't know if there was a reason to don't do that
-        return super(purchase_order, self).action_done(cr, uid, ids, context=context)
-        #return self.write(cr, uid, ids, {'state':'done'}, context=context)
+        return self.write(cr, uid, ids, {'state':'done'}, context=context)
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
