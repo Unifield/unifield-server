@@ -107,11 +107,12 @@ class wizard_accrual_validation(osv.osv_memory):
                         'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                     }
                     
-                    # and their reversal
+                    # and their reversal (source_date to keep the old change rate)
                     reversal_accrual_move_line_vals = {
                         'accrual': True,
                         'move_id': reversal_move_id,
                         'date': reversal_move_date,
+                        'source_date': move_date,
                         'journal_id': accrual_line.journal_id.id,
                         'period_id': reversal_period_id,
                         'reference': accrual_line.reference,
@@ -126,6 +127,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'accrual': True,
                         'move_id': reversal_move_id,
                         'date': reversal_move_date,
+                        'source_date': move_date,
                         'journal_id': accrual_line.journal_id.id,
                         'period_id': reversal_period_id,
                         'reference': accrual_line.reference,

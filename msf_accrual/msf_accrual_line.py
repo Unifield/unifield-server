@@ -176,11 +176,12 @@ class msf_accrual_line(osv.osv):
                     'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                 }
                 
-                # and their reversal
+                # and their reversal (source_date to keep the old change rate)
                 reversal_accrual_move_line_vals = {
                     'accrual': True,
                     'move_id': reversal_move_id,
                     'date': reversal_move_date,
+                    'source_date': move_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,
                     'reference': accrual_line.reference,
@@ -195,6 +196,7 @@ class msf_accrual_line(osv.osv):
                     'accrual': True,
                     'move_id': reversal_move_id,
                     'date': reversal_move_date,
+                    'source_date': move_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,
                     'reference': accrual_line.reference,
