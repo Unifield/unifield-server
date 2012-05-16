@@ -907,7 +907,7 @@ class stock_production_lot(osv.osv):
                  'life_date': False,
                  }
     
-    _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
+    _sql_constraints = [('name_uniq', 'unique (product_id,name)', 'For a given product, the batch number must be unique.'),
                         ]
 
     _constraints = [(_check_batch_type_integrity,
