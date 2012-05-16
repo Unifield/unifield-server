@@ -203,6 +203,10 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function
         """
+        if values.get('open_advance_amount', False):
+            values.update({'open_advance_amount': abs(values.get('open_advance_amount'))})
+        if values.get('unrecorded_expenses_amount', False):
+            values.update({'unrecorded_expenses_amount': abs(values.get('unrecorded_expenses_amount'))})
         return super(osv.osv, self).write(cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
