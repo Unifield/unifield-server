@@ -111,8 +111,7 @@ class update_to_send(osv.osv):
     """
     _name = "sync.client.update_to_send"
     _rec_name = 'values'
-    
-    
+
 
     _columns = {
         'values':fields.text('Values', size=128, readonly=True),
@@ -154,10 +153,16 @@ class update_to_send(osv.osv):
             xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):
                 continue
-            
-            #print "create update for ", id, " model", rule.model.model
+
             context['sync_context'] = True
+            
             values = obj.export_data(cr, uid, [id], included_fields, context=context)['datas'][0]
+            fields_ref = obj.fields_get(cr, uid, [], context=context)
+            for (i,field) in enumerate(included_fields):
+                field = field.split('/')[0]
+                if field != 'id' and fields_ref[field]['type'] in ('many2one','many2many',) and not values[i]:
+                    values[i] = ''
+
             data = {
                 'session_id' : session_id,
                 'values' : tools.ustr(values),
@@ -167,6 +172,7 @@ class update_to_send(osv.osv):
                 'xml_id' : xml_id,
                 'fields' : tools.ustr(included_fields),
             }
+
             self.create(cr,uid, data, context=context)
             
     def create_package(self, cr, uid, session_id, packet_size, context=None):
@@ -201,8 +207,7 @@ class update_to_send(osv.osv):
         for update in self.browse(cr, uid, update_ids, context=context):
             model_data_pool.write(cr, uid, update.xml_id.id, {'sync_date' : update.sync_date, 'version' : update.version})
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)    
-        
-        
+
     _order = 'id asc'
 update_to_send()
 
