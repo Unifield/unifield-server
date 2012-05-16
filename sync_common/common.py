@@ -241,7 +241,7 @@ class check_common(osv.osv):
         error = False
         message = "* Forced values syntax... "
         try:
-            forced_value = eval(rec.forced_values or '1')
+            forced_value = eval(rec.forced_values or '{}')
             if not isinstance(forced_value, dict): raise TypeError
         except TypeError:
             message += "failed (Forced values should be a dictionnary)!\n"
@@ -260,7 +260,7 @@ class check_common(osv.osv):
         error = False
         message = "* Fallback values syntax... "
         try:
-            fallback_value = eval(rec.fallback_values or '1')
+            fallback_value = eval(rec.fallback_values or '{}')
             if not isinstance(fallback_value, dict): raise TypeError
         except TypeError:
             message += "failed (Fallback values should be a dictionnary)!\n"

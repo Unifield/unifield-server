@@ -22,7 +22,7 @@
 from osv import osv
 from osv import fields
 import sync_common.common
-
+from tools.translate import _
 from datetime import datetime
 
 _field2type = {
@@ -59,7 +59,7 @@ class sync_rule(osv.osv):
         'name': fields.char('Rule Name', size=64, required = True),
         #'model_id': fields.char('Model', size=128, required = True),
         'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
-        'model_ref': fields.many2one('ir.model', 'Model', required = True),
+        'model_ref': fields.many2one('ir.model', 'Model'),
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
@@ -256,7 +256,8 @@ class sync_rule(osv.osv):
         return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
     
     def write(self, cr, uid, ids, values, context=None):
-        if 'included_fields_sel' in values:
+        if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
+            print values.get('included_fields_sel')
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
         
         if not isinstance(ids, (list, tuple)):
@@ -431,6 +432,7 @@ class message_rule(osv.osv):
         check_obj = self.pool.get('sync.check_common')
         for rec in self.browse(cr, uid, ids, context=context):
             # Check destination_name
+            message.append(_("* Destination Name... "))
             try:
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
                 if not field_ids: raise StandardError
@@ -449,7 +451,7 @@ class message_rule(osv.osv):
             call_tree = rec.remote_call.split('.')
             call_class = '.'.join(call_tree[:-1])
             call_funct = call_tree[-1]
-            message.append("* Remote call exists... ")
+            message.append(_("* Remote call exists... "))
             ##TODO doesn't work because sync_so needed but it needs sync_client to be installed
             obj = self.pool.get(call_class)
             if not obj:

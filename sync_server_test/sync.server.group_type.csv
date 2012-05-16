@@ -1,4 +1,4 @@
 "id","name"
-"type_sec_id","Section"
-"type_int_id","International"
-"type_co_id","Coordination"
+"sd.type_sec_id","Section"
+"sd.type_int_id","International"
+"sd.type_co_id","Coordination"

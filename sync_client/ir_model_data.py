@@ -281,8 +281,10 @@ def create(model,cr,uid,values,context=None):
     if not context:
         context = {}
     
+    link_ir_model_data = context.get('no_model_data_line')
+    context['no_model_data_line'] = False
     res_id = old_create(model,cr,uid,values,context=context)
-    if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(context.get('no_model_data_line'))):
+    if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(link_ir_model_data)):
         link_with_ir_model(model, cr, uid, res_id, context=context)
         modif_o2m(model,cr,uid,res_id,values,context=context)
     
@@ -296,8 +298,9 @@ def write(model,cr,uid,ids,values,context=None):
     if not context:
         context = {}
     
-    
-    if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(context.get('no_model_data_line'))):
+    link_ir_model_data = context.get('no_model_data_line')
+    context['no_model_data_line'] = False
+    if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(link_ir_model_data)):
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
         for id in ids:
@@ -330,6 +333,7 @@ def log_o2m_write(model, cr, uid, id, relation, parent_id, context=None):
             model.pool.get('sync.client.write_info').log_write(cr, uid, model._name, id, {key : parent_id}, context=context)
     
 def link_with_ir_model(model, cr, uid, id, context=None):
+    
     model.get_xml_id(cr, uid, [id], context={'sync' : True})
     model_data_pool = model.pool.get('ir.model.data')
     res_id = model_data_pool.get(cr, uid, model, id, context=context)

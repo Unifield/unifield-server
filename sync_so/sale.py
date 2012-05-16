@@ -114,6 +114,6 @@ class account_period_sync(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         print "generate xml name for period"
         period = self.browse(cr, uid, res_id)
-        return '/' + table_name + '/' + period.name
+        return period.fiscalyear_id.code + "/" + period.name + "_" + period.date_start
     
 account_period_sync()
