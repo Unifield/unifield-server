@@ -190,6 +190,8 @@ class stock_picking(osv.osv):
                             vals.update({'cross_docking_ok': True,})
                         elif move.move_cross_docking_ok == False:
                             vals.update({'cross_docking_ok': False,})
+        # we check availability
+        self.action_assign(cr, uid, ids)
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
     def button_cross_docking_all (self, cr, uid, ids, context=None):
@@ -356,7 +358,12 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        return self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+        ret = self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+        # check availability
+        self.check_assign(cr, uid, ids, context=context)
+        return ret
+    
+    
 
     def button_stock (self, cr, uid, ids, context=None):
         """
@@ -369,6 +376,8 @@ class stock_move(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         for sm in self.browse(cr, uid, ids):
             self.write(cr, uid, sm.id, {'location_id': sm.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+        # check availability
+        self.check_assign(cr, uid, ids, context=context)
         return True
     
 stock_move()
