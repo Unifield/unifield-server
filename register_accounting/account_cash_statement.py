@@ -171,7 +171,7 @@ class account_cash_statement(osv.osv):
         return res
 
     _columns = {
-            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
+            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
             'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
