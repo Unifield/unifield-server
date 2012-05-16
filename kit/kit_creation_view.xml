@@ -208,7 +208,7 @@
 			<field name="res_model">kit.creation</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
-			<field name="domain">[('composition_product_id', '=', active_id)]</field>
+			<field name="domain">[('product_id_kit_creation', '=', active_id)]</field>
 			<field name="context">{}</field>
 			<field name="search_view_id" ref="view_kit_creation_filter" />
 		</record>
