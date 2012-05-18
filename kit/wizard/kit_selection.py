@@ -164,7 +164,9 @@ class kit_selection(osv.osv_memory):
                             'company_id': pol.company_id.id,
                             'state': pol.state,
                             }
-                new_id = pol_obj.create(cr, uid, p_values, context=context)
+                # copy the original purchase order line
+                new_id = pol_obj.copy(cr, uid, pol_id, p_values, context=context)
+#                new_id = pol_obj.create(cr, uid, p_values, context=context)
                 
         # delete the pol
         pol_obj.unlink(cr, uid, [pol_id], context=context)
