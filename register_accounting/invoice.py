@@ -148,15 +148,15 @@ class account_invoice(osv.osv):
                     debit = el[1]
                 vals.update({
                     'account_id': dp_account and dp_account[0] or False,
-                    'debit': debit,
-                    'credit': credit,
+                    'debit_currency': debit,
+                    'credit_currency': credit,
                 })
                 dp_counterpart_id = self.pool.get('account.move.line').create(cr, uid, vals)
                 # create supplier line
                 vals.update({
                     'account_id': inv.account_id.id,
-                    'debit': credit, # opposite of dp counterpart line
-                    'credit': debit, # opposite of dp counterpart line
+                    'debit_currency': credit, # opposite of dp counterpart line
+                    'credit_currency': debit, # opposite of dp counterpart line
                 })
                 supplier_line_id = self.pool.get('account.move.line').create(cr, uid, vals)
                 # post move
