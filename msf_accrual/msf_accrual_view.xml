@@ -28,7 +28,7 @@
 	                        <field name="accrual_amount" colspan="2"/>
 	                        <field name="currency_id" colspan="2"/>
                             <newline/>
-                            <field name="state" colspan="2"/>
+                            <field name="state" colspan="2" readonly="1"/>
                             <button name="button_cancel" string="Cancel" states="posted" type="object" icon="gtk-cancel"/>
                         </group>
                     </form>
