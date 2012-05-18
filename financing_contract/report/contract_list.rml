@@ -184,11 +184,11 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable style="Table10">
+    <blockTable>
       <tr>
         <td>
           <para style="P20">[[ repeatIn(get_contract_list(),'line') ]]</para>
-          <blockTable colWidths="50.0,62.0,50.0,50.0,100.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0" style="Table12">
+          <blockTable colWidths="50.0,62.0,50.0,50.0,100.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0" style="Table10">
             <tr>
               <td>
                 <para style="P3">[[ line['code'] ]]</para>
