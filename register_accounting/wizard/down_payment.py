@@ -35,6 +35,7 @@ class wizard_down_payment(osv.osv_memory):
             states={'draft': [('readonly', False), ('required', True)]}),
         'state': fields.selection([('draft', 'Draft'), ('closed', 'Closed')], string="State", required=True),
         'currency_id': fields.many2one('res.currency', string="Register line currency", required=True, readonly=True),
+        'partner_id': fields.many2one('res.partner', string="Register line 3rd party", required=True, readonly=True),
     }
 
     _defaults = {

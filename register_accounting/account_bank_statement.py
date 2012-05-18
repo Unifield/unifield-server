@@ -1547,6 +1547,8 @@ class account_bank_statement_line(osv.osv):
             vals.update({'state': 'draft'})
         if register_line and register_line.currency_id:
             vals.update({'currency_id': register_line.currency_id.id})
+        if register_line and register_line.partner_id:
+            vals.update({'partner_id': register_line.partner_id.id})
         wiz_id = self.pool.get('wizard.down.payment').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({
