@@ -760,6 +760,7 @@ class account_bank_statement_line(osv.osv):
     _defaults = {
         'from_cash_return': lambda *a: 0,
         'direct_invoice': lambda *a: 0,
+        'transfer_amount': lambda *a: 0,
     }
 
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
@@ -1354,8 +1355,10 @@ class account_bank_statement_line(osv.osv):
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
-                if absl.is_transfer_with_change and not absl.transfer_amount and not absl.transfer_currency:
-                    raise osv.except_osv(_('Error'), _('Transfer amount and transfer currency is missing!'))
+                if absl.is_transfer_with_change and not absl.transfer_currency:
+                    if not absl.transfer_journal_id:
+                        raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
+                    self.write(cr, uid, [absl.id], {'transfer_currency': absl.transfer_journal_id.currency.id})
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard
