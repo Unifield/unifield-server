@@ -129,7 +129,6 @@ class account_invoice(osv.osv):
                     'journal_id': inv.journal_id.id,
                     'period_id': inv.period_id.id,
                     'date': inv.date_invoice,
-                    'name': 'Down payment to supplier' + inv.partner_id.name or '',
                     'partner_id': inv.partner_id.id,
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, vals)
@@ -138,6 +137,7 @@ class account_invoice(osv.osv):
                     'move_id': move_id,
                     'partner_type_mandatory': True,
                     'currency_id': inv.currency_id.id,
+                    'name': 'Down payment for ' + ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids]),
                 })
                 # create dp counterpart line
                 dp_account = self.pool.get('account.move.line').read(cr, uid, el[0], ['account_id']).get('account_id', False)
