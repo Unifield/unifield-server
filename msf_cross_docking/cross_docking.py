@@ -190,8 +190,6 @@ class stock_picking(osv.osv):
                             vals.update({'cross_docking_ok': True,})
                         elif move.move_cross_docking_ok == False:
                             vals.update({'cross_docking_ok': False,})
-        # we check availability
-        self.action_assign(cr, uid, ids)
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
     def button_cross_docking_all (self, cr, uid, ids, context=None):
@@ -216,6 +214,9 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
+        # we check availability : cancel then check
+        self.cancel_assign(cr, uid, ids)
+        self.action_assign(cr, uid, ids)
         return False
 
     def button_stock_all (self, cr, uid, ids, context=None):
@@ -239,6 +240,9 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
+        # we check availability : cancel then check
+        self.cancel_assign(cr, uid, ids)
+        self.action_assign(cr, uid, ids)
         return False
 
     def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -359,8 +363,12 @@ class stock_move(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         ret = self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
-        # check availability
-        self.check_assign(cr, uid, ids, context=context)
+        # below we cancel availability to recheck it
+        stock_picking_id = self.read(cr, uid, ids, ['picking_id'], context=context)[0]['picking_id'][0]
+        # we cancel availability
+        self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
+        # we recheck availability
+        self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
         return ret
     
     
@@ -376,8 +384,12 @@ class stock_move(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         for sm in self.browse(cr, uid, ids):
             self.write(cr, uid, sm.id, {'location_id': sm.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
-        # check availability
-        self.check_assign(cr, uid, ids, context=context)
+        # below we cancel availability to recheck it
+        stock_picking_id = self.read(cr, uid, ids, ['picking_id'], context=context)[0]['picking_id'][0]
+        # we cancel availability
+        self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
+        # we recheck availability
+        self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
         return True
     
 stock_move()
