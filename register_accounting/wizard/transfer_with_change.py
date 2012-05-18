@@ -106,9 +106,6 @@ class wizard_transfer_with_change(osv.osv_memory):
                 elif wiz.type == 'from':
                     amount = wiz.amount_from
                 vals.update({'transfer_amount': amount})
-            # Take currency from account_bank_statement_line transfer_journal_id field
-            if wiz.absl_id and wiz.absl_id.transfer_journal_id:
-                vals.update({'transfer_currency': wiz.absl_id.transfer_journal_id.currency.id})
             if vals and wiz.absl_id:
                 self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.absl_id.id], vals, context=context)
         # Close wizard
