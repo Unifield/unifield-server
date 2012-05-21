@@ -314,6 +314,8 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
 
     _columns = {
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     _defaults = {
@@ -538,7 +540,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 }
                                 # Add cost_center_id value if we come from a funding_pool object
                                 if line_type == 'funding.pool':
-                                    vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False})
+                                    vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False, 
+                                        'destination_id': line.destination_id and line.destination_id.id or False,})
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
@@ -703,7 +706,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             }
             # Add cost_center_id field if we come from a funding.pool object
             if line_type == 'funding.pool':
-                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False})
+                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, 
+                    'destination_id': x.destination_id and x.destination_id.id or False,})
             db_lines.append(db_lines_vals)
         
         # Search wizard lines
@@ -718,7 +722,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             }
             # Add cost_center_id field if we come from a funding_pool object
             if line_type == 'funding.pool':
-                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,})
+                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,
+                    'destination_id': x.destination_id and x.destination_id.id or False,})
             wiz_lines.append(wiz_lines_vals)
         
         processed_line_ids = []
@@ -740,6 +745,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_id': distrib.id,
                     'currency_id': wizard.currency_id and wizard.currency_id.id,
                     'cost_center_id': line.get('cost_center_id') or False,
+                    'destination_id': line.get('destination_id') or False,
                 }
                 new_line = line_obj.create(cr, uid, vals, context=context)
                 processed_line_ids.append(new_line)

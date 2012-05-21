@@ -121,6 +121,7 @@ class funding_pool_distribution_line(osv.osv):
     _inherit = "distribution.line"
     _columns = {
         "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account'),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
     }
     
 funding_pool_distribution_line()
@@ -324,7 +325,8 @@ class analytic_distribution(osv.osv):
                     })
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':
-                        vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                        vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False, 
+                            'destination_id': distrib_line.destination_id and distrib_line.destination_id.id or False,})
                     # create analytic line
                     al_id = self.pool.get('account.analytic.line').create(cr, uid, vals, context=context)
                     res.append(al_id)
