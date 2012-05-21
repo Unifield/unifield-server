@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-    
+
     <!-- WARNING: These IDs are used in analytic_distribution module, in analytic_account.py in order to disallow there deletion. -->
         <record id="analytic_account_project" model="account.analytic.account">
             <field name="name">OC</field>
@@ -20,7 +20,7 @@
             <field name="parent_id" ref="analytic_account_project" />
             <field name="for_fx_gain_loss" eval="True"/>
         </record>
-    
+        
         <record id="analytic_account_funding_pool" model="account.analytic.account">
             <field name="name">Funding Pool</field>
             <field name="code">FUNDING</field>
@@ -28,7 +28,7 @@
             <field name="active">True</field>
             <field name="category">FUNDING</field>
         </record>
-    
+        
         <record id="analytic_account_free_1" model="account.analytic.account">
             <field name="name">Free 1</field>
             <field name="code">FREE1</field>
@@ -36,7 +36,7 @@
             <field name="active">True</field>
             <field name="category">FREE1</field>
         </record>
-    
+        
         <record id="analytic_account_free_2" model="account.analytic.account">
             <field name="name">Free 2</field>
             <field name="code">FREE2</field>
@@ -44,7 +44,7 @@
             <field name="active">True</field>
             <field name="category">FREE2</field>
         </record>
-    
+        
         <record id="analytic_account_msf_private_funds" model="account.analytic.account">
             <field name="name">MSF Private Funds</field>
             <field name="code">PF</field>
@@ -52,6 +52,50 @@
             <field name="active">True</field>
             <field name="category">FUNDING</field>
             <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+        </record>
+        
+        <record id="analytic_account_destination" model="account.analytic.account">
+            <field name="name">Destination</field>
+            <field name="code">DEST</field>
+            <field name="type">view</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+        </record>
+        
+        <record id="analytic_account_destination_operation" model="account.analytic.account">
+            <field name="name">Operations</field>
+            <field name="code">OP</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+        </record>
+        
+        <record id="analytic_account_destination_support" model="account.analytic.account">
+            <field name="name">Support</field>
+            <field name="code">SUP</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+        </record>
+        
+        <record id="analytic_account_destination_national_staff" model="account.analytic.account">
+            <field name="name">National Staff</field>
+            <field name="code">NATSTAFF</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+        </record>
+        
+        <record id="analytic_account_destination_expatriates" model="account.analytic.account">
+            <field name="name">Expatriates</field>
+            <field name="code">EXPAT</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
         </record>
     <!-- END OF WARNING -->
 
