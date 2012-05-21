@@ -72,7 +72,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", 
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True, 
                                        domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]",
                                        help='The location where the products will be received.'),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char',

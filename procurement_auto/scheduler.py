@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from datetime import datetime
 from tools.translate import _
 
@@ -53,6 +53,8 @@ class procurement_order(osv.osv):
         report_except = 0
         
         # Cache for product/location
+        # TODO : To confirm by Magali, cache system is very strange
+        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
         cache = {}
         
         # We start with only category Automatic Supply
@@ -64,16 +66,23 @@ class procurement_order(osv.osv):
             else:
                 location_id = auto_sup.location_id.id
                
+            # We create a procurement order for each line of the rule
             for line in auto_sup.line_ids:
                 proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
                                                  line.product_uom_id.id, line.product_qty,
                                                  location_id, cache=cache, context=context)
+                # If a procurement has been created, add it to the list
                 if proc_id:
                     created_proc.append(proc_id)
             
+            # Update the frequence to save the date of the last run
             if auto_sup.frequence_id:
                 freq_obj.write(cr, uid, auto_sup.frequence_id.id, {'last_run': datetime.now()})
 
+
+        ###
+        # Add created document and exception in a request
+        ###
         created_doc = '''################################
 Created documents : \n'''
                     
@@ -102,7 +111,7 @@ Created documents : \n'''
             self.pool.get('procurement.batch.cron').write(cr, uid, batch_id, {'last_run_on': time.strftime('%Y-%m-%d %H:%M:%S')})
             old_request = request_obj.search(cr, uid, [('batch_id', '=', batch_id), ('name', '=', 'Procurement Processing Report (Automatic supplies).')])
             request_obj.write(cr, uid, old_request, {'batch_id': False})
-        req_id = request_obj.create(cr, uid,
+        request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report (Automatic supplies).",
                  'act_from': uid,
                  'act_to': uid,
@@ -126,16 +135,20 @@ Created documents : \n'''
         proc_obj = self.pool.get('procurement.order')
         auto_sup_obj = self.pool.get('stock.warehouse.automatic.supply')
         wf_service = netsvc.LocalService("workflow")
-        report = []
         proc_id = False
+        # TODO : To confirm by Magali, cache system is very strange
         if cache is None:
             cache = {}
         
         # Enter the stock location in cache to know which products has been already replenish for this location
+        # TODO : To confirm by Magali, cache system is very strange
+        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
         if not cache.get(location_id, False):
             cache.update({location_id: []})
-            
-        if product_id.id not in cache.get(location_id):
+        
+        # TODO : To confirm by Magali, cache system is very strange
+        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
+        if product_id and product_id.id not in cache.get(location_id):
             newdate = datetime.today()
             proc_id = proc_obj.create(cr, uid, {
                                         'name': _('Automatic Supply: %s') % (auto_sup.name,),
@@ -152,6 +165,8 @@ Created documents : \n'''
             auto_sup_obj.write(cr, uid, [auto_sup.id], {'procurement_id': proc_id}, context=context)
             
             # Fill the cache
+            # TODO : To confirm by Magali, cache system is very strange
+            # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
             cache.get(location_id).append(product_id.id)
         
         return proc_id
