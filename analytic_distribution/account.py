@@ -28,10 +28,23 @@ class account_account(osv.osv):
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
-        'default_destination_analytic_account': fields.many2one('account.analytic.account', 'Default Destination', required=True),
+        'default_destination_analytic_account': fields.many2one('account.analytic.account', 'Default Destination'),
         'destination_ids': fields.many2many('account.analytic.account', 'destination_associated_accounts', 'account_id', 'destination_id', 'Destinations'),
     }
-    
-account_account()
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Default destination analytic account is mandatory for expense account !
+        """
+        expense_type_ids = False
+        if vals.get('user_type', False):
+            expense_type_ids = self.pool.get('account.account.type').search(cr, uid, [('code', '=', 'expense')])
+        for a in self.browse(cr, uid, ids):
+            if a.user_type_code == 'expense' or (vals.get('user_type', False) and vals.get('user_type') in expense_type_ids):
+                if vals.get('default_destination_analytic_account', False) or a.default_destination_analytic_account:
+                    continue
+                raise osv.except_osv(_('Warning'), _('Default destination is mandatory for expense accounts!'))
+        return super(account_account, self).write(cr, uid, ids, vals, context)
+
+account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
