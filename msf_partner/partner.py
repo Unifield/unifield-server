@@ -111,9 +111,9 @@ class res_partner(osv.osv):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
             if msf_customer:
-                res['property_stock_customer'] = msf_customer
+                res['property_stock_customer'] = msf_customer[0]
             if msf_supplier:
-                res['property_stock_supplier'] = msf_supplier
+                res['property_stock_supplier'] = msf_supplier[0]
 
         return res
     
