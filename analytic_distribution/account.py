@@ -28,6 +28,8 @@ class account_account(osv.osv):
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
+        'default_destination_analytic_account': fields.many2one('account.analytic.account', 'Default Destination', required=True),
+        'destination_ids': fields.many2many('account.analytic.account', 'destination_associated_accounts', 'account_id', 'destination_id', 'Destinations'),
     }
     
 account_account()

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_account_form" model="ir.ui.view">
+            <field name="name">account.form</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='General Information']" position="after">
+                        <page string="Analytical Destination">
+                            <field name="default_destination_analytic_account" colspan="2"/>
+                            <label string="" colspan="2"/>
+                            <field name="destination_ids" nolabel="1" colspan="4">
+                                <tree string="Destinations">
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="date_start"/>
+                                    <field name="date"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>
