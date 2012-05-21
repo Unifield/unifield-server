@@ -107,19 +107,21 @@ class stock_move(osv.osv):
                         procurement_id = obj.purchase_line_id.procurement_id.id
                         # find the corresponding sale order line
                         so_line_ids = so_line_obj.search(cr, uid, [('procurement_id', '=', procurement_id)], context=context)
-                        assert len(so_line_ids) == 1, 'number of so line is wrong - 1 - %s'%len(so_line_ids)
-                        # find the corresponding OUT move
-                        # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
-                        move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
-                        # list of matching out moves
-                        integrity_check = []
-                        for move in self.browse(cr, uid, move_ids, context=context):
-                            # move from draft picking or standard picking
-                            if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
-                                integrity_check.append(move.id)
-                        # return the first one matching
-                        if integrity_check:
-                            res[obj.id] = integrity_check[0]
+                        # if the procurement comes from replenishment rules, there will be a procurement, but no associated sale order line
+                        # we therefore do not raise an exception, but handle the case only if sale order lines are found
+                        if so_line_ids:
+                            # find the corresponding OUT move
+                            # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                            move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                            # list of matching out moves
+                            integrity_check = []
+                            for move in self.browse(cr, uid, move_ids, context=context):
+                                # move from draft picking or standard picking
+                                if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
+                                    integrity_check.append(move.id)
+                            # return the first one matching
+                            if integrity_check:
+                                res[obj.id] = integrity_check[0]
             else:
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'

@@ -39,6 +39,7 @@
         "wizard/split_order_line_view.xml",
         "sale_sequence.xml",
         "report/sale_report_view.xml",
+        'process/sale_process.xml',
     ],
     "demo_xml": [
     ],
