@@ -19,10 +19,11 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from datetime import datetime
 from tools.translate import _
-from mx.DateTime import *
+from mx.DateTime import RelativeDate
+from mx.DateTime import now
 
 import time
 import pooler
@@ -40,7 +41,6 @@ class procurement_order(osv.osv):
         '''
         if use_new_cursor:
             cr = pooler.get_db(use_new_cursor).cursor()
-        wf_service = netsvc.LocalService("workflow")
             
         request_obj = self.pool.get('res.request')
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
@@ -59,7 +59,6 @@ class procurement_order(osv.osv):
         
         # Cache for product/location
         cache = {}
-
         
         # We start with only category Automatic Supply
         for cycle in cycle_obj.browse(cr, uid, cycle_ids):
@@ -122,7 +121,7 @@ Created documents : \n'''
             old_request = request_obj.search(cr, uid, [('batch_id', '=', batch_id), ('name', '=', 'Procurement Processing Report (Order cycle).')])
             request_obj.write(cr, uid, old_request, {'batch_id': False})
         
-        req_id = request_obj.create(cr, uid,
+        request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report (Order cycle).",
                  'act_from': uid,
                  'act_to': uid,

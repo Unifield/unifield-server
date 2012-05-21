@@ -11,8 +11,6 @@
                     <group colspan="2" col="2">
                         <separator string="General Information" />
                         <field name="name" />
-                        <field name="sequence" />
-                        <field name="product_id" invisible='1'/>
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Locations" />
@@ -92,8 +90,6 @@
 
                     <group colspan="4" col="4" >
                         <separator colspan="4" string="Products that will be included in the current policy" />
-                        <!-- <field name="product_ids" nolabel="1" colspan="4" domain="[('fnct_categ_id', '=', category_id)]"/>
-                         -->
                         <field name="product_ids" nolabel="1" colspan="4" 
                         domain="[('list_ids', '=', parent.sublist_id)]"
                         />
@@ -107,15 +103,26 @@
             <field name="model">stock.warehouse.order.cycle</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Order Cycle">
-                    <field name="sequence" select="1"/>
+                <tree string="Order Cycle rules">
                     <field name="name" />
-                    <field name="product_id" invisible='1'/>
                     <field name="warehouse_id" />
                     <field name="location_id" />
                     <field name="frequence_id" />
                 </tree>
             </field>
+        </record>
+        
+        <record id="order_cycle_search_view" model="ir.ui.view">
+        	<field name="name">order.cycle.search.view</field>
+        	<field name="model">stock.warehouse.order.cycle</field>
+        	<field name="type">search</field>
+        	<field name="arch" type="xml">
+        		<search string="Order cycle rules">
+        			<field name="name" />
+        			<field name="warehouse_id" widget="selection" />
+        			<field name="location_id" widget="selection" domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]" />
+        		</search>
+        	</field>
         </record>
         
         <record id="action_order_cycle_tree" model="ir.actions.act_window">

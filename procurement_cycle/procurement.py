@@ -21,15 +21,17 @@
 
 from osv import osv, fields
 
-import time
 from tools.translate import _
+from mx.DateTime import DateFrom
+from mx.DateTime import RelativeDate
+from mx.DateTime import now
 
-from mx.DateTime import *
+import time
 
 class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
     _description = 'Order Cycle'
-    _order = 'sequence, id'
+    _order = 'name, id'
 
     def create(self, cr, uid, data, context=None):
         '''
@@ -84,30 +86,38 @@ class stock_warehouse_order_cycle(osv.osv):
         return res
     
     _columns = {
-        'sequence': fields.integer(string='Order', required=True, help='A higher order value means a low priority'),
-        'name': fields.char(size=64, string='Name', required=True),
-        'category_id': fields.many2one('product.category', string='Category'),
-        'product_id': fields.many2one('product.product', string='Specific product'),
+        'name': fields.char(size=64, string='Name', required=True, help='Reference of the order cycle rule'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", domain="[('usage', '=', 'internal')]"),
-        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
-        'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
-        'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products"),
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", domain="[('usage', '=', 'internal')]",
+                                       help='Location where products will be received'),
+        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char', 
+                                          help='Define the time between two replenishments'),
+        'frequence_id': fields.many2one('stock.frequence', string='Frequency', help='It\'s the time between two replenishments'),
+        'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products",),
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
         # Parameters for quantity calculation
         'leadtime': fields.float(digits=(16,2), string='Delivery lead time to consider', help='Delivery lead time in month'),
-        'order_coverage': fields.float(digits=(16,2), string='Order coverage'),
-        'safety_stock_time': fields.float(digits=(16,2), string='Safety stock in time'),
-        'safety_stock': fields.integer(string='Safety stock (quantity'),
-        'past_consumption': fields.boolean(string='Average monthly consumption'),
+        'order_coverage': fields.float(digits=(16,2), string='Order coverage', help='In months. \
+Define the time between two replenishments. \
+Time used to compute the quantity of products to order according to the monthly consumption.'),
+        'safety_stock_time': fields.float(digits=(16,2), string='Safety stock in time', help='In months. \
+Define the time while the stock is not negative but should be replenished. \
+Time used to compute the quantity of products to order according to the monthly consumption.'),
+        'safety_stock': fields.integer(string='Safety stock (quantity)', help='In product UoM. \
+Minimal quantity below the stock quantity is not critical.'),
+        'past_consumption': fields.boolean(string='Average monthly consumption', 
+                                           help='If checked, the system will used the average monthly consumption to compute the quantity to order'),
         'consumption_period_from': fields.date(string='Period of calculation', 
                                              help='This period is a number of past months the system has to consider for AMC calculation.'\
                                              'By default this value is equal to the order coverage of the rule.'),
         'consumption_period_to': fields.date(string='-'),
-        'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption'),
-        'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption'),
+        'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption', 
+                                               help='If checked, the system will used the forecasted monthly consumption to compute the quantity to order'),
+        'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption',
+                                           help='If checked, the system will used the entered monthly consumption to compute the quantity to order'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
+                                    help='As this date is not in the past, no new replenishment will be run', 
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context=None: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
@@ -118,7 +128,6 @@ class stock_warehouse_order_cycle(osv.osv):
     }
     
     _defaults = {
-        'sequence': lambda *a: 10,
         'past_consumption': lambda *a: 1,
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.order.cycle') or '',
@@ -158,17 +167,19 @@ class stock_warehouse_order_cycle(osv.osv):
         if from_date and to_date and from_date > to_date:
             warn = {'title': 'Issue on date',
                     'message': 'The start date must be younger than end date'}
-            
+
+        # Set the from date to the first day of the month            
         if from_date:
             val.update({'consumption_period_from': (DateFrom(from_date) + RelativeDate(day=1)).strftime('%Y-%m-%d')})
             
+        # Set the to date to the last day of the month
         if to_date:
             val.update({'consumption_period_to': (DateFrom(to_date) + RelativeDate(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
         
         return {'value': val, 'warning': warn}
 
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+    def onChangeSearchNomenclature(self, cr, uid, ids, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
 
     def fill_lines(self, cr, uid, ids, context=None):
         '''
@@ -207,8 +218,8 @@ class stock_warehouse_order_cycle(osv.osv):
         
         return True
 
-    def get_nomen(self, cr, uid, id, field):
-        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+    def get_nomen(self, cr, uid, ids, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, ids, field, context={'withnum': 1})
 
     def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, order_coverage, field='past'):
         '''
@@ -295,6 +306,9 @@ class stock_warehouse_order_cycle(osv.osv):
         return {}
     
     def unlink(self, cr, uid, ids, context=None):
+        '''
+        When remove an order cycle rule, delete the attached frequency
+        '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         freq_ids = []
@@ -305,7 +319,10 @@ class stock_warehouse_order_cycle(osv.osv):
             self.pool.get('stock.frequence').unlink(cr, uid, freq_ids, context)
         return super(stock_warehouse_order_cycle, self).unlink(cr, uid, ids, context=context)
     
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, ids, default=None, context=None):
+        '''
+        When duplicate an order cycle rule, duplicate the frequency
+        '''
         if not default:
             default = {}
         obj = self.read(cr, uid, id, ['frequence_id'])
@@ -315,7 +332,7 @@ class stock_warehouse_order_cycle(osv.osv):
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.order.cycle') or '',
         })
-        return super(stock_warehouse_order_cycle, self).copy(cr, uid, id, default, context=context)
+        return super(stock_warehouse_order_cycle, self).copy(cr, uid, ids, default, context=context)
     
 stock_warehouse_order_cycle()
 
@@ -327,11 +344,14 @@ class stock_frequence(osv.osv):
         'order_cycle_ids': fields.one2many('stock.warehouse.order.cycle', 'frequence_id', string='Order Cycle'),
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, ids, default=None, context=None):
+        '''
+        When the frequence is duplicate, remove the attached order cycle rules
+        '''
         if not default:
             default = {}
         default['order_cycle_ids'] = False
-        return super(stock_frequence, self).copy(cr, uid, id, default, context)
+        return super(stock_frequence, self).copy(cr, uid, ids, default, context)
 
     def choose_frequency(self, cr, uid, ids, context=None):
         '''

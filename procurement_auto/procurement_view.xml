@@ -11,7 +11,6 @@
                     <group colspan="2" col="2">
                         <separator string="General Information" />
                         <field name="name" />
-                        <!-- <field name="sequence" /> -->
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Locations" />
@@ -80,7 +79,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Automatic Supply rules">
-                    <!-- <field name="sequence" select="1"/> -->
                     <field name="name" />
                     <field name="warehouse_id" />
                     <field name="location_id" />
