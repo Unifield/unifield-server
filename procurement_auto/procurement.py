@@ -72,7 +72,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]"),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
         'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products"),
@@ -93,8 +93,30 @@ class stock_warehouse_automatic_supply(osv.osv):
         'sequence': lambda *a: 10,
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.automatic.supply') or '',
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=c)
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(stock_warehouse_automatic_supply, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
     
     def choose_change_frequence(self, cr, uid, ids, context=None):
         '''

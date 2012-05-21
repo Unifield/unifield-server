@@ -199,6 +199,29 @@ class stock_warehouse_orderpoint(osv.osv):
          'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
     }
     
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(stock_warehouse_orderpoint, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
+    
     def create(self, cr, uid, vals, context=None):
         '''
         add message

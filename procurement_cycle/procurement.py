@@ -122,9 +122,31 @@ class stock_warehouse_order_cycle(osv.osv):
         'past_consumption': lambda *a: 1,
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.order.cycle') or '',
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.order.cycle', context=c),
         'order_coverage': lambda *a: 3,
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(stock_warehouse_order_cycle, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
     
     def on_change_period(self, cr, uid, ids, from_date, to_date):
         '''
