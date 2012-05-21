@@ -49,7 +49,8 @@ class msf_budget(osv.osv):
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal Year', required=True),
         'state': fields.selection([('draft','Draft'),('valid','Validated'),('done','Done')], 'State', select=True, required=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC'), ('type', '=', 'normal')], required=True),
-        'decision_moment': fields.char('Decision Moment', size=32),
+        'decision_moment_id': fields.many2one('msf.budget.decision.moment', 'Decision Moment', required=True),
+        'decision_moment_order': fields.related('decision_moment_id', 'order', string="Decision Moment Order", readonly=True, store=True, type="integer"),
         'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'display_type': fields.selection([('all', 'All lines'), ('view', 'View lines only')], string="Display type"),
@@ -63,6 +64,8 @@ class msf_budget(osv.osv):
         'display_type': 'all',
         'type': 'normal',
     }
+
+    _order = 'decision_moment_order desc, version, code'
     
     def create(self, cr, uid, vals, context=None):
         res = super(msf_budget, self).create(cr, uid, vals, context=context)
@@ -73,7 +76,8 @@ class msf_budget(osv.osv):
             parent_budget_ids = self.search(cr,
                                             uid,
                                             [('fiscalyear_id','=',budget.fiscalyear_id.id),
-                                             ('cost_center_id','=',parent_cost_center.id)])
+                                             ('cost_center_id','=',parent_cost_center.id),
+                                             ('decision_moment_id','=',budget.decision_moment_id.id)])
             if len(parent_budget_ids) == 0:
                 parent_budget_id = self.create(cr,
                                                uid,
@@ -81,6 +85,7 @@ class msf_budget(osv.osv):
                                                 'code': "BU" + budget.fiscalyear_id.code[4:6] + " - " + parent_cost_center.code,
                                                 'fiscalyear_id': budget.fiscalyear_id.id,
                                                 'cost_center_id': budget.cost_center_id.parent_id.id,
+                                                'decision_moment_id': budget.decision_moment_id.id,
                                                 'type': 'view'}, context=context)
                 # Create all lines for all accounts (no budget values, those are retrieved)
                 expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
@@ -120,7 +125,7 @@ class msf_budget(osv.osv):
                 cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                         AND cost_center_id = %s \
                                                         AND state != 'draft' \
-                                                        ORDER BY version DESC LIMIT 1",
+                                                        ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
                                                         (fiscalyear_id,
                                                          cost_center_ids[0]))
                 if cr.rowcount:

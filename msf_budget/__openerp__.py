@@ -34,6 +34,7 @@
         'msf_budget_report.xml',
         'msf_budget_view.xml',
         'msf_budget_workflow.xml',
+        'data/msf_budget_decision_moment_data.xml',
         'wizard/wizard_budget_criteria_export_view.xml'
     ],
     'test': [
