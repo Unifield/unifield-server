@@ -249,6 +249,7 @@ class sale_order_line(osv.osv):
         if default is None:
             default = {}
         # Copy analytic distribution
+        # TODO: copy distrib if line split
         if 'analytic_distribution_id' not in default:
             default['analytic_distribution_id'] = False
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context)
