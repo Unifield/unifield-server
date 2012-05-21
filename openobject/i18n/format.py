@@ -294,7 +294,7 @@ def format_decimal(value, digits=2):
     locale = get_locale()
     v = ("%%.%df" % digits) % value
     if not digits:
-        return numbers.format_number(value, locale=locale)
+        return numbers.format_number(int(round(value)), locale=locale)
     num, decimals = v.split(".", 1)
 
     if num == "-0":
