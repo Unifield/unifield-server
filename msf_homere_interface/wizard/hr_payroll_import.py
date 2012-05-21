@@ -124,18 +124,23 @@ class hr_payroll_import(osv.osv_memory):
         is_payroll_rounding = False
         if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE':
             is_payroll_rounding = True
+        # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
+        is_counterpart = False
+        if third and third[0] and third[0] != '':
+            is_counterpart = True
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
             if second_description and second_description[0] and not is_payroll_rounding:
-                # fetch employee ID
-                employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-                employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
-                employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
-                if not employee_ids:
-                    raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
-                if len(employee_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
-                employee_id = employee_ids[0]
+                if not is_counterpart:
+                    # fetch employee ID
+                    employee_identification_id = ustr(second_description[0]).split(' ')[-1]
+                    employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
+                    if not employee_ids:
+                        employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
+                        raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
+                    if len(employee_ids) > 1:
+                        raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
+                    employee_id = employee_ids[0]
                 # Create description
                 name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], '%d/%m/%Y')))
                 # Create reference

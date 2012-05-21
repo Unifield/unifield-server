@@ -33,7 +33,7 @@ class account_move_line_activable(osv.osv):
             if vals['date'] < account.activation_date \
             or (account.inactivation_date != False and \
                 vals['date'] >= account.inactivation_date):
-                raise osv.except_osv(_('Error !'), _('The account selected is not active.'))
+                raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
         return super(account_move_line_activable, self)._check_date(cr, uid, vals, context, check)
 
 account_move_line_activable()
