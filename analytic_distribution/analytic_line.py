@@ -36,6 +36,7 @@ class analytic_line(osv.osv):
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
         'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination"),
     }
 
     _defaults = {

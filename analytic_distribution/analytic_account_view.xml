@@ -120,11 +120,11 @@
                         <field name="code"/>
                         <field name="description"/>
                         <field name="category"/>
-	                    <field name="type"/>
-	                    <field name="date_start"/>
-	                    <field name="date"/>
+                        <field name="type"/>
+                        <field name="date_start"/>
+                        <field name="date"/>
                         <field name="parent_id" invisible="1"/>
-	                </tree>
+                    </tree>
                 </tree>
             </field>
         </record>

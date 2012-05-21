@@ -48,6 +48,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree/field[@name='account_id']" position='before'>
+                        <field name="destination_id" string="Destination" invisible="not context.get('display_fp', False)"/>
                         <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     </xpath>
                 </data>
