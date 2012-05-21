@@ -27,7 +27,7 @@ from tools.translate import _
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'
-    _order = 'sequence, id'
+    _order = 'name, id'
     
     def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context=None):
         '''
@@ -72,7 +72,9 @@ class stock_warehouse_automatic_supply(osv.osv):
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]"),
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", 
+                                       domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]",
+                                       help='The location where the products will be received.'),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
         'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products"),
