@@ -79,7 +79,7 @@
             <field name="model">stock.warehouse.automatic.supply</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Automatic Supply">
+                <tree string="Automatic Supply rules">
                     <!-- <field name="sequence" select="1"/> -->
                     <field name="name" />
                     <field name="warehouse_id" />
@@ -87,6 +87,19 @@
                     <field name="frequence_id" />
                 </tree>
             </field>
+        </record>
+        
+        <record id="automatic_supply_search_view" model="ir.ui.view">
+        	<field name="name">automatic.supply.search.view</field>
+        	<field name="model">stock.warehouse.automatic.supply</field>
+        	<field name="type">search</field>
+        	<field name="arch" type="xml">
+        		<search string="Automatic Supply rules">
+        			<field name="name" />
+        			<field name="warehouse_id" widget="selection" />
+        			<field name="location_id" widget="selection" domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]" />
+        		</search>
+        	</field>
         </record>
         
         <record id="action_automatic_supply_tree" model="ir.actions.act_window">
