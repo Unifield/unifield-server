@@ -104,6 +104,18 @@ class res_partner(osv.osv):
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
     }
+
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(res_partner, self).default_get(cr, uid, fields, context=context)
+        if 'partner_type' in res and res['partner_type'] in ('internal', 'section', 'esc'):
+            msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
+            msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
+            if msf_customer:
+                res['property_stock_customer'] = msf_customer
+            if msf_supplier:
+                res['property_stock_supplier'] = msf_supplier
+
+        return res
     
     def on_change_partner_type(self, cr, uid, ids, partner_type):
         '''
