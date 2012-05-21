@@ -40,6 +40,23 @@ class wizard_csv_report(osv.osv_memory):
         if context is None:
             context = {}
         if 'reporting_type' in context:
+            
+            out_currency_name = contract.reporting_currency.name
+            out_currency_amount = contract.grant_amount
+            
+            if 'output_currency' in context:
+                currency_id = context.get('output_currency')
+                out_currency_name = currency_id.name
+                
+                # get amount in selected currency    
+                out_currency_amount = self.pool.get('res.currency').compute(cr,
+                                                           uid,
+                                                           contract.reporting_currency.id,
+                                                           currency_id.id, 
+                                                           out_currency_amount or 0.0,
+                                                           round=True,
+                                                           context=context)
+            
             # Dictionary for selection
             
             # get Cost Center codes of the given contract
@@ -56,8 +73,8 @@ class wizard_csv_report(osv.osv_memory):
                     ['Donor:', contract.donor_id.name],
                     ['Financing contract name:', contract.name],
                     ['Financing contract code:', contract.code],
-                    ['Grant amount:', str(contract.grant_amount)],
-                    ['Reporting currency:', contract.reporting_currency.name],
+                    ['Grant amount:', out_currency_amount],
+                    ['Reporting currency:', out_currency_name],
                     ['Eligible from:', contract.eligibility_from_date],
                     ['to:', contract.eligibility_to_date],
                     ['Reporting type:', reporting_type_selection[context.get('reporting_type')]],

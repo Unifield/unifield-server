@@ -365,7 +365,23 @@
                     </tree>
                 </field>
             </record>
-            
+
+	        <record id="wizard_financing_currency_export_view" model="ir.ui.view">
+	            <field name="name">Select output currency</field>
+	            <field name="model">wizard.financing.currency.export</field>
+	            <field name="type">form</field>
+	            <field name="arch" type="xml">
+	                <form string="Select currency">
+	                    <field name="out_currency" string="Select output currency"/>
+	                    <separator colspan="4"/>
+	                    <group colspan="4" col="6">
+	                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+	                        <button name="button_create_budget" string="Create report" type="object" icon="gtk-ok"/>
+	                    </group>
+	                </form>
+	            </field>
+	        </record>
+
             <record id="act_financing_contract_donor_reporting_tree" model="ir.actions.server">
                 <field name="name">Interactive Report</field>
                 <field name="model_id" ref="model_financing_contract_contract"/>
