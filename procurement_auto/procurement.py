@@ -190,6 +190,9 @@ class stock_warehouse_automatic_supply(osv.osv):
         return {}
    
     def unlink(self, cr, uid, ids, context):
+        '''
+        When delete an automatic supply rule, also remove the frequency
+        '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         freq_ids = []
@@ -201,6 +204,9 @@ class stock_warehouse_automatic_supply(osv.osv):
         return super(stock_warehouse_automatic_supply, self).unlink(cr, uid, ids, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        When duplicate an automatic supply rule, also duplicate the frequency 
+        '''
         if not default:
             default = {}
         obj = self.read(cr, uid, id, ['frequence_id'])
