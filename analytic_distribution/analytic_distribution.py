@@ -60,7 +60,7 @@ class analytic_distribution1(osv.osv):
         """
         if context is None:
             context = {}
-        # Have an analytic distribution on another account than expense account make no sense. So their analaytic distribution is valid
+        # Have an analytic distribution on another account than expense account make no sense. So their analytic distribution is valid
         if account_id:
             account =  self.pool.get('account.account').browse(cr, uid, account_id)
             if account and account.user_type and account.user_type.code != 'expense':
@@ -80,7 +80,7 @@ class analytic_distribution1(osv.osv):
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue
-            if account_id not in [x.id for x in fp_line.analytic_id.account_ids]:
+            if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
                 return 'invalid'
