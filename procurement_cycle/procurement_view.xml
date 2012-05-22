@@ -38,9 +38,6 @@
                         <label string="In months" colspan="4" align="0.0"/>
                         <field name="safety_stock_time" />
                         <label string="In months (will be converted into quantity regarding monthly consumption)" colspan="4" align="0.0"/>
-                        <field name="safety_stock" />
-                        <label string="(warning, UoM has to be coherent)" colspan="4" align="0.0"/>
-                        <label />
                         <newline />
                         <group name="consumption calculation" colspan="6" col="6">
 	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'past')" />
@@ -90,9 +87,13 @@
 
                     <group colspan="4" col="4" >
                         <separator colspan="4" string="Products that will be included in the current policy" />
-                        <field name="product_ids" nolabel="1" colspan="4" 
-                        domain="[('list_ids', '=', parent.sublist_id)]"
-                        />
+                        <field name="product_ids" nolabel="1" colspan="4" mode="tree">
+                        	<tree string="Products" editable="top">
+                        		<field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id)]" />
+                        		<field name="uom_id" />
+                        		<field name="safety_stock" />
+                        	</tree>
+                        </field>
                     </group>
                 </form>
             </field>

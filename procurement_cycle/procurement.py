@@ -93,7 +93,7 @@ class stock_warehouse_order_cycle(osv.osv):
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char', 
                                           help='Define the time between two replenishments'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequency', help='It\'s the time between two replenishments'),
-        'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products",),
+        'product_ids': fields.one2many('stock.warehouse.order.cycle.line', 'order_cycle_id', string='Products'),
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
         # Parameters for quantity calculation
@@ -115,7 +115,7 @@ Minimal quantity below the stock quantity is not critical.'),
         'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption', 
                                                help='If checked, the system will used the forecasted monthly consumption to compute the quantity to order'),
         'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption',
-                                           help='If checked, the system will used the entered monthly consumption to compute the quantity to order'),
+                                           help='If not 0.00, the system will used the entered monthly consumption to compute the quantity to order'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
                                     help='As this date is not in the past, no new replenishment will be run', 
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context=None: ids, ['frequence_id'], 20),
@@ -154,6 +154,12 @@ Minimal quantity below the stock quantity is not critical.'),
         if not 'location_id' in res:
             location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
             res.update({'location_id': location_id})
+            
+        if not 'consumption_period_from' in res:
+            res.update({'consumption_period_from': (DateFrom(now()) + RelativeDate(day=1)).strftime('%Y-%m-%d')})
+            
+        if not 'consumption_period_to' in res:
+            res.update({'consumption_period_to': (DateFrom(now()) + RelativeDate(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
         
         return res
     
@@ -226,10 +232,11 @@ Minimal quantity below the stock quantity is not critical.'),
         Uncheck a box when the other is checked
         '''
         v = {}
+        w = {}
+        date_from = now() + RelativeDate(day=1, months=-round(order_coverage, 1)+1)
+        date_to = now() + RelativeDate(days=-1, day=1, months=1)
+        dates = self.on_change_period(cr, uid, ids, date_from, date_to)
         if field == 'past' and past_consumption:
-            date_from = now() + RelativeDate(day=1, months=-round(order_coverage, 1)+1)
-            date_to = now() + RelativeDate(days=-1, day=1, months=1)
-            dates = self.on_change_period(cr, uid, ids, date_from, date_to)
             v.update({'reviewed_consumption': 0, 'manual_consumption': 0.00,
                       'consumption_period_from': dates.get('value', {}).get('consumption_period_from'),
                       'consumption_period_to': dates.get('value', {}).get('consumption_period_to'),})
@@ -240,16 +247,22 @@ Minimal quantity below the stock quantity is not critical.'),
             v.update({'past_consumption': 0, 'manual_consumption': 0.00})
             v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'review' and not reviewed_consumption:
-            v.update({'past_consumption': 1, 'manual_consumption': 0.00})
-            v.update({'consumption_period_from': False, 'consumption_period_to': False})
+            v.update({'past_consumption': 1, 'manual_consumption': 0.00, 
+                      'consumption_period_from': dates.get('value', {}).get('consumption_period_from'),
+                      'consumption_period_to': dates.get('value', {}).get('consumption_period_to'),})
+        elif field == 'manual' and manual_consumption < 0.00:
+            v.update({'manual_consumption': 0.00})
+            w.update({'title': 'Negative consumption',
+                      'message': 'You mustn\'t have a negative consumption'})
         elif field == 'manual' and manual_consumption != 0.00 :
             v.update({'reviewed_consumption': 0, 'past_consumption': 0})
             v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'manual' and (manual_consumption == 0.00 ):
-            v.update({'past_consumption': 1})
-            v.update({'consumption_period_from': False, 'consumption_period_to': False})
+            v.update({'past_consumption': 1,
+                      'consumption_period_from': dates.get('value', {}).get('consumption_period_from'),
+                      'consumption_period_to': dates.get('value', {}).get('consumption_period_to'),})
             
-        return {'value': v}
+        return {'value': v, 'warning': w}
     
     def choose_change_frequence(self, cr, uid, ids, context=None):
         '''
@@ -335,6 +348,34 @@ Minimal quantity below the stock quantity is not critical.'),
         return super(stock_warehouse_order_cycle, self).copy(cr, uid, ids, default, context=context)
     
 stock_warehouse_order_cycle()
+
+class stock_warehouse_order_cycle_line(osv.osv):
+    _name = 'stock.warehouse.order.cycle.line'
+    _description = 'Products to replenish'
+    
+    _columns = {
+        'product_id': fields.many2one('product.product', required=True, string='Product'),
+        'uom_id': fields.many2one('product.uom', string='UoM', required=True),
+        'order_cycle_id': fields.many2one('stock.warehouse.order.cycle', string='Order cycle', required=True, ondelete='cascade'),
+        'safety_stock': fields.float(digits=(16,2), string='Safety stock (Qty)', required=True),
+    }
+    
+    def product_change(self, cr, uid, ids, product_id=False, context=None):
+        '''
+        Set the UoM as the default UoM of the product
+        '''
+        v = {}
+        
+        if not product_id:
+            v.update({'product_uom': False, 'safety_stock': 0.00})
+        else:
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            if product.uom_id:
+                v.update({'uom_id': product.uom_id.id})
+                
+        return {'value': v}
+    
+stock_warehouse_order_cycle_line()
 
 class stock_frequence(osv.osv):
     _name = 'stock.frequence'
