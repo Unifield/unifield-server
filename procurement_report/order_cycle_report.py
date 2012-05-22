@@ -181,7 +181,7 @@ class order_cycle_rules_report(osv.osv):
                 FROM
                     stock_warehouse_order_cycle min
                     LEFT JOIN
-                        order_cycle_product_rel line
+                        stock_warehouse_order_cycle_line line
                         ON
                         line.order_cycle_id = min.id
                     LEFT JOIN
