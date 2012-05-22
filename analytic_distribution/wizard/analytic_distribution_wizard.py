@@ -190,11 +190,17 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('account_ids', '=', parent.account_id), ('id', '=', %s)]" % fp_id)
-                    
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), '&', ('tuple_destination_account_ids.account_id', '=', parent.account_id), ('tuple_destination_account_ids.destination_id', '=', destination_id), ('id', '=', %s)]" % fp_id)
+                # Change Destination field
+                dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
+                for field in dest_fields:
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)):
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                    else:
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
                 # Change Analytic Account field
