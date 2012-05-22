@@ -2,6 +2,30 @@
 <openerp>
     <data>
 
+        <record id="view_account_destination_link_form" model="ir.ui.view">
+            <field name="name">account.destination.link.form</field>
+            <field name="model">account.destination.link</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tuples">
+                    <field name="account_id"/>
+                    <field name="destination_id"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_account_destination_link_tree" model="ir.ui.view">
+            <field name="name">account.destination.link.tree</field>
+            <field name="model">account.destination.link</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Tuple list">
+                    <field name="account_id"/>
+                    <field name="destination_id"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="view_account_form" model="ir.ui.view">
             <field name="name">account.form</field>
             <field name="model">account.account</field>
@@ -12,10 +36,15 @@
                     <xpath expr="/form/notebook/page[@string='General Information']" position="after">
                         <page string="Analytical Destination">
                             <field name="user_type_code" invisible="1"/>
-                            <field name="dest_ids" nolabel="1" colspan="4" attrs="{'readonly': [('user_type_code', '!=', 'expense')]}" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
-                                <tree string="Destination List" editable="bottom">
-                                    <field name="destination_id"/>
-                                    <field name="default"/>
+                            <field name="default_destination_id" colspan="2" 
+                                attrs="{'required': [('user_type_code', '=', 'expense')], 'readonly': [('user_type_code', '!=', 'expense')]}"/>
+                            <label string="" colspan="2"/>
+                            <field name="destination_ids" nolabel="1" colspan="4" attrs="{'readonly': [('user_type_code', '!=', 'expense')]}" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
+                                <tree string="Destinations">
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="date_start"/>
+                                    <field name="date"/>
                                 </tree>
                             </field>
                         </page>

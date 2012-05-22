@@ -28,7 +28,7 @@ class account_destination_link(osv.osv):
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
-        'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'account_id', 'funding_pool_id', "Funding Pools"),
+        'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
     }
 
 account_destination_link()
@@ -41,7 +41,7 @@ class account_account(osv.osv):
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
-        'default_destination_analytic_account': fields.many2one('account.analytic.account', 'Default Destination'),
+        'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination'),
         'destination_ids': fields.many2many('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations'),
     }
 

@@ -41,10 +41,10 @@
                             </field>
                         </page>
                         <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
-                            <field name="account_ids" nolabel="1" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
+                            <field name="tuple_destination_account_ids" nolabel="1"/>
                         </page>
                         <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'DEST')]}">
-                            <field name="destination_account_ids" nolabel="1" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]">
+                            <field name="destination_ids" nolabel="1" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]">
                                 <tree string="Expenses accounts list">
                                     <field name="code"/>
                                     <field name="name"/>

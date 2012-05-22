@@ -31,6 +31,7 @@
     ],
     "update_xml": [
         'security/ir.model.access.csv',
+        'account_view.xml',
         'analytic_account_view.xml',
         'analytic_line_view.xml',
         'wizard/account_analytic_chart_view.xml',
@@ -39,7 +40,6 @@
         'account_commitment_sequence.xml',
         'account_commitment_view.xml',
         'funding_pool_report.xml',
-        'account_view.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',
