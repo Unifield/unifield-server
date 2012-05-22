@@ -104,8 +104,6 @@ Time used to compute the quantity of products to order according to the monthly 
         'safety_stock_time': fields.float(digits=(16,2), string='Safety stock in time', help='In months. \
 Define the time while the stock is not negative but should be replenished. \
 Time used to compute the quantity of products to order according to the monthly consumption.'),
-        'safety_stock': fields.integer(string='Safety stock (quantity)', help='In product UoM. \
-Minimal quantity below the stock quantity is not critical.'),
         'past_consumption': fields.boolean(string='Average monthly consumption', 
                                            help='If checked, the system will used the average monthly consumption to compute the quantity to order'),
         'consumption_period_from': fields.date(string='Period of calculation', 
