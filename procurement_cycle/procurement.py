@@ -191,8 +191,12 @@ Minimal quantity below the stock quantity is not critical.'),
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
+        line_obj = self.pool.get('stock.warehouse.order.cycle.line')
+        product_obj = self.pool.get('product.product')
+        
         if context is None:
             context = {}
+            
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
 
@@ -218,9 +222,16 @@ Minimal quantity below the stock quantity is not critical.'),
             if report.sublist_id:
                 for line in report.sublist_id.product_ids:
                     product_ids.append(line.name.id)
-
-            # Check if the product is not already on the report
-            self.write(cr, uid, [report.id], {'product_ids': [(6,0,product_ids)]}, context=context)
+                    
+            for product in product_obj.browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already in the list
+                if not line_obj.search(cr, uid, [('order_cycle_id', '=', report.id), 
+                                                 ('product_id', '=', product.id),
+                                                 ('uom_id', '=', product.uom_id.id)], context=context):
+                    line_obj.create(cr, uid, {'order_cycle_id': report.id,
+                                              'product_id': product.id, 
+                                              'safety_stock': 0.00,
+                                              'uom_id': product.uom_id.id}, context=context)
         
         return True
 
