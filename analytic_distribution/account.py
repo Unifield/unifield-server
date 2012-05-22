@@ -21,12 +21,54 @@
 
 from osv import fields, osv
 
+class destination_m2m(fields.many2many):
+
+    def set(self, cr, obj, id, name, values, user=None, context=None):
+        """
+        Compare written object and given objects. If new object, create them. If one of them disappears, delete it.
+        """
+        if not context:
+            context = {}
+        if not values:
+            return
+        obj = obj.pool.get(self._obj)
+        for act in values:
+            if not (isinstance(act, list) or isinstance(act, tuple)) or not act:
+                continue
+            if act[0] == 6:
+                # search current destination
+                destination_sql = """
+                SELECT destination_id FROM %s
+                WHERE account_id = '%s'
+                """
+                cr.execute(destination_sql % (self._rel, id))
+                destination_ids = cr.fetchall()
+                old_list = [x[0] for x in destination_ids if x and x[0]]
+                # delete useless destination
+                if act[2]:
+                    delete_sql = """
+                    DELETE FROM %s
+                    WHERE account_id = '%s'
+                    AND destination_id NOT IN %s
+                    """ % (self._rel, id, tuple(act[2]))
+                else:
+                    delete_sql = """
+                    DELETE FROM %s
+                    WHERE account_id = '%s'
+                    """ % (self._rel, id)
+                cr.execute(delete_sql)
+                # insert new destination
+                for new_id in list(set(act[2]) - set(old_list)):
+                    cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, new_id))
+            else:
+                return super(destination_m2m, self).set(cr, obj, id, name, values, user, context)
+
 class account_destination_link(osv.osv):
     _name = 'account.destination.link'
     _description = 'Destination link between G/L and Analytic accounts'
 
     _columns = {
-        'account_id': fields.many2one('account.account', "G/L Account", required=True),
+        'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
     }
@@ -42,7 +84,7 @@ class account_account(osv.osv):
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination'),
-        'destination_ids': fields.many2many('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations'),
+        'destination_ids': destination_m2m('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations'),
     }
 
 account_account()

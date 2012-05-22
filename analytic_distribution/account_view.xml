@@ -7,7 +7,7 @@
             <field name="model">account.destination.link</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Tuples">
+                <form string="Account/Destination">
                     <field name="account_id"/>
                     <field name="destination_id"/>
                 </form>
@@ -19,7 +19,7 @@
             <field name="model">account.destination.link</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Tuple list">
+                <tree string="Tuple Account/Destination list">
                     <field name="account_id"/>
                     <field name="destination_id"/>
                 </tree>
