@@ -20,9 +20,12 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
+from osv import fields
 
-from mx.DateTime import *
+from mx.DateTime import DateFrom
+from mx.DateTime import now
+from mx.DateTime import RelativeDate 
 
 class threshold_value(osv.osv):
     _name = 'threshold.value'
@@ -31,22 +34,30 @@ class threshold_value(osv.osv):
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'active': fields.boolean(string='Active'),
-        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
-        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
+                                       domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock'), ('warehouse_id', '=', warehouse_id)]",
+                                       help='The location where products will be received.'),
         'compute_method': fields.selection([('fixed', 'Fixed values'), ('computed', 'Computed values')],
                                            string='Method of computation', required=True,
                                            help="""If 'Fixed values', the scheduler will compare stock of product with the threshold value of the line. \n
                                            If 'Computed values', the threshold value and the ordered quantity will be calculated according to defined parameters"""),
         'consumption_method': fields.selection([('amc', 'Average Monthly Consumption'), ('fmc', 'Forecasted Monthly Consumption')],
-                                               string='Consumption Method'),
+                                               string='Consumption Method',
+                                               help='Method used to compute the consumption of products.'),
         'consumption_period_from': fields.date(string='Period of calculation', 
                                              help='This period is a number of past months the system has to consider for AMC calculation.'\
                                              'By default this value is equal to the frequency in the Threshold.'),
         'consumption_period_to': fields.date(string='-'),
-        'frequency': fields.float(digits=(16,2), string='Order frequency'),
-        'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
-        'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
-        'supplier_lt': fields.boolean(string='Product\'s supplier LT'),
+        'frequency': fields.float(digits=(16,2), string='Order frequency', 
+                                  help='The time between two replenishments. Will be used to compute the quantity to order.'),
+        'safety_month': fields.float(digits=(16,2), string='Safety Stock in months',
+                                     help='In months. Period during the stock is not empty but need to be replenish. \
+                                     Used to compute the quantity to order.'),
+        'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months',
+                                  help='In months. Time to be delivered after processing the purchase order.'),
+        'supplier_lt': fields.boolean(string='Product\'s supplier LT',
+                                      help='If checked, use the lead time set in the supplier form.'),
         'line_ids': fields.one2many('threshold.value.line', 'threshold_value_id', string="Products"),
         'fixed_line_ids': fields.one2many('threshold.value.line', 'threshold_value_id2', string="Products"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),

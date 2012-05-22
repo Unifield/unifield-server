@@ -46,7 +46,6 @@ class procurement_order(osv.osv):
         request_obj = self.pool.get('res.request')
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
         proc_obj = self.pool.get('procurement.order')
-        product_obj = self.pool.get('product.product')
         freq_obj = self.pool.get('stock.frequence')
 
         start_date = time.strftime('%Y-%m-%d %H:%M:%S')

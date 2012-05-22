@@ -14,8 +14,15 @@
         			<field name="warehouse_id" widget="selection" on_change="onchange_warehouse_id(warehouse_id)" />
         			<field name="compute_method" />
         			<field name="location_id" />
-        			<field name="active" />
+        			<field name="active" attrs="{'invisible': [('compute_method', '=', False)]}" />
         			<newline />
+        			<group colspan="4" col="4" attrs="{'invisible': [('compute_method', '!=', False)]}">
+        				<separator colspan="4" />
+						<label colspan="4" 
+        						string="Please choose a method of computation. 
+	        					If you choose 'Fixed values', you should enter manually a threshold value and a order quantity for each product.
+    	    					If you choose 'Computed values', you should enter some parameters to automatically compute the threshold value for each product and the quantity to order." />
+    	    		</group>
         			
         			<group colspan="4" col="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}">
         				<separator colspan="4" string="Calculation parameters" />
@@ -122,12 +129,14 @@
         	<field name="type">search</field>
         	<field name="arch" type="xml">
         		<search string="Threshold values">
-        			 <group expand="1" string="Filters...">
+        			 <group expand="1" string="Filters..." colspan="4" col="12">
         			 	<field name="name" default_focus="1" />
-        			 	<field name="location_id" eval="context.get('location_id', False)" />
+        			 	<field name="warehouse_id" widget="selection" />
+        			 	<field name="location_id" eval="context.get('location_id', False)" widget="selection" 
+        			 		domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]" />
         			 	<field name="compute_method" />
 	                </group>
-	                <newline/>
+	                <!-- <newline/>
 	                <group expand="1" string="Group By...">
 	                	<filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
 	                	<separator orientation="vertical"/>
@@ -138,7 +147,7 @@
                         <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
                         <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
                         <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
-	                </group>
+	                </group> -->
         		</search>
         	</field>
         </record>
