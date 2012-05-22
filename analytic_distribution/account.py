@@ -27,40 +27,9 @@ class account_destination_link(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True),
-        'destination_id': fields.many2one('account.analytic.account', 'Analytical Destination Account', required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
-        'default': fields.boolean('Default?', help="If True, the destination account is those by default for this account."),
+        'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
+        'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'account_id', 'funding_pool_id', "Funding Pools"),
     }
-
-    _defaults = {
-        'default': lambda *a: False,
-    }
-
-    def _check_couple(self, cr, uid, ids, context=None):
-        """
-        Check that no more than one account_id/destination_id couple exists
-        """
-        for link in self.browse(cr, uid, ids):
-            couple_ids = self.search(cr, uid, [('account_id', '=', link.account_id.id), ('destination_id', '=', link.destination_id.id)])
-            if len(couple_ids) > 1:
-                return False
-        return True
-
-    def _check_default(self, cr, uid, ids, context=None):
-        """
-        Check that no more than one account_id is selected for a given destination_id.
-        Tip: In fact we search account_id/default which shouldn't be more than one element.
-        """
-        for link in self.browse(cr, uid, ids):
-            if link.default:
-                default_ids = self.search(cr, uid, [('account_id', '=', link.account_id.id), ('default', '=', True)])
-                if len(default_ids) > 1:
-                    return False
-        return True
-
-    _constraints = [
-        (_check_couple, 'You cannot have the same couple account/destination twice!', ['account_id', 'destination_id']),
-        (_check_default, 'You cannot have more than one destination for this account!', ['account_id', 'default']),
-    ]
 
 account_destination_link()
 
@@ -68,41 +37,12 @@ class account_account(osv.osv):
     _name = 'account.account'
     _inherit = 'account.account'
 
-#    def _get_destinations(self, cr, uid, ids, field_name, args, context=None):
-#        """
-#        Retrieve destination linked to the given accounts (ids).
-#        """
-#        res = {}
-#        for el in self.browse(cr, uid, ids):
-#            res[el.id] = False
-#            search_ids = self.pool.get('account.destination.link').search(cr, uid, [('account_id', '=', el.id)])
-#            if search_ids:
-#                res[el.id] = map(lambda x: x, search_ids)
-#        return res
-
-#    def _set_destinations(self, cr, uid, id, field, value, arg, context=None):
-#        """
-#        Write change to account.destination.link Object.
-#        """
-#        for el in value:
-#            if len(el) != 3:
-#                continue
-#            vals = el[2]
-#            if el[0] == 0:
-#                vals.update({'account_id': id})
-#                self.pool.get('account.destination.link').create(cr, uid, vals)
-#            elif el[0] == 1:
-#                self.pool.get('account.destination.link').write(cr, uid, el[1], vals)
-#        return True
-
-#    def _search_destinations(self, cr, uid, *a, **b):
-#        return []
-
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
-        'dest_ids': fields.one2many('account.destination.link', 'account_id', "Destination"), #fields.function(_get_destinations, fnct_inv=_set_destinations, fnct_search=_search_destinations, type="many2many", method=True, required=False, relation="account.destination.link"),
+        'default_destination_analytic_account': fields.many2one('account.analytic.account', 'Default Destination'),
+        'destination_ids': fields.many2many('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations'),
     }
 
 account_account()
