@@ -23,13 +23,16 @@
     leadtime: 0
     order_coverage: 3
     safety_stock_time: 1
-    safety_stock: 0
     past_consumption: 0
     reviewed_consumption: 1
     manual_consumption: 0.00
     product_ids: 
-      - product1
-      - product2
+      - product_id: product1
+        uom_id: product.product_uom_unit
+        safety_stock: 0.00
+      - product_id: product2
+        uom_id: product.product_uom_unit
+        safety_stock: 0.00
 -
   We create a new rule for P3 in Sloc2
 -
@@ -41,12 +44,13 @@
     leadtime: 1.5
     order_coverage: 5
     safety_stock_time: 0
-    safety_stock: 0
     past_consumption: 0
     reviewed_consumption: 1
     manual_consumption: 70.00
     product_ids: 
-      - product3
+      - product_id: product3
+        uom_id: product.product_uom_unit
+        safety_stock: 0.00
 -
   We create a new rule for Categ2 on Sloc2
 -
@@ -58,11 +62,12 @@
     leadtime: 0
     order_coverage: 2
     safety_stock_time: 0
-    safety_stock: 0
     past_consumption: 1
     reviewed_consumption: 0
     product_ids:
-      - product4
+      - product_id: product4
+        uom_id: product.product_uom_unit
+        safety_stock: 0.00
 -
   We create a new rule for Categ 1 on Sloc1
 -
@@ -74,14 +79,19 @@
     leadtime: 3
     order_coverage: 6
     safety_stock_time: 0
-    safety_stock: 50
     past_consumption: 0
     reviewed_consumption: 1
     manual_consumption: 0.00
     product_ids:
-      - product1
-      - product2
-      - product3
+      - product_id: product1
+        uom_id: product.product_uom_unit
+        safety_stock: 50.00
+      - product_id: product2
+        uom_id: product.product_uom_unit
+        safety_stock: 50.00
+      - product_id: product3
+        uom_id: product.product_uom_unit
+        safety_stock: 50.00
 -
   We run the scheduler
 -
