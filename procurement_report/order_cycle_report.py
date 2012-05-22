@@ -170,7 +170,7 @@ class order_cycle_rules_report(osv.osv):
                     min.leadtime AS delivery_lt,
                     min.order_coverage AS order_coverage,
                     min.safety_stock_time AS safety_time,
-                    min.safety_stock AS safety_stock,
+                    line.safety_stock AS safety_stock,
                     CASE WHEN min.past_consumption = 't' THEN 'AMC' ELSE 'FMC' END consumption,
                     prod.default_code AS product_reference,
                     temp.name AS product_name,

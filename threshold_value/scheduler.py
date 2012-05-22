@@ -19,15 +19,12 @@
 #
 ##############################################################################
 
-from osv import osv, fields
-from datetime import datetime
+from osv import osv
 from tools.translate import _
 
-import time
 import pooler
 import netsvc
-
-from mx.DateTime import *
+import time
 
 class procurement_order(osv.osv):
     _name = 'procurement.order'
