@@ -188,7 +188,7 @@ class sync_rule(osv.osv):
         sel = []
         for field in self.pool.get('ir.model.fields').read(cr, uid, fields, ['name','model','ttype']):
             name = str(field['name'])
-            if field['ttype'] in ('many2one','one2many',): name += '/id'
+            if field['ttype'] in ('many2one','one2many', 'many2many'): name += '/id'
             sel.append(name)
         return (str(sel) if sel else '')
     
