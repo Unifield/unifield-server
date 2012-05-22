@@ -41,7 +41,7 @@
         'wizard/schedulers_all_view.xml',
         'procurement_view.xml',
         'procurement_workflow.xml',
-        'process/procurement_process.xml',
+        #'process/procurement_process.xml',
         "company_view.xml",
         'board_mrp_procurement_view.xml',
     ],

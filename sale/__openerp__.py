@@ -65,7 +65,7 @@
         'sale_report.xml',
         'stock_view.xml',
         'board_sale_view.xml',
-        'process/sale_process.xml',
+        #'process/sale_process.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [
