@@ -78,6 +78,110 @@ class res_currency(osv.osv):
                 return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
         # Fallback case if no currency table or one currency not defined in the table
         return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
+    
+    def create(self, cr, uid, values, context=None):
+        '''
+        Create automatically a purchase and a sales pricelist on
+        currency creation
+        '''
+        pricelist_obj = self.pool.get('product.pricelist')
+        version_obj = self.pool.get('product.pricelist.version')
+        item_obj = self.pool.get('product.pricelist.item')
+        
+        company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        
+        res = super(res_currency, self).create(cr, uid, values, context=context)
+        
+        # Create the sale pricelist
+        sale_price_id = pricelist_obj.create(cr, uid, {'currency_id': res, 
+                                                       'name': values.get('name'), 
+                                                       'active': values.get('active', True),
+                                                       'type': 'sale',
+                                                       'company_id': company_id}, context=context)
+        
+        # Create the sale pricelist version
+        sale_version_id = version_obj.create(cr, uid, {'pricelist_id': sale_price_id,
+                                                       'name': 'Default Sale %s Version' % values.get('name'),
+                                                       'active': values.get('active', True)}, context=context)
+        
+        # Create the sale pricelist item
+        item_obj.create(cr, uid, {'price_version_id': sale_version_id,
+                                  'name': 'Default Sale %s Line' % values.get('name'),
+                                  'base': 1,
+                                  'min_qunatity': 0.00}, context=context)
+        
+        # Create the purchase pricelist
+        purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': res, 
+                                                           'name': values.get('name'), 
+                                                           'active': values.get('active', True),
+                                                           'type': 'purchase',
+                                                           'company_id': company_id}, context=context)
+        
+        # Create the sale pricelist version
+        purchase_version_id = version_obj.create(cr, uid, {'pricelist_id': purchase_price_id,
+                                                           'name': 'Default Purchase %s Version' % values.get('name'),
+                                                           'active': values.get('active', True)}, context=context)
+        
+        # Create the sale pricelist item
+        item_obj.create(cr, uid, {'price_version_id': purchase_version_id,
+                                  'name': 'Default Purchase %s Line' % values.get('name'),
+                                  'base': -2,
+                                  'min_qunatity': 0.00}, context=context)
+        
+        return res
+    
+    def write(self, cr, uid, ids, values, context=None):
+        '''
+        Active/De-active pricelists according to activation/de-activation of the currency
+        '''
+        pricelist_obj = self.pool.get('product.pricelist')
+        version_obj = self.pool.get('product.pricelist.version')
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        if 'active' in values:
+            # Get all pricelists and versions for the given currency
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+            version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
+            # Update the pricelists and versions
+            pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=context)
+            version_obj.write(cr, uid, version_ids, {'active': values['active']}, context=context)
+        
+        return super(res_currency, self).write(cr, uid, ids, values, context=context)
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Unlink the pricelist associated to the currency 
+        '''
+        pricelist_obj = self.pool.get('product.pricelist')
+        purchase_obj = self.pool.get('purchase.order')
+        sale_obj = self.pool.get('sale.order')
+        partner_obj = self.pool.get('res.partner')
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+        if pricelist_ids:
+            # Get all documents which disallow the deletion of the currency
+            purchase_ids = purchase_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
+            sale_ids = sale_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
+            partner_ids = partner_obj.search(cr, uid, ['|', ('property_product_pricelist', 'in', pricelist_ids),
+                                                       ('property_product_pricelist_purchase', 'in', pricelist_ids)], context=context)
+    
+            # Raise an error if the currency is used on partner form        
+            if partner_ids:
+                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to remove is currently used on at least one partner form.'))
+            
+            # Raise an error if the currency is used on sale or purchase order
+            if purchase_ids or sale_ids:
+                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to remove is currently used on at least one sale order or purchase order.'))
+        
+        for cur_id in ids:
+            res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
+            
+        return res   
             
 res_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
