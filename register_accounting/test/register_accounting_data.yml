@@ -240,6 +240,7 @@
     user_type: account_account_type_expense0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I create a X2110 Expense Account.
 -
@@ -252,6 +253,7 @@
     user_type: account_account_type_expense0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_support
 -
   I create Cash Advance 4204 Account.
 -
@@ -265,6 +267,7 @@
     type_for_register: advance
     reconcile: 1
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_national_staff
 -
   I create a X11002 Receivable Account.
 -
@@ -382,6 +385,7 @@
     user_type: account_account_type_expense0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I create a Journal View with some columns
 -
@@ -432,6 +436,13 @@
           field: reconcile_id
           sequence: 20
 -
+  I create an analytic journal for Cash
+-
+  !record {model: account.analytic.journal, id: analytic_journal_cash_0}:
+    code: acsh
+    name: Analytic Cash Journal
+    type: general
+-
   I create a Cash Journal
 -
   !record {model: account.journal, id: account_journal_cash_0}:
@@ -443,6 +454,7 @@
     default_debit_account_id: account_account_cash0
     default_credit_account_id: account_account_cash0
     allow_date: 0
+    analytic_journal_id: analytic_journal_cash_0
 -
   I create a Cash Journal in CHF
 -
