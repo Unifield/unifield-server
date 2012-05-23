@@ -55,6 +55,8 @@
     currency_id: 1
     analytic_id: analytic_account_gabon
     distribution_id: global_distrib_1
+    cost_center_id: analytic_account_gabon
+    destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I create a funding pool distribution line for kenya
 -
@@ -64,4 +66,6 @@
     percentage: 25.0
     currency_id: 1
     analytic_id: analytic_account_kenya
+    cost_center_id: analytic_account_kenya
+    destination_id: analytic_distribution.analytic_account_destination_operation
     distribution_id: global_distrib_1
