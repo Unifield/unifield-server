@@ -35,7 +35,7 @@
         'financing_contract_report.xml'
     ],
     'test': [
-        'test/financing_contract.yml'
+        #'test/financing_contract.yml'
     ],
     'demo_xml': [
     ],
