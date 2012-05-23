@@ -65,7 +65,7 @@ class purchase_report(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Supplier', readonly=True),
         'partner_address_id':fields.many2one('res.partner.address', 'Address Contact Name', readonly=True),
         'dest_address_id':fields.many2one('res.partner.address', 'Dest. Address Contact Name',readonly=True),
-        'pricelist_id':fields.many2one('product.pricelist', 'Pricelist', readonly=True),
+        'pricelist_id':fields.many2one('product.pricelist', 'Currency', readonly=True),
         'date_approve':fields.date('Date Approved', readonly=True),
         'expected_date':fields.date('Expected Date', readonly=True),
         'validator' : fields.many2one('res.users', 'Validated By', readonly=True),

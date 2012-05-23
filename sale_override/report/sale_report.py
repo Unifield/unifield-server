@@ -84,7 +84,7 @@ class sale_report(osv.osv):
             ('done', 'Closed'),
             ('cancel', 'Cancelled')
             ], 'Order State', readonly=True),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', readonly=True),
+        'pricelist_id': fields.many2one('product.pricelist', 'Currency', readonly=True),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account', readonly=True),
         'name': fields.char('Order Reference', size=64, required=True,
             readonly=True, states={'draft': [('readonly', False)]}, select=True),
