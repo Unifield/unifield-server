@@ -40,7 +40,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                        <page string="Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="tuple_destination_account_ids" nolabel="1"/>
                         </page>
                         <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'DEST')]}">
