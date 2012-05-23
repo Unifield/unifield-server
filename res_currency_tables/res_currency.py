@@ -79,54 +79,70 @@ class res_currency(osv.osv):
         # Fallback case if no currency table or one currency not defined in the table
         return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
     
-    def create(self, cr, uid, values, context=None):
+    def create_associated_pricelist(self, cr, uid, currency_id, context=None):
         '''
-        Create automatically a purchase and a sales pricelist on
-        currency creation
+        Create purchase and sale pricelists according to the currency
         '''
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
         item_obj = self.pool.get('product.pricelist.item')
         
         company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
-        
-        res = super(res_currency, self).create(cr, uid, values, context=context)
+        currency = self.browse(cr, uid, currency_id, context=context)
         
         # Create the sale pricelist
-        sale_price_id = pricelist_obj.create(cr, uid, {'currency_id': res, 
-                                                       'name': values.get('name'), 
-                                                       'active': values.get('active', True),
+        sale_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency_id, 
+                                                       'name': currency.name, 
+                                                       'active': currency.active,
                                                        'type': 'sale',
                                                        'company_id': company_id}, context=context)
         
         # Create the sale pricelist version
         sale_version_id = version_obj.create(cr, uid, {'pricelist_id': sale_price_id,
-                                                       'name': 'Default Sale %s Version' % values.get('name'),
-                                                       'active': values.get('active', True)}, context=context)
+                                                       'name': 'Default Sale %s Version' % currency.name,
+                                                       'active': currency.active}, context=context)
         
         # Create the sale pricelist item
         item_obj.create(cr, uid, {'price_version_id': sale_version_id,
-                                  'name': 'Default Sale %s Line' % values.get('name'),
+                                  'name': 'Default Sale %s Line' % currency.name,
                                   'base': 1,
                                   'min_qunatity': 0.00}, context=context)
         
         # Create the purchase pricelist
-        purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': res, 
-                                                           'name': values.get('name'), 
-                                                           'active': values.get('active', True),
+        purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency_id, 
+                                                           'name': currency.name, 
+                                                           'active': currency.active,
                                                            'type': 'purchase',
                                                            'company_id': company_id}, context=context)
         
         # Create the sale pricelist version
         purchase_version_id = version_obj.create(cr, uid, {'pricelist_id': purchase_price_id,
-                                                           'name': 'Default Purchase %s Version' % values.get('name'),
-                                                           'active': values.get('active', True)}, context=context)
+                                                           'name': 'Default Purchase %s Version' % currency.name,
+                                                           'active': currency.active}, context=context)
         
         # Create the sale pricelist item
         item_obj.create(cr, uid, {'price_version_id': purchase_version_id,
-                                  'name': 'Default Purchase %s Line' % values.get('name'),
+                                  'name': 'Default Purchase %s Line' % currency.name,
                                   'base': -2,
                                   'min_qunatity': 0.00}, context=context)
+        
+        return True
+    
+    def create(self, cr, uid, values, context=None):
+        '''
+        Create automatically a purchase and a sales pricelist on
+        currency creation
+        '''    
+        res = super(res_currency, self).create(cr, uid, values, context=context)
+        
+        # Create the corresponding pricelists
+        self.create_associated_pricelist(cr, uid, res, context=context)
+        
+        # Check if currencies has no associated pricelists
+        cr.execute('SELECT id FROM res_currency WHERE id NOT IN (SELECT currency_id FROM product_pricelist)')
+        curr_ids = cr.fetchall()
+        for cur_id in curr_ids:
+            self.create_associated_pricelist(cr, uid, cur_id, context=context)
         
         return res
     
