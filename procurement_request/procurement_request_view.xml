@@ -20,7 +20,7 @@
                         <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" groups="base.group_extended" required="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='pricelist_id']" position="replace">
-                        <field domain="[('type','=','sale')]" name="pricelist_id" groups="base.group_extended" required="1" />
+                        <field domain="[('type','=','sale')]" name="pricelist_id" groups="base.group_extended" required="1" widget="selection" />
                     </xpath>
                 </data>
             </field>

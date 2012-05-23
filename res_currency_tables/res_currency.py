@@ -142,7 +142,7 @@ class res_currency(osv.osv):
         cr.execute('SELECT id FROM res_currency WHERE id NOT IN (SELECT currency_id FROM product_pricelist)')
         curr_ids = cr.fetchall()
         for cur_id in curr_ids:
-            self.create_associated_pricelist(cr, uid, cur_id, context=context)
+            self.create_associated_pricelist(cr, uid, cur_id[0], context=context)
         
         return res
     

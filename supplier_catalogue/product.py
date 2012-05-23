@@ -234,6 +234,17 @@ class product_pricelist(osv.osv):
         
         return price, uom_price_already_computed
     
+    def name_get(self, cr, user, ids, context=None):
+        '''
+        Display the currency name instead of the pricelist name
+        '''
+        result = self.browse(cr, user, ids, context=context)
+        res = []
+        for pp in result:
+            txt = pp.currency_id.name
+            res += [(pp.id, txt)]
+        return res
+    
 product_pricelist()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

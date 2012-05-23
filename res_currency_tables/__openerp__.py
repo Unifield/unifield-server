@@ -21,7 +21,7 @@
 {
     "name": "Fx Tables Management",
     "version": "1.0",
-    "depends": ["res_currency_functional"],
+    "depends": ["res_currency_functional", "base"],
     "category": "General/Standard",
     "description": """
     This module aims to have other subsets of currencies, and have them available
