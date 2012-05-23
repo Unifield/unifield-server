@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+        <!--
+            Process
+        -->
+
+        <record id="tender_flow.process_process_tender" model="process.process">
+            <field eval="1" name="active"/>
+            <field name="model_id" ref="tender_flow.model_tender" />
+            <field eval="&quot;&quot;&quot;Tender&quot;&quot;&quot;" name="name"/>
+        </record>
+
+        <!--
+            Process Node
+        -->
+
+    </data>
+</openerp>

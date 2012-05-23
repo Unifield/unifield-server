@@ -19,20 +19,23 @@
 # 
 ##############################################################################
 {
-    "name" : "Procurement override",
+    "name" : "MSF Processes",
     "version" : "1.0",
     "author" : "TeMPO Consulting, MSF",
     "category": "Others",
     "description": """
-        Process modification
+        Process
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [
     ],
-    "depends" : ["procurement",
+    "depends" : [
                  ],
     "update_xml": [
         "process/procurement_process.xml",
+        "process/purchase_process.xml",
+        "process/sale_process.xml",
+        "process/tender_process.xml",
     ],
     "demo_xml": [
     ],

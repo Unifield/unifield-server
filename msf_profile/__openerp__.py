@@ -97,7 +97,7 @@
         "purchase_allocation_report",
         "supplier_catalogue",
         "msf_cross_docking",
-        "procurement_override",
+        "msf_processes",
     ],
     "update_xml": [
         "report.xml",

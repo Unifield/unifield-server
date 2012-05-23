@@ -37,7 +37,7 @@
             <field eval="&quot;&quot;&quot;Drives procurement orders for every sales order line.&quot;&quot;&quot;" name="note"/>
             <field name="subflow_id" ref="sale.process_process_salesprocess0"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state in ('draft', 'waiting_date', 'manual', 'progress', 'shipping_except', 'invoice_except', 'done', 'cancel')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;object.state != False&quot;&quot;&quot;" name="model_states"/>
             <field eval="1" name="flow_start"/>
         </record>
 
