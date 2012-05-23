@@ -303,7 +303,7 @@ Created documents : \n'''
                                                                                               'from_date': time.strftime('%Y-%m-%d')})
            
         # Get the safety stock
-        safety_stock = d_values.get('safety', 0)
+        safety_stock = d_values.get('safety_stock', 0)
         
         # Get the safety time
         safety_time = d_values.get('safety_time', 0)
