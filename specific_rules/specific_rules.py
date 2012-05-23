@@ -196,7 +196,8 @@ class stock_warehouse_orderpoint(osv.osv):
     _inherit = 'stock.warehouse.orderpoint'
 
     _columns = {
-         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
+                                        domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]"),
     }
     
     def default_get(self, cr, uid, fields, context=None):
