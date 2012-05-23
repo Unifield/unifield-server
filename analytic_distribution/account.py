@@ -109,5 +109,17 @@ class account_account(osv.osv):
             return res
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
+    def onchange_user_type(self, cr, uid, ids, user_type_id=False, context=None):
+        """
+        Update user_type_code with user_type_id code
+        """
+        res = {}
+        if not user_type_id:
+            return res
+        data = self.pool.get('account.account.type').read(cr, uid, user_type_id, ['code']).get('code', False)
+        if data:
+            res.setdefault('value', {}).update({'user_type_code': data})
+        return res
+
 account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
