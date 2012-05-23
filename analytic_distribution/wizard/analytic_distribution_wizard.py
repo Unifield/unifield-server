@@ -328,6 +328,26 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         'type': lambda *a: 'funding.pool',
     }
 
+    def onchange_destination(self, cr, uid, ids, destination_id=False, fp_id=False, account_id=False):
+        """
+        Check given funding pool with destination
+        """
+        # Prepare some values
+        res = {}
+        # If all elements given, then search FP compatibility
+        if destination_id and fp_id and account_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, fp_id)
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids]:
+                res = {'value': {'analytic_id': False}}
+        # If no destination, do nothing
+        elif not destination_id:
+            res = {}
+        # Otherway: delete FP
+        else:
+            res = {'value': {'analytic_id': False}}
+        # If destination given, search if given 
+        return res
+
 analytic_distribution_wizard_fp_lines()
 
 class analytic_distribution_wizard_f1_lines(osv.osv_memory):

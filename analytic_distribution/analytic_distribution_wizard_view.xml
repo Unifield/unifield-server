@@ -22,7 +22,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
-                    <field name="destination_id"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)"/>
                     <field name="cost_center_id"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
