@@ -253,3 +253,19 @@
     # on_change_product_id_specific_rules
     self.on_change_product_id_specific_rules(cr, uid, [ref("stock_inventory_line0")], ref("stock.stock_location_stock"), ref("product_product_testproduct0"), prod_lot_id=False, uom=False, to_date=False,)
     
+-
+  Try to create a Min/Max stock rules with an UoM which
+  has a different category than the standard product UoM
+-
+  !python {model: stock.warehouse.orderpoint}: |
+    try:
+      self.create(cr, uid, {'product_id': ref("product_product_testproduct0"),
+                            'location_id': ref("stock.stock_location_stock"),
+                            'warehouse_id': ref("stock.warehouse0"),
+                            'product_min_qty': 1.00,
+                            'product_max_qty': 1.00,
+                            'qty_multiple': 1.00,
+                            'product_uom': ref("product.product_uom_kgm")})
+      assert False, "No error raised when the Min/Max rule has a non-compatible UoM"
+    except:
+      assert True
