@@ -98,6 +98,7 @@ class hr_payroll_validation(osv.osv_memory):
         if not context:
             context = {}
         # Delete non-working fields (third*)
+        partner_obj = self.pool.get('res.partner')
         pattern = re.compile('^(third(.*))$')
         to_delete = []
         for field in vals:
@@ -106,7 +107,15 @@ class hr_payroll_validation(osv.osv_memory):
                 to_delete.append(field)
                 # Write changes to lines
                 if m.groups() and m.groups()[0] and m.groups()[1]:
-                    self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], {'partner_id': vals.get(m.groups()[0])})
+                    partner_id = vals.get(m.groups()[0])
+                    newvals = {'partner_id': vals.get(m.groups()[0])}
+                    if partner_id:
+                        partner = partner_obj.read(cr, uid, partner_id, ['property_account_payable', 'name'])
+                        if not partner['property_account_payable']:
+                                raise osv.except_osv(_('Error'), _('Partner %s has no Account Payable')%(partner['name'],))
+                        newvals['account_id'] =  partner['property_account_payable'][0]
+
+                    self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], newvals)
         for field in to_delete:
             del vals[field]
         # Return default behaviour
