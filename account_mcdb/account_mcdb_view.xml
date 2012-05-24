@@ -96,6 +96,21 @@
                     <separator string="Reallocation" colspan="4"/>
                     <field name="reallocated" colspan="2"/>
                     <field name="reversed" colspan="2"/>
+                    <separator string="Destination" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <group col="2" colspan="2">
+                            <button name="button_destination_clear" type="object" string="Remove all Destinations" icon="gtk-clear" colspan="1"/>
+                            <button name="button_destination_add" type="object" string="Add all Destinations" icon="gtk-add" colspan="1"/>
+                        </group>
+                        <field name="rev_analytic_account_dest_ids"/>
+                        <field name="analytic_account_dest_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
+                            <tree string="Destination" editable="top" noteditable="1">
+                                <field name="code" string="Ana. Code"/>
+                                <field name="name" string="Ana. Name"/>
+                                <field name="type" string="Ana. Type"/>
+                            </tree>
+                        </field>
+                    </group>
                     <separator string="Analytic Accounts" colspan="4"/>
                     <group colspan="2" col="2">
                         <group col="2" colspan="2">

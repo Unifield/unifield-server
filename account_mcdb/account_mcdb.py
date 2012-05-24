@@ -84,6 +84,9 @@ class account_mcdb(osv.osv_memory):
         'rev_account_type_ids': fields.boolean('Exclude account type selection'),
         'rev_analytic_journal_ids': fields.boolean('Exclude analytic journal selection'),
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('cc', 'Cost Center'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
+        'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
+        'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+            string="Destination"),
     }
 
     _defaults = {
@@ -190,7 +193,7 @@ class account_mcdb(osv.osv_memory):
             # First MANY2MANY fields
             m2m_fields = [('period_ids', 'period_id'), ('journal_ids', 'journal_id'), ('analytic_journal_ids', 'journal_id'), 
                 ('analytic_account_fp_ids', 'account_id'), ('analytic_account_cc_ids', 'account_id'), 
-                ('analytic_account_f1_ids', 'account_id'), ('analytic_account_f2_ids', 'account_id')]
+                ('analytic_account_f1_ids', 'account_id'), ('analytic_account_f2_ids', 'account_id'), ('analytic_account_dest_ids', 'destination_id')]
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
                 m2m_fields.append(('account_type_ids', 'general_account_id.user_type'))
@@ -215,6 +218,9 @@ class account_mcdb(osv.osv_memory):
                         operator = 'not in'
                     # analytic_account_f2_ids with reversal
                     if m2m[0] == 'analytic_account_f2_ids' and wiz.rev_analytic_account_f2_ids:
+                        operator = 'not in'
+                    # analytic_account_dest_ids with reversal
+                    if m2m[0] == 'analytic_account_dest_ids' and wiz.rev_analytic_account_dest_ids:
                         operator = 'not in'
                     # period_ids with reversal
                     if m2m[0] == 'period_ids' and wiz.rev_period_ids:
@@ -726,6 +732,33 @@ class account_mcdb(osv.osv_memory):
         obj = 'account.analytic.account'
         args = [('type', '!=', 'view'), ('category', '=', 'FREE2')]
         field = 'analytic_account_f2_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
+    def button_destination_clear(self, cr, uid, ids, context=None):
+        """
+        Delete analytic_account_dest_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'analytic_account_dest_ids' field
+        return self.button_clear(cr, uid, ids, field='analytic_account_dest_ids', context=context)
+
+    def button_destination_add(self, cr, uid, ids, context=None):
+        """
+        Add all Destination in analytic_account_dest_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'account.analytic.account'
+        args = [('type', '!=', 'view'), ('category', '=', 'DEST')]
+        field = 'analytic_account_dest_ids'
         return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
 account_mcdb()
