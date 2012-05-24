@@ -158,11 +158,11 @@ class res_currency(osv.osv):
         
         if 'active' in values:
             # Get all pricelists and versions for the given currency
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
                 for cur_id in ids:
                     pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=context)
-            version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
+            version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('active', 'in', ['t', 'f'])], context=context)
             # Update the pricelists and versions
             pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=context)
             version_obj.write(cr, uid, version_ids, {'active': values['active']}, context=context)

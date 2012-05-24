@@ -291,6 +291,10 @@ class purchase_order(osv.osv):
         todo2 = []
         todo3 = []
         for order in self.browse(cr, uid, ids):
+            for line in order.order_line:
+                if line.price_unit == 0.00 and order.order_type == 'regular':
+                    raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price.'))
+            
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
@@ -841,9 +845,6 @@ class purchase_order_line(osv.osv):
         else:
             if vals.get('product_qty', 0.00) == 0.00:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
-            
-            if vals.get('price_unit', 0.00) == 0.00:
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         order_id = vals.get('order_id')
         product_id = vals.get('product_id')
@@ -874,9 +875,6 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
-            
-            if vals.get('price_unit', line.price_unit) == 0.00 and not line.order_id.rfq_ok:
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         if not context.get('update_merge'):
             for line in ids:
