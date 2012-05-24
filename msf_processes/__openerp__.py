@@ -27,20 +27,24 @@
         Process
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
+    "init_xml": [],
+    "depends" : ["account",
+                 "procurement",
+                 "sale",
+                 "purchase",
+                 "tender_flow",
+                 "stock",
                  ],
-    "update_xml": [
-        "process/procurement_process.xml",
-        "process/purchase_process.xml",
-        "process/sale_process.xml",
-        "process/tender_process.xml",
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
+    "update_xml": ["process/outgoing_process.xml", #5
+                   "process/incoming_process.xml", #6
+                   "process/rfq_process.xml", #7
+                   "process/purchase_process.xml", #8
+                   "process/tender_process.xml", #9
+                   "process/procurement_process.xml", #10
+                   "process/sale_process.xml", #11
+                   ],
+    "demo_xml": [],
+    "test": [],
     "installable": True,
     "active": False,
 }

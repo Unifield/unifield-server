@@ -68,23 +68,24 @@
         </record>
         
         <record id="procurement.process_node_procure_tender" model="process.node">
-            <field name="menu_id" ref="procurement.menu_stock_procurement_action"/>
-            <field name="model_id" ref="procurement.model_procurement_order"/>
-            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
-            <field eval="&quot;&quot;&quot;Tender Subflow.&quot;&quot;&quot;" name="note"/>
-            <field eval="&quot;&quot;&quot;Tender&quot;&quot;&quot;" name="name"/>
-            <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
-            <field eval="0" name="flow_start"/>
-        </record>
-        
-        <record id="procurement.process_node_procure_tender" model="process.node">
-            <field name="menu_id" ref="procurement.menu_stock_procurement_action"/>
-            <field name="model_id" ref="procurement.model_procurement_order"/>
+            <field name="menu_id" ref="tender_flow.menu_tender"/>
+            <field name="model_id" ref="tender_flow.model_tender"/>
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Tender&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Tender subflow.&quot;&quot;&quot;" name="note"/>
             <field name="subflow_id" ref="tender_flow.process_process_tender"/>
+            <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state == 'draft'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="procurement.process_node_procure_po" model="process.node">
+            <field name="menu_id" ref="purchase.menu_purchase_form_action"/>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Purchase Order&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Purchase Order subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="subflow_id" ref="purchase.process_process_purchaseprocess0"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
             <field eval="&quot;&quot;&quot;object.state == 'draft'&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
@@ -134,6 +135,33 @@
             <field eval="&quot;&quot;&quot;The procurement order goes in closed.&quot;&quot;&quot;" name="note"/>
             <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_done"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_running"/>
+            <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
+        </record>
+        
+        <record id="procurement.process_transition_running_tender" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_tender"/>
+            <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_running"/>
+            <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
+        </record>
+        
+        <record id="procurement.process_transition_running_po" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
+            <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_running"/>
+            <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
+        </record>
+        
+        <record id="procurement.process_transition_tender_po" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
+            <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_tender"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         

@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+		<!-- Process process -->
+        
+        <record id="stock.process_process_incoming0" model="process.process">
+            <field eval="&quot;&quot;&quot;Incoming&quot;&quot;&quot;" name="name"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field eval="1" name="active"/>
+        </record>
+        
+        <!-- Process Node -->
+        
+    </data>
+</openerp>
