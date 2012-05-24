@@ -112,7 +112,7 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <para style="P3">[[ o.instance or '' ]]</para>
+          <para style="P3">[[ o.instance and o.instance_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
