@@ -479,10 +479,22 @@ class tender_line(osv.osv):
         '''
         result = {}
         for line in self.browse(cr, uid, ids, context=context):
+            result[line.id] = {}
             if line.price_unit and line.qty:
-                result[line.id] = line.price_unit * line.qty
+                result[line.id]['total_price'] = line.price_unit * line.qty
             else:
-                result[line.id] = 0.0
+                result[line.id]['total_price'] = 0.0
+            
+            result[line.id]['func_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            if line.purchase_order_line_id:
+                result[line.id]['currency_id'] = line.purchase_order_line_id.order_id.pricelist_id.currency_id.id
+            else:
+                result[line.id]['currency_id'] = result[line.id]['func_currency_id']
+            
+            result[line.id]['func_total_price'] = self.pool.get('res.currency').compute(cr, uid, result[line.id]['currency_id'],  
+                                                                                            result[line.id]['func_currency_id'], 
+                                                                                            result[line.id]['total_price'], 
+                                                                                            round=True, context=context)
                 
         return result
     
@@ -504,7 +516,10 @@ class tender_line(osv.osv):
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
                 'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price"),
+                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", multi='total'),
+                'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
+                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", multi='total'),
+                'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
