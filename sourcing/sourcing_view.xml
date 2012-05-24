@@ -65,7 +65,7 @@
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
 						domain="[('id', '!=', company_id)]"
-						context="{'product_id': product_id, 'choose_supplier': True}"
+						context="{'product_id': product_id, 'choose_supplier': True, 'uom': uom_id, 'product_qty': qty}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />
 					<field name="customer" invisible="1" />
