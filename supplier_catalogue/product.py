@@ -283,6 +283,18 @@ class product_pricelist(osv.osv):
             res += [(pp.id, txt)]
         return res
     
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=80):
+        '''
+        Search pricelist by currency name instead of pricelist name
+        '''
+        ids = []
+        if name:
+            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', operator, name)], context=context)
+            ids = self.search(cr, uid, [('currency_id', 'in', currency_ids)] + args)
+            
+        return self.name_get(cr, uid, ids)          
+        
+    
 product_pricelist()
 
 
@@ -290,11 +302,40 @@ class res_currency(osv.osv):
     _name = 'res.currency'
     _inherit = 'res.currency'
     
+    def _get_in_search(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for id in ids:
+            res[id] = True
+        
+        return res
+    
+    def _search_in_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns currency according to partner type
+        '''
+        user_obj = self.pool.get('res.users')
+        price_obj = self.pool.get('product.pricelist')
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'is_po_functional':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                else:
+                    func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+                    po_currency_id = price_obj.browse(cr, uid, arg[2]).currency_id.id
+                    dom.append(('id', 'in', [func_currency_id, po_currency_id]))
+                        
+        return dom  
+    
     _columns = {
         'is_section_currency': fields.boolean(string='Is a currency of a section', 
                                         help='If this box is checked, this currenc is used as a functional currency for at least one section in MSF.'),
         'is_esc_currency': fields.boolean(string='Is a currency of an ESC', 
-                                        help='If this box is checked, this currency is used as a currency for at least one ESC.')
+                                        help='If this box is checked, this currency is used as a currency for at least one ESC.'),
+        'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
+                                            type='boolean', string='transport PO currencies'),
     }
     
 res_currency()

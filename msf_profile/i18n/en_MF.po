@@ -107,6 +107,16 @@ msgstr ""
 msgid "Sales by Salesman in last 90 days"
 msgstr "Field Orders by Responsible in last 90 days"
 
+#. module: product
+#: view:res.partner:0
+msgid "Sales & Purchases"
+msgstr "Field orders & Purchases"
+
+#. module: product
+#: view:res.partner:0
+msgid "Sales Properties"
+msgstr "Field orders properties"
+
 #. module: sale
 #: model:ir.actions.act_window,name:sale.action_config_picking_policy
 msgid "Configure Picking Policy for Sales Order"
@@ -464,7 +474,7 @@ msgstr "Procurement Orders represent the need for a certain quantity of products
 #: model:product.pricelist.type,name:product.pricelist_type_sale
 #: field:res.partner,property_product_pricelist:0
 msgid "Sale Pricelist"
-msgstr "Field Currency"
+msgstr "Field orders default currency"
 
 #. module: sale
 #: model:ir.model,name:sale.model_sale_advance_payment_inv
@@ -718,7 +728,7 @@ msgstr "Import of the statement in the system from a supplier or stock transfer 
 #. module: purchase
 #: model:product.pricelist,name:purchase.list0
 msgid "Default Purchase Pricelist"
-msgstr "Default Purchase Currency"
+msgstr "Purchase default currency"
 
 #. module: purchase
 #: help:purchase.order,pricelist_id:0
