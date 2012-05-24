@@ -113,6 +113,15 @@ class res_partner(osv.osv):
         
         if not partner_type or partner_type in ('external', 'internal'):
             r.update({'po_by_project': 'all'})
+            
+        if partner_type and partner_type == 'internal':
+            func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+            sale_pricelist_id = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', func_curr_id), ('type', '=', 'sale')])
+            if sale_pricelist_id:
+                r.update({'property_product_pricelist': sale_pricelist_id[0]})
+            purchase_pricelist_id = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', func_curr_id), ('type', '=', 'purchase')])
+            if purchase_pricelist_id:
+                r.update({'property_product_pricelist_purchase': purchase_pricelist_id[0]})
         
         return {'value': r}
     

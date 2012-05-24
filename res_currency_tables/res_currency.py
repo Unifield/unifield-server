@@ -91,7 +91,7 @@ class res_currency(osv.osv):
         currency = self.browse(cr, uid, currency_id, context=context)
         
         # Create the sale pricelist
-        sale_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency_id, 
+        sale_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency.id, 
                                                        'name': currency.name, 
                                                        'active': currency.active,
                                                        'type': 'sale',
@@ -109,7 +109,7 @@ class res_currency(osv.osv):
                                   'min_qunatity': 0.00}, context=context)
         
         # Create the purchase pricelist
-        purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency_id, 
+        purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency.id, 
                                                            'name': currency.name, 
                                                            'active': currency.active,
                                                            'type': 'purchase',
@@ -126,7 +126,7 @@ class res_currency(osv.osv):
                                   'base': -2,
                                   'min_qunatity': 0.00}, context=context)
         
-        return True
+        return [sale_price_id, purchase_price_id]
     
     def create(self, cr, uid, values, context=None):
         '''
@@ -159,6 +159,9 @@ class res_currency(osv.osv):
         if 'active' in values:
             # Get all pricelists and versions for the given currency
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+            if not pricelist_ids:
+                for cur_id in ids:
+                    pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=context)
             version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
             # Update the pricelists and versions
             pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=context)

@@ -60,6 +60,35 @@
                 </data>
             </field>
         </record>
+        
+        <record id="view_partner_property_purchase_form" model="ir.ui.view">
+	      <field name="name">res.partner.purchase.property.form.inherit</field>
+	      <field name="model">res.partner</field>
+	      <field name="type">form</field>
+	      <field name="inherit_id" ref="purchase.view_partner_property_form"/>
+	      <field name="arch" type="xml">
+			<data>
+	    		<xpath expr="/form//field[@name='property_product_pricelist_purchase']" position="replace">
+					<field name="property_product_pricelist_purchase" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
+				</xpath>
+			</data>
+		  </field>
+		</record>
+		
+		<record id="view_partner_property_sale_form" model="ir.ui.view">
+	      <field name="name">res.partner.sale.property.form.inherit</field>
+	      <field name="model">res.partner</field>
+	      <field name="type">form</field>
+	      <field name="inherit_id" ref="partner_modification.view_partner_property_form"/>
+	      <field name="arch" type="xml">
+			<data>
+	    		<xpath expr="/form//field[@name='property_product_pricelist']" position="replace">
+					<field name="property_product_pricelist" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
+				</xpath>
+			</data>
+		  </field>
+		</record>
+
 
 	</data>
 </openerp>

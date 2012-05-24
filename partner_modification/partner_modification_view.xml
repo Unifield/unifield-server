@@ -85,28 +85,10 @@
 		            	<field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
 		          	</group>
 				</xpath>
-				
-					<xpath expr="/form//field[@name='property_product_pricelist']" position="attributes">
-						<attribute name="widget">selection</attribute>
-					</xpath>
 					        	
 	          </data>
 	      </field>
 	    </record>
-	    
-	    <record id="view_partner_property_form" model="ir.ui.view">
-	      <field name="name">res.partner.stock.property.form.inherit</field>
-	      <field name="model">res.partner</field>
-	      <field name="type">form</field>
-	      <field name="inherit_id" ref="purchase.view_partner_property_form"/>
-	      <field name="arch" type="xml">
-			<data>
-	    		<xpath expr="/form//field[@name='property_product_pricelist_purchase']" position="attributes">
-					<attribute name="widget">selection</attribute>
-				</xpath>
-			</data>
-		  </field>
-		</record>
-		
+	    		
 	</data>
 </openerp>

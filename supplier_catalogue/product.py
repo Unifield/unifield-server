@@ -215,6 +215,44 @@ class product_pricelist(osv.osv):
     _name = 'product.pricelist'
     _inherit = 'product.pricelist'
     
+    def _get_in_search(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for id in ids:
+            res[id] = True
+        
+        return res
+    
+    def _search_in_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns pricelists according to partner type
+        '''
+        user_obj = self.pool.get('res.users')
+        cur_obj = self.pool.get('res.currency')
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'in_search':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                else:
+                    if arg[2] == 'internal':
+                        func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+                        dom.append(('currency_id', '=', func_currency_id))
+                    elif arg[2] == 'section':
+                        currency_ids = cur_obj.search(cr, uid, [('is_section_currency', '=', True)])
+                        dom.append(('currency_id', 'in', currency_ids))
+                    elif arg[2] == 'esc':
+                        currency_ids = cur_obj.search(cr, uid, [('is_esc_currency', '=', True)])
+                        dom.append(('currency_id', 'in', currency_ids))
+                        
+        return dom  
+    
+    _columns = {
+        'in_search': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
+                                     type='boolean', string='In search'),
+    }
+    
     def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
         '''
         Rework the computation of price from partner section in product form
@@ -246,5 +284,19 @@ class product_pricelist(osv.osv):
         return res
     
 product_pricelist()
+
+
+class res_currency(osv.osv):
+    _name = 'res.currency'
+    _inherit = 'res.currency'
+    
+    _columns = {
+        'is_section_currency': fields.boolean(string='Is a currency of a section', 
+                                        help='If this box is checked, this currenc is used as a functional currency for at least one section in MSF.'),
+        'is_esc_currency': fields.boolean(string='Is a currency of an ESC', 
+                                        help='If this box is checked, this currency is used as a currency for at least one ESC.')
+    }
+    
+res_currency()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
