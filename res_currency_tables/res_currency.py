@@ -184,7 +184,7 @@ class res_currency(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+        pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
         if pricelist_ids:
             # Get all documents which disallow the deletion of the currency
             purchase_ids = purchase_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
