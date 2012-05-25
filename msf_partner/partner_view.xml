@@ -30,7 +30,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/group/field[@name='title']" position="replace">
-                        <field name="partner_type" on_change="on_change_partner_type(partner_type)" />
+                        <field name="partner_type" 
+                        	on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
@@ -69,7 +70,7 @@
 	      <field name="arch" type="xml">
 			<data>
 	    		<xpath expr="/form//field[@name='property_product_pricelist_purchase']" position="replace">
-					<field name="property_product_pricelist_purchase" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
+					<field name="property_product_pricelist_purchase" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
 				</xpath>
 			</data>
 		  </field>
