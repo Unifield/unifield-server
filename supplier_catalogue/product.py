@@ -338,6 +338,50 @@ class res_currency(osv.osv):
                                             type='boolean', string='transport PO currencies'),
     }
     
+    def write(self, cr, uid, ids, values, context=None):
+        '''
+        Disallow the uncheck of section/esc checkbox if a section/esc partner use this currency
+        '''
+        property_obj = self.pool.get('ir.property')
+        partner_obj = self.pool.get('res.partner')
+        pricelist_obj = self.pool.get('product.pricelist')
+        
+        # Check if Inter-section partners used one of these currencies
+        if 'is_section_currency' in values and not values['is_section_currency']:
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'section')], context=context)
+            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
+            res_reference = ['res.partner,%s' % x for x in partner_ids]
+            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
+                                                             ('name', '=', 'property_product_pricelist_purcahse'),
+                                                             ('res_id', 'in', res_reference),
+                                                             ('value_reference', 'in', value_reference)], context=context)
+            if property_ids:
+                properties = property_obj.browse(cr, uid, property_ids, context=context)
+                partner_list = ' / '.join(x.res_id.name for x in properties)
+                raise osv.except_osv(_('Error !'), 
+                                     _('You cannot uncheck the Section checkbox because this currency is used on these \'Inter-section\' partners : \
+                                      %s' % partner_list))
+        
+        # Check if ESC partners used one of these currencies
+        if 'is_esc_currency' in values and not values['is_esc_currency']:
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
+            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc')], context=context)
+            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
+            res_reference = ['res.partner,%s' % x for x in partner_ids]
+            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
+                                                             ('name', '=', 'property_product_pricelist_purcahse'),
+                                                             ('res_id', 'in', res_reference),
+                                                             ('value_reference', 'in', value_reference)], context=context)
+            if property_ids:
+                properties = property_obj.browse(cr, uid, property_ids, context=context)
+                partner_list = ' / '.join(x.res_id.name for x in properties)
+                raise osv.except_osv(_('Error !'), 
+                                     _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
+                                      %s' % partner_list))
+            
+        return super(res_currency, self).write(cr, uid, ids, values, context=context)
+    
 res_currency()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
