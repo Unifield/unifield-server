@@ -80,7 +80,7 @@
 	      <field name="name">res.partner.sale.property.form.inherit</field>
 	      <field name="model">res.partner</field>
 	      <field name="type">form</field>
-	      <field name="inherit_id" ref="partner_modification.view_partner_property_form"/>
+	      <field name="inherit_id" ref="product.view_partner_property_form"/>
 	      <field name="arch" type="xml">
 			<data>
 	    		<xpath expr="/form//field[@name='property_product_pricelist']" position="replace">
