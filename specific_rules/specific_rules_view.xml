@@ -832,9 +832,10 @@
         	<field name="type">form</field>
         	<field name="inherit_id" ref="procurement.view_warehouse_orderpoint_form" />
         	<field name="arch" type="xml">
-        		<data>
+        		<data>        			
         			<xpath expr="/form//field[@name='product_uom']" position="attributes">
         				<attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+        				<attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
         			</xpath>
         		</data>
         	</field>

@@ -90,7 +90,7 @@
                         <field name="product_ids" nolabel="1" colspan="4" mode="tree">
                         	<tree string="Products" editable="top">
                         		<field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id)]" />
-                        		<field name="uom_id" />
+                        		<field name="uom_id" domain="[('uom_by_product', '=', product_id)]" />
                         		<field name="safety_stock" />
                         	</tree>
                         </field>

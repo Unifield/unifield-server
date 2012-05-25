@@ -321,6 +321,36 @@ class stock_warehouse_orderpoint(osv.osv):
 stock_warehouse_orderpoint()
 
 
+class product_uom(osv.osv):
+    _name = 'product.uom'
+    _inherit = 'product.uom'
+    
+    def _get_uom_by_product(self, cr, uid, ids, field_name, args, context=None):
+        return {}
+    
+    def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'uom_by_product' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_product':
+                product_id = arg[2]
+                if isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                
+        return dom
+    
+    _columns = {
+        'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
+                                          help='Field used to filter the UoM for a specific product'),
+    }
+    
+product_uom()
+
+
 class stock_warehouse_automatic_supply(osv.osv):
     '''
     add message
