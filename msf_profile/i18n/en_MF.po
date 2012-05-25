@@ -747,7 +747,7 @@ msgstr "The selected currency is not activated !\n"
 #: model:product.pricelist.type,name:purchase.pricelist_type_purchase
 #: field:res.partner,property_product_pricelist_purchase:0
 msgid "Purchase Pricelist"
-msgstr "Purchase Currency"
+msgstr "Purchase default currency"
 
 #. module: purchase
 #: code:addons/purchase/purchase.py:700
