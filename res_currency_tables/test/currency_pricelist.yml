@@ -9,7 +9,7 @@
     symbol: TCUR
     currency_name: TestCUR
     active: False
-    rate:
+    rate_ids:
       - rate: 1.5023
         name: 2011-05-02
 -
@@ -17,13 +17,13 @@
   one for purchase)
 -
   !python {model: product.pricelist}: |
-    sale_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1'), ('active', '=', False), ('type', '=', 'sale'))])
+    sale_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1')), ('active', '=', 0), ('type', '=', 'sale')])
     assert sale_ids, "No inactive sale pricelist for the new currency"
-    purchase_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1'), ('active', '=', False), ('type', '=', 'purchase'))])
+    purchase_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1')), ('active', '=', 0), ('type', '=', 'purchase')])
     assert purchase_ids, "No inactive purchase pricelist for the new currency"
     sale_version_ids = self.pool.get('product.pricelist.version').search(cr, uid, ([('pricelist_id', 'in', sale_ids), ('active', '=', False)]))
     purchase_version_ids = self.pool.get('product.pricelist.version').search(cr, uid, ([('pricelist_id', 'in', purchase_ids), ('active', '=', False)]))
-    assert sale_verson_ids, "No inactive version for sale pricelist"
+    assert sale_version_ids, "No inactive version for sale pricelist"
     assert purchase_version_ids, "No inactive version for purchase pricelist"
 -
   Activate the new currency
@@ -35,20 +35,20 @@
   one for purchase)
 -
   !python {model: product.pricelist}: |
-    sale_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1'), ('type', '=', 'sale'))])
+    sale_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1')), ('type', '=', 'sale')])
     assert sale_ids, "No active sale pricelist for the new currency"
-    purchase_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1'), ('type', '=', 'purchase'))])
+    purchase_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1')), ('type', '=', 'purchase')])
     assert purchase_ids, "No active purchase pricelist for the new currency"
     sale_version_ids = self.pool.get('product.pricelist.version').search(cr, uid, [('pricelist_id', 'in', sale_ids)])
     purchase_version_ids = self.pool.get('product.pricelist.version').search(cr, uid, [('pricelist_id', 'in', purchase_ids)])
-    assert sale_verson_ids, "No active version for sale pricelist"
+    assert sale_version_ids, "No active version for sale pricelist"
     assert purchase_version_ids, "No active version for purchase pricelist"
 -
   Delete the currency and check if the pricelist are removed
 -
   !python {model: res.currency}: |
     self.unlink(cr, uid, ref('new_cur1'))
-    purchase_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1'), ('type', '=', 'purchase'), ('active', 'in', ['t', 'f']))])
-    sale_ids = self.search(cr, uid, [('currency_id', '=', ref('new_cur1'), ('type', '=', 'sale'), ('active', 'in', ['t', 'f']))])
+    purchase_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', ref('new_cur1')), ('type', '=', 'purchase'), ('active', 'in', ['t', 'f'])])
+    sale_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', ref('new_cur1')), ('type', '=', 'sale'), ('active', 'in', ['t', 'f'])])
     assert not sale_ids, "No active sale pricelist for the new currency"
     assert not purchase_ids, "No active purchase pricelist for the new currency"

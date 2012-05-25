@@ -179,6 +179,7 @@ class res_currency(osv.osv):
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
         partner_obj = self.pool.get('res.partner')
+        property_obj = self.pool.get('ir.property')
         
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -188,8 +189,12 @@ class res_currency(osv.osv):
             # Get all documents which disallow the deletion of the currency
             purchase_ids = purchase_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
             sale_ids = sale_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
-            partner_ids = partner_obj.search(cr, uid, ['|', ('property_product_pricelist', 'in', pricelist_ids),
-                                                       ('property_product_pricelist_purchase', 'in', pricelist_ids)], context=context)
+#            partner_ids = partner_obj.search(cr, uid, ['|', ('property_product_pricelist', 'in', pricelist_ids),
+#                                                       ('property_product_pricelist_purchase', 'in', pricelist_ids)], context=context)
+            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
+            partner_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
+                                                             ('name', '=', 'property_product_pricelist_purcahse'),
+                                                        ('value_reference', 'in', value_reference)])
     
             # Raise an error if the currency is used on partner form        
             if partner_ids:
