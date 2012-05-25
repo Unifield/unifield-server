@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,10 +21,24 @@
 #
 ##############################################################################
 
-import msf_budget_decision_moment
-import msf_budget
-import msf_budget_line
-import wizard
-import report
+from osv import osv
+from osv import fields
+from tools.translate import _
+from time import strftime
+from tools.misc import flatten
 
+class account_move_line(osv.osv):
+    _name = 'account.move.line'
+    _inherit = 'account.move.line'
+
+    _columns = {
+        'accrual': fields.boolean(string="Accrual?", readonly=True, 
+            help="If true, this line was created by an accrual generation."),
+    }
+
+    _defaults = {
+        'accrual': lambda *a: False,
+    }
+
+account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -24,6 +24,7 @@
 import res_company
 import hr
 import hr_payroll
+import hr_contract_msf
 import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

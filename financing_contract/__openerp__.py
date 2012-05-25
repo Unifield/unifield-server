@@ -32,7 +32,8 @@
         'security/ir.model.access.csv',
         'financing_contract_view.xml',
         'financing_contract_workflow.xml',
-        'financing_contract_report.xml'
+        'financing_contract_report.xml',
+        'wizard/wizard_financing_currency_export_view.xml'
     ],
     'test': [
         #'test/financing_contract.yml'
