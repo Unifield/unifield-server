@@ -31,12 +31,17 @@ class account_move_line(osv.osv):
     }
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Create analytic lines on expense accounts that have an analytical distribution.
+        """
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             amount = obj_line.debit_currency - obj_line.credit_currency
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
+                if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, obj_line.analytic_distribution_id.id, {}, obj_line.account_id.id) == 'invalid':
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is not valid!'))
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
