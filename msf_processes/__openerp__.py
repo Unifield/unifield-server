@@ -34,6 +34,7 @@
                  "purchase",
                  "tender_flow",
                  "stock",
+                 "msf_outgoing",
                  ],
     "update_xml": ["process/outgoing_process.xml", #5
                    "process/incoming_process.xml", #6

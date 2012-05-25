@@ -85,22 +85,10 @@
             <field eval="0" name="flow_start"/>
         </record>
         
-        <record id="purchase.process_node_packinglist0" model="process.node">
-            <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
-            <!-- <field name="model_id" ref="stock.model_stock_picking"/> -->
-            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
-            <field eval="&quot;&quot;&quot;Incoming Products&quot;&quot;&quot;" name="name"/>
-            <field eval="&quot;&quot;&quot;Incoming products subflow.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="purchase.process_process_purchaseprocess0"/>
-            <field name="subflow_id" ref="stock.process_process_incoming0"/>
-            <!-- <field eval="&quot;&quot;&quot;object.state in ('approved', 'except_picking', 'except_invoice', 'done')&quot;&quot;&quot;" name="model_states"/> -->
-            <field eval="0" name="flow_start"/>
-        </record>
-        
         <!-- 
-        	Call back nodes
+        	Call back nodes in purchase order process
         -->
-        
+        <!-- 
         <record id="tender_flow.process_node_po_back_tender" model="process.node">
             <field name="menu_id" ref="tender_flow.menu_tender"/>
             <field name="model_id" ref="tender_flow.model_tender"/>
@@ -109,15 +97,15 @@
             <field eval="&quot;&quot;&quot;Tender subflow.&quot;&quot;&quot;" name="note"/>
             <field name="process_id" ref="purchase.process_process_purchaseprocess0"/>
             <field name="subflow_id" ref="tender_flow.process_process_tender"/>
-            <!-- <field eval="&quot;&quot;&quot;object.state in ('approved', 'except_picking', 'except_invoice', 'done')&quot;&quot;&quot;" name="model_states"/> -->
+            <field eval="&quot;&quot;&quot;object.state in ('approved', 'except_picking', 'except_invoice', 'done')&quot;&quot;&quot;" name="model_states"/>
             <field eval="1" name="flow_start"/>
         </record>
         
         <record id="tender_flow.process_condition_po_back_tender" model="process.condition">
         	<field name="model_id" ref="purchase.model_purchase_order"/>
             <field name="node_id" ref="tender_flow.process_node_po_back_tender"/>
-            <field eval="&quot;&quot;&quot;object.state != 'draft'&quot;&quot;&quot;" name="model_states"/> <!-- dummy condition to be completed when function attributes are available -->
-            <field eval="&quot;&quot;&quot;condition_tender_po&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;object.state != 'draft'&quot;&quot;&quot;" name="model_states"/> dummy condition to be completed when function attributes are available
+            <field eval="&quot;&quot;&quot;condition_tender_back_po&quot;&quot;&quot;" name="name"/>
         </record>
         
         <record id="tender_flow.process_transition_tender_po_back_draft" model="process.transition">
@@ -128,6 +116,37 @@
             <field model="process.node" name="target_node_id" ref="purchase.process_node_draftpurchaseorder0"/>
         </record>
         
+        
+        	Call back nodes in rfq process
+        
+        
+        <record id="tender_flow.process_node_rfq_back_tender" model="process.node">
+            <field name="menu_id" ref="tender_flow.menu_tender"/>
+            <field name="model_id" ref="tender_flow.model_tender"/>
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Tender&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Tender subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="purchase.process_process_rfq0"/>
+            <field name="subflow_id" ref="tender_flow.process_process_tender"/>
+            <field eval="&quot;&quot;&quot;object.state in ('approved', 'except_picking', 'except_invoice', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="1" name="flow_start"/>
+        </record>
+        
+        <record id="tender_flow.process_condition_rfq_back_tender" model="process.condition">
+        	<field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="node_id" ref="tender_flow.process_node_rfq_back_tender"/>
+            <field eval="&quot;&quot;&quot;object.state != 'draft'&quot;&quot;&quot;" name="model_states"/> dummy condition to be completed when function attributes are available
+            <field eval="&quot;&quot;&quot;condition_tender_back_rfq&quot;&quot;&quot;" name="name"/>
+        </record>
+        
+        <record id="tender_flow.process_transition_tender_rfq_back_draft" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From back tender subflow to draft rfq.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From back tender subflow to draft rfq.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="tender_flow.process_node_rfq_back_tender"/>
+            <field model="process.node" name="target_node_id" ref="purchase.process_node_rfq_draft"/>
+        </record>
+         -->
         <!--
             Process Condition
         -->

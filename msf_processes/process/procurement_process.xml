@@ -17,10 +17,10 @@
             <field name="model_id" ref="procurement.model_procurement_order"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Draft state of procurement order.&quot;&quot;&quot;" name="note"/>
-            <field eval="&quot;&quot;&quot;Procurement Order&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Proc - draft&quot;&quot;&quot;" name="name"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state in ('draft', 'confirmed', 'exception', 'running', 'cancel', 'ready', 'done', 'waiting')&quot;&quot;&quot;" name="model_states"/>
-            <field eval="0" name="flow_start"/>
+            <field eval="&quot;&quot;&quot;object.state in ('draft', 'confirmed', 'exception', 'running', 'ready', 'done', 'waiting')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="1" name="flow_start"/>
         </record>
         
         <record id="procurement.process_node_procure_confirmed" model="process.node">
@@ -28,9 +28,9 @@
             <field name="model_id" ref="procurement.model_procurement_order"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Confirmed state of procurement order.&quot;&quot;&quot;" name="note"/>
-            <field eval="&quot;&quot;&quot;Procurement Order&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Proc - confirmed&quot;&quot;&quot;" name="name"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state in ('confirmed', 'exception', 'running', 'cancel', 'ready', 'done', 'waiting')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;object.state in ('confirmed', 'exception', 'running', 'ready', 'done', 'waiting')&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
         </record>
         
@@ -39,7 +39,7 @@
             <field name="model_id" ref="procurement.model_procurement_order"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Exception state of procurement order.&quot;&quot;&quot;" name="note"/>
-            <field eval="&quot;&quot;&quot;Procurement Order&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Proc - exception&quot;&quot;&quot;" name="name"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
             <field eval="&quot;&quot;&quot;object.state == 'exception'&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
@@ -50,9 +50,9 @@
             <field name="model_id" ref="procurement.model_procurement_order"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Running state of procurement order.&quot;&quot;&quot;" name="note"/>
-            <field eval="&quot;&quot;&quot;Procurement Order&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Proc - running&quot;&quot;&quot;" name="name"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state in ('running', 'cancel', 'ready', 'done', 'waiting')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;object.state in ('running', 'ready', 'done', 'waiting')&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
         </record>
         
@@ -61,7 +61,7 @@
             <field name="model_id" ref="procurement.model_procurement_order"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Closed state of procurement order.&quot;&quot;&quot;" name="note"/>
-            <field eval="&quot;&quot;&quot;Procurement Order&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Proc - closed&quot;&quot;&quot;" name="name"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
             <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
@@ -69,25 +69,37 @@
         
         <record id="procurement.process_node_procure_tender" model="process.node">
             <field name="menu_id" ref="tender_flow.menu_tender"/>
-            <field name="model_id" ref="tender_flow.model_tender"/>
+            <!-- <field name="model_id" ref="tender_flow.model_tender"/> -->
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Tender&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Tender subflow.&quot;&quot;&quot;" name="note"/>
             <field name="subflow_id" ref="tender_flow.process_process_tender"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state == 'draft'&quot;&quot;&quot;" name="model_states"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state == 'draft'&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
         </record>
         
         <record id="procurement.process_node_procure_po" model="process.node">
             <field name="menu_id" ref="purchase.menu_purchase_form_action"/>
-            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <!-- <field name="model_id" ref="purchase.model_purchase_order"/> -->
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Purchase Order&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Purchase Order subflow.&quot;&quot;&quot;" name="note"/>
             <field name="subflow_id" ref="purchase.process_process_purchaseprocess0"/>
             <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
-            <field eval="&quot;&quot;&quot;object.state == 'draft'&quot;&quot;&quot;" name="model_states"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state == 'draft'&quot;&quot;&quot;" name="model_states"/> -->
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="procurement.process_node_procure_in" model="process.node">
+            <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
+            <!-- <field name="model_id" ref="purchase.model_stock_picking"/> -->
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Incoming Products&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Incoming products subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="procurement.process_process_procurementprocess0"/>
+            <field name="subflow_id" ref="stock.process_process_incoming0"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state in ('comparison', 'done')&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
         </record>
         
@@ -97,8 +109,8 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Confirm Procurement Order&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;The procurement order is being confirmed.&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_confirmed"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procureproducts0"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_confirmed"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
@@ -106,8 +118,8 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;The Procurement Order goes in exception&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;The procurement order goes in exception.&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_exception"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_confirmed"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_exception"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
@@ -115,8 +127,8 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;The Procurement Order goes in confirmed&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;The procurement order goes in confirmed.&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_confirmed"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_exception"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_confirmed"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
@@ -124,8 +136,8 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;The Procurement Order goes in exception&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;The procurement order goes in exception.&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_running"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_confirmed"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_running"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
@@ -133,8 +145,8 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;The Procurement Order goes in closed&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;The procurement order goes in closed.&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_done"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_running"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_done"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
@@ -142,8 +154,8 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_tender"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_running"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_tender"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
@@ -151,17 +163,26 @@
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_running"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
         <record id="procurement.process_transition_tender_po" model="process.transition">
             <field eval="[(6,0,[])]" name="transition_ids"/>
-            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="name"/>
-            <field eval="&quot;&quot;&quot;Tender is created&quot;&quot;&quot;" name="note"/>
-            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
+            <field eval="&quot;&quot;&quot;Purchase Order is created.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Purchase Order is created.&quot;&quot;&quot;" name="note"/>
             <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_tender"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
+            <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
+        </record>
+        
+        <record id="procurement.process_transition_po_in" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Incoming Products is created.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Incoming Products is created.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="procurement.process_node_procure_po"/>
+            <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_in"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
         
