@@ -77,6 +77,9 @@ class analytic_distribution1(osv.osv):
         except ValueError:
             fp_id = 0
         for fp_line in distri.funding_pool_lines:
+            account = self.pool.get('account.account').browse(cr, uid, account_id)
+            if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
+                return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue
