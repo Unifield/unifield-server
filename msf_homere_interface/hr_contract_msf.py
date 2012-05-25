@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +20,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Accruals for MSF",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["register_accounting"],
-    "description": """Module for defining accrual expenses.
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'msf_accrual_view.xml',
-        'account_view.xml',
-        'wizard/wizard_accrual_view.xml'
-    ],
-    'test': [
-        'test/accrual_test.yml'
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+from osv import fields
+
+class hr_contract_msf(osv.osv):
+    _name = 'hr.contract.msf'
+    _description = 'MSF Employee contract from Homère'
+
+    _columns = {
+        'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=True),
+        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=True),
+        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=True),
+        'date_start': fields.date(string="Contract ' starting date", readonly=True, required=False),
+        'date_end': fields.date(string="Contract's ending date", readonly=True, required=False),
+        'current': fields.boolean(string="Current contract", readonly=True, required=True),
+    }
+
+hr_contract_msf()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

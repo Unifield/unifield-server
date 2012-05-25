@@ -74,8 +74,11 @@ class wizard_accrual_validation(osv.osv_memory):
                     move_id = move_obj.create(cr, uid, move_vals, context=context)
                     reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
                     
+                    reversal_description = "REV - " + accrual_line.description
+                    
                     # Create move lines
                     accrual_move_line_vals = {
+                        'accrual': True,
                         'move_id': move_id,
                         'date': move_date,
                         'journal_id': accrual_line.journal_id.id,
@@ -89,6 +92,7 @@ class wizard_accrual_validation(osv.osv_memory):
                         'currency_id': accrual_line.currency_id.id,
                     }
                     expense_move_line_vals = {
+                        'accrual': True,
                         'move_id': move_id,
                         'date': move_date,
                         'journal_id': accrual_line.journal_id.id,
@@ -103,14 +107,16 @@ class wizard_accrual_validation(osv.osv_memory):
                         'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                     }
                     
-                    # and their reversal
+                    # and their reversal (source_date to keep the old change rate)
                     reversal_accrual_move_line_vals = {
+                        'accrual': True,
                         'move_id': reversal_move_id,
                         'date': reversal_move_date,
+                        'source_date': move_date,
                         'journal_id': accrual_line.journal_id.id,
                         'period_id': reversal_period_id,
                         'reference': accrual_line.reference,
-                        'name': accrual_line.description,
+                        'name': reversal_description,
                         'account_id': accrual_line.accrual_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,
@@ -118,12 +124,14 @@ class wizard_accrual_validation(osv.osv_memory):
                         'currency_id': accrual_line.currency_id.id,
                     }
                     reversal_expense_move_line_vals = {
+                        'accrual': True,
                         'move_id': reversal_move_id,
                         'date': reversal_move_date,
+                        'source_date': move_date,
                         'journal_id': accrual_line.journal_id.id,
                         'period_id': reversal_period_id,
                         'reference': accrual_line.reference,
-                        'name': accrual_line.description,
+                        'name': reversal_description,
                         'account_id': accrual_line.expense_account_id.id,
                         'partner_id': ((accrual_line.partner_id) and accrual_line.partner_id.id) or False,
                         'employee_id': ((accrual_line.employee_id) and accrual_line.employee_id.id) or False,

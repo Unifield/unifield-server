@@ -35,7 +35,7 @@ class report_csv_budget_monthly(report_sxw.report_sxw):
                    ['Budget code:', budget.code],
                    ['Fiscal year:', budget.fiscalyear_id.name],
                    ['Cost center:', budget.cost_center_id.name],
-                   ['Decision moment:', budget.decision_moment],
+                   ['Decision moment:', budget.decision_moment_id.name],
                    ['Version:', budget.version],
                    [],
                    ['Account','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']]

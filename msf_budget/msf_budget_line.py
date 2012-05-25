@@ -109,11 +109,13 @@ class msf_budget_line(osv.osv):
                 for cost_center_id in cost_center_list:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                             AND cost_center_id = %s \
+                                                            AND decision_moment_id = %s \
                                                             AND state != 'draft' \
                                                             AND type = 'normal' \
                                                             ORDER BY version DESC LIMIT 1",
                                                            (budget.fiscalyear_id.id,
-                                                            cost_center_id))
+                                                            cost_center_id,
+                                                            budget.decision_moment_id.id))
                     if cr.rowcount:
                         # A budget was found; get its lines and their amounts
                         child_budget_id = cr.fetchall()[0][0]
