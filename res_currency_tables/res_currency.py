@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 
+from tools.translate import _
+
 class res_currency(osv.osv):
     _inherit = 'res.currency'
     _name = 'res.currency'
