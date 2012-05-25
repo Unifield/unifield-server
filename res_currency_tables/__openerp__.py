@@ -36,6 +36,7 @@
         'res_currency_table_workflow.xml',
     ],
     'test': [
+        'test/currency_pricelist.yml',
     ],
     'demo_xml': [],
     'installable': True,

@@ -198,7 +198,10 @@ class res_currency(osv.osv):
             # Raise an error if the currency is used on sale or purchase order
             if purchase_ids or sale_ids:
                 raise osv.except_osv(_('Currency currently used !'), _('The currency you want to remove is currently used on at least one sale order or purchase order.'))
-        
+            
+        # If no error, unlink pricelists
+        for p_list in pricelist_ids:
+            pricelist_obj.unlink(cr, uid, p_list, context=context)
         for cur_id in ids:
             res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
             
