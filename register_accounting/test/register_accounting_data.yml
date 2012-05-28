@@ -241,6 +241,7 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create a X2110 Expense Account.
 -
@@ -254,6 +255,7 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_support
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create Cash Advance 4204 Account.
 -
@@ -268,6 +270,7 @@
     reconcile: 1
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_national_staff
+    destination_ids: [analytic_distribution.analytic_account_destination_national_staff]
 -
   I create a X11002 Receivable Account.
 -
@@ -386,6 +389,7 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_support, analytic_distribution.analytic_account_destination_operation]
 -
   I create a Journal View with some columns
 -
