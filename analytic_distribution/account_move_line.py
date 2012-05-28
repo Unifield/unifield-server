@@ -40,8 +40,10 @@ class account_move_line(osv.osv):
             # Prepare some values
             amount = obj_line.debit_currency - obj_line.credit_currency
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
-                if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, obj_line.analytic_distribution_id.id, {}, obj_line.account_id.id) == 'invalid':
-                    raise osv.except_osv(_('Warning'), _('Analytic distribution is not valid!'))
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, obj_line.analytic_distribution_id.id, {}, obj_line.account_id.id)
+                if ana_state == 'invalid':
+                    ana_content = self.pool.get('analytic.distribution')._get_lines_count(cr, uid, obj_line.analytic_distribution_id.id)
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution seems to be not valid. State: %s. Content: %s.') % (ana_state, ana_content,))
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)

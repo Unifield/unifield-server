@@ -144,7 +144,7 @@ free_2_distribution_line()
 class analytic_distribution(osv.osv):
     _inherit = "analytic.distribution"
 
-    def _get_lines_count(self, cr, uid, ids, name, args, context=None):
+    def _get_lines_count(self, cr, uid, ids, name=False, args=False, context=None):
         """
         Get count of each analytic distribution lines type.
         Example: with an analytic distribution with 2 cost center, 3 funding pool and 1 Free 1:
