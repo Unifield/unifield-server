@@ -132,17 +132,7 @@ class sale_order(osv.osv):
         # Set analytic distribution from sale order to invoice
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids):
-            # Copy analytic distribution from sale order to invoices
-            if so.analytic_distribution_id and so.invoice_ids:
-                for inv in so.invoice_ids:
-                    distrib_id = so.analytic_distribution_id and so.analytic_distribution_id.id or False
-                    if distrib_id:
-                        new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
-                        if not new_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                        # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
-                        self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
+            # Code to retrieve DISTRO from SO have been removed because of impossibility to retrieve some DESTINATION AXIS from FO
             # Copy analytic distribution from sale order line to invoice lines
             for sol in so.order_line:
                 if sol.analytic_distribution_id and sol.invoice_lines:

@@ -15,6 +15,7 @@
     pricelist_id: purchase.list0
     from_yml_test: False
     delivery_confirmed_date: !eval time.strftime('%Y-%m-%d')
+    analytic_distribution_id: global_distrib_1
 -
   Then I add an order line to this purchase
 -

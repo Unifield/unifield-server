@@ -171,17 +171,7 @@ class purchase_order(osv.osv):
             })
             # Create commitment
             commit_id = commit_obj.create(cr, uid, vals, context=context)
-            # Add analytic distribution from purchase
-            if po.analytic_distribution_id:
-                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
-                # Update this distribution not to have a link with purchase but with new commitment
-                if new_distrib_id:
-                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], 
-                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
-                    # Create funding pool lines if needed
-                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
-                    # Update commitment with new analytic distribution
-                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
+            # Code to retrieve analytic distribution from PO to commitment header have been delete because of impossibility to know which analytic destination could be used.
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id

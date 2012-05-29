@@ -142,6 +142,7 @@ class free_2_distribution_line(osv.osv):
 free_2_distribution_line()
 
 class analytic_distribution(osv.osv):
+    _name = 'analytic.distribution'
     _inherit = "analytic.distribution"
 
     def _get_lines_count(self, cr, uid, ids, name=False, args=False, context=None):
@@ -232,11 +233,12 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], {'analytic_id': account_id,}, context=context)
         return True
 
-    def create_funding_pool_lines(self, cr, uid, ids, context=None):
+    def create_funding_pool_lines(self, cr, uid, ids, account_id=False, context=None):
         """
         Create funding pool lines regarding cost_center_lines from analytic distribution.
         If funding_pool_lines exists, then nothing appends.
         By default, add funding_pool_lines with MSF Private Fund element (written in an OpenERP demo file).
+        For destination axis, get those from account_id default configuration (default_destination_id).
         """
         # Some verifications
         if not context:
@@ -258,7 +260,6 @@ class analytic_distribution(osv.osv):
                     'analytic_account_msf_private_funds')[1]
                 except ValueError:
                     pf_id = 0
-#                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
                 if pf_id:
                     vals = {
                         'analytic_id': pf_id,
@@ -268,6 +269,11 @@ class analytic_distribution(osv.osv):
                         'distribution_id': distrib.id or False,
                         'cost_center_id': line.analytic_id and line.analytic_id.id or False,
                     }
+                    # Search default destination
+                    if account_id:
+                        account = self.pool.get('account.account').browse(cr, uid, account_id)
+                        if account and account.user_type and account.user_type.code == 'expense':
+                            vals.update({'destination_id': account.default_destination_id and account.default_destination_id.id or False})
                     new_pf_line_id = self.pool.get('funding.pool.distribution.line').create(cr, uid, vals, context=context)
             res[distrib.id] = True
         return res
