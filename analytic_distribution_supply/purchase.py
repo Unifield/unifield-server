@@ -296,18 +296,8 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Change commitments state if all shipments have been invoiced (not in "to be invoiced" state)
-        to_process = []
-        for po in self.browse(cr, uid, ids, context=context):
-            is_totally_done = True
-            # If one shipment (stock.picking) is '2binvoiced', we shouldn't change commitments ' state
-            for pick in po.picking_ids:
-                if pick.invoice_state == '2binvoiced':
-                    is_totally_done = False
-            # Else shipment is fully done. We could change commitments ' state to Done.
-            if is_totally_done:
-                to_process.append(po.id)
-        self._finish_commitment(cr, uid, to_process, context=context)
+        # Change commitments state
+        self._finish_commitment(cr, uid, ids, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
 purchase_order()
