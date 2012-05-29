@@ -221,6 +221,16 @@
             </field>
         </record>
         
+        <record id="product_product_product_tree_view" model="ir.ui.view">
+        	<field name="name">porduct.product.product.tree.view</field>
+        	<field name="model">product.product</field>
+        	<field name="type">tree</field>
+        	<field name="inherit_id" ref="product.product_product_tree_view" />
+        	<field name="arch" type="xml">
+        		<xpath expr="/tree//field[@name='price']" position="replace" />
+        	</field>
+        </record>
+        
         
         <record id="product_supplierinfo_form_view" model="ir.ui.view">
             <field name="name">product.supplierinfo.form.view.inherit</field>
@@ -344,7 +354,6 @@
                    <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
                    <newline/>
                    <group expand="0" string="Extended Filters..." groups="base.group_extended">
-                       <field name="pricelist_id" widget="selection" context="{'pricelist': self}" />
                        <field name="list_ids" widget="many2one" context="{'list': self}" />
                    </group>
                    <newline/>
@@ -357,6 +366,19 @@
                    </group>
 
                 </search>
+            </field>
+        </record>
+        
+        <record id="stock.product_search_form_view_stock" model="ir.ui.view">
+            <field name="name">product.search.stock.form</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="product.product_search_form_view"/>
+            <field name="arch" type="xml">
+                   <field name="list_ids" position="before">
+                       <field name="location_id" context="{'location': self}"/>
+                       <separator orientation="vertical"/>
+                   </field>
             </field>
         </record>
 
