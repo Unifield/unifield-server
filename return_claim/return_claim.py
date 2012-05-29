@@ -1333,7 +1333,7 @@ class stock_picking(osv.osv):
         # get the processed picking (pick if no backorder, new_picking if backorder, both under concerned_picking name) - this is an internal chained picking
         concerned_picking = kwargs['concerned_picking']
         # test if we need a claim
-        if partial_datas['register_a_claim_partial_picking']:
+        if 'register_a_claim_partial_picking' in partial_datas and partial_datas['register_a_claim_partial_picking']:
             # this is theoretically only possible for internal picking, which are linked to an incoming shipment
             if concerned_picking.type != 'internal':
                 raise osv.except_osv(_('Warning !'), _('Claim registration during picking process is only available for internal picking.'))
