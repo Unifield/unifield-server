@@ -1309,7 +1309,7 @@ class stock_picking(osv.osv):
         assert partial_datas is not None, 'missing partial_datas'
         # if a claim is needed:
         # if return claim: we do not close the processed picking, it is now an out picking which need to be processed
-        if partial_datas['register_a_claim_partial_picking']:
+        if 'register_a_claim_partial_picking' in partial_datas and partial_datas['register_a_claim_partial_picking']:
             if partial_datas['claim_type_partial_picking'] == 'return':
                 return False
         

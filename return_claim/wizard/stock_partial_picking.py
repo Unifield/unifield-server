@@ -115,7 +115,7 @@ class stock_partial_picking(osv.osv_memory):
         partial_datas = kwargs['partial_datas']
         # res
         res = kwargs['res']
-        if partial_datas['register_a_claim_partial_picking']:
+        if 'register_a_claim_partial_picking' in partial_datas and partial_datas['register_a_claim_partial_picking']:
             if partial_datas['claim_type_partial_picking'] == 'return':
                 view_id = obj_data.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
                 view_id = view_id and view_id[1] or False
