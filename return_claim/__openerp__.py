@@ -22,10 +22,10 @@
 {
     "name": "MSF Return-Claim",
     "version": "0.1",
-    "depends": ["msf_config_locations", # for location ids from load common values
-                "purchase",
+    "depends": ["purchase",
                 "sale",
                 "stock",
+                "msf_config_locations", # for location ids from load common values
                 "product_attributes", # for product menu
                 "delivery_mechanism", # for do_incoming function
                 "kit", # for compute availability with production lots
