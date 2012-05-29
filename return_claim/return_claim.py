@@ -94,7 +94,7 @@ class return_claim(osv.osv):
 
         mod_obj = self.pool.get('ir.module.module')
         demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'product_nomenclature')])
+        mod_id = mod_obj.search(cr, 1, [('name', '=', 'return_claim')])
         if mod_id:
             demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
 
