@@ -227,7 +227,15 @@
         	<field name="type">tree</field>
         	<field name="inherit_id" ref="product.product_product_tree_view" />
         	<field name="arch" type="xml">
-        		<xpath expr="/tree//field[@name='price']" position="replace" />
+        		<xpath expr="/tree//field[@name='lst_price']" position="attributes" >
+        			<attribute name="invisible">context.get('pricelist', False)</attribute>
+        		</xpath>
+        		<xpath expr="/tree//field[@name='standard_price']" position="attributes" >
+        			<attribute name="invisible">context.get('pricelist', False)</attribute>
+        		</xpath>
+        		<xpath expr="/tree//field[@name='price']" position="attributes">
+        			<attribute name="string">Price</attribute>
+        		</xpath>
         	</field>
         </record>
         

@@ -161,7 +161,7 @@ class purchase_order(osv.osv):
 
         return res
 
-    def onchange_pricelist_id(self, cr, uid, ids, partner_id, pricelist_id):
+    def onchange_pricelist_id(self, cr, uid, ids, partner_id, pricelist_id, transport_currency_id=False):
         '''
         Change the domain of the transport currency according to the currency and the functional currency
         '''
@@ -173,8 +173,9 @@ class purchase_order(osv.osv):
         # Set the currency of the pricelist of the supplier
         if partner_id and pricelist_id:
             cur_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist_id).currency_id.id
-            res.setdefault('value', {}).update({'transport_currency_id': cur_id})
             currency_ids.append(cur_id)
+            if not transport_currency_id or transport_currency_id not in currency_ids:
+                res.setdefault('value', {}).update({'transport_currency_id': cur_id})
             
         res.update({'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}})
 
