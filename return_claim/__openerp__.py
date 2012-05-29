@@ -28,6 +28,7 @@
                 "product_attributes", # for product menu
                 "delivery_mechanism", # for do_incoming function
                 "kit", # for compute availability with production lots
+                "msf_config_locations", # for location ids from load common values
                 ],
     "author": "MSF",
     "website": "",
