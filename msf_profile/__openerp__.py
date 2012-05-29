@@ -33,6 +33,7 @@
     "depends" : [
         "msf_audittrail",
         "base_report_designer",
+        "msf_config_locations", # to get location data
         "msf_partner",
         "analytic_distribution",
         "register_accounting",
@@ -78,7 +79,6 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
-        "msf_config_locations",
         "service_purchasing",
         "account_reconciliation",
         "vat_management",
