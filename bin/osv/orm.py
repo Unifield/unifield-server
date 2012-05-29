@@ -265,7 +265,10 @@ class browse_record(object):
                             if isinstance(result_line[field_name], browse_record):
                                 new_data[field_name] = result_line[field_name]
                             else:
-                                ref_obj, ref_id = result_line[field_name].split(',')
+                                if isinstance(result_line[field_name], dict):
+                                    ref_obj, ref_id = result_line[field_name].get('selection', ',0').split(',')
+                                else:
+                                    ref_obj, ref_id = result_line[field_name].split(',')
                                 ref_id = long(ref_id)
                                 if ref_id:
                                     obj = self._table.pool.get(ref_obj)
