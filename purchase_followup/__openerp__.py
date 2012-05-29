@@ -31,7 +31,7 @@
     """,
     'author': 'TeMPO Consulting/MSF',
     'website': 'unifield.org',
-    'depends': ['purchase', "msf_config_locations"],
+    'depends': ['purchase'],
     'init_xml' : [ ],
      "update_xml": [
         "purchase_followup_view.xml",
