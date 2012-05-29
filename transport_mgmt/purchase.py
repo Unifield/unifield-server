@@ -165,14 +165,20 @@ class purchase_order(osv.osv):
         '''
         Change the domain of the transport currency according to the currency and the functional currency
         '''
+        res = {}
+        
         # Set at least, the functional currency
         currency_ids = [self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id]
 
         # Set the currency of the pricelist of the supplier
         if partner_id and pricelist_id:
-            currency_ids.append(self.pool.get('product.pricelist').browse(cr, uid, pricelist_id).currency_id.id)
+            cur_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist_id).currency_id.id
+            res.setdefault('value', {}).update({'transport_currency_id': cur_id})
+            currency_ids.append(cur_id)
+            
+        res.update({'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}})
 
-        return {'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}}
+        return res
 
 
 purchase_order()

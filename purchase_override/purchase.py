@@ -291,9 +291,16 @@ class purchase_order(osv.osv):
         todo2 = []
         todo3 = []
         for order in self.browse(cr, uid, ids):
-            for line in order.order_line:
-                if line.price_unit == 0.00 and order.order_type == 'regular':
-                    raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price.'))
+            # Don't accept the confirmation of regular PO with 0.00 unit price lines
+            if order.order_type == 'regular':
+                line_error = []
+                for line in order.order_line:
+                    if line.price_unit == 0.00:
+                        line_error.append(line.line_number)
+                    
+                if len(line_error) > 0:
+                    errors = ' / '.join(str(x) for x in line_error)
+                    raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in error : %s') % errors)
             
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
