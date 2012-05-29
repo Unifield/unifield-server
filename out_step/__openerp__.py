@@ -29,7 +29,7 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "sale"],
+    "depends" : ["stock", "sale", "msf_config_locations"],
     'update_xml': [
         'out_step_view.xml',
     ],
