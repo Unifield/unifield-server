@@ -89,6 +89,12 @@ class stock_location(osv.osv):
         'service_location': fields.boolean(string='Service Location', readonly=True,),
     }
     
+    def get_service_location(self, cr, uid, context=None):
+        ids = self.search(cr, uid, [('service_location', '=', True)])
+        if not ids:
+            raise osv.except_osv(_('Error'), _('You must have a location with "Service Location".'))
+        return ids[0]
+
 stock_location()
 
 

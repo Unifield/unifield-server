@@ -51,10 +51,6 @@
                             <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
                             <label string="" colspan="1"/>
                         </group>
-                        <group col="4" colspan="4">
-                            <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill" colspan="2"/>
-                            <label string="" colspan="4"/>
-                        </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
@@ -346,7 +342,12 @@
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
                 <tree string="Register Lines">
-                    <button name="button_advance" states="hard" string="Advance return" type="object" icon="terp-stock_effects-object-colorize" context="context"/>
+                    <button name="button_advance" states="hard" string="Advance return" type="object" 
+                        icon="terp-stock_effects-object-colorize" context="context"
+                        attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
+                            ('employee_id', '=', False)]}"/>
+                    <field name="from_cash_return" invisible="1"/>
+                    <field name="amount" invisible="1"/>
                     <field name="date"/>
                     <field name="sequence"/>
                     <field name="name" string="Description"/>
@@ -603,10 +604,6 @@
                             context="context"/>
                         <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                         <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
-                    </group>
-                    <group col="4" colspan="4">
-                        <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill" colspan="2"/>
-                        <label string="" colspan="4"/>
                     </group>
                     <group col="4" colspan="2">
                         <field name="display_type"/>

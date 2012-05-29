@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +20,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Accruals for MSF",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["register_accounting"],
-    "description": """Module for defining accrual expenses.
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'msf_accrual_view.xml',
-        'account_view.xml',
-        'wizard/wizard_accrual_view.xml'
-    ],
-    'test': [
-        'test/accrual_test.yml'
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+from osv import fields
+
+class account_account(osv.osv):
+    _name = "account.account"
+    _inherit = "account.account"
+
+    _columns = {
+        'accrual_account': fields.boolean('Accrual Account')
+    }
+
+    _defaults = {
+        'accrual_account': lambda *a: False,
+    }
+
+account_account()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

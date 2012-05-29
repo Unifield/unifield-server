@@ -169,8 +169,15 @@ class tender(osv.osv):
                               }
                     # create purchase order line
                     pol_id = pol_obj.create(cr, uid, values, context=context)
-                
-                po_obj.log(cr, uid, po_id, "Request for Quotation '%s' has been created."%po_obj.browse(cr, uid, po_id, context=context).name)
+                    message = "Request for Quotation '%s' has been created."%po_obj.browse(cr, uid, po_id, context=context).name
+                    # create the log message
+                    self.pool.get('res.log').create(cr, uid,
+                                                           {'name': message,
+                                                            'res_model': po_obj._name,
+                                                            'secondary': False,
+                                                            'res_id': po_id,
+                                                            'domain': [('rfq_ok', '=', True)],
+                                                            }, context={'rfq_ok': True})
             
         self.write(cr, uid, ids, {'state':'comparison'}, context=context)
         return True
@@ -756,6 +763,38 @@ class purchase_order(osv.osv):
                 'context': {'rfq_ok': True, 'search_default_draft_rfq': 1,},
                 'domain': [('rfq_ok', '=', True)],
                 'res_id': rfq.id}
+        
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        columns for the tree
+        """
+        if context is None:
+            context = {}
+        # the search view depends on the type we want to display
+        if view_type == 'search':
+            if context.get('rfq_ok', False):
+                # rfq search view
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_filter')
+                if view:
+                    view_id = view[1]
+        if view_type == 'tree':
+            # the view depends on po type
+            if context.get('rfq_ok', False):
+                # rfq search view
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_tree')
+                if view:
+                    view_id = view[1]
+                 
+        # call super
+        result = super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form':
+            if context.get('rfq_ok', False):
+                # the title of the screen depends on po type
+                arch = result['arch']
+                arch = arch.replace('<form string="Purchase Order">', '<form string="Requests for Quotation">')
+                result['arch'] = arch
+        
+        return result
 
 purchase_order()
 

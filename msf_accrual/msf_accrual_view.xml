@@ -21,12 +21,15 @@
                             <field name="employee_id" nolabel="1" attrs="{'required': [('third_party_type', '=', 'hr.employee')], 'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
 	                        <newline/>
 	                        <field name="expense_account_id" colspan="2"/>
-	                        <field name="accrual_account_id" colspan="2"/>
+	                        <field name="accrual_account_id" colspan="2" domain="[('accrual_account', '=', True)]"/>
 	                        <newline/>
 	                        <field name="journal_id" colspan="2" readonly="1"/>
 	                        <newline/>
 	                        <field name="accrual_amount" colspan="2"/>
 	                        <field name="currency_id" colspan="2"/>
+                            <newline/>
+                            <field name="state" colspan="2" readonly="1"/>
+                            <button name="button_cancel" string="Cancel" states="posted" type="object" icon="gtk-cancel"/>
                         </group>
                     </form>
                 </field>

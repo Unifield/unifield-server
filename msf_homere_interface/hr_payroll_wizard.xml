@@ -157,5 +157,8 @@
             target="new"
             view_id="payroll_deletion_wizard"/>
 
+        <!-- Delete "Employee Hierarchy" action -->
+        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Employee Hierarchy%')]"/>
+
     </data>
 </openerp>

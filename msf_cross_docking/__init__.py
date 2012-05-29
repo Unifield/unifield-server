@@ -19,5 +19,6 @@
 #
 ##############################################################################
 
+import stock_location
 import cross_docking
 import wizard

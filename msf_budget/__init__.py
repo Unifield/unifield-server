@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import msf_budget_decision_moment
 import msf_budget
 import msf_budget_line
 import wizard

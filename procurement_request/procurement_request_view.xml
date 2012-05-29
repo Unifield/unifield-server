@@ -107,6 +107,7 @@
                     <field name="origin" />
                     <field name="requestor" />
                     <field name="state" />
+                    <field name="warehouse_id" invisible="1" />
                 </tree>
             </field>
         </record>
