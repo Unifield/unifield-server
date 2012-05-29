@@ -495,6 +495,7 @@ class purchase_order(osv.osv):
                         'state': 'draft',
                         'purchase_line_id': order_line.id,
                         'company_id': order.company_id.id,
+                        'price_currency_id': order.pricelist_id.currency_id.id,
                         'price_unit': order_line.price_unit
                     }
                     # hook for stock move values modification

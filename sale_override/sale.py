@@ -381,6 +381,7 @@ class sale_order(osv.osv):
         '''
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
+        result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
         
         return result
     
