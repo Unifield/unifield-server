@@ -85,24 +85,24 @@ class return_claim(osv.osv):
     '''
     _name = 'return.claim'
     
-    def init(self, cr):
-        """
-        Load msf_location_data.xml before claim
-        """
-        if hasattr(super(return_claim, self), 'init'):
-            super(return_claim, self).init(cr)
-
-        mod_obj = self.pool.get('ir.module.module')
-        demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'return_claim')])
-        if mod_id:
-            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-
-        if demo:
-            logging.getLogger('init').info('HOOK: module return_claim: loading msf_location_data.xml')
-            pathname = path.join('msf_config_locations', 'msf_location_data.xml')
-            file = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'return_claim', file, {}, mode='init', noupdate=False)
+#    def init(self, cr):
+#        """
+#        Load msf_location_data.xml before claim
+#        """
+#        if hasattr(super(return_claim, self), 'init'):
+#            super(return_claim, self).init(cr)
+#
+#        mod_obj = self.pool.get('ir.module.module')
+#        demo = False
+#        mod_id = mod_obj.search(cr, 1, [('name', '=', 'return_claim')])
+#        if mod_id:
+#            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
+#
+#        if demo:
+#            logging.getLogger('init').info('HOOK: module return_claim: loading msf_location_data.xml')
+#            pathname = path.join('msf_config_locations', 'msf_location_data.xml')
+#            file = tools.file_open(pathname)
+#            tools.convert_xml_import(cr, 'return_claim', file, {}, mode='init', noupdate=False)
     
     def create(self, cr, uid, vals, context=None):
         '''
