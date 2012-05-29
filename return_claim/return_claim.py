@@ -100,7 +100,7 @@ class return_claim(osv.osv):
 
         if demo:
             logging.getLogger('init').info('HOOK: module return_claim: loading msf_location_data.xml')
-            pathname = path.join('return_claim', 'msf_location_data.xml')
+            pathname = path.join('msf_config_locations', 'msf_location_data.xml')
             file = tools.file_open(pathname)
             tools.convert_xml_import(cr, 'return_claim', file, {}, mode='init', noupdate=False)
     
