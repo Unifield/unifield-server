@@ -719,6 +719,9 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
             init_module_objects(cr, package.name, modules)
         cr.commit()
 
+    test_to_load = []
+    old_package = []
+
     for package in graph:
         status['progress'] = (float(statusi)+0.1) / len(graph)
         m = package.name
@@ -757,7 +760,8 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                 # on demo data. Other tests can be added into the regular
                 # 'data' section, but should probably not alter the data,
                 # as there is no rollback.
-                load_test(cr, m, idref, mode)
+                #load_test(cr, m, idref, mode)
+                test_to_load.append((m, mode))
 
             processed_modules.append(package.name)
 
@@ -780,6 +784,10 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         statusi += 1
 
     cr.commit()
+    id_ref = {}
+    for to_test in test_to_load:
+        package = graph[to_test[0]]
+        load_test(cr,to_test[0], id_ref, to_test[1])
 
     return processed_modules
 
