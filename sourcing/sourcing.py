@@ -562,9 +562,11 @@ class sale_order(osv.osv):
         result['supplier'] = line.supplier and line.supplier.id or False
         if line.po_cft:
             result.update({'po_cft': line.po_cft})
-        # uf-583 - the location defined for the procurementis input instead of stock
+        # uf-583 - the location defined for the procurementis input instead of stock if the procurement is on order
+        # if from stock, the procurement search from products in the default location: Stock
         order = kwargs['order']
-        result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
+        if line.type == 'make_to_order':
+            result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
 
         return result
 
