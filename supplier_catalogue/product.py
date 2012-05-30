@@ -218,6 +218,7 @@ class product_product(osv.osv):
             if sequence_ids:
                 min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
                 domain.append(('suppinfo_id.sequence', '=', min_seq))
+                domain.append(('suppinfo_id', 'in', sequence_ids))
             
             info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
                 
