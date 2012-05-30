@@ -201,20 +201,11 @@ class create_picking(osv.osv_memory):
             elif step == 'returnproducts':
                 field = 'returnproducts'
 
-	if step in ['create','validate','returnproducts']:
-       		_moves_arch_lst = """<form string="%s">
-                        <field name="date" invisible="1"/>
-                        <separator colspan="4" string="%s"/>
-                        <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
-                        """ % (_('Process Document'), _('Products'), field)
-
-        else:
-       		_moves_arch_lst = """<form string="%s">
-                        <button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>
-                        <field name="date" invisible="1"/>
-                        <separator colspan="4" string="%s"/>
-                        <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
-                        """ % (_('Process Document'), _('Products'), field)
+	_moves_arch_lst = """<form string="%s">
+                <field name="date" invisible="1"/>
+                <separator colspan="4" string="%s"/>
+                <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
+                """ % (_('Process Document'), _('Products'), field)
 
         _moves_fields = result['fields']
 
@@ -243,9 +234,6 @@ class create_picking(osv.osv_memory):
         else:
             button = ('undefined', 'Undefined')
                 
-
-
-
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
@@ -253,10 +241,6 @@ class create_picking(osv.osv_memory):
                 <button icon='gtk-cancel' special="cancel"
                     string="_Cancel" />"""
 
-
-
-
-                    
         if step == 'ppl2':
             _moves_arch_lst += """
                 <button name="back_ppl1" string="previous"
