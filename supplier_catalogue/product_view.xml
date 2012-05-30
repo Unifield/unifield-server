@@ -155,6 +155,19 @@
         		</data>
         	</field>
         </record>
+        
+        
+        <!-- Remove pricelists configuration menu entries -->
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_main" />
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action" />
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action2" />
+        <delete model="ir.ui.menu" id="product.menu_product_price_type" />
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_type_action2" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
+
 		
 	</data>
 </openerp>
