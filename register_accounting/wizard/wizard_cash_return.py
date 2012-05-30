@@ -50,6 +50,21 @@ class wizard_advance_line(osv.osv_memory):
     A simulated bank statement line.
     """
     _name = 'wizard.advance.line'
+    
+    def _display_analytic_button(self, cr, uid, ids, name, args, context=None):
+        """
+        Return True for all element that correspond to some criteria:
+         - The entry state is draft
+         - The account is an expense account
+        """
+        res = {}
+        for absl in self.browse(cr, uid, ids, context=context):
+            res[absl.id] = True
+            # False if account not an expense account
+            if absl.account_id.user_type.code not in ['expense']:
+                res[absl.id] = False
+        return res
+
     _columns = {
         'date': fields.date(string='Date', required=True),
         'description': fields.char(string='Description', size=64, required=True),
@@ -57,7 +72,70 @@ class wizard_advance_line(osv.osv_memory):
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
+        
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+            help="This informs system that we can display or not an analytic button", store=False),
     }
+    
+    _defaults = {
+        'display_analytic_button': lambda *a: True,
+    }
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard from a statement line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        absl = self.browse(cr, uid, ids[0], context=context)
+        amount = absl.amount * -1 or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = absl.wizard_id.currency_id and absl.wizard_id.currency_id.id or company_currency
+        # Get analytic distribution id from this line
+        distrib_id = absl.analytic_distribution_id and absl.analytic_distribution_id.id or False
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'register_line_id': absl.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': absl.account_id and absl.account_id.id or False,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        
+        # set some values to the context to indicate the caller of the distr. wizard    
+        context.update({'from_cash_return_analytic_dist': True,
+                        'from': 'wizard.cash.return', 
+                        'wiz_id': absl.wizard_id.id or False, 
+                        'cash_return_line_id': ids[0]})
+        
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': 'Analytic distribution',
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+
 
 wizard_advance_line()
 
@@ -70,13 +148,17 @@ class wizard_cash_return(osv.osv_memory):
     _name = "wizard.cash.return"
     _description = "A wizard that link some advance lines to some account move lines"
 
-    def changeline(self, cr, uid, ids, lines, returned_amount, context=None):
+    def changeline(self, cr, uid, ids, lines, returned_amount, date, context=None):
         total_amount = returned_amount or 0.0
         for line in lines:
             if line[0] == 1:
                 total_amount += line[2].get('amount',0)
 
+        # write the modifiable values to the cash return wizard, because the opening of the distribution analytic wizard could
+        # reset all entered values!
+        self.write(cr, uid, ids, {'returned_amount': returned_amount, 'total_amount': total_amount, 'date': date}, context=context)
         return {'value': {'total_amount': total_amount}}
+
 
     _columns = {
         'initial_amount': fields.float(string="Initial Advance amount", digits=(16,2), readonly=True),
