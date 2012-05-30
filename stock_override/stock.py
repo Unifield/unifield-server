@@ -30,6 +30,7 @@ import netsvc
 import tools
 import decimal_precision as dp
 import logging
+from os import path
 
 
 #----------------------------------------------------------
@@ -763,6 +764,19 @@ stock_move()
 class stock_location(osv.osv):
     _name = 'stock.location'
     _inherit = 'stock.location'
+    
+    def init(self, cr):
+        """
+        Load data.xml asap
+        """
+        if hasattr(super(stock_location, self), 'init'):
+            super(stock_location, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        logging.getLogger('init').info('HOOK: module stock_override: loading stock_data.xml')
+        pathname = path.join('stock_override', 'stock_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'stock_override', file, {}, mode='init', noupdate=False)
     
     def _product_value(self, cr, uid, ids, field_names, arg, context=None):
         """Computes stock value (real and virtual) for a product, as well as stock qty (real and virtual).

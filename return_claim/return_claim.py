@@ -64,8 +64,8 @@ CLAIM_EVENT_STATE = [('draft', 'Draft'),
                      ('done', 'Done')]
 # event type destination - for return event, the destination depends on 
 EVENT_TYPE_DESTINATION = {'accept': 'stock.stock_location_stock', #move to stock
-                          'quarantine': 'msf_config_locations.stock_location_quarantine_analyze',
-                          'scrap': 'msf_config_locations.stock_location_quarantine_scrap',
+                          'quarantine': 'stock_override.stock_location_quarantine_analyze',
+                          'scrap': 'stock_override.stock_location_quarantine_scrap',
                           }
 # import partner_type from msf_partner
 from msf_partner import PARTNER_TYPE
