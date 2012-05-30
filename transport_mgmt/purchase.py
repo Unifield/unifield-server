@@ -177,6 +177,13 @@ class purchase_order(osv.osv):
             if not transport_currency_id or transport_currency_id not in currency_ids:
                 res.setdefault('value', {}).update({'transport_currency_id': cur_id})
             
+            if ids:
+                order = self.browse(cr, uid, ids[0])
+                if pricelist_id != order.pricelist_id.id and order.order_line:
+                    res.update({'warning': {'title': 'Currency change',
+                                            'message': 'You have changed the currency of the order. \
+                                            Please note that all order lines in the old currency will be changed to the new currency without conversion !'}})
+            
         res.update({'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}})
 
         return res
