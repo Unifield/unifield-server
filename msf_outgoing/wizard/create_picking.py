@@ -34,7 +34,23 @@ class create_picking(osv.osv_memory):
         'product_moves_families' : fields.one2many('stock.move.memory.families', 'wizard_id', 'Pack Families'),
         'product_moves_returnproducts': fields.one2many('stock.move.memory.returnproducts', 'wizard_id', 'Return Products')
      }
-    
+
+    def copy_all(self, cr, uid, ids, context=None):
+        create = self.browse(cr, uid, ids[0], context=context)
+	if create.product_moves_picking:
+		for move in create.product_moves_picking:
+		    self.pool.get('stock.move.memory.picking').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+	if create.product_moves_ppl:
+		for move in create.product_moves_ppl:
+		    self.pool.get('stock.move.memory.ppl').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+	if create.product_moves_families:
+		for move in create.product_moves_families:
+		    self.pool.get('stock.move.memory.families').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+	if create.product_moves_returnproducts:
+		for move in create.product_moves_returnproducts:
+		    self.pool.get('stock.move.memory.returnproducts').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+        return {}
+
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
          @param self: The object pointer.
@@ -106,7 +122,7 @@ class create_picking(osv.osv_memory):
                 'product_id' : move.product_id.id,
                 'asset_id': move.asset_id.id, 
                 'composition_list_id': move.composition_list_id.id,
-                'quantity' : move.product_qty,
+                'quantity_ordered' : move.product_qty,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
                 'move_id' : move.id,
@@ -184,12 +200,22 @@ class create_picking(osv.osv_memory):
                 field = 'families'
             elif step == 'returnproducts':
                 field = 'returnproducts'
-        
-        _moves_arch_lst = """<form string="%s">
+
+	if step in ['create','validate','returnproducts']:
+       		_moves_arch_lst = """<form string="%s">
                         <field name="date" invisible="1"/>
                         <separator colspan="4" string="%s"/>
                         <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
                         """ % (_('Process Document'), _('Products'), field)
+
+        else:
+       		_moves_arch_lst = """<form string="%s">
+                        <button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>
+                        <field name="date" invisible="1"/>
+                        <separator colspan="4" string="%s"/>
+                        <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
+                        """ % (_('Process Document'), _('Products'), field)
+
         _moves_fields = result['fields']
 
         # add field related to picking type only
@@ -217,12 +243,19 @@ class create_picking(osv.osv_memory):
         else:
             button = ('undefined', 'Undefined')
                 
+
+
+
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
                 <group col="4" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
                     string="_Cancel" />"""
+
+
+
+
                     
         if step == 'ppl2':
             _moves_arch_lst += """
@@ -272,10 +305,10 @@ class create_picking(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.product_moves_picking:
                 # get the qty from the corresponding stock move
-                original_qty = line.move_id.product_qty
+                original_qty = line.quantity_ordered
                 line.write({'quantity':original_qty,}, context=context)
             for line in wiz.product_moves_returnproducts:
-                line.write({'qty_to_return':line.quantity,}, context=context)
+                line.write({'qty_to_return':line.quantity_ordered,}, context=context)
         # update the current wizard
         return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         

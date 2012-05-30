@@ -25,7 +25,11 @@
 					<field name="product_uom" position="attributes">
 						<attribute name="readonly">True</attribute>
 					</field>
-				
+
+					<field name="quantity" position="before">
+	           				<field name="quantity_ordered" readonly="1"/>
+					</field>
+
 					<field name="quantity" position="after">
 						<field name="force_complete" invisible="True" />
 						<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
@@ -57,6 +61,10 @@
 					
 					<field name="product_uom" position="attributes">
 						<attribute name="readonly">True</attribute>
+					</field>
+
+					<field name="quantity" position="before">
+	           				<field name="quantity_ordered" readonly="1"/>
 					</field>
 				
 					<field name="quantity" position="after">

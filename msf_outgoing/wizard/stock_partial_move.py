@@ -107,11 +107,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
               'change_reason': fields.char(string='Change Reason', size=1024),
               'initial_qty': fields.related('move_id', 'product_qty', string='Initial Qty', readonly=True),
               # override to change the name
-              'quantity' : fields.float("Selected Qty", required=True),
+              'quantity' : fields.float("Quantity to process", required=True),
               }
     
     _defaults = {'integrity_status': 'empty',
                  'force_complete': False,
+                 'quantity': 0.0,
                  }
     
     def _check_quantity(self, cr, uid, ids, context=None):
@@ -238,7 +239,7 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
         therefore be completed with default value at creation
         '''
         if 'qty_per_pack' not in vals:
-            vals.update(qty_per_pack=vals['quantity'])
+            vals.update(qty_per_pack=vals['quantity_ordered'])
         
         if 'from_pack' not in vals:
             vals.update(from_pack=1)
