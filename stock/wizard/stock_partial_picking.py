@@ -91,6 +91,7 @@ class stock_partial_picking(osv.osv_memory):
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
 
         _moves_arch_lst = """<form string="%s">
+                        <button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>
                         <field name="date" invisible="1"/>
                         <separator colspan="4" string="%s"/>
                         <field name="%s" colspan="4" nolabel="1" mode="tree,form" width="550" height="200" ></field>
@@ -119,7 +120,7 @@ class stock_partial_picking(osv.osv_memory):
     def __create_partial_picking_memory(self, move, pick_type):
         move_memory = {
             'product_id' : move.product_id.id,
-            'quantity' : move.product_qty,
+            'quantity_ordered' : move.product_qty,
             'product_uom' : move.product_uom.id,
             'prodlot_id' : move.prodlot_id.id,
             'move_id' : move.id,
@@ -131,6 +132,12 @@ class stock_partial_picking(osv.osv_memory):
                 'currency' : move.product_id.company_id and move.product_id.company_id.currency_id.id or False,
             })
         return move_memory
+
+    def copy_all(self, cr, uid, ids, context=None):
+        partial = self.browse(cr, uid, ids[0], context=context)
+        for move in partial.product_moves_out:
+            self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+        return {}
 
     def do_partial(self, cr, uid, ids, context=None):
         """ Makes partial moves and pickings done.
