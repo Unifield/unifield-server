@@ -21,6 +21,7 @@
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='pricelist_id']" position="replace">
                         <field domain="[('type','=','sale'), ('in_search', '=', partner_type)]" name="pricelist_id"
+                        	on_change="pricelist_id_change(pricelist_id)"
                         	groups="base.group_extended" required="1" />
                     </xpath>
                 </data>

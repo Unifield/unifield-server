@@ -247,6 +247,21 @@ class procurement_request(osv.osv):
         
         return True
     
+    def pricelist_id_change(self, cr, uid, ids, pricelist_id):
+        '''
+        Display a warning message on pricelist change
+        '''
+        res = {}
+        
+        if pricelist_id and ids:
+            order = self.browse(cr, uid, ids[0])
+            if pricelist_id != order.pricelist_id.id and order.order_line:
+                res.update({'warning': {'title': 'Currency change',
+                                        'message': 'You have changed the currency of the order. \
+                                         Please note that all order lines in the old currency will be changed to the new currency without conversion !'}})
+                
+        return res
+    
 procurement_request()
 
 class procurement_request_line(osv.osv):
