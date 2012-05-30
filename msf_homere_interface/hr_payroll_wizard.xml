@@ -12,8 +12,11 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Analytic Reallocation">
-                    <field name="cost_center_id"/>
-                    <field name="funding_pool_id"/>
+                    <group  colspan="6" col="6">
+                        <field name="destination_id"/>
+                        <field name="cost_center_id"/>
+                        <field name="funding_pool_id"/>
+                    </group>
                     <newline/>
                     <field name="free1_id"/>
                     <field name="free2_id"/>
