@@ -246,11 +246,39 @@ class product_pricelist(osv.osv):
                         currency_ids = cur_obj.search(cr, uid, [('is_esc_currency', '=', True)])
                         dom.append(('currency_id', 'in', currency_ids))
                         
-        return dom  
+        return dom
+    
+    def _get_currency_name(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the name of the related currency
+        '''  
+        res = {}
+        
+        for p_list in self.browse(cr, uid, ids, context=context):
+            res[p_list.id] = False
+            if p_list.currency_id:
+                res[p_list.id] = p_list.currency_id.currency_name
+        
+        return res
+    
+    def _search_currency_name(self, cr, uid, obj, name, args, context=None):
+        '''
+        Return the list corresponding to the currency name
+        '''
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'currency_name':
+                currency_ids = self.pool.get('res.currency').search(cr, uid, [('currency_name', arg[1], arg[2])], context=context)
+                dom.append(('currency_id', 'in', currency_ids))
+                
+        return dom
+        
     
     _columns = {
         'in_search': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
                                      type='boolean', string='In search'),
+        'currency_name': fields.function(_get_currency_name, fnct_search=_search_currency_name, type='char', method=True, string='Currency name'),
     }
     
     def _hook_product_partner_price(self, cr, uid, *args, **kwargs):

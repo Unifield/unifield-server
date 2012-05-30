@@ -108,8 +108,9 @@
         	<field name="type">tree</field>
         	<field name="priority" eval="8" />
         	<field name="arch" type="xml">
-        		<tree string="Currencies">
-        			<field name="currency_id" string="Name" />
+        		<tree string="Currencies" hide_new_button="1">
+        			<field name="currency_id" string="Currency" />
+        			<field name="currency_name" string="Currency name" />
         		</tree>
         	</field>
         </record>
@@ -120,8 +121,9 @@
         	<field name="type">search</field>
         	<field name="priority" eval="8" />
         	<field name="arch" type="xml">
-        		<search string="Currencies">
-        			<field name="name" string="Name" />
+        		<search string="Currencies" >
+        			<field name="currency_name" string="Currency name" />
+        			<field name="currency_id" string="Currency" />
         		</search>
         	</field>
         </record>
