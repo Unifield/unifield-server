@@ -98,6 +98,7 @@
         "purchase_allocation_report",
         "supplier_catalogue",
         "msf_cross_docking",
+        "mission_stock",
     ],
     "update_xml": [
         "report.xml",
