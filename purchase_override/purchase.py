@@ -632,10 +632,17 @@ class purchase_order_merged_line(osv.osv):
     _description = 'Purchase Order Merged Lines'
     _table = 'purchase_order_merged_line'
 
+    def _get_name(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
+        return res
+
     _columns = {
         'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
         'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
+        'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
 
     def create(self, cr, uid, vals, context=None):
