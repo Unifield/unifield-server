@@ -82,7 +82,7 @@ class stock_partial_picking(osv.osv_memory):
                 if calc_qty <= 0:
                     raise osv.except_osv(_('Processing Error'), \
                             _('Can not process quantity %d for Product %s !') \
-                            %(move.quantity, move.product_id.name))
+                            %(move.quantity_ordered, move.product_id.name))
 
                 partial_datas['move%s' % (move.move_id.id)] = {
                     'product_id': move.product_id.id, 
