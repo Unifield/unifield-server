@@ -87,8 +87,12 @@ class stock_partial_picking(osv.osv_memory):
 
     def copy_all(self, cr, uid, ids, context=None):
         partial = self.browse(cr, uid, ids[0], context=context)
+
         for move in partial.product_moves_out:
             self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+        for move in partial.product_moves_in:
+            self.pool.get('stock.move.memory.in').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+
         return {}
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

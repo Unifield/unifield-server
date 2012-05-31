@@ -67,8 +67,9 @@ class split_memory_move(osv.osv_memory):
         for memory_move in memory_move_obj.browse(cr, uid, memory_move_ids, context=context):
             
             # quantity from memory move
+
             available_qty = memory_move.quantity_ordered
-	    available_qty_to_process = memory_move.quantity
+            available_qty_to_process = memory_move.quantity
             
             # leave quantity must be greater than zero
             if leave_qty <= 0:
@@ -87,6 +88,7 @@ class split_memory_move(osv.osv_memory):
             
             # update the selected memory move
             values = {'quantity_ordered': new_qty}
+
 	    if available_qty_to_process > 0.0 :
 		 values['quantity'] = new_qty
             # update the object    

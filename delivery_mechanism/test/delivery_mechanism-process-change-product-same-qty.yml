@@ -103,7 +103,7 @@
         if out.quantity == 5:
           change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_D"), 'change_reason': 'yml test'}, context=change_c)
           change_obj.change_product(cr, uid, change_ids, context=change_c)
-    
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
