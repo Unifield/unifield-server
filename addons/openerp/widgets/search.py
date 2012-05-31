@@ -385,7 +385,7 @@ class Search(TinyInputWidget):
 
                     if kind == 'boolean':
                         # '0' in string because 0 is considering as No Value, and we need 0 as some value.
-                        field.options = [['', ''], [1,_('Yes')],['0',_('No')]]
+                        field.options = [[1,_('Yes')],['0',_('No')]]
                         field.validator.if_empty = ''
 
                     default_search = None
@@ -488,17 +488,7 @@ class Group(form.Group):
 
 class Integer(form.Integer): pass
 class NewLine(form.NewLine): pass
-class Selection(form.Selection):
-    def __init__(self, **attrs):
-        super(Selection, self).__init__(**attrs)
-        found_empty = False
-
-        for opt in self.options:
-            if not opt[0]:
-                found_empty = True
-        
-        if not found_empty:
-            self.options.insert(0, ('',''))
+class Selection(form.Selection): pass
 class Separator(form.Separator): pass
 
 RANGE_WIDGETS = {

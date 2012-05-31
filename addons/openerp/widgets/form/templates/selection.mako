@@ -9,7 +9,7 @@
         search_context="${search_context}" ${py.attrs(attrs)}>
         ## add empty option only if no empty option exist
         ## and no default value is set
-        % if all(label for _, label in options) and not value:
+        % if all(label for _, label in options) and not required:
             <option value=""></option>
         % endif
         % for (val, label) in options:
