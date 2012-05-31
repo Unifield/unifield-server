@@ -179,13 +179,14 @@
     # create wizard objects
     wizard_obj = self.pool.get('stock.partial.picking')
     wizard_id = self.action_process(cr, uid, pick_ids, context=context)['res_id']
-    
+
     # enter the new expiry date value - memory_out because product cost method is standard price
     the_date = time.strftime('%Y-%m-%d')
     the_date = '2022-01-01'
     for memory_out in wizard_obj.browse(cr, uid, wizard_id, context=context).product_moves_out:
       # test
       memory_out.write({'expiry_date': the_date}, context=context)
+      wizard_obj.copy_all(cr,uid,[memory_out.id])
       
     # validate the processing
     wizard_obj.do_partial(cr, uid, [wizard_id], context=context)
