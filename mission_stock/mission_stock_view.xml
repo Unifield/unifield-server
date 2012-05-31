@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="mission_stock_wizard_view" model="ir.ui.view">
+			<field name="name">mission.stock.wizard.view</field>
+			<field name="model">mission.stock.wizard</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Mission stock report">
+					<field name="report_id" widget="selection" />
+					<field name="with_valuation" />
+					<button name="open_products_view" string="Open report" type="object" />
+				</form>
+			</field>
+		</record>
+		
+		<record id="mission_stock_wizard_action" model="ir.actions.act_window">
+			<field name="name">Mission stock report</field>
+			<field name="res_model">mission.stock.wizard</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+		</record>
+		
+		<menuitem id="mission_stock_wizard_menu"
+			      action="mission_stock_wizard_action" />
+			      
+			      
+		<record id="mission_stock_product_list_view" model="ir.ui.view">
+			<field name="name">mission.stock.product.list.view</field>
+			<field name="model">product.product</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Mission stock report">
+					<field name="default_code" />
+					<field name="name" />
+					<field name="uom_id" string="UoM" />
+					<field name="internal_qty" />
+					<field name="internal_val" invisible="not context.get('with_valuation', False)" />
+					<field name="stock_qty" />
+					<field name="stock_val" invisible="not context.get('with_valuation', False)" />
+					<field name="central_qty" />
+					<field name="central_val" invisible="not context.get('with_valuation', False)" />
+					<field name="cross_qty" />
+					<field name="cross_val" invisible="not context.get('with_valuation', False)" />
+					<field name="secondary_qty" />
+					<field name="secondary_val" invisible="not context.get('with_valuation', False)" />
+					<field name="cu_qty" />
+					<field name="cu_val" invisible="not context.get('with_valuation', False)" />
+					<field name="product_amc" string="AMC" />
+					<field name="reviewed_consumption" string="FMC" />
+				</tree>
+			</field>
+		</record>
+		
+	</data>
+</openerp>

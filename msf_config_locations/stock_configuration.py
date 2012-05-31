@@ -33,6 +33,10 @@ class stock_location(osv.osv):
     _parent_order = 'location_id, posz'
     _order = 'location_id, posz'
     
+    _columns = {
+        'central_location_ok': fields.boolean(string='If check, all products in this location are unallocated.'),
+    }
+    
 stock_location()
 
 
