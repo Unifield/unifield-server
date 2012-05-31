@@ -63,7 +63,8 @@ class stock_partial_picking(osv.osv_memory):
         uom_obj = self.pool.get('product.uom')
         
         # save the wizard ids into context - for compatibility with cross_docking assertion on wizard_ids
-        context.update(wizard_ids=ids)
+        if 'wizard_ids' not in context:
+            context.update(wizard_ids=ids)
 
         picking_ids = context.get('active_ids', False)
         partial = self.browse(cr, uid, ids[0], context=context)
