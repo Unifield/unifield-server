@@ -220,12 +220,6 @@ class account_bank_statement(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Verify that a first register (register that doesn't have a prev_reg_id) has a starting balance not null
-        registers = self.browse(cr, uid, ids, context=context)
-        for register in registers:
-            if not register.prev_reg_id:
-                if not register.balance_start > 0:
-                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
         # Verify that previous register is open, unless this register is the first register
         return self.write(cr, uid, ids, {'state': 'open'})
 
