@@ -467,12 +467,17 @@ class wizard_cash_return(osv.osv_memory):
         if context is None:
             context = {}
 
+        # check if any line with expense account missing the distribution_id value
+        wizard = self.browse(cr, uid, ids[0], context=context)      
+        for st_line in wizard.advance_line_ids:
+            if st_line.account_id.user_type.code in ['expense'] and not st_line.analytic_distribution_id:  
+                raise osv.except_osv(_('Warning'), _('All advance lines with expense account must have analytic distribution'))
+
         # Do computation of total_amount
         self.compute_total_amount(cr, uid, ids, context=context)
         # Verify dates
         self.verify_date(cr, uid, ids, context=context)
         # retrieve some values
-        wizard = self.browse(cr, uid, ids[0], context=context)
         if wizard.initial_amount != wizard.total_amount:
             raise osv.except_osv(_('Warning'), _('Initial advance amount does not match the amount you justified. First correct. Then press Compute button'))
         #if not wizard.invoice_line_ids and not wizard.advance_line_ids:
