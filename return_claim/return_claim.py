@@ -643,6 +643,10 @@ class claim_event(osv.osv):
         '''
         # event picking object
         event_picking = obj.event_picking_id_claim_event
+        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
+        picking_tools.confirm(cr, uid, event_picking.id, context=context)
+        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
         # validate the event picking if not from picking wizard
         if not obj.from_picking_wizard_claim_event:
             self._validate_picking(cr, uid, event_picking.id, context=context)
@@ -658,6 +662,10 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
+        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
+        picking_tools.confirm(cr, uid, event_picking.id, context=context)
+        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_anal']}, context=context)
@@ -676,6 +684,10 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
+        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
+        picking_tools.confirm(cr, uid, event_picking.id, context=context)
+        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_scrap']}, context=context)
@@ -726,6 +738,10 @@ class claim_event(osv.osv):
                                 'location_dest_id': context['common']['input_id']})
         # update the picking
         event_picking.write(picking_values, context=context)
+        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
+        picking_tools.confirm(cr, uid, event_picking.id, context=context)
+        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
@@ -882,14 +898,10 @@ class claim_event(osv.osv):
                                            'reason_type_id': context['common']['rt_internal_supply']}) for x in claim.product_line_ids_return_claim]
                 # update the created picking with stock moves
                 pick_obj.write(cr, uid, [new_event_picking_id], {'move_lines': moves_lines}, context=context)
-                # confirm the picking
-                picking_tools.confirm(cr, uid, new_event_picking_id, context=context)
                 # update the claim setting the link to created event picking
                 self.write(cr, uid, [obj.id], {'event_picking_id_claim_event': new_event_picking_id}, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
-            # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
-            picking_tools.check_assign(cr, uid, obj.event_picking_id_claim_event.id, context=context)
             # we start a new loop in order to have browse object reloaded, taking into account possible previous modification to claim object
             result = getattr(self, base_func + obj.type_claim_event)(cr, uid, obj, context=context)
             # event is done
