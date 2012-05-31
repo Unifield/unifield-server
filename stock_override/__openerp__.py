@@ -32,6 +32,7 @@
     "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
+        "stock_data.xml",
         "stock_view.xml",
         "stock_workflow.xml",
         "procurement_view.xml",

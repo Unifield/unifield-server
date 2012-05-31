@@ -218,13 +218,13 @@ class data_tools(osv.osv):
         input_id = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         context['common']['input_id'] = input_id
         # quarantine analyze
-        quarantine_anal = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_analyze')[1]
+        quarantine_anal = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1]
         context['common']['quarantine_anal'] = quarantine_anal
         # quarantine before scrap
-        quarantine_scrap = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_quarantine_scrap')[1]
+        quarantine_scrap = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
         context['common']['quarantine_scrap'] = quarantine_scrap
         # log
-        log = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_logistic')[1]
+        log = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         context['common']['log'] = log
         # cross docking
         cross_docking = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
