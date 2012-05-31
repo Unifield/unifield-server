@@ -241,7 +241,6 @@ class sale_order_line(osv.osv):
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order line
-        Copy global distribution and give it to new sale order line.
         """
         # Some verifications
         if not context:
@@ -250,9 +249,12 @@ class sale_order_line(osv.osv):
             default = {}
         # Copy analytic distribution
         # TODO: copy distrib if line split
-        if 'analytic_distribution_id' not in default:
+        if 'analytic_distribution_id' not in default and not context.get('keepDate'):
             default['analytic_distribution_id'] = False
-        return super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        new_data = super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
 sale_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
