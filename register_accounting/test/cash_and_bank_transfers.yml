@@ -50,7 +50,6 @@
           account_id: account_account_transfer_0
           amount: -1000.0
           transfer_amount: 1000.0
-          transfer_currency: base.EUR
 -
   I click on a button to hard post this line
 -
@@ -69,7 +68,6 @@
           account_id: account_account_transfer_0
           amount: 1000.0
           transfer_amount: 1000.0
-          transfer_currency: base.EUR
 -
   I click on a button to hard post this line
 -
