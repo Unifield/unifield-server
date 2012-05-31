@@ -79,7 +79,7 @@ class stock_partial_picking(osv.osv_memory):
         add hook to do_partial
         '''
         partial_datas = super(stock_partial_picking, self).do_partial_hook(cr, uid, context=context, *args, **kwargs)
-        assert partial_datas, 'partial_datas missing'
+        assert partial_datas, 'partial_datas missing > return_claim > wizard > stock_partial_picking'
         
         # get pick object
         partial = kwargs['partial']

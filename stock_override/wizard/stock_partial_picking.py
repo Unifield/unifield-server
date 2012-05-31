@@ -36,7 +36,7 @@ class stock_partial_picking(osv.osv_memory):
         - allow to modify partial_datas
         '''
         partial_datas = kwargs.get('partial_datas')
-        assert partial_datas, 'partial_datas missing'
+        assert partial_datas, 'partial_datas missing stock_override > wizard > stock_partial_picking'
         
         return partial_datas
     

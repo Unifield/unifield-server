@@ -397,10 +397,11 @@ class stock_picking(osv.osv):
 
             # At first we confirm the new picking (if necessary)
             if new_picking:
-                wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
                 self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
                 # custom code execution
                 self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=self.browse(cr, uid, new_picking, context=context))
+                # we confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
+                wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
                 # Then we finish the good picking
                 if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
                     self.action_move(cr, uid, [new_picking])
