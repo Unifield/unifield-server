@@ -641,6 +641,8 @@ class claim_event(osv.osv):
         
         - no change to event picking
         '''
+        # objects
+        picking_tools = self.pool.get('picking.tools')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
@@ -660,6 +662,7 @@ class claim_event(osv.osv):
         '''
         # objects
         move_obj = self.pool.get('stock.move')
+        picking_tools = self.pool.get('picking.tools')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
@@ -682,6 +685,7 @@ class claim_event(osv.osv):
         '''
         # objects
         move_obj = self.pool.get('stock.move')
+        picking_tools = self.pool.get('picking.tools')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
@@ -825,7 +829,6 @@ class claim_event(osv.osv):
         fields_tools = self.pool.get('fields.tools')
         data_tools = self.pool.get('data.tools')
         pick_obj = self.pool.get('stock.picking')
-        picking_tools = self.pool.get('picking.tools')
         move_obj = self.pool.get('stock.move')
         # load common data
         data_tools.load_common_data(cr, uid, ids, context=context)
