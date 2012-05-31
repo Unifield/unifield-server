@@ -59,6 +59,13 @@ class stock_partial_picking(osv.osv_memory):
         @param context: A standard dictionary
         @return: A dictionary which of fields with values.
         """
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
         pick_obj = self.pool.get('stock.picking')
         uom_obj = self.pool.get('product.uom')
         
