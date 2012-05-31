@@ -85,25 +85,6 @@ class return_claim(osv.osv):
     '''
     _name = 'return.claim'
     
-#    def init(self, cr):
-#        """
-#        Load msf_location_data.xml before claim
-#        """
-#        if hasattr(super(return_claim, self), 'init'):
-#            super(return_claim, self).init(cr)
-#
-#        mod_obj = self.pool.get('ir.module.module')
-#        demo = False
-#        mod_id = mod_obj.search(cr, 1, [('name', '=', 'return_claim')])
-#        if mod_id:
-#            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-#
-#        if demo:
-#            logging.getLogger('init').info('HOOK: module return_claim: loading msf_location_data.xml')
-#            pathname = path.join('msf_config_locations', 'msf_location_data.xml')
-#            file = tools.file_open(pathname)
-#            tools.convert_xml_import(cr, 'return_claim', file, {}, mode='init', noupdate=False)
-    
     def create(self, cr, uid, vals, context=None):
         '''
         - add sequence for events
@@ -112,6 +93,30 @@ class return_claim(osv.osv):
         seq_id = seq_tools.create_sequence(cr, uid, vals, 'Return Claim', 'return.claim', prefix='', padding=5, context=context)
         vals.update({'sequence_id_return_claim': seq_id})
         return super(return_claim, self).create(cr, uid, vals, context=context)
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset data
+        
+        sequence_id is reset in the create method
+        '''
+        if default is None:
+            default = {}
+        
+        # state is set to draft
+        default.update(state='draft')
+        # reset the name to get default from sequence
+        default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'return.claim'))
+        # reset creation date, get today
+        default.update(creation_date_return_claim=time.strftime('%Y-%m-%d'))
+        # no event
+        default.update(event_ids_return_claim=[])
+        # reset description
+        default.update(description_return_claim=False)
+        # reset follow up
+        default.update(follow_up_return_claim=False)
+        # return super
+        return super(return_claim, self).copy_data(cr, uid, id, default, context=context)
     
     def add_event(self, cr, uid, ids, context=None):
         '''
