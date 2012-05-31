@@ -50,6 +50,7 @@
           account_id: account_account_transfer_0
           amount: -1000.0
           transfer_amount: 1000.0
+          transfer_journal_id: account_bank_statement_5
 -
   I click on a button to hard post this line
 -
@@ -68,6 +69,7 @@
           account_id: account_account_transfer_0
           amount: 1000.0
           transfer_amount: 1000.0
+          transfer_journal_id: account_bank_statement_4
 -
   I click on a button to hard post this line
 -
