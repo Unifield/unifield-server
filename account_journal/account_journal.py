@@ -184,5 +184,15 @@ class account_journal(osv.osv):
                                   context=context)
         return journal_obj
 
+    # FIXME: add this button to the journal list view!
+    def button_delete_journal(self, cr, uid, ids, context=None):
+        """
+        Delete all linked register and this journal except:
+        - if another register is linked to one of attached register
+        - if one of register's balance is not null
+        - if one of register is not draft
+        """
+        pass
+
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
