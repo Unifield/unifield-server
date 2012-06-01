@@ -102,9 +102,6 @@
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
-        # Installer views
-        "installer/project_addresses_view.xml",
-        "installer/project_lead_time_view.xml",
     ],
     "demo_xml": [
     ],
