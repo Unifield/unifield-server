@@ -740,10 +740,12 @@ class claim_event(osv.osv):
         move_values = {}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
+            print 'set return type to out'
             # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
             move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
         elif claim_type == 'customer':
             picking_values.update({'type': 'in'})
+            print 'set return type to in'
             # receive return from customer, and go into input
             move_values.update({'location_id': claim.partner_id_return_claim.property_stock_customer.id,
                                 'location_dest_id': context['common']['input_id']})
