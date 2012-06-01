@@ -39,6 +39,8 @@ CLAIM_TYPE = [('supplier', 'Supplier'),
 
 TYPES_FOR_SRC_LOCATION = ['supplier', 'transport']
 
+TYPES_FOR_INTEGRITY = ['supplier']
+
 CLAIM_TYPE_RELATION = {'in': 'supplier',
                        'out': 'customer'}
 # claim state
@@ -844,9 +846,10 @@ class claim_event(osv.osv):
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _('Only events in state draft can be processed.'))
             # integrity check on product lines for corresponding claim - only for first event - only if from scratch - if from wizard, the checks must be done from the wizard logic
+            # we do not check integrity from wizard because of force availability option at picking level -> processing even if no stock available
             events = obj.return_claim_id_claim_event.event_ids_return_claim
             integrity_check = True
-            if len(events) == 1 and not events[0].from_picking_wizard_claim_event:
+            if len(events) == 1 and not events[0].from_picking_wizard_claim_event and obj.return_claim_id_claim_event.type_return_claim in TYPES_FOR_INTEGRITY:
                 integrity_check = claim_obj.check_product_lines_integrity(cr, uid, obj.return_claim_id_claim_event.id, context=context)
             if not integrity_check:
                 # return False
