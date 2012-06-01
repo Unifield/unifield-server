@@ -188,44 +188,77 @@ class product_product(osv.osv):
         report_id = self.pool.get('stock.mission.report').search(cr, uid, [('id', '=', context.get('mission_report_id'))])
         if not context.get('mission_report_id', False) or not report_id:
             raise osv.except_osv(_('Error'), _('No mission stock report found !'))
-        
-        report = self.pool.get('stock.mission.report').browse(cr, uid, report_id[0], context=context)            
-        
+                
         for product in ids:
-            res[product] = {'internal_qty': 0.00,
-                            'internal_val': 0.00,
-                            'stock_qty': 0.00,
-                            'stock_val': 0.00,
-                            'central_qty': 0.00,
-                            'central_val': 0.00,
-                            'cross_qty': 0.00,
-                            'cross_val': 0.00,
-                            'secondary_qty': 0.00,
-                            'secondary_val': 0.00,
-                            'cu_qty': 0.00,
-                            'cu_val': 0.00,}
-            
-        for line in report.report_line:
-            res[line.product_id.id] = {'internal_qty': line.internal_qty,
-                                       'internal_val': line.internal_qty*line.product_id.standard_price,
-                                       'stock_qty': line.stock_qty,
-                                       'stock_val': line.stock_qty*line.product_id.standard_price,
-                                       'central_qty': line.central_qty,
-                                       'central_val': line.central_qty*line.product_id.standard_price,
-                                       'cross_qty': line.cross_qty,
-                                       'cross_val': line.cross_qty*line.product_id.standard_price,
-                                       'secondary_qty': line.secondary_qty,
-                                       'secondary_val': line.secondary_qty*line.product_id.standard_price,
-                                       'cu_qty': line.cu_qty,
-                                       'cu_val': line.cu_qty*line.product_id.standard_price,
-                                       }
+                res[product] = {'internal_qty': 0.00,
+                                'internal_val': 0.00,
+                                'stock_qty': 0.00,
+                                'stock_val': 0.00,
+                                'central_qty': 0.00,
+                                'central_val': 0.00,
+                                'cross_qty': 0.00,
+                                'cross_val': 0.00,
+                                'secondary_qty': 0.00,
+                                'secondary_val': 0.00,
+                                'cu_qty': 0.00,
+                                'cu_val': 0.00,}
+        
+        report = self.pool.get('stock.mission.report').browse(cr, uid, report_id[0], context=context)
+        # If user wants to see the Full view...
+        if report.full_view:
+            # ... search the all stock reports
+            report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', False)], context=context)
+            for report in self.pool.get('stock.mission.report').browse(cr, uid, report_ids, context=context):
+                for line in report.report_line:
+                    if not line.product_id.id in res:
+                        res[line.product_id.id] = {'internal_qty': line.internal_qty,
+                                                   'internal_val': line.internal_qty*line.product_id.standard_price,
+                                                   'stock_qty': line.stock_qty,
+                                                   'stock_val': line.stock_qty*line.product_id.standard_price,
+                                                   'central_qty': line.central_qty,
+                                                   'central_val': line.central_qty*line.product_id.standard_price,
+                                                   'cross_qty': line.cross_qty,
+                                                   'cross_val': line.cross_qty*line.product_id.standard_price,
+                                                   'secondary_qty': line.secondary_qty,
+                                                   'secondary_val': line.secondary_qty*line.product_id.standard_price,
+                                                   'cu_qty': line.cu_qty,
+                                                   'cu_val': line.cu_qty*line.product_id.standard_price,
+                                                   }
+                    else:
+                        res[line.product_id.id]['internal_qty'] += line.internal_qty
+                        res[line.product_id.id]['internal_val'] += line.internal_qty*line.product_id.standard_price
+                        res[line.product_id.id]['stock_qty'] += line.stock_qty
+                        res[line.product_id.id]['stock_val'] += line.stock_qty*line.product_id.standard_price
+                        res[line.product_id.id]['central_qty'] += line.central_qty
+                        res[line.product_id.id]['central_val'] += line.central_qty*line.product_id.standard_price
+                        res[line.product_id.id]['cross_qty'] += line.cross_qty
+                        res[line.product_id.id]['cross_val'] += line.cross_qty*line.product_id.standard_price
+                        res[line.product_id.id]['secondary_qty'] += line.secondary_qty
+                        res[line.product_id.id]['secondary_val'] += line.secondary_qty*line.product_id.standard_price
+                        res[line.product_id.id]['cu_qty'] += line.cu_qty
+                        res[line.product_id.id]['cu_val'] += line.cu_qty*line.product_id.standard_price
+        else:                
+            for line in report.report_line:
+                res[line.product_id.id] = {'internal_qty': line.internal_qty,
+                                           'internal_val': line.internal_qty*line.product_id.standard_price,
+                                           'stock_qty': line.stock_qty,
+                                           'stock_val': line.stock_qty*line.product_id.standard_price,
+                                           'central_qty': line.central_qty,
+                                           'central_val': line.central_qty*line.product_id.standard_price,
+                                           'cross_qty': line.cross_qty,
+                                           'cross_val': line.cross_qty*line.product_id.standard_price,
+                                           'secondary_qty': line.secondary_qty,
+                                           'secondary_val': line.secondary_qty*line.product_id.standard_price,
+                                           'cu_qty': line.cu_qty,
+                                           'cu_val': line.cu_qty*line.product_id.standard_price,
+                                           }
                 
         return res
                 
     
     _columns = {
         'internal_qty': fields.function(_get_report_qty, method=True, type='float', string='Internal Qty.', store=False, multi='mission_report'),
-        'internal_val': fields.function(_get_report_qty, method=True, type='float', string='Internal Vàal.', store=False, multi='mission_report'),
+        'internal_val': fields.function(_get_report_qty, method=True, type='float', string='Internal Val.', store=False, multi='mission_report'),
         'stock_qty': fields.function(_get_report_qty, method=True, type='float', string='Stock Qty.', store=False, multi='mission_report'),
         'stock_val': fields.function(_get_report_qty, method=True, type='float', string='Stock Val.', store=False, multi='mission_report'),
         'central_qty': fields.function(_get_report_qty, method=True, type='float', string='Central Stock Qty.', store=False, multi='mission_report'),
