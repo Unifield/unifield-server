@@ -349,7 +349,7 @@ class create_picking(osv.osv_memory):
                     .setdefault(move.to_pack, {}) \
                     .setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                              'product_id': move.product_id.id,
-                                                             'product_qty': move.quantity,
+                                                             'product_qty': move.quantity_ordered,
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
@@ -374,7 +374,6 @@ class create_picking(osv.osv_memory):
         '''
         assert context, 'no context defined'
         assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 not in context'
-        
         pick_obj = self.pool.get('stock.picking')
         family_obj = self.pool.get('stock.move.memory.families')
         # partial data from wizard
@@ -383,7 +382,6 @@ class create_picking(osv.osv_memory):
         memory_families_list = partial.product_moves_families
         # returned datas
         partial_datas_ppl1 = context['partial_datas_ppl1']
-        
         # picking ids
         picking_ids = context['active_ids']
         for picking_id in picking_ids:
@@ -731,7 +729,7 @@ class create_picking(osv.osv_memory):
                 if move.qty_to_return:
                     partial_datas[pick.id][move.move_id.id] = {'memory_move_id': move.id,
                                                                'product_id': move.product_id.id,
-                                                               'product_qty': move.quantity,
+                                                               'product_qty': move.quantity_ordered,
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,
@@ -902,7 +900,6 @@ class create_picking(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
         pick_obj = self.pool.get('stock.picking')
         # name of the wizard field for moves (one2many)
         field_name = 'product_moves_families'
@@ -912,7 +909,6 @@ class create_picking(osv.osv_memory):
         self.update_data_from_partial(cr, uid, ids, context=context)
         # integrity check on wizard data
         partial_datas_ppl1 = context['partial_datas_ppl1']
-        
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly

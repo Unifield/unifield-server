@@ -186,9 +186,9 @@
     for memory_out in wizard_obj.browse(cr, uid, wizard_id, context=context).product_moves_out:
       # test
       memory_out.write({'expiry_date': the_date}, context=context)
-      wizard_obj.copy_all(cr,uid,[memory_out.id])
-      
+
     # validate the processing
+    wizard_obj.copy_all(cr,uid,[wizard_id])
     wizard_obj.do_partial(cr, uid, [wizard_id], context=context)
     
     # check a new production lot has been created with corresponding expiry date

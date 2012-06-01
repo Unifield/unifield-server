@@ -64,7 +64,7 @@
 					</field>
 
 					<field name="quantity" position="before">
-	           				<field name="quantity_ordered" readonly="1"/>
+	           				<field name="quantity_ordered" readonly="1"  />
 					</field>
 				
 					<field name="quantity" position="after">

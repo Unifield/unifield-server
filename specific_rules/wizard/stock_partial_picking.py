@@ -78,7 +78,8 @@ class stock_partial_picking(osv.osv_memory):
         arch = result['arch']
         l = arch.split('<field name="date" invisible="1"/>')
         arch = l[0]
-	if context.get('step',False) not in ['create','validate','returnproducts']:
+    
+	if context.get('step',False) not in ['create','validate','returnproducts','ppl2']:
 		arch += button
 	arch += '<field name="date" invisible="1"/>' + message + l[1]
         result['arch'] = arch
