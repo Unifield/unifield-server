@@ -29,7 +29,7 @@ class mission_stock_wizard(osv.osv_memory):
     _name = 'mission.stock.wizard'
     
     _columns = {
-        'report_id': fields.many2one('stock.mission.report', name='Report', required=True),
+        'report_id': fields.many2one('stock.mission.report', string='Report', required=True),
         'with_valuation': fields.boolean(string='Display stock valuation ?'),
     }
     
