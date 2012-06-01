@@ -57,7 +57,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Attach errors if context contents "employee_import_wizard_ids
+        Attach errors if context contents "employee_import_wizard_ids"
         """
         if not context:
             context={}
@@ -177,7 +177,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 return False
         return True
 
-    def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None):
+    def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None, line_number=None):
         """
         Get employee infos and set them to DB.
         """
@@ -185,6 +185,8 @@ class hr_payroll_employee_import(osv.osv_memory):
         created = 0
         updated = 0
         if not employee_data or not wizard_id:
+            message = _('No data found for this line: %s.') % line_number
+            self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
             return False, created, updated
         # Prepare some values
         vals = {}
@@ -289,6 +291,8 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if res:
                     updated += 1
         else:
+            message = _('code_terrain, id_unique and/or id_staff seems to be missing for this line: %s. Line content: %s') % (line_number, employee_data)
+            self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
             return False, created, updated
         return True, created, updated
 
@@ -333,13 +337,13 @@ class hr_payroll_employee_import(osv.osv_memory):
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
             self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False,}, {'from': 'import'})
             res = True
-            for employee_data in reader:
-                processed += 1
-                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id)
+            for i, employee_data in enumerate(reader):
+                update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
                 if not update:
                     res = False
                 created += nb_created
                 updated += nb_updated
+                processed += 1
             # Close Temporary File
             fileobj.close()
         if res:
