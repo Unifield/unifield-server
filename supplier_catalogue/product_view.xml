@@ -91,6 +91,7 @@
         		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
         			<field name="rounding" />
         			<field name="min_order_qty" />
+        			<field name="valid_from" />
         		</xpath>
             	
             	<xpath expr="//field[@name='min_qty']" position="replace">

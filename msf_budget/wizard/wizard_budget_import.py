@@ -93,7 +93,11 @@ class wizard_budget_import(osv.osv_memory):
         if import_data[4][1] == "":
             raise osv.except_osv(_('Warning !'), _("The budget has no decision moment!"))
         else:
-            result.update({'decision_moment': import_data[4][1]})
+            moment_ids = self.pool.get('msf.budget.decision.moment').search(cr, uid, [('name', '=', import_data[4][1])], context=context)
+            if len(moment_ids) == 0:
+                raise osv.except_osv(_('Warning !'), _("The decision moment %s is not defined in the database!") % (import_data[4][1],))
+            else:
+                result.update({'decision_moment_id': moment_ids[0]})
         return result
     
     def fill_budget_line_data(self, cr, uid, import_data, context=None):
@@ -182,11 +186,13 @@ class wizard_budget_import(osv.osv_memory):
                                                                         AND name = %s \
                                                                         AND fiscalyear_id = %s \
                                                                         AND cost_center_id = %s \
+                                                                        AND decision_moment_id = %s \
                                                                         ORDER BY version DESC LIMIT 1",
                                                                        (budget_vals['code'],
                                                                         budget_vals['name'],
                                                                         budget_vals['fiscalyear_id'],
-                                                                        budget_vals['cost_center_id']))
+                                                                        budget_vals['cost_center_id'],
+                                                                        budget_vals['decision_moment_id']))
                     
                 
                 if not cr.rowcount:

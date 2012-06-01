@@ -12,9 +12,9 @@
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
                     <field name="state"/>
-                    <field name="decision_moment"/>
+                    <field name="decision_moment_id"/>
                     <field name="version"/>
-                    <field name="total_budget_amount"/>
+                    <field name="total_budget_amount" digits="(24,0)"/>
                 </tree>
             </field>
         </record>
@@ -35,7 +35,7 @@
                        <field name="state"/>
                        <field name="fiscalyear_id"/>
                        <field name="currency_id"/>
-                       <field name="decision_moment"/>
+                       <field name="decision_moment_id"/>
                        <field name="version"/>
                    </group>
                </search>
@@ -52,7 +52,7 @@
                     <field name="code" readonly="1"/>
                     <field name="fiscalyear_id" readonly="1"/>
                     <field name="cost_center_id" readonly="1"/>
-                    <field name="decision_moment" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <field name="decision_moment_id" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="type" readonly="1" invisible="1"/>
                     <group col="4" colspan="2">

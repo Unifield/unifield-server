@@ -632,10 +632,17 @@ class purchase_order_merged_line(osv.osv):
     _description = 'Purchase Order Merged Lines'
     _table = 'purchase_order_merged_line'
 
+    def _get_name(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
+        return res
+
     _columns = {
         'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
         'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
+        'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -986,8 +993,20 @@ class purchase_order_line(osv.osv):
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
-            nomen_manda_0=False, comment=False):
-        res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+            nomen_manda_0=False, comment=False, context=None):
+        all_qty = qty
+        suppinfo_obj = self.pool.get('product.supplierinfo')
+        partner_price = self.pool.get('pricelist.partnerinfo')
+        
+        if context and context.get('purchase_id') and state == 'draft':
+            domain = [('product_id', '=', product), 
+                      ('product_uom', '=', uom), 
+                      ('order_id', '=', context.get('purchase_id'))]
+            other_lines = self.search(cr, uid, domain)
+            for l in self.browse(cr, uid, other_lines):
+                all_qty += l.product_qty 
+        
+        res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
                                                                  partner_id, date_order, fiscal_position, 
                                                                  date_planned, name, price_unit, notes)
         
@@ -1002,25 +1021,32 @@ class purchase_order_line(osv.osv):
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if not res.get('value', {}).get('price_unit', False) and qty != 0.00:
+        if not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
-            suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), 
-                                                                              ('product_id', '=', product)])
-            if suppinfo_ids:
-                currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
-                pricelist_ids = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('currency_id', '=', currency_id),
-                                                                                        ('suppinfo_id', 'in', suppinfo_ids),
-                                                                                        ('uom_id', '=', uom),
-                                                                                        '|', ('valid_till', '=', False),
-                                                                                        ('valid_till', '>=', date_order)], order='min_quantity')
-                if pricelist_ids:
-                    pricelist = self.pool.get('pricelist.partnerinfo').browse(cr, uid, pricelist_ids[0])
-                    res['value'].update({'old_price_unit': pricelist.price, 'price_unit': pricelist.price})
-                    res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
+            currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
+            tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
+            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
+                                                     ('product_id', '=', tmpl_id)], 
+                                                     order='sequence asc', limit=1, context=context)
+            domain = [('uom_id', '=', uom),
+                      ('currency_id', '=', currency_id),
+                      '|', ('valid_from', '<=', date_order),
+                      ('valid_from', '=', False),
+                      '|', ('valid_till', '>=', date_order),
+                      ('valid_till', '=', False)]
+        
+            if sequence_ids:
+                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
+                domain.append(('suppinfo_id.sequence', '=', min_seq))
+        
+            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                
+            if info_prices:
+                info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
+                res['value'].update({'old_price_unit': info_price.price, 'price_unit': info_price.price})
+                res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
-                                                                                'it might change at the supplier confirmation.') % pricelist.min_quantity}})
-                else:
-                    res['value'].update({'old_price_unit': res['value']['price_unit']})
+                                                                                'it might change at the supplier confirmation.') % info_price.min_quantity}})
             else:
                 res['value'].update({'old_price_unit': res['value']['price_unit']})
         else:

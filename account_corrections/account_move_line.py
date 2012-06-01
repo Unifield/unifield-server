@@ -80,6 +80,9 @@ class account_move_line(osv.osv):
             # False if this line come from a write-off
             if ml.is_write_off:
                 res[ml.id] = False
+            # False if this line come from an accrual
+            if ml.accrual:
+                res[ml.id] = False
         return res
 
     _columns = {
