@@ -429,7 +429,9 @@ class return_claim(osv.osv):
         if picking_id:
             # partner from picking
             data = pick_obj.read(cr, uid, picking_id, ['partner_id2', 'type', 'order_category', 'origin'], context=context)
-            partner_id = data['partner_id2'][0]
+            partner_id = data.get('partner_id2', False)
+            if partner_id:
+                partner_id = partner_id[0]
             type = data['type']
             # convert the picking type for the corresponding claim type
             type = CLAIM_TYPE_RELATION.get(type, False)
