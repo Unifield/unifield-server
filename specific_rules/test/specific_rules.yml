@@ -174,12 +174,10 @@
     pick_ids = self.search(cr, uid, [('purchase_id', '=', ref("purchase_order_po0"))], context=context)
     assert len(pick_ids) == 1, 'wrong number of IN stock picking'
     context.update(active_ids=pick_ids)
-    
     # process incoming shipment with a new expiry date
     # create wizard objects
     wizard_obj = self.pool.get('stock.partial.picking')
     wizard_id = self.action_process(cr, uid, pick_ids, context=context)['res_id']
-
     # enter the new expiry date value - memory_out because product cost method is standard price
     the_date = time.strftime('%Y-%m-%d')
     the_date = '2022-01-01'
@@ -190,7 +188,6 @@
     # validate the processing
     wizard_obj.copy_all(cr,uid,[wizard_id])
     wizard_obj.do_partial(cr, uid, [wizard_id], context=context)
-    
     # check a new production lot has been created with corresponding expiry date
     prodlot_obj = self.pool.get('stock.production.lot')
     assert len(prodlot_obj.search(cr, uid, [('life_date', '=', the_date), ('type', '=', 'internal')], context=context)), 'prodlots wrong'

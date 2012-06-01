@@ -80,7 +80,7 @@
           split_obj.write(cr, uid, split_ids, {'quantity': 5}, context=split_c)
         if out.quantity_ordered == 5:
           # reduce qty
-          out.write({'quantity': 4, 'quantity_ordered': 7}, context=wiz_c)
+          out.write({'quantity': 4, 'quantity_ordered': 4}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 3}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
