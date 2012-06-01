@@ -39,6 +39,7 @@
         "installer/project_addresses_view.xml",
         "installer/project_lead_time_view.xml",
         "installer/delivery_process_view.xml",
+        "security/ir.model.access.csv",
     ],
     'demo_xml': [
     ],
