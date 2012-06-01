@@ -65,44 +65,49 @@ class project_addresses(osv.osv_memory):
                              'not handled yet')
         company = payload.company_id
         partner_obj = self.pool.get('res.partner')
-        address_obj = self.pool.ges('res.address')
+        address_obj = self.pool.get('res.partner.address')
         
-        ship_address_data = {
-            'name':payload.name,
-            'street':payload.ship_street,
-            'street2':payload.ship_street2,
-            'zip':payload.ship_zip,
-            'city':payload.ship_city,
-            'email':payload.ship_email,
-            'phone':payload.ship_phone,
-            'country_id':int(payload.ship_country_id),
-            'state_id':int(payload.ship_state_id),
-        }
-
-        ship_address = partner_obj.address_get(cr, uid, company.partner_id.id, ['delivery'])
-        if ship_address:
-            address_obj.write(cr, uid, ship_address[0], ship_address_data, context=context)
-        else:
-            address_obj.create(cr, uid, dict(ship_address_data, partner_id=int(company.partner_id)),
-                    context=context)
-            
-        bill_address_data = {
-            'name':payload.name,
-            'street':payload.bill_street,
-            'street2':payload.bill_street2,
-            'zip':payload.bill_zip,
-            'city':payload.bill_city,
-            'email':payload.bill_email,
-            'phone':payload.bill_phone,
-            'country_id':int(payload.bill_country_id),
-            'state_id':int(payload.bill_state_id),
-        }
-
-        bill_address = partner_obj.address_get(cr, uid, company.partner_id.id, ['invoice'])
-        if bill_address:
-            address_obj.write(cr, uid, bill_address[0], bill_address_data, context=context)
-        else:
-            address_obj.create(cr, uid, dict(bill_address_data, partner_id=int(company.partner_id)),
+        if payload.ship_street or payload.ship_street2 or payload.ship_zip or payload.ship_city \
+           or payload.ship_email or payload.ship_phone or payload.ship_country_id:
+            ship_address_data = {
+                'type': 'delivery',
+                'name':payload.name,
+                'street':payload.ship_street,
+                'street2':payload.ship_street2,
+                'zip':payload.ship_zip,
+                'city':payload.ship_city,
+                'email':payload.ship_email,
+                'phone':payload.ship_phone,
+                'country_id':int(payload.ship_country_id),
+                'state_id':int(payload.ship_state_id),
+            }
+    
+            ship_address = address_obj.search(cr, uid, [('type', '=', 'delivery'), ('partner_id', '=', company.partner_id.id)], context=context)
+            if ship_address:
+                address_obj.write(cr, uid, ship_address[0], ship_address_data, context=context)
+            else:
+                address_obj.create(cr, uid, dict(ship_address_data, partner_id=int(company.partner_id)),
+                        context=context)
+        if payload.bill_street or payload.bill_street2 or payload.bill_zip or payload.bill_city \
+           or payload.bill_email or payload.bill_phone or payload.bill_country_id:    
+            bill_address_data = {
+                'type': 'invoice',
+                'name':payload.name,
+                'street':payload.bill_street,
+                'street2':payload.bill_street2,
+                'zip':payload.bill_zip,
+                'city':payload.bill_city,
+                'email':payload.bill_email,
+                'phone':payload.bill_phone,
+                'country_id':int(payload.bill_country_id),
+                'state_id':int(payload.bill_state_id),
+            }
+    
+            bill_address = address_obj.search(cr, uid, [('type', '=', 'invoice'), ('partner_id', '=', company.partner_id.id)], context=context)
+            if bill_address:
+                address_obj.write(cr, uid, bill_address[0], bill_address_data, context=context)
+            else:
+                address_obj.create(cr, uid, dict(bill_address_data, partner_id=int(company.partner_id)),
                     context=context)
             
         return res
