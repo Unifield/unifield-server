@@ -66,6 +66,7 @@ class delivery_process_setup(osv.osv_memory):
         if not setup_ids:
             setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
             
+        # Get all menu ids concerned by this modification
         picking_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_picking_ticket')[1]
         pre_packing_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_ppl')[1]
         pack_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_pack_type_tree')[1]
@@ -74,8 +75,10 @@ class delivery_process_setup(osv.osv_memory):
         menu_ids = [picking_menu_id, pre_packing_menu_id, pack_menu_id, packing_menu_id]
             
         if payload.delivery_process == 'simple':
+            # In simple configuration, remove the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': False}, context=context)
         else:
+            # In complex configuration, added the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': True}, context=context)
     
         setup_obj.write(cr, uid, setup_ids, {'delivery_process': payload.delivery_process}, context=context)

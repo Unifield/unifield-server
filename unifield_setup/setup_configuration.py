@@ -45,12 +45,15 @@ class unifield_setup_configuration(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Name'),
         'delivery_process': fields.selection([('simple', 'Simple OUT'), ('complex', 'PICK/PACK/SHIP')], string='Delivery process'),
-        
+        'allocation_setup': fields.selection([('allocated', 'Allocated'),
+                                              ('unallocated', 'Unallocated'),
+                                              ('mixed', 'Mixed')], string='Allocated stocks'),
     }
     
     _defaults = {
         'name': lambda *a: 'Unifield setup',
         'delivery_process': lambda *a: 'complex',
+        'allocation_setup': lambda *a: 'allocated',
     }
     
     _constraints = [

@@ -71,6 +71,20 @@ class purchase_order(osv.osv):
         return res
     # @@@end
     
+    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the Unifield configuration value
+        '''
+        res = {}
+        
+        setup_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'unifield_setup')[1]
+        setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_id, context=context)
+        
+        for order in ids:
+            res[order] = setup.allocation_setup
+        
+        return res
+    
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -103,6 +117,8 @@ class purchase_order(osv.osv):
                 "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
         ),
         'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
+        'allocation_setup': fields.function(_get_allocation_setup, type='boolean', string='Allocated setup', method=True),
+        'unallocation_ok': fields.boolean(string='Unallocated PO'),
     }
     
     _defaults = {
@@ -115,6 +131,21 @@ class purchase_order(osv.osv):
         'invoice_method': lambda *a: 'picking',
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery']
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+        
+        setup_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'unifield_setup')[1]
+        setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_id, context=context)
+        
+        res.update({'unallocation_ok': False})
+        if setup.allocation_setup == 'unallocated':
+            res.update({'unallocation_ok': True})
+            
+        return res
 
     def _check_user_company(self, cr, uid, company_id, context=None):
         '''
