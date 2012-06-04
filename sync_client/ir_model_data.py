@@ -292,21 +292,6 @@ def create(model,cr,uid,values,context=None):
     
 osv.osv.create=create
 
-context_group :  fields.many('group_definition')
-
-context= {'group' : 'user_value' }
-
-
-class base_model(osv.osv):
-    _name 
-    _columns : 
-     create_group
-     write_group
-     
-     
-class model(osv.osv):
-    _name
-
 #to be sure to access last_modification for every record
 old_write=osv.osv.write
 def write(model,cr,uid,ids,values,context=None):
