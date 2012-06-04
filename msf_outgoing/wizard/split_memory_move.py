@@ -90,7 +90,7 @@ class split_memory_move(osv.osv_memory):
             values = {'quantity_ordered': new_qty}
 
 	    if available_qty_to_process > 0.0 :
-		 values['quantity'] = new_qty
+		 values['quantity'] = 0.0
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
@@ -110,7 +110,7 @@ class split_memory_move(osv.osv_memory):
                            }
 
 	    if available_qty_to_process > 0.0 :
-		 default_val['quantity'] = leave_qty
+		 default_val['quantity'] = 0.0
 
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
         
