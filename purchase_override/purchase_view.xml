@@ -22,8 +22,8 @@
                         <field name="details" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="replace">
+                    	<field name="allocation_setup" invisible="1" />
                         <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
-                        <field name="allocation_setup" invisible="1" />
                         <field name="unallocation_ok" attrs="{'readonly': [('allocation_setup', '!=', 'mixed')]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">

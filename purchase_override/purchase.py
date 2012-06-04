@@ -117,7 +117,10 @@ class purchase_order(osv.osv):
                 "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
         ),
         'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
-        'allocation_setup': fields.function(_get_allocation_setup, type='boolean', string='Allocated setup', method=True),
+        'allocation_setup': fields.function(_get_allocation_setup, type='selection', 
+                                            selection=[('allocated', 'Allocated'),
+                                                       ('unallocated', 'Unallocated'),
+                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
     }
     

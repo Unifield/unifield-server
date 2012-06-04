@@ -100,10 +100,13 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for purchase in self.browse(cr, uid, ids, context=context):
-            if purchase.cross_docking_ok and purchase.location_id.id != cross_docking_location:
-                raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
+            if purchase.cross_docking_ok:
+                cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                if purchase.location_id.id != cross_docking_location:
+                    raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
+                else:
+                    return True
             else:
                 return True
 
@@ -178,7 +181,6 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
