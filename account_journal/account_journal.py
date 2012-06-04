@@ -184,7 +184,6 @@ class account_journal(osv.osv):
                                   context=context)
         return journal_obj
 
-    # FIXME: add this button to the journal list view!
     def button_delete_journal(self, cr, uid, ids, context=None):
         """
         Delete all linked register and this journal except:
@@ -192,7 +191,35 @@ class account_journal(osv.osv):
         - if one of register's balance is not null
         - if one of register is not draft
         """
-        pass
+        if not context:
+            context = {}
+        for id in ids:
+            all_register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('journal_id', '=', id)])
+            criteria_register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('journal_id', '=', id), ('state', '=', 'draft'), ('balance_end', '=', 0)])
+            if not all_register_ids:
+                raise osv.except_osv(_('Error'), _('No register found. You can manually delete this journal.'))
+            if all_register_ids != criteria_register_ids:
+                raise osv.except_osv(_('Warning'), _('Deletion is not possible. All registers are not in draft state!'))
+            # Delete all registers
+            context.update({'from': 'journal_deletion'})
+            self.pool.get('account.bank.statement').unlink(cr, uid, all_register_ids, context) # Needs context to permit register deletion
+            # Delete this journal
+            self.unlink(cr, uid, id)
+        # Return to the journal view list
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_journal_tree')
+        view_id = view_id and view_id[1] or False
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_journal_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Journal list'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.journal',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
+            'target': 'crush',
+        }
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
