@@ -471,6 +471,7 @@ class sourcing_line(osv.osv):
         
 sourcing_line()
 
+
 class sale_order(osv.osv):
     
     _inherit = 'sale.order'
@@ -593,8 +594,56 @@ class sale_order(osv.osv):
             return False
 
         return True
+    
+    def order_confirm_method(self, cr, uid, ids, context=None):
+        '''
+        wrapper for confirmation wizard
+        '''
+        # data
+        name = _("You are about to validate the FO without going through the sourcing tool. Are you sure?")
+        model = 'confirm'
+        step = 'default'
+        question = 'You are about to validate the FO without going through the sourcing tool. Are you sure?'
+        clazz = 'sale.order'
+        func = 'do_order_confirm_method'
+        args = [ids]
+        kwargs = {}
+        
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                callback={'clazz': clazz,
+                                                                                                          'func': func,
+                                                                                                          'args': args,
+                                                                                                          'kwargs': kwargs}))
+        return res
+    
+    def do_order_confirm_method(self, cr, uid, ids, context=None):
+        '''
+        trigger the workflow
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # we confirm (validation in unifield) the sale order
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'sale.order', ids[0], 'order_confirm', cr)
+        
+        return {'name':_("Field Orders"),
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'res_model': 'sale.order',
+                'res_id': ids[0],
+                'type': 'ir.actions.act_window',
+                'target': 'dummy',
+                'domain': [],
+                'context': {},
+                }
 
 sale_order()
+
 
 class sale_order_line(osv.osv):
     '''
