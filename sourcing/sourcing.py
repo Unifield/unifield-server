@@ -562,9 +562,11 @@ class sale_order(osv.osv):
         result['supplier'] = line.supplier and line.supplier.id or False
         if line.po_cft:
             result.update({'po_cft': line.po_cft})
-        # uf-583 - the location defined for the procurementis input instead of stock
+        # uf-583 - the location defined for the procurementis input instead of stock if the procurement is on order
+        # if from stock, the procurement search from products in the default location: Stock
         order = kwargs['order']
-        result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
+        if line.type == 'make_to_order':
+            result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
 
         return result
 
@@ -840,6 +842,11 @@ class procurement_order(osv.osv):
         - allow to modify the data for purchase order line creation
         '''
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        if 'procurement' in kwargs:
+            order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
+            if order_line_ids:
+                origin = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0]).order_id.name
+                line.update({'origin': origin})
         if line.get('price_unit', False) == False:
             st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
             line.update({'price_unit': st_price})

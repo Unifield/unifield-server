@@ -804,10 +804,10 @@ class shipment(osv.osv):
                 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
                 if treat_draft:
-                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
-                    for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
-                        if linked_packing.state not in ('done','cancel'):
-                            treat_draft = False
+                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id),
+                                                                   ('state', 'not in', ['done', 'cancel'])], context=context)
+                    if linked_packing_ids:
+                        treat_draft = False
                 
                 if treat_draft:
                     # trigger the workflow for draft_picking
@@ -1084,6 +1084,16 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink test for draft
+        '''
+        data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
+        if [x for x in data.values() if x]:
+            raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
+        
+        return super(stock_picking, self).unlink(cr, uid, ids, context=context)
    
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
@@ -1213,25 +1223,26 @@ class stock_picking(osv.osv):
         '''
         validate or not the draft picking ticket
         '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        
         for draft_picking in self.browse(cr, uid, ids, context=context):
             # the validate function should only be called on draft picking ticket
             assert draft_picking.subtype == 'picking' and draft_picking.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
             #check the qty of all stock moves
             treat_draft = True
-            for move in draft_picking.move_lines:
-                if move.product_qty != 0.0 and move.state != 'done':
-                    treat_draft = False
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_picking.id),
+                                                 ('product_qty', '!=', 0.0),
+                                                 ('state', 'not in', ['done', 'cancel'])], context=context)
+            if move_ids:
+                treat_draft = False
             
             if treat_draft:
                 # then all child picking must be fully completed, meaning:
                 # - all picking must be 'completed'
                 # completed means, we recursively check that next_step link object is cancel or done
-                # TODO should use has_picking_ticket_in_progress()
-                for picking in draft_picking.backorder_ids:
-                    # take care, is_completed returns a dictionary
-                    if not picking.is_completed()[picking.id]:
-                        treat_draft = False
-                        break
+                if self.has_picking_ticket_in_progress(cr, uid, [draft_picking.id], context=context)[draft_picking.id]:
+                    treat_draft = False
             
             if treat_draft:
                 # - all picking are completed (means ppl completed and all shipment validated)
@@ -1907,8 +1918,10 @@ class stock_picking(osv.osv):
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.backorder_ids:
-                raise osv.except_osv(_('Warning !'), _('You cannot convert a picking which has already been started.'))
+            # the convert function should only be called on draft picking ticket
+            assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
+            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
             
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
@@ -1921,15 +1934,21 @@ class stock_picking(osv.osv):
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
             # if corresponding sale order, date and date_expected are updated to rts + shipment lt
             for move in obj.move_lines:
-                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,}
+                # was previously set to confirmed/assigned, otherwise, when we confirm the stock picking,
+                # using draft_force_assign, the moves are not treated because not in draft
+                # and the corresponding chain location on location_dest_id was not computed
+                # we therefore set them back in draft state before treatment
+                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,
+                        'state': 'draft'}
                 if obj.sale_id:
                     # compute date
                     shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
                     rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
                     rts = rts + relativedelta(days=shipment_lt or 0)
                     rts = rts.strftime(db_date_format)
-                    vals.update({'date': rts, 'date_expected': rts})
+                    vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
+
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])
         
@@ -2453,11 +2472,10 @@ class stock_picking(osv.osv):
         
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
-            # if draft and all qty are still there, we can cancel it without further checks
+            # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
-                for move in picking.move_lines:
-                    if move.product_qty != move.sale_line_id.product_uom_qty:
-                        raise osv.except_osv(_('Warning !'), _('The shipment process has already started! Return products to stock from ppl and shipment and try to cancel again.'))
+                if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
                 return super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
             # if not draft or qty does not match, the shipping is already in progress
             if picking.subtype == 'picking' and picking.state in ('done',):
@@ -2792,3 +2810,26 @@ class sale_order(osv.osv):
         return cond
 
 sale_order()
+
+
+class procurement_order(osv.osv):
+    '''
+    procurement order workflow
+    '''
+    _inherit = 'procurement.order'
+    
+    def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
+        
+        - allow to modify the message written back to procurement order
+        '''
+        message = super(procurement_order, self)._hook_check_mts_on_message(cr, uid, context=context, *args, **kwargs)
+        procurement = kwargs['procurement']
+        if procurement.move_id.picking_id.state == 'draft' and procurement.move_id.picking_id.subtype == 'picking':
+            message = _("Shipment Process in Progress.")
+        return message
+    
+procurement_order()
+

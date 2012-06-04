@@ -37,6 +37,7 @@
         "msf_partner",
         "analytic_distribution",
         "register_accounting",
+        "analytic_distribution",
         "account_period_closing_level",
         "account_activable",
         "purchase_override",
