@@ -52,6 +52,7 @@ class unifield_setup_configuration(osv.osv):
                                    help='This percentage will be applied on field price from product form view.'),
         'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
                                                  string='Restrictive countries'),
+        'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
     }
     
     _defaults = {
@@ -59,6 +60,7 @@ class unifield_setup_configuration(osv.osv):
         'delivery_process': lambda *a: 'complex',
         'allocation_setup': lambda *a: 'allocated',
         'sale_price': lambda *a: 0.00,
+        'field_orders_ok': lambda *a: True,
     }
     
     _constraints = [

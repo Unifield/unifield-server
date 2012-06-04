@@ -44,6 +44,7 @@
         "installer/allocation_setup_view.xml",
         "installer/sales_price_view.xml",
         "installer/restrictive_country_view.xml",
+        "installer/field_orders_view.xml",
         "security/ir.model.access.csv",
     ],
     'demo_xml': [
