@@ -162,7 +162,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False):
         '''
         Changes the invoice method of the purchase order according to
         the choosen order type
