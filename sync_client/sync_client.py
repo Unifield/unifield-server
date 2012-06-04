@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -417,7 +417,7 @@ class entity(osv.osv, Thread):
     def recover_message(self, cr, uid, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         entity = self.get_entity(cr, uid, context)
-        proxy.message_recover_from_seq(entity.identifier, entity.message_last + 1, context)
+        proxy.message_recover_from_seq(entity.identifier, entity.message_last, context)
         return self.pull_message(cr, uid, context=context)
 
     """
