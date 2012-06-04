@@ -726,6 +726,7 @@ class claim_event(osv.osv):
         picking_tools = self.pool.get('picking.tools')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
+        event_picking_id = event_picking.id
         # origin picking in/out
         origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
         # claim
@@ -742,21 +743,21 @@ class claim_event(osv.osv):
         move_values = {}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
-            print 'set return type to out'
             # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
             move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
         elif claim_type == 'customer':
             picking_values.update({'type': 'in'})
-            print 'set return type to in'
             # receive return from customer, and go into input
             move_values.update({'location_id': claim.partner_id_return_claim.property_stock_customer.id,
                                 'location_dest_id': context['common']['input_id']})
         # update the picking
-        event_picking.write(picking_values, context=context)
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
-        picking_tools.confirm(cr, uid, event_picking.id, context=context)
-        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
-        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
+        picking_tools.confirm(cr, uid, event_picking_id, context=context)
+        # update the picking again - strange bug on runbot, the type was internal again...
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking) - force assign - must be available thanks to UI checks
+        picking_tools.check_assign(cr, uid, event_picking_id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
