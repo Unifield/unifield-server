@@ -25,6 +25,7 @@
     "depends": [
                 "base",
                 "product",
+                "product_attributes",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -42,6 +43,7 @@
         "installer/delivery_process_view.xml",
         "installer/allocation_setup_view.xml",
         "installer/sales_price_view.xml",
+        "installer/restrictive_country_view.xml",
         "security/ir.model.access.csv",
     ],
     'demo_xml': [

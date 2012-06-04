@@ -120,7 +120,7 @@
                             </group>
                             <separator string="Import restrictions" colspan="4"/>
                             <field name="restricted_country" colspan="2"/>
-                            <field name="country_restriction" colspan="2" attrs="{'readonly':[('restricted_country','=',False)]}"/>
+                            <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             <separator string="Code remarks section" colspan="4"/>
                             <group colspan="2" col="2">
                                 <field name="section_code_ids" colspan="2" nolabel="1">

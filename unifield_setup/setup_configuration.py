@@ -50,6 +50,8 @@ class unifield_setup_configuration(osv.osv):
                                               ('mixed', 'Mixed')], string='Allocated stocks'),
         'sale_price': fields.float(digits=(16,2), string='Fields price percentage',
                                    help='This percentage will be applied on field price from product form view.'),
+        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
+                                                 string='Restrictive countries'),
     }
     
     _defaults = {

@@ -70,6 +70,22 @@ class product_attributes_template(osv.osv):
     
 product_attributes_template()
 
+
+class product_country_restriction(osv.osv):
+    _name = 'res.country'
+    _inherit = 'res.country'
+    
+    _columns = {
+        'is_restrictive': fields.boolean(string='Is restrictive ?'),
+    }
+    
+    _defaults = {
+        'is_restrictive': lambda *a: False,
+    }
+    
+product_country_restriction()
+
+
 class product_attributes(osv.osv):
     _inherit = "product.product"
     
@@ -192,11 +208,7 @@ class product_attributes(osv.osv):
         'closed_article': fields.boolean('Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
-        # TODO: add real country restrictions
-        'country_restriction': fields.selection([('',''),
-            ('A','A'),
-            ('B','B'),
-            ('C','C')], 'Country Restriction'),
+        'country_restriction': fields.many2one('res.country', 'Country Restriction', domain=[('is_restrictive', '=', True)]),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
