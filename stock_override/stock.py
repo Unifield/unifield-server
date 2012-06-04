@@ -438,6 +438,31 @@ class stock_move(osv.osv):
         '''
         return self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
+    def _get_from_dpo(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the move has a dpo_id
+        '''
+        res = {}
+
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = False
+            if move.dpo_id:
+               res[move.id] = True
+
+        return res
+
+    def _search_from_dpo(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns the list of moves from or not from DPO
+        '''
+        for arg in args:
+            if arg[0] == 'from_dpo' and arg[1] == '=':
+                return [('dpo_id', '!=', False)]
+            elif arg[0] == 'from_dpo' and arg[1] in ('!=', '<>'):
+                return [('dpo_id', '=', False)]
+        
+        return []
+
     _columns = {
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
@@ -445,6 +470,8 @@ class stock_move(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'already_confirmed': fields.boolean(string='Already confirmed'),
+        'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
+        'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
     }
     
     def create(self, cr, uid, vals, context=None):

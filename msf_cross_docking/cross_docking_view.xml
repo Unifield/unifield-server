@@ -27,12 +27,12 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
-                        <field name="cross_docking_ok" attrs="{'readonly':['|', ('categ','in', ['service', 'transport']), ('state', '!=', 'draft')]}" 
+                        <field name="cross_docking_ok" attrs="{'readonly':['|', '|', ('state', '!=', 'draft'), ('order_type', '=', 'direct'), ('categ','in', ['service', 'transport'] )]}" 
                         on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id)"
                         />
                     </xpath>
                     <field name="location_id" position= "replace">
-                        <field name="location_id" attrs="{'readonly':[('cross_docking_ok','=', True )]}"/>
+                        <field name="location_id" attrs="{'readonly':['|', '|', ('state', 'not in', ['draft', 'confirmed']), ('warehouse_id', '!=', False), ('cross_docking_ok','=', True)]}"/>
                     </field>
                 </data>
             </field>

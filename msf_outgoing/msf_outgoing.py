@@ -1938,8 +1938,11 @@ class stock_picking(osv.osv):
                 # using draft_force_assign, the moves are not treated because not in draft
                 # and the corresponding chain location on location_dest_id was not computed
                 # we therefore set them back in draft state before treatment
-                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,
-                        'state': 'draft'}
+                vals = {'state': 'draft'}
+                # If the move comes from a DPO, don't change the destination location
+                if not move.dpo_id:
+                    vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
+
                 if obj.sale_id:
                     # compute date
                     shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
