@@ -24,6 +24,7 @@
     "version": "1.0",
     "depends": [
                 "base",
+                "product",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -40,6 +41,7 @@
         "installer/project_lead_time_view.xml",
         "installer/delivery_process_view.xml",
         "installer/allocation_setup_view.xml",
+        "installer/sales_price_view.xml",
         "security/ir.model.access.csv",
     ],
     'demo_xml': [

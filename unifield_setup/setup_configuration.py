@@ -48,12 +48,15 @@ class unifield_setup_configuration(osv.osv):
         'allocation_setup': fields.selection([('allocated', 'Allocated'),
                                               ('unallocated', 'Unallocated'),
                                               ('mixed', 'Mixed')], string='Allocated stocks'),
+        'sale_price': fields.float(digits=(16,2), string='Fields price percentage',
+                                   help='This percentage will be applied on field price from product form view.'),
     }
     
     _defaults = {
         'name': lambda *a: 'Unifield setup',
         'delivery_process': lambda *a: 'complex',
         'allocation_setup': lambda *a: 'allocated',
+        'sale_price': lambda *a: 0.00,
     }
     
     _constraints = [
