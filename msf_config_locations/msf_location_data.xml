@@ -342,7 +342,7 @@
         <field name="posz">2</field>
     </record>
     
-    <record id="stock_location_internal_suppliers_view" model="stock.location">
+    <record id="stock.stock_location_internal_suppliers_view" model="stock.location">
         <field name="name">Supplier</field>
         <field name="location_id" ref="stock.stock_location_locations_partner" />
         <field name="location_category">other</field>
@@ -355,7 +355,7 @@
 
     <record id="stock.stock_location_suppliers" model="stock.location">
         <field name="name">Other Supplier</field>
-        <field name="location_id" ref="stock_location_internal_suppliers_view" />
+        <field name="location_id" ref="stock.stock_location_internal_suppliers_view" />
         <field name="location_category">other</field>
         <field name="usage">supplier</field>
         <field name="chained_location_type">none</field>
@@ -364,9 +364,9 @@
         <field name="posz">2</field>
     </record>
 
-    <record id="stock_location_internal_suppliers" model="stock.location">
+    <record id="stock.stock_location_internal_suppliers" model="stock.location">
         <field name="name">MSF Supplier</field>
-        <field name="location_id" ref="stock_location_internal_suppliers_view" />
+        <field name="location_id" ref="stock.stock_location_internal_suppliers_view" />
         <field name="location_category">other</field>
         <field name="usage">supplier</field>
         <field name="chained_location_type">none</field>
