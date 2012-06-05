@@ -349,7 +349,7 @@ class product_product(osv.osv):
         res = super(product_product,self).fields_view_get(cr, uid, view_id, view_type, context, toolbar=toolbar, submenu=submenu)
         if context is None:
             context = {}
-        if ('location' in context) and context['location']:
+        if ('location' in context) and context['location'] and type(context['location']) == type(1):
             location_info = self.pool.get('stock.location').browse(cr, uid, context['location'])
             fields=res.get('fields',{})
             if fields:

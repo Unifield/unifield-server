@@ -377,6 +377,16 @@ class procurement_order(osv.osv):
            for computing their own purpose
         @return: True"""
         return True
+    
+    def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
+        
+        - allow to modify the message written back to procurement order
+        '''
+        message = kwargs['message']
+        return message
 
     def _check_make_to_stock_product(self, cr, uid, procurement, context=None):
         """ Checks procurement move state.
@@ -397,6 +407,8 @@ class procurement_order(osv.osv):
                     message = _("No minimum orderpoint rule defined.")
                 elif not ok:
                     message = _("Not enough stock.")
+                # hook on message value
+                message = self._hook_check_mts_on_message(cr, uid, context=context, message=message, procurement=procurement)
 
                 if message:
                     self.log(cr, uid, procurement.id, _("Procurement '%s' is in exception: ") % (procurement.name) + message)
