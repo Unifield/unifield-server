@@ -175,26 +175,26 @@
 			<field name="priority" eval="200" />
 			<field name="arch" type="xml">
 				<data>
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='name']" position="replace">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='name']" position="replace">
 						<field name="default_name" />
 						<field name="comment" />
 					</xpath>
 					
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='default_name']" position="before">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='default_name']" position="before">
 						<field name="default_code" />
 					</xpath>
 					
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='comment']" position="after">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='comment']" position="after">
 						<field name="nomenclature_description" />
 					</xpath>
 					
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='date_planned']" position="replace">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='date_planned']" position="replace">
 					</xpath>
 					
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='price_unit']" position="replace">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='price_unit']" position="replace">
 					</xpath>
 					
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='product_uom']" position="after">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_uom']" position="after">
 						<field name="date_planned" />
 						<field name="confirmed_delivery_date" />
 					</xpath>
