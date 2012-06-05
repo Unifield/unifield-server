@@ -34,6 +34,7 @@
     'data': [
         'sync.server.group_type.csv',
         'sync_server.sync_rule.csv',
+        'account.analytic.journal.csv',
         #'sync_server.message_rule.csv',
     ],
     'demo_xml': [
