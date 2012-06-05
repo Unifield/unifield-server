@@ -65,26 +65,30 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
     """
     Set some fields in function of "Third Parties" field
     """
-    if name and value:
-        fields = value.split(",")
-        element = fields[0]
+    if name:
+        element = False
+        if value:
+            fields = value.split(",")
+            element = fields[0]
         sql = "UPDATE %s SET " % self._table
-        obj = False
+        emp_val = 'Null'
+        reg_val = 'Null'
+        par_val = 'Null'
+        tra_val = 'Null'
         if element == 'hr.employee':
-            obj = 'employee_id'
+            emp_val = fields[1] or 'Null'
         elif element == 'account.bank.statement':
-            obj = 'register_id'
+            reg_val = fields[1] or 'Null'
         elif element == 'res.partner':
-            obj = 'partner_id'
+            par_val = fields[1] or 'Null'
         elif element == 'account.journal':
-            obj = 'transfer_journal_id'
-        if obj:
-            sql += "%s = %s " % (obj, fields[1])
-            sql += "WHERE id = %s" % id
-            if self._table == 'wizard_journal_items_corrections_lines':
-                self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
-                return True
-            cr.execute(sql)
+            tra_val = fields[1] or 'Null'
+        sql += "employee_id = %s, register_id = %s, partner_id = %s, transfer_journal_id = %s " % (emp_val, reg_val, par_val, tra_val)
+        sql += "WHERE id = %s" % id
+        if self._table == 'wizard_journal_items_corrections_lines':
+            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
+            return True
+        cr.execute(sql)
     return True
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):
