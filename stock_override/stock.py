@@ -774,6 +774,33 @@ class stock_location(osv.osv):
                             
         return result
 
+    def _fake_get(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        return result
+
+    def _prod_loc_search(self, cr, uid, ids, fields, arg, context=None):
+        if context is None:
+            context = {}
+        id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')[1]
+        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
+        prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2])
+        if prod_obj.type == 'consu':
+            return [('id', 'in', [id_nonstock,id_cross])]
+        elif prod_obj.type != 'consu':
+                return [('id', 'not in', [id_nonstock])]
+        ids = [('id', 'in', [])]
+        return ids
+
+    def _cd_search(self, cr, uid, ids, fields, arg, context=None):
+        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
+        if context is None:
+            context = {}
+        if arg[0][2]:
+            obj_po = self.pool.get('purchase.order').browse(cr,uid,arg[0][2])
+            if obj_po.cross_docking_ok:
+                return [('id', 'in', [id_cross])]
+        return []
+
     _columns = {
         'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],
                                 'Chained Location Type', required=True,
@@ -790,6 +817,11 @@ class stock_location(osv.osv):
         'stock_virtual': fields.function(_product_value, method=True, type='float', string='Virtual Stock', multi="stock"),
         'stock_real_value': fields.function(_product_value, method=True, type='float', string='Real Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
+
+
+        'check_prod_loc': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_prod_loc_search),
+        'check_cd': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_cd_search),
+
     }
 
     #####

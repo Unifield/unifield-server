@@ -2717,6 +2717,7 @@ class stock_move(osv.osv):
             values['sale_order_line_number'] = move.sale_line_id and move.sale_line_id.line_number or 0
                     
         return result
+
     
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
@@ -2742,7 +2743,10 @@ class stock_move(osv.osv):
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',), # old_multi get_vals
+
+
                 }
+
 
 stock_move()
 

@@ -497,6 +497,9 @@ class stock_move(osv.osv):
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')
                 result.setdefault('value', {}).update({'location_dest_id': id_nonstock[1] })
 
+            if product.type == 'product':
+                result.setdefault('value', {}).update({'location_dest_id': None })
+            
             if product.batch_management:
                 result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
