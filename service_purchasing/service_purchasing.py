@@ -123,7 +123,10 @@ class stock_move(osv.osv):
         else:
             if loc_dest_id == service_loc: 
                 result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
-            result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
+            if parent_type == 'out':
+                result.update({'domain': {'location_dest_id': [('standard_out_ok', '=', True)]}})
+            else:
+                result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
             
         
         return result

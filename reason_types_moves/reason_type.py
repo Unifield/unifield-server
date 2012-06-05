@@ -21,6 +21,8 @@
 
 from osv import osv, fields
 
+from tools.translate import _
+
 import logging
 from os import path
 import math
@@ -401,5 +403,50 @@ class stock_return_picking(osv.osv_memory):
         return default_value
 
 stock_return_picking()
+
+
+class stock_location(osv.osv):
+    _name = 'stock.location'
+    _inherit = 'stock.location'
+    
+    def _get_st_out(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for id in ids:
+            res[id] = False
+            
+        return res
+    
+    def _src_st_out(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns location allowed for Standard out
+        '''
+        res = [('usage', '!=', 'view')]
+        for arg in args:
+            if arg[0] == 'standard_out_ok':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                elif arg[2] in (True, 't', 'True', 1):
+                    loc_obj = self.pool.get('stock.location')
+        
+                    virtual_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+                    virtual_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', virtual_loc_id)], context=context)
+                    
+                    customer_loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'customer')], context=context)
+                    output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+                    
+                    loc_ids = virtual_loc_ids
+                    loc_ids.extend(customer_loc_ids)
+                    loc_ids.append(output_loc_id)
+                    res.append(('id', 'in', loc_ids))
+                    
+        return res
+                    
+    
+    _columns = {
+        'standard_out_ok': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
+    }
+    
+stock_location()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
