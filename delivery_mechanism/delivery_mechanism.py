@@ -519,7 +519,7 @@ class stock_picking(osv.osv):
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
-                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.')%(obj.purchase_id.name, obj.purchase_id.shipped_rate))
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received.')%(obj.purchase_id.name, round(obj.purchase_id.shipped_rate,2)))
             # correct the corresponding so
             for sale_id in sale_ids:
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)

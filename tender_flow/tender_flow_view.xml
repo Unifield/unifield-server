@@ -186,6 +186,10 @@
                         <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
                     </field>
+                    
+                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes">
+                    	<attribute name="string">Lines</attribute>
+                    </xpath>
 
                     <xpath expr="/form//field[@name='date_order']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
@@ -236,13 +240,15 @@
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                         <group colspan="4" col="14">
                             <field name="state" readonly="1"/>
+                            <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
                             <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/>
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
                             <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                            <button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
+                            <button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward" type="object" />
                             <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
@@ -267,7 +273,7 @@
             			<field name="currency_id" />
             		</xpath>
             		
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='min_order_qty']" position="after">
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='valid_from']" position="after">
             			<field name="valid_till" />
             			<field name="comment" />
             			<field name="purchase_order_id" />

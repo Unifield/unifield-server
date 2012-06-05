@@ -86,7 +86,7 @@
 			<field name="arch" type="xml">
 				<data>
 				
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='product_uom']" position="after">
+					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_uom']" position="after">
 						<field name="kc_dg" />
 					</xpath>
             	
