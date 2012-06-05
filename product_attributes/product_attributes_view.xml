@@ -47,13 +47,15 @@
                                 <field name="procure_method" groups="base.group_extended"/>
                                 <field name="supply_method"/>
                             </group>
-                            <group colspan="2" col="2">
-                                <separator string="Base Prices" colspan="2"/>
-                                <field groups="base.group_extended" name="cost_method"/>
-                                <field name="standard_price" attrs="{'readonly':[('cost_method','=','average')]}"/>
-                                <field name="list_price"/>
+                            <group colspan="2" col="3">
+                                <separator string="Base Prices" colspan="3"/>
+                                <field groups="base.group_extended" name="cost_method" colspan="3"/>
+                                <field name="standard_price" string="Cost Price " attrs="{'readonly':[('cost_method','=','average')]}"/>
+                                <field name="currency_id" nolabel="1" />
+                                <field name="list_price" colspan="2"/>
+                                <field name="field_currency_id" nolabel="1" />
                                 <newline/>
-                                <field name="price_margin" groups="product.group_product_variant"/>
+                                <field name="price_margin" groups="product.group_product_variant" colspan="3"/>
                             </group>
 
                             <group colspan="2" col="2" groups="base.group_extended">
