@@ -29,10 +29,10 @@
                     </group>
                 </group>
                 <group colspan="4" col="8">
-                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
-                    <field name="funding_pool_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
-                    <field name="free1_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
-                    <field name="free2_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
+                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)"/>
+                    <field name="funding_pool_id"/>
+                    <field name="free1_id"/>
+                    <field name="free2_id"/>
                 </group>
                 <notebook colspan="6">
                     <page string="Personal Information">
