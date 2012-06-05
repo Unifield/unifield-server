@@ -908,7 +908,8 @@ class procurement_order(osv.osv):
                 line.update({'origin': origin})
         if line.get('price_unit', False) == False:
             st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
-            if pricelist:
+            if line.get('pricelist'):
+                pricelist = self.pool.get('product.pricelist').browse(cr, uid, line.get('pricelist'))
                 cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, pricelist.currency_id.id, st_price)
             line.update({'price_unit': st_price})
