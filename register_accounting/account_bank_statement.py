@@ -916,10 +916,6 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         res = values.copy()
-        # Fetch distribution
-        distrib_id = False
-        if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
-            distrib_id = values.get('analytic_distribution_id')
         # Fetch default funding pool: MSF Private Fund
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
@@ -944,7 +940,7 @@ class account_bank_statement_line(osv.osv):
                     return res
                 emp_id = third and third[1] or False
             employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
-            if employee.employee_type and employee.employee_type == 'ex' and is_expense and not distrib_id:
+            if employee.employee_type and employee.employee_type == 'ex' and is_expense:
                 # Create a distribution
                 cc_id = employee.cost_center_id and employee.cost_center_id.id or False
                 fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
@@ -1322,7 +1318,11 @@ class account_bank_statement_line(osv.osv):
         # First update amount
         values = self._update_amount(values=values)
         # Then update expat analytic distribution
-        values = self._update_expat_analytic_distribution(cr, uid, values=values)
+        distrib_id = False
+        if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
+            distrib_id = values.get('analytic_distribution_id')
+        if not distrib_id:
+            values = self._update_expat_analytic_distribution(cr, uid, values=values)
         # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
@@ -1356,6 +1356,19 @@ class account_bank_statement_line(osv.osv):
                 self._update_move_from_st_line(cr, uid, id, values, context=context)
             if saveddate:
                 values['date'] = saveddate
+        # Then update analytic distribution
+        if 'employee_id' or 'partner_type' in values:
+            res = []
+            for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id']):
+                if not line.get('analytic_distribution_id', False) and (not 'analytic_distribution_id' in values or values.get('analytic_distribution_id') is False):
+                    if not 'account_id' in values:
+                        values.update({'account_id': line.get('account_id')[0]})
+                    if not 'statement_id' in values:
+                        values.update({'statement_id': line.get('statement_id')[0]})
+                    values = self._update_expat_analytic_distribution(cr, uid, values)
+                tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
+                res.append(tmp)
+            return res
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
