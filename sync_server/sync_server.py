@@ -459,6 +459,7 @@ class sync_manager(osv.osv):
                         {
                             'server_id' : integer : id of the rule server side,
                             'name' : string : Name of the rule,
+                            'owner_field' : string : Name of the field that is the owner instance of the record
                             'model' : string : Name of the model on which the rule applies,
                             'domain' : string : The domain to filter the record to synchronize, format : standard domain [(),()]
                             'sequence_number' : integer : Sequence number of the rule,
@@ -538,6 +539,7 @@ class sync_manager(osv.osv):
                               {
                                     'model': string : model's name of the update
                                     'source_name' : string : source entity's name
+                                    'owner_name' : string : owner entity's name
                                     'fields' : string : list of fields to include, format : a list of string, same format as the one needed for export data
                                     'sequence' : update's sequence number, a integer
                                     'fallback_values' : update_master.rule_id.fallback_values

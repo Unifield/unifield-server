@@ -40,7 +40,9 @@
             <field name="arch" type="xml">
                 <form string="Sync Rule Form">
                     <group colspan="4" col="6">
-                        
+                        <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
+                        <field name="owner_field"/>
+                        <newline/>
                         <field name="name"/>
                         <field name="model_ref" on_change="invalidate(model_ref)" required="1"/>
                         <field name="model_id" invisible="1"/>
@@ -53,7 +55,6 @@
                             <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}"/>
                             <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)], 'required':[('applies_to_type','=',True)]}" widget="selection"/>
                         </group>
-                        <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
                     </group>
                     <group colspan="4" col="2">
                         <separator string="Domain" colspan="2"/>

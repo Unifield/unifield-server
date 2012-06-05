@@ -82,6 +82,7 @@ class local_rule(osv.osv):
         'domain' : fields.text('Domain', required = False, readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'included_fields' : fields.text('Included Fields', readonly=True),
+        'owner_field' : fields.char('Owner Field', size=128, readonly=True),
     }
     
     def save(self, cr, uid, data_list, context=None):
@@ -171,6 +172,7 @@ class update_to_send(osv.osv):
                 'rule_id' : rule.id,
                 'xml_id' : xml_id,
                 'fields' : tools.ustr(included_fields),
+                'owner' : obj.read(cr, uid, id, [rule.owner_field])[rule.owner_field],
             }
 
             self.create(cr,uid, data, context=context)
@@ -218,6 +220,7 @@ class update_received(osv.osv):
 
     _columns = {
         'source': fields.char('Source Instance', size=128, readonly=True), 
+        'owner': fields.char('Owner Instance', size=128, readonly=True), 
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'sequence' : fields.integer('Sequence', readonly=True),
         'version' : fields.integer('Record Version', readonly=True),
@@ -240,6 +243,7 @@ class update_received(osv.osv):
                 log(self, cr, uid, "Model %s does not exist" % packet['model'], data=packet, context=context)
         data = {
             'source' : packet['source_name'],
+            'owner' : packet['owner_name'],
             'model' : model_id[0],
             'fields' : packet['fields'],
             'sequence' : packet['sequence'],

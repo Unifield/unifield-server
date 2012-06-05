@@ -38,6 +38,7 @@ class update(osv.osv):
 
     _columns = {
         'source': fields.many2one('sync.server.entity', string="Source Instance"), 
+        'owner': fields.many2one('sync.server.entity', string="Owner Instance"), 
         'model': fields.char('Model', size=128, readonly=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence'),
@@ -54,6 +55,7 @@ class update(osv.osv):
     def unfold_package(self, cr, uid, entity, packet, context=None):
         data = {
             'source': entity.id,
+            'owner': packet['owner'],
             'model': packet['model'],
             'session_id': packet['session_id'],
             'rule_id': packet['rule_id'],
@@ -98,9 +100,15 @@ class update(osv.osv):
         ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         for update in self.browse(cr, uid, update_ids, context=context):
+            if update.rule_id.direction == 'bi-private':
+                privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
+                           self.pool.get('sync.server.entity')._get_all_children(cr, uid, update.owner.id, context=context)
+            else:
+                privates = []
             if (update.rule_id.direction == 'up' and update.source.id in children) or \
-                (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
-                update.rule_id.direction == 'bidirectional':
+               (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
+               (update.rule_id.direction == 'bidirectional') or \
+               (entity.id in privates):
                 
                 source_rules_ids = self.pool.get('sync_server.sync_rule')._get_group_per_rules(cr, uid, update.source, context)
                 s_group = source_rules_ids.get(update.rule_id.id, [])
@@ -135,6 +143,7 @@ class update(osv.osv):
         complete_fields = self.get_additional_forced_field(update_master) 
         data = {
             'model' : update_master.model,
+            'owner_name' : update_master.owner.name,
             'source_name' : update_master.source.name,
             'fields' : tools.ustr(complete_fields),
             'sequence' : update_master.sequence,
