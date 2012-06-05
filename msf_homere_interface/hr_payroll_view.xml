@@ -114,7 +114,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="editable_view_employee_tree"/>
-            <field name="context">{'search_default_active': 1, 'search_default_employee_type_local': 1}</field>
+            <field name="domain">[('employee_type', '=', 'local')]</field>
         </record>
 
         <record id="action_employee_import_wizard" model="ir.actions.act_window">

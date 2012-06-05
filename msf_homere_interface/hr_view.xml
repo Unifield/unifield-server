@@ -149,11 +149,6 @@
         <field name="inherit_id" ref="hr.view_employee_filter"/>
         <field name="arch" type="xml">
             <data>
-                <xpath expr="/search/filter[@name='active']" position="after">
-                    <separator orientation="vertical" />
-                    <filter icon="gtk-leave-fullscreen" domain="[('employee_type','=','local')]" name="employee_type_local" string="Local" groups="base.group_extended"/>
-                    <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" groups="base.group_extended"/>
-                </xpath>
                 <xpath expr="/search/field[@name='department_id']" position="replace">
                 </xpath>
                 <xpath expr="/search/field[@name='parent_id']" position="replace">
