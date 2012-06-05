@@ -422,13 +422,12 @@ class stock_location(osv.osv):
         Returns location allowed for Standard out
         '''
         res = [('usage', '!=', 'view')]
+        loc_obj = self.pool.get('stock.location')
         for arg in args:
             if arg[0] == 'standard_out_ok':
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
-                elif arg[2] in (True, 't', 'True', 1):
-                    loc_obj = self.pool.get('stock.location')
-        
+                if arg[2] == 'dest':
                     virtual_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
                     virtual_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', virtual_loc_id)], context=context)
                     
@@ -439,12 +438,19 @@ class stock_location(osv.osv):
                     loc_ids.extend(customer_loc_ids)
                     loc_ids.append(output_loc_id)
                     res.append(('id', 'in', loc_ids))
+                elif arg[2] == 'src':
+                    output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+                    loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', output_loc_id)])
+                    res.append(('quarantine_location', '=', False))
+                    res.append(('usage', '=', 'internal'))
+                    res.append(('id', 'not in', loc_ids))
                     
         return res
                     
     
     _columns = {
         'standard_out_ok': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
+        'standard_out_src': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
     }
     
 stock_location()
