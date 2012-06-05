@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,26 +19,20 @@
 #
 ##############################################################################
 {
-    'name': 'MSF Budget Management',
-    'version': '1.0',
-    'category': 'Generic Modules/Accounting',
-    'author': 'MSF, TeMPO Consulting',
-    'developer': 'Matthieu Dietrich',
-    'depends': ['res_currency_tables',"msf_audittrail","msf_instance"],
-    'description': '''
-        Budget view
-    ''',
-    'init_xml': [],
-    'update_xml': [
-        'security/ir.model.access.csv',
-        'msf_budget_report.xml',
-        'msf_budget_view.xml',
-        'msf_budget_workflow.xml',
-        'data/msf_budget_decision_moment_data.xml',
-        'wizard/wizard_budget_criteria_export_view.xml'
+    "name" : "MSF Proprietary Instance",
+    "version": "1.1",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["account_msf", "res_currency_functional"],
+    "description": """Module for defining proprietary instances, their informations
+    """,
+    "init_xml" : [],
+    "update_xml": [
+        'msf_instance_view.xml',
+        'data/instance_data.xml',
     ],
-    'test': [
-        'test/budget_test.yml'
+    'demo_xml': [
     ],
     'installable': True,
     'active': False,

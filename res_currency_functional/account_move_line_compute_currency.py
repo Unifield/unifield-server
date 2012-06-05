@@ -52,7 +52,6 @@ class account_move_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
-        'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
 
@@ -415,14 +414,6 @@ class account_move_line_compute_currency(osv.osv):
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
         return res
 
-    def _get_instance_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.browse(cr, uid, ids):
-            ret[line.id] = line.journal_id and line.journal_id.instance_id or False
-        return ret
-
     def _get_journal_move_line(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
     
@@ -446,12 +437,6 @@ class account_move_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
-        'instance': fields.function(_get_instance_type, type='char', string='Proprietary instance', size=64, method=True,
-                store = {
-                    'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['journal_id'], 10),
-                    'account.journal': (_get_journal_move_line, ['instance_id'], 10),
-                }
-            ),
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
                 store = {
                     'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),

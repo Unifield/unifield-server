@@ -10,6 +10,7 @@ class msf_chart_of_account_installer(osv.osv_memory):
     _columns = {
         'create': fields.boolean('Create Journals'),
         'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account"),
+        'instance_id': fields.many2one('msf.instance', string="Proprietary instance", required=True),
     }
 
     def get_inter(self, cr, uid, *a, **b):
@@ -26,6 +27,9 @@ class msf_chart_of_account_installer(osv.osv_memory):
     def execute(self, cr, uid, ids, context=None):
         res = self.read(cr, uid, ids)
         if res and res[0]:
+            # Create instance before journals
+            if res[0]['instance_id']:
+                self.pool.get('res.users').browse(cr, uid, uid).company_id.write({'instance_id': res[0]['instance_id']})
             if res[0]['create']:
                 fp = tools.file_open(opj('msf_chart_of_account', 'journal_data.xml'))
                 tools.convert_xml_import(cr, 'msf_chart_of_account', fp, {}, 'init', True, None)
