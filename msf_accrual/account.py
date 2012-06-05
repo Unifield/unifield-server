@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- encoding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -29,28 +29,13 @@ class account_account(osv.osv):
     _inherit = "account.account"
 
     _columns = {
-        'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Transfer'), ('transfer_same','Transfer (same currency)'), 
-            ('advance', 'Cash Advance'), ('payroll', 'Third party required - Payroll')], string="Type for Third Parties", required=True,
-            help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 
-            that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
-            when he add a new register line.
-            """),
+        'accrual_account': fields.boolean('Accrual Account')
     }
 
     _defaults = {
-        'type_for_register': lambda *a: 'none',
+        'accrual_account': lambda *a: False,
     }
 
 account_account()
 
-class account_move(osv.osv):
-    _inherit = 'account.move'
-
-    _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
-        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
-            string="Statement lines", help="This field give all statement lines linked to this move."),
-    }
-
-account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

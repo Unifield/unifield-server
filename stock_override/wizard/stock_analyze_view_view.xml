@@ -30,9 +30,9 @@
             <field name="target">new</field>
         </record>
 
-        <menuitem id="menu_stock_analyze_view"
+        <!--<menuitem id="menu_stock_analyze_view"
                   action="action_view_stock_analyze_view"
-                  parent="stock.next_id_61" />
+                  parent="stock.next_id_61" />-->
 
 
     </data>

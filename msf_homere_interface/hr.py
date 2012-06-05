@@ -78,9 +78,12 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        # Prepare some values
         local = False
         ex = False
         allowed = False
+        res = []
+        # Prepare some variable for process
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True
@@ -88,26 +91,30 @@ class hr_employee(osv.osv):
                 ex = True
         if context.get('from', False) and context.get('from') in ['yaml', 'import']:
             allowed = True
-        # Do not change any field except analytic distribution (if not allowed)
-        if not allowed:
-            new_vals = {}
-            for el in vals:
-                if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
-                    new_vals.update({el: vals[el],})
-            vals = new_vals
-        # Raise an error if attempt to change local into expat and expat into local
+        # Browse all employees
         for emp in self.browse(cr, uid, ids):
+            new_vals = dict(vals)
+            # Raise an error if attempt to change local into expat and expat into local
             if emp.employee_type == 'ex' and local and not allowed:
                 raise osv.except_osv(_('Error'), _('You are not allowed to change an expatriate to local staff!'))
             if emp.employee_type == 'local' and ex and not allowed:
                 raise osv.except_osv(_('Error'), _('You are not allowed to change a local staff to expatriate!'))
+            # Do some modifications for local employees
             if local or emp.employee_type == 'local':
                 if (not emp.cost_center_id and not vals.get('cost_center_id', False)) or (vals.get('cost_center_id') is False):
                     cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
                     if not cc_id:
                         raise osv.except_osv(_('Warning'), _('You should give a Cost Center (CC) for local staff! "%s" have no CC!') % (emp.name,))
-                    vals.update({'cost_center_id': cc_id})
-        return super(hr_employee, self).write(cr, uid, ids, vals, context)
+                    new_vals.update({'cost_center_id': cc_id})
+                # Do not change any field except analytic distribution (if not allowed)
+                for el in vals:
+                    if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
+                        new_vals.update({el: vals[el]})
+            # Write changes
+            employee_id = super(hr_employee, self).write(cr, uid, ids, new_vals, context)
+            if employee_id:
+                res.append(employee_id)
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         """

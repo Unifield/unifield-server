@@ -417,7 +417,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id and move.dpo_id:
                 if move.product_id.batch_management:
                     if not move.prodlot_id and move.product_qty:
                         return False
@@ -429,7 +429,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id and move.dpo_id:
                 if move.product_id.perishable:
                     if not move.prodlot_id and move.product_qty:
                         return False
@@ -907,7 +907,7 @@ class stock_production_lot(osv.osv):
                  'life_date': False,
                  }
     
-    _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
+    _sql_constraints = [('name_uniq', 'unique (product_id,name)', 'For a given product, the batch number must be unique.'),
                         ]
 
     _constraints = [(_check_batch_type_integrity,

@@ -203,6 +203,12 @@
     self.create_analytic_lines(cr, uid, [ref("move_line_test"), ref("move_line_test_2")], context={})
     
 -
+  I create a decision moment
+-
+  !record {model: msf.budget.decision.moment, id: decision1}:
+    name: Do not forget the tests
+    order: 100
+-
   Now that lines are here, time for the budget
 -
   !record {model: msf.budget, id: budget_test}:
@@ -211,7 +217,7 @@
     fiscalyear_id: account_fiscalyear_fiscalyear0
     state: 'draft'
     cost_center_id: analytic_account_OC1
-    decision_moment: 'Test moment'
+    decision_moment_id: decision1
     version: 1
     currency_id: base.EUR
       

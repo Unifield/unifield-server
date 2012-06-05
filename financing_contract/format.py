@@ -32,6 +32,9 @@ class financing_contract_format(osv.osv):
                                             ('all', 'Earmarked and total project')], 'Reporting type', required=True),
         # For contract only, but needed for line domain;
         # we need to keep them available
+        'overhead_percentage': fields.float('Overhead percentage'),
+        'overhead_type': fields.selection([('cost_percentage','Percentage of direct costs'),
+                                           ('grant_percentage','Percentage of grant')], 'Overhead calculation mode'),
         'eligibility_from_date': fields.date('Eligibility date from'),
         'eligibility_to_date': fields.date('Eligibility date to'),
         'funding_pool_ids': fields.one2many('financing.contract.funding.pool.line', 'contract_id', 'Funding Pools'),
@@ -41,6 +44,7 @@ class financing_contract_format(osv.osv):
     _defaults = {
         'format_name': 'Format',
         'reporting_type': 'all',
+        'overhead_type': 'cost_percentage',
     }
     
     def name_get(self, cr, uid, ids, context=None):
