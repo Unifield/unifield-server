@@ -53,34 +53,38 @@ class one2many_budget_lines(fields.one2many):
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
     
-    def _create_view_line_amounts(self, cr, uid, account_id, actual_amounts, context=None):
-        if account_id not in actual_amounts:
-            account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
-            result = [0] * 12
-            for child_account in account.child_id:
-                if child_account.id not in actual_amounts:
-                    self._create_view_line_amounts(cr, uid, child_account.id, actual_amounts, context=context)
-                result = [sum(pair) for pair in zip(result, actual_amounts[child_account.id])]
-            actual_amounts[account_id] = result
-        return
-    
-    def _get_cc_children(self, browse_cost_center, cost_center_list):
-        for child in browse_cost_center.child_ids:
-            if child.type == 'view':
-                self._get_cc_children(child, cost_center_list)
-            else:
-                cost_center_list.append(child.id)
-        return
-    
-    def _get_cost_center_ids(self, browse_budget):
-        if browse_budget.type == 'normal':
-            # Normal budget, just return a 1-item list
-            return [browse_budget.cost_center_id.id]
-        else:
-            # View budget: return all non-view cost centers below this one
-            cost_center_list = []
-            self._get_cc_children(browse_budget.cost_center_id, cost_center_list)
-            return cost_center_list
+    def _get_actual_amounts(self, cr, uid, ids, context=None):
+        # Input: list of budget lines
+        # Output: a dict of list {general_account_id: [jan_actual, feb_actual,...]}
+        res = {}
+        if context is None:
+            context = {}
+        # global values
+        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENG')], context=context)
+        
+        # we discard the ids, but retrieve the budget from it
+        # Otherwise, view lines don't have values in "view lines only" display mode
+        budget_line_ids = []
+        if len(ids) > 0:
+            budget = self.browse(cr, uid, ids[0], context=context).budget_id
+            output_currency_id = budget.currency_id.id
+                    
+            cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
+                    
+            # Create search domain (one search for all analytic lines)
+            actual_domain = [('account_id', 'in', cost_center_ids)]
+            actual_domain.append(('date', '>=', budget.fiscalyear_id.date_start))
+            actual_domain.append(('date', '<=', budget.fiscalyear_id.date_stop))
+            # 3. commitments
+            # if commitments are set to False in context, the ENG analytic journal is removed
+            # from the domain
+            if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
+                actual_domain.append(('journal_id', '!=', engagement_journal_ids[0]))
+            
+            # Call budget_tools method
+            res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)
+        
+        return res
         
     def _get_budget_amounts(self, cr, uid, ids, context=None):
         # Input: list of budget lines
@@ -104,7 +108,7 @@ class msf_budget_line(osv.osv):
                 for budget_line in self.browse(cr, uid, ids, context=context):
                     res[budget_line.account_id.id] = [0] * 12
                 # Not stored in lines; retrieve child budgets, get their budget values and add
-                cost_center_list = self._get_cost_center_ids(budget)
+                cost_center_list = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
                 # For each cost center, get the latest non-draft budget
                 for cost_center_id in cost_center_list:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
@@ -132,85 +136,6 @@ class msf_budget_line(osv.osv):
                                                                  zip(child_budget_amounts[child_line.account_id.id],
                                                                      res[child_line.account_id.id])]
 
-        return res
-        
-    
-    def _get_actual_amounts(self, cr, uid, ids, context=None):
-        # Input: list of budget lines
-        # Output: a dict of list {general_account_id: [jan_actual, feb_actual,...]}
-        res = {}
-        if context is None:
-            context = {}
-        # global values
-        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENG')], context=context)
-        
-        # list to store every account in the budget
-        general_account_ids = []
-        # list to store accounts for view lines
-        view_line_account_ids = []
-        
-        # we discard the ids, and retrieve them all
-        # Otherwise, view lines don't have values in "view lines only" display mode
-        budget_line_ids = []
-        if len(ids) > 0:
-            budget = self.browse(cr, uid, ids[0], context=context).budget_id
-            cr.execute("SELECT id FROM msf_budget_line WHERE budget_id = %s" % budget.id)
-            budget_line_ids = [i[0] for i in cr.fetchall()]
-        
-            # Browse each budget line for type
-            for budget_line in self.browse(cr, uid, budget_line_ids, context=context):
-                if budget_line.line_type == 'normal':
-                    # add to list of accounts
-                    res[budget_line.account_id.id] = [0] * 12
-                    general_account_ids.append(budget_line.account_id.id)
-                else:
-                    view_line_account_ids.append(budget_line.account_id.id)
-                    
-            cost_center_ids = self._get_cost_center_ids(budget_line.budget_id)
-                    
-            # Create search domain (one search for all analytic lines)
-            actual_domain = [('general_account_id', 'in', general_account_ids)]
-            actual_domain.append(('account_id', 'in', cost_center_ids))
-            actual_domain.append(('date', '>=', budget_line.budget_id.fiscalyear_id.date_start))
-            actual_domain.append(('date', '<=', budget_line.budget_id.fiscalyear_id.date_stop))
-            # 3. commitments
-            # if commitments are set to False in context, the ENG analytic journal is removed
-            # from the domain
-            if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', '!=', engagement_journal_ids[0]))
-            
-            # Analytic domain is now done; lines are retrieved and added
-            analytic_line_obj = self.pool.get('account.analytic.line')
-            analytic_lines = analytic_line_obj.search(cr, uid, actual_domain, context=context)
-            # use currency_table_id
-            currency_table = None
-            if 'currency_table_id' in context:
-                currency_table = context['currency_table_id']
-            main_currency_id = budget_line.budget_id.currency_id.id
-            
-            # parse each line and add it to the right array
-            for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                date_context = {'date': analytic_line.source_date or analytic_line.date,
-                                'currency_table_id': currency_table}
-                actual_amount = self.pool.get('res.currency').compute(cr,
-                                                                      uid,
-                                                                      analytic_line.currency_id.id,
-                                                                      main_currency_id, 
-                                                                      analytic_line.amount_currency or 0.0,
-                                                                      round=True,
-                                                                      context=date_context)
-                # add the amount to correct month
-                month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
-                res[analytic_line.general_account_id.id][month - 1] += round(actual_amount)
-                
-            # after all lines are parsed, absolute of every column
-            for budget_line in res.keys():
-                res[budget_line] = map(abs, res[budget_line])
-                    
-            # do the view lines
-            for account_id in view_line_account_ids:
-                self._create_view_line_amounts(cr, uid, account_id, res, context=context)
-            
         return res
     
     def _compute_total_amounts(self, cr, uid, budget_amount_list, actual_amount_list, context=None):
