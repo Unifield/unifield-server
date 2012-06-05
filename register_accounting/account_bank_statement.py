@@ -1426,7 +1426,11 @@ class account_bank_statement_line(osv.osv):
             if postype == "hard":
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
-                    raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
+                    vals = self._update_expat_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
+                    if 'analytic_distribution_id' in vals:
+                        self.write(cr, uid, [absl.id], {'analytic_distribution_id': vals.get('analytic_distribution_id'),})
+                    else:
+                        raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 if absl.is_transfer_with_change:
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))

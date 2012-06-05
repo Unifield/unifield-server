@@ -443,6 +443,7 @@
     default_debit_account_id: account_account_cash0
     default_credit_account_id: account_account_cash0
     allow_date: 0
+    currency: base.EUR
 -
   I create a Cash Journal in CHF
 -
