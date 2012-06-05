@@ -940,7 +940,7 @@ class account_bank_statement_line(osv.osv):
                     return res
                 emp_id = third and third[1] or False
             employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
-            if employee.employee_type and employee.employee_type == 'ex' and is_expense:
+            if employee.employee_type and employee.employee_type == 'ex' and is_expense and employee.cost_center_id:
                 # Create a distribution
                 cc_id = employee.cost_center_id and employee.cost_center_id.id or False
                 fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
