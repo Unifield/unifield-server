@@ -122,16 +122,10 @@ class purchase_order(osv.osv):
             default = {}
         # Update default
         default.update({'commitment_ids': False,})
+        if 'analytic_distribution_id' not in default:
+            default['analytic_distribution_id'] = False
         # Default method
-        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
-        # Update analytic distribution
-        if res:
-            po = self.browse(cr, uid, res, context=context)
-        if res and po.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
-        return res
+        return super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
 
     def action_create_commitment(self, cr, uid, ids, type=False, context=None):
         """
@@ -391,7 +385,6 @@ class purchase_order_line(osv.osv):
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
-        Copy global distribution and give it to new purchase line
         Copy global distribution and give it to new purchase line.
         """
         # Some verifications
@@ -401,13 +394,12 @@ class purchase_order_line(osv.osv):
             default = {}
         # Update default
         default.update({'commitment_line_ids': [(6, 0, [])],})
-        # Copy analytic distribution
-        pol = self.browse(cr, uid, [id], context=context)[0]
-        if pol.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, pol.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                default.update({'analytic_distribution_id': new_distrib_id})
-        return super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
+            default['analytic_distribution_id'] = False
+        new_data = super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
 purchase_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
