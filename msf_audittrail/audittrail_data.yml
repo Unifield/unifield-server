@@ -74,6 +74,7 @@
     if object_ids and not rule_id:
       # Create the rule
       fields = ['partner_invoice_id', 'partner_shipping_id', 'picking_ids', 'priority', 'procurement_request',
+                'delivery_requested_date', 'delivery_confirmed_date',
                 'project_id', 'ready_to_ship_date', 'receipt_date', 'requested_date', 'requestor',
                 'shipment_date', 'shipped', 'state', 'transport_type', 'warehouse_id']
 
