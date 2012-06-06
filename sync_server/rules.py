@@ -298,6 +298,12 @@ class sync_rule(osv.osv):
             mess, err = check_obj._check_fallback_values(cr, uid, rec, context)
             error = err or error
             message.append(mess)
+            # Check Owner Field
+            import ipdb
+            ipdb.set_trace()
+            mess, err = check_obj._check_owner_field(cr, uid, rec, context)
+            error = err or error
+            message.append(mess)
             
             message.append("* Sequence is unique... ")
             if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
@@ -307,7 +313,7 @@ class sync_rule(osv.osv):
                 message.append("pass.\n")
             
             message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
-            message_body = ' '.join(message)
+            message_body = ''.join(message)
             message_data = {'state': 'valid' if not error else 'invalid',
                             'message' : message_header + message_body,
                             'sync_rule' : rec.id}

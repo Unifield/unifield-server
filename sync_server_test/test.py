@@ -47,3 +47,4 @@ class test(osv.osv_memory):
         rule_obj.write(cr, uid, ids, {'group_id' : g_ids[0]}, context=context)
         return True
 test()
+

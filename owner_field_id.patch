@@ -1,0 +1,133 @@
+=== modified file 'sync_server/rules.py'
+--- a/sync_server/rules.py	2012-06-06 14:07:35 +0000
++++ b/sync_server/rules.py	2012-06-06 14:08:34 +0000
+@@ -55,6 +55,26 @@
+             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
+         return True
+ 
++    def _get_owner_field_id(self, cr, uid, ids, field, args, context=None):
++        res = {}
++        for rec in self.read(cr, uid, ids, ['owner_field_id'], context=context):
++            if not rec['owner_field_id']: continue
++            field = self.pool.get('ir.model.fields').read(cr, uid, [rec['owner_field_id'][0]], ['name'])[0]
++            res[rec['id']] = field['name']
++        return res
++
++    def _get_owner_field_name(self, cr, uid, rec_id, field, value, args, context=None):
++        rec = self.browse(cr, uid, rec_id, context=context)
++        print "<<<", [rec.name, rec.model_id, field, value, args, rec.owner_field, rec.owner_field_id]
++        if not value:
++            import ipdb
++            ipdb.set_trace()
++        field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',value)], context=context)
++        if field_ids:
++            self.write(cr, uid, rec_id, {'owner_field_id' : field_ids[0]}, context=context)
++        print ">>>", field_ids
++        return True
++
+     _columns = {
+         'name': fields.char('Rule Name', size=64, required = True),
+         #'model_id': fields.char('Model', size=128, required = True),
+@@ -69,13 +89,14 @@
+                     ('bidirectional', 'Bidirectional'),
+                     ('bi-private', 'Bidirectional-Private'),
+                     ], 'Directionality', required = True,),
+-        'domain':fields.text('Domain', required = False),
+-        'owner_field':fields.char('Owner Field', size = 64, required = False),
++        'domain': fields.text('Domain', required = False),
++        'owner_field': fields.function(_get_owner_field_id, string = 'Owner Field', fnct_inv=_get_owner_field_name, type = 'char', size = 64, method = True, store = True),
++        'owner_field_id': fields.many2one('ir.model.fields', 'Owner Field'),
+         'sequence_number': fields.integer('Sequence', required = True),
+         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
+-        'included_fields':fields.text('Fields to include', required = False, readonly = True),
++        'included_fields': fields.text('Fields to include', required = False, readonly = True),
+         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
+-        'forced_values':fields.text('Values to force', required = False, readonly = True),
++        'forced_values': fields.text('Values to force', required = False, readonly = True),
+         'fallback_values_sel': fields.one2many('sync_server.sync_rule.fallback_values', 'sync_rule_id', 'Select Fallback Values'),
+         'fallback_values':fields.text('Fallback values', required = False),
+         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
+@@ -183,8 +204,8 @@
+         Usability Part
+     """
+     
+-    def on_change_included_fields(self, cr, uid, ids, fields, model_ref, context=None):
+-        values = self.invalidate(cr, uid, ids, model_ref, context=context)['value']
++    def on_change_included_fields(self, cr, uid, ids, fields, model_ref, owner_field_id, context=None):
++        values = self.invalidate(cr, uid, ids, model_ref, owner_field_id, context=context)['value']
+         sel = self._compute_included_field(cr, uid, ids, fields[0][2], context)
+         values.update( {'included_fields' : sel})
+         return {'value': values}
+@@ -252,22 +273,31 @@
+         
+         return True 
+     
+-    def invalidate(self, cr, uid, ids, model_ref, context=None):
+-        print model_ref
+-        model = ''
+-        if model_ref:
+-            model = self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model
+-        
+-        return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
++    def invalidate(self, cr, uid, ids, model_ref, owner_field_id, context=None):
++        a = {
++            'value' : {
++                'active' : False,
++                'status' : 'invalid',
++                #'owner_field' : self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model if model_ref else '',
++                #'owner_field' : self.pool.get('ir.model.fields').browse(cr, uid, owner_field_id, context=context).name if owner_field_id else '',
++                'owner_field' : 'xxxx',
++            }
++        }
++        print a
++        return a
+     
+     def write(self, cr, uid, ids, values, context=None):
+         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
+             print values.get('included_fields_sel')
+             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
+-        
++
++        # Clean Tree View from unused fields
++        if values.get('direction') == 'bi-private':
++            values.update({'owner_field':'','owner_field_id':0})
++
+         if not isinstance(ids, (list, tuple)):
+             ids = [ids]
+-               
++
+         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields'], context=context):
+             dirty = False
+             for k in rule_data.keys():
+
+=== modified file 'sync_server/rules_view.xml'
+--- a/sync_server/rules_view.xml	2012-06-06 14:07:35 +0000
++++ b/sync_server/rules_view.xml	2012-06-06 14:08:34 +0000
+@@ -43,12 +43,12 @@
+                     <field name="model_id" invisible="1"/>
+                     <group colspan="4" col="6">
+                         <field name="name"/>
+-                        <field name="sequence_number" on_change="invalidate(model_ref)"/>
++                        <field name="sequence_number" on_change="invalidate(model_ref, owner_field_id)"/>
+                         <newline/>
+                         <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
+                         <field name="direction" />
+                         <group colspan="2" col="2">
+-                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}"/>
++                            <field name="owner_field_id" attrs="{'invisible':[('direction','!=','bi-private')],'required':[('direction','=','bi-private')]}" on_change="invalidate(model_ref, owner_field_id)" domain="[('model','=',model_id)]"/>
+                         </group>
+                         <field name="model_ref" on_change="invalidate(model_ref)" required="1"/>
+                         <field name="applies_to_type"/>
+@@ -59,9 +59,9 @@
+                     </group>
+                     <group colspan="4" col="2">
+                         <separator string="Domain" colspan="2"/>
+-                        <field name="domain" on_change="invalidate(model_ref)" colspan="2" nolabel="1"/>
++                        <field name="domain" on_change="invalidate(model_ref, owner_field_id)" colspan="2" nolabel="1"/>
+                         <separator string="Included fields (required)" colspan="2"/>
+-                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
++                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref, owner_field_id)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
+                             <tree string="Included fields">
+                                 <field name="name"/>
+                                 <field name="field_description"/>
+

@@ -274,5 +274,26 @@ class check_common(osv.osv):
             if error: message += "Example: {'field_name/id' : 'sd.xml_id'}\n"
             # Sequence is unique
         return (message, error)
-            
+
+    def _check_owner_field(self, cr, uid, rec, context=None):
+        if rec.direction != 'bi-private': return ('', False)
+        error = False
+        message = "* Owner field existence... "
+        try:
+            fields = []
+            ir_model_fields = self.pool.get('ir.model.fields')
+            fields_ids = ir_model_fields.search(cr, uid, [('model','=',rec.model_id)], context=context)
+            fields = ir_model_fields.browse(cr, uid, fields_ids, context=context)
+            fields = [x.name for x in fields]
+            if not rec.owner_field in fields: raise KeyError
+        except KeyError:
+            message += "failed!\n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Please choose one of these: %s\n" % (", ".join(fields),)
+        return (message, error)
+
 check_common()
+
