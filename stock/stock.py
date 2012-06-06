@@ -822,7 +822,7 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines]
+            move_ids = [x.id for x in pick.move_lines if x.state == 'assigned']
             move_obj.cancel_assign(cr, uid, move_ids)
             wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
         return True
