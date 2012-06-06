@@ -348,7 +348,7 @@ Time used to compute the quantity of products to order according to the monthly 
         '''
         if not default:
             default = {}
-        obj = self.read(cr, uid, id, ['frequence_id'])
+        obj = self.read(cr, uid, ids, ['frequence_id'])
         if obj['frequence_id']:
             default['frequence_id'] = self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context)
 

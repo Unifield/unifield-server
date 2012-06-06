@@ -76,6 +76,15 @@ class threshold_value(osv.osv):
         'consumption_period_to': lambda *a: (now() + RelativeDate(day=1)).strftime('%Y-%m-%d'),
     }
     
+    def copy(self, cr, uid, ids, defaults={}, context=None):
+        '''
+        Increment the sequence
+        '''
+        name = self.pool.get('ir.sequence').get(cr, uid, 'threshold.value') or ''
+        defaults.update({'name': name})
+        
+        return super(threshold_value, self).copy(cr, uid, ids, defaults, context=context)
+    
     def default_get(self, cr, uid, fields, context=None):
         '''
         Get the default values for the replenishment rule
@@ -222,6 +231,17 @@ class threshold_value_line(osv.osv):
     _name = 'threshold.value.line'
     _description = 'Threshold Value Line'
     _rec_name = 'product_id'
+    
+    def copy_data(self, cr, uid, ids, defaults={}, context=None):
+        res = super(threshold_value_line, self).copy_data(cr, uid, ids, defaults, context=context)
+        
+        if isinstance(res, dict):
+            if 'threshold_value_id' in res:
+                del res['threshold_value_id']
+            if 'threshold_value_id2' in res:
+                del res['threshold_value_id2']
+        
+        return res
     
     def create(self, cr, uid, vals, context=None):
         '''

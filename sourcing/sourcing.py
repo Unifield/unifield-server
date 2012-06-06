@@ -905,7 +905,13 @@ class procurement_order(osv.osv):
             if procurement.po_cft == 'dpo':
                 sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
                 sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
-                values.update({'order_type': 'direct', 
+                # Force the destination location of the Po to Input location
+                company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+                warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)
+                if warehouse_id:
+                    input_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id[0], context=context).lot_input_id.id
+                    values.update({'location_id': input_id,})
+                values.update({'order_type': 'direct',
                                'dest_partner_id': sol.order_id.partner_id.id, 
                                'dest_address_id': sol.order_id.partner_shipping_id.id})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
