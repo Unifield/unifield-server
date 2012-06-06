@@ -57,11 +57,6 @@ class procurement_order(osv.osv):
         report_except = 0
         ran_proc = []
         
-        # Cache for product/location
-        # TODO : To confirm by Magali, cache system is very strange
-        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-        cache = {}
-        
         # We start with only category Automatic Supply
         for cycle in cycle_obj.browse(cr, uid, cycle_ids):
             # We define the replenish location
@@ -85,7 +80,7 @@ class procurement_order(osv.osv):
                 for line in cycle.product_ids:
                     # Update the safety stock according to the safety stock defined in the line
                     d_values.update({'safety_stock': line.safety_stock})
-                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values, cache=cache)
+                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values)
 
                     if proc_id:
                         created_proc.append(proc_id)
@@ -137,7 +132,7 @@ Created documents : \n'''
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, cache=None, context=None):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -151,10 +146,6 @@ Created documents : \n'''
             context = {}
         if d_values is None:
             d_values = {}
-        # TODO : To confirm by Magali, cache system is very strange
-        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-        if cache is None:
-            cache = {}
 
         if isinstance(product_id, (int, long)):
             product_id = [product_id]
@@ -169,41 +160,29 @@ Created documents : \n'''
             context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
         product = product_obj.browse(cr, uid, product_id[0], context=context)
-        
-        # Enter the stock location in cache to know which products has been already replenish for this location
-        # TODO : To confirm by Magali, cache system is very strange
-        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-        if not cache.get(location_id, False):
-            cache.update({location_id: []})
             
-        if product.id not in cache.get(location_id):
-            newdate = datetime.today()
-            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
-                
-            # Create a procurement only if the quantity to order is more than 0.00
-            if quantity_to_order <= 0.00:
-                return False
-            else:
-                proc_id = proc_obj.create(cr, uid, {
-                                        'name': _('Procurement cycle: %s') % (cycle.name,),
-                                        'origin': cycle.name,
-                                        'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
-                                        'product_id': product.id,
-                                        'product_qty': quantity_to_order,
-                                        'product_uom': product.uom_id.id,
-                                        'location_id': location_id,
-                                        'procure_method': 'make_to_order',
-                })
-                # Confirm the procurement order
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                context.update({'button': 'scheduler'})
-                cycle_obj.write(cr, uid, [cycle.id], {'procurement_id': proc_id}, context=context)
+        newdate = datetime.today()
+        quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
             
-            # Fill the cache
-            # TODO : To confirm by Magali, cache system is very strange
-            # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-            cache.get(location_id).append(product.id)
+        # Create a procurement only if the quantity to order is more than 0.00
+        if quantity_to_order <= 0.00:
+            return False
+        else:
+            proc_id = proc_obj.create(cr, uid, {
+                                    'name': _('Procurement cycle: %s') % (cycle.name,),
+                                    'origin': cycle.name,
+                                    'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                                    'product_id': product.id,
+                                    'product_qty': quantity_to_order,
+                                    'product_uom': product.uom_id.id,
+                                    'location_id': location_id,
+                                    'procure_method': 'make_to_order',
+            })
+            # Confirm the procurement order
+            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+            context.update({'button': 'scheduler'})
+            cycle_obj.write(cr, uid, [cycle.id], {'procurement_id': proc_id}, context=context)
         
         return proc_id
     
