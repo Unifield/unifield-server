@@ -504,7 +504,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
 #            continue
         
         if method not in ('create', 'unlink') and ((field['ttype'] != 'datetime' and old_value == new_value) \
-           or (field['ttype'] == 'datetime' and old_value[:10] == new_value[:10])):
+           or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])):
             continue
         
         res_id = line.get('res_id')
@@ -560,8 +560,8 @@ def create_log_line(self, cr, uid, model, lines=[]):
 
         vals = {
                 "field_id": field_id,
-                "old_value": old_value,
-                "new_value": new_value,
+                "old_value": old_value or '',
+                "new_value": new_value or '',
                 "field_description": field_description,
                 "res_id": res_id,
                 "name": name,
