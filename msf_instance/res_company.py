@@ -33,6 +33,18 @@ class res_company(osv.osv):
             help="Representation of the current instance"),
     }
     
+    def _refresh_objects(self, cr, uid, object_name, old_instance_id, new_instance_id, context=None):
+        object_ids = self.pool.get(object_name).search(cr,
+                                                       uid,
+                                                       [('instance_id', '=', old_instance_id)],
+                                                       context=context)
+        self.pool.get(object_name).write(cr,
+                                         uid,
+                                         object_ids,
+                                         {'instance_id': new_instance_id},
+                                         context=context)
+        return
+    
     def write(self, cr, uid, ids, vals, context=None):
         instance_obj = self.pool.get('msf.instance')
         if 'instance_id' in vals:
@@ -52,28 +64,9 @@ class res_company(osv.osv):
                 # add DB name and activate it
                 instance_obj.write(cr, uid, [vals['instance_id']], {'instance': cr.dbname,
                                                                     'state': 'active'}, context=context)
-                # refresh journals 
-                analytic_journals_ids = self.pool.get('account.analytic.journal').search(cr,
-                                                                                         uid,
-                                                                                         [('instance_id', '=', old_instance_id)],
-                                                                                         context=context)
-                self.pool.get('account.analytic.journal').write(cr,
-                                                                uid,
-                                                                analytic_journals_ids,
-                                                                {'instance_id': vals['instance_id']},
-                                                                context=context)
-                
-                journals_ids = self.pool.get('account.journal').search(cr,
-                                                                       uid,
-                                                                       [('instance_id', '=', old_instance_id)],
-                                                                       context=context)
-                self.pool.get('account.journal').write(cr,
-                                                       uid,
-                                                       journals_ids,
-                                                       {'instance_id': vals['instance_id']},
-                                                       context=context)
-            
-        return super(res_company, self).write(cr, uid, ids, vals, context=context)
+                # refresh all objects
+                for object in ['account.analytic.journal', 'account.journal', 'account.analytic.line', 'account.move', 'account.move.line', 'account.bank.statement']:
+                    self._refresh_objects(cr, uid, object, old_instance_id, vals['instance_id'], context=context)
                 
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
