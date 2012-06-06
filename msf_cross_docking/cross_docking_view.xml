@@ -49,7 +49,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']" position="attributes" >
-                        <attribute name="context">{'purchase_id': purchase_id, reason_type_id': reason_type_id, 'warehouse_id': warehouse_id} </attribute>
+                        <attribute name="default_get">{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id} </attribute>
                     </xpath>
                 </data>
             </field>
