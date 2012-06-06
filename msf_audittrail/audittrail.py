@@ -503,7 +503,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
 #        if old_value == new_value and method not in ('create', 'unlink'):
 #            continue
         
-        if method not in ('create', 'unlink') and ((field['ttype'] != 'datetime' and old_value == new_value) \
+        if method not in ('create', 'unlink') and (old_value == new_value \
            or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])):
             continue
         
