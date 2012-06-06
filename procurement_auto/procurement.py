@@ -327,6 +327,23 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
     ]
     
+    def _check_uniqueness(self, cr, uid, ids, context=None):
+        '''
+        Check if the product is not already in the current rule
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            lines = self.search(cr, uid, [('id', '!=', line.id), 
+                                          ('product_id', '=', line.product_id.id),
+                                          ('supply_id', '=', line.supply_id.id)], context=context)
+            if lines:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_uniqueness, 'You cannot have two times the same product on the same automatic supply rule', ['product_id'])
+    ]
+    
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
