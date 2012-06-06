@@ -786,8 +786,10 @@ class stock_location(osv.osv):
         prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2])
         if prod_obj.type == 'consu':
             return [('id', 'in', [id_nonstock,id_cross])]
+
         elif prod_obj.type != 'consu':
-                return [('id', 'not in', [id_nonstock])]
+                return [('id', 'not in', [id_nonstock]),('usage','=','internal'),]
+
         ids = [('id', 'in', [])]
         return ids
 
@@ -796,8 +798,8 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         if arg[0][2]:
-            obj_po = self.pool.get('purchase.order').browse(cr,uid,arg[0][2])
-            if obj_po.cross_docking_ok:
+            obj_po = arg[0][2][0] and self.pool.get('purchase.order').browse(cr,uid,arg[0][2][0]) or False
+            if  ( obj_po and obj_po.cross_docking_ok ) or arg[0][2][1]:
                 return [('id', 'in', [id_cross])]
         return []
 

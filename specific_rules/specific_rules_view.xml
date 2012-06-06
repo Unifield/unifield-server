@@ -104,7 +104,7 @@
             	<data>
 					
 					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
-            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" domain="[('check_prod','=',product_id)]"/>
             		</xpath>
             		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
@@ -157,7 +157,8 @@
             	<data>
             	
             		<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
-            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,purchase_line_id,True)" colspan="4" />
+	           			<field name="purchase_line_id" invisible="1"/>
             		</xpath>
             		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
@@ -176,6 +177,8 @@
 	           			<field name="ssl_check" invisible="True" />
 	           			<field name="dg_check" />
 	           			<field name="np_check" />
+
+
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
@@ -193,8 +196,9 @@
 					
 					<!-- MERGED FROM SPECIFIC_LOCATIONS (quarantine domain) -->
 					<xpath expr="//form[@string='Stock Moves']//field[@name='location_id']" position="replace">
-						<field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False)]"
+						<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',product_id), ('check_cd','in',[purchase_line_id,move_cross_docking_ok])]"
 								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
+	           			<field name="move_cross_docking_ok"  invisible="1"/>
             		</xpath>
             		
             		<button name="%(stock.action_partial_move_server)d" position="attributes">
@@ -239,7 +243,8 @@
             	<data>
             	
             		<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
-            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,purchase_line_id)" colspan="4" />
+	           			<field name="purchase_line_id" invisible="1"/>
             		</xpath>
             		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
@@ -257,7 +262,6 @@
 	           			<field name="ssl_check" invisible="True" />
 	           			<field name="dg_check" />
 	           			<field name="np_check" />
-	           			<field name="purchase_line_id" invisible="True"/>
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">

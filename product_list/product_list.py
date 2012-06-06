@@ -227,9 +227,21 @@ class product_product(osv.osv):
             
         return [('id', 'in', ids)]
 
+    def _fake_get(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        return result
+
+    def _prod_search(self, cr, uid, ids, fields, arg, context=None):
+        if context is None:
+            context = {}
+        ids = self.pool.get('product.product').search(cr,uid,[('type','!=','consu')])
+        ids = [('id', 'in', ids)]
+        return ids
+
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        'check_prod': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_prod_search),
     }
 
 product_product()

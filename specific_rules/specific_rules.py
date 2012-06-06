@@ -478,13 +478,18 @@ class stock_move(osv.osv):
                     return False
         return True
     
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False):
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False,purchase_line_id=False,out=False):
+        print "change"
+        print out
         '''
         the product changes, set the hidden flag if necessary
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                                                              loc_dest_id, address_id)
-        
+
+        po = purchase_line_id and self.pool.get('purchase.order').browse(cr,uid,purchase_line_id) or False
+        cd = po and po.cross_docking_ok or False
+
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prodlot_id'] = False
         # reset the hidden flag
@@ -492,14 +497,21 @@ class stock_move(osv.osv):
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
         if prod_id:
             product = self.pool.get('product.product').browse(cr, uid, prod_id)
-
-            if product.type == 'consu':
+            if product.type == 'consu' and not cd:
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')
-                result.setdefault('value', {}).update({'location_dest_id': id_nonstock[1] })
+                if out:
+                    result.setdefault('value', {}).update({'location_id': id_nonstock[1] })
+                else:
+                    result.setdefault('value', {}).update({'location_dest_id': id_nonstock[1] })
+            if product.type == 'product' and not cd:
+                    result.setdefault('value', {}).update({'location_id': None, 'location_dest_id': None })
+            if cd:
+                id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
+                if out:
+                    result.setdefault('value', {}).update({'location_id': id_cross })
+                else:
+                    result.setdefault('value', {}).update({'location_dest_id': id_cross })
 
-            if product.type == 'product':
-                result.setdefault('value', {}).update({'location_dest_id': None })
-            
             if product.batch_management:
                 result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
@@ -509,6 +521,8 @@ class stock_move(osv.osv):
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
                                      'message': _('The selected product is Perishable.')}
+        if not prod_id and not cd:
+            result.setdefault('value', {}).update({'location_dest_id': None, 'location_id': None})
                 
         # quantities are set to False
         result.setdefault('value', {}).update({'product_qty': 0.00,

@@ -452,12 +452,12 @@ class stock_move(osv.osv):
         return result
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False):
+                            loc_dest_id=False, address_id=False,purchase_line_id=False,out=False):
         '''
         override to clear asset_id
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                            loc_dest_id, address_id)
+                            loc_dest_id, address_id,purchase_line_id,out)
         
         if 'value' not in result:
             result['value'] = {}
@@ -466,11 +466,9 @@ class stock_move(osv.osv):
             prod = self.pool.get('product.product').browse(cr, uid, prod_id)
             result['value'].update({'subtype': prod.product_tmpl_id.subtype})
             
-            
         result['value'].update({'asset_id': False})
         
         return result
-    
     
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset'),
