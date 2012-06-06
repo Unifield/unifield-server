@@ -276,6 +276,25 @@ class threshold_value_line(osv.osv):
         'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
     
+    def _check_uniqueness(self, cr, uid, ids, context=None):
+        '''
+        Check if the product is not already in the current rule
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            lines = self.search(cr, uid, [('id', '!=', line.id), 
+                                          ('product_id', '=', line.product_id.id),
+                                          '|',
+                                          ('threshold_value_id2', '=', line.threshold_value_id2.id),
+                                          ('threshold_value_id', '=', line.threshold_value_id.id)], context=context)
+            if lines:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_uniqueness, 'You cannot have two times the same product on the same threshold value rule', ['product_id'])
+    ]
+    
     def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
                                 consumption_period_from, consumption_period_to, frequency,
                                 safety_month, lead_time, supplier_lt, uom_id, context=None):
