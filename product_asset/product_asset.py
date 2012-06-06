@@ -372,7 +372,8 @@ class product_product(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         if vals.get('type',False) == 'service':
-            vals.update({'type': 'service_recep','procure_method':'make_to_order'})
+            vals.update({'type': 'service_recep'})
+            vals['procure_method'] = 'make_to_order'
         '''
         if a product is not of type product, it is set to single subtype
         '''
