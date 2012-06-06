@@ -57,7 +57,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'percentage': fields.float(string="Percentage", required=True, digits=(16,4)),
         'wizard_id': fields.many2one('analytic.distribution.wizard', string="Analytic Distribution Wizard", required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
-        'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line"),
+        'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line", readonly=True),
         'type': fields.selection([('cost.center', 'Cost Center Lines'), ('funding.pool', 'Funding Pool Lines'), ('free.1', 'Free 1 Lines'), 
             ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values 
             #+ to construct object research !
@@ -710,6 +710,66 @@ class analytic_distribution_wizard(osv.osv_memory):
                 cc_obj.unlink(cr, uid, [line_id], context=context)
         return True
 
+    def distrib_lines_to_list(self, cr, uid, distrib_ids, line_type=False):
+        """
+        Return a list containing distribution lines from first given distribution
+        """
+        # Some verifications
+        if not distrib_ids:
+            return False
+        if isinstance(distrib_ids, (int, long)):
+            distrib_ids = [distrib_ids]
+        if not line_type:
+            return False
+        # Prepare some values
+        db_line_type = '_'.join([line_type.replace('.', '_'), 'lines'])
+        distrib = self.pool.get('analytic.distribution').browse(cr, uid, distrib_ids)[0]
+        res = []
+        for x in getattr(distrib, db_line_type, False):
+            db_lines_vals = {
+                'id': x.id,
+                'distribution_id': x.distribution_id and x.distribution_id.id,
+                'currency_id': x.currency_id and x.currency_id.id,
+                'analytic_id': x.analytic_id and x.analytic_id.id,
+                'percentage': x.percentage,
+            }
+            # Add cost_center_id field if we come from a funding.pool object
+            if line_type == 'funding.pool':
+                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, 
+                    'destination_id': x.destination_id and x.destination_id.id or False,})
+            res.append(db_lines_vals)
+        return res
+
+    def wizard_lines_to_list(self, cr, uid, ids, line_type=False):
+        """
+        Return a list containing distribution linked to given wizard
+        """
+        # Some verifications
+        if not ids:
+            return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not line_type:
+            return False
+        # Prepare some values
+        res = []
+        wizard = self.browse(cr, uid, ids)[0]
+        wiz_line_types = {'cost.center': 'line_ids', 'funding.pool': 'fp_line_ids', 'free.1': 'f1_line_ids', 'free.2': 'f2_line_ids',}
+        for x in getattr(wizard, wiz_line_types.get(line_type), False):
+            wiz_lines_vals = {
+                'id': x.distribution_line_id and x.distribution_line_id.id or False,
+                'distribution_id': x.wizard_id.distribution_id and x.wizard_id.distribution_id.id,
+                'currency_id': x.currency_id and x.currency_id.id,
+                'analytic_id': x.analytic_id and x.analytic_id.id,
+                'percentage': x.percentage,
+            }
+            # Add cost_center_id field if we come from a funding_pool object
+            if line_type == 'funding.pool':
+                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,
+                    'destination_id': x.destination_id and x.destination_id.id or False,})
+            res.append(wiz_lines_vals)
+        return res
+
     def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context=None):
         """
         Compare wizard lines to database lines and write modifications done
@@ -726,40 +786,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         distrib = wizard.distribution_id
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
-        db_line_type = '_'.join([line_type.replace('.', '_'), 'lines'])
-        wiz_line_types = {'cost.center': 'line_ids', 'funding.pool': 'fp_line_ids', 'free.1': 'f1_line_ids', 'free.2': 'f2_line_ids',}
         # Search database lines
-        db_lines = []
-        for x in getattr(distrib, db_line_type, False):
-            db_lines_vals = {
-                'id': x.id,
-                'distribution_id': x.distribution_id and x.distribution_id.id,
-                'currency_id': x.currency_id and x.currency_id.id,
-                'analytic_id': x.analytic_id and x.analytic_id.id,
-                'percentage': x.percentage,
-            }
-            # Add cost_center_id field if we come from a funding.pool object
-            if line_type == 'funding.pool':
-                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, 
-                    'destination_id': x.destination_id and x.destination_id.id or False,})
-            db_lines.append(db_lines_vals)
-        
+        db_lines = self.distrib_lines_to_list(cr, uid, distrib.id, db_line_type)
         # Search wizard lines
-        wiz_lines = []
-        for x in getattr(wizard, wiz_line_types.get(line_type), False):
-            wiz_lines_vals = {
-                'id': x.distribution_line_id and x.distribution_line_id.id or False,
-                'distribution_id': x.wizard_id.distribution_id and x.wizard_id.distribution_id.id,
-                'currency_id': x.currency_id and x.currency_id.id,
-                'analytic_id': x.analytic_id and x.analytic_id.id,
-                'percentage': x.percentage,
-            }
-            # Add cost_center_id field if we come from a funding_pool object
-            if line_type == 'funding.pool':
-                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,
-                    'destination_id': x.destination_id and x.destination_id.id or False,})
-            wiz_lines.append(wiz_lines_vals)
-        
+        wiz_lines = self.wizard_lines_to_list(cr, uid, wizard_id, line_type)
+        # Begin comparison process
         processed_line_ids = []
         # Delete wizard lines that have not changed
         for line in db_lines:

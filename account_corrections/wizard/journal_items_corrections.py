@@ -67,10 +67,9 @@ class journal_items_corrections_lines(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Prepare some values
-        aml_obj = self.pool.get('account.move.line')
         # Add context in order to know we come from a correction wizard
-        wiz = self.browse(cr, uid, ids[0], context=context).wizard_id
+        this_line = self.browse(cr, uid, ids[0], context=context)
+        wiz = this_line.wizard_id
         context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': wiz.id or False})
         # Get distribution
         distrib_id = False
@@ -87,10 +86,11 @@ class journal_items_corrections_lines(osv.osv_memory):
             'total_amount': amount,
             'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
             'currency_id': currency or False,
-            'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+            'old_account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
             'distribution_id': distrib_id,
             'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
             'date': wiz.date or strftime('%Y-%m-%d'),
+            'account_id': this_line.account_id and this_line.account_id.id or False,
         }
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
