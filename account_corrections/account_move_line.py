@@ -493,7 +493,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context=None):
+    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, context=None):
         """
         Correct given account_move_line by only changing account
         """
@@ -531,8 +531,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'journal_id': j_corr_ids[0],
                 'period_id': period_ids[0],
             }
-            context.update({'omit_analytic_distribution': True})
             # Copy the line
+            context.update({'omit_analytic_distribution': False})
             rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             correction_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             # Do the reverse
@@ -566,9 +566,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # 1/ copy old distribution_id on new correction line
             # 2/ delete old distribution on original move line
             if ml.analytic_distribution_id:
-                self.write(cr, uid, [correction_line_id], 
-                    {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
-                self.write(cr, uid, [ml.id], {'analytic_distribution_id': False}, context=context)
+                analytic_distribution_id = ml.analytic_distribution_id and ml.analytic_distribution_id.id or False
+                if distrib_id:
+                    analytic_distribution_id = distrib_id
+                self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': analytic_distribution_id,}, context=context)
             # Update register line if exists
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
