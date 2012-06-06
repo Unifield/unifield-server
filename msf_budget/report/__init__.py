@@ -24,5 +24,6 @@ import report_csv_budget_monthly
 import report_pdf_budget_monthly
 import report_pdf_budget_summary
 import msf_budget_summary
+import report_local_expenses
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

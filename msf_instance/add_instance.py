@@ -40,13 +40,11 @@ class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
     
     _columns = {
-        'instance_id': fields.related('journal_id',
-                                      'instance_id',
-                                      string='Proprietary Instance',
-                                      store={'account.analytic.journal': (lambda self, cr, uid, ids, c=None: ids, ['instance_id'], 10)},
-                                      readonly=True,
-                                      type="many2one",
-                                      relation="msf.instance"),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+    
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
 account_analytic_line()
@@ -70,13 +68,11 @@ class account_move(osv.osv):
     _inherit = 'account.move'
     
     _columns = {
-        'instance_id': fields.related('journal_id',
-                                      'instance_id',
-                                      string='Proprietary Instance',
-                                      store={'account.journal': (lambda self, cr, uid, ids, c=None: ids, ['instance_id'], 10)},
-                                      readonly=True,
-                                      type="many2one",
-                                      relation="msf.instance"),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+    
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
 account_move()
@@ -86,13 +82,11 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     
     _columns = {
-        'instance_id': fields.related('journal_id',
-                                      'instance_id',
-                                      string='Proprietary Instance',
-                                      store={'account.journal': (lambda self, cr, uid, ids, c=None: ids, ['instance_id'], 10)},
-                                      readonly=True,
-                                      type="many2one",
-                                      relation="msf.instance"),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+    
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
 account_move_line()
@@ -102,13 +96,11 @@ class account_bank_statement(osv.osv):
     _inherit = 'account.bank.statement'
     
     _columns = {
-        'instance_id': fields.related('journal_id',
-                                      'instance_id',
-                                      string='Proprietary Instance',
-                                      store={'account.journal': (lambda self, cr, uid, ids, c=None: ids, ['instance_id'], 10)},
-                                      readonly=True,
-                                      type="many2one",
-                                      relation="msf.instance"),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+    
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
 account_bank_statement()

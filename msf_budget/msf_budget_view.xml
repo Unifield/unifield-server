@@ -180,12 +180,48 @@
             <field name="view_id" ref="wizard_budget_import_view"/>
             <field name="target">new</field>
         </record>
+        
+        <record id="wizard_local_expenses_view" model="ir.ui.view">
+            <field name="name">Local Expenses</field>
+            <field name="model">wizard.local.expenses</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Local Expenses">
+                    <field name="fiscalyear_id"/>
+                    <field name="period_id"/>
+                    <field name="breakdown"/>
+                    <field name="granularity"/>
+                    <field name="booking_currency_id"/>
+                    <field name="output_currency_id"/>
+                    <field name="cost_center_id"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_report" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_wizard_local_expenses" model="ir.actions.act_window">
+            <field name="name">Local Expenses</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.local.expenses</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="wizard_local_expenses_view"/>
+            <field name="target">new</field>
+        </record>
 
 
 		<!-- Menu Item: Analytic Accounts which displays only Cost Center, and not allow: delete, new, edit
 		hide_new_button="1" hide_delete_button="1"
 		 -->
         
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_wizard_local_expenses"
+            id="menu_action_wizard_local_expenses"/>
+            
         <menuitem parent="next_id_31"
             action="action_wizard_budget_import"
             id="menu_action_wizard_budget_import"  sequence="2"/>

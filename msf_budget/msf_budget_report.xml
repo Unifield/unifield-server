@@ -32,6 +32,16 @@
         rml="msf_budget/report/budget_summary.rml"
         auto="False"
         menu="True"/>
+        
+        <report id="report_local_expenses_xls"
+        string="Local Expenses"
+        model="account.analytic.line"
+        name="local.expenses"
+        file="msf_budget/report/report_local_expenses_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
 
     </data>
 </openerp>

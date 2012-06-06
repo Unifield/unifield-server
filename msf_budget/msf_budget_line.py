@@ -60,7 +60,7 @@ class msf_budget_line(osv.osv):
         if context is None:
             context = {}
         # global values
-        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENG')], context=context)
+        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
         
         # we discard the ids, but retrieve the budget from it
         # Otherwise, view lines don't have values in "view lines only" display mode
