@@ -370,6 +370,23 @@ class stock_warehouse_order_cycle_line(osv.osv):
         'safety_stock': fields.float(digits=(16,2), string='Safety stock (Qty)', required=True),
     }
     
+    def _check_uniqueness(self, cr, uid, ids, context=None):
+        '''
+        Check if the product is not already in the current rule
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            lines = self.search(cr, uid, [('id', '!=', line.id), 
+                                          ('product_id', '=', line.product_id.id),
+                                          ('order_cycle_id', '=', line.order_cycle_id.id)], context=context)
+            if lines:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_uniqueness, 'You cannot have two times the same product on the same order cycle rule', ['product_id'])
+    ]
+    
     def product_change(self, cr, uid, ids, product_id=False, context=None):
         '''
         Set the UoM as the default UoM of the product
