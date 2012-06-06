@@ -365,7 +365,7 @@ class stock_move(osv.osv):
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
 
             if product.type == 'consu' and vals.get('location_dest_id') != id_cross:
-                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
                 vals.update(location_dest_id=id_nonstock[1])
 
             if product.batch_management:
@@ -392,7 +392,7 @@ class stock_move(osv.osv):
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
 
             if product.type == 'consu' and vals.get('location_dest_id') and vals.get('location_dest_id') != id_cross:
-                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
                 vals.update(location_dest_id=id_nonstock[1])
 
             if product.batch_management:
@@ -498,7 +498,7 @@ class stock_move(osv.osv):
         if prod_id:
             product = self.pool.get('product.product').browse(cr, uid, prod_id)
             if product.type == 'consu' and not cd:
-                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
                 if out:
                     result.setdefault('value', {}).update({'location_id': id_nonstock[1] })
                 else:

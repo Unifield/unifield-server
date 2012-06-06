@@ -781,7 +781,7 @@ class stock_location(osv.osv):
     def _prod_loc_search(self, cr, uid, ids, fields, arg, context=None):
         if context is None:
             context = {}
-        id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations','stock_location_non_stockable')[1]
+        id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')[1]
         id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
         prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2])
         if prod_obj.type == 'consu':
