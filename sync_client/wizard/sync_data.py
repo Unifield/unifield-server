@@ -117,6 +117,7 @@ class update_to_send(osv.osv):
     _columns = {
         'values':fields.text('Values', size=128, readonly=True),
         'model' : fields.many2one('ir.model','Model', readonly=True),
+        'owner' : fields.char('Owner', size=128, readonly=True),
         'sent' : fields.boolean('Sent ?', readonly=True),
         'sync_date' : fields.datetime('Start date',readonly=True),
         'sent_date' : fields.datetime('Sent date', readonly=True),
@@ -164,6 +165,8 @@ class update_to_send(osv.osv):
                 if field != 'id' and fields_ref[field]['type'] in ('many2one','many2many',) and not values[i]:
                     values[i] = ''
 
+            owner = obj.read(cr, uid, id, [rule.owner_field])[rule.owner_field] if rule.owner_field else False
+
             data = {
                 'session_id' : session_id,
                 'values' : tools.ustr(values),
@@ -172,7 +175,7 @@ class update_to_send(osv.osv):
                 'rule_id' : rule.id,
                 'xml_id' : xml_id,
                 'fields' : tools.ustr(included_fields),
-                'owner' : obj.read(cr, uid, id, [rule.owner_field])[rule.owner_field],
+                'owner' : owner,
             }
 
             self.create(cr,uid, data, context=context)

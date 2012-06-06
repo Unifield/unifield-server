@@ -32,7 +32,9 @@
     'depends': ['base', 'sale', 'sync_client', 'purchase', 'account'],
     'init_xml': [],
     'update_xml' : ['view_inherit.xml'],
-    'data': [],
+    'data': [
+        'account.analytic.journal.csv',
+    ],
     'demo_xml': [
     ],
     'test':[

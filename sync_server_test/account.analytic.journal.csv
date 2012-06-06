@@ -1,8 +1,0 @@
-id,active,code,name,type
-"pur","True","PUR","Purchase","Purchase"
-"sal","True","SAL","Sale","Sale"
-"od","True","OD","Correction","General"
-"bnk","True","BNK","Bank","General"
-"cas","True","CAS","Cash","Cash"
-"chk","True","CHK","Cheque","General"
-"eng","True","ENG","Engagement Journal","Engagement"
