@@ -112,7 +112,7 @@ class res_partner(osv.osv):
                 price = price_list[pricelist.id]
                 if not price:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.list_price, round=True, context=context)
+                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
                     
                 res[partner.id] = price
         
