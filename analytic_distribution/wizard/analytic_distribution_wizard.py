@@ -787,7 +787,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
         # Search database lines
-        db_lines = self.distrib_lines_to_list(cr, uid, distrib.id, db_line_type)
+        db_lines = self.distrib_lines_to_list(cr, uid, distrib.id, line_type)
         # Search wizard lines
         wiz_lines = self.wizard_lines_to_list(cr, uid, wizard_id, line_type)
         # Begin comparison process

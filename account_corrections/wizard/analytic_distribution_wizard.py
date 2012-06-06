@@ -107,7 +107,15 @@ class analytic_distribution_wizard(osv.osv_memory):
                 
                 # Account AND Distribution have changed
                 if account_changed and distrib_changed:
-                    pass
+                    # Create new distribution
+                    new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    self.write(cr, uid, [wiz.id], {'distribution_id': new_distrib_id})
+                    for line_type in ['funding.pool', 'free.1', 'free.2']:
+                        # Compare and write modifications done on analytic lines
+                        type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+                    # return account change behaviour with a new analytic distribution
+                    self.pool.get('wizard.journal.items.corrections').write(cr, uid, [context.get('wiz_id')], {'date': wiz.date})
+                    return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), new_distrib_id)
                 # JUST Account have changed
                 elif account_changed and not distrib_changed:
                     # return normal behaviour with account change

@@ -235,7 +235,7 @@ class journal_items_corrections(osv.osv_memory):
         res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
-    def action_confirm(self, cr, uid, ids, context=None):
+    def action_confirm(self, cr, uid, ids, distrib_id=False, context=None):
         """
         Do a correction from the given line
         """
@@ -265,7 +265,7 @@ class journal_items_corrections(osv.osv_memory):
         if comparison == 1:
 #            if not old_line.statement_id:
 #                raise osv.except_osv(_('Error'), _('Account correction is only possible on move line that come from a register!'))
-            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
+            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
         # Correct third parties
