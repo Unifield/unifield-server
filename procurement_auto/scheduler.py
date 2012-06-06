@@ -52,11 +52,6 @@ class procurement_order(osv.osv):
         report = []
         report_except = 0
         
-        # Cache for product/location
-        # TODO : To confirm by Magali, cache system is very strange
-        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-        cache = {}
-        
         # We start with only category Automatic Supply
         for auto_sup in auto_sup_obj.browse(cr, uid, auto_sup_ids):
             # We define the replenish location
@@ -70,7 +65,7 @@ class procurement_order(osv.osv):
             for line in auto_sup.line_ids:
                 proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
                                                  line.product_uom_id.id, line.product_qty,
-                                                 location_id, cache=cache, context=context)
+                                                 location_id, context=context)
                 # If a procurement has been created, add it to the list
                 if proc_id:
                     created_proc.append(proc_id)
@@ -128,7 +123,7 @@ Created documents : \n'''
             
         return {}
     
-    def create_proc_order(self, cr, uid, auto_sup, product_id, product_uom, qty, location_id, cache=None, context=None):
+    def create_proc_order(self, cr, uid, auto_sup, product_id, product_uom, qty, location_id, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -136,19 +131,8 @@ Created documents : \n'''
         auto_sup_obj = self.pool.get('stock.warehouse.automatic.supply')
         wf_service = netsvc.LocalService("workflow")
         proc_id = False
-        # TODO : To confirm by Magali, cache system is very strange
-        if cache is None:
-            cache = {}
         
-        # Enter the stock location in cache to know which products has been already replenish for this location
-        # TODO : To confirm by Magali, cache system is very strange
-        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-        if not cache.get(location_id, False):
-            cache.update({location_id: []})
-        
-        # TODO : To confirm by Magali, cache system is very strange
-        # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-        if product_id and product_id.id not in cache.get(location_id):
+        if product_id:
             newdate = datetime.today()
             proc_id = proc_obj.create(cr, uid, {
                                         'name': _('Automatic Supply: %s') % (auto_sup.name,),
@@ -163,11 +147,6 @@ Created documents : \n'''
             wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
             wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
             auto_sup_obj.write(cr, uid, [auto_sup.id], {'procurement_id': proc_id}, context=context)
-            
-            # Fill the cache
-            # TODO : To confirm by Magali, cache system is very strange
-            # @JF : do not integrate this if a TODO is present in the previous line, please tell QT
-            cache.get(location_id).append(product_id.id)
         
         return proc_id
         
