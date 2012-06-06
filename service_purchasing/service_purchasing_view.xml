@@ -135,6 +135,10 @@
 					<xpath expr="/form//field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
+            		
+            		<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="attributes">
+                    	<attribute name="domain">[('usage', '=', product_id.type == 'service_recep' and 'inventory' or 'internal'), ('service_location', '=', product_id.type=='service_recep')]</attribute>
+                	</xpath>
             	
             	</data>
             </field>

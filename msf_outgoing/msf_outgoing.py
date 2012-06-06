@@ -2721,6 +2721,38 @@ class stock_move(osv.osv):
                     
         return result
     
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set default values according to type and subtype
+        '''
+        if not context:
+            context = {}
+            
+        res = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        
+        if 'warehouse_id' in context and context.get('warehouse_id'):
+            warehouse_id = context.get('warehouse_id')
+        else:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
+        res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
+        
+        loc_virtual_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Virtual Locations')])
+        loc_virtual_id = len(loc_virtual_ids) > 0 and loc_virtual_ids[0] or False
+        res.update({'location_virtual_id': loc_virtual_id})
+        
+        if 'type' in context and context.get('type', False) == 'out':
+            loc_stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': loc_stock_id})
+        
+        if 'subtype' in context and context.get('subtype', False) == 'picking':
+            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
+            res.update({'location_dest_id': loc_packing_id})
+        elif 'subtype' in context and context.get('subtype', False) == 'standard':
+            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
+            res.update({'location_dest_id': loc_packing_id})
+        
+        return res
+    
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -2745,6 +2777,9 @@ class stock_move(osv.osv):
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',), # old_multi get_vals
+                # Fields used for domain
+                'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
+                'location_output_id': fields.many2one('stock.location', string='Output location'),
                 }
 
 stock_move()
