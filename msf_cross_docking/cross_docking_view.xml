@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-    <data>   
+    <data>
+    
+    <!--  We add the button Check availability on the picking out form-->
+        <record id="view_picking_out_form" model="ir.ui.view">
+            <field name="name">stock.picking.out.form.button.check.availability</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority">301</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='button_cancel']" position="after">
+                        <button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    
         <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
         
         <record id="purchase_cross_docking_form_view2" model="ir.ui.view">
