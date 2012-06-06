@@ -109,7 +109,7 @@
             <field name="standard_price">25.5</field>
             <field name="uom_id" ref="product_uom_unit"/>
             <field name="uom_po_id" ref="product_uom_unit"/>
-            <field name="type">service_recep</field>
+            <field name="type">service</field>
             <field name="name">Onsite Senior Intervention</field>
             <field name="categ_id" ref="product_category_7"/>
         </record>
@@ -118,7 +118,7 @@
             <field name="standard_price">20.5</field>
             <field name="uom_id" ref="product_uom_unit"/>
             <field name="uom_po_id" ref="product_uom_unit"/>
-            <field name="type">service_recep</field>
+            <field name="type">service</field>
             <field name="name">Onsite Intervention</field>
             <field name="categ_id" ref="product_category_7"/>
         </record>
@@ -459,7 +459,7 @@
             <field name="default_code">PROJ</field>
             <field name="supply_method">produce</field>
             <field eval="'make_to_order'" name="procure_method"/>
-            <field name="type">service_recep</field>
+            <field name="type">service</field>
             <field name="list_price">90.0</field>
             <field name="standard_price">20.0</field>
             <field name="uom_id" ref="uom_hour"/>
@@ -472,7 +472,7 @@
             <field name="default_code">EMPL</field>
             <field name="supply_method">produce</field>
             <field eval="'make_to_order'" name="procure_method"/>
-            <field name="type">service_recep</field>
+            <field name="type">service</field>
             <field name="list_price">200.0</field>
             <field name="standard_price">50.0</field>
             <field name="uom_id" ref="uom_hour"/>
@@ -496,7 +496,7 @@
         <record id="product_product_worker0" model="product.product">
             <field name="default_code">WORK</field>
             <field name="supply_method">produce</field>
-            <field name="type">service_recep</field>
+            <field name="type">service</field>
             <field eval="'make_to_order'" name="procure_method"/>
             <field eval="0" name="sale_ok"/>
             <field eval="1" name="purchase_ok"/>
