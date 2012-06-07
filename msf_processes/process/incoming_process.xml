@@ -14,7 +14,7 @@
         
         <record id="stock.process_node_in_draft" model="process.node">
             <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
-            <field name="model_id" ref="purchase.model_stock_picking"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;In - draft&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Draft state of incoming product.&quot;&quot;&quot;" name="note"/>
@@ -25,7 +25,7 @@
         
         <record id="stock.process_node_in_confirmed" model="process.node">
             <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
-            <field name="model_id" ref="purchase.model_stock_picking"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;In - not available&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Not available state of incoming product.&quot;&quot;&quot;" name="note"/>
@@ -36,7 +36,7 @@
         
         <record id="stock.process_node_in_assigned" model="process.node">
             <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
-            <field name="model_id" ref="purchase.model_stock_picking"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;In - available&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Available state of incoming product.&quot;&quot;&quot;" name="note"/>
@@ -47,7 +47,7 @@
         
         <record id="stock.process_node_in_done" model="process.node">
             <field name="menu_id" ref="stock.menu_action_picking_tree4"/>
-            <field name="model_id" ref="purchase.model_stock_picking"/>
+            <field name="model_id" ref="stock.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;In - closed&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Closed state of incoming product.&quot;&quot;&quot;" name="note"/>

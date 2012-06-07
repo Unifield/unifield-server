@@ -36,7 +36,12 @@
                  "stock",
                  "msf_outgoing",
                  ],
-    "update_xml": ["process/outgoing_process.xml", #5
+    "update_xml": [# see process_dependencies.xmind for detail about dependencies
+                   "process/ship_process.xml", #1
+                   "process/draft_ship_process.xml", #2
+                   "process/ppl_process.xml", #3
+                   "process/picking_process.xml", #4
+                   "process/outgoing_process.xml", #5
                    "process/incoming_process.xml", #6
                    "process/rfq_process.xml", #7
                    "process/purchase_process.xml", #8

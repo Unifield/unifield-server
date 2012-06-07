@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+		<!-- Process process -->
+        
+        <record id="msf_outgoing.process_process_ship0" model="process.process">
+            <field eval="&quot;&quot;&quot;Shipment&quot;&quot;&quot;" name="name"/>
+            <field name="model_id" ref="msf_outgoing.model_shipment"/>
+            <field eval="1" name="active"/>
+        </record>
+        
+        <!-- Process Node outgoing -->
+        
+        
+    </data>
+</openerp>

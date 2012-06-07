@@ -115,7 +115,7 @@
             <field eval="&quot;&quot;&quot;Outgoing Products.&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Outgoing Products.&quot;&quot;&quot;" name="note"/>
             <field name="process_id" ref="sale.process_process_salesprocess0"/>
-            <field name="subflow_id" ref="stock.process_process_outgoing0"/>
+            <field name="subflow_id" ref="msf_outgoing.process_process_outgoing0"/>
             <!-- <field eval="&quot;&quot;&quot;object.state in ('done', 'assigned')&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
         </record>
