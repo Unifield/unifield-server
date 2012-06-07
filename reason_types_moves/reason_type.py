@@ -21,6 +21,8 @@
 
 from osv import osv, fields
 
+from tools.translate import _
+
 import logging
 from os import path
 import math
@@ -427,5 +429,48 @@ class stock_return_picking(osv.osv_memory):
         return default_value
 
 stock_return_picking()
+
+class stock_location(osv.osv):
+    _name = 'stock.location'
+    _inherit = 'stock.location'
+    
+    def _get_replenishment(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for loc in ids:
+            res[loc] = True
+        
+        return res
+    
+    def _src_replenishment(self, cr, uid, obj, name, args, context=None):
+        res = []
+        
+        for arg in args:
+            if arg[0] == 'is_replenishment':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                elif arg[2] in ('True', 'true', 't', 1):                    
+                    cpm_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+                    wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', cpm_id)], context=context)
+                    if wh_ids:
+                        stock_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
+                        res.append('|')
+                        res.append('&')
+                        res.append(('quarantine_location', '=', False))
+                        res.append(('location_category', '=', 'stock'))
+                        res.append(('id', '=', stock_id))
+                    else:
+                        res.append(('quarantine_location', '=', False))
+                        res.append(('location_category', '=', 'stock'))
+                    
+        return res
+    
+    _columns = {
+        'is_replenishment': fields.function(_get_replenishment, fnct_search=_src_replenishment, type='boolean',
+                                            method=True, string='Is replenishment ?', store=False,
+                                            help='Is True, the location could be used in replenishment rules'),
+    }
+    
+stock_location()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
