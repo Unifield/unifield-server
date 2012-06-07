@@ -78,7 +78,7 @@
             <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -129,7 +129,7 @@
             <field name="inherit_id" ref="account_journal.view_account_journal_tree_inherit"/>
             <field name="arch" type="xml">
                 <field name="code" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -143,7 +143,7 @@
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
                 <field name="name" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -155,7 +155,7 @@
             <field name="inherit_id" ref="account.view_move_tree"/>
             <field name="arch" type="xml">
                 <field name="name" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -168,7 +168,7 @@
             <field name="inherit_id" ref="res_currency_functional.view_move_line_tree"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -180,7 +180,7 @@
             <field name="inherit_id" ref="res_currency_functional.view_move_line_tree_editable"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -195,7 +195,7 @@
             <field name="arch" type="xml">
                 <data>
 	                <xpath expr="/form//field[@name='journal_id']" position="before">
-	                    <field name="instance_id"/>
+	                    <field name="instance_id" readonly="1"/>
 	                </xpath>
                 </data>
             </field>
@@ -210,7 +210,7 @@
             <field name="arch" type="xml">
                 <data>
 	                <xpath expr="/form//field[@name='journal_id']" position="before">
-	                    <field name="instance_id"/>
+	                    <field name="instance_id" readonly="1"/>
 	                </xpath>
                 </data>
             </field>
@@ -224,7 +224,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//field[@name='journal_id']" position="before">
-                        <field name="instance_id"/>
+                        <field name="instance_id" readonly="1"/>
                     </xpath>
                 </data>
             </field>
@@ -238,7 +238,7 @@
             <field name='inherit_id' ref='account.view_bank_statement_tree' />
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='name']" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </xpath>
             </field>
         </record>
@@ -251,7 +251,7 @@
             <field name='inherit_id' ref='register_accounting.view_cash_statement_tree' />
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='name']" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </xpath>
             </field>
         </record>
@@ -264,7 +264,7 @@
             <field name='inherit_id' ref='register_accounting.view_cheque_register_tree' />
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='name']" position="before">
-                    <field name="instance_id"/>
+                    <field name="instance_id" readonly="1"/>
                 </xpath>
             </field>
         </record>
