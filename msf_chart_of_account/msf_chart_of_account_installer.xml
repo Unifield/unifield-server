@@ -23,6 +23,8 @@
                   <field name="create"/>
                   <newline/>
                   <field name="import_invoice_default_account" />
+                  <newline/>
+                  <field name="instance_id" domain="[('state', '=', 'draft')]"/>
                 </group>
               </data>
             </field>

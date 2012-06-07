@@ -99,6 +99,7 @@
         "supplier_catalogue",
         "msf_cross_docking",
         "mission_stock",
+        "msf_instance",
     ],
     "update_xml": [
         "report.xml",
