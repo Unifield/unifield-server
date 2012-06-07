@@ -207,7 +207,7 @@ class product_product(osv.osv):
         for product in prod_obj.browse(cr, uid, product_ids, context=context):            
             sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
                                                          ('product_id', '=', product.product_tmpl_id.id)], 
-                                                         order='sequence asc', limit=1, context=context)
+                                                         order='sequence asc', context=context)
                 
             domain = [('min_quantity', '<=', product_qty),
                       ('uom_id', '=', product_uom_id),
@@ -383,9 +383,9 @@ class res_currency(osv.osv):
         return dom  
     
     _columns = {
-        'is_section_currency': fields.boolean(string='Is a currency of a section', 
-                                        help='If this box is checked, this currenc is used as a functional currency for at least one section in MSF.'),
-        'is_esc_currency': fields.boolean(string='Is a currency of an ESC', 
+        'is_section_currency': fields.boolean(string='Functional currency', 
+                                        help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
+        'is_esc_currency': fields.boolean(string='ESC currency', 
                                         help='If this box is checked, this currency is used as a currency for at least one ESC.'),
         'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
                                             type='boolean', string='transport PO currencies'),
