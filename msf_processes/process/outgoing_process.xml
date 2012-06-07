@@ -52,7 +52,7 @@
             <field eval="&quot;&quot;&quot;Out - closed&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Closed state of incoming product.&quot;&quot;&quot;" name="note"/>
             <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
-            <field eval="&quot;&quot;&quot;object.state == 'done' and not object.delivered&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
         </record>
         
