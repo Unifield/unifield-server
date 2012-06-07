@@ -55,7 +55,7 @@
             <field name="inherit_id" ref="base.view_res_partner_filter" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group/filter[@name='supplier']" position="after">
+                    <xpath expr="/search/group/filter[@name='manufacturer']" position="after">
                     	<separator orientation="vertical" />
                         <filter string="International" name="international" icon="gtk-dnd" domain="[('zone','=','international')]" help="International Partners"/>
                         <filter string="National" name="national" icon="gtk-dnd-multiple" domain="[('zone','=','national')]" help="National Partners"/>

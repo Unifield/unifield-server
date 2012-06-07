@@ -47,7 +47,12 @@
             <field name="inherit_id" ref="base.view_res_partner_filter" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/search/group/filter[@name='customer']" position="replace">
+                        <filter string="Suppliers" name="supplier" icon="terp-personal" domain="[('supplier','=',1)]" help="Supplier Partners"/>
+                    </xpath>
+
                     <xpath expr="/search/group/filter[@name='supplier']" position="after">
+                        <filter string="Customers" name="customer" icon="terp-personal" domain="[('customer','=',1)]" help="Customer Partners"/>
                         <filter string="Manufacturers" name="manufacturer" icon="terp-personal" domain="[('manufacturer','=',1)]" help="Manufacturer Partners"/>
                     </xpath>
                     <xpath expr="/search/group/field[@name='name']" position="before">
