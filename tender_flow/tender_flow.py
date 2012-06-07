@@ -722,6 +722,26 @@ class purchase_order(osv.osv):
             'You must specify a Valid Till date.',
             ['valid_till']),]
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Display an error message if the PO has associated IN
+        '''
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', 'in', ids)], context=context)
+        if in_ids:
+            raise osv.except_osv(_('Error !'), _('Cannot delete a document if its associated ' \
+            'document remains open. Please delete it (associated IN) first.'))
+            
+        # Copy a part of purchase_order standard unlink method to fix the bad state on error message
+        purchase_orders = self.read(cr, uid, ids, ['state'], context=context)
+        unlink_ids = []
+        for s in purchase_orders:
+            if s['state'] in ['draft','cancel']:
+                unlink_ids.append(s['id'])
+            else:
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Purchase Order(s) which are in %s State!')  % _(dict(PURCHASE_ORDER_STATE_SELECTION).get(s['state'])))
+            
+        return super(purchase_order, self).unlink(cr, uid, ids, context=context)
+    
     def _hook_copy_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         HOOK from purchase>purchase.py for COPY function. Modification of default copy values

@@ -268,7 +268,7 @@ class purchase_order(osv.osv):
                 self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
         return True
 
-    def action_cancel(self, cr, uid, ids, context=None):
+    def wkf_action_cancel_po(self, cr, uid, ids, context=None):
         """
         Delete commitment from purchase before 'cancel' state.
         """
@@ -279,7 +279,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Change commitments state if exists
         self._finish_commitment(cr, uid, ids, context=context)
-        return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
+        return super(purchase_order, self).wkf_action_cancel_po(cr, uid, ids, context=context)
 
     def action_done(self, cr, uid, ids, context=None):
         """
