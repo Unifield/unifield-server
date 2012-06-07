@@ -1160,7 +1160,7 @@ class purchase_order_line(osv.osv):
                 domain.append(('suppinfo_id.sequence', '=', min_seq))
                 domain.append(('suppinfo_id', 'in', sequence_ids))
         
-                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='min_quantity asc, id desc', limit=1, context=context)
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
