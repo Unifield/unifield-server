@@ -2,10 +2,10 @@
 <openerp>
     <data>
 
-		<!-- Process process -->
+		<!-- Process process outgoing -->
         
         <record id="msf_outgoing.process_process_outgoing0" model="process.process">
-            <field eval="&quot;&quot;&quot;Outgoing&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Standard Outgoing&quot;&quot;&quot;" name="name"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="1" name="active"/>
         </record>
@@ -123,13 +123,19 @@
         
         <!-- Process Node picking -->
         
+        <record id="msf_outgoing.process_process_outgoing1" model="process.process">
+            <field eval="&quot;&quot;&quot;Draft Picking Ticket&quot;&quot;&quot;" name="name"/>
+            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field eval="1" name="active"/>
+        </record>
+        
         <record id="msf_outgoing.process_node_draft_pick_draft" model="process.node">
             <field name="menu_id" ref="msf_outgoing.menu_action_picking_ticket"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Draft Picking - draft&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Draft state of draft picking ticket.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
+            <field name="process_id" ref="msf_outgoing.process_process_outgoing1"/>
             <field eval="&quot;&quot;&quot;object.state in ('draft', 'auto', 'confirmed', 'assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
             <field eval="1" name="flow_start"/>
         </record>
@@ -140,7 +146,7 @@
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Draft Picking - closed&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Closed state of draft picking ticket.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
+            <field name="process_id" ref="msf_outgoing.process_process_outgoing1"/>
             <field eval="&quot;&quot;&quot;object.state in ('auto', 'confirmed', 'assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
         </record>
@@ -151,7 +157,7 @@
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Picking Ticket&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Picking Ticket subflow.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
+            <field name="process_id" ref="msf_outgoing.process_process_outgoing1"/>
             <field name="subflow_id" ref="msf_outgoing.process_process_picking0"/>
             <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
@@ -163,7 +169,7 @@
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;PPL&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Pre-packing list subflow.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
+            <field name="process_id" ref="msf_outgoing.process_process_outgoing1"/>
             <field name="subflow_id" ref="msf_outgoing.process_process_ppl0"/>
             <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
@@ -175,7 +181,7 @@
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Draft Shipment&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Draft shipment subflow.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
+            <field name="process_id" ref="msf_outgoing.process_process_outgoing1"/>
             <field name="subflow_id" ref="msf_outgoing.process_process_draft_ship0"/>
             <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
@@ -187,7 +193,7 @@
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Shipment&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;Shipment subflow.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="msf_outgoing.process_process_outgoing0"/>
+            <field name="process_id" ref="msf_outgoing.process_process_outgoing1"/>
             <field name="subflow_id" ref="msf_outgoing.process_process_ship0"/>
             <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
             <field eval="0" name="flow_start"/>
