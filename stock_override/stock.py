@@ -798,8 +798,8 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         if arg[0][2]:
-            obj_po = arg[0][2][0] and self.pool.get('purchase.order').browse(cr,uid,arg[0][2][0]) or False
-            if  ( obj_po and obj_po.cross_docking_ok ) or arg[0][2][1]:
+            obj_pol = arg[0][2][0] and self.pool.get('purchase.order.line').browse(cr,uid,arg[0][2][0]) or False
+            if  ( obj_pol and obj_pol.order_id.cross_docking_ok ) or arg[0][2][1]:
                 return [('id', 'in', [id_cross])]
         return []
 
@@ -819,10 +819,9 @@ class stock_location(osv.osv):
         'stock_virtual': fields.function(_product_value, method=True, type='float', string='Virtual Stock', multi="stock"),
         'stock_real_value': fields.function(_product_value, method=True, type='float', string='Real Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
-
-
         'check_prod_loc': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_prod_loc_search),
         'check_cd': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_cd_search),
+        'virtual_location': fields.boolean(string='Virtual location'),
 
     }
 

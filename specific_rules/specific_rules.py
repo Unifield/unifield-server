@@ -479,8 +479,6 @@ class stock_move(osv.osv):
         return True
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False,purchase_line_id=False,out=False):
-        print "change"
-        print out
         '''
         the product changes, set the hidden flag if necessary
         '''

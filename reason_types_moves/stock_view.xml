@@ -201,6 +201,7 @@
 			<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
         	                <field name="location_dest_id" domain="[('check_prod_loc','=',product_id),('check_cd','in',[purchase_line_id,move_cross_docking_ok])]" on_change="location_dest_change(location_dest_id)" />
 	           			<field name="move_cross_docking_ok" invisible="1"/>
+
 	                </xpath>
 			
                 </data>
