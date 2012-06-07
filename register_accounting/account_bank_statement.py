@@ -209,6 +209,8 @@ class account_bank_statement(osv.osv):
         """
         Delete a bank statement is forbidden!
         """
+        if context and context.get('from', False) and context.get('from') == "journal_deletion":
+            return super(account_bank_statement, self).unlink(cr, uid, ids)
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
 
