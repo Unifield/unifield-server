@@ -9,11 +9,6 @@
             <field name="inherit_id" ref="product.product_search_form_view" />
             <field name="arch" type="xml">
             	<data>
-            	
-            		<filter string="Service" position="after">
-                   		<filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
-                   	</filter>
-            	
             	</data>
             </field>
        	</record>
