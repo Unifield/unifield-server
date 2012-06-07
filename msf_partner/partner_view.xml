@@ -18,6 +18,12 @@
 	                    <field name="min_qty" invisible="not context.get('choose_supplier')" />
 	                    <field name="delay" invisible="not context.get('choose_supplier')" />
 	                </xpath>
+
+	                <xpath expr="/tree/field[@name='user_id']" position="after">
+	                    <field name="catalogue_bool" />
+	                    <field name="supplier_lt" string="Supplier LT"/>
+	                    <field name="customer_lt" string="Customer LT"/>
+	                </xpath>
                 </data>
             </field>
         </record>
@@ -55,6 +61,13 @@
                         <filter string="Customers" name="customer" icon="terp-personal" domain="[('customer','=',1)]" help="Customer Partners"/>
                         <filter string="Manufacturers" name="manufacturer" icon="terp-personal" domain="[('manufacturer','=',1)]" help="Manufacturer Partners"/>
                     </xpath>
+
+                    <xpath expr="/search/group/filter[@name='manufacturer']" position="after">
+                    	<separator orientation="vertical" />
+                        <filter string="International" name="international" icon="gtk-dnd" domain="[('zone','=','international')]" help="International Partners"/>
+                        <filter string="National" name="national" icon="gtk-dnd-multiple" domain="[('zone','=','national')]" help="National Partners"/>
+                    </xpath>
+
                     <xpath expr="/search/group/field[@name='name']" position="before">
                         <filter string="Internal" name="internal" icon="gtk-leave-fullscreen" domain="[('partner_type','=','internal')]" help="Internal Partners"/>
                         <filter string="Inter-section" name="inter-section" icon="gtk-refresh" domain="[('partner_type','=','section')]" help="Inter-section Partners"/>
@@ -63,9 +76,25 @@
                         <separator orientation="vertical" />
                         <newline />
                     </xpath>
+
+                    <xpath expr="/search/group[@string='Group By...']/filter[@string='Salesman']" position="replace">
+                       <filter string="Partner type" icon="terp-personal" domain="[]" context="{'group_by' : 'partner_type'}" />
+                       <filter string="Zone" icon="terp-personal" domain="[]" context="{'group_by' : 'zone'}" />
+                    </xpath>
+
                 </data>
             </field>
         </record>
+
+        <delete id="base.action_partner_sms_send" model="ir.actions.act_window" />
+        <delete id="base.action_partner_mass_mail" model="ir.actions.act_window" />
+        <delete id="base.action_translation" model="ir.actions.act_window" />
+        <delete id="account.account_overdue" model="ir.actions.report.xml" />
+        <delete id="base.res_partner_address_report" model="ir.actions.report.xml" />
+        <delete id="base.act_res_partner_event" model="ir.actions.act_window" />
+
+
+
 
 	</data>
 </openerp>

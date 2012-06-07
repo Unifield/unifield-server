@@ -48,22 +48,6 @@
 			</field>
 		</record>
 		
-        <record id="view_res_partner_filter" model="ir.ui.view">
-            <field name="name">view.res.partner.filter</field>
-            <field name="model">res.partner</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="base.view_res_partner_filter" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group/filter[@name='manufacturer']" position="after">
-                    	<separator orientation="vertical" />
-                        <filter string="International" name="international" icon="gtk-dnd" domain="[('zone','=','international')]" help="International Partners"/>
-                        <filter string="National" name="national" icon="gtk-dnd-multiple" domain="[('zone','=','national')]" help="National Partners"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-		
 	    <record id="view_partner_property_form" model="ir.ui.view">
 	      <field name="name">res.partner.stock.property.form.inherit</field>
 	      <field name="model">res.partner</field>
