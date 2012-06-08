@@ -225,17 +225,8 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 # Verify that:
                 # - the line doesn't have any draft/open contract
-                link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aline.account_id.id)], context=context)
-                format_ids = []
-                for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
-                    if link.contract_id:
-                        format_ids.append(link.contract_id.id)
-                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
-                valid = True
-                for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
-                    if contract.state in ['soft_closed', 'hard_closed']:
-                        valid = False
-                if not valid:
+                check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
+                if check_accounts and aline.account_id.id in check_accounts:
                     continue
                 # No verification if account is MSF Private Fund because of its compatibility with all elements.
                 if account_id == msf_private_fund:

@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 import time
 
 class analytic_distribution_wizard(osv.osv_memory):
@@ -39,6 +40,202 @@ class analytic_distribution_wizard(osv.osv_memory):
         'state': lambda *a: 'draft',
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
+
+    def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, type):
+        """
+        Check components compatibility
+        """
+        # Prepare some values
+        wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
+        obj = '.'.join([type, 'distribution', 'line'])
+        oline = self.pool.get(obj).browse(cr, uid, distribution_line_id)
+        nline_type = '.'.join([wiz_line_types.get(type), 'lines'])
+        nline_obj = '.'.join(['analytic.distribution.wizard', nline_type])
+        nline = self.pool.get(nline_obj).browse(cr, uid, wiz_line_id)
+        to_reverse = []
+        to_override = []
+        # Some cases
+        if type == 'funding.pool':
+            old_component = [oline.destination_id.id, oline.analytic_id.id, oline.cost_center_id.id, oline.percentage]
+            new_component = [nline.destination_id.id, nline.analytic_id.id, nline.cost_center_id.id, nline.percentage]
+            if old_component != new_component:
+                # Don't do anything if the old FP account is on a soft/hard closed contract!
+                if oline.analytic_id.id != nline.analytic_id.id:
+                    check_fp = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [oline.analytic_id.id])
+                    if check_fp and oline.analytic_id.id in check_fp:
+                        return False, _("Old funding pool is on a soft/hard closed contract: %s") % (oline.analytic_id.code,)
+                    to_reverse.append(oline.id)
+                # Override CC on open period, otherwise reverse line
+                if oline.cost_center_id.id != nline.cost_center_id.id:
+                    period = nline.wizard_id and nline.wizard_id.move_line_id and nline.wizard_id.move_line_id.period_id
+                    if not period:
+                        raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
+                    # if period is open, do an override, except if FP needs to reverse the line
+                    if period.state != 'done' and oline.id not in to_reverse:
+                        to_override.append((oline.id, 'cost_center_id', nline.cost_center_id.id))
+                # Only reverse line if destination have changed
+                if oline.destination_id.id != nline.destination_id.id:
+                    to_reverse.append(oline.id)
+                    # Delete ID from to_override if needed
+                    to_remove = []
+                    for el in to_override:
+                        if oline.id == el[0]:
+                            to_remove.append(el)
+                    # Second loop permits to not disturb first loop (by reducing its length)
+                    for tr in to_remove:
+                        to_override.remove(tr)
+                # Override line if percentage have changed
+                if oline.percentage != nline.percentage and oline.id not in to_reverse:
+                    to_override.append((oline.id, 'percentage', nline.percentage))
+        else:
+            old_component = [oline.analytic_id.id, oline.percentage]
+            new_component = [nline.analytic_id.id, nline.percentage]
+            if old_component != new_component:
+                field_name = ''
+                value = None
+                if oline.analytic_id.id != nline.analytic_id.id:
+                    field_name = 'account_id'
+                    value = nline.analytic_id.id
+                if oline.percentage != nline.percentage:
+                    field_name = 'percentage'
+                    value = nline.percentage
+                if not value:
+                    raise osv.except_osv(_('Error'), _('A value is missing.'))
+                to_override.append((oline.id, field_name, value))
+        return True, _("All is OK."), to_reverse, to_override
+
+    def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id):
+        """
+        For each given wizard compare old (distrib_id) and new analytic distribution. Then adapt analytic lines.
+        """
+        # Prepare some values
+        wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
+        wizard = self.browse(cr, uid, wizard_id)
+        # Fetch funding pool lines, free 1 lines and free 2 lines
+        for line_type in ['funding.pool', 'free.1', 'free.2']:
+            # Prepare some values
+            line_obj = '.'.join([line_type, 'distribution', 'line'])
+            company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+            current_date = time.strftime('%Y-%m-%d')
+            ml = wizard.move_line_id
+            ml_id = ml.id
+            args = [
+                ('move_id', '=', ml_id),
+            ]
+            # Search old line and new lines
+            old_line_ids = self.pool.get(line_obj).search(cr, uid, [('distribution_id', '=', distrib_id)])
+            wiz_line_type = '.'.join([wiz_line_types.get(line_type), 'lines'])
+            wiz_line_obj = '.'.join(['analytic.distribution.wizard', wiz_line_type])
+            wiz_line_ids = self.pool.get(wiz_line_obj).search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', line_type)])
+            # Compare database lines with wizard lines
+            old_line_checked = []
+            for wiz_line in self.pool.get(wiz_line_obj).browse(cr, uid, wiz_line_ids):
+                if wiz_line.distribution_line_id.id not in old_line_ids:
+                    amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
+                    context = {'date': current_date}
+                    func_amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount, context=context)
+                    # Create new lines
+                    vals = {
+                        'account_id': wiz_line.analytic_id and wiz_line.analytic_id.id or False,
+                        'amount_currency': amount or 0.0,
+                        'general_account_id': ml.account_id and ml.account_id.id or False,
+                        'source_date': current_date,
+                        'date': current_date,
+                        'move_id': ml_id,
+                        'name': ml.name,
+                        'journal_id': ml.journal_id and ml.journal_id.analytic_journal_id and ml.journal_id.analytic_journal_id.id or False,
+                        'currency_id': ml.currency_id and ml.currency_id.id or False,
+                        'amount': func_amount,
+                    }
+                    if line_type == 'funding.pool':
+                        vals.update({
+                            'cost_center_id': wiz_line.cost_center_id and wiz_line.cost_center_id.id or False,
+                            'destination_id': wiz_line.destination_id and wiz_line.destination_id.id or False,
+                        })
+                    self.pool.get('account.analytic.line').create(cr, uid, vals)
+                    continue
+                # compare components (Destination | CC | FP | percentage)
+                res_cmp, msg, to_reverse, to_override = self._check_lines(cr, uid, wiz_line.distribution_line_id.id, wiz_line.id, line_type)
+                old_line_checked.append(wiz_line.distribution_line_id.id)
+                if not res_cmp:
+                    raise osv.except_osv(_('Warning'), msg)
+                # Override process
+                if to_override:
+                    for over in to_override:
+                        distrib_line = self.pool.get(line_obj).browse(cr, uid, over[0])
+                        amount = (ml.debit_currency - ml.credit_currency) * distrib_line.percentage / 100
+                        # search analytic lines
+                        args.append(('distribution_id', '=', distrib_line.distribution_id.id))
+                        args.append(('account_id', '=', distrib_line.analytic_id.id))
+                        args.append(('amount_currency', '=', amount))
+                        if line_type == "funding.pool":
+                            args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
+                            args.append(('destination_id', '=', distrib_line.destination_id.id))
+                        too_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
+                        if over[1] != 'percentage':
+                            self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {over[1]: over[2]})
+                        else:
+                            for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, too_ana_ids):
+                                context = {'date': ana_line.source_date or ana_line.date}
+                                func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, context=context)
+                                new_amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
+                                self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {'amount_currency': new_amount, 'amount': func_amount,})
+                # Reverse process
+                if to_reverse:
+                    for rev in to_reverse:
+                        distrib_line = self.pool.get(line_obj).browse(cr, uid, rev)
+                        amount = (ml.debit_currency - ml.credit_currency) * distrib_line.percentage / 100
+                        # Search lines
+                        args.append(('distribution_id', '=', distrib_line.distribution_id.id))
+                        args.append(('account_id', '=', distrib_line.analytic_id.id))
+                        args.append(('amount_currency', '=', amount))
+                        if line_type == 'funding.pool':
+                            args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
+                            args.append(('destination_id', '=', distrib_line.destination_id.id))
+                        tor_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
+                        # Reverse lines
+                        self.pool.get('account.analytic.line').reverse(cr, uid, tor_ana_ids)
+                        # Mark old lines as non reallocatable (ana_ids)
+                        self.pool.get('account.analytic.line').write(cr, uid, tor_ana_ids, {'is_reallocated': True,})
+                        # Write new lines
+                        for ana_line in self.browse(cr, uid, tor_ana_ids):
+                            context = {'date': ana_line.source_date or ana_line.date}
+                            func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, context=context)
+                            # Create new lines
+                            vals = {
+                                'account_id': wiz_line.analytic_id and wiz_line.analytic_id.id or False,
+                                'amount_currency': amount or 0.0,
+                                'general_account_id': ml.account_id and ml.account_id.id or False,
+                                'source_date': ana_line.source_date or ana_line.date,
+                                'date': time.strftime('%Y-%m-%d'),
+                                'move_id': ml_id,
+                                'name': ana_line.name,
+                                'journal_id': ana_line.journal_id and ana_line.journal_id.id or False,
+                                'currency_id': ana_line.currency_id and ana_line.currency_id.id or False,
+                                'amount': func_amount,
+                            }
+                            if line_type == 'funding.pool':
+                                vals.update({
+                                    'cost_center_id': wiz_line.cost_center_id and wiz_line.cost_center_id.id or False,
+                                    'destination_id': wiz_line.destination_id and wiz_line.destination_id.id or False,
+                                })
+                            self.pool.get('account.analytic.line').create(cr, uid, vals)
+            # Check which old line have not been processed
+            have_disappear = set(old_line_ids) - set(old_line_checked)
+            if have_disappear:
+                for hd_line in self.pool.get(line_obj).browse(cr, uid, list(have_disappear)):
+                    amount = (ml.debit_currency - ml.credit_currency) * hd_line.percentage / 100
+                    args.append(('distribution_id', '=', hd_line.distribution_id.id))
+                    args.append(('account_id', '=', hd_line.analytic_id.id))
+                    args.append(('amount_currency', '=', amount))
+                    if line_type == 'funding.pool':
+                        args.append(('cost_center_id', '=', hd_line.cost_center_id.id))
+                        args.append(('destination_id', '=', hd_line.destination_id.id))
+                    # search lines to reverse
+                    hd_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
+                    # reverse lines
+                    self.pool.get('account.analytic.line').reverse(cr, uid, hd_ana_ids)
+        return True
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
@@ -123,7 +320,19 @@ class analytic_distribution_wizard(osv.osv_memory):
                     return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'))
                 # JUST Distribution have changed
                 else:
-                    pass
+                    # Check all lines to proceed to changes
+                    self.do_analytic_distribution_changes(cr, uid, wiz.id, distrib_id)
+                    # Create new distribution
+                    new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    self.write(cr, uid, [wiz.id], {'distribution_id': new_distrib_id})
+                    for line_type in ['funding.pool', 'free.1', 'free.2']:
+                        # Compare and write modifications done on analytic lines
+                        type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+                    # Check new distribution state
+                    if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, new_distrib_id, False, wiz.account_id.id) != 'valid':
+                        raise osv.except_osv(_('Warning'), _('New analytic distribution is not compatible. Please check your distribution!'))
+                    # Link new distribution to the move line
+                    self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': new_distrib_id})
         # Get default method
         return super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
 

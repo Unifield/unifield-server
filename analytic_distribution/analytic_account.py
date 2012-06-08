@@ -227,5 +227,29 @@ class analytic_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot delete this Analytic Account!'))
         return super(analytic_account, self).unlink(cr, uid, ids, context=context)
 
+    def is_blocked_by_a_contract(self, cr, uid, ids):
+        """
+        Return ids (analytic accounts) that are blocked by a contract (just FP1)
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = []
+        for aa in self.browse(cr, uid, ids):
+            # Only check funding pool accounts
+            if aa.category != 'FUNDING':
+                continue
+            link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aa.id)], context=context)
+            format_ids = []
+            for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
+                if link.contract_id:
+                    format_ids.append(link.contract_id.id)
+            contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
+            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
+                if contract.state in ['soft_closed', 'hard_closed']:
+                    res.append(aa.id)
+        return res
+
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
