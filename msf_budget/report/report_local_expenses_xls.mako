@@ -68,7 +68,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    nb_of_rows = 2
+    nb_of_rows = 8
     nb_of_columns = 3
     month_list = []
     if data and data.get('form'):
@@ -76,13 +76,25 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
             nb_of_columns = 3 + data.get('form').get('month_stop')
             month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][0:data.get('form').get('month_stop')]
         if data.get('form').get('result_lines'):
-            nb_of_rows = 2 + len(data.get('form').get('result_lines'))
+            nb_of_rows = 8 + len(data.get('form').get('result_lines'))
 %>
 <Table ss:ExpandedColumnCount="${nb_of_rows}" ss:ExpandedRowCount="${nb_of_columns}" x:FullColumns="1"
 x:FullRows="1">
 % for x in range(0,nb_of_columns):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
+% if data.get('form').get('header'):
+% for line in data.get('form').get('header'):
+<Row>
+% for value in line:
+<Cell ss:StyleID="ssBoldLeft">
+   <Data ss:Type="String">${value}</Data>
+</Cell>
+% endfor
+</Row>
+% endfor
+<Row/>
+% endif
 <Row>
 <Cell ss:StyleID="ssBorderLeft"><Data ss:Type="String">Account code</Data></Cell>
 <Cell ss:StyleID="ssBorderLeft"><Data ss:Type="String">Account name</Data></Cell>

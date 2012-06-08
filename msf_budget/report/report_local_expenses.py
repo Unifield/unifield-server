@@ -48,19 +48,44 @@ class report_local_expenses(WebKitParser):
         domain = [('journal_id', 'not in', bad_journal_ids)]
         if 'form' in data:
             # general variables
+            wizard_obj = pool.get('wizard.local.expenses')
+            currency_obj = pool.get('res.currency')
+            breakdown_selection = dict(wizard_obj._columns['breakdown'].selection)
+            granularity_selection = dict(wizard_obj._columns['granularity'].selection)
             result_data = []
+            header_data = [['Local expenses report'],
+                           ['Breakdown:', breakdown_selection[data['form']['breakdown']]],
+                           ['Granularity:', granularity_selection[data['form']['granularity']]]]
             month_stop = data['form']['month_stop']
             # Booking currency
             if 'booking_currency_id' in data['form']:
                 domain.append(('currency_id', '=', data['form']['booking_currency_id']))
+                booking_currency = currency_obj.browse(cr, uid, data['form']['booking_currency_id'], context=context)
+                # Add booking currency to header
+                header_data.append(['Booking currency:', booking_currency.name])
+            
+            # Add output currency to header
+            output_currency = currency_obj.browse(cr, uid, data['form']['output_currency_id'], context=context)
+            header_data.append(['Output currency:', output_currency.name])
             # Cost Center
             cost_center = pool.get('account.analytic.account').browse(cr, uid, data['form']['cost_center_id'], context=context)
             cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cost_center)
             domain.append(('account_id', 'in', cost_center_ids))
+            # Add cost center to header
+            header_data.append(['Cost center:', cost_center.name])
             # Dates
             fiscalyear = pool.get('account.fiscalyear').browse(cr, uid, data['form']['fiscalyear_id'], context=context)
             domain.append(('date', '>=', fiscalyear.date_start))
             domain.append(('date', '<=', fiscalyear.date_stop))
+            # add fiscal year to header
+            header_data.append(['Fiscal year:', fiscalyear.name])
+            # Period name for header
+            if 'period_id' in data['form']:
+                period = pool.get('account.period').browse(cr,
+                                                           uid,
+                                                           data['form']['period_id'],
+                                                           context=context)
+                header_data.append(['Year-to-date:', period.name])
             # Get expenses
             expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
                                                                         uid,
@@ -91,6 +116,8 @@ class report_local_expenses(WebKitParser):
                     total_amount += sum(rounded_values)
             # Format total
             total_line = ['Total', ''] + total_line + [total_amount]
+            
+            data['form']['header'] = header_data
             data['form']['report_lines'] = result_data
             data['form']['total_line'] = total_line
                 

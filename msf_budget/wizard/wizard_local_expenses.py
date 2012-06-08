@@ -58,6 +58,7 @@ class wizard_local_expenses(osv.osv_memory):
         # Month stop for YTD
         month_stop = 12
         if wizard.period_id:
+            data['form'].update({'period_id': wizard.period_id.id})
             period = self.pool.get('account.period').browse(cr, uid, wizard.period_id.id, context=context)
             month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
         data['form'].update({'month_stop': month_stop})

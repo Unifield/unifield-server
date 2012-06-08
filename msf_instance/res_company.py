@@ -67,6 +67,7 @@ class res_company(osv.osv):
                 # refresh all objects
                 for object in ['account.analytic.journal', 'account.journal', 'account.analytic.line', 'account.move', 'account.move.line', 'account.bank.statement']:
                     self._refresh_objects(cr, uid, object, old_instance_id, vals['instance_id'], context=context)
+        return super(res_company, self).write(cr, uid, ids, vals, context=context)
                 
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
