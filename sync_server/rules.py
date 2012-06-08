@@ -144,14 +144,14 @@ class sync_rule(osv.osv):
         rules_to_send = []
         for group_id, rule_ids in rules_ids.items():
             for rule in self.browse(cr, uid, rule_ids):
-                if rule.direction == 'bidirectional':
-                    rules_to_send.append(rule.id)
-                elif rule.direction == 'up' and entity.parent_id: #got a parent in the same group
+                if rule.direction == 'up' and entity.parent_id: #got a parent in the same group
                     if group_id in ancestor_group:
                         rules_to_send.append(rule.id)
                 elif rule.direction == 'down' and entity.children_ids: #got children in the same group
                     if group_id in children_group:
                         rules_to_send.append(rule.id)
+                else:
+                    rules_to_send.append(rule.id)
                     
         return rules_to_send
     
@@ -299,8 +299,6 @@ class sync_rule(osv.osv):
             error = err or error
             message.append(mess)
             # Check Owner Field
-            import ipdb
-            ipdb.set_trace()
             mess, err = check_obj._check_owner_field(cr, uid, rec, context)
             error = err or error
             message.append(mess)

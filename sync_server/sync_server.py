@@ -494,6 +494,7 @@ class sync_manager(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an error message if a is False
         """
+        print entity, packet
         res = self.pool.get("sync.server.update").unfold_package(cr, 1, entity, packet, context=context)
         return (True, res)
             
@@ -539,7 +540,6 @@ class sync_manager(osv.osv):
                               {
                                     'model': string : model's name of the update
                                     'source_name' : string : source entity's name
-                                    'owner_name' : string : owner entity's name
                                     'fields' : string : list of fields to include, format : a list of string, same format as the one needed for export data
                                     'sequence' : update's sequence number, a integer
                                     'fallback_values' : update_master.rule_id.fallback_values

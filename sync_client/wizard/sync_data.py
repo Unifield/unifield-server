@@ -166,6 +166,7 @@ class update_to_send(osv.osv):
                     values[i] = ''
 
             owner = obj.read(cr, uid, id, [rule.owner_field])[rule.owner_field] if rule.owner_field else False
+            print "owner:",owner
 
             data = {
                 'session_id' : session_id,
@@ -200,7 +201,9 @@ class update_to_send(osv.osv):
                 break
             values.append({'version' : update.version,
                            'values' : update.values,
+                           'owner' : update.owner,
                            })
+            print "values:",values
             ids_in_package.append(update.id)
         data['load'] = values
         #for update in 
@@ -246,7 +249,6 @@ class update_received(osv.osv):
                 log(self, cr, uid, "Model %s does not exist" % packet['model'], data=packet, context=context)
         data = {
             'source' : packet['source_name'],
-            'owner' : packet['owner_name'],
             'model' : model_id[0],
             'fields' : packet['fields'],
             'sequence' : packet['sequence'],
@@ -257,11 +259,10 @@ class update_received(osv.osv):
         for load_item in packet['load']:
             data.update({
                 'version' : load_item['version'],
-                'values' : load_item['values']
+                'values' : load_item['values'],
+                'owner' : load_item['owner_name'],
             })
             self.create(cr, uid, data ,context=context)
-        
-        
         return len(packet['load'])
     
     def execute_update(self, cr, uid, context=None):
@@ -295,6 +296,11 @@ class update_received(osv.osv):
             rollback = False
             run = True
             res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
+            rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')])
+            if not (rec_id and self.pool.get(update.model.model).search(cr, uid, [('id','=',rec_id)])):
+                import ipdb
+                ipdb.set_trace()
+                raise Exception, "Exception detected!"
             if res and res[2]:
                 if res[0] != 1:
                     message.append(res[2])

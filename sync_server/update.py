@@ -55,26 +55,29 @@ class update(osv.osv):
     def unfold_package(self, cr, uid, entity, packet, context=None):
         data = {
             'source': entity.id,
-            'owner': packet['owner'],
             'model': packet['model'],
             'session_id': packet['session_id'],
             'rule_id': packet['rule_id'],
             'fields': packet['fields']
         }
         
-        server_ids = []
         for update in packet['load']:
+            if 'owner' not in update: raise Exception, "Packet field 'owner' absent"
+            else:
+                owner = self.pool.get('sync.server.entity').search(cr, uid, [('name','=',update['owner'])], limit=1)
+                owner = owner[0] if owner else 0
             data.update({
                 'version': update['version'],
-                'values': update['values']
+                'values': update['values'],
+                'owner': owner,
             })
             ids = self.search(cr, uid, [('version', '=', data['version']), 
                                   ('session_id', '=', data['session_id']),
+                                  ('owner','=', data['owner']),
                                   ('values', '=', data['values'])], context=context)
             if ids: #Avoid add two time the same update.
-                server_ids.append(ids[0])
                 continue
-            self.create(cr, uid, data ,context=context)
+            self.create(cr, uid, data,context=context)
             
         return True
     
@@ -101,8 +104,15 @@ class update(osv.osv):
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
-                privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
-                           self.pool.get('sync.server.entity')._get_all_children(cr, uid, update.owner.id, context=context)
+                if not update.owner:
+                    print "No owner specified even if in bi-private rule!"
+                    import ipdb
+                    ipdb.set_trace()
+                    privates = []
+                else:
+                    privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
+                               self.pool.get('sync.server.entity')._get_all_children(cr, uid, update.owner.id, context=context) + \
+                               [update.owner.id]
             else:
                 privates = []
             if (update.rule_id.direction == 'up' and update.source.id in children) or \
@@ -115,6 +125,7 @@ class update(osv.osv):
                 for group in entity.group_ids:
                     if group.id in s_group:
                         update_to_send.append(update)
+                        print "Update prepared for %s (source %s)" % (entity.name, update.source.name)
         return update_to_send
 
     def _save_puller(self, cr, uid, ids, context, entity_id):
@@ -138,12 +149,12 @@ class update(osv.osv):
         update_to_send = update_to_send[offset:offset+max_size]
         self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
+            print "No update to send to %s" %(entity.name,)
             return False
         update_master = update_to_send[0]
         complete_fields = self.get_additional_forced_field(update_master) 
         data = {
             'model' : update_master.model,
-            'owner_name' : update_master.owner.name,
             'source_name' : update_master.source.name,
             'fields' : tools.ustr(complete_fields),
             'sequence' : update_master.sequence,
@@ -158,10 +169,9 @@ class update(osv.osv):
             load.append({
                 'version' : update.version,
                 'values' : self.set_forced_values(update, complete_fields),
+                'owner_name' : update.owner.name if update.owner else '',
             })
-            
         data['load'] = load
-        
         return data
     
     def get_additional_forced_field(self, update): 
