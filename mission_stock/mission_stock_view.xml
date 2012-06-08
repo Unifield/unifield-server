@@ -8,11 +8,14 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Mission stock report">
+					<separator colspan="4" string="Mission stock" />
 					<field name="report_id" widget="selection" on_change="report_change(report_id)" />
-					<field name="with_valuation" />
 					<field name="last_update" />
-					<button name="update" string="Update" type="object" />
-					<button name="open_products_view" string="Open report" type="object" />
+					<separator colspan="4" string="Stock valuation" />
+					<field name="with_valuation" />
+					<separator colspan="4" string="Actions" />
+					<button special="cancel" string="Close window" icon="gtk-cancel" />
+					<button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="3" />
 				</form>
 			</field>
 		</record>
@@ -26,6 +29,8 @@
 		</record>
 		
 		<menuitem id="mission_stock_wizard_menu"
+				  parent="stock.next_id_61"
+				  sequence="5"
 			      action="mission_stock_wizard_action" />
 			      
 			      
@@ -38,18 +43,20 @@
 					<field name="default_code" />
 					<field name="name" />
 					<field name="uom_id" string="UoM" />
+					<field name="type" invisible="1" />
+					<field name="categ_id" invisible="1" />
 					<field name="internal_qty" />
-					<field name="internal_val" invisible="not context.get('with_valuation', False)" />
+					<field name="internal_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="stock_qty" />
-					<field name="stock_val" invisible="not context.get('with_valuation', False)" />
+					<field name="stock_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="central_qty" />
-					<field name="central_val" invisible="not context.get('with_valuation', False)" />
+					<field name="central_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="cross_qty" />
-					<field name="cross_val" invisible="not context.get('with_valuation', False)" />
+					<field name="cross_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="secondary_qty" />
-					<field name="secondary_val" invisible="not context.get('with_valuation', False)" />
+					<field name="secondary_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="cu_qty" />
-					<field name="cu_val" invisible="not context.get('with_valuation', False)" />
+					<field name="cu_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="product_amc" string="AMC" />
 					<field name="reviewed_consumption" string="FMC" />
 				</tree>

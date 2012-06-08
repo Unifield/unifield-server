@@ -24,7 +24,9 @@ from osv import fields
 
 from tools.translate import _
 
+import pooler
 import time
+import threading
 
 
 class stock_mission_report(osv.osv):
@@ -46,12 +48,34 @@ class stock_mission_report(osv.osv):
                 
         return res
     
+    def _src_local_report(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns the local or not report mission according to args
+        '''
+        res = []
+        
+        local_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        
+        for arg in args:
+            if arg[0] == 'local_report':
+                if (arg[1] == '=' and arg[2] in ('True', 'true', 't', 1)) or \
+                    (arg[1] in ('!=', '<>') and arg[2] in ('False', 'false', 'f', 0)):
+                    res.append(('instance_id', '=', local_instance_id))
+                elif (arg[1] == '=' and arg[2] in ('False', 'false', 'f', 0)) or \
+                    (arg[1] in ('!=', '<>') and arg[2] in ('True', 'true', 't', 1)):                     
+                    res.append(('instance_id', '!=', local_instance_id))
+                else:
+                    raise osv.except_osv(_('Error', _('Bad operator')))
+                
+        return res
+    
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'instance_id': fields.many2one('msf.instance', string='Instance', required=True),
         'full_view': fields.boolean(string='Is a full view report ?'),
-        'local_report': fields.function(_get_local_report, type='boolean', method=True, store=False,
-                                         string='Is a local report ?', help='If the report is a local report, it will be updated periodically'),
+        'local_report': fields.function(_get_local_report, fnct_search=_src_local_report, 
+                                        type='boolean', method=True, store=False,
+                                        string='Is a local report ?', help='If the report is a local report, it will be updated periodically'),
         'report_line': fields.one2many('stock.mission.report.line', 'mission_report_id', string='Lines'),
         'last_update': fields.datetime(string='Last update'),
     }
@@ -74,12 +98,22 @@ class stock_mission_report(osv.osv):
         
         return res
     
+    def background_update(self, cr, uid, ids, context=None):
+        """
+        Run the update of local stock report in background 
+        """
+        threaded_calculation = threading.Thread(target=self.update, args=(cr, uid, ids, context))
+        threaded_calculation.start()
+        return {'type': 'ir.actions.act_window_close'}
+    
     def update(self, cr, uid, ids, context=None):
         '''
         Create lines if new products exist or update the existing lines
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        cr = pooler.get_db(cr.dbname).cursor()
         
         line_obj = self.pool.get('stock.mission.report.line')
         
@@ -102,12 +136,12 @@ class stock_mission_report(osv.osv):
             product_diff = filter(lambda x:x not in product_in_report, product_ids)
             for product in product_diff:
                 line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report.id}, context=context))
+        
+            # Update the update date on report
+            self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 
         # Update all lines
         line_obj.update(cr, uid, line_ids, context=context)
-        
-        # Update the update date on report
-        self.write(cr, uid, ids, {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
         
         return True
                 

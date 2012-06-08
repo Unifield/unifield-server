@@ -30,9 +30,29 @@ class mission_stock_wizard(osv.osv_memory):
     
     _columns = {
         'report_id': fields.many2one('stock.mission.report', string='Report', required=True),
-        'with_valuation': fields.boolean(string='Display stock valuation ?'),
+#        'with_valuation': fields.boolean(string='Display stock valuation ?'),
+        'with_valuation': fields.selection([('true', 'Yes'), ('false', 'No')], string='Display stock valuation ?', 
+                                           required=True),
         'last_update': fields.datetime(string='Last update', readonly=True),
     }
+    
+    _defaults = {
+        'with_valuation': lambda *a: 'false',
+    }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Choose the first local report as default
+        '''
+        res = super(mission_stock_wizard, self).default_get(cr, uid, fields, context=context)
+        
+        local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True)], context=context)
+        if local_id:
+            res['report_id'] = local_id[0]
+            res['last_update'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).last_update
+            
+
+        return res
     
     def report_change(self, cr, uid, ids, report_id, context=None):
         v = {}
@@ -74,6 +94,6 @@ class mission_stock_wizard(osv.osv_memory):
         
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
-        return self.pool.get('stock.mission.report').update(cr, uid, ids)
+        return self.pool.get('stock.mission.report').background_update(cr, uid, ids)
         
 mission_stock_wizard()
