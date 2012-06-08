@@ -2,6 +2,45 @@
 <openerp>
     <data>
 
+
+
+
+
+
+
+        <record model="ir.ui.view" id="product_replace_tree">
+            <field name="name">product.replace.tree</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_product_tree_view" />
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+				<data>            
+                        <xpath expr="/tree" position="replace">
+                            <tree colors="red:virtual_available&lt;0;blue:virtual_available&gt;=0 and state in ('draft', 'end', 'obsolete');black:virtual_available&gt;=0 and state not in ('draft', 'end', 'obsolete')" string="Products">
+                            <field name="default_code" string="Code"/>
+                            <field name="name" string="Description"/>
+                            <field name="categ_id" invisible="1"/>
+                            <field name="variants" groups="product.group_product_variant"/>
+                            <field name="uom_id" string="UoM"/>
+                            <field name="type"   invisible="1" />
+                            <field name="qty_available"/>
+                            <field name="virtual_available"/>
+                            <field name="product_amc" string="AMC"/>
+                            <field name="reviewed_consumption" string="FMC" />
+                            <!--<field name="lst_price"/>-->
+                            <field name="price" invisible="not context.get('pricelist',False)"/>
+                            <field name="standard_price"/>
+                            <field name="state" groups="base.group_extended"/>
+                            <field name="international_status"/>
+                           </tree>
+                        </xpath>
+            	</data>
+            </field>
+        </record>
+
+
+
+
         <record model="ir.ui.view" id="product_account_no_sales_tax">
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>
@@ -29,12 +68,12 @@
                    <group colspan="4" col="6">
                         <group colspan="1" col="2">
                             <separator string="Codes" colspan="2"/>
-                            <field name="default_code" required="1"/>
+                            <field name="default_code" required="1" string="Code"/>
                             <field name="old_code"/>
                         </group>
                         <group colspan="4" col="2">
                             <separator string="Name" colspan="2"/>
-                            <field name="name"/>
+                            <field name="name" string="Description"/>
                             <field groups="product.group_product_variant" name="variants" />
                         </group>
                     </group>
@@ -285,6 +324,7 @@
             <field name="arch" type="xml">
                <field name="default_code" position="after">
                    <field name="old_code"/>
+
                </field>
             </field>
         </record>
@@ -335,9 +375,9 @@
                    <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
                    <filter string="Service" icon="terp-accessories-archiver" domain="[('type','=','service')]"/>
                    <separator orientation="vertical"/>
-                   <field name="default_code"/>
-                   <field name="name"/>
-                   <field name="categ_id" widget="selection" operator="child_of" groups="base.group_extended"/>
+                   <field name="default_code" string="Code"/>
+                   <field name="name" string="Description"/>
+                   <field name="list_ids" widget="many2one" context="{'list': self}" />
                    <newline/>
                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
@@ -345,7 +385,6 @@
                    <newline/>
                    <group expand="0" string="Extended Filters..." groups="base.group_extended">
                        <field name="pricelist_id" widget="selection" context="{'pricelist': self}" />
-                       <field name="list_ids" widget="many2one" context="{'list': self}" />
                    </group>
                    <newline/>
                    <group  expand='0' string='Group by...' groups="base.group_extended">
@@ -359,6 +398,29 @@
                 </search>
             </field>
         </record>
+
+        <record id="product_search_replace_ext" model="ir.ui.view">
+            <field name="name">product.search.replace.ext</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="product.product_search_form_view"/>
+            <field name="priority" eval="45"/>
+            <field name="arch" type="xml">
+				<data>
+                    <xpath expr="/search/group[@string='Extended Filters...']" position="replace">
+                    </xpath>
+				</data>
+            </field>
+        </record>
+
+        <delete id="product.action_product_price_list" model="ir.actions.act_window" />
+        <delete id="product.report_product_label" model="ir.actions.report.xml" />
+        <delete id="stock.report_product_history" model="ir.actions.report.xml" />
+
+        <delete id="procurement.act_make_procurement" model="ir.actions.act_window" />
+        <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
+
+
 
         <menuitem id="menu_main_product" name="Products" sequence="1" 
                   web_icon_hover="images/products.png"

@@ -30,7 +30,7 @@
 								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 						</group>
 						<newline />
-						<group expand="1" string="Optional Nomenclature Filters...">
+						<group expand="0" string="Optional Nomenclature Filters...">
 							<field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 							<field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 							<field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
