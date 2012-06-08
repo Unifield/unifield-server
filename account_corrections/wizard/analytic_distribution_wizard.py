@@ -73,6 +73,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     # if period is open, do an override, except if FP needs to reverse the line
                     if period.state != 'done' and oline.id not in to_reverse:
                         to_override.append((oline.id, 'cost_center_id', nline.cost_center_id.id))
+                    elif period.state == 'done':
+                        to_reverse.append(oline.id)
                 # Only reverse line if destination have changed
                 if oline.destination_id.id != nline.destination_id.id:
                     to_reverse.append(oline.id)
@@ -133,7 +135,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if wiz_line.distribution_line_id.id not in old_line_ids:
                     amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
                     context = {'date': current_date}
-                    func_amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount, context=context)
+                    func_amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount, round=False, context=context)
                     # Create new lines
                     vals = {
                         'account_id': wiz_line.analytic_id and wiz_line.analytic_id.id or False,
@@ -171,13 +173,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                         if line_type == "funding.pool":
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
+                        print "OVERFOUND: ", too_ana_ids
                         too_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
                         if over[1] != 'percentage':
                             self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {over[1]: over[2]})
                         else:
                             for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, too_ana_ids):
                                 context = {'date': ana_line.source_date or ana_line.date}
-                                func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, context=context)
+                                func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, round=False, context=context)
                                 new_amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
                                 self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {'amount_currency': new_amount, 'amount': func_amount,})
                 # Reverse process
@@ -188,19 +191,20 @@ class analytic_distribution_wizard(osv.osv_memory):
                         # Search lines
                         args.append(('distribution_id', '=', distrib_line.distribution_id.id))
                         args.append(('account_id', '=', distrib_line.analytic_id.id))
-                        args.append(('amount_currency', '=', amount))
+                        args.append(('amount_currency', '=', -1 * amount))
                         if line_type == 'funding.pool':
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
                         tor_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
+                        print "REVFOUND: %s %s" % (tor_ana_ids, args)
                         # Reverse lines
                         self.pool.get('account.analytic.line').reverse(cr, uid, tor_ana_ids)
                         # Mark old lines as non reallocatable (ana_ids)
                         self.pool.get('account.analytic.line').write(cr, uid, tor_ana_ids, {'is_reallocated': True,})
                         # Write new lines
-                        for ana_line in self.browse(cr, uid, tor_ana_ids):
+                        for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, tor_ana_ids):
                             context = {'date': ana_line.source_date or ana_line.date}
-                            func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, context=context)
+                            func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, round=False, context=context)
                             # Create new lines
                             vals = {
                                 'account_id': wiz_line.analytic_id and wiz_line.analytic_id.id or False,
@@ -333,6 +337,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Warning'), _('New analytic distribution is not compatible. Please check your distribution!'))
                     # Link new distribution to the move line
                     self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': new_distrib_id})
+                    return {'type': 'ir.actions.act_window_close'}
         # Get default method
         return super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
 
