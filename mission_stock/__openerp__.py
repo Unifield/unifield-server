@@ -32,6 +32,7 @@
                  "product",
                  "consumption_calculation",
                  "msf_config_locations",
+                 "msf_instance",
                  "msf_cross_docking",],
     'update_xml': [
         'mission_stock_view.xml',

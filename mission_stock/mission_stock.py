@@ -24,21 +24,40 @@ from osv import fields
 
 from tools.translate import _
 
+import time
+
 
 class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
     
+    def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the mission stock report is a local report or not
+        '''
+        res = {}
+        
+        local_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        
+        for report in self.browse(cr, uid, ids, context=context):
+            res[report.id] = False
+            if not report.full_view and report.instance_id.id == local_instance_id:
+                res[report.id] = True
+                
+        return res
+    
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
+        'instance_id': fields.many2one('msf.instance', string='Instance', required=True),
         'full_view': fields.boolean(string='Is a full view report ?'),
-        'local_report': fields.boolean(string='Is a local report ?', help='If the report is a local report, it wiil be updated periodically'),
+        'local_report': fields.function(_get_local_report, type='boolean', method=True, store=False,
+                                         string='Is a local report ?', help='If the report is a local report, it will be updated periodically'),
         'report_line': fields.one2many('stock.mission.report.line', 'mission_report_id', string='Lines'),
+        'last_update': fields.datetime(string='Last update'),
     }
     
     _defaults = {
         'full_view': lambda *a: False,
-        'local_report': lambda *a: False,
     }
     
     def create(self, cr, uid, vals, context=None):
@@ -47,8 +66,10 @@ class stock_mission_report(osv.osv):
         '''
         res = super(stock_mission_report, self).create(cr, uid, vals, context=context)
         
+        local_instance_id = self.pool.ges('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        
         # Not update lines for full view or non local reports
-        if vals.get('local_report', False) or not vals.get('full_view', False):
+        if (vals.get('instance_id', False) and vals['instance_id'] != local_instance_id) or not vals.get('full_view', False):
             self.update(cr, uid, res, context=context)
         
         return res
@@ -57,6 +78,7 @@ class stock_mission_report(osv.osv):
         '''
         Create lines if new products exist or update the existing lines
         '''
+        print time.strftime('%H:%M.%S')
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -84,6 +106,10 @@ class stock_mission_report(osv.osv):
                 
         # Update all lines
         line_obj.update(cr, uid, line_ids, context=context)
+        
+        # Update the update date on report
+        self.write(cr, uid, ids, {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+        print time.strftime('%H:%M.%S')
         
         return True
                 
@@ -128,34 +154,62 @@ class stock_mission_report_line(osv.osv):
         central_loc = location_obj.search(cr, uid, [('central_location_ok', '=', True)], context=context)
         cross_loc = location_obj.search(cr, uid, [('cross_docking_location_ok', '=', True)], context=context)
         cu_loc = location_obj.search(cr, uid, [('location_category', '=', 'consumption_unit')], context=context)
-        secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+        secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
         
         for line in self.browse(cr, uid, ids, context=context):
-            internal_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': internal_loc, 
-                                                                                                   'compute_child': False,
-                                                                                                   'states': ('done',), 
-                                                                                                   'what': ('in', 'out')})[line.product_id.id]
-                                                                                                   
-            stock_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': stock_loc, 
-                                                                                                   'compute_child': False,
-                                                                                                   'states': ('done',), 
-                                                                                                   'what': ('in', 'out')})[line.product_id.id]
-            central_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': central_loc, 
+            # Internal locations
+            if internal_loc:
+                internal_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': internal_loc, 
+                                                                                                         'compute_child': False,
+                                                                                                         'states': ('done',), 
+                                                                                                         'what': ('in', 'out')})[line.product_id.id]
+            else:
+                internal_qty = 0.00
+            
+            # Stock locations
+            if stock_loc:                                                                
+                stock_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': stock_loc, 
+                                                                                                      'compute_child': False,
+                                                                                                      'states': ('done',), 
+                                                                                                      'what': ('in', 'out')})[line.product_id.id]
+            else:
+                stock_qty = 0.00
+            
+            # Central stock locations
+            if central_loc:
+                central_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': central_loc, 
                                                                                                    'compute_child': True,
                                                                                                    'states': ('done',), 
                                                                                                    'what': ('in', 'out')})[line.product_id.id]
-            cross_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': cross_loc, 
+            else:
+                central_qty = 0.00
+
+            # Cross-docking locations
+            if cross_loc:
+                cross_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': cross_loc, 
                                                                                                    'compute_child': True,
                                                                                                    'states': ('done',), 
                                                                                                    'what': ('in', 'out')})[line.product_id.id]
-            secondary_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': secondary_location_id, 
-                                                                                                   'compute_child': False,
-                                                                                                   'states': ('done',), 
-                                                                                                   'what': ('in', 'out')})[line.product_id.id]
-            cu_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': cu_loc, 
+            else:
+                cross_qty = 0.00
+
+            # Secondary stock locations
+            if secondary_location_id != False:
+                secondary_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': secondary_location_id, 
+                                                                                                          'compute_child': False,
+                                                                                                          'states': ('done',), 
+                                                                                                          'what': ('in', 'out')})[line.product_id.id]
+            else:
+                secondary_qty = 0.00
+                
+            # Consumption unit locations
+            if cu_loc:
+                cu_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': cu_loc, 
                                                                                                    'compute_child': True,
                                                                                                    'states': ('done',), 
                                                                                                    'what': ('in', 'out')})[line.product_id.id]
+            else:
+                cu_qty = 0.00
             
             self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
                                             'stock_qty': stock_qty,
@@ -202,6 +256,7 @@ class product_product(osv.osv):
                                 'secondary_val': 0.00,
                                 'cu_qty': 0.00,
                                 'cu_val': 0.00,}
+    
         
         report = self.pool.get('stock.mission.report').browse(cr, uid, report_id[0], context=context)
         # If user wants to see the Full view...

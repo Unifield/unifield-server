@@ -31,7 +31,18 @@ class mission_stock_wizard(osv.osv_memory):
     _columns = {
         'report_id': fields.many2one('stock.mission.report', string='Report', required=True),
         'with_valuation': fields.boolean(string='Display stock valuation ?'),
+        'last_update': fields.datetime(string='Last update', readonly=True),
     }
+    
+    def report_change(self, cr, uid, ids, report_id, context=None):
+        v = {}
+        if report_id:
+            report = self.pool.get('stock.mission.report').browse(cr, uid, report_id, context=context)
+            v.update({'last_update': report.last_update})
+        else:
+            v.update({'last_update': False})
+        
+        return {'value': v}
     
     def open_products_view(self, cr, uid, ids, context=None):
         '''
@@ -60,5 +71,9 @@ class mission_stock_wizard(osv.osv_memory):
                 'view_id': [view_id],
                 'target': 'current',
                 'context': c}
+        
+    def update(self, cr, uid, ids, context=None):
+        ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
+        return self.pool.get('stock.mission.report').update(cr, uid, ids)
         
 mission_stock_wizard()

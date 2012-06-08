@@ -8,8 +8,10 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Mission stock report">
-					<field name="report_id" widget="selection" />
+					<field name="report_id" widget="selection" on_change="report_change(report_id)" />
 					<field name="with_valuation" />
+					<field name="last_update" />
+					<button name="update" string="Update" type="object" />
 					<button name="open_products_view" string="Open report" type="object" />
 				</form>
 			</field>
