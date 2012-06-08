@@ -154,8 +154,6 @@
             </field>
         </record>
 
-
-
 	 	<record id="view_partner_form_replace_2" model="ir.ui.view">
             <field name="name">view.partner.form.replace.2</field>
             <field name="model">res.partner</field>
@@ -211,17 +209,11 @@
                                     <separator colspan="4" string="Categories"/>
                                     <field  colspan="4" name="category_id" nolabel="1"/>
                             </group>
-
-
-
                         </page>
 	                </xpath>
                 </data>
             </field>
         </record>
-
-
-
 
 
 	</data>
