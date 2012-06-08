@@ -78,7 +78,6 @@ class stock_mission_report(osv.osv):
         '''
         Create lines if new products exist or update the existing lines
         '''
-        print time.strftime('%H:%M.%S')
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -109,7 +108,6 @@ class stock_mission_report(osv.osv):
         
         # Update the update date on report
         self.write(cr, uid, ids, {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-        print time.strftime('%H:%M.%S')
         
         return True
                 
@@ -132,6 +130,31 @@ class stock_mission_report_line(osv.osv):
         'cu_qty': fields.float(digits=(16,3), string='Internal Cons. Unit Qty.'),
     }
     
+    def _get_request(self, cr, location_ids, product_id):
+        '''
+        Build the SQL request and give the result
+        '''
+        if isinstance(location_ids, (int, long)):
+            location_ids = [location_ids]
+            
+        if not isinstance(product_id, (int, long)):
+            raise osv.except_osv(_('Error'), _('You can\'t build the request for some products !'))
+            
+        where_location = ','.join(str(x) for x in location_ids)
+            
+        request = '''SELECT sum(qty) 
+                 FROM 
+                     stock_report_prodlots 
+                 WHERE 
+                    location_id in (%s)
+                    AND
+                    product_id = %s
+                 GROUP BY product_id''' % (where_location, product_id)
+                 
+        cr.execute(request)
+        
+        return cr.fetchone()
+    
     def update(self, cr, uid, ids, context=None):
         '''
         Update line values
@@ -143,7 +166,6 @@ class stock_mission_report_line(osv.osv):
             ids = [ids]
         
         location_obj = self.pool.get('stock.location')
-        product_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
         
         stock_location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
@@ -159,55 +181,52 @@ class stock_mission_report_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             # Internal locations
             if internal_loc:
-                internal_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': internal_loc, 
-                                                                                                         'compute_child': False,
-                                                                                                         'states': ('done',), 
-                                                                                                         'what': ('in', 'out')})[line.product_id.id]
+                internal_qty = self._get_request(cr, internal_loc, line.product_id.id)
+                if internal_qty:
+                    internal_qty = internal_qty[0]
             else:
                 internal_qty = 0.00
             
             # Stock locations
-            if stock_loc:                                                                
-                stock_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': stock_loc, 
-                                                                                                      'compute_child': False,
-                                                                                                      'states': ('done',), 
-                                                                                                      'what': ('in', 'out')})[line.product_id.id]
+            if stock_loc:
+                stock_qty = self._get_request(cr, stock_loc, line.product_id.id)
+                if stock_qty:
+                    stock_qty = stock_qty[0]                                                           
             else:
                 stock_qty = 0.00
             
             # Central stock locations
             if central_loc:
-                central_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': central_loc, 
-                                                                                                   'compute_child': True,
-                                                                                                   'states': ('done',), 
-                                                                                                   'what': ('in', 'out')})[line.product_id.id]
+                central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
+                central_qty = self._get_request(cr, central_loc, line.product_id.id)
+                if central_qty:
+                    central_qty = central_qty[0]
             else:
                 central_qty = 0.00
 
             # Cross-docking locations
             if cross_loc:
-                cross_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': cross_loc, 
-                                                                                                   'compute_child': True,
-                                                                                                   'states': ('done',), 
-                                                                                                   'what': ('in', 'out')})[line.product_id.id]
+                cross_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cross_loc)], context=context)
+                cross_qty = self._get_request(cr, cross_loc, line.product_id.id)
+                if cross_qty:
+                    cross_qty = cross_qty[0]
             else:
                 cross_qty = 0.00
 
             # Secondary stock locations
             if secondary_location_id != False:
-                secondary_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': secondary_location_id, 
-                                                                                                          'compute_child': False,
-                                                                                                          'states': ('done',), 
-                                                                                                          'what': ('in', 'out')})[line.product_id.id]
+                secondary_qty = self._get_request(cr, secondary_location_id, line.product_id.id)
+                if secondary_qty:
+                    secondary_qty = secondary_qty[0]
             else:
                 secondary_qty = 0.00
                 
             # Consumption unit locations
             if cu_loc:
-                cu_qty = product_obj.get_product_available(cr, uid, [line.product_id.id], context={'location': cu_loc, 
-                                                                                                   'compute_child': True,
-                                                                                                   'states': ('done',), 
-                                                                                                   'what': ('in', 'out')})[line.product_id.id]
+                cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
+                cu_qty = self._get_request(cr, cu_loc, line.product_id.id)
+                if cu_qty:
+                    cu_qty = cu_qty[0]
             else:
                 cu_qty = 0.00
             
@@ -217,7 +236,6 @@ class stock_mission_report_line(osv.osv):
                                             'cross_qty': cross_qty,
                                             'secondary_qty': secondary_qty,
                                             'cu_qty': cu_qty}, context=context)
-            
         return True
     
 stock_mission_report_line()
@@ -242,72 +260,43 @@ class product_product(osv.osv):
         report_id = self.pool.get('stock.mission.report').search(cr, uid, [('id', '=', context.get('mission_report_id'))])
         if not context.get('mission_report_id', False) or not report_id:
             raise osv.except_osv(_('Error'), _('No mission stock report found !'))
-                
-        for product in ids:
-                res[product] = {'internal_qty': 0.00,
-                                'internal_val': 0.00,
-                                'stock_qty': 0.00,
-                                'stock_val': 0.00,
-                                'central_qty': 0.00,
-                                'central_val': 0.00,
-                                'cross_qty': 0.00,
-                                'cross_val': 0.00,
-                                'secondary_qty': 0.00,
-                                'secondary_val': 0.00,
-                                'cu_qty': 0.00,
-                                'cu_val': 0.00,}
-    
         
+        where = 'WHERE l.product_id in (%s)' % ','.join(str(x) for x in ids)
         report = self.pool.get('stock.mission.report').browse(cr, uid, report_id[0], context=context)
-        # If user wants to see the Full view...
-        if report.full_view:
-            # ... search the all stock reports
-            report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', False)], context=context)
-            for report in self.pool.get('stock.mission.report').browse(cr, uid, report_ids, context=context):
-                for line in report.report_line:
-                    if not line.product_id.id in res:
-                        res[line.product_id.id] = {'internal_qty': line.internal_qty,
-                                                   'internal_val': line.internal_qty*line.product_id.standard_price,
-                                                   'stock_qty': line.stock_qty,
-                                                   'stock_val': line.stock_qty*line.product_id.standard_price,
-                                                   'central_qty': line.central_qty,
-                                                   'central_val': line.central_qty*line.product_id.standard_price,
-                                                   'cross_qty': line.cross_qty,
-                                                   'cross_val': line.cross_qty*line.product_id.standard_price,
-                                                   'secondary_qty': line.secondary_qty,
-                                                   'secondary_val': line.secondary_qty*line.product_id.standard_price,
-                                                   'cu_qty': line.cu_qty,
-                                                   'cu_val': line.cu_qty*line.product_id.standard_price,
-                                                   }
-                    else:
-                        res[line.product_id.id]['internal_qty'] += line.internal_qty
-                        res[line.product_id.id]['internal_val'] += line.internal_qty*line.product_id.standard_price
-                        res[line.product_id.id]['stock_qty'] += line.stock_qty
-                        res[line.product_id.id]['stock_val'] += line.stock_qty*line.product_id.standard_price
-                        res[line.product_id.id]['central_qty'] += line.central_qty
-                        res[line.product_id.id]['central_val'] += line.central_qty*line.product_id.standard_price
-                        res[line.product_id.id]['cross_qty'] += line.cross_qty
-                        res[line.product_id.id]['cross_val'] += line.cross_qty*line.product_id.standard_price
-                        res[line.product_id.id]['secondary_qty'] += line.secondary_qty
-                        res[line.product_id.id]['secondary_val'] += line.secondary_qty*line.product_id.standard_price
-                        res[line.product_id.id]['cu_qty'] += line.cu_qty
-                        res[line.product_id.id]['cu_val'] += line.cu_qty*line.product_id.standard_price
-        else:                
-            for line in report.report_line:
-                res[line.product_id.id] = {'internal_qty': line.internal_qty,
-                                           'internal_val': line.internal_qty*line.product_id.standard_price,
-                                           'stock_qty': line.stock_qty,
-                                           'stock_val': line.stock_qty*line.product_id.standard_price,
-                                           'central_qty': line.central_qty,
-                                           'central_val': line.central_qty*line.product_id.standard_price,
-                                           'cross_qty': line.cross_qty,
-                                           'cross_val': line.cross_qty*line.product_id.standard_price,
-                                           'secondary_qty': line.secondary_qty,
-                                           'secondary_val': line.secondary_qty*line.product_id.standard_price,
-                                           'cu_qty': line.cu_qty,
-                                           'cu_val': line.cu_qty*line.product_id.standard_price,
-                                           }
-                
+        if not report.full_view:
+            where = 'AND l.mission_report_id = %s' % report.id    
+        
+        request = '''select l.product_id,
+                            pt.standard_price,
+                            sum(l.internal_qty), 
+                            sum(l.stock_qty), 
+                            sum(l.central_qty), 
+                            sum(l.cross_qty), 
+                            sum(l.secondary_qty), 
+                            sum(l.cu_qty) 
+                     from stock_mission_report_line l 
+                         left join product_product pp on pp.id = l.product_id
+                         left join product_template pt on pp.product_tmpl_id = pt.id
+                     %s 
+                     group by l.product_id, pt.standard_price
+                     order by product_id''' % (where,)
+                     
+        cr.execute(request)
+        for line in cr.fetchall():
+            res[line[0]] = {'internal_qty': line[2],
+                            'internal_val': line[2]*line[1],
+                            'stock_qty': line[3],
+                            'stock_val': line[3]*line[1],
+                            'central_qty': line[4],
+                            'central_val': line[4]*line[1],
+                            'cross_qty': line[5],
+                            'cross_val': line[5]*line[1],
+                            'secondary_qty': line[6],
+                            'secondary_val': line[6]*line[1],
+                            'cu_qty': line[7],
+                            'cu_val': line[7]*line[1],
+                            }
+        
         return res
                 
     
