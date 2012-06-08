@@ -46,7 +46,7 @@ class mission_stock_wizard(osv.osv_memory):
         '''
         res = super(mission_stock_wizard, self).default_get(cr, uid, fields, context=context)
         
-        local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True)], context=context)
+        local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         if local_id:
             res['report_id'] = local_id[0]
             res['last_update'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).last_update
@@ -85,12 +85,19 @@ class mission_stock_wizard(osv.osv_memory):
         view_id = view_ids[1]
         
         return {'type': 'ir.actions.act_window',
-                'res_model': 'product.product',
+                'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
-                'view_id': [view_id],
-                'target': 'current',
-                'context': c}
+                'domain': [('mission_report_id', '=', wiz_id.report_id.id)],
+                'target': 'current'}
+        
+#        return {'type': 'ir.actions.act_window',
+#                'res_model': 'product.product',
+#                'view_type': 'form',
+#                'view_mode': 'tree,form',
+#                'view_id': [view_id],
+#                'target': 'current',
+#                'context': c}
         
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)

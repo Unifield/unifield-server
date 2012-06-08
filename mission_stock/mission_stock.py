@@ -153,15 +153,88 @@ class stock_mission_report_line(osv.osv):
     _name = 'stock.mission.report.line'
     _description = 'Mission stock report line'
     
+    def _get_product_type_selection(self, cr, uid, context=None):
+        return self.pool.get('product.template').PRODUCT_TYPE
+    
+    def _get_product_subtype_selection(self, cr, uid, context=None):
+        return self.pool.get('product.template').PRODUCT_SUBTYPE
+    
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+    
+    def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
+        value = {}
+        for f in fields:
+            value[f] = False
+
+        ret = {}
+        for id in ids:
+            ret[id] = value
+        return ret
+    
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+            
+        if not args:
+            return []
+        narg = []
+        for arg in args:
+            el = arg[0].split('_')
+            el.pop()
+            narg=[('_'.join(el), arg[1], arg[2])]
+        
+        return narg
+    
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True),
+        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char'),
+        'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
+        'name': fields.related('product_id', 'name', string='Name', type='char'),
+        'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category'),
+        'type': fields.related('product_id', 'type', string='Type', type='selection', selection=_get_product_type_selection),
+        'subtype': fields.related('product_id', 'subtype', string='Subtype', type='selection', selection=_get_product_subtype_selection),
+        # mandatory nomenclature levels
+        'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
+        'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group'),
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', type='many2one', relation='product.nomenclature', string='Family'),
+        'nomen_manda_3': fields.related('product_id', 'nomen_manda_3', type='many2one', relation='product.nomenclature', string='Root'),
+        # optional nomenclature levels
+        'nomen_sub_0': fields.related('product_id', 'nomen_sub_0', type='many2one', relation='product.nomenclature', string='Sub Class 1'),
+        'nomen_sub_1': fields.related('product_id', 'nomen_sub_1', type='many2one', relation='product.nomenclature', string='Sub Class 2'),
+        'nomen_sub_2': fields.related('product_id', 'nomen_sub_2', type='many2one', relation='product.nomenclature', string='Sub Class 3'),
+        'nomen_sub_3': fields.related('product_id', 'nomen_sub_3', type='many2one', relation='product.nomenclature', string='Sub Class 4'),
+        'nomen_sub_4': fields.related('product_id', 'nomen_sub_4', type='many2one', relation='product.nomenclature', string='Sub Class 5'),
+        'nomen_sub_5': fields.related('product_id', 'nomen_sub_5', type='many2one', relation='product.nomenclature', string='Sub Class 6'),
+        'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
+        'product_amc': fields.related('product_id', 'product_amc', string='AMC'),
+        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', string='FMC'),
+        'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM'),
+        
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
         'internal_qty': fields.float(digits=(16,2), string='Internal Qty.'),
+        'internal_val': fields.float(digits=(16,2), string='Internal Val.'),
         'stock_qty': fields.float(digits=(16,2), string='Stock Qty.'),
+        'stock_val': fields.float(digits=(16,2), string='Stock Val.'),
         'central_qty': fields.float(digits=(16,2), string='Central Stock Qty.'),
+        'central_val': fields.float(digits=(16,2), string='Central Stock Val.'),
         'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
+        'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
         'secondary_qty': fields.float(digits=(16,3), string='Secondary Stock Qty.'),
+        'secondary_val': fields.float(digits=(16,3), string='Secondary Stock Val.'),
         'cu_qty': fields.float(digits=(16,3), string='Internal Cons. Unit Qty.'),
+        'cu_val': fields.float(digits=(16,3), string='Internal Cons. Unit Val.'),
     }
     
     def _get_request(self, cr, location_ids, product_id):
@@ -176,13 +249,15 @@ class stock_mission_report_line(osv.osv):
             
         where_location = ','.join(str(x) for x in location_ids)
             
-        request = '''SELECT sum(qty) 
+        request = '''SELECT sum(product_qty) 
                  FROM 
-                     stock_report_prodlots 
+                     report_stock_move
                  WHERE 
                     location_id in (%s)
                     AND
                     product_id = %s
+                    AND
+                    state = 'done'
                  GROUP BY product_id''' % (where_location, product_id)
                  
         cr.execute(request)
@@ -213,21 +288,26 @@ class stock_mission_report_line(osv.osv):
         secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
         
         for line in self.browse(cr, uid, ids, context=context):
+            st_price = line.product_id.st_price
             # Internal locations
             if internal_loc:
                 internal_qty = self._get_request(cr, internal_loc, line.product_id.id)
                 if internal_qty:
                     internal_qty = internal_qty[0]
+                    internal_val = internal_qty*st_price
             else:
                 internal_qty = 0.00
+                internal_val = 0.00
             
             # Stock locations
             if stock_loc:
                 stock_qty = self._get_request(cr, stock_loc, line.product_id.id)
                 if stock_qty:
-                    stock_qty = stock_qty[0]                                                           
+                    stock_qty = stock_qty[0]
+                    stock_val = stock_qty*st_price                                                    
             else:
                 stock_qty = 0.00
+                stock_val = 0.00
             
             # Central stock locations
             if central_loc:
@@ -235,8 +315,10 @@ class stock_mission_report_line(osv.osv):
                 central_qty = self._get_request(cr, central_loc, line.product_id.id)
                 if central_qty:
                     central_qty = central_qty[0]
+                    central_val = central_qty*st_price
             else:
                 central_qty = 0.00
+                central_val = 0.00
 
             # Cross-docking locations
             if cross_loc:
@@ -244,7 +326,9 @@ class stock_mission_report_line(osv.osv):
                 cross_qty = self._get_request(cr, cross_loc, line.product_id.id)
                 if cross_qty:
                     cross_qty = cross_qty[0]
+                    cross_val = cross_qty*st_price
             else:
+                cross_qty = 0.00
                 cross_qty = 0.00
 
             # Secondary stock locations
@@ -252,8 +336,10 @@ class stock_mission_report_line(osv.osv):
                 secondary_qty = self._get_request(cr, secondary_location_id, line.product_id.id)
                 if secondary_qty:
                     secondary_qty = secondary_qty[0]
+                    secondary_val = secondary_qty*st_price
             else:
                 secondary_qty = 0.00
+                secondary_val = 0.00
                 
             # Consumption unit locations
             if cu_loc:
@@ -261,15 +347,23 @@ class stock_mission_report_line(osv.osv):
                 cu_qty = self._get_request(cr, cu_loc, line.product_id.id)
                 if cu_qty:
                     cu_qty = cu_qty[0]
+                    cu_val = cu_qty*st_price
             else:
+                cu_qty = 0.00
                 cu_qty = 0.00
             
             self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
+                                            'internal_val': internal_val,
                                             'stock_qty': stock_qty,
+                                            'stock_val': stock_val,
                                             'central_qty': central_qty,
+                                            'central_val': central_val,
                                             'cross_qty': cross_qty,
+                                            'cross_val': cross_val,
                                             'secondary_qty': secondary_qty,
-                                            'cu_qty': cu_qty}, context=context)
+                                            'secondary_val': secondary_val,
+                                            'cu_qty': cu_qty,
+                                            'cu_val': cu_val}, context=context)
         return True
     
 stock_mission_report_line()
@@ -278,6 +372,23 @@ stock_mission_report_line()
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
+    
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        Order by quantity
+        '''
+        res = super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
+        
+        if order and 'internal_qty' in order and 'mission_report_id' in context:
+            line_ids = self.pool.get('stock.mission.report.line').search(cr, uid, [('mission_report_id', '=', context['mission_report_id']),
+                                                                                   ('product_id', 'in', res)],
+                                                                         order=order, 
+                                                                         context=context)
+            res = []
+            for line in self.pool.get('stock.mission.report.line').browse(cr, uid, line_ids):
+                res.append(line.product_id.id)
+        
+        return res
     
     def _get_report_qty(self, cr, uid, ids, field_name, args, context=None):
         '''
