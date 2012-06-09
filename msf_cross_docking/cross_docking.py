@@ -53,7 +53,7 @@ class purchase_order(osv.osv):
                 res['value'].update({'location_id': location_id})
             else:
                 res.update({'value': {'location_id': location_id}})
-            
+        
         return res
 
     def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, warehouse_id, context=None):
@@ -64,9 +64,16 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        l = self.pool.get('stock.warehouse').read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
         if cross_docking_ok:
             l = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+        else:
+            warehouse_obj = self.pool.get('stock.warehouse')
+            if not warehouse_id:
+                warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
+                if not warehouse_ids:
+                    return {'warning': {'title': _('Error !'), 'message': _('No Warehouse defined !')}, 'value': {'location_id': False}}
+                warehouse_id = warehouse_ids[0]
+            l = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
         return {'value': {'location_id': l}}
     
     def onchange_categ(self, cr, uid, ids, categ, context=None):
