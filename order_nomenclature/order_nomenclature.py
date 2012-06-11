@@ -101,6 +101,11 @@ class purchase_order_line(osv.osv):
         result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
             name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment)
+        
+        if not product and not comment and not nomen_manda_0 and qty != 0.00:
+            result.setdefault('warning', {}).update({'title': 'No product !',
+                                                     'message': 'Please fill the product or comment fields before changing the quantity.'})
+        
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']

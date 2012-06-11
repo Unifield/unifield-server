@@ -1140,7 +1140,7 @@ class purchase_order_line(osv.osv):
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
+        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
@@ -1194,7 +1194,10 @@ class purchase_order_line(osv.osv):
         
         return res
 
-    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, change_price_ok, state, old_price_unit, context=None):
+    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, 
+                          product_uom, product_qty, pricelist, partner_id, date_order, 
+                          change_price_ok, state, old_price_unit, 
+                          nomen_manda_0=False, comment=False, context=None):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
@@ -1202,6 +1205,12 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
+            
+        if not product_id and not comment and not nomen_manda_0 and price_unit != 0.00:
+            res.setdefault('warning', {}).update({'title': 'No product !',
+                                                  'message': 'Please fill the product or comment fields before changing the unit price.'})
+            res['value'].update({'price_unit': 0.00})
+            
         if not product_id or not product_uom or not product_qty:
             return res
         
