@@ -169,12 +169,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                         # search analytic lines
                         args.append(('distribution_id', '=', distrib_line.distribution_id.id))
                         args.append(('account_id', '=', distrib_line.analytic_id.id))
-                        args.append(('amount_currency', '=', amount))
+                        args.append(('amount_currency', '=', -1 * amount))
                         if line_type == "funding.pool":
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
                         too_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
-                        print "OVERFOUND: ", too_ana_ids
                         if over[1] != 'percentage':
                             self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {over[1]: over[2]})
                         else:
@@ -196,7 +195,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
                         tor_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
-                        print "REVFOUND: %s %s" % (tor_ana_ids, args)
                         # Reverse lines
                         self.pool.get('account.analytic.line').reverse(cr, uid, tor_ana_ids)
                         # Mark old lines as non reallocatable (ana_ids)
@@ -227,7 +225,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Check which old line have not been processed
             have_disappear = set(old_line_ids) - set(old_line_checked)
             if have_disappear:
-                print "DISAPPEARFOUND: %s" % have_disappear
                 for hd_line in self.pool.get(line_obj).browse(cr, uid, list(have_disappear)):
                     amount = (ml.debit_currency - ml.credit_currency) * hd_line.percentage / 100
                     args.append(('distribution_id', '=', hd_line.distribution_id.id))
