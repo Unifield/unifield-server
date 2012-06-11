@@ -37,6 +37,7 @@
     'update_xml': [
         'mission_stock_view.xml',
         'mission_stock_data.xml',
+        'security/ir.model.access.csv',
     ],
     "demo_xml": [],
     'test': [
