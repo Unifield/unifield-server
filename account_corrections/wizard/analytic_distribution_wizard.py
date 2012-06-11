@@ -77,18 +77,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                         to_override[oline.id].append(('cost_center_id', nline.cost_center_id.id))
                     elif period.state == 'done':
                         to_reverse.append(oline.id)
-                        # Delete ID from to_override if needed
-                        if oline.id in to_override:
-                            del to_override[oline.id]
                 # Only reverse line if destination have changed
                 if oline.destination_id.id != nline.destination_id.id:
                     if period.state != 'done' and oline.id not in to_reverse:
                         to_override[oline.id].append(('destination_id', nline.destination_id.id))
                     elif period.state == 'done':
                         to_reverse.append(oline.id)
-                        # Delete ID from to_override if needed
-                        if oline.id in to_override:
-                            del to_override[oline.id]
                 # Override line if percentage have changed
                 if oline.percentage != nline.percentage and oline.id not in to_reverse:
                     to_override[oline.id].append(('percentage', nline.percentage))
@@ -107,6 +101,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if not value:
                     raise osv.except_osv(_('Error'), _('A value is missing.'))
                 to_override[oline.id].append((field_name, value))
+        # Delete lines that are in override if they are in to_reverse
+        if oline.id in to_override:
+            del to_override[oline.id]
         return True, _("All is OK."), to_reverse, to_override
 
     def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id):
