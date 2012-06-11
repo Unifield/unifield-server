@@ -56,6 +56,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         nline = self.pool.get(nline_obj).browse(cr, uid, wiz_line_id)
         to_reverse = []
         to_override = defaultdict(list)
+        period = nline.wizard_id and nline.wizard_id.move_line_id and nline.wizard_id.move_line_id.period_id or False
+        if not period:
+            raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
         # Some cases
         if type == 'funding.pool':
             old_component = [oline.destination_id.id, oline.analytic_id.id, oline.cost_center_id.id, oline.percentage]
@@ -65,24 +68,27 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if oline.analytic_id.id != nline.analytic_id.id:
                     check_fp = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [oline.analytic_id.id])
                     if check_fp and oline.analytic_id.id in check_fp:
-                        return False, _("Old funding pool is on a soft/hard closed contract: %s") % (oline.analytic_id.code,)
+                        return False, _("Old funding pool is on a soft/hard closed contract: %s") % (oline.analytic_id.code,), to_reverse, to_override
                     to_override[oline.id].append(('account_id', nline.analytic_id.id))
                 # Override CC on open period, otherwise reverse line
                 if oline.cost_center_id.id != nline.cost_center_id.id:
-                    period = nline.wizard_id and nline.wizard_id.move_line_id and nline.wizard_id.move_line_id.period_id
-                    if not period:
-                        raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
                     # if period is open, do an override, except if FP needs to reverse the line
                     if period.state != 'done' and oline.id not in to_reverse:
                         to_override[oline.id].append(('cost_center_id', nline.cost_center_id.id))
                     elif period.state == 'done':
                         to_reverse.append(oline.id)
+                        # Delete ID from to_override if needed
+                        if oline.id in to_override:
+                            del to_override[oline.id]
                 # Only reverse line if destination have changed
                 if oline.destination_id.id != nline.destination_id.id:
-                    to_reverse.append(oline.id)
-                    # Delete ID from to_override if needed
-                    if oline.id in to_override:
-                        del to_override[oline.id]
+                    if period.state != 'done' and oline.id not in to_reverse:
+                        to_override[oline.id].append(('destination_id', nline.destination_id.id))
+                    elif period.state == 'done':
+                        to_reverse.append(oline.id)
+                        # Delete ID from to_override if needed
+                        if oline.id in to_override:
+                            del to_override[oline.id]
                 # Override line if percentage have changed
                 if oline.percentage != nline.percentage and oline.id not in to_reverse:
                     to_override[oline.id].append(('percentage', nline.percentage))
