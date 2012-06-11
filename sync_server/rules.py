@@ -65,7 +65,7 @@ class sync_rule(osv.osv):
     def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
         print "sync rule set model_id", field, value, args
         model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
-        print model_ids
+        print "model", model_ids
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
@@ -285,6 +285,14 @@ class sync_rule(osv.osv):
             model_ids = self.pool.get('sync.check_common')._get_all_model_ids(cr, uid, model)
         
         return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model, 'model_ids' : model_ids} }
+    
+    def create(self, cr, uid, values, context=None):
+        if values.get('model_id'):
+            model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',values.get('model_id'))], context=context)
+            if model_ids:
+                values['model_ref'] = model_ids[0]
+            
+        return super(sync_rule, self).create(cr, uid, values, context=context)
     
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
