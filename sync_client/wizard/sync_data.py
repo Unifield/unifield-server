@@ -305,8 +305,6 @@ class update_received(osv.osv):
             res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
             rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')])
             if not (rec_id and self.pool.get(update.model.model).search(cr, uid, [('id','=',rec_id)])):
-                import ipdb
-                ipdb.set_trace()
                 raise Exception, "Exception detected!"
             if res and res[2]:
                 if res[0] != 1:

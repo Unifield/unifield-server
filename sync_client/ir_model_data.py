@@ -375,9 +375,13 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         @param dest_field : field of the record from where the name will be extract
         @return a dictionnary with ids : dest_fields
     """
+    result = dict.fromkeys(ids, False)
+    if not dest_field:
+        return result
+    
     fields_ref = self.fields_get(cr, uid, context=context)
     field = fields_ref.get(dest_field)
-    result = {}
+    
     data_list = self.read(cr, uid, ids, ['id', dest_field], context=context)
     for data in data_list:
         if not data[dest_field]:

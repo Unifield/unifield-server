@@ -63,7 +63,9 @@ class sync_rule(osv.osv):
         return res
 
     def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
+        print "sync rule set model_id", field, value, args
         model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
+        print model_ids
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
