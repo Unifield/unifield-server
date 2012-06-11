@@ -44,6 +44,7 @@ class entity(osv.osv, Thread):
     
     __logger = logging.getLogger('sync.client')
 
+    _syncing = False
 
     def _auto_init(self,cr,context=None):
         res = super(entity,self)._auto_init(cr,context=context)
@@ -431,16 +432,24 @@ class entity(osv.osv, Thread):
         self.start()
         return True
         
-    
-
     def sync(self, cr, uid, context=None):
         context = context or {}
         # Init log dict for sync.monitor
-        log = {'error':'','data_pull':'null','status':'in-progress',
-            'msg_pull':'null','data_push':'null','msg_push':'null',}
+        log = {
+            'error' : '',
+            'status' : 'in-progress',
+            'data_pull' : 'null',
+            'msg_pull' : 'null',
+            'data_push' : 'null',
+            'msg_push' : 'null',
+        }
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()
-        if self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+        if self._syncing:
+            log['error'] += "Skipped: another synchronization is currently in progress. Please try again later."
+            log['status'] = 'failed'
+        elif self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            self._syncing = True
             # Start pulling data
             log['data_pull'] = 'in-progress';
             self.pool.get('sync.monitor').write(cr, uid, log_id, log)
@@ -461,6 +470,7 @@ class entity(osv.osv, Thread):
             self.pool.get('sync.monitor').write(cr, uid, log_id, log)
             cr.commit()
             self.push_message(cr, uid, log, context=context)
+            self._syncing = False
         else:
             log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
             log['status'] = 'failed'
