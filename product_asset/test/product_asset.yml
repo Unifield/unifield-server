@@ -135,7 +135,7 @@
     invo_date: '2011-03-22'
     invo_num: d
     invo_value: 120.1
-    invo_currency: d
+    invo_currency: base.EUR
     name: Boite \xc3\xa0 chaussures asset
     prod_int_code: CHAUSS-INT-1234
     prod_int_name: Boite \xc3\xa0 chaussures
