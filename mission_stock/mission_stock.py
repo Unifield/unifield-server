@@ -187,13 +187,23 @@ class stock_mission_report_line(osv.osv):
         
         return narg
     
+    def _get_template(self, cr, uid, ids, context=None):
+        res = {}
+        template_ids = self.pool.get('product.template').browse(cr, uid, ids, context=context)
+        for t in template_ids:
+            res[t.id] = True
+            
+        return res
+    
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char'),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
-        'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category'),
-        'type': fields.related('product_id', 'type', string='Type', type='selection', selection=_get_product_type_selection),
+        'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
+                                   store={'product.template': (_get_template, ['type'], 10)}),
+        'type': fields.related('product_id', 'type', string='Type', type='selection', selection=_get_product_type_selection, 
+                               store={'product.template': (_get_template, ['type'], 10)}),
         'subtype': fields.related('product_id', 'subtype', string='Subtype', type='selection', selection=_get_product_subtype_selection),
         # mandatory nomenclature levels
         'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
@@ -220,8 +230,8 @@ class stock_mission_report_line(osv.osv):
         'product_amc': fields.related('product_id', 'product_amc', string='AMC'),
         'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', string='FMC'),
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
-        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM'),
-        
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
+                                store={'product.template': (_get_template, ['type'], 10)}),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
         'internal_qty': fields.float(digits=(16,2), string='Internal Qty.'),
         'internal_val': fields.float(digits=(16,2), string='Internal Val.'),

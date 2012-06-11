@@ -72,13 +72,21 @@
 							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 					</group>
 					<newline />
-					<group expand="1" string="Optional Nomenclature Filters...">
+					<group expand="0" string="Optional Nomenclature Filters...">
 						<field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						<field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						<field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						<field name="nomen_sub_3_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						<field name="nomen_sub_4_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						<field name="nomen_sub_5_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+					</group>
+					<newline />
+					<group expand="0" string="Group by...">
+	 					<filter string='Category' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}" />
+                        <separator orientation="vertical"/>
+                        <filter string='Default UOM' icon="terp-mrp" domain="[]" context="{'group_by' : 'uom_id'}" />
+                        <separator orientation="vertical"/>
+                        <filter string='Type' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'type'}" />
 					</group>
                 </search>
 			</field>
@@ -107,6 +115,8 @@
 					<field name="cu_val" invisible="context.get('with_valuation', 'false') == 'false'" />
 					<field name="product_amc" />
 					<field name="reviewed_consumption" />
+					<field name="categ_id" invisible="1" />
+					<field name="type" invisible="1" />
 				</tree>
 			</field>
 		</record>
