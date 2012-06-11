@@ -499,7 +499,7 @@ class sync_server_connection(osv.osv):
         res = {}
         for connection in self.browse(cr, uid, ids, context=context):
             ## Make sure we get an integer (xmlrpc bug fixed in 6.1 server)
-            res[connection.id] = "Connected" if int(connection.uid) else "Disconnected"
+            res[connection.id] = "Connected" if int(connection.uid) and connection.password else "Disconnected"
         return res
  
     _password = {}
