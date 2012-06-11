@@ -286,13 +286,18 @@ class check_common(osv.osv):
             fields = ir_model_fields.browse(cr, uid, fields_ids, context=context)
             fields = [x.name for x in fields]
             if not rec.owner_field in fields: raise KeyError
-        except KeyError:
+        except:
             message += "failed!\n"
+            message += "Please choose one of these: %s\n" % (", ".join(fields),)
             error = True
-        else:
+        try:
+            if rec.owner_field not in eval(rec.included_fields): raise KeyError
+        except:
+            message += "failed!\n"
+            message += "The owner field must be present in the included fields!\n"
+            error = True
+        if not error:
             message += "pass.\n"
-        finally:
-            if error: message += "Please choose one of these: %s\n" % (", ".join(fields),)
         return (message, error)
 
 check_common()

@@ -105,10 +105,8 @@ class update(osv.osv):
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
                 if not update.owner:
-                    print "No owner specified even if in bi-private rule!"
-                    import ipdb
-                    ipdb.set_trace()
-                    privates = []
+                    print "No owner specified even if in bi-private rule! => Works like a bidirectional rule"
+                    privates = [entity.id]
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
                                self.pool.get('sync.server.entity')._get_all_children(cr, uid, update.owner.id, context=context) + \

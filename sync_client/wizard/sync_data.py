@@ -191,7 +191,6 @@ class update_to_send(osv.osv):
             'model' : update_master.model.model,
             'rule_id' : update_master.rule_id.server_id,
             'fields' : update_master.fields,
-            
         }
         ids_in_package = []
         values = []
@@ -203,8 +202,8 @@ class update_to_send(osv.osv):
                            'values' : update.values,
                            'owner' : update.owner,
                            })
-            print "values:",values
             ids_in_package.append(update.id)
+        print "values:",values
         data['load'] = values
         #for update in 
         return (ids_in_package, data)
