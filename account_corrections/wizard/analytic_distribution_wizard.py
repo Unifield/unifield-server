@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import time
+from collections import defaultdict
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
@@ -53,7 +54,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         nline_obj = '.'.join(['analytic.distribution.wizard', nline_type])
         nline = self.pool.get(nline_obj).browse(cr, uid, wiz_line_id)
         to_reverse = []
-        to_override = []
+        to_override = defaultdict(list)
         # Some cases
         if type == 'funding.pool':
             old_component = [oline.destination_id.id, oline.analytic_id.id, oline.cost_center_id.id, oline.percentage]
@@ -64,7 +65,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     check_fp = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [oline.analytic_id.id])
                     if check_fp and oline.analytic_id.id in check_fp:
                         return False, _("Old funding pool is on a soft/hard closed contract: %s") % (oline.analytic_id.code,)
-                    to_reverse.append(oline.id)
+                    to_override[oline.id].append(('account_id', nline.analytic_id.id))
                 # Override CC on open period, otherwise reverse line
                 if oline.cost_center_id.id != nline.cost_center_id.id:
                     period = nline.wizard_id and nline.wizard_id.move_line_id and nline.wizard_id.move_line_id.period_id
@@ -72,23 +73,18 @@ class analytic_distribution_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
                     # if period is open, do an override, except if FP needs to reverse the line
                     if period.state != 'done' and oline.id not in to_reverse:
-                        to_override.append((oline.id, 'cost_center_id', nline.cost_center_id.id))
+                        to_override[oline.id].append(('cost_center_id', nline.cost_center_id.id))
                     elif period.state == 'done':
                         to_reverse.append(oline.id)
                 # Only reverse line if destination have changed
                 if oline.destination_id.id != nline.destination_id.id:
                     to_reverse.append(oline.id)
                     # Delete ID from to_override if needed
-                    to_remove = []
-                    for el in to_override:
-                        if oline.id == el[0]:
-                            to_remove.append(el)
-                    # Second loop permits to not disturb first loop (by reducing its length)
-                    for tr in to_remove:
-                        to_override.remove(tr)
+                    if oline.id in to_override:
+                        del to_override[oline.id]
                 # Override line if percentage have changed
                 if oline.percentage != nline.percentage and oline.id not in to_reverse:
-                    to_override.append((oline.id, 'percentage', nline.percentage))
+                    to_override[oline.id].append(('percentage', nline.percentage))
         else:
             old_component = [oline.analytic_id.id, oline.percentage]
             new_component = [nline.analytic_id.id, nline.percentage]
@@ -103,7 +99,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     value = nline.percentage
                 if not value:
                     raise osv.except_osv(_('Error'), _('A value is missing.'))
-                to_override.append((oline.id, field_name, value))
+                to_override[oline.id].append((field_name, value))
         return True, _("All is OK."), to_reverse, to_override
 
     def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id):
@@ -163,8 +159,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), msg)
                 # Override process
                 if to_override:
-                    for over in to_override:
-                        distrib_line = self.pool.get(line_obj).browse(cr, uid, over[0])
+                    for old_line_id in to_override:
+                        distrib_line = self.pool.get(line_obj).browse(cr, uid, old_line_id)
                         amount = (ml.debit_currency - ml.credit_currency) * distrib_line.percentage / 100
                         # search analytic lines
                         args.append(('distribution_id', '=', distrib_line.distribution_id.id))
@@ -174,14 +170,20 @@ class analytic_distribution_wizard(osv.osv_memory):
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
                         too_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
-                        if over[1] != 'percentage':
-                            self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {over[1]: over[2]})
-                        else:
-                            for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, too_ana_ids):
-                                context = {'date': ana_line.source_date or ana_line.date}
-                                func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, round=False, context=context)
-                                new_amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
-                                self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {'amount_currency': new_amount, 'amount': func_amount,})
+                        # fetch all modifications
+                        vals = {}
+                        for couple in to_override[old_line_id]:
+                            # Compute all lines amount
+                            if couple[0] == 'percentage':
+                                for ana_line in self.pool.get('account.analytic.line').browse(cr, uid, too_ana_ids):
+                                    context = {'date': ana_line.source_date or ana_line.date}
+                                    func_amount = self.pool.get('res.currency').compute(cr, uid, ana_line.currency_id.id, company_currency_id, amount, round=False, context=context)
+                                    new_amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
+                                    self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {'amount_currency': new_amount, 'amount': func_amount,})
+                            else:
+                                vals.update({couple[0]: couple[1]})
+                        # Write changes
+                        self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, vals)
                 # Reverse process
                 if to_reverse:
                     for rev in to_reverse:

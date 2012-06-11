@@ -240,13 +240,13 @@ class analytic_account(osv.osv):
             # Only check funding pool accounts
             if aa.category != 'FUNDING':
                 continue
-            link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aa.id)], context=context)
+            link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aa.id)])
             format_ids = []
             for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
                 if link.contract_id:
                     format_ids.append(link.contract_id.id)
             contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
-            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
+            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids):
                 if contract.state in ['soft_closed', 'hard_closed']:
                     res.append(aa.id)
         return res
