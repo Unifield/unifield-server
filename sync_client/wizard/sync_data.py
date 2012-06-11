@@ -27,7 +27,11 @@ from datetime import datetime
 import tools
 import time
 import pprint
+import StringIO
+import traceback
 from sync_client.ir_model_data import link_with_ir_model
+
+import logging
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -222,6 +226,10 @@ class update_received(osv.osv):
 
     _name = "sync.client.update_received"
     _rec_name = 'source'
+    
+    __logger = logging.getLogger('sync.client')
+     
+
 
     _columns = {
         'source': fields.char('Source Instance', size=128, readonly=True), 
@@ -308,9 +316,10 @@ class update_received(osv.osv):
                 rollback = True
                 
         except Exception, e:
-            traceback.print_exc(file=sys.stdout)
-            print e
-            message.append(str(e))
+            tb = StringIO.StringIO()
+            traceback.print_exc(file=tb)
+            self.__logger.debug(tb)
+            message.append(str(tb))
             run = False
         #TODO problem
         #6 set version and sync_date

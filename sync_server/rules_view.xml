@@ -52,6 +52,7 @@
                         </group>
                         <field name="model_ref" on_change="invalidate(model_ref)" required="1"/>
                         <field name="applies_to_type"/>
+                        <field name="model_ids" invisible="1" />
                         <group colspan="2" col="4">
                             <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}"/>
                             <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)], 'required':[('applies_to_type','=',True)]}" widget="selection"/>
@@ -61,7 +62,7 @@
                         <separator string="Domain" colspan="2"/>
                         <field name="domain" on_change="invalidate(model_ref)" colspan="2" nolabel="1"/>
                         <separator string="Included fields (required)" colspan="2"/>
-                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref)" domain="[('model','=',model_id),('ttype','not in',['one2many','reference'])]">
+                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref)" domain="[('model_id','in', model_ids),('ttype','not in',['one2many','reference'])]">
                             <tree string="Included fields">
                                 <field name="name"/>
                                 <field name="field_description"/>

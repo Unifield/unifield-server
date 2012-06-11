@@ -12,3 +12,6 @@
 "funding_pool",81,"Finance Base Data: Funding Pool","account.analytic.account",,"True","sd.type_sec_id","Down","[('category','=','FUNDING')]","['name','code','category','type','date_start','date','description','accounts_ids/id','cost_center_ids/id']",0,"valid"
 "cc_fp_tree",82,"Finance Base Data: CC & FP tree","account.analytic.account",,"True","sd.type_sec_id","Down","[]","['parent_id/id']",0,"valid"
 "account_line",85,"Bidirectional Test: Analytical Line","account.analytic.line","owner","True","sd.type_sec_id","bi-private","[]","['name','account_id/id','general_account_id/id','ref','is_reversal','is_reallocated','reversal_origin','cost_center_id/id','currency_id/id','journal_id/id','amount','amount_currency','owner']",0,"valid"
+product,150,Product Base Data : Product,product.product,"",True,sd.type_sec_id,Down,[],"['default_code', 'international_status', 'name_template', 'name', 'nomen_manda_0/id', 'nomen_manda_1/id', 'nomen_manda_2/id', 'nomen_manda_3/id']",1,valid
+product_nom,140,Product Base Data : Product Nomenclature,product.nomenclature,"",True,sd.type_sec_id,Down,[],"['name','type']",1,valid
+product_nom_tree,141,Product Base Data : Product Nomenclature Tree,product.nomenclature,"",True,sd.type_sec_id,Down,"[('parent_id', '!=', '')]",['parent_id/id'],1,valid

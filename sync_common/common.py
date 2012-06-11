@@ -189,7 +189,9 @@ class check_common(osv.osv):
             for field in included_fields:
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
-                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): raise KeyError
+                model_ids = self._get_all_model_ids(cr, uid, rec.model_id)
+                print 'model_ids', model_ids
+                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model_id','in', model_ids),('name','=',base_field)], context=context)): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"
             error = True
@@ -209,16 +211,14 @@ class check_common(osv.osv):
     def _check_arguments(self, cr, uid, rec, title="", context=None):
         message = title
         error = False
-        print "check fields"
         try:
             field_error = False
-            print rec.arguments
             arguments = eval(rec.arguments)
-            print arguments
             for field in arguments:
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
-                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',base_field)], context=context)): 
+                model_ids = self._get_all_model_ids(cr, uid, rec.model_id)
+                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)): 
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -282,7 +282,8 @@ class check_common(osv.osv):
         try:
             fields = []
             ir_model_fields = self.pool.get('ir.model.fields')
-            fields_ids = ir_model_fields.search(cr, uid, [('model','=',rec.model_id)], context=context)
+            model_ids = self._get_all_model_ids(cr, uid, rec.model_id)
+            fields_ids = ir_model_fields.search(cr, uid, [('model','in', model_ids)], context=context)
             fields = ir_model_fields.browse(cr, uid, fields_ids, context=context)
             fields = [x.name for x in fields]
             if not rec.owner_field in fields: raise KeyError
@@ -300,5 +301,20 @@ class check_common(osv.osv):
             message += "pass.\n"
         return (message, error)
 
+
+    
+    def _get_all_model_ids(self, cr, uid, model_name):
+        def recur_get_model(model, res):
+            ids = self.pool.get('ir.model').search(cr, uid, [('model','=',model._name)])
+            res.extend(ids)
+            for parent in model._inherits.keys():
+                new_model = self.pool.get(parent)
+                recur_get_model(new_model, res)
+            return res
+           
+        model = self.pool.get(model_name)
+        return recur_get_model(model, [])
+            
 check_common()
+
 

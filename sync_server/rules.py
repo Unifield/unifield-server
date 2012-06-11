@@ -35,6 +35,19 @@ _field2type = {
     'datetime'  : 'str',
 }
 
+class ir_model_field(osv.osv):
+    _inherit = 'ir.model.fields'
+   
+    def search(self, cr, uid, args, offset=0, limit=80, order='', context=None, count=False):
+        print 'before', args
+        for index, arg in enumerate(args):
+            if isinstance(arg, (list, tuple)) and arg[0] == 'model_id' and arg[1] == 'in' and isinstance(arg[2], (list, tuple)) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3 and arg[2][0][0] ==6:
+                args[index] = ('model_id', 'in', arg[2][0][2])
+        print 'after', args
+        return super(ir_model_field, self).search(cr, uid, args, offset, limit, order, context, count)
+     
+ir_model_field()
+       
 class sync_rule(osv.osv):
     """ Synchronization Rule """
 
@@ -54,6 +67,14 @@ class sync_rule(osv.osv):
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
+    
+    def _get_all_model(self, cr, uid, ids, field, args, context=None):
+        res = dict.fromkeys(ids)
+        for rule_data in self.read(cr, uid, ids, ['model_id'], context=context):
+            if rule_data.get('model_id'):
+                res[rule_data['id']] = self.pool.get('sync.check_common')._get_all_model_ids(cr, uid, rule_data.get('model_id'))
+        return res
+    
 
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
@@ -80,6 +101,7 @@ class sync_rule(osv.osv):
         'fallback_values':fields.text('Fallback values', required = False),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
         'active': fields.boolean('Active'),
+        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True)
     }
 
     _defaults = {
@@ -255,10 +277,12 @@ class sync_rule(osv.osv):
     def invalidate(self, cr, uid, ids, model_ref, context=None):
         print model_ref
         model = ''
+        model_ids = []
         if model_ref:
             model = self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model
+            model_ids = self.pool.get('sync.check_common')._get_all_model_ids(cr, uid, model)
         
-        return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
+        return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model, 'model_ids' : model_ids} }
     
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
@@ -348,7 +372,7 @@ class message_rule(osv.osv):
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
-
+    
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
         'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
