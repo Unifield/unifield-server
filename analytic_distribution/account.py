@@ -69,11 +69,32 @@ class account_destination_link(osv.osv):
     _name = 'account.destination.link'
     _description = 'Destination link between G/L and Analytic accounts'
 
+    def _get_tuple_name(self, cr, uid, ids, name=False, args=False, context=None):
+        """
+        Get account_id code for tuple name
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse given invoices
+        for t in self.browse(cr, uid, ids):
+            res[t.id] = ''
+            if t.account_id and t.account_id.code:
+                res[t.id] = t.account_id.code
+        return res
+
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
+        'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, store=True),
     }
+
+    _order = 'name ASC'
 
 account_destination_link()
 
