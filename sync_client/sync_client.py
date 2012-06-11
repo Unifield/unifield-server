@@ -440,31 +440,33 @@ class entity(osv.osv, Thread):
             'msg_pull':'null','data_push':'null','msg_push':'null',}
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()
-        # Start pulling data
-        
-        log['data_pull'] = 'in-progress';
-        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-        cr.commit()
-        self.pull_update(cr, uid, log, context=context)
-        # Start pulling message
-        
-        log['msg_pull'] = 'in-progress';
-        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-        cr.commit()
-        self.pull_message(cr, uid, log, context=context)
-        # Start pushing data
-        log['data_push'] = 'in-progress';
-        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-        cr.commit()
-        self.push_update(cr, uid, log, context=context)
-        # Start pushing message
-        log['msg_push'] = 'in-progress';
-        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-        cr.commit()
-        self.push_message(cr, uid, log, context=context)
+        if self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            # Start pulling data
+            log['data_pull'] = 'in-progress';
+            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+            cr.commit()
+            self.pull_update(cr, uid, log, context=context)
+            # Start pulling message
+            log['msg_pull'] = 'in-progress';
+            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+            cr.commit()
+            self.pull_message(cr, uid, log, context=context)
+            # Start pushing data
+            log['data_push'] = 'in-progress';
+            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+            cr.commit()
+            self.push_update(cr, uid, log, context=context)
+            # Start pushing message
+            log['msg_push'] = 'in-progress';
+            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+            cr.commit()
+            self.push_message(cr, uid, log, context=context)
+        else:
+            log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
+            log['status'] = 'failed'
         # Determine final status
         log.update({'end':datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'status': 'failed' if 'failed' in list(v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull'))  else 'ok'})
+            'status': 'failed' if 'failed' in [v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]  else 'ok'})
         self.pool.get('sync.monitor').write(cr, uid, log_id, log)
         cr.commit()
         return log['status'] == 'ok'
@@ -499,7 +501,7 @@ class sync_server_connection(osv.osv):
         res = {}
         for connection in self.browse(cr, uid, ids, context=context):
             ## Make sure we get an integer (xmlrpc bug fixed in 6.1 server)
-            res[connection.id] = "Connected" if int(connection.uid) else "Disconnected"
+            res[connection.id] = "Connected" if int(connection.uid) and connection.password else "Disconnected"
         return res
  
     _password = {}
