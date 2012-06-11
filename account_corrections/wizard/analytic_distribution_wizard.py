@@ -173,8 +173,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                         if line_type == "funding.pool":
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
-                        print "OVERFOUND: ", too_ana_ids
                         too_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
+                        print "OVERFOUND: ", too_ana_ids
                         if over[1] != 'percentage':
                             self.pool.get('account.analytic.line').write(cr, uid, too_ana_ids, {over[1]: over[2]})
                         else:
@@ -227,6 +227,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Check which old line have not been processed
             have_disappear = set(old_line_ids) - set(old_line_checked)
             if have_disappear:
+                print "DISAPPEARFOUND: %s" % have_disappear
                 for hd_line in self.pool.get(line_obj).browse(cr, uid, list(have_disappear)):
                     amount = (ml.debit_currency - ml.credit_currency) * hd_line.percentage / 100
                     args.append(('distribution_id', '=', hd_line.distribution_id.id))
@@ -336,7 +337,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, new_distrib_id, False, wiz.account_id.id) != 'valid':
                         raise osv.except_osv(_('Warning'), _('New analytic distribution is not compatible. Please check your distribution!'))
                     # Link new distribution to the move line
-                    self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': new_distrib_id})
+                    # WARNING CHECK=FALSE IS NEEDED in order NOT to delete OLD ANALYTIC LINES (and so permits reverse)
+                    self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': new_distrib_id}, check=False, update_check=False)
                     return {'type': 'ir.actions.act_window_close'}
         # Get default method
         return super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
