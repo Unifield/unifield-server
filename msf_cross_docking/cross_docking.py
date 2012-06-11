@@ -89,6 +89,9 @@ class purchase_order(osv.osv):
         if categ in ['service', 'transport']:
             bool_value = False
             defined_location = self.pool.get('stock.location').get_service_location(cr, uid)
+        else:
+            bool_value = False
+            defined_location = self.browse(cr, uid, ids, context=context)[0].warehouse_id.lot_input_id.id
         return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
 
     def write(self, cr, uid, ids, vals, context=None):
