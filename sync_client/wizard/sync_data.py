@@ -165,7 +165,7 @@ class update_to_send(osv.osv):
                 if field != 'id' and fields_ref[field]['type'] in ('many2one','many2many',) and not values[i]:
                     values[i] = ''
 
-            owner = obj.read(cr, uid, id, [rule.owner_field])[rule.owner_field] if rule.owner_field else False
+            owner = obj.get_destination_name(cr, uid, [id], rule.owner_field, context=context)[id]
             print "owner:",owner
 
             data = {
