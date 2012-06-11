@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 import time
 from collections import defaultdict
+from tools.misc import flatten
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
@@ -109,6 +110,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
         wizard = self.browse(cr, uid, wizard_id)
+        to_update  = [] # NEEDED for analytic lines to be updated with new analytic distribution after its creation
         # Fetch funding pool lines, free 1 lines and free 2 lines
         for line_type in ['funding.pool', 'free.1', 'free.2']:
             # Prepare some values
@@ -170,6 +172,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
                         too_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
+                        if too_ana_ids:
+                            to_update.append(too_ana_ids)
                         # fetch all modifications
                         vals = {}
                         for couple in to_override[old_line_id]:
@@ -239,7 +243,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     hd_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, args)
                     # reverse lines
                     self.pool.get('account.analytic.line').reverse(cr, uid, hd_ana_ids)
-        return True
+        if to_update:
+            to_update = flatten(to_update)
+        return True, to_update
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
@@ -325,7 +331,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # JUST Distribution have changed
                 else:
                     # Check all lines to proceed to changes
-                    self.do_analytic_distribution_changes(cr, uid, wiz.id, distrib_id)
+                    to_update = []
+                    res_changes, to_update = self.do_analytic_distribution_changes(cr, uid, wiz.id, distrib_id)
                     # Create new distribution
                     new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                     self.write(cr, uid, [wiz.id], {'distribution_id': new_distrib_id})
@@ -335,6 +342,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                     # Check new distribution state
                     if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, new_distrib_id, False, wiz.account_id.id) != 'valid':
                         raise osv.except_osv(_('Warning'), _('New analytic distribution is not compatible. Please check your distribution!'))
+                    # Link new distribtion to analytic lines that have been overriden
+                    ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distribution_id', '=', distrib_id), ('move_id', "=", wiz.move_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+                    if to_update:
+                        for id in to_update:
+                            if id not in ana_line_ids:
+                                ana_line_ids.append(id)
+                    res_ana = self.pool.get('account.analytic.line').write(cr, uid, ana_line_ids, {'distribution_id': new_distrib_id})
                     # Link new distribution to the move line
                     # WARNING CHECK=FALSE IS NEEDED in order NOT to delete OLD ANALYTIC LINES (and so permits reverse)
                     self.pool.get('account.move.line').write(cr, uid, wiz.move_line_id.id, {'analytic_distribution_id': new_distrib_id}, check=False, update_check=False)
