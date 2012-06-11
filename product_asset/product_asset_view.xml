@@ -140,7 +140,7 @@
 								<field name="invo_num" colspan="4" />
 								<field name="invo_date" colspan="4" />
 								<field name="invo_value" />
-								<field name="invo_currency" />
+								<field name="invo_currency"  widget="many2one" />
 								<field name="invo_supplier" colspan="4" />
 								<field name="invo_donator_code" colspan="4" />
 								<field name="invo_certif_depreciation" colspan="4" />
@@ -360,7 +360,7 @@
 
 		<!-- Asset Types in SALES>Products>Asssets -->
 		<menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
-			parent="menu_asset_sales" sequence="1" />
+			parent="product.prod_config_main" sequence="1" />
 
 	</data>
 </openerp>

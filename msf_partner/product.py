@@ -34,12 +34,33 @@ class product_supplierinfo(osv.osv):
             r[supinfo['id']] = supinfo['sequence']
         return r
 
+    def _get_bool_manu(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        ret = {}
+        for prod in self.browse(cr, uid, ids):
+            ret[prod.id] = prod.manufacturer_id and True or False
+        return ret
+
+    def _get_first_price(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        ret = {}
+        for prod in self.browse(cr, uid, ids):
+            if prod.pricelist_ids:
+                ret[prod.id] = prod.pricelist_ids[0].price
+        return ret
+
     _columns = {
         'manufacturer_id': fields.many2one('res.partner', string='Manufacturer', domain=[('manufacturer', '=', 1)]),
         'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
         'third_manufacturer_id': fields.many2one('res.partner', string='Third Manufacturer', domain=[('manufacturer', '=', 1)]),
         'company_id': fields.many2one('res.company','Company',select=1),
         'sequence_bis': fields.function(_get_order_id, method=True, type="integer", help="Assigns the priority to the list of product supplier.", string="Ranking"),
+        'check_manufacturer': fields.function(_get_bool_manu, method=True, type="boolean", string="Manufacturer"),
+        'get_first_price': fields.function(_get_first_price, method=True, type="float", string="Indicative Price"),
+    
+
     }
     
     _defaults = {

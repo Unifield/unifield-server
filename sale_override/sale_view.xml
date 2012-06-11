@@ -170,11 +170,11 @@
                   parent="menu_sales_deliver_products" sequence="10"/>
 
         <!-- Products -->
-        <menuitem action="product.product_category_action"
+        <!--<menuitem action="product.product_category_action"
                   id="product.menu_products_category"
                   groups="base.group_extended"
                   parent="base.menu_product"
-                  sequence="5" />
+                  sequence="5" />-->
 
     </data>
 </openerp>

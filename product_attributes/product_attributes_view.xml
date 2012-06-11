@@ -139,7 +139,15 @@
                                 <field name="gmdn_code" colspan="2"/>
                                 <field name="gmdn_description" colspan="2"/>
                                 <field name="closed_article" colspan="2"/>
+                                <separator string="Import restrictions" colspan="4"/>
+                                <field name="restricted_country" colspan="2"/>
+                                <field name="country_restriction" colspan="2" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
+
+
+
+
+
                         </page>
                         <page string="Miscellaneous">
                             <group colspan="2" col="2">
@@ -157,9 +165,7 @@
                                 <field name="criticism" colspan="2"/>
                                 <field name="abc_class" colspan="2"/>
                             </group>
-                            <separator string="Import restrictions" colspan="4"/>
-                            <field name="restricted_country" colspan="2"/>
-                            <field name="country_restriction" colspan="2" attrs="{'readonly':[('restricted_country','=',False)]}"/>
+
                             <separator string="Code remarks section" colspan="4"/>
                             <group colspan="2" col="2">
                                 <field name="section_code_ids" colspan="2" nolabel="1">
@@ -173,12 +179,49 @@
                             <group colspan="2" col="2">
                                 <field name="supply_source_ids" colspan="2" nolabel="1"/>
                             </group>
-                            <field name="library" colspan="2"/>
+
                             <separator string="Associated Products" colspan="4"/>
                             <field name="options_ids" colspan="4" nolabel="1"/>
                         </page>
                         <page string="Suppliers">
-                            <field colspan="4" name="seller_ids" nolabel="1"/>
+                            <field colspan="4" name="seller_ids" nolabel="1">       
+                                <form>
+                                    <field name="name"/>
+                                    <field name="sequence"/>
+                                    <field name="product_code" groups="base.group_extended"/>
+                                    <field name="product_name" groups="base.group_extended"/>
+                                    <field name="product_uom"/>
+                                    <field name="manufacturer_id"/>
+                                    <field name="catalogue_id"/>
+                                    <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
+                                    <field name="delay"/>
+                                    <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
+                                    <field colspan="4" groups="base.group_extended" name="pricelist_ids" nolabel="1" widget="one2many_list">
+                                        <tree editable="bottom" string="Pricelist">
+                                			<field name="min_quantity" />
+                                			<field name="uom_id" />
+                                			<field name="price" />
+                                			<field name="rounding" />
+                                			<field name="currency_id" />
+                                			<field name="min_order_qty" />
+                                			<field name="valid_from" />
+                                			<field name="valid_till" />
+                                			<field name="comment" />
+                                			<field name="purchase_order_id" />
+                                			<field name="purchase_order_line_number" />
+                                			<field name="purchase_order_line_id" />
+                                        </tree>
+                                    </field>
+                                </form>
+                                <tree>      
+                                    <field name="sequence"/>
+                                    <field name="name"/>
+                                    <field name="delay"/>
+                                    <field name="catalogue_id"/>
+                                    <field name="get_first_price"/>
+                                    <field name="check_manufacturer"/>
+                                </tree>
+                            </field>    
                         </page>
                         <page groups="base.group_extended" string="Packaging">
                             <field colspan="4" name="packaging" nolabel="1">
@@ -413,14 +456,69 @@
             </field>
         </record>
 
+        <record id="product_form_replace_pack" model="ir.ui.view">
+            <field name="name">product.form.replace.ext</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="priority" eval="45"/>
+            <field name="arch" type="xml">
+				<data>
+                    <xpath expr="/form/notebook/page[@string='Packaging']" position="replace">
+                    </xpath>
+				</data>
+            </field>
+        </record>
+
         <delete id="product.action_product_price_list" model="ir.actions.act_window" />
         <delete id="product.report_product_label" model="ir.actions.report.xml" />
         <delete id="stock.report_product_history" model="ir.actions.report.xml" />
-
         <delete id="procurement.act_make_procurement" model="ir.actions.act_window" />
         <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
+        <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
 
+        <delete id="product.menu_products_category" model="ir.ui.menu" />
+        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" />
 
+        <record id="view_act_product_stock_move_open" model="ir.ui.view">
+            <field name="name">Stock Moves</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="grey:state in ('cancel')" string="Moves"  noteditable="1" hide_delete_button="1" 	hide_new_button="1">
+                        <field name="name" />
+                        <field name="picking_id" string="Reference"/>
+                        <field name="origin"/>
+			    		<field name="reason_type_id" />
+       	                <field name="comment" />
+       	                <field name="partner_id" />
+                        <field name="product_id" />
+                        <field name="product_qty" />
+                        <field name="product_uom" string="UOM"/>
+                        <field name="order_type" />
+                        <field name="order_category" />
+                        <field name="order_priority" />
+            			<field name="prodlot_id" />
+            			<field name="tracking_id" />
+                        <field name="location_id" />
+                        <field name="location_dest_id" />
+                        <field name="date" />
+                        <field name="date_expected" />
+            			<field name="state" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
+                </tree>
+            </field>
+        </record>
+        <record model="ir.actions.act_window.view" id="act_product_stock_move_open_tree">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_act_product_stock_move_open"/>
+            <field name="act_window_id" ref="stock.act_product_stock_move_open"/>
+        </record>
 
         <menuitem id="menu_main_product" name="Products" sequence="1" 
                   web_icon_hover="images/products.png"
@@ -430,6 +528,23 @@
         <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" sequence="20" />
         <menuitem groups="base.group_extended" id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
         <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
     </data>
 </openerp>
