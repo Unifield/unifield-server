@@ -131,10 +131,14 @@ class purchase_order(osv.osv):
             cross_docking_ok = vals.get('cross_docking_ok')
         elif active_id:
             cross_docking_ok = self.read(cr, uid, [active_id],['cross_docking_ok'], context=context)[0]['cross_docking_ok']
+        else:
+            cross_docking_ok = False
         if vals.get('location_id', False):
             location_id = vals.get('location_id', False)
         elif active_id:
             location_id = self.read(cr, uid, [active_id],['location_id'], context=context)[0]['location_id'][0]
+        else:
+            location_id = False
         if cross_docking_ok or location_id == default_cross_docking_location:
             if not vals.get('categ') in ['service', 'transport']:
                 default_location_id = default_cross_docking_location
