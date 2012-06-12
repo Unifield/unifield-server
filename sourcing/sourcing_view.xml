@@ -64,7 +64,7 @@
 					<field name="rts" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 					<field name="po_cft"
-						on_change="onChangePoCft(po_cft, company_id, sale_order_id)" 
+						on_change="onChangePoCft(po_cft, sale_order_id)" 
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
@@ -72,7 +72,7 @@
 					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
-						domain="[('id', '!=', company_id)]"
+						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft)]"
 						context="{'product_id': product_id, 'choose_supplier': True}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />

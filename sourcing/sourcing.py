@@ -349,15 +349,12 @@ class sourcing_line(osv.osv):
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
-    def onChangePoCft(self, cr, uid, id, po_cft, company_id, order_id=False, context=None):
+    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, context=None):
         '''
         if po_cft == 'direct', add a domain on supplier
         '''
-        domain = {}
         warning = {}
         value = {}
-        if po_cft == 'dpo':
-            domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
             
         if order_id:
             order = self.pool.get('sale.order').browse(cr, uid, order_id, context=context)
@@ -366,7 +363,7 @@ class sourcing_line(osv.osv):
                            'message': 'You cannot choose Direct Purchase Order as method to source an Internal Request line.'}
                 value = {'po_cft': 'po'} 
     
-        return {'domain': domain, 'warning': warning, 'value': value}
+        return {'warning': warning, 'value': value}
     
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
@@ -1230,3 +1227,47 @@ class product_supplierinfo(osv.osv):
         return super(product_supplierinfo, self).create(cr, uid, values, context)
         
 product_supplierinfo()
+
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+    
+    def _get_available_for_dpo(self, cr, uid,ids, field_name, args, context=None):
+        '''
+        Return for each partner if he's available for DPO selection
+        '''
+        res = {}
+        company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+        
+        for partner in self.browse(cr, uid, ids, context=context):
+            res[partner.id] = False
+            if partner.supplier and partner.id != company_id and partner.partner_type in ('external', 'esc'):
+                res[partner.id] = True
+        
+        return res
+    
+    def _src_available_for_dpo(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all partners according to args
+        '''
+        res = []
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'available_for_dpo':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error'), _('Bad operator'))
+                elif arg[2] == 'dpo':
+                    company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+                    res.append(('id', '!=', company_id))
+                    res.append(('partner_type', 'in', ('external', 'esc')))
+                    res.append(('supplier', '=', True))
+                    
+        return res
+        
+    
+    _columns = {
+        'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
+                                             method=True, type='boolean', string='Available for DPO', store=False),
+    }
+    
+res_partner()
