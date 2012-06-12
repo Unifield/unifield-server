@@ -64,13 +64,13 @@ class account_analytic_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.analytic.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.analytic.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
 account_analytic_line()
@@ -90,13 +90,13 @@ class account_move(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_move, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_move, self).write(cr, uid, ids, vals, context=context)
 
 account_move()
@@ -116,13 +116,13 @@ class account_move_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_move_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context)
 
 account_move_line()
@@ -142,13 +142,13 @@ class account_bank_statement(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_bank_statement, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals.append({'instance_id': journal.instance_id.id})
+            vals.update({'instance_id': journal.instance_id.id})
         return super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
 
 account_bank_statement()

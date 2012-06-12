@@ -42,6 +42,7 @@
     "demo_xml": [],
     'test': [
         'test/data.yml',
+        'test/report.yml',
     ],
     'installable': True,
 }
