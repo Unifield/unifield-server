@@ -7,13 +7,12 @@
             <field name="model">product.product</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="product.product_search_form_view" />
+            <field name="priority" eval="99" />
             <field name="arch" type="xml">
             	<data>
-            	
-            		<filter string="Service" position="after">
+            	    <xpath expr="/search//filter[@string='Service']" position="replace">
                    		<filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
-                   	</filter>
-            	
+            	    </xpath>
             	</data>
             </field>
        	</record>

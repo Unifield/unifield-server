@@ -72,7 +72,7 @@
                             <field name="old_code"/>
                         </group>
                         <group colspan="4" col="2">
-                            <separator string="Name" colspan="2"/>
+                            <separator string="Description" colspan="2"/>
                             <field name="name" string="Description"/>
                             <field groups="product.group_product_variant" name="variants" />
                         </group>
