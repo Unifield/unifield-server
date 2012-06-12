@@ -294,6 +294,8 @@
     currency_id: 1
     analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: analytic_distrib1
+    cost_center_id: analytic_distribution.analytic_account_project_dummy
+    destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I register an expense of 400 EUR and select a Supplier as a Third Party
 -
