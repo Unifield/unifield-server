@@ -94,16 +94,19 @@ class purchase_order_line(osv.osv):
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
-            nomen_manda_0=False, comment=False):
+            nomen_manda_0=False, comment=False,context=None):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
+        if not context:
+            context = {}
+        
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
             return {}
         
         result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment)
+            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=context)
         
         # drop modification to name attribute
         if 'name' in result['value']:
