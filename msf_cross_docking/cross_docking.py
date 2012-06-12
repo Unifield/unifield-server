@@ -87,6 +87,8 @@ class purchase_order(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        res = {}
+        res['value'] = {}
         obj_data = self.pool.get('ir.model.data')
         if location_id == self.pool.get('stock.location').get_cross_docking_location(cr, uid) and categ not in ['service', 'transport']:
             cross_docking_ok = True
@@ -96,7 +98,19 @@ class purchase_order(osv.osv):
             return {'warning': {'title': _('Error !'), 'message': _("""
             If the 'Order Category' is 'Service' or 'Transport', you cannot have an other location than 'Service'
             """)}, 'value': {'location_id': self.pool.get('stock.location').get_service_location(cr, uid)}}
-        return {'value': {'cross_docking_ok': cross_docking_ok}}
+        res['value']['cross_docking_ok'] = cross_docking_ok
+        return res
+    
+    def onchange_warehouse_id(self, cr, uid, ids,  warehouse_id, order_type, dest_address_id):
+        """ Set cross_docking_ok to False when we change warehouse.
+        @param warehouse_id: Changed id of warehouse.
+        @return: Dictionary of values.
+        """
+        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids,  warehouse_id, order_type, dest_address_id)
+        if warehouse_id:
+            res['value'].update({'cross_docking_ok': False})
+        return res
+    
     
     def onchange_categ(self, cr, uid, ids, categ, context=None):
         """ Sets cross_docking to False if the categ is service or transport.
