@@ -66,16 +66,6 @@
             <field name="context">{'display_fp': True}</field>
         </record>
 
-    <!-- Action for Analytic Journal Items (COST CENTER) -->
-        <record id="action_account_analytic_cost_center_line" model="ir.actions.act_window">
-            <field name="name">Analytic Journal Items (CC)</field>
-            <field name="res_model">account.analytic.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('account_id.category', '=', 'OC')]</field>
-        </record>
-
     <!-- Action for Analytic Journal Items (FREE 1) -->
         <record id="action_account_analytic_free_1_line" model="ir.actions.act_window">
             <field name="name">Analytic Journal Items (F1)</field>
@@ -99,8 +89,6 @@
     <!-- Menu for Analytic Journal Items -->
         <menuitem groups="analytic.group_analytic_accounting" action="account.action_account_analytic_journal_open_form" 
             id="account.account_analytic_journal_entries" parent="account.menu_finance_entries"/>
-        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_cost_center_line" 
-            id="account_analytic_journal_cost_center_entries" parent="account.menu_finance_entries"/>
         <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_1_line" 
             id="account.account_analytic_journal_free_1_entries" parent="account.menu_finance_entries"/>
         <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_2_line" 
