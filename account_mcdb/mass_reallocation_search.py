@@ -49,8 +49,15 @@ class mass_reallocation_search(osv.osv_memory):
             search.append(('date', '>=', account.date_start))
         if account.date:
             search.append(('date', '<=', account.date))
-        if account.account_ids:
-            search.append(('general_account_id', 'in', [x.id for x in account.account_ids]))
+        if account.tuple_destination_account_ids:
+            account_ids = [x.account_id and x.account_id.id for x in account.tuple_destination_account_ids]
+            destination_ids = [x.destination_id and x.destination_id.id for x in account.tuple_destination_account_ids]
+            if account_ids:
+                account_ids = list(set(account_ids))
+            if destination_ids:
+                destination_ids = list(set(destination_ids))
+            search.append(('general_account_id', 'in', account_ids))
+            search.append(('destination_id', 'in', destination_ids))
         if account.cost_center_ids:
             search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
