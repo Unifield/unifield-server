@@ -49,13 +49,16 @@ class mission_stock_wizard(osv.osv_memory):
         local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         if local_id:
             res['report_id'] = local_id[0]
-            res['last_update'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).last_update
-            
+            res['last_update'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).last_update            
 
         return res
     
     def report_change(self, cr, uid, ids, report_id, context=None):
+        if isinstance(report_id, list):
+            report_id = report_id[0]
+            
         v = {}
+        
         if report_id:
             report = self.pool.get('stock.mission.report').browse(cr, uid, report_id, context=context)
             v.update({'last_update': report.last_update})
@@ -68,36 +71,23 @@ class mission_stock_wizard(osv.osv_memory):
         '''
         Open the product list with report information
         '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        if isinstance(ids, list):
+            ids = ids[0]
             
         if not context:
             context = {}
             
-        wiz_id = self.browse(cr, uid, ids[0], context=context)
+        wiz_id = self.browse(cr, uid, ids, context=context)
         c = context.copy()
-        c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation})
-        
-        view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'mission_stock_product_list_view')
-        if not view_ids or len(view_ids) <= 1 or not view_ids[1]:
-            raise osv.except_osv(_('Error'), _('View not found for mission stock report !'))
-        
-        view_id = view_ids[1]
+        c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation == 'yes' and True or False})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
                 'domain': [('mission_report_id', '=', wiz_id.report_id.id)],
+                'context': c,
                 'target': 'current'}
-        
-#        return {'type': 'ir.actions.act_window',
-#                'res_model': 'product.product',
-#                'view_type': 'form',
-#                'view_mode': 'tree,form',
-#                'view_id': [view_id],
-#                'target': 'current',
-#                'context': c}
         
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)

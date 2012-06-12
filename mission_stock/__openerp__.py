@@ -41,6 +41,7 @@
     ],
     "demo_xml": [],
     'test': [
+        'test/data.yml',
     ],
     'installable': True,
 }
