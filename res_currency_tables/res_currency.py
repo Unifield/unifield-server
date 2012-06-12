@@ -159,6 +159,8 @@ class res_currency(osv.osv):
             ids = [ids]
         
         if 'active' in values:
+            if values['active'] == False:
+                self.check_in_use(cr, uid, ids, context=context)
             # Get all pricelists and versions for the given currency
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
@@ -171,14 +173,13 @@ class res_currency(osv.osv):
         
         return super(res_currency, self).write(cr, uid, ids, values, context=context)
     
-    def unlink(self, cr, uid, ids, context=None):
+    def check_in_use(self, cr, uid, ids, context=None):
         '''
-        Unlink the pricelist associated to the currency 
+        Check if the currency is currently in used in the system
         '''
         pricelist_obj = self.pool.get('product.pricelist')
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
-        partner_obj = self.pool.get('res.partner')
         property_obj = self.pool.get('ir.property')
         
         if isinstance(ids, (int, long)):
@@ -204,8 +205,19 @@ class res_currency(osv.osv):
             if purchase_ids or sale_ids:
                 raise osv.except_osv(_('Currency currently used !'), _('The currency you want to remove is currently used on at least one sale order or purchase order.'))
             
+        return pricelist_ids
+            
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Unlink the pricelist associated to the currency 
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        pricelist_obj = self.pool.get('product.pricelist')
+            
         # If no error, unlink pricelists
-        for p_list in pricelist_ids:
+        for p_list in self._check_in_use(cr, uid, ids, context=context):
             pricelist_obj.unlink(cr, uid, p_list, context=context)
         for cur_id in ids:
             res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
