@@ -117,6 +117,8 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
+        location_id = False
+        cross_docking_ok = False
         active_id = context.get('active_id', False)
         order = self.browse(cr, uid, ids, context=context)[0]
         default_cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
@@ -130,15 +132,13 @@ class purchase_order(osv.osv):
         if  vals.get('cross_docking_ok'):
             cross_docking_ok = vals.get('cross_docking_ok')
         elif active_id:
-            cross_docking_ok = self.read(cr, uid, [active_id],['cross_docking_ok'], context=context)[0]['cross_docking_ok']
-        else:
-            cross_docking_ok = False
+            if self.read(cr, uid, [active_id],['cross_docking_ok'], context=context):
+                cross_docking_ok = self.read(cr, uid, [active_id],['cross_docking_ok'], context=context)[0]['cross_docking_ok']
         if vals.get('location_id', False):
             location_id = vals.get('location_id', False)
         elif active_id:
-            location_id = self.read(cr, uid, [active_id],['location_id'], context=context)[0]['location_id'][0]
-        else:
-            location_id = False
+            if self.read(cr, uid, [active_id],['cross_docking_ok'], context=context):
+                location_id = self.read(cr, uid, [active_id],['location_id'], context=context)[0]['location_id'][0]
         if cross_docking_ok or location_id == default_cross_docking_location:
             if not vals.get('categ') in ['service', 'transport']:
                 default_location_id = default_cross_docking_location
