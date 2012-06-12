@@ -284,8 +284,8 @@
                     <group colspan="2" col="3">
                         <separator string="Stocks" colspan="4"/>
                         <field name="qty_available"/>
-                        <button name="%(stock.action_view_change_product_quantity)d" string="Update" attrs="{'invisible': [('type', '=', 'service')]}"
-                            type="action" icon="gtk-execute" groups = "stock.group_stock_manager,stock.group_stock_user"/>
+                        <!--<button name="%(stock.action_view_change_product_quantity)d" string="Update" attrs="{'invisible': [('type', '=', 'service')]}"
+                            type="action" icon="gtk-execute" groups = "stock.group_stock_manager,stock.group_stock_user"/>-->
                         <newline/>
                         <field name="virtual_available"/>
                     </group>
@@ -474,6 +474,24 @@
         <delete id="product.report_product_label" model="ir.actions.report.xml" />
         <delete id="stock.report_product_history" model="ir.actions.report.xml" />
         <delete id="procurement.act_make_procurement" model="ir.actions.act_window" />
+
+
+        <act_window
+        context="{'search_default_product_id': [active_id]}"
+        id="action_order_line_product_tree"
+        name="Field orders"
+        res_model="sale.order.line"
+        src_model="product.product"
+        groups="base.group_sale_salesman"/>
+
+        <act_window
+        context="{'search_default_product_id': [active_id]}"
+        id="action_tender_product_tree"
+        name="Tenders"
+        res_model="tender"
+        src_model="product.product"
+        groups="base.group_sale_salesman"/>
+
         <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
         <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
 
