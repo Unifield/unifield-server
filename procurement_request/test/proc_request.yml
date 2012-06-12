@@ -116,6 +116,11 @@
   !assert {model: sale.order, id: pr3}:
     - state == 'progress', "Bad state for the procurement request"
 -
+  We check if procurement orders have been created for 'on order' lines
+-
+  !assert {model: sale.order.line, id: pr3l2}:
+    - procurement_id != False, "No procurement order generated from procurement request"
+-
   We close this procurement request
 -
   !workflow {model: sale.order, action: procurement_cancel, ref: pr3}

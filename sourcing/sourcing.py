@@ -216,8 +216,8 @@ class sourcing_line(osv.osv):
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
-        'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
-        'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
+        'sale_order_id': fields.many2one('sale.order', 'Order', on_delete='cascade', readonly=True),
+        'sale_order_line_id': fields.many2one('sale.order.line', 'Order Line', on_delete='cascade', readonly=True),
         'customer': fields.many2one('res.partner', 'Customer', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
 #        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False),

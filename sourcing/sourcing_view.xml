@@ -50,7 +50,7 @@
 					<field name="display_confirm_button" invisible="True" />
 					<field name="procurement_request" invisible="True" />
 					<field name="name" invisible="True" />
-					<field name="sale_order_id" />
+					<field name="sale_order_id" string="Order" />
 					<field name="priority" />
 					<field name="categ" />
 					<field name="line_number" />
@@ -96,7 +96,7 @@
 					<filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
 					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="['&amp;', '|', ('state', '!=', 'draft'), ('procurement_request', '=', True), '|', ('sale_order_state', '!=', 'progress'), ('procurement_request', '=', False)]" />
 					<separator orientation="vertical"/>
-					<field name="sale_order_id" />
+					<field name="sale_order_id" string="Order" />
 					<field name="priority" />
 					<field name="categ" />
 					<field name="sale_order_state_search" />
