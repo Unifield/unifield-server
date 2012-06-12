@@ -1117,9 +1117,10 @@ class purchase_order_line(osv.osv):
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
         
-        if context and context.get('purchase_id') and state == 'draft':
-            if not uom:
-                uom = self.pool.get('product.product').browse(cr, uid, product).uom_id.id
+        if product and not uom:
+            uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
+        
+        if context and context.get('purchase_id') and state == 'draft' and product:    
             domain = [('product_id', '=', product), 
                       ('product_uom', '=', uom), 
                       ('order_id', '=', context.get('purchase_id'))]
