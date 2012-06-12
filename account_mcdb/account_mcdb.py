@@ -83,7 +83,7 @@ class account_mcdb(osv.osv_memory):
         'rev_period_ids': fields.boolean('Exclude period selection'),
         'rev_account_type_ids': fields.boolean('Exclude account type selection'),
         'rev_analytic_journal_ids': fields.boolean('Exclude analytic journal selection'),
-        'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('cc', 'Cost Center'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
+        'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Destination"),
@@ -301,8 +301,6 @@ class account_mcdb(osv.osv_memory):
                 if wiz.analytic_axis == 'fp':
                     context.update({'display_fp': True})
                     domain.append(('account_id.category', '=', 'FUNDING'))
-                elif wiz.analytic_axis == 'cc':
-                    domain.append(('account_id.category', '=', 'OC'))
                 elif wiz.analytic_axis == 'f1':
                     domain.append(('account_id.category', '=', 'FREE1'))
                 elif wiz.analytic_axis == 'f2':
