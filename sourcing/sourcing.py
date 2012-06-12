@@ -349,15 +349,24 @@ class sourcing_line(osv.osv):
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
-    def onChangePoCft(self, cr, uid, id, po_cft, company_id, context=None):
+    def onChangePoCft(self, cr, uid, id, po_cft, company_id, order_id=False, context=None):
         '''
         if po_cft == 'direct', add a domain on supplier
         '''
         domain = {}
+        warning = {}
+        value = {}
         if po_cft == 'dpo':
             domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
+            
+        if order_id:
+            order = self.pool.get('sale.order').browse(cr, uid, order_id, context=context)
+            if order.procurement_request:
+                warning = {'title': 'DPO for IR',
+                           'message': 'You cannot choose Direct Purchase Order as method to source an Internal Request line.'}
+                value = {'po_cft': 'po'} 
     
-        return {'domain': domain}
+        return {'domain': domain, 'warning': warning, 'value': value}
     
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
@@ -949,7 +958,11 @@ class procurement_order(osv.osv):
         
         if partner.po_by_project == 'project' or procurement.po_cft == 'dpo':
             sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-            customer_id = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context).order_id.partner_id.id
+            line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+            if line.procurement_request:
+                customer_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+            else:
+                customer_id = line.order_id.partner_id.id 
             values.update({'customer_id': customer_id})
             purchase_domain.append(('customer_id', '=', customer_id))
             
@@ -988,9 +1001,10 @@ class procurement_order(osv.osv):
             if procurement.po_cft == 'dpo':
                 sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
                 sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
-                values.update({'order_type': 'direct', 
-                               'dest_partner_id': sol.order_id.partner_id.id, 
-                               'dest_address_id': sol.order_id.partner_shipping_id.id})
+                if not sol.procurement_request:
+                    values.update({'order_type': 'direct', 
+                                   'dest_partner_id': sol.order_id.partner_id.id, 
+                                   'dest_address_id': sol.order_id.partner_shipping_id.id})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     
