@@ -19,7 +19,7 @@
             <field name="model">account.destination.link</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Tuple Account/Destination list">
+                <tree string="Account/Destination">
                     <field name="account_id"/>
                     <field name="destination_id"/>
                 </tree>
@@ -31,7 +31,7 @@
             <field name="model">account.destination.link</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Search Account/Destination tuples">
+                <search string="Search Account/Destination">
                     <field name="account_id"/>
                     <field name="destination_id"/>
                 </search>
