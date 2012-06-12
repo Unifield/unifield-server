@@ -72,7 +72,7 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,progress,validated" />
+                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" />
                                 <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" />
                             </group>
