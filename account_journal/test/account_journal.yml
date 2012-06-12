@@ -88,7 +88,7 @@
   !python {model: account.invoice}: |
     self.action_open_invoice(cr, uid, [ref('invoice_for_engagement_1')])
 -
-  I check that analytic lines where written for Gabon and Kenya in cost_center and funding_pool elements.
+  I check that analytic lines where written for Gabon and Kenya in funding_pool elements.
 -
   !python {model: account.analytic.line}: |
     # We should 2 lines for each analytic account with an amount of -187.5 and one of -62.5
@@ -96,4 +96,4 @@
         search_ids = self.search(cr, uid, [('amount', '=', -1 * el[0])])
         for line in self.browse(cr, uid, search_ids):
             print line.name, line.amount, line.account_id.code, line.account_id.category
-        assert len(search_ids) == 2, "Some lines are missing."
+        assert len(search_ids) == 1, "Some lines are missing."
