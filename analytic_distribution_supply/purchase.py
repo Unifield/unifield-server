@@ -122,16 +122,10 @@ class purchase_order(osv.osv):
             default = {}
         # Update default
         default.update({'commitment_ids': False,})
+        if 'analytic_distribution_id' not in default:
+            default['analytic_distribution_id'] = False
         # Default method
-        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
-        # Update analytic distribution
-        if res:
-            po = self.browse(cr, uid, res, context=context)
-        if res and po.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
-        return res
+        return super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
 
     def action_create_commitment(self, cr, uid, ids, type=False, context=None):
         """
@@ -264,7 +258,7 @@ class purchase_order(osv.osv):
                 self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
         return True
 
-    def action_cancel(self, cr, uid, ids, context=None):
+    def wkf_action_cancel_po(self, cr, uid, ids, context=None):
         """
         Delete commitment from purchase before 'cancel' state.
         """
@@ -275,7 +269,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Change commitments state if exists
         self._finish_commitment(cr, uid, ids, context=context)
-        return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
+        return super(purchase_order, self).wkf_action_cancel_po(cr, uid, ids, context=context)
 
     def action_done(self, cr, uid, ids, context=None):
         """
@@ -286,18 +280,8 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Change commitments state if all shipments have been invoiced (not in "to be invoiced" state)
-        to_process = []
-        for po in self.browse(cr, uid, ids, context=context):
-            is_totally_done = True
-            # If one shipment (stock.picking) is '2binvoiced', we shouldn't change commitments ' state
-            for pick in po.picking_ids:
-                if pick.invoice_state == '2binvoiced':
-                    is_totally_done = False
-            # Else shipment is fully done. We could change commitments ' state to Done.
-            if is_totally_done:
-                to_process.append(po.id)
-        self._finish_commitment(cr, uid, to_process, context=context)
+        # Change commitments state
+        self._finish_commitment(cr, uid, ids, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
 purchase_order()
@@ -316,9 +300,10 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        line = self.browse(cr, uid, ids, context=context)[0]
-        if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
-            vals['price_unit'] = 1.00
+        if ids:
+            line = self.browse(cr, uid, ids, context=context)[0]
+            if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
+                vals['price_unit'] = 1.00
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
@@ -391,7 +376,6 @@ class purchase_order_line(osv.osv):
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
-        Copy global distribution and give it to new purchase line
         Copy global distribution and give it to new purchase line.
         """
         # Some verifications
@@ -401,13 +385,12 @@ class purchase_order_line(osv.osv):
             default = {}
         # Update default
         default.update({'commitment_line_ids': [(6, 0, [])],})
-        # Copy analytic distribution
-        pol = self.browse(cr, uid, [id], context=context)[0]
-        if pol.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, pol.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                default.update({'analytic_distribution_id': new_distrib_id})
-        return super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
+            default['analytic_distribution_id'] = False
+        new_data = super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
 purchase_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

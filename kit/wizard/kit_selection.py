@@ -124,6 +124,8 @@ class kit_selection(osv.osv_memory):
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
         # process
+        ctx_keep_info = context.copy()
+        ctx_keep_info['keepDateAndDistrib'] = True
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.product_ids_kit_selection):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items must be selected.'))
@@ -164,7 +166,9 @@ class kit_selection(osv.osv_memory):
                             'company_id': pol.company_id.id,
                             'state': pol.state,
                             }
-                new_id = pol_obj.create(cr, uid, p_values, context=context)
+                # copy the original purchase order line
+                new_id = pol_obj.copy(cr, uid, pol_id, p_values, context=ctx_keep_info)
+#                new_id = pol_obj.create(cr, uid, p_values, context=context)
                 
         # delete the pol
         pol_obj.unlink(cr, uid, [pol_id], context=context)

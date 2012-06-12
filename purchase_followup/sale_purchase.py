@@ -33,8 +33,12 @@ class purchase_order(osv.osv):
         res = {}
         
         for order in self.browse(cr, uid, ids, context=context):
-            if order.order_type == 'direct' and order.state == 'approved':
+            # Direct PO is 100.00% received when a user confirm the reception at customer side
+            if order.order_type == 'direct' and order.state == 'done':
                 res[order.id] = 100.00
+                continue
+            elif order.order_type == 'direct' and order.state != 'done':
+                res[order.id] = 0.00
                 continue
             res[order.id] = 0.00
             amount_total = 0.00

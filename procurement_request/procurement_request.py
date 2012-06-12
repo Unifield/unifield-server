@@ -190,7 +190,14 @@ class procurement_request(osv.osv):
             'procurement_request': proc,
         })
         
-        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+        # bypass name sequence
+        new_id = super(osv.osv, self).copy(cr, uid, id, default, context=context)
+        if new_id:
+            new_order = self.read(cr, uid, new_id, ['delivery_requested_date', 'order_line'])
+            if new_order['delivery_requested_date'] and new_order['order_line']:
+                self.pool.get('sale.order.line').write(cr, uid, new_order['order_line'], {'date_planned': new_order['delivery_requested_date']})
+        return new_id
+
 
     def wkf_action_cancel(self, cr, uid, ids, context=None):
         '''

@@ -349,6 +349,16 @@ class sourcing_line(osv.osv):
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
+    def onChangePoCft(self, cr, uid, id, po_cft, company_id, context=None):
+        '''
+        if po_cft == 'direct', add a domain on supplier
+        '''
+        domain = {}
+        if po_cft == 'dpo':
+            domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
+    
+        return {'domain': domain}
+    
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
         if type == make to stock, change pocft to False
@@ -461,6 +471,7 @@ class sourcing_line(osv.osv):
         
 sourcing_line()
 
+
 class sale_order(osv.osv):
     
     _inherit = 'sale.order'
@@ -562,9 +573,11 @@ class sale_order(osv.osv):
         result['supplier'] = line.supplier and line.supplier.id or False
         if line.po_cft:
             result.update({'po_cft': line.po_cft})
-        # uf-583 - the location defined for the procurementis input instead of stock
+        # uf-583 - the location defined for the procurementis input instead of stock if the procurement is on order
+        # if from stock, the procurement search from products in the default location: Stock
         order = kwargs['order']
-        result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
+        if line.type == 'make_to_order':
+            result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
 
         return result
 
@@ -581,8 +594,56 @@ class sale_order(osv.osv):
             return False
 
         return True
+    
+    def order_confirm_method(self, cr, uid, ids, context=None):
+        '''
+        wrapper for confirmation wizard
+        '''
+        # data
+        name = _("You are about to validate the FO without going through the sourcing tool. Are you sure?")
+        model = 'confirm'
+        step = 'default'
+        question = 'You are about to validate the FO without going through the sourcing tool. Are you sure?'
+        clazz = 'sale.order'
+        func = 'do_order_confirm_method'
+        args = [ids]
+        kwargs = {}
+        
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                callback={'clazz': clazz,
+                                                                                                          'func': func,
+                                                                                                          'args': args,
+                                                                                                          'kwargs': kwargs}))
+        return res
+    
+    def do_order_confirm_method(self, cr, uid, ids, context=None):
+        '''
+        trigger the workflow
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # we confirm (validation in unifield) the sale order
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'sale.order', ids[0], 'order_confirm', cr)
+        
+        return {'name':_("Field Orders"),
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'res_model': 'sale.order',
+                'res_id': ids[0],
+                'type': 'ir.actions.act_window',
+                'target': 'dummy',
+                'domain': [],
+                'context': {},
+                }
 
 sale_order()
+
 
 class sale_order_line(osv.osv):
     '''
@@ -840,6 +901,11 @@ class procurement_order(osv.osv):
         - allow to modify the data for purchase order line creation
         '''
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        if 'procurement' in kwargs:
+            order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
+            if order_line_ids:
+                origin = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0]).order_id.name
+                line.update({'origin': origin})
         if line.get('price_unit', False) == False:
             st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
             line.update({'price_unit': st_price})
@@ -888,6 +954,23 @@ class procurement_order(osv.osv):
             purchase_domain.append(('customer_id', '=', customer_id))
             
         purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+        
+        # Set the origin of the line with the origin of the Procurement order
+        if procurement.origin:
+            values['order_line'][0][2].update({'origin': procurement.origin})
+        
+        # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
+        sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if sol_ids:
+            sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+            if sol.analytic_distribution_id:
+                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, 
+                                                    sol.analytic_distribution_id.id, context=context)
+                values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
+            elif sol.order_id.analytic_distribution_id:
+                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, 
+                                                    uid, sol.order_id.analytic_distribution_id.id, context=context)
+                values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
             
         if purchase_ids:
             line_values = values['order_line'][0][2]

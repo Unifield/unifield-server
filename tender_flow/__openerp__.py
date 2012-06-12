@@ -41,6 +41,8 @@
         'tender_flow_sequence.xml',
         'tender_flow_view.xml',
         'tender_flow_workflow.xml',
+        'report/purchase_report_view.xml',
+        'board_purchase_view.xml',
     ],
     'installable': True,
 }

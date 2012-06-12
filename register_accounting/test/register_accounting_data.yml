@@ -440,12 +440,12 @@
           field: reconcile_id
           sequence: 20
 -
-  I create an analytic journal for Cash
+  I create an analytic Cash Journal.
 -
   !record {model: account.analytic.journal, id: analytic_journal_cash_0}:
     code: acsh
     name: Analytic Cash Journal
-    type: general
+    type: cash
 -
   I create a Cash Journal
 -

@@ -79,7 +79,7 @@ class sale_order(osv.osv):
                 'context': context,
         }
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order.
         """
@@ -89,15 +89,9 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
         # Default method
-        res = super(sale_order, self).copy(cr, uid, id, default=default, context=context)
-        # Update analytic distribution
-        if res:
-            so = self.browse(cr, uid, res, context=context)
-        if res and so.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, so.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
-        return res
+        if 'analytic_distribution_id' not in default:
+            default['analytic_distribution_id'] = False
+        return super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
 
     def wkf_validated(self, cr, uid, ids, context=None):
         """
@@ -237,7 +231,6 @@ class sale_order_line(osv.osv):
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order line
-        Copy global distribution and give it to new sale order line.
         """
         # Some verifications
         if not context:
@@ -245,12 +238,12 @@ class sale_order_line(osv.osv):
         if default is None:
             default = {}
         # Copy analytic distribution
-        sol = self.browse(cr, uid, [id], context=context)[0]
-        if sol.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, sol.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                default.update({'analytic_distribution_id': new_distrib_id})
-        return super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
+            default['analytic_distribution_id'] = False
+        new_data = super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
 sale_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
