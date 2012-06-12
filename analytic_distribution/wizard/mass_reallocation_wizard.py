@@ -112,7 +112,7 @@ class mass_reallocation_wizard(osv.osv_memory):
     _description = 'Mass Reallocation Wizard'
 
     _columns = {
-        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
+        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, domain="[('category', 'in', ['OC', 'FUNDING', 'FREE1', 'FREE2']), ('type', '!=', 'view')]"),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
