@@ -955,13 +955,14 @@ class procurement_order(osv.osv):
         
         if partner.po_by_project == 'project' or procurement.po_cft == 'dpo':
             sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-            line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
-            if line.procurement_request:
-                customer_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
-            else:
-                customer_id = line.order_id.partner_id.id 
-            values.update({'customer_id': customer_id})
-            purchase_domain.append(('customer_id', '=', customer_id))
+            if sale_line_ids:
+                line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+                if line.procurement_request:
+                    customer_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+                else:
+                    customer_id = line.order_id.partner_id.id 
+                values.update({'customer_id': customer_id})
+                purchase_domain.append(('customer_id', '=', customer_id))
             
         purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
         
@@ -997,11 +998,12 @@ class procurement_order(osv.osv):
         else:
             if procurement.po_cft == 'dpo':
                 sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-                sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
-                if not sol.procurement_request:
-                    values.update({'order_type': 'direct', 
-                                   'dest_partner_id': sol.order_id.partner_id.id, 
-                                   'dest_address_id': sol.order_id.partner_shipping_id.id})
+                if sol_ids:
+                    sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+                    if not sol.procurement_request:
+                        values.update({'order_type': 'direct', 
+                                       'dest_partner_id': sol.order_id.partner_id.id, 
+                                       'dest_address_id': sol.order_id.partner_shipping_id.id})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     
