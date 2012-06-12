@@ -141,7 +141,7 @@ class account_move_line(osv.osv):
         sql =  """
             SELECT SUM(debit - credit)
             FROM account_move_line
-            WHERE id in %%s
+            WHERE id in %s
         """
         cr.execute(sql, (tuple(ids),))
         res = cr.fetchall()
