@@ -1118,6 +1118,8 @@ class purchase_order_line(osv.osv):
         partner_price = self.pool.get('pricelist.partnerinfo')
         
         if context and context.get('purchase_id') and state == 'draft':
+            if not uom:
+                uom = self.pool.get('product.product').browse(cr, uid, product).uom_id.id
             domain = [('product_id', '=', product), 
                       ('product_uom', '=', uom), 
                       ('order_id', '=', context.get('purchase_id'))]
@@ -1205,11 +1207,6 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
-            
-        if not product_id and not comment and not nomen_manda_0 and price_unit != 0.00:
-            res.setdefault('warning', {}).update({'title': 'No product !',
-                                                  'message': 'Please fill the product or comment fields before changing the unit price.'})
-            res['value'].update({'price_unit': 0.00})
             
         if not product_id or not product_uom or not product_qty:
             return res
