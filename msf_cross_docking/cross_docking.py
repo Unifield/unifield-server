@@ -136,10 +136,10 @@ class purchase_order(osv.osv):
         active_id = context.get('active_id', False)
         order = self.browse(cr, uid, ids, context=context)[0]
         default_cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        if order.warehouse_id.lot_input_id:
-            default_location_id = order.warehouse_id.lot_input_id.id
-        else:
+        if vals.get('location_id', order.location_id.id):
             default_location_id = vals.get('location_id', order.location_id.id)
+        elif order.warehouse_id.lot_input_id:
+            default_location_id = order.warehouse_id.lot_input_id.id
         type_value = vals.get('order_type', order.order_type)
         if type_value == 'direct':
             vals.update({'cross_docking_ok': False})
