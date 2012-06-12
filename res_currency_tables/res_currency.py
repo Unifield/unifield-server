@@ -160,7 +160,7 @@ class res_currency(osv.osv):
         
         if 'active' in values:
             if values['active'] == False:
-                self.check_in_use(cr, uid, ids, context=context)
+                self.check_in_use(cr, uid, ids, 'de-activate', context=context)
             # Get all pricelists and versions for the given currency
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
@@ -173,7 +173,7 @@ class res_currency(osv.osv):
         
         return super(res_currency, self).write(cr, uid, ids, values, context=context)
     
-    def check_in_use(self, cr, uid, ids, context=None):
+    def check_in_use(self, cr, uid, ids, keyword='delete', context=None):
         '''
         Check if the currency is currently in used in the system
         '''
@@ -195,15 +195,15 @@ class res_currency(osv.osv):
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             partner_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
                                                              ('name', '=', 'property_product_pricelist_purcahse'),
-                                                        ('value_reference', 'in', value_reference)])
+                                                             ('value_reference', 'in', value_reference)])
     
             # Raise an error if the currency is used on partner form        
             if partner_ids:
-                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to remove is currently used on at least one partner form.'))
+                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to %s is currently used on at least one partner form.') % keyword)
             
             # Raise an error if the currency is used on sale or purchase order
             if purchase_ids or sale_ids:
-                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to remove is currently used on at least one sale order or purchase order.'))
+                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to %s is currently used on at least one sale order or purchase order.') % keyword)
             
         return pricelist_ids
             
@@ -217,8 +217,8 @@ class res_currency(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
             
         # If no error, unlink pricelists
-        for p_list in self._check_in_use(cr, uid, ids, context=context):
-            pricelist_obj.unlink(cr, uid, p_list, context=context)
+        for p_list in self.check_in_use(cr, uid, ids, context=context):
+            pricelist_obj.unlink(cr, uid, p_list, 'delete', context=context)
         for cur_id in ids:
             res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
             
