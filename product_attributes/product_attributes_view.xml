@@ -498,6 +498,9 @@
         <delete id="product.menu_products_category" model="ir.ui.menu" />
         <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" />
 
+        <delete id="base.menu_res_partner_canal-act" model="ir.ui.menu" />
+        <delete id="resource.menu_view_resource_calendar_leaves_search" model="ir.ui.menu" />
+
         <record id="view_act_product_stock_move_open" model="ir.ui.view">
             <field name="name">Stock Moves</field>
             <field name="model">stock.move</field>
