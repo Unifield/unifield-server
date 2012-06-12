@@ -33,7 +33,6 @@
             <field name="arch" type="xml">
                 <search string="Search Account/Destination">
                     <field name="account_id"/>
-                    <field name="destination_id"/>
                 </search>
             </field>
         </record>
