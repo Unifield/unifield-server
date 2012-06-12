@@ -8,7 +8,7 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries List" editable="top" hide_delete_button="1" hide_new_button="1" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" limit="50">
+                <tree string="HQ Entries List" editable="top" noteditable="user_validated==True" hide_new_button="1" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" limit="50">
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="date"/>
@@ -132,21 +132,16 @@
         </record>
 
     <!-- Action: lines validation -->
-        <record id="action_hq_entries_validation" model="ir.actions.server">
-            <field name="name">Validation</field>
-            <field name="model_id" ref="model_hq_entries_validation_wizard"/>
-            <field name="state">code</field>
-            <field name="code">action = obj.validate(context)</field>
-        </record>
+        <act_window id="action_hq_validation"
+            name="Validation"
+            res_model="hq.entries.validation"
+            src_model="hq.entries"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="hq_entries_validation_form"/>
         
-        <record id="ir_validate_hq_entries" model="ir.values">
-            <field name="key2">client_action_multi</field>
-            <field name="model">hq.entries</field>
-            <field name="name">Validation</field>
-            <field eval="'ir.actions.server,%d'%action_hq_entries_validation" name="value"/>
-            <field eval="True" name="object"/>
-        </record>
-
     <!-- Mass analytic reallocation wizard for HQ Entries -->
         <act_window id="action_hq_analytic_reallocation"
             name="Analytic reallocation"

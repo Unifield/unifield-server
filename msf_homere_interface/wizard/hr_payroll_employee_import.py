@@ -42,6 +42,8 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'total': fields.integer(string="Processed", size=64, readonly=True),
         'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')], 
             string="State", required=True, readonly=True),
+        'nberrors': fields.integer(string="Errors", readonly=True),
+        'errors': fields.text('Error', readonly=True),
     }
 
     _defaults = {

@@ -40,6 +40,13 @@ class hq_entries_import_wizard(osv.osv_memory):
         'file': fields.binary(string="File", filters="*.csv", required=True),
     }
 
+    def parse_date(self, date):
+        try:
+            pdate = time.strptime(date, '%d/%m/%y')
+        except ValueError, e:
+            pdate = time.strptime(date, '%d/%m/%Y')
+        return time.strftime('%Y-%m-%d', pdate)
+
     def update_hq_entries(self, cr, uid, line):
         """
         Import hq entry regarding all elements given in "line"
@@ -47,26 +54,28 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Seems that some line could be empty
         if line.count('') == 12:
             return False
+        for x in xrange(0,12-len(line)):
+            line.append('')
+        
         # Prepare some values
         vals = {
             'user_validated': False,
         }
-        date_format = '%d/%m/%y'
         try:
             description, reference, date, document_date, account_description, third_party, booking_amount, booking_currency, \
-                cost_center, funding_pool, free1, free2 = zip(line)
+                cost_center, funding_pool, free1, free2 = line
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('Unknown format.'))
         ### TO USE IF DATE HAVE some JAN or MAR or OCT instead of 01 ####
         ### Set locale 'C' because of period
         ## locale.setlocale(locale.LC_ALL, 'C')
         # Check period
-        if not date and not date[0]:
+        if not date:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
-            line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], date_format))
+            line_date = self.parse_date(date)
         except ValueError, e:
-            raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date[0], e))
+            raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date, e))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
             raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (line_date,))
@@ -74,15 +83,15 @@ class hq_entries_import_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (line_date,))
         period_id = period_ids[0]
         vals.update({'period_id': period_id, 'date': line_date})
-        if document_date and document_date[0]:
+        if document_date:
             try:
-                dd = time.strftime('%Y-%m-%d', time.strptime(document_date[0], date_format))
+                dd = self.parse_date(document_date)
                 vals.update({'document_date': dd})
             except ValueError, e:
-                raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date[0], e))
+                raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (document_date, e))
         # Retrive account
-        if account_description and account_description[0]:
-            account_data = account_description[0].split(' ')
+        if account_description:
+            account_data = account_description.split(' ')
             account_code = account_data and account_data[0] or False
             if not account_code:
                 raise osv.except_osv(_('Error'), _('No account code found!'))
@@ -91,34 +100,40 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist!') % (account_code,))
             vals.update({'account_id': account_ids[0], 'account_id_first_value': account_ids[0]})
         # Retrieve Cost Center and Funding Pool
-        try:
-            cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
-        except ValueError:
-            cc_id = 0
+        if cost_center:
+            cc_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', cost_center)])
+            if not cc_id:
+                raise osv.except_osv(_('Error'), _('Cost Center %s doesn\'t exist!') % (cost_center,))
+            cc_id = cc_id[0]
+        else:
+            try:
+                cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
+            except ValueError:
+                cc_id = 0
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
         vals.update({'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
         # Fetch description
-        if description and description[0]:
-            vals.update({'name': description[0]})
+        if description:
+            vals.update({'name': description})
         # Fetch reference
-        if reference and reference[0]:
-            vals.update({'ref': reference[0]})
+        if reference:
+            vals.update({'ref': reference})
         # Fetch 3rd party
-        if third_party and third_party[0]:
-            vals.update({'partner_txt': third_party[0]})
+        if third_party:
+            vals.update({'partner_txt': third_party})
         # Fetch currency
-        if booking_currency and booking_currency[0]:
-            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency[0]), ('active', 'in', [False, True])])
+        if booking_currency:
+            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
             if not currency_ids:
-                raise osv.except_osv(_('Error'), _('This currency was not found or is not active: %s') % (booking_currency[0],))
+                raise osv.except_osv(_('Error'), _('This currency was not found or is not active: %s') % (booking_currency,))
             if currency_ids and currency_ids[0]:
                 vals.update({'currency_id': currency_ids[0],})
         # Fetch amount
-        if booking_amount and booking_amount[0]:
-            vals.update({'amount': booking_amount[0],})
+        if booking_amount:
+            vals.update({'amount': booking_amount,})
         # Line creation
         res = self.pool.get('hq.entries').create(cr, uid, vals)
         if res:
@@ -145,6 +160,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         res = False
         created = 0
         processed = 0
+        errors = []
         
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -164,24 +180,34 @@ class hq_entries_import_wizard(osv.osv_memory):
             amount = 0.0
             # Omit first line that contains columns ' name
             reader.next()
+            nbline = 1
             for line in reader:
+                nbline += 1
                 processed += 1
-                update = self.update_hq_entries(cr, uid, line)
+                try:
+                    update = self.update_hq_entries(cr, uid, line)
+                except osv.except_osv, e:
+                    errors.append('Line %s, %s'%(nbline, e.value))
                 if update:
                     created += 1
             fileobj.close()
         
         if res:
-            message = _("Payroll import successful")
+            message = _("HQ Entries import successful")
         context.update({'message': message})
         
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+        if errors:
+            cr.rollback()
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_error')
+        else:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
         
         # This is to redirect to HQ Entries Tree View
         context.update({'from': 'hq_entries_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed, 'state': 'hq'})
+
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed, 'state': 'hq', 'errors':"\n".join(errors), 'nberrors': len(errors)})
         
         return {
             'name': 'HQ Entries Import Confirmation',

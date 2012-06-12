@@ -32,6 +32,7 @@
     "update_xml" : [
         'security/ir.model.access.csv',
         'res_company_view.xml',
+        'wizard/hq_entries_validation_view.xml',
         'account_view.xml',
     ],
     "demo_xml" : [],

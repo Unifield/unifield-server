@@ -303,8 +303,11 @@ class hq_entries(osv.osv):
         """
         Do not permit user to delete HQ Entries lines
         """
-        if not context.get('from', False) or context.get('from') != 'code':
-            raise osv.except_osv(_('Error'), _('You cannot delete HQ Entries lines!'))
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('from', False) or context.get('from') != 'code' and ids:
+            if self.search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
+                raise osv.except_osv(_('Error'), _('You cannot delete validated HQ Entries lines!'))
         return super(hq_entries, self).unlink(cr, uid, ids, context)
 
 hq_entries()
