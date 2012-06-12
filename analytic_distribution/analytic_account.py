@@ -24,6 +24,7 @@ from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 from tools.translate import _
 from lxml import etree
+from tools.misc import flatten
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -130,8 +131,10 @@ class analytic_account(osv.osv):
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
     
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        No description found
+        """
         if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
             args.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
             args.append('|')
@@ -145,9 +148,17 @@ class analytic_account(osv.osv):
             for arg in args2:
                 ids.append(arg[1])
             args.append(('id', 'in', ids))
-            
-        return super(analytic_account, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+        
+        # Tuple Account/Destination search
+        for i, arg in enumerate(args):
+            if arg[0] and arg[0] == 'tuple_destination':
+                fp_ids = []
+                destination_ids = self.pool.get('account.destination.link').search(cr, uid, [('account_id', '=', arg[2][0]), ('destination_id', '=', arg[2][1])])
+                for adl in self.pool.get('account.destination.link').read(cr, uid, destination_ids, ['funding_pool_ids']):
+                    fp_ids.append(adl.get('funding_pool_ids'))
+                fp_ids = flatten(fp_ids)
+                args[i] = ('id', 'in', fp_ids)
+        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:

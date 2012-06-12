@@ -193,7 +193,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), '&', ('tuple_destination_account_ids.account_id', '=', parent.account_id), ('tuple_destination_account_ids.destination_id', '=', destination_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
