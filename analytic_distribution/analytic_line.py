@@ -219,50 +219,24 @@ class analytic_line(osv.osv):
         expired_date_ids = []
         date_start = account and account.get('date_start', False) or False
         date_stop = account and account.get('date', False) or False
-        elements = defaultdict(list)
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
-        for aline in self.browse(cr, uid, ids, context=context):
+        for aline in self.browse(cr, uid, ids):
             # Add line to expired_date if date is not in date_start - date_stop
             if (date_start and aline.date < date_start) or (date_stop and aline.date > date_stop):
                 expired_date_ids.append(aline.id)
-            # add line to elements, sorted by distribution
-            elements[aline.distribution_id.id].append(aline)
-        # Retrieve distribution_ids
-        distrib_ids = [x for x in elements]
         # Process regarding account_type
         if account_type == 'OC':
-            # Search all FP lines for given distribution
-            fp_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', 'in', distrib_ids)])
-            # Browse FP and select those that are compatible with selected account_id
-            fp_compatible_ids = defaultdict(list)
-            non_compatible_distribution_ids = []
-            for distrib_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, fp_line_ids, context=context):
-                # If account_id is msf_private_fund OR account_id is in cost_center_ids, then add distrib line in fp_compatible_ids
-                if distrib_line.analytic_id.id == msf_private_fund or account_id in [x.id for x in distrib_line.analytic_id.cost_center_ids]:
-                    fp_compatible_ids[distrib_line.distribution_id.id].append(distrib_line.id)
-            # Browse each distribution
-            for distrib_id in fp_compatible_ids:
-                # Test FP for each analytic line
-                for aline in elements[distrib_id]:
-                    if aline.distribution_id and fp_compatible_ids[distrib_id]:
-                        # Test that analytic line distribution have some funding pool lines that matches all compatible funding pool for 
-                        #+ the current distrib
-                        valid = 0
-                        aline_fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', aline.distribution_id.id), 
-                            ('cost_center_id', '=', aline.account_id.id)], context=context) or []
-                        for el in aline_fp_lines:
-                            if el in fp_compatible_ids[distrib_id]:
-                                valid += 1
-                        if len(aline_fp_lines) == valid:
-                            # All matches
-                            res.append(aline.id)
+            for aline in self.browse(cr, uid, ids):
+                if aline.account_id and aline.account_id.cost_center_ids:
+                    if account_id in [x and x.id for x in aline.account_id.cost_center_ids]:
+                        res.append(aline.id)
         elif account_type == 'FUNDING':
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
             tuple_destination_account_ids = fp and fp.get('tuple_destination_account_ids', []) or []
             tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids)]
             # Browse all analytic line to verify them
-            for aline in self.browse(cr, uid, ids, context=context):
+            for aline in self.browse(cr, uid, ids):
                 # Verify that:
                 # - the line doesn't have any draft/open contract
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
