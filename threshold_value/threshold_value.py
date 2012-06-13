@@ -274,22 +274,39 @@ class threshold_value_line(osv.osv):
             context = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {'threshold_value': 0.00, 'product_qty': 0.00}
+            res[line.id] = 0.00
             
             rule = line.threshold_value_id
             context.update({'location_id': rule.location_id.id, 'compute_child': True})
             product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
-            res[line.id] = self._get_threshold_value(cr, uid, line.id, product, rule.compute_method, rule.consumption_method, 
+            result = self._get_threshold_value(cr, uid, line.id, product, rule.compute_method, rule.consumption_method, 
                                                      rule.consumption_period_from, rule.consumption_period_to, rule.frequency, 
                                                      rule.safety_month, rule.lead_time, rule.supplier_lt, line.product_uom_id.id, context)
+            res[line.id] = result.get(field_name, 0.00) 
         
         return res
+    
+    def _get_threshold(self, cr, uid, ids, context={}):
+        res = {}
+        for t in self.pool.get('threshold.value').browse(cr, uid, ids, context=context):
+            for l in t.line_ids:
+                res[l.id] = True
+                
+        return res.keys()
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_qty': fields.function(_get_values, method=True, type='float', string='Quantity to order', multi='values'),
-        'threshold_value': fields.function(_get_values, method=True, type='float', string='Threshold value', multi='values'),
+        'product_qty': fields.function(_get_values, method=True, type='float', string='Quantity to order'),
+        'threshold_value': fields.function(_get_values, method=True, type='float', string='Threshold value',
+                                           store={'threshold.value': (_get_threshold, ['compute_method',
+                                                                                       'consumption_method',
+                                                                                       'consumption_period_from',
+                                                                                       'consumption_period_to',
+                                                                                       'frequency',
+                                                                                       'safety_month',
+                                                                                       'lead_time',
+                                                                                       'supplier_lt'], 10)}),
         'fixed_product_qty': fields.float(digits=(16,2), string='Quantity to order'),
         'fixed_threshold_value': fields.float(digits=(16,2), string='Threshold value'),
         'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
