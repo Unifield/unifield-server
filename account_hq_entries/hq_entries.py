@@ -26,6 +26,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 from collections import defaultdict
+from lxml import etree
 
 class hq_entries_validation_wizard(osv.osv_memory):
     _name = 'hq.entries.validation.wizard'
@@ -48,6 +49,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
             self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account.id or False
         if not counterpart_account_id:
             raise osv.except_osv(_('Warning'), _('Default counterpart for HQ Entries is not set. Please configure it to Company Settings.'))
+
+        private_fund_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         if ids:
             # prepare some values
             current_date = strftime('%Y-%m-%d')
@@ -63,12 +66,15 @@ class hq_entries_validation_wizard(osv.osv_memory):
             })
             total_debit = 0
             total_credit = 0
+            
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id_first_value', 'partner_txt']):
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id']):
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
-                fp_id = line.get('analytic_id_first_value', False) and line.get('analytic_id_first_value')[0] or False
+                fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
+                if line['cost_center_id'] != line['cost_center_id_first_value'] or line['account_id_first_value'] != line['account_id']:
+                    fp_id = private_fund_id
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
                 f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
@@ -110,7 +116,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     credit = abs(amount)
                 else:
                     debit = abs(amount)
-                vals.update({'debit': debit, 'credit': credit,})
+                vals.update({'debit_currency': debit, 'credit_currency': credit,})
                 move_line_id = self.pool.get('account.move.line').create(cr, uid, vals, context={}, check=False)
                 res[line['id']] = move_line_id
                 # Increment totals
@@ -135,7 +141,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 counterpart_debit = abs(total_debit - total_credit)
             else:
                 counterpart_credit = abs(total_debit - total_credit)
-            counterpart_vals.update({'debit': counterpart_debit, 'credit': counterpart_credit,})
+            counterpart_vals.update({'debit_currency': counterpart_debit, 'credit_currency': counterpart_credit,})
             self.pool.get('account.move.line').create(cr, uid, counterpart_vals, context={}, check=False)
             # Post move
             post = self.pool.get('account.move').post(cr, uid, [move_id])
@@ -169,7 +175,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     if line.cost_center_id.id != line.cost_center_id_first_value.id:
                         cc_account_change.append(line)
                     else:
-                        account_change.append((line.id, line.account_id.id))
+                        account_change.append(line)
                 elif line.cost_center_id.id != line.cost_center_id_first_value.id:
                         cc_change.append(line)
         all_lines = {}
@@ -182,7 +188,18 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
         for hq_id in account_change:
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[hq_id[0]], current_date, hq_id[1])
+            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
+                corrected_distrib={
+                    'funding_pool_lines': [(0, 0, {
+                            'percentage': 100,
+                            'analytic_id': line.analytic_id.id,
+                            'cost_center_id': line.cost_center_id.id,
+                            'currency_id': line.currency_id.id,
+                            'source_date': line.date,
+                        })]
+                    }
+                )
+
         for line in cc_change:
             # actual distrib_id
             distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
@@ -205,10 +222,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
             ana_line_obj.reverse(cr, uid, cc_old_lines+fp_old_lines)
             # create new lines
             ana_line_obj.copy(cr, uid, cc_old_lines[0], {'date': current_date, 'source_date': line.date, 'account_id': line.cost_center_id.id})
-            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id})
+            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines+cc_old_lines, {'is_reallocated': True})
-        
+
         for line in cc_account_change:
             # call correct_account with a new arg: new_distrib
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
@@ -302,6 +319,26 @@ class hq_entries(osv.osv):
         'user_validated': lambda *a: False,
         'amount': lambda *a: 0.0,
     }
+
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change funding pool domain in order to include MSF Private fund
+        """
+        if not context:
+            context = {}
+        view = super(hq_entries, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        arch = etree.fromstring(view['arch'])
+        fields = arch.xpath('field[@name="analytic_id"]')
+        if fields:
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            fields[0].set('domain', "[('type', '!=', 'view'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('account_ids', '=', account_id), ('id', '=', %s)]"%(fp_id, ))
+            view['arch'] = etree.tostring(arch)
+        return view
+
 
     def write(self, cr, uid, ids, vals, context=None):
         """
