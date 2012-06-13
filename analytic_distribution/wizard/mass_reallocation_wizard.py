@@ -163,18 +163,23 @@ class mass_reallocation_wizard(osv.osv_memory):
             to_process = [x.id for x in wiz.line_ids] or []
             account_id = wiz.account_id.id
             # Don't process lines:
-            # - that are not from choosen category. For an example it's useless to treat line that have a funding pool if we choose a cost center account.
-            # Nevertheless line that have a funding pool line could be indirectally be modified by a change of cost center.
-            # - that have same account
+            # - that have same account (or cost_center_id)
             # - that are commitment lines
             # - that have been reallocated
             # - that have been reversed
             # - that come from an engagement journal
             # - that come from a write-off (is_write_off = True)
-            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                '|', '|', '|', '|', '|', '|', ('account_id.category', '!=', wiz.account_id.category), ('account_id', '=', account_id),
-                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
-                ('from_write_off', '=', True)], context=context)
+            account_field_name = 'account_id'
+            if wiz.account_id.category == 'OC':
+                account_field_name = 'cost_center_id'
+            search_args = [
+                ('id', 'in', to_process), '|', '|', '|', '|', '|',
+                (account_field_name, '=', account_id),
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
+                ('from_write_off', '=', True)
+            ]
+            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:
                 non_supported_ids.extend(search_ns_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids
