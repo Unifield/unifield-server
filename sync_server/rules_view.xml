@@ -50,6 +50,7 @@
                     <field name="direction"/>
                     <field name="owner_field"/>
                     <field name="status"/>
+                    <field name="included_fields" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -89,7 +90,7 @@
                                 <field name="ttype"/>
                             </tree>
                         </field>
-                        <field name="included_fields" nolabel="1"/>
+                        <field name="included_fields" nolabel="1" attrs="{'readonly':[]}" />
                         <separator string="Values to be forced" colspan="2"/>
                         <field name="forced_values_sel" nolabel="1">
                             <tree editable="bottom">
@@ -97,7 +98,7 @@
                                 <field name="value"/>
                             </tree>
                         </field>
-                        <field name="forced_values" nolabel="1"/>
+                        <field name="forced_values" nolabel="1" attrs="{'readonly':[]}"/>
                         <button string="Compute Forced Values" colspan="4" type="object" name="compute_forced_value" />
                         <separator string="Fallback Values" colspan="2"/>
                         <field name="fallback_values_sel" nolabel="1" >
@@ -106,7 +107,7 @@
                                 <field name="value"/>
                             </tree>
                         </field>
-                        <field name="fallback_values" nolabel="1" readonly="1"/>
+                        <field name="fallback_values" nolabel="1" readonly="1" attrs="{'readonly':[]}"/>
                         <button string="Compute Fallback Values" colspan="4" type="object" name="compute_fallback_value" />
                     </group>
                     <separator string="" colspan="4"/>
@@ -115,8 +116,8 @@
                         <label string="" colspan="6"/>
                         <label string="" colspan="6"/>
                         <label string="" colspan="3"/>
-                        <field name="status"/>
-                        <button type="object" string="Validate" name="validate"/>
+                        <field name="status" attrs="{'readonly':[]}"/>
+                        <button type="object" string="Validate" name="validate" />
                     </group>
                 </form>
             </field>

@@ -96,12 +96,12 @@ class sync_rule(osv.osv):
         'owner_field':fields.char('Owner Field', size = 64, required = False),
         'sequence_number': fields.integer('Sequence', required = True),
         'included_fields_sel': fields.many2many('ir.model.fields', 'ir_model_fields_rules_rel', 'field', 'name', 'Select Fields'),
-        'included_fields':fields.text('Fields to include', required = False, readonly = True),
+        'included_fields':fields.text('Fields to include', required = False),
         'forced_values_sel': fields.one2many('sync_server.sync_rule.forced_values', 'sync_rule_id', 'Select Forced Values'),
-        'forced_values':fields.text('Values to force', required = False, readonly = True),
+        'forced_values':fields.text('Values to force', required = False),
         'fallback_values_sel': fields.one2many('sync_server.sync_rule.fallback_values', 'sync_rule_id', 'Select Fallback Values'),
         'fallback_values':fields.text('Fallback values', required = False),
-        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
         'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True)
     }
