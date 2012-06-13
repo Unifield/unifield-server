@@ -40,8 +40,10 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'updated': fields.integer(string="Updated", size=64, readonly=True),
         'created': fields.integer(string="Created", size=64, readonly=True),
         'total': fields.integer(string="Processed", size=64, readonly=True),
-        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll')], string="State", 
-            required=True, readonly=True),
+        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')], 
+            string="State", required=True, readonly=True),
+        'nberrors': fields.integer(string="Errors", readonly=True),
+        'errors': fields.text('Error', readonly=True),
     }
 
     _defaults = {
@@ -82,8 +84,12 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
                 domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
+            if context.get('from') == 'hq_entries_import':
+                result = ('hq_entries_tree', 'hq.entries', 'account_hq_entries')
+                domain = ""
+                context.update({'search_default_non_validated': 1})
             if result:
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', result[0])
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, result[2] or 'msf_homere_interface', result[0])
                 if view_id:
                     view_id = view_id and view_id[1] or False
                 return {

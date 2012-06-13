@@ -80,6 +80,7 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
+        "account_hq_entries",
         "msf_config_locations",
         "service_purchasing",
         "account_reconciliation",

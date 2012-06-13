@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,27 +21,19 @@
 #
 ##############################################################################
 
-from osv import fields, osv
-from tools.translate import _
+from osv import osv
+from osv import fields
 
-class account_journal_period(osv.osv):
-    _name = "account.journal.period"
-    _inherit = "account.journal.period"
-    
-    # @@@override@account.account_journal_period.create()
-    def create(self, cr, uid, vals, context=None):
-        period_id=vals.get('period_id',False)
-        if period_id:
-            period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-            # If the period is not open, the move line/account journal period are not created.
-            if period.state == 'created':
-                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open!') % (period.name,))
-            elif period.state != 'done':
-                vals['state'] = 'draft'
-            else:
-                vals['state'] = 'done'
-        return super(osv.osv, self).create(cr, uid, vals, context)
-    # @@@end
+class res_company(osv.osv):
+    _name = 'res.company'
+    _inherit = 'res.company'
 
-account_journal_period()
+    _columns = {
+        'expat_salaries_default_account': fields.many2one('account.account', string="Expat Salaries", 
+            help="Account not allowed to be changed in HQ entries import."),
+        'counterpart_hq_entries_default_account': fields.many2one('account.account', string="Default counterpart", 
+            help="Account that will be used as counterpart for HQ Validated Entries."),
+    }
+
+res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
