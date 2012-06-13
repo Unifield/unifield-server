@@ -75,7 +75,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         try:
             line_date = self.parse_date(date)
         except ValueError, e:
-            raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (date, e))
+            raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (date, e))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
             raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (line_date,))
@@ -88,7 +88,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 dd = self.parse_date(document_date)
                 vals.update({'document_date': dd})
             except ValueError, e:
-                raise osv.except_osv(_('Error'), _('Wrong format for date: %s.\n%s') % (document_date, e))
+                raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
         # Retrive account
         if account_description:
             account_data = account_description.split(' ')
@@ -171,7 +171,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             fileobj.seek(0)
             # Read CSV file
             try:
-                reader = csv.reader(fileobj, delimiter=',')
+                reader = csv.reader(fileobj, delimiter=',', quotechar='"')
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
@@ -186,10 +186,9 @@ class hq_entries_import_wizard(osv.osv_memory):
                 processed += 1
                 try:
                     update = self.update_hq_entries(cr, uid, line)
+                    created += 1
                 except osv.except_osv, e:
                     errors.append('Line %s, %s'%(nbline, e.value))
-                if update:
-                    created += 1
             fileobj.close()
         
         if res:
