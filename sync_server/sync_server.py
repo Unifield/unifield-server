@@ -229,6 +229,16 @@ class entity(osv.osv):
         return super(entity, self).create(cr, uid, vals, context=context)
         
     def register(self, cr, uid, data, context=None):
+        """
+            data = {
+                'parent_name' : 'name'
+                'group_names' : ['group1', 'group2']
+                'identifier' : 'uuid', 
+                'name' : 'name',
+                'email' : 'cur.email',
+                'max_size' : '5',
+            }
+        """
         def get_parent(parent_name):
             if parent_name:
                 return self.get(cr, uid, name=parent_name, context=context)
@@ -475,16 +485,16 @@ class sync_manager(osv.osv):
         """
             Synchronizing entity sending it's packet to the sync server.
             @param entity : string : uuid of the synchronizing entity
-            @param packet : list of dictionaries : List of update to send to the server, a pakcet contains at max all the update generate by the same rule
+            @param packet : Dictionnary : update to send to the server, a pakcet contains at max all the update generate by the same rule
                             format :
                             {
                                 'session_id': string : id of the push session, given by get_model_to_sync,
                                 'model': string : model's name of the update,
-                                'rule_id': integer : server_side rule's id given,
+                                'rule_id': string : server_side rule's id given,
                                 'fields': string : list of fields to include, format : a list of string, same format as the one needed for export data
                                 'load' : list of dictionaries : content of the packet, it the list of values and version
                                         format [{
-                                                    'version' : integer : version of the update
+                                                    'version' : string : version of the update
                                                     'values' : string : list of values in the matching order of fields
                                                              format "['value1', 'value2']"
                                                 }, ...]
@@ -534,7 +544,7 @@ class sync_manager(osv.osv):
                             newer update then the one already their when the pull session start.
             @return tuple :(a,b,c) 
                 a : boolean : True if the call is successfull, False otherwise
-                b : list of dictionaries : Package if there is some update to send remaining, False otherwise
+                b : dictionnary : Package if there is some update to send remaining, False otherwise
                 c : boolean : False if there is some update to send remaining, True otherwise
                               Package format : 
                               {
