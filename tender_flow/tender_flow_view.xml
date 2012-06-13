@@ -268,6 +268,10 @@
             <field name="inherit_id" ref="supplier_catalogue.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
             	<data>
+            		
+            		<xpath expr="//field[@name='pricelist_ids']" position="attributes">
+            			<attribute name="context">{'partner_id': name}</attribute>
+            		</xpath>
             	
             		<xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
             			<field name="currency_id" />
