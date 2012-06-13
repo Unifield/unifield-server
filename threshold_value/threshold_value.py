@@ -127,6 +127,9 @@ class threshold_value(osv.osv):
         
         if method and method == 'fmc':
             res.update({'consumption_period_from': False, 'consumption_period_to': False})
+        elif method and method == 'amc':
+            res.update({'consumption_period_from': (now() + RelativeDate(day=1, months=-2)).strftime('%Y-%m-%d'),
+                        'consumption_period_to': (now() + RelativeDate(day=1, months=1, days=-1)).strftime('%Y-%m-%d')})
         
         return {'value': res}
     
@@ -262,6 +265,9 @@ class threshold_value_line(osv.osv):
             vals.update({'threshold_value_id2': vals['threshold_value_id']})
         elif 'threshold_value_id2' in vals:
             vals.update({'threshold_value_id': vals['threshold_value_id2']})
+            
+        context.update({'fake_threshold_value': vals.get('fake_threshold_value', False)})
+        vals.update({'fake_threshold_value': 0.00})
         
         return super(threshold_value_line, self).write(cr, uid, ids, vals, context=context)
     
@@ -274,6 +280,9 @@ class threshold_value_line(osv.osv):
             context = {}
         
         for line in self.browse(cr, uid, ids, context=context):
+            if context.get('fake_threshold_value', False):
+                res[line.id] = context.get('fake_threshold_value', 0.00)
+                continue 
             res[line.id] = 0.00
             
             rule = line.threshold_value_id
@@ -285,6 +294,7 @@ class threshold_value_line(osv.osv):
             res[line.id] = result.get(field_name, 0.00) 
         
         return res
+
     
     def _get_threshold(self, cr, uid, ids, context={}):
         res = {}
@@ -298,8 +308,10 @@ class threshold_value_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_qty': fields.function(_get_values, method=True, type='float', string='Quantity to order'),
+        'fake_threshold_value': fields.float(digits=(16,2), string='Threshold value'),
         'threshold_value': fields.function(_get_values, method=True, type='float', string='Threshold value',
-                                           store={'threshold.value': (_get_threshold, ['compute_method',
+                                           store={'threshold.value.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'],20),
+                                                  'threshold.value': (_get_threshold, ['compute_method',
                                                                                        'consumption_method',
                                                                                        'consumption_period_from',
                                                                                        'consumption_period_to',
@@ -374,15 +386,29 @@ class threshold_value_line(osv.osv):
             
         return {'threshold_value': threshold_value, 'product_qty': qty_to_order}
 
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, compute_method=False, consumption_method=False,
+                                consumption_period_from=False, consumption_period_to=False, frequency=False,
+                                safety_month=False, lead_time=False, supplier_lt=False, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
         """
+        if not context:
+            context = {}
+        
+        res = {'value': {'product_uom_id': False,
+                         'fake_threshold_value': 0.00,
+                         'threshold_value': 0.00}}
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v = {'product_uom_id': prod.uom_id.id}
-            return {'value': v}
-        return {}
+            res['value'].update({'product_uom_id': prod.uom_id.id})
+            
+            if compute_method:
+                tv = self._get_threshold_value(cr, uid, ids, prod, compute_method, consumption_method,
+                                               consumption_period_from, consumption_period_to, frequency,
+                                               safety_month, lead_time, supplier_lt, prod.uom_id.id, context=context)['threshold_value']
+                res['value'].update({'fake_threshold_value': tv, 'threshold_value': tv})
+            
+        return res
     
 threshold_value_line()
