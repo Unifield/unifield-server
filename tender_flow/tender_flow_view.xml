@@ -32,8 +32,8 @@
                                     <field name="supplier_id" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
-                                    <!-- <field name="currency_id" />
-                                    <field name="func_total_price" />
+                                    <field name="currency_id" />
+                                    <!--<field name="func_total_price" />
                                     <field name="func_currency_id" /> -->
                                     <field name="purchase_order_id" />
                                     <field name="purchase_order_line_number" />
