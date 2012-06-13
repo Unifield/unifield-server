@@ -31,12 +31,51 @@ class analytic_line(osv.osv):
     _name = "account.analytic.line"
     _inherit = "account.analytic.line"
 
+    def _get_fake_is_fp_compat_with(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Fake method for 'is_fp_compat_with' field
+        """
+        res = {}
+        for id in ids:
+            res[id] = ''
+        return res
+
+    def _search_is_fp_compat_with(self, cr, uid, obj, name, args, context=None):
+        """
+        Return domain that permit to give all analytic line compatible with a given FP.
+        """
+        if not args:
+            return []
+        res = []
+        # We just support '=' operator
+        for arg in args:
+            if not arg[1]:
+                raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
+            if arg[1] not in ['=',]:
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
+            if not arg[2]:
+                raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
+            analytic_account = self.pool.get('account.analytic.account').browse(cr, uid, arg[2])
+            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in analytic_account.tuple_destination_account_ids]
+            cost_center_ids = [x and x.id for x in analytic_account.cost_center_ids]
+            for cc in cost_center_ids:
+                for t in tuple_list:
+                    if res:
+                        res.append('|')
+                    res.append('&')
+                    res.append('&')
+                    res.append(('cost_center_id', '=', cc))
+                    res.append(('general_account_id', '=', t[0]))
+                    res.append(('destination_id', '=', t[1]))
+        return res
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
         'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination"),
+        'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
     }
 
     _defaults = {
@@ -236,7 +275,8 @@ class analytic_line(osv.osv):
                 # Verify that:
                 # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
                 # - the cost_center is in compatible cost center from the new funding pool
-                # - the general account is in compatible accounts
+                # - the general account is in compatible account/destination tuple
+                # - the destination is in compatible account/destination tuple
                 if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.destination_id and (aline.general_account_id.id, aline.destination_id.id) in tuple_list:
                     res.append(aline.id)
         else:

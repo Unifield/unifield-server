@@ -50,36 +50,12 @@ class mass_reallocation_search(osv.osv_memory):
         if account.date:
             search.append(('date', '<=', account.date))
         if account.tuple_destination_account_ids:
-            account_ids = [x.account_id and x.account_id.id for x in account.tuple_destination_account_ids]
-            destination_ids = [x.destination_id and x.destination_id.id for x in account.tuple_destination_account_ids]
-            if account_ids:
-                account_ids = list(set(account_ids))
-            if destination_ids:
-                destination_ids = list(set(destination_ids))
-            search.append(('general_account_id', 'in', account_ids))
-            search.append(('destination_id', 'in', destination_ids))
+            search.append(('is_fp_compat_with', '=', account.id))
         if account.cost_center_ids:
             search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
             search.append(criterium)
         search.append(('contract_open','=', True))
-        #search_ids = self.pool.get('account.analytic.line').search(cr, uid, search, context=context)
-        #non_valid_ids = []
-        ## Browse all analytic line to verify contract state
-        #for aline in self.pool.get('account.analytic.line').browse(cr, uid, search_ids, context=context):
-        #    contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
-        #    valid = True
-        #    for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
-        #        if contract.state in ['soft_closed', 'hard_closed']:
-        #            valid = False
-        #    if not valid:
-        #        non_valid_ids.append(aline.id)
-        ## Delete ids that doesn't correspond to a valid line
-        #valid_ids = [x for x in search_ids if x not in non_valid_ids]
-        #operator = 'in'
-        #if len(valid_ids) == 1:
-        #    operator = '='
-        #domain = [('id', 'in', valid_ids)]
         
         # Update context for Mass reallocation
         context['analytic_account_from'] = ids[0]
