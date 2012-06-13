@@ -218,9 +218,10 @@ class analytic_line(osv.osv):
                             # All matches
                             res.append(aline.id)
         elif account_type == 'FUNDING':
-            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'account_ids'], context=context)
+            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
-            account_ids = fp and fp.get('account_ids', []) or []
+            tuple_destination_account_ids = fp and fp.get('tuple_destination_account_ids', []) or []
+            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids)]
             # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids, context=context):
                 # Verify that:
@@ -236,7 +237,7 @@ class analytic_line(osv.osv):
                 # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
                 # - the cost_center is in compatible cost center from the new funding pool
                 # - the general account is in compatible accounts
-                if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.general_account_id.id in account_ids:
+                if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.destination_id and (aline.general_account_id.id, aline.destination_id.id) in tuple_list:
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
