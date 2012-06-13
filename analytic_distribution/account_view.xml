@@ -20,6 +20,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Account/Destination">
+                    <field name="name" invisible="1"/>
                     <field name="account_id"/>
                     <field name="destination_id"/>
                 </tree>
