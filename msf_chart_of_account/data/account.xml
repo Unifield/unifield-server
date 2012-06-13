@@ -242,7 +242,7 @@
 
         <record model="account.account" id="msf_chart_of_account.1302">
             <field name="code">1302</field>
-            <field name="type_for_register">none</field>
+            <field name="type_for_register">down_payment</field>
             <field name="type">receivable</field>
             <field name="name">Advances to suppliers</field>
             <field name="parent_id" ref="msf_chart_of_account.130" />
