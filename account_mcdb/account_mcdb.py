@@ -192,7 +192,7 @@ class account_mcdb(osv.osv_memory):
             # Prepare domain values
             # First MANY2MANY fields
             m2m_fields = [('period_ids', 'period_id'), ('journal_ids', 'journal_id'), ('analytic_journal_ids', 'journal_id'), 
-                ('analytic_account_fp_ids', 'account_id'), ('analytic_account_cc_ids', 'account_id'), 
+                ('analytic_account_fp_ids', 'account_id'), ('analytic_account_cc_ids', 'cost_center_id'), 
                 ('analytic_account_f1_ids', 'account_id'), ('analytic_account_f2_ids', 'account_id'), ('analytic_account_dest_ids', 'destination_id')]
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
