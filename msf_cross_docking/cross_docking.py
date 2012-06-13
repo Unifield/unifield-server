@@ -130,6 +130,8 @@ class purchase_order(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context  {}
         obj_data = self.pool.get('ir.model.data')
         location_id = False
         cross_docking_ok = False
