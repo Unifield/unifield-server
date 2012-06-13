@@ -86,6 +86,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # Override line if percentage have changed
                 if oline.percentage != nline.percentage and oline.id not in to_reverse:
                     to_override[oline.id].append(('percentage', nline.percentage))
+                # Check that if old_component and new_component have changed we should find oline.id in to_reverse OR to_override
+                if oline.id not in to_override and oline.id not in to_reverse:
+                    raise osv.except_osv(_('Error'), _('Code error: A case have not been taken.'))
         else:
             old_component = [oline.analytic_id.id, oline.percentage]
             new_component = [nline.analytic_id.id, nline.percentage]
@@ -102,7 +105,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('A value is missing.'))
                 to_override[oline.id].append((field_name, value))
         # Delete lines that are in override if they are in to_reverse
-        if oline.id in to_override:
+        if oline.id in to_override and oline.id in to_reverse:
             del to_override[oline.id]
         return True, _("All is OK."), to_reverse, to_override
 
@@ -122,9 +125,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             current_date = time.strftime('%Y-%m-%d')
             ml = wizard.move_line_id
             ml_id = ml.id
-            args = [
-                ('move_id', '=', ml_id),
-            ]
             # Search old line and new lines
             old_line_ids = self.pool.get(line_obj).search(cr, uid, [('distribution_id', '=', distrib_id)])
             wiz_line_type = '.'.join([wiz_line_types.get(line_type), 'lines'])
@@ -168,9 +168,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                         distrib_line = self.pool.get(line_obj).browse(cr, uid, old_line_id)
                         amount = (ml.debit_currency - ml.credit_currency) * distrib_line.percentage / 100
                         # search analytic lines
-                        args.append(('distribution_id', '=', distrib_line.distribution_id.id))
-                        args.append(('account_id', '=', distrib_line.analytic_id.id))
-                        args.append(('amount_currency', '=', -1 * amount))
+                        args = [
+                            ('move_id', '=', ml_id),
+                            ('distribution_id', '=', distrib_line.distribution_id.id),
+                            ('account_id', '=', distrib_line.analytic_id.id),
+                            ('amount_currency', '=', -1 * amount),
+                        ]
                         if line_type == "funding.pool":
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
@@ -197,9 +200,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                         distrib_line = self.pool.get(line_obj).browse(cr, uid, rev)
                         amount = (ml.debit_currency - ml.credit_currency) * distrib_line.percentage / 100
                         # Search lines
-                        args.append(('distribution_id', '=', distrib_line.distribution_id.id))
-                        args.append(('account_id', '=', distrib_line.analytic_id.id))
-                        args.append(('amount_currency', '=', -1 * amount))
+                        args = [
+                            ('move_id', '=', ml_id),
+                            ('distribution_id', '=', distrib_line.distribution_id.id),
+                            ('account_id', '=', distrib_line.analytic_id.id),
+                            ('amount_currency', '=', -1 * amount),
+                        ]
                         if line_type == 'funding.pool':
                             args.append(('cost_center_id', '=', distrib_line.cost_center_id.id))
                             args.append(('destination_id', '=', distrib_line.destination_id.id))
@@ -236,9 +242,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             if have_disappear:
                 for hd_line in self.pool.get(line_obj).browse(cr, uid, list(have_disappear)):
                     amount = (ml.debit_currency - ml.credit_currency) * hd_line.percentage / 100
-                    args.append(('distribution_id', '=', hd_line.distribution_id.id))
-                    args.append(('account_id', '=', hd_line.analytic_id.id))
-                    args.append(('amount_currency', '=', amount))
+                    args = [
+                            ('move_id', '=', ml_id),
+                            ('distribution_id', '=', hd_line.distribution_id.id),
+                            ('account_id', '=', hd_line.analytic_id.id),
+                            ('amount_currency', '=', amount),
+                    ]
                     if line_type == 'funding.pool':
                         args.append(('cost_center_id', '=', hd_line.cost_center_id.id))
                         args.append(('destination_id', '=', hd_line.destination_id.id))
