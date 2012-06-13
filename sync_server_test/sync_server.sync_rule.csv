@@ -1,7 +1,9 @@
 "id","sequence_number","name","model_id","owner_field","applies_to_type","type_id/id","direction","domain","included_fields","active","status"
 "fiscal_year",10,"Finance Base Data: Fiscal Year","account.fiscalyear",,"True","sd.type_sec_id","Down","[]","['name','code','date_start','date_stop','state']",0,"valid"
-"currency",20,"Finance Base Data: Currency","res.currency",,"True","sd.type_sec_id","Down","['|' , ('active', '=', True), ('active', '=', False)]","['name','symbol','rounding','accuracy']",0,"valid"
-"currency_rate",21,"Finance Base Data: Currency rate","res.currency.rate",,"True","sd.type_sec_id","Down","[]","['name','rate','currency_id/id']",0,"valid"
+"currency_table",20,"Finance Base Data: Currency Table","res.currency.table",,"True","sd.type_sec_id","Down","[]","['code', 'name']",0,"valid"
+"currency",21,"Finance Base Data: Currency","res.currency",,"True","sd.type_sec_id","Down","['|', ('active', '=', ''), ('active', '!=', ''),('currency_table_id', '=', '')]","['accuracy', 'currency_name', 'name', 'rounding', 'symbol']",0,"valid"
+"currency_ref",22,"Finance Base Data: Currency (with ref to current table)","res.currency",,"True","sd.type_sec_id","Down","['|', ('active', '=', ''), ('active', '!=', ''),('currency_table_id', '!=', '')]","['accuracy', 'currency_name', 'currency_table_id/id', 'name', 'reference_currency_id/id', 'rounding', 'symbol']",0,"valid"
+"currency_rate",23,"Finance Base Data: Currency rate","res.currency.rate",,"True","sd.type_sec_id","Down","[('rate' , '!=' , ''),('currency_id', '!=', '')]","['name','rate','currency_id/id']",0,"valid"
 "gl_account_type",30,"Finance Base Data: GL account type","account.account.type",,"True","sd.type_sec_id","Down","[]","['name','code','report_type','close_method','note']",0,"valid"
 "gl_accounts",31,"Finance Base Data: GL accounts","account.account",,"True","sd.type_sec_id","Down","[]","['name','code','type','user_type/id','type_for_register','reconcile','note']",0,"valid"
 "gl_accounts_tree",32,"Finance Base Data: GL accounts tree","account.account",,"True","sd.type_sec_id","Down","[]","['parent_id/id']",0,"valid"
@@ -11,8 +13,8 @@
 "cost_center",80,"Finance Base Data: Cost center","account.analytic.account",,"True","sd.type_sec_id","Down","[('category','!=','FUNDING')]","['name','code','category','type','date_start','date','description']",0,"valid"
 "funding_pool",81,"Finance Base Data: Funding Pool","account.analytic.account",,"True","sd.type_sec_id","Down","[('category','=','FUNDING')]","['name','code','category','type','date_start','date','description','accounts_ids/id','cost_center_ids/id']",0,"valid"
 "cc_fp_tree",82,"Finance Base Data: CC & FP tree","account.analytic.account",,"True","sd.type_sec_id","Down","[]","['parent_id/id']",0,"valid"
-"account_line_normal",85,"Bidirectional Test: Analytical Line (normal)","account.analytic.line","","True","sd.type_sec_id","bidirectional","[]","['name','account_id/id','general_account_id/id','ref','is_reversal','is_reallocated','reversal_origin','cost_center_id/id','currency_id/id','journal_id/id','amount','amount_currency']",0,"valid"
+"account_line_normal",85,"Bidirectional Test: Analytical Line (normal)","account.analytic.line",,"True","sd.type_sec_id","bidirectional","[]","['name','account_id/id','general_account_id/id','ref','is_reversal','is_reallocated','reversal_origin','cost_center_id/id','currency_id/id','journal_id/id','amount','amount_currency']",0,"valid"
 "account_line_private",85,"Bidirectional Test: Analytical Line (private)","account.analytic.line","owner","True","sd.type_sec_id","bi-private","[]","['name','account_id/id','general_account_id/id','ref','is_reversal','is_reallocated','reversal_origin','cost_center_id/id','currency_id/id','journal_id/id','amount','amount_currency','owner']",0,"valid"
-product,150,Product Base Data : Product,product.product,"",True,sd.type_sec_id,Down,[],"['default_code', 'international_status', 'name_template', 'name', 'nomen_manda_0/id', 'nomen_manda_1/id', 'nomen_manda_2/id', 'nomen_manda_3/id']",0,valid
-product_nom,140,Product Base Data : Product Nomenclature,product.nomenclature,"",True,sd.type_sec_id,Down,[],"['name','type']",0,valid
-product_nom_tree,141,Product Base Data : Product Nomenclature Tree,product.nomenclature,"",True,sd.type_sec_id,Down,"[('parent_id', '!=', '')]",['parent_id/id'],0,valid
+"product",150,"Product Base Data : Product","product.product",,"True","sd.type_sec_id","Down","[]","['default_code', 'international_status', 'name_template', 'name', 'nomen_manda_0/id', 'nomen_manda_1/id', 'nomen_manda_2/id', 'nomen_manda_3/id']",0,"valid"
+"product_nom",140,"Product Base Data : Product Nomenclature","product.nomenclature",,"True","sd.type_sec_id","Down","[]","['name','type']",0,"valid"
+"product_nom_tree",141,"Product Base Data : Product Nomenclature Tree","product.nomenclature",,"True","sd.type_sec_id","Down","[('parent_id', '!=', '')]","['parent_id/id']",0,"valid"
