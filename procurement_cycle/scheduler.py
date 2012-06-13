@@ -253,12 +253,11 @@ Created documents : \n'''
         product_obj = self.pool.get('product.product')
         
         context.update({'location': location_id,
-                        'compute_child': True, 
-                        'from_date': time.strftime('%Y-%m-%d')})
+                        'compute_child': True, })
         
         product = product_obj.browse(cr, uid, product_id, context=context)
 
-        ''' Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
+        ''' Set this part of algorithm as comment because this algorithm seems to be equal to virtual stock
         
             To do validate by Magali
             
@@ -270,16 +269,14 @@ Created documents : \n'''
         picked_resa = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['assigned'],
                                                                                        'what': ('in, out'), 
                                                                                        'location': location_id,
-                                                                                       'compute_child': True, 
-                                                                                       'from_date': time.strftime('%Y-%m-%d')})
+                                                                                       'compute_child': True,})
             
         available_stock = product.qty_available - picked_resa.get(product.id)
             
         quantity_on_order = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['confirmed'],
                                                                                               'what': ('in, out'), 
                                                                                               'location': location_id,
-                                                                                              'compute_child': True, 
-                                                                                              'from_date': time.strftime('%Y-%m-%d')})
+                                                                                              'compute_child': True,})
            
         # Get the safety stock
         safety_stock = d_values.get('safety_stock', 0)
