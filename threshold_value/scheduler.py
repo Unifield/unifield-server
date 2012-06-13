@@ -56,7 +56,7 @@ class procurement_order(osv.osv):
         
         for threshold in threshold_obj.browse(cr, uid, threshold_ids, context=context):
             c = context.copy()
-            c.update({'location': threshold.location_id.id})
+            c.update({'location': threshold.location_id.id, 'compute_child': True})
             line_ids = self.pool.get('threshold.value.line').search(cr, uid, [('threshold_value_id', '=', threshold.id)], context=c)
             for line in self.pool.get('threshold.value.line').browse(cr, uid, line_ids, context=c):
                 if line.threshold_value >= line.product_id.virtual_available and line.product_qty > 0.00:
