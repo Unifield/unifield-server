@@ -490,7 +490,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context=None):
+    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, corrected_distrib=None, context=None):
         """
         Correct given account_move_line by only changing account
         """
@@ -564,7 +564,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # 2/ copy old distribution_id on reversed line
             if ml.analytic_distribution_id:
                 # correction line
-                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
+                change_distrib = {}
+                if corrected_distrib:
+                    change_distrib = corrected_distrib
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, change_distrib, context=context)
                 if new_distrib_id:
                     self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': new_distrib_id,}, context=context)
                 # reversed line
