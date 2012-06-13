@@ -188,9 +188,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
             distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
             # update the distribution
             distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id})
+            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date})
             distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id})
+            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date})
 
 
             # reverse ana lines
@@ -214,8 +214,19 @@ class hq_entries_validation_wizard(osv.osv_memory):
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
                 corrected_distrib={
                     # TODO: ?? source date ??
-                    'cost_center_lines': [(0, 0, {'percentage': 100, 'analytic_id': line.cost_center_id.id, 'currency_id': line.currency_id.id})],
-                    'funding_pool_lines': [(0, 0, {'percentage': 100, 'analytic_id': line.analytic_id.id, 'cost_center_id': line.cost_center_id.id, 'currency_id': line.currency_id.id})]
+                    'cost_center_lines': [(0, 0, {
+                            'percentage': 100, 
+                            'analytic_id': line.cost_center_id.id,
+                            'currency_id': line.currency_id.id,
+                            'source_date': line.date,
+                        })],
+                    'funding_pool_lines': [(0, 0, {
+                            'percentage': 100,
+                            'analytic_id': line.analytic_id.id,
+                            'cost_center_id': line.cost_center_id.id,
+                            'currency_id': line.currency_id.id,
+                            'source_date': line.date,
+                        })]
                 })
 
         # Write lines and validate them

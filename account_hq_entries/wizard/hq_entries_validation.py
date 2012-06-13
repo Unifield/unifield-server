@@ -39,7 +39,7 @@ class hq_entries_validation(osv.osv_memory):
         ids = context.get('active_ids', [])
         if self.pool.get('hq.entries').search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
             raise osv.except_osv(_('Error'), _('You cannot validate HQ Entries already validated !'))
-        return _('%d HQ entries') % (len(context.get('active_ids', [])),)
+        return _('Are you sure you want to post %d HQ entries ?') % (len(context.get('active_ids', [])),)
 
 
     def button_validate(self, cr, uid, ids, context):
