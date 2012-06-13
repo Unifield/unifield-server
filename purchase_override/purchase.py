@@ -1117,7 +1117,10 @@ class purchase_order_line(osv.osv):
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
         
-        if context and context.get('purchase_id') and state == 'draft':
+        if product and not uom:
+            uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
+        
+        if context and context.get('purchase_id') and state == 'draft' and product:    
             domain = [('product_id', '=', product), 
                       ('product_uom', '=', uom), 
                       ('order_id', '=', context.get('purchase_id'))]
@@ -1140,7 +1143,7 @@ class purchase_order_line(osv.osv):
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
+        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
@@ -1194,7 +1197,10 @@ class purchase_order_line(osv.osv):
         
         return res
 
-    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, change_price_ok, state, old_price_unit, context=None):
+    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, 
+                          product_uom, product_qty, pricelist, partner_id, date_order, 
+                          change_price_ok, state, old_price_unit, 
+                          nomen_manda_0=False, comment=False, context=None):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
@@ -1202,6 +1208,7 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
+            
         if not product_id or not product_uom or not product_qty:
             return res
         
