@@ -149,6 +149,7 @@
             <field name="name">leadtime.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority" eval="30" />
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -184,6 +185,8 @@
             	<data>
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Receipt Date</attribute>
+            			<attribute name="attrs">{'readonly': [('state', 'in', ['done', 'cancel'])]}</attribute>
+            			<attribute name="readonly"></attribute>
             		</field>
 					<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
 						<attribute name="string">Actual Receipt Date</attribute>
@@ -226,6 +229,8 @@
             	
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Move Date</attribute>
+            			<attribute name="attrs">{'readonly': [('state', 'in', ['done', 'cancel'])]}</attribute>
+            			<attribute name="readonly"></attribute>
             		</field>
             		
             		<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
@@ -267,6 +272,8 @@
             	<data>
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Shipped Date</attribute>
+            			<attribute name="attrs">{'readonly': [('state', 'in', ['done', 'cancel'])]}</attribute>
+            			<attribute name="readonly"></attribute>
             		</field>
 					<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
 						<attribute name="string">Actual Shipped Date</attribute>

@@ -77,25 +77,43 @@ class account_cash_statement(osv.osv):
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context=None):
-        """
-        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
-        """
-        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        st = self.browse(cr, uid, ids)[0]
-        # Calculate the starting balance
+            ids = [ids] # Calculate the starting balance
+            
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
-            self.write(cr, uid, [rs], res.get(rs))
-            # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
+            self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
             register = self.browse(cr, uid, [rs], context=context)[0]
             if register and not register.prev_reg_id:
                 if not register.balance_start > 0:
-                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+                    return {'name' : "Open Empty CashBox Confirmation",
+                            'type' : 'ir.actions.act_window',
+                            'res_model' :"wizard.open.empty.cashbox",
+                            'target': 'new',
+                            'view_mode': 'form',
+                            'view_type': 'form',
+                            'context': {'active_id': ids[0],
+                                        'active_ids': ids
+                                        }
+                            }
+
+        # if the cashbox is valid for opening, just continue the method do open
+        return self.do_button_open_cash(cr, uid, ids, context)
+
+    def do_button_open_cash(self, cr, uid, ids, context=None):
+        """
+        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids] # Calculate the starting balance
+
+        # Prepare some values
+        st = self.browse(cr, uid, ids)[0]
+                
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')
         # Search lines from current register starting balance
@@ -114,8 +132,7 @@ class account_cash_statement(osv.osv):
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
-            res_id = self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
-            return res_id
+            return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
         else:
             return False
 

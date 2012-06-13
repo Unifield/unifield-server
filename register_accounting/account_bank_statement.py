@@ -209,6 +209,8 @@ class account_bank_statement(osv.osv):
         """
         Delete a bank statement is forbidden!
         """
+        if context and context.get('from', False) and context.get('from') == "journal_deletion":
+            return super(account_bank_statement, self).unlink(cr, uid, ids)
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
 
@@ -220,12 +222,6 @@ class account_bank_statement(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Verify that a first register (register that doesn't have a prev_reg_id) has a starting balance not null
-        registers = self.browse(cr, uid, ids, context=context)
-        for register in registers:
-            if not register.prev_reg_id:
-                if not register.balance_start > 0:
-                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
         # Verify that previous register is open, unless this register is the first register
         return self.write(cr, uid, ids, {'state': 'open'})
 
@@ -754,12 +750,12 @@ class account_bank_statement_line(osv.osv):
         'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?", 
             type='boolean', store=False),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
-        'transfer_currency': fields.many2one('res.currency', string="Currency", help="Currency used for Transfers"),
     }
 
     _defaults = {
         'from_cash_return': lambda *a: 0,
         'direct_invoice': lambda *a: 0,
+        'transfer_amount': lambda *a: 0,
     }
 
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
@@ -831,7 +827,6 @@ class account_bank_statement_line(osv.osv):
             'currency_id': st.currency.id,
             'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False,
             'transfer_amount': st_line.transfer_amount or 0.0,
-            'transfer_currency': st_line.transfer_currency and st_line.transfer_currency.id or False,
         }
 
         if st_line.analytic_distribution_id:
@@ -1027,7 +1022,7 @@ class account_bank_statement_line(osv.osv):
                 # Amount currency for "other line" is the opposite of "register line"
                 other_amount_currency = -register_amount_currency
             # Update values for register line
-            for el in ['is_transfer_with_change', 'transfer_amount', 'transfer_currency']:
+            for el in ['is_transfer_with_change', 'transfer_amount']:
                 if el in move_line_values:
                     del(move_line_values[el])
             move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
@@ -1041,8 +1036,6 @@ class account_bank_statement_line(osv.osv):
                 move_line_values.update({'is_transfer_with_change': True})
                 if st_line.transfer_amount:
                     move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
-                if st_line.transfer_currency:
-                    move_line_values.update({'transfer_currency': st_line.transfer_currency and st_line.transfer_currency.id or False})
             # Write move line object for other line
             acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
             # Update analytic distribution lines
@@ -1277,7 +1270,7 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state  == 'hard':
-            if values == {'from_cash_return': True} or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context:
+            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context:
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
@@ -1323,7 +1316,6 @@ class account_bank_statement_line(osv.osv):
             'sequence_for_reference': False,
             'state': 'draft',
             'transfer_amount': False,
-            'transfer_currency': False,
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
@@ -1354,8 +1346,9 @@ class account_bank_statement_line(osv.osv):
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
-                if absl.is_transfer_with_change and not absl.transfer_amount and not absl.transfer_currency:
-                    raise osv.except_osv(_('Error'), _('Transfer amount and transfer currency is missing!'))
+                if absl.is_transfer_with_change:
+                    if not absl.transfer_journal_id:
+                        raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard
@@ -1547,12 +1540,6 @@ class account_bank_statement_line(osv.osv):
                 curr_field = 'currency_from'
         if absl and absl.transfer_amount:
             vals.update({amount_field: absl.transfer_amount,})
-        if absl and absl.transfer_currency:
-            vals.update({'currency_id': absl.transfer_currency.id, curr_field: absl.transfer_currency.id})
-            # Verify that transfer_journal currency is not different
-            if absl.transfer_journal_id:
-                if absl.transfer_currency.id != absl.transfer_journal_id.currency.id:
-                    vals.update({curr_field: absl.transfer_journal_id.currency.id})
         elif absl and absl.transfer_journal_id:
             vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
         if absl and absl.state == 'hard':

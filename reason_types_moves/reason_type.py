@@ -376,9 +376,18 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
     
+    def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = move.product_id.type
+        
+        return res
+    
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
+        'product_type': fields.function(_get_product_type, method=True, type='char', string='Product type', store=False),
     }
     
     _defaults = {
@@ -436,15 +445,18 @@ class stock_location(osv.osv):
     
     def _get_replenishment(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        
         for loc in ids:
             res[loc] = True
-        
+        return res
+
+    def _get_st_out(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = False
         return res
     
     def _src_replenishment(self, cr, uid, obj, name, args, context=None):
         res = []
-        
         for arg in args:
             if arg[0] == 'is_replenishment':
                 if arg[1] != '=':
@@ -462,13 +474,43 @@ class stock_location(osv.osv):
                     else:
                         res.append(('quarantine_location', '=', False))
                         res.append(('location_category', '=', 'stock'))
+        return res
+        
+    def _src_st_out(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns location allowed for Standard out
+        '''
+        res = [('usage', '!=', 'view')]
+        loc_obj = self.pool.get('stock.location')
+        for arg in args:
+            if arg[0] == 'standard_out_ok':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                if arg[2] == 'dest':
+                    virtual_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+                    virtual_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', virtual_loc_id)], context=context)
+                    
+                    customer_loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'customer')], context=context)
+                    output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+                    
+                    loc_ids = virtual_loc_ids
+                    loc_ids.extend(customer_loc_ids)
+                    loc_ids.append(output_loc_id)
+                    res.append(('id', 'in', loc_ids))
+                elif arg[2] == 'src':
+                    output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+                    loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', output_loc_id)])
+                    res.append(('quarantine_location', '=', False))
+                    res.append(('usage', '=', 'internal'))
+                    res.append(('id', 'not in', loc_ids))
                     
         return res
-    
+                    
     _columns = {
         'is_replenishment': fields.function(_get_replenishment, fnct_search=_src_replenishment, type='boolean',
                                             method=True, string='Is replenishment ?', store=False,
                                             help='Is True, the location could be used in replenishment rules'),
+        'standard_out_ok': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
     }
     
 stock_location()

@@ -31,6 +31,7 @@
     "update_xml": [
         'security/ir.model.access.csv',
         'msf_accrual_view.xml',
+        'account_view.xml',
         'wizard/wizard_accrual_view.xml'
     ],
     'test': [

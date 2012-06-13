@@ -27,6 +27,11 @@
                                     <field name="currency_table_id" colspan="2" on_change="onchange_currency_table(currency_table_id, reporting_currency)" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 			                        <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 </group>
+                                <group colspan="4" col="8">
+                                    <field name="overhead_type" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="overhead_percentage" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="overhead_amount" digits="(24,0)" colspan="2"/>
+                                </group>
                             </page>
                             <page string="Funding pools">
                                 <field colspan="4" name="funding_pool_ids" nolabel="1"
@@ -195,6 +200,9 @@
                         <newline/>
                         <field name="reporting_type"/>
                         <field name="active" colspan="2"/>
+                        <newline/>
+                        <field name="overhead_type"/>
+                        <field name="overhead_percentage" colspan="2"/>
                         <separator string="Dates"/>
                         <notebook colspan="4">
                             <page string="Reporting lines">
@@ -365,7 +373,23 @@
                     </tree>
                 </field>
             </record>
-            
+
+	        <record id="wizard_financing_currency_export_view" model="ir.ui.view">
+	            <field name="name">Select output currency</field>
+	            <field name="model">wizard.financing.currency.export</field>
+	            <field name="type">form</field>
+	            <field name="arch" type="xml">
+	                <form string="Select currency">
+	                    <field name="out_currency" string="Select output currency"/>
+	                    <separator colspan="4"/>
+	                    <group colspan="4" col="6">
+	                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+	                        <button name="button_create_budget" string="Create report" type="object" icon="gtk-ok"/>
+	                    </group>
+	                </form>
+	            </field>
+	        </record>
+
             <record id="act_financing_contract_donor_reporting_tree" model="ir.actions.server">
                 <field name="name">Interactive Report</field>
                 <field name="model_id" ref="model_financing_contract_contract"/>
