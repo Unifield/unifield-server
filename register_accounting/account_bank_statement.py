@@ -209,6 +209,8 @@ class account_bank_statement(osv.osv):
         """
         Delete a bank statement is forbidden!
         """
+        if context and context.get('from', False) and context.get('from') == "journal_deletion":
+            return super(account_bank_statement, self).unlink(cr, uid, ids)
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
 
@@ -1268,7 +1270,7 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state  == 'hard':
-            if values == {'from_cash_return': True} or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context:
+            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context:
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount

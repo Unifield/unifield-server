@@ -432,6 +432,13 @@
           field: reconcile_id
           sequence: 20
 -
+  I create an analytic Cash Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_cash_journal}:
+    code: CASH
+    name: Analytic Cash Journal
+    type: cash
+-
   I create a Cash Journal
 -
   !record {model: account.journal, id: account_journal_cash_0}:
@@ -442,6 +449,7 @@
     view_id: account_journal_view0
     default_debit_account_id: account_account_cash0
     default_credit_account_id: account_account_cash0
+    analytic_journal_id: account_analytic_cash_journal
     allow_date: 0
 -
   I create a Cash Journal in CHF

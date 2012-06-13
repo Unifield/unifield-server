@@ -626,6 +626,33 @@ class purchase_order(osv.osv):
         'confirmed_date_by_synchro': False,
     }
     
+    def copy(self, cr, uid, id, default=None, context=None):
+        new_id = super(purchase_order, self).copy(cr, uid, id, default, context)
+        if new_id:
+            data = self.read(cr, uid, new_id, ['order_line', 'delivery_requested_date'])
+            if data['order_line'] and data['delivery_requested_date']:
+                self.pool.get('purchase.order.line').write(cr, uid, data['order_line'], {'date_planned': data['delivery_requested_date']})
+        return new_id
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase dates
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve']
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
+        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
+        return res
+    
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
@@ -866,6 +893,21 @@ class purchase_order_line(osv.osv):
                  'confirmed_delivery_date': _get_confirmed_date,
                  }
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase dates
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        if not context.get('keepDateAndDistrib'):
+            if 'confirmed_delivery_date' not in default:
+                default['confirmed_delivery_date'] = False
+            if 'date_planned' not in default:
+                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+        return super(purchase_order_line, self).copy_data(cr, uid, id, default=default, context=context)
+    
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
         '''
         Checks if dates are later than header dates
@@ -925,14 +967,22 @@ class sale_order(osv.osv):
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
-        erase shipment date
+        erase dates
         '''
         if default is None:
             default = {}
         if context is None:
             context = {}
         default.update({'shipment_date': False,})
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date']
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
         res = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
         return res
     
     def _get_receipt_date(self, cr, uid, ids, field_name, arg, context=None):
@@ -1238,6 +1288,21 @@ class sale_order_line(osv.osv):
                  'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
                  }
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase dates
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        if not context.get('keepDateAndDistrib'):
+            if 'confirmed_delivery_date' not in default:
+                default['confirmed_delivery_date'] = False
+            if 'date_planned' not in default:
+                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+        return super(sale_order_line, self).copy_data(cr, uid, id, default=default, context=context)
     
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
         '''

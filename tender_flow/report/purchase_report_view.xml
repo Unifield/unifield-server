@@ -61,21 +61,12 @@
                          domain="[('date','&lt;=', (datetime.date.today() - relativedelta(day=31, months=1)).strftime('%%Y-%%m-%%d')),('date','&gt;=',(datetime.date.today() - relativedelta(day=1,months=1)).strftime('%%Y-%%m-%%d'))]"
                          help="Order in last month"/>
                 <separator orientation="vertical"/>
-                <filter icon="terp-document-new"
-                        string="Quotations"
-                        name="quotes"
-                        domain="[('state','=','draft')]"/>
-                <filter icon="terp-gtk-jump-to-rtl"
-                        string="Orders"
-                        name="orders"
-                        domain="[('state','&lt;&gt;','draft'),('state','&lt;&gt;','cancel')]"/>
-                <separator orientation="vertical"/>
-		        <field name="order_name" />
+                <field name="order_name" />
                 <field name="partner_id"/>
                 <field name="product_id"/>
             </group>
             <newline/>
-    		<group string="Type" expand="0">
+            <group string="Type" expand="0">
                     <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]"/>
                     <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
                     <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]"/>
