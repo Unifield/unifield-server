@@ -188,6 +188,7 @@
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         <attribute name="context">{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}</attribute>
                         <attribute name="on_change">onchange_move()</attribute>
+                        <attribute name="attrs">{'readonly': [ ('purchase_id', '!=', 0),('state','in',['draft','confirmed',]) ]}</attribute>
                     </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
@@ -226,6 +227,7 @@
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         	<attribute name="context">{'reason_type_id': reason_type_id}</attribute>
                         	<attribute name="on_change">onchange_move()</attribute>
+                            <attribute name="attrs">{'readonly': [ ('purchase_id', '!=', 0),('state','in',['draft','confirmed',]) ]}</attribute>
                     	</xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
@@ -264,6 +266,7 @@
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         <attribute name="context">{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}</attribute>
                         <attribute name="on_change">onchange_move()</attribute>
+                        <attribute name="attrs">{'readonly': [ ('sale_id', '!=', 0),('state','in',['draft','confirmed',]) ]}</attribute>
                     </xpath>
                     
 
