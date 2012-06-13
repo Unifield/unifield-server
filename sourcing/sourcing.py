@@ -957,6 +957,23 @@ class procurement_order(osv.osv):
             purchase_domain.append(('customer_id', '=', customer_id))
             
         purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+        
+        # Set the origin of the line with the origin of the Procurement order
+        if procurement.origin:
+            values['order_line'][0][2].update({'origin': procurement.origin})
+        
+        # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
+        sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if sol_ids:
+            sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+            if sol.analytic_distribution_id:
+                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, 
+                                                    sol.analytic_distribution_id.id, context=context)
+                values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
+            elif sol.order_id.analytic_distribution_id:
+                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, 
+                                                    uid, sol.order_id.analytic_distribution_id.id, context=context)
+                values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
             
         if purchase_ids:
             line_values = values['order_line'][0][2]

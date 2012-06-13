@@ -144,7 +144,7 @@ class purchase_report(osv.osv):
                     left join product_pricelist ppl on (ppl.id = s.pricelist_id)
                     left join res_currency_rate rcr_fr on rcr_fr.currency_id = ppl.currency_id 
                         AND rcr_fr.id IN (SELECT rcrd.id from res_currency_rate rcrd WHERE rcrd.currency_id = ppl.currency_id AND rcrd.name <= COALESCE(s.date_approve,NOW()) ORDER BY name desc LIMIT 1 )
-                where l.product_id is not null
+                where l.product_id is not null and s.rfq_ok = False
                 group by
                     s.company_id,
                     s.create_uid,

@@ -146,8 +146,6 @@ class stock_picking(osv.osv):
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
             vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
-        elif not vals.get('partner_id2'):
-            vals['partner_id2'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
             
         if not vals.get('address_id') and vals.get('partner_id2'):
             addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
@@ -255,6 +253,10 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         sequence_obj = self.pool.get('ir.sequence')
         wf_service = netsvc.LocalService("workflow")
+
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        ctx_avg = context.copy()
+        ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
             new_picking = None
             complete, too_many, too_few = [], [], []
@@ -283,7 +285,7 @@ class stock_picking(osv.osv):
 
                 # Average price computation
                 if (pick.type == 'in') and (move.product_id.cost_method == 'average'):
-                    product = product_obj.browse(cr, uid, move.product_id.id)
+                    product = product_obj.browse(cr, uid, move.product_id.id, context=ctx_avg)
                     move_currency_id = move.company_id.currency_id.id
                     context['currency_id'] = move_currency_id
                     qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
@@ -611,6 +613,9 @@ class stock_move(osv.osv):
         complete, too_many, too_few = [], [], []
         move_product_qty = {}
         prodlot_ids = {}
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        ctx_avg = context.copy()
+        ctx_avg['location'] = internal_loc_ids
         for move in self.browse(cr, uid, ids, context=context):
             if move.state in ('done', 'cancel'):
                 continue
@@ -631,7 +636,7 @@ class stock_move(osv.osv):
 
             # Average price computation
             if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
-                product = product_obj.browse(cr, uid, move.product_id.id)
+                product = product_obj.browse(cr, uid, move.product_id.id, context=ctx_avg)
                 move_currency_id = move.company_id.currency_id.id
                 context['currency_id'] = move_currency_id
                 qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)

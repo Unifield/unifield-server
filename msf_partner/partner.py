@@ -104,6 +104,17 @@ class res_partner(osv.osv):
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc'):
+            msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
+            msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
+            if msf_customer and not 'property_stock_customer' in vals:
+                vals['property_stock_customer'] = msf_customer[1]
+            if msf_supplier and not 'property_stock_supplier' in vals:
+                vals['property_stock_supplier'] = msf_supplier[1]
+
+        return super(res_partner, self).create(cr, uid, vals, context=context)
     
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
         '''
@@ -125,6 +136,21 @@ class res_partner(osv.osv):
         purchase_authorized_price = price_obj.search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner_type)])
         if purchase_authorized_price and purchase_pricelist not in purchase_authorized_price:
             r.update({'property_product_pricelist_purchase': purchase_authorized_price[0]})
+        
+        if partner_type and partner_type in ('internal', 'section', 'esc'):
+            msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
+            if msf_customer:
+                r.update({'property_stock_customer': msf_customer[1]})
+            msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
+            if msf_supplier:
+                r.update({'property_stock_supplier': msf_supplier[1]})
+        else:
+            other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')
+            if other_customer:
+                r.update({'property_stock_customer': other_customer[1]})
+            other_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
+            if other_supplier:
+                r.update({'property_stock_supplier': other_supplier[1]}) 
         
         return {'value': r}
     

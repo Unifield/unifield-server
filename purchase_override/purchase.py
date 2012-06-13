@@ -652,7 +652,7 @@ stock moves which are already processed : '''
     
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
-    def action_cancel(self, cr, uid, ids, context=None):
+    def wkf_action_cancel_po(self, cr, uid, ids, context=None):
         """
         Cancel activity in workflow.
         """
