@@ -130,45 +130,13 @@ class purchase_order(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if context is None:
-            context  {}
-        obj_data = self.pool.get('ir.model.data')
-        location_id = False
-        cross_docking_ok = False
-        active_id = context.get('active_id', False)
-        order = self.browse(cr, uid, ids, context=context)[0]
-        default_cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        if vals.get('location_id', order.location_id.id):
-            default_location_id = vals.get('location_id', order.location_id.id)
-        elif order.warehouse_id.lot_input_id:
-            default_location_id = order.warehouse_id.lot_input_id.id
-        type_value = vals.get('order_type', order.order_type)
-        if type_value == 'direct':
+        if 'order_type' in vals and vals['order_type'] == 'direct':
             vals.update({'cross_docking_ok': False})
-        if  vals.get('cross_docking_ok'):
-            cross_docking_ok = vals.get('cross_docking_ok')
-        elif active_id:
-            if self.read(cr, uid, [active_id],['cross_docking_ok'], context=context):
-                cross_docking_ok = self.read(cr, uid, [active_id],['cross_docking_ok'], context=context)[0]['cross_docking_ok']
-        if vals.get('location_id', False):
-            location_id = vals.get('location_id', False)
-        elif active_id:
-            if self.read(cr, uid, [active_id],['cross_docking_ok'], context=context):
-                location_id = self.read(cr, uid, [active_id],['location_id'], context=context)[0]['location_id'][0]
-        if cross_docking_ok or location_id == default_cross_docking_location:
-            if not vals.get('categ') in ['service', 'transport']:
-                default_location_id = default_cross_docking_location
-                vals.update({'location_id': default_location_id, 'cross_docking_ok': True})
-            else:
-                vals.update({'location_id': default_location_id, 'cross_docking_ok': False})
-        elif not cross_docking_ok or location_id != default_cross_docking_location:
-            if vals.get('categ') in ['service', 'transport']:
-                default_location_id = self.pool.get('stock.location').get_service_location(cr, uid)
-                vals.update({'location_id': default_location_id, 'cross_docking_ok': False})
-            else:
-                vals.update({'location_id': default_location_id, 'cross_docking_ok': False})
-        elif location_id == self.pool.get('stock.location').get_cross_docking_location(cr, uid):
-            vals.update({'location_id': default_cross_docking_location, 'cross_docking_ok': True})
+        if 'categ' in vals and vals['categ'] in ['service', 'transport']:
+            vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
+        if 'cross_docking_ok' in vals and vals['cross_docking_ok']:
+            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
