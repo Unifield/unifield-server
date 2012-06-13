@@ -461,19 +461,12 @@ class stock_location(osv.osv):
             if arg[0] == 'is_replenishment':
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
-                elif arg[2] in ('True', 'true', 't', 1):                    
-                    cpm_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
-                    wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', cpm_id)], context=context)
-                    if wh_ids:
-                        stock_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
-                        res.append('|')
-                        res.append('&')
-                        res.append(('quarantine_location', '=', False))
-                        res.append(('location_category', '=', 'stock'))
-                        res.append(('id', '=', stock_id))
-                    else:
-                        res.append(('quarantine_location', '=', False))
-                        res.append(('location_category', '=', 'stock'))
+                elif arg[2] and isinstance(arg[2], (int, long)):
+                    warehouse_id = arg[2]
+                    stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+                    res.append(('location_id', 'child_of', stock_id))
+                    res.append(('location_category', '=', 'stock'))
+                    res.append(('quarantine_location', '=', False))
         return res
         
     def _src_st_out(self, cr, uid, obj, name, args, context=None):

@@ -72,7 +72,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True, 
-                                       domain="[('is_replenishment', '=', True)]",
+                                       domain="[('is_replenishment', '=', warehouse_id)]",
                                        help='Location where the computation is made.'),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char',
                                           help='Define the time between two replenishments'),

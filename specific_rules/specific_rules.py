@@ -197,7 +197,7 @@ class stock_warehouse_orderpoint(osv.osv):
 
     _columns = {
          'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
-                                        domain="[('is_replenishment', '=', True)]"),
+                                        domain="[('is_replenishment', '=', warehouse_id)]"),
     }
     
     def _check_product_uom(self, cr, uid, ids, context=None):

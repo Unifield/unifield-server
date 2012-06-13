@@ -36,7 +36,7 @@ class threshold_value(osv.osv):
         'active': fields.boolean(string='Active'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
-                                       domain="[('is_replenishment', '=', True)]",
+                                       domain="[('is_replenishment', '=', warehouse_id)]",
                                        help='Location where the computation is made'),
         'compute_method': fields.selection([('fixed', 'Fixed values'), ('computed', 'Computed values')],
                                            string='Method of computation', required=True,
