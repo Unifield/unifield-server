@@ -159,37 +159,27 @@ class analytic_line(osv.osv):
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
-            if account.category == 'OC':
-                old_account_id = aline.account_id and aline.account_id.id or False
-                fp_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('cost_center_id', '=', old_account_id), 
-                    ('distribution_id', '=', aline.distribution_id.id)], context=context)
-                if isinstance(fp_line_ids, (int, long)):
-                    fp_line_ids = [fp_line_ids]
+            if account.category in ['OC', 'DEST']:
                 # Period verification
                 period = aline.move_id and aline.move_id.period_id or False
-                # if period not 'Draft' (created) or 'Open' (draft), so reverse line before recreating them with right values
-                if period and period.state not in ['created', 'draft', 'field-closed']:
-                    # First reverse lines
-                    self.pool.get('account.analytic.line').reverse(cr, uid, fp_line_ids, context=context) # for Funding Pool Lines
-                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], context=context) # for given Cost Center Line
-                    # Then Create new lines
-                    for fp in self.pool.get('account.analytic.line').browse(cr, uid, fp_line_ids, context=context):
-                        self.pool.get('account.analytic.line').copy(cr, uid, fp.id, {'cost_center_id': account_id, 'date': strftime('%Y-%m-%d'),
-                            'source_date': fp.source_date or fp.date}, context=context)
-                        # Update FP line to inform that it have been reallocated
-                        self.pool.get('account.analytic.line').write(cr, uid, fp.id, {'is_reallocated': True}, context=context)
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {'account_id': account_id, 'date': strftime('%Y-%m-%d'),
-                        'source_date': aline.source_date or aline.date}, context=context)
-                    # Update cost center line to inform that it have been reallocated
-                    self.pool.get('account.analytic.line').write(cr, uid, aline.id, {'is_reallocated': True}, context=context)
-                else:
-                    # Update attached funding pool lines
-                    for fp in self.pool.get('account.analytic.line').browse(cr, uid, fp_line_ids, context=context):
-                        self.pool.get('account.analytic.line').write(cr, uid, [fp.id], {'cost_center_id': account_id, 'date': strftime('%Y-%m-%d'),
-                            'source_date': fp.source_date or fp.date}, context=context)
+                # Prepare some values
+                fieldname = 'cost_center_id'
+                if account.category == 'DEST':
+                    fieldname = 'destination_id'
+                # if period is not closed, so override line.
+                if period and period.state != 'done':
                     # Update account
-                    self.write(cr, uid, [aline.id], {'account_id': account_id, 'date': strftime('%Y-%m-%d'), 
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': strftime('%Y-%m-%d'), 
                         'source_date': aline.source_date or aline.date}, context=context)
+                # else reverse line before recreating them with right values
+                else:
+                    # First reverse line
+                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    # then create new lines
+                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': strftime('%Y-%m-%d'),
+                        'source_date': aline.source_date or aline.date}, context=context)
+                    # finally flag analytic line as reallocated
+                    self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:
                 # Update account
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
@@ -227,8 +217,8 @@ class analytic_line(osv.osv):
         # Process regarding account_type
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
-                if aline.account_id and aline.account_id.cost_center_ids:
-                    if account_id in [x and x.id for x in aline.account_id.cost_center_ids]:
+                if aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
+                    if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
                         res.append(aline.id)
         elif account_type == 'FUNDING':
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
