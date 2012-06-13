@@ -217,8 +217,8 @@ class res_currency(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
             
         # If no error, unlink pricelists
-        for p_list in self.check_in_use(cr, uid, ids, context=context):
-            pricelist_obj.unlink(cr, uid, p_list, 'delete', context=context)
+        for p_list in self.check_in_use(cr, uid, ids, 'delete', context=context):
+            pricelist_obj.unlink(cr, uid, p_list, context=context)
         for cur_id in ids:
             res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
             
