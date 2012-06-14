@@ -77,6 +77,7 @@ XML_ID_TO_IGNORE = [
 
 from osv import osv
 from osv import fields
+import logging
 
 from osv.orm import *
 from datetime import datetime
@@ -87,6 +88,8 @@ pp = pprint.PrettyPrinter(indent=4)
 from tools.safe_eval import safe_eval as eval
 
 class write_info(osv.osv):
+    
+    __logger = logging.getLogger('sync.client')
     
     _name = 'sync.client.write_info'
     
@@ -112,6 +115,9 @@ class write_info(osv.osv):
     def log_write(self, cr, uid, model_name, res_id, values, context=None):
         field = [key for key in values.keys()]
         read_res = self.pool.get(model_name).read(cr, uid, res_id, field, context=context)
+        if not read_res: 
+            self.__logger.warning("No read res found for model %s id %s" % (model_name, res_id))
+            return
         real_modif_field = []
         for k, val in read_res.items():
             if k in field and (not isinstance(values[k], list) or values[k]) and val != values[k]:
