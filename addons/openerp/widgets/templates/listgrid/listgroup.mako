@@ -22,7 +22,7 @@ import itertools
 					% endif
                     % if len(group_by_ctx) > 1 or not group_by_no_leaf:
                         <td class="pager-cell-button">
-                            <button title="${_('Expand all.')}" id="expand_all" onclick="new ListView('_terp_list').expand_all_group(); return false;">${_('Expand All')}</button>
+                            <button title="${_('Expand all.')}" id="expand_all" onclick="new ListView('${name}').expand_all_group(); return false;">${_('Expand All')}</button>
                         </td>
                     % endif
 						</td>
