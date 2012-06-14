@@ -1147,9 +1147,10 @@ class purchase_order_line(osv.osv):
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
+            info_prices = []
             sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
                                                      ('product_id', '=', tmpl_id)], 
-                                                     order='sequence asc', limit=1, context=context)
+                                                     order='sequence asc', context=context)
             domain = [('uom_id', '=', uom),
                       ('currency_id', '=', currency_id),
                       '|', ('valid_from', '<=', date_order),
@@ -1160,8 +1161,9 @@ class purchase_order_line(osv.osv):
             if sequence_ids:
                 min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
                 domain.append(('suppinfo_id.sequence', '=', min_seq))
+                domain.append(('suppinfo_id', 'in', sequence_ids))
         
-            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
