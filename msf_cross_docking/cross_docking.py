@@ -112,7 +112,7 @@ class purchase_order(osv.osv):
         return res
     
     
-    def onchange_categ(self, cr, uid, ids, categ, context=None):
+    def onchange_categ(self, cr, uid, ids, categ, warehouse_id, cross_docking_ok, location_id, context=None):
         """ Sets cross_docking to False if the categ is service or transport.
         @param categ: Changed value of categ.
         @return: Dictionary of values.
@@ -120,12 +120,20 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        bool_value = None
-        defined_location = None
+        warehouse_obj = self.pool.get('stock.warehouse')
+        value = {}
+        service_loc = self.pool.get('stock.location').get_service_location(cr, uid)
+        cross_loc = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         if categ in ['service', 'transport']:
-            bool_value = False
-            defined_location = self.pool.get('stock.location').get_service_location(cr, uid)
-        return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
+            value = {'location_id': service_loc, 'cross_docking_ok': False}
+        elif cross_docking_ok:
+            value = {'location_id': cross_loc}
+        elif location_id in (service_loc, cross_loc):
+            if warehouse_id:
+                value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
+            else:
+                value = {'location_id': False}
+        return {'value': value}
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
