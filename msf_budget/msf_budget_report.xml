@@ -42,6 +42,14 @@
         header="False"
         auto="False"
         menu="False"/>
+        
+        <report id="pdf_engagement"
+        string="Order impact vs. Budget"
+        model="purchase.order"
+        name="msf.pdf.engagement"
+        rml="msf_budget/report/engagement.rml"
+        auto="False"
+        menu="True"/>
 
     </data>
 </openerp>
