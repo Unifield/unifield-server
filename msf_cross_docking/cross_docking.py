@@ -112,7 +112,7 @@ class purchase_order(osv.osv):
         return res
     
     
-    def onchange_categ(self, cr, uid, ids, categ, warehouse_id, context=None):
+    def onchange_categ(self, cr, uid, ids, categ, warehouse_id, cross_docking_ok, context=None):
         """ Sets cross_docking to False if the categ is service or transport.
         @param categ: Changed value of categ.
         @return: Dictionary of values.
@@ -125,9 +125,12 @@ class purchase_order(osv.osv):
         warehouse_obj = self.pool.get('stock.warehouse')
         if categ in ['service', 'transport']:
             defined_location = self.pool.get('stock.location').get_service_location(cr, uid)
-        else:
+        elif categ in ['medical', 'log', 'other'] and not cross_docking_ok:
             if warehouse_id:
                 defined_location = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
+        elif categ in ['medical', 'log', 'other'] and cross_docking_ok:
+            defined_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+            bool_value = True
         return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
 
     def write(self, cr, uid, ids, vals, context=None):
