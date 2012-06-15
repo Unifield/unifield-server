@@ -54,7 +54,7 @@ class account_analytic_line(osv.osv):
         'period_id': fields.related('move_id', 'period_id', string="Period", readonly=True, type="many2one", relation="account.period"),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True),
         'date': fields.date('Posting Date', required=True, select=True),
-        'document_date': fields.date('Document Date', readonly=True),
+        'document_date': fields.date('Document Date', readonly=True, required=True),
         'partner_txt': fields.related('move_id', 'partner_txt', string="Third Party", readonly=True, type="text"),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True),
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency"),
