@@ -36,6 +36,10 @@ class account_invoice(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
             help="This field contains the information related to the numbering of the lines of this order."),
+        'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 
+            'close':[('readonly',True)]}, select=True),
+        'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 
+            'close':[('readonly',True)]}, select=True),
     }
 
     _defaults = {
@@ -79,6 +83,14 @@ class account_invoice(osv.osv):
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
         return super(account_invoice, self).create(cr, uid, vals, context)
+
+    def line_get_convert(self, cr, uid, x, part, date, context=None):
+        """
+        Add document_date to values
+        """
+        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)
+        res['document_date'] = x.get('document_date', date)
+        return res
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """

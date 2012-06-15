@@ -33,6 +33,11 @@
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
                         <field name="line_number"/>
                     </xpath>
+                    <xpath expr="//field[@name='period_id']" position="replace">
+                        <field name="document_date"/>
+                    </xpath>
+                    <xpath expr="//label[@string='(keep empty to use the current period)']" position="replace">
+                    </xpath>
                 </data>
             </field>
         </record>
