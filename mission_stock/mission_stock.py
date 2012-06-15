@@ -93,7 +93,7 @@ class stock_mission_report(osv.osv):
         '''
         res = super(stock_mission_report, self).create(cr, uid, vals, context=context)
         
-        local_instance_id = self.pool.ges('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        local_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         
         # Not update lines for full view or non local reports
         if (vals.get('instance_id', False) and vals['instance_id'] != local_instance_id) or not vals.get('full_view', False):
