@@ -89,7 +89,10 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 domain = ""
                 context.update({'search_default_non_validated': 1})
             if result:
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, result[2] or 'msf_homere_interface', result[0])
+                module_name = 'msf_homere_interface'
+                if result and len(result) > 2:
+                    module_name = result[2]
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module_name, result[0])
                 if view_id:
                     view_id = view_id and view_id[1] or False
                 return {
