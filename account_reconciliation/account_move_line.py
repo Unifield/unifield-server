@@ -220,6 +220,11 @@ class account_move_line(osv.osv):
                 WHERE id IN %s
             """
             cr.execute(sql, [0.0, 0.0, 0.0, tuple(lines)])
+            # Reconcile lines
+            all_lines = flatten([to_reverse, lines])
+            to_reconcile = self.pool.get('account.move.line').search(cr, uid, [('id', 'in', all_lines), ('account_id.reconcile', '=', True)])
+            if to_reconcile:
+                self.pool.get('account.move.line').reconcile(cr, uid, to_reconcile)
         return res
 
 account_move_line()
