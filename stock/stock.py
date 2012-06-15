@@ -452,13 +452,9 @@ class stock_location(osv.osv):
             if amount > 0:
                 if amount > min(total, product_qty):
                     amount = min(product_qty, total)
-                result.append((amount, id))
-                product_qty -= amount
-                total -= amount
-                if product_qty <= 0.0:
-                    return result
-                if total <= 0.0:
-                    continue
+
+                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id)
+
         return False
 
 stock_location()
@@ -2009,6 +2005,7 @@ class stock_move(osv.osv):
         @return: No. of moves done
         """
         done = []
+        notdone = []
         count = 0
         pickings = {}
         if context is None:
@@ -2033,13 +2030,8 @@ class stock_move(osv.osv):
                     r = res.pop(0)
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
-                    while res:
-                        r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
-                        done.append(move_id)
-        if done:
-            count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
+                    done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
+        count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
             for pick_id in pickings:
