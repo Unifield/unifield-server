@@ -368,11 +368,16 @@ class tender(osv.osv):
                     
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
+                pricelist = line.supplier_id.property_product_pricelist_purchase.id,
+                if line.currency_id:
+                    price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
+                    if price_ids:
+                        pricelist = price_ids[0]
                 po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '/' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
-                             'pricelist_id': line.currency_id and line.currency_id.id or line.supplier_id.property_product_pricelist_purchase.id,
+                             'pricelist_id': pricelist,
                              'company_id': tender.company_id.id,
                              'fiscal_position': line.supplier_id.property_account_position and line.supplier_id.property_account_position.id or False,
                              'categ': tender.categ,
