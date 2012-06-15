@@ -372,7 +372,7 @@ class tender(osv.osv):
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
-                             'pricelist_id': line.supplier_id.property_product_pricelist_purchase.id,
+                             'pricelist_id': line.currency_id and line.currency_id.id or line.supplier_id.property_product_pricelist_purchase.id,
                              'company_id': tender.company_id.id,
                              'fiscal_position': line.supplier_id.property_account_position and line.supplier_id.property_account_position.id or False,
                              'categ': tender.categ,
