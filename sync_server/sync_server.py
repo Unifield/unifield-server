@@ -98,8 +98,8 @@ class entity(osv.osv):
     _description = "Synchronization Instance"
 
     _columns = {
-        'name':fields.char('Instance Name', size=64, required=True),
-        'identifier':fields.char('Identifier', size=64, readonly=True),
+        'name':fields.char('Instance Name', size=64, required=True, select=True),
+        'identifier':fields.char('Identifier', size=64, readonly=True, select=True),
         'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='set null', ),
         'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
         'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Updated')], 'State'),

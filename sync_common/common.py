@@ -183,14 +183,11 @@ class check_common(osv.osv):
         message = title
         error = False
         try:
-            print rec.included_fields
             included_fields = eval(rec.included_fields)
-            print included_fields
             for field in included_fields:
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self._get_all_model_ids(cr, uid, rec.model_id)
-                print 'model_ids', model_ids
                 if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model_id','in', model_ids),('name','=',base_field)], context=context)): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"

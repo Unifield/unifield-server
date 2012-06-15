@@ -36,11 +36,11 @@ class message(osv.osv):
     
     __logger = logging.getLogger('sync.server')
     _columns = {
-        'identifier': fields.char('Identifier', size=128),
+        'identifier': fields.char('Identifier', size=128, select=True),
         'sent': fields.boolean('Sent to destination ?'),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True), 
-        'destination': fields.many2one('sync.server.entity', string="Destination Instance"),
+        'destination': fields.many2one('sync.server.entity', string="Destination Instance", select=True),
         'source': fields.many2one('sync.server.entity', string="Source Instance"), 
         'sequence': fields.integer('Sequence', required = True),
     }

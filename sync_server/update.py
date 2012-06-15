@@ -37,13 +37,13 @@ class update(osv.osv):
     _rec_name = 'source'
 
     _columns = {
-        'source': fields.many2one('sync.server.entity', string="Source Instance"), 
-        'owner': fields.many2one('sync.server.entity', string="Owner Instance"), 
+        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
+        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
         'model': fields.char('Model', size=128, readonly=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence'),
         'version': fields.integer('Record Version'),
-        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null"),
+        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null", select=True),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
