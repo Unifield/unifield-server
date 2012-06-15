@@ -44,7 +44,7 @@ class activate_currencies(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('No rate is set for currency %s !') % (currency_obj.name,))
                 break
             else:
-                cr.execute('update res_currency set active=%s where id=%s',(data['active_status'],currency_id))
+                currency_obj.write(cr, uid, currency_id, {'active': data['active_status']}, context=context)
         return {'type': 'ir.actions.act_window_close'}
     
 activate_currencies()
