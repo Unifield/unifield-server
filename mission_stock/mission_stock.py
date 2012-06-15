@@ -196,12 +196,7 @@ class stock_mission_report_line(osv.osv):
         return narg
     
     def _get_template(self, cr, uid, ids, context=None):
-        res = {}
-        template_ids = self.pool.get('product.template').browse(cr, uid, ids, context=context)
-        for t in template_ids:
-            res[t.id] = True
-            
-        return res
+        return self.pool.get('stock.mission.report.line').search(cr, uid, [('product_id.product_tmpl_id', 'in', ids)], context=context)
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True),
@@ -249,10 +244,14 @@ class stock_mission_report_line(osv.osv):
         'central_val': fields.float(digits=(16,2), string='Central Stock Val.'),
         'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
         'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
-        'secondary_qty': fields.float(digits=(16,3), string='Secondary Stock Qty.'),
-        'secondary_val': fields.float(digits=(16,3), string='Secondary Stock Val.'),
-        'cu_qty': fields.float(digits=(16,3), string='Internal Cons. Unit Qty.'),
-        'cu_val': fields.float(digits=(16,3), string='Internal Cons. Unit Val.'),
+        'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.'),
+        'secondary_val': fields.float(digits=(16,2), string='Secondary Stock Val.'),
+        'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.'),
+        'cu_val': fields.float(digits=(16,2), string='Internal Cons. Unit Val.'),
+        'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.'),
+        'in_pipe_val': fields.float(digits=(16,2), string='In Pipe Val.'),
+        'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.'),
+        'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.'),
     }
     
     def _get_request(self, cr, uid, location_ids, product_id):
@@ -299,6 +298,12 @@ class stock_mission_report_line(osv.osv):
         stock_location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
         if stock_location_id:
             stock_location_id = stock_location_id[1]
+            
+        # Check if the instance is a coordination or a project
+        coordo_id = False
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        if company.instance_id.level == 'project':
+            coordo_id = company.instance_id.partner_id.id
         
         # Search considered SLocation
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
@@ -358,7 +363,27 @@ class stock_mission_report_line(osv.osv):
             if cu_loc:
                 cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
                 cu_qty = self._get_request(cr, uid, cu_loc, line.product_id.id)
-                cu_val = cu_qty*standard_price    
+                cu_val = cu_qty*standard_price
+                
+            # In Pipe
+            in_pipe_qty = 0.00
+            in_pipe_not_coord_qty = 0.00
+            cr.execute('''SELECT product_qty, product_uom, partner_id
+                          FROM stock_move
+                          WHERE type = 'in' AND state in ('confirmed', 'waiting', 'assigned')
+                              AND product_id = %s''' % line.product_id.id)
+            moves = cr.fetchall()
+            for qty, uom, partner_id in moves:
+                if uom != line.product_id.uom_id.id:
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
+                
+                in_pipe_qty += qty
+                if partner_id != coordo_id:
+                    in_pipe_not_coord_qty += qty
+            
+            in_pipe_val = in_pipe_qty*standard_price
+            in_pipe_not_coord_val = in_pipe_not_coord_qty*standard_price
+                         
             
             self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
                                             'internal_val': internal_val,
@@ -371,7 +396,11 @@ class stock_mission_report_line(osv.osv):
                                             'secondary_qty': secondary_qty,
                                             'secondary_val': secondary_val,
                                             'cu_qty': cu_qty,
-                                            'cu_val': cu_val}, context=context)
+                                            'cu_val': cu_val,
+                                            'in_pipe_qty': in_pipe_qty,
+                                            'in_pipe_val': in_pipe_val,
+                                            'in_pipe_coor_qty': in_pipe_not_coord_qty,
+                                            'in_pipe_coor_val': in_pipe_not_coord_val}, context=context)
         return True
     
 stock_mission_report_line()

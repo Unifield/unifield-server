@@ -6,6 +6,7 @@
             <field name="code">OCG</field>
             <field name="name">Geneva</field>
             <field name="level">section</field>
+            <field name="partner_id" ref="base.main_partner" />
             <field name="cost_center_id" ref="analytic_distribution.analytic_account_project"/>
         </record>
         
