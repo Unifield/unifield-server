@@ -277,7 +277,9 @@ class update_received(osv.osv):
         print "update_ids", update_ids
         self.run(cr, uid, update_ids, context)
             
-    def single_update_execution(self, cr, uid, update, context=None):
+    def single_update_execution(self, cr, uid, update, context=None):  
+        context = context or {}
+        context['sync_data'] = True                                
         message = []
         #1 conflict detection
         #2 if conflict => manage conflict according rules : report conflict and how it's solve
@@ -303,9 +305,19 @@ class update_received(osv.osv):
             rollback = False
             run = True
             res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
-            rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')])
-            if not (rec_id and self.pool.get(update.model.model).search(cr, uid, [('id','=',rec_id)])):
-                raise Exception, "Exception detected!"
+            #check that the record is imported
+            fields_ref = self.pool.get(update.model.model).fields_get(cr, uid, context=context)
+            rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')], context=context)
+            res_id = False
+            if fields_ref.get('active'):
+                res_id = self.pool.get(update.model.model).search(cr, uid, [('id','=',rec_id), '|', ('active', '=', False),('active', '=', True)], context=context)
+            else:
+                res_id = self.pool.get(update.model.model).search(cr, uid, [('id','=',rec_id)], context=context)
+            
+            
+            if not (rec_id and res_id):
+                self.__logger.debug("%s , %s" % (fields, values))
+                raise Exception, "Exception detected! \n Import data res %s %s, %s" % (res, rec_id, res_id)
             if res and res[2]:
                 if res[0] != 1:
                     message.append(res[2])
@@ -316,8 +328,8 @@ class update_received(osv.osv):
         except Exception, e:
             tb = StringIO.StringIO()
             traceback.print_exc(file=tb)
-            self.__logger.debug(tb)
-            message.append(str(tb))
+            self.__logger.debug(tb.getvalue())
+            message.append(tb.getvalue())
             run = False
         #TODO problem
         #6 set version and sync_date
