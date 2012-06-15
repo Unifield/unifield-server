@@ -87,6 +87,19 @@
                     <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='purchase_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
+
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='action_assign']" position="replace">
+                         <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='draft_force_assign']" position="replace">
+                        <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='draft_validate']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='force_assign']" position="replace">
+                        <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                    </xpath>
+
                 </data>
             </field>
         </record>
@@ -132,6 +145,21 @@
                     <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='company_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
+
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='action_assign']" position="replace">
+                         <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='draft_force_assign']" position="replace">
+                        <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='draft_validate']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='force_assign']" position="replace">
+                        <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                    </xpath>
+
+
+
                 </data>
             </field>
         </record>

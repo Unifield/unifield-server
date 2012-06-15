@@ -259,12 +259,15 @@ class stock_picking(osv.osv):
         ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
             new_picking = None
-            complete, too_many, too_few = [], [], []
+            complete, too_many, too_few , not_aval = [], [], [], []
             move_product_qty = {}
             prodlot_ids = {}
             product_avail = {}
             for move in pick.move_lines:
                 if move.state in ('done', 'cancel'):
+                    continue
+                elif move.state in ('confirmed'):
+                    not_aval.append(move)
                     continue
                 partial_data = partial_datas.get('move%s'%(move.id), {})
                 #Commented in order to process the less number of stock moves from partial picking wizard
@@ -315,11 +318,17 @@ class stock_picking(osv.osv):
                         move_obj.write(cr, uid, [move.id],
                                 {'price_unit': product_price,
                                  'price_currency_id': product_currency})
-
+            for move in not_aval:
+                if not new_picking:
+                    new_picking = self.copy(cr, uid, pick.id,
+                            {
+                                'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),
+                                'move_lines' : [],
+                                'state':'draft',
+                            })
 
             for move in too_few:
                 product_qty = move_product_qty[move.id]
-
                 if not new_picking:
                     new_picking = self.copy(cr, uid, pick.id,
                             {
@@ -360,6 +369,7 @@ class stock_picking(osv.osv):
                 defaults = self._do_partial_hook(cr, uid, ids, context, move=move, partial_datas=partial_datas, defaults=defaults)
                 move_obj.write(cr, uid, [move.id], defaults)
                 # override : end
+
             for move in too_many:
                 product_qty = move_product_qty[move.id]
                 defaults = {
@@ -581,7 +591,24 @@ class stock_move(osv.osv):
         if kwargs.get('context'):
             kwargs['context'].update({'call_unlink': True})
         return {'state': 'cancel'}, kwargs.get('context', {})
-    
+
+    def _hook_write_state_stock_move(self, cr, uid, done, notdone, count):
+        if done:
+            count += len(done)
+            self.write(cr, uid, done, {'state': 'assigned'})
+        if notdone:
+            self.write(cr, uid, notdone, {'state': 'confirmed'})
+        return count
+
+    def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
+        while res:
+            r = res.pop(0)
+            move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
+            if r[2]:
+                done.append(move_id)
+            else:
+                notdone.append(move_id)
+        return done, notdone 
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
@@ -842,6 +869,17 @@ class stock_location(osv.osv):
 
         return result
 
+    def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id ):
+        result.append((amount, id, True))
+        product_qty -= amount
+        if product_qty <= 0.0:
+            return result
+        else:
+            result = []
+            result.append((amount, id, True))
+            result.append((product_qty, id, False))
+            return result
+        return []
 
     def on_change_location_type(self, cr, uid, ids, chained_location_type, context=None):
         '''

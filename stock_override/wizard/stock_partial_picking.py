@@ -36,7 +36,17 @@ class stock_partial_picking(osv.osv_memory):
         assert partial_datas, 'partial_datas missing'
         
         return partial_datas
-    
+
+    def _hook_default_get(self, cr, uid, picking_ids, context=None):
+        result = []
+        pick_obj = self.pool.get('stock.picking')
+        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            pick_type = self.get_picking_type(cr, uid, pick, context=context)
+            for m in pick.move_lines:
+                if m.state in ('done','cancel','confirmed'):
+                    continue
+                result.append(self.__create_partial_picking_memory(m, pick_type))
+        return result
 
     # @@@override stock>wizard>stock_partial_picking.py>stock_partial_picking
     def do_partial(self, cr, uid, ids, context=None):
@@ -62,7 +72,6 @@ class stock_partial_picking(osv.osv_memory):
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
 
             for move in moves_list:
-
                 #Adding a check whether any line has been added with new qty
                 if not move.move_id:
                     raise osv.except_osv(_('Processing Error'),\
@@ -90,6 +99,7 @@ class stock_partial_picking(osv.osv_memory):
                     'product_uom': move.move_id.product_uom.id, 
                     'prodlot_id': move.prodlot_id.id, 
                 }
+
                 if (picking_type == 'in') and (move.product_id.cost_method == 'average'):
                     partial_datas['move%s' % (move.move_id.id)].update({
                                                     'product_price' : move.cost, 
@@ -98,6 +108,7 @@ class stock_partial_picking(osv.osv_memory):
                     
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context, move=move, partial_datas=partial_datas)
+
             
         pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return {'type': 'ir.actions.act_window_close'}
