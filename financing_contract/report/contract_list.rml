@@ -191,16 +191,16 @@
           <blockTable colWidths="50.0,62.0,50.0,50.0,100.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0" style="Table10">
             <tr>
               <td>
-                <para style="P3">[[ line['code'] ]]</para>
+                <parawrap style="P3">[[ line['code'] ]]</parawrap>
               </td>
               <td>
-                <para style="P3">[[ line['name'] ]]</para>
+                <parawrap style="P3">[[ line['name'] ]]</parawrap>
               </td>
               <td>
-                <para style="P3">[[ line['donor_grant_reference'] ]]</para>
+                <parawrap style="P3">[[ line['donor_grant_reference'] ]]</parawrap>
               </td>
               <td>
-                <para style="P3">[[ line['hq_grant_reference'] ]]</para>
+                <parawrap style="P3">[[ line['hq_grant_reference'] ]]</parawrap>
               </td>
               <td>
                 <para style="P3">[[ line['cost_centers'] ]]</para>
