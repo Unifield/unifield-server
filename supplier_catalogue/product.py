@@ -317,6 +317,10 @@ class product_pricelist(osv.osv):
         date = kwargs['date']
         uom = kwargs['uom']
         context = kwargs['context']
+        if not uom and product_id:
+            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
+        if not partner and 'partner_id' in context:
+            partner = context.get('partner_id', False)
         uom_price_already_computed = kwargs['uom_price_already_computed']
         
         price, rounding, min_qty = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
