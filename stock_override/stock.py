@@ -875,7 +875,7 @@ class stock_location(osv.osv):
 
         return result
 
-    def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id ):
+    def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id, ids ):
         result.append((amount, id, True))
         product_qty -= amount
         if product_qty <= 0.0:
@@ -883,7 +883,10 @@ class stock_location(osv.osv):
         else:
             result = []
             result.append((amount, id, True))
-            result.append((product_qty, id, False))
+            if len(ids) >= 1:
+                result.append((product_qty, ids[0], False))
+            else:
+                result.append((product_qty, id, False))
             return result
         return []
 
