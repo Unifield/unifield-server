@@ -97,7 +97,8 @@ class stock_mission_report(osv.osv):
         
         # Not update lines for full view or non local reports
         if (vals.get('instance_id', False) and vals['instance_id'] != local_instance_id) or not vals.get('full_view', False):
-            self.update(cr, uid, res, context=context)
+            if not context.get('no_update', False):
+                self.update(cr, uid, res, context=context)
         
         return res
     
@@ -116,6 +117,9 @@ class stock_mission_report(osv.osv):
         '''
         Create lines if new products exist or update the existing lines
         '''
+        if not context:
+            context = {}
+        
         # Open a new cursor : Don't forget to close it at the end of method   
         cr = pooler.get_db(cr.dbname).cursor()
         
@@ -125,6 +129,14 @@ class stock_mission_report(osv.osv):
         report_ids = self.search(cr, uid, [('local_report', '=', True)], context=context)
         line_ids = []
         
+        if not report_ids:
+            c = context.copy()
+            c.update({'no_update': True})
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            report_ids = [self.create(cr, uid, {'name': company.instance_id.name,
+                                               'instance_id': company.instance_id.id,
+                                               'full_view': False}, context=c)]
+            
         # Check in each report if new products are in the database and not in the report
         for report in self.browse(cr, uid, report_ids, context=context):
             # Don't update lines for full view or non local reports
