@@ -71,7 +71,9 @@ class field_orders_setup(osv.osv_memory):
         fo_analysis_menu_id = data_obj.get_object_reference(cr, uid, 'sale', 'menu_report_product_all')[1]
         fo_followup_menu_id = data_obj.get_object_reference(cr, uid, 'sales_followup', 'menuitem_sale_order_followup_from_menu')[1]
         
-        menu_ids = [field_order_menu_id, fo_analysis_menu_id, fo_followup_menu_id]
+        menu_ids = [field_order_menu_id, 
+                    fo_analysis_menu_id, 
+                    fo_followup_menu_id]
             
         if payload.field_orders_ok:
             # If the feature is not activate, inactive the menu entries

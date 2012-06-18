@@ -2776,8 +2776,11 @@ class sale_order(osv.osv):
         
         - allow to modify the data for stock picking creation
         '''
-        setup_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'unifield_setup')[1]
-        setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_id, context=context)
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
         
         picking_data = super(sale_order, self)._hook_ship_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']

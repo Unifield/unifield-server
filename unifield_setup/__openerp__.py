@@ -28,7 +28,7 @@
                 "product_attributes",
     ],
     "author": "TeMPO Consulting, MSF",
-    "website": "",
+    "website": "http://www.unifield.org",
     "category": "General",
     "description": """
     This module aims at implementing the configuration of a Unifield instance.
@@ -45,6 +45,8 @@
         "installer/sales_price_view.xml",
         "installer/restrictive_country_view.xml",
         "installer/field_orders_view.xml",
+        "installer/lang_setup_view.xml",
+        # Security and access rights
         "security/ir.model.access.csv",
     ],
     'demo_xml': [

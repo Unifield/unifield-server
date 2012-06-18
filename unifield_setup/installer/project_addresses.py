@@ -52,6 +52,46 @@ class project_addresses(osv.osv_memory):
         'bill_phone':fields.char('Phone', size=64),
     }
     
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the current address of the main partner and fill the form
+        '''
+        res = super(project_addresses, self).default_get(cr, uid, fields, context=context)
+        
+        if not 'company_id' in res:
+            return res
+        company_id = self.pool.get('res.company').browse(cr, uid, res['company_id'], context=context).partner_id.id
+        addresses = self.pool.get('res.partner').address_get(cr, uid, company_id, ['invoice', 'delivery', 'default'])
+        default_id = addresses.get('default', False)
+        delivery_id = addresses.get('delivery', False) != default_id and addresses.get('delivery', False)
+        bill_id = addresses.get('invoice', False) != default_id and addresses.get('invoice', False)
+        
+        if default_id:
+            address = self.pool.get('res.partner.address').browse(cr, uid, default_id, context=context)
+            for field in ['street','street2','zip','city','email','phone']:
+                res[field] = address[field]
+            for field in ['country_id','state_id']:
+                if address[field]:
+                    res[field] = address[field].id
+                    
+        if delivery_id:
+            address = self.pool.get('res.partner.address').browse(cr, uid, delivery_id, context=context)
+            for field in ['street','street2','zip','city','email','phone']:
+                res['ship_%s' % field] = address[field]
+            for field in ['country_id','state_id']:
+                if address[field]:
+                    res['ship_%s' % field] = address[field].id
+                    
+        if bill_id:
+            address = self.pool.get('res.partner.address').browse(cr, uid, bill_id, context=context)
+            for field in ['street','street2','zip','city','email','phone']:
+                res['bill_%s' % field] = address[field]
+            for field in ['country_id','state_id']:
+                if address[field]:
+                    res['bill_%s' % field] = address[field].id
+        
+        return res
+    
     def execute(self, cr, uid, ids, context=None):
         '''
         Create project's addresses
@@ -61,10 +101,9 @@ class project_addresses(osv.osv_memory):
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
         if not getattr(payload, 'company_id', None):
-            raise ValueError('Case where no default main company is setup '
+            raise ValueError('Case where no default main company is setup ' 
                              'not handled yet')
         company = payload.company_id
-        partner_obj = self.pool.get('res.partner')
         address_obj = self.pool.get('res.partner.address')
         
         if payload.ship_street or payload.ship_street2 or payload.ship_zip or payload.ship_city \

@@ -77,8 +77,11 @@ class purchase_order(osv.osv):
         '''
         res = {}
         
-        setup_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'unifield_setup')[1]
-        setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_id, context=context)
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
         
         for order in ids:
             res[order] = setup.allocation_setup
@@ -141,8 +144,11 @@ class purchase_order(osv.osv):
         '''
         res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
         
-        setup_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'unifield_setup')[1]
-        setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_id, context=context)
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
         
         res.update({'unallocation_ok': False})
         if setup.allocation_setup == 'unallocated':

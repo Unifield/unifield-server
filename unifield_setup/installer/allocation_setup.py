@@ -46,9 +46,9 @@ class allocation_stock_setup(osv.osv_memory):
         
         setup_ids = setup_obj.search(cr, uid, [], context=context)
         if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
-            
-        setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
+            setup_id = setup_obj.create(cr, uid, {}, context=context)
+        else:
+            setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
         
         res['allocation_setup'] = setup_id.allocation_setup
         

@@ -31,7 +31,7 @@ class unifield_setup_configuration(osv.osv):
     
     def _check_uniqueness(self, cr, uid, ids, context=None):
         '''
-        Limit the creation of one and only one instance
+        Limit the creation of one and only one instance configuration
         '''
         setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
         if len(setup_ids) > 1:
@@ -53,6 +53,7 @@ class unifield_setup_configuration(osv.osv):
         'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
                                                  string='Restrictive countries'),
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
+        'lang_id': fields.char(size=5, string='Default language'),
     }
     
     _defaults = {
@@ -61,6 +62,7 @@ class unifield_setup_configuration(osv.osv):
         'allocation_setup': lambda *a: 'allocated',
         'sale_price': lambda *a: 0.00,
         'field_orders_ok': lambda *a: True,
+        'lang_id': lambda *a: 'en_MF',
     }
     
     _constraints = [
@@ -68,3 +70,5 @@ class unifield_setup_configuration(osv.osv):
     ]
     
 unifield_setup_configuration()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

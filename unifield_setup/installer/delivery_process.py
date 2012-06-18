@@ -72,7 +72,10 @@ class delivery_process_setup(osv.osv_memory):
         pack_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_pack_type_tree')[1]
         packing_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_shipment')[1]
         
-        menu_ids = [picking_menu_id, pre_packing_menu_id, pack_menu_id, packing_menu_id]
+        menu_ids = [picking_menu_id, 
+                    pre_packing_menu_id, 
+                    pack_menu_id, 
+                    packing_menu_id]
             
         if payload.delivery_process == 'simple':
             # In simple configuration, remove the menu entries
