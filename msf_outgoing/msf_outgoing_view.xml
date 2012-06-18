@@ -314,6 +314,7 @@
 						</page>
 						<page string="Notes">
 							<field colspan="4" name="note" nolabel="1"/>
+							<field  name="from_wkf" invisible="1"/>
 						</page>
 					</notebook>
 				</form>
@@ -596,6 +597,7 @@
 						</page>
 						<page string="Notes">
 							<field colspan="4" name="note" nolabel="1"/>
+							<field  name="from_wkf" invisible="1"/>
 						</page>
 					</notebook>
 				</form>
