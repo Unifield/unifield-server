@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 import decimal_precision as dp
 from time import strftime
+import logging
 
 class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
@@ -90,6 +91,17 @@ class account_analytic_line(osv.osv):
             new_al = self.copy(cr, uid, al.id, vals, context=context)
             res.append(new_al)
         return res
+
+    def create(self, cr, uid, vals, context):
+        """
+        Filled in 'document_date' if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('AAL: set document_date')
+            vals['document_date'] = strftime('%Y-%m-%d')
+        return super(account_analytic_line, self).create(cr, uid, vals, context=context)
 
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

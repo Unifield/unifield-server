@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 import re
 import decimal_precision as dp
+from time import strftime
+import logging
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -150,6 +152,17 @@ class account_move_line(osv.osv):
         if isinstance(ids, list):
             res = res[0]
         return res
+
+    def create(self, cr, uid, vals, context, *args):
+        """
+        Filled in 'document_date' if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('AML: set document_date')
+            vals['document_date'] = strftime('%Y-%m-%d')
+        return super(account_move_line, self).create(cr, uid, vals, context, args)
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
