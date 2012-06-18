@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,26 +18,24 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
 {
-    "name" : "MSF Chart Of Account",
-    "version" : "0.1",
-    "description" : "This permits to have a chart of account for Unifield Project at MSF",
-    "author" : "TeMPO Consulting, MSF",
-    "category" : "Localisation/Account Charts",
-    "depends" : ["base", "account_activable", "register_accounting", "account_journal", "msf_instance"],
-    "init_xml" : [
-        "data/account.xml",
-        "data/account_data.xml",
+    "name" : "MSF Proprietary Instance",
+    "version": "1.1",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["account_msf", "res_currency_functional"],
+    "description": """Module for defining proprietary instances, their informations
+    """,
+    "init_xml" : [],
+    "update_xml": [
+        'msf_instance_view.xml',
+        'data/instance_data.xml',
     ],
-    "update_xml" : [
-        "msf_chart_of_account_installer.xml",
+    'demo_xml': [
     ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
 }
-
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

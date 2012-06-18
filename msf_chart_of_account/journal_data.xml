@@ -82,7 +82,6 @@
             <field name="name">Stock</field>
             <field name="code">STO</field>
             <field name="type">stock</field>
-            <field name="instance_id" search="[]" use="name" model="res.company" />
         </record>
         
         <record id="bank_analytic_journal" model="account.analytic.journal">
@@ -187,7 +186,6 @@
             <field name="name">Accruals</field>
             <field name="code">AC</field>
             <field name="type">accrual</field>
-            <field name="instance_id" search="[]" use="name" model="res.company" />
             <field name="analytic_journal_id" ref="msf_accrual.analytic_accrual_journal"/>
         </record>
     </data>
