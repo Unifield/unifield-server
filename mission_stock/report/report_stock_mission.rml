@@ -1,0 +1,93 @@
+<document filename="report_stock_mission.pdf">
+  <template pageSize="(842.0,595.0)" title="Stock mission report" author="Unifield" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="15.0" y1="42.0" width="758" height="539"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="reportLines">
+      <blockAlignment value="CENTER"/>
+      <blockValign value="MIDDLE"/>
+      <lineStyle kind="OUTLINE" colorName="#aaaaaa" />
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
+    <paraStyle name="lines" fontName="Helvetica" fontSize="8.0" alignment="CENTER" />
+
+    <images/>
+  </stylesheet>
+  
+  <story>
+  
+  	<para style="P1">Mission stock report : [[ objects[0].mission_report_id.name ]]</para>
+  
+  	<blockTable colWidths="" style="reportLines">
+  		<tr>
+  		[[repeatIn(objects[0].mission_report_id.report_line,'o')]]
+  			<td>
+  				<para style="lines">
+  					[[ '[%s] %s' % (o.product_id.default_code, o.product_id.name) ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_id.uom_id.name ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.internal_qty != 0.00 and o.internal_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.in_pipe_qty != 0.00 and o.in_pipe_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.in_pipe_coor_qty != 0.00 and o.in_pipe_coor_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.stock_qty != 0.00 and o.stock_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.central_qty != 0.00 and o.central_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.cross_qty != 0.00 and o.cross_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.secondary_qty != 0.00 and o.secondary_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.cu_qty != 0.00 or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_id.product_amc != 0.00 and o.product_id.product_amc or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_id.reviewed_consumption != 0.00 and o.product_id.reviewed_consumption or '0.00' ]]
+  				</para>
+  			</td>
+  		</tr>
+  	</blockTable>
+    
+  </story>
+</document>
