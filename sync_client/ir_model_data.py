@@ -192,15 +192,10 @@ class ir_model_data_sync(osv.osv):
         model = ir_record.model
         id = ir_record.res_id
         obj = self.pool.get(model)
-        fields_ref = obj.fields_get(cr, uid, context=context)
-        if fields_ref.get('active'):
-            domain = [('id', '=', id), '|', ('active', '=', True), ('active', '=', False)]
-        else:
-            domain = [('id', '=', id)]
-        ids = obj.search(cr, uid, domain, context=context)
-        return ids and ids[0] or False
-        
-    
+        #check if record properly exist in the database
+        cr.execute("select id from %s where id = %s;" % (obj._table, id))
+        return id if cr.fetchone() else False
+
     def get_ir_record(self, cr, uid, xml_id, context=None):
         xml_id_split = xml_id.split('.')
         if len(xml_id_split) > 2:
