@@ -453,7 +453,7 @@ class stock_location(osv.osv):
                 if amount > min(total, product_qty):
                     amount = min(product_qty, total)
 
-                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id)
+                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id, ids)
 
         return False
 
