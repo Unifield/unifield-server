@@ -153,7 +153,7 @@ class account_move_line(osv.osv):
             res = res[0]
         return res
 
-    def create(self, cr, uid, vals, context, *args):
+    def create(self, cr, uid, vals, context=None, check=True):
         """
         Filled in 'document_date' if we come from tests
         """
@@ -162,7 +162,7 @@ class account_move_line(osv.osv):
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('AML: set document_date')
             vals['document_date'] = strftime('%Y-%m-%d')
-        return super(account_move_line, self).create(cr, uid, vals, context, args)
+        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
