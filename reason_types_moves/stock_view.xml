@@ -186,10 +186,10 @@
             <field name="arch" type="xml">
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}</attribute>
-                        <attribute name="on_change">onchange_move()</attribute>
-                        <attribute name="attrs">{'readonly': [ ('purchase_id', '!=', 0),('state','in',['draft','confirmed',]) ]}</attribute>
-                    </xpath>
+                            <attribute name="context">{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}</attribute>
+                            <attribute name="on_change">onchange_move()</attribute>
+                            <attribute name="attrs">{'readonly': [ ('purchase_id', '!=', 0),('state','in',['draft','confirmed','assigned']) ]}</attribute>
+                        </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
                                 <field name="reason_type_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
@@ -239,7 +239,7 @@
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         	<attribute name="context">{'reason_type_id': reason_type_id}</attribute>
                         	<attribute name="on_change">onchange_move()</attribute>
-                            <attribute name="attrs">{'readonly': [ ('purchase_id', '!=', 0),('state','in',['draft','confirmed',]) ]}</attribute>
+                            <attribute name="attrs">{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}</attribute>
                     	</xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
@@ -257,7 +257,9 @@
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
                        		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
                        </xpath>
-                        
+                        <xpath expr="/form//page[@string='Notes']//field[@name='note']" position="after">
+						    <field name="from_wkf" invisible="1"/>
+                        </xpath>
                         <!-- MOVED TO SPECIFIC_RULES
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="replace">
                                 <field name="location_id" domain="[('usage','in',('internal', 'procurement', 'production'))]" />
@@ -278,7 +280,7 @@
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         <attribute name="context">{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}</attribute>
                         <attribute name="on_change">onchange_move()</attribute>
-                        <attribute name="attrs">{'readonly': [ ('sale_id', '!=', 0),('state','in',['draft','confirmed',]) ]}</attribute>
+                        <attribute name="attrs">{'readonly': [ ('sale_id', '!=', 0),('state','in',['draft','confirmed','assigned']) ]}</attribute>
                     </xpath>
                     
 
