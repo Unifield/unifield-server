@@ -213,10 +213,12 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             values = {}
             curr_date = time.strftime('%Y-%m-%d')
-            if not inv.date_invoice:
-                values.update({'date': curr_date, 'state': 'date'})
-            if not inv.document_date:
-                values.update({'document_date': curr_date, 'state': 'date'})
+            if not inv.date_invoice and not inv.document_date:
+                values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
+            elif not inv.date_invoice:
+                values.update({'date': curr_date, 'document_date': inv.document_date, 'state': 'date'})
+            elif not inv.document_date:
+                values.update({'date': inv.date_invoice, 'document_date': curr_date, 'state': 'date'})
             if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 state = values and 'both' or 'amount'
                 values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})

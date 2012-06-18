@@ -84,12 +84,19 @@ class account_invoice(osv.osv):
         vals.update({'sequence_id': res_seq,})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
-    def line_get_convert(self, cr, uid, x, part, date, context=None):
+    def action_date_assign(self, cr, uid, ids, *args):
         """
-        Add document_date to values
+        Check Document date.
+        Add it if we come from a YAML test.
         """
-        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)
-        res['document_date'] = x.get('document_date', date)
+        # Default behaviour to add date
+        res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
+        # Process invoices
+        for i in self.browse(cr, uid, ids):
+            if not i.document_date and i.from_yml_test:
+                self.write(cr, uid, i.id, {'document_date': strftime('%Y-%m-%d')})
+            if not i.document_date and not i.from_yml_test:
+                raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
         return res
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
@@ -120,6 +127,27 @@ class account_invoice(osv.osv):
             ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']), 
             ('company_id', '=', inv.company_id.id)], context=context, order="date_start ASC, name ASC")
         return res
+
+    def finalize_invoice_move_lines(self, cr, uid, inv, line):
+        """
+        Hook that changes move line data before write them.
+        Add invoice document date to data.
+        """
+        res = super(account_invoice, self).finalize_invoice_move_lines(cr, uid, inv, line)
+        new_line = []
+        for el in line:
+            if el[2]:
+                el[2].update({'document_date': inv.document_date})
+        return res
+
+    def copy(self, cr, uid, id, default={}, context=None):
+        """
+        Delete period_id from invoice
+        """
+        if default is None:
+            default = {}
+        default.update({'period_id': False,})
+        return super(account_invoice, self).copy(cr, uid, id, default, context)
 
 account_invoice()
 
