@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-    <data>   
+    <data>
+    
         <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
         
         <record id="purchase_cross_docking_form_view2" model="ir.ui.view">
@@ -12,7 +13,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/field[@name='categ']" position="replace" >
-                        <field name="categ" on_change="onchange_categ(categ)" />
+                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
                     </xpath>
                 </data>
             </field>
@@ -27,12 +28,14 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
-                        <field name="cross_docking_ok" attrs="{'readonly':['|', '|', ('allocation_setup', '=', 'unallocated'), ('categ','in', ['service', 'transport']), ('state', '!=', 'draft')]}" 
+                        <field name="cross_docking_ok" attrs="{'readonly':['|', '|', '|', ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('categ','in', ['service', 'transport']), ('state', '!=', 'draft')]}" 
                         on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id)"
                         />
                     </xpath>
                     <field name="location_id" position= "replace">
-                        <field name="location_id" attrs="{'readonly':[('cross_docking_ok','=', True )]}"/>
+                        <field name="location_id" 
+                        attrs="{'readonly':['|', ('state', 'not in', ['draft', 'confirmed']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"
+                        on_change="onchange_location_id(location_id,categ)"/>
                     </field>
                 </data>
             </field>
@@ -49,7 +52,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']" position="attributes" >
-                        <attribute name="context">{'purchase_id': purchase_id} </attribute>
+                        <attribute name="default_get">{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id} </attribute>
                     </xpath>
                 </data>
             </field>

@@ -626,6 +626,33 @@ class purchase_order(osv.osv):
         'confirmed_date_by_synchro': False,
     }
     
+    def copy(self, cr, uid, id, default=None, context=None):
+        new_id = super(purchase_order, self).copy(cr, uid, id, default, context)
+        if new_id:
+            data = self.read(cr, uid, new_id, ['order_line', 'delivery_requested_date'])
+            if data['order_line'] and data['delivery_requested_date']:
+                self.pool.get('purchase.order.line').write(cr, uid, data['order_line'], {'date_planned': data['delivery_requested_date']})
+        return new_id
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase dates
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve']
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
+        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
+        return res
+    
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
@@ -866,6 +893,21 @@ class purchase_order_line(osv.osv):
                  'confirmed_delivery_date': _get_confirmed_date,
                  }
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase dates
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        if not context.get('keepDateAndDistrib'):
+            if 'confirmed_delivery_date' not in default:
+                default['confirmed_delivery_date'] = False
+            if 'date_planned' not in default:
+                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+        return super(purchase_order_line, self).copy_data(cr, uid, id, default=default, context=context)
+    
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
         '''
         Checks if dates are later than header dates
@@ -925,14 +967,22 @@ class sale_order(osv.osv):
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
-        erase shipment date
+        erase dates
         '''
         if default is None:
             default = {}
         if context is None:
             context = {}
         default.update({'shipment_date': False,})
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date']
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
         res = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
         return res
     
     def _get_receipt_date(self, cr, uid, ids, field_name, arg, context=None):
@@ -1238,6 +1288,21 @@ class sale_order_line(osv.osv):
                  'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
                  }
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase dates
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        if not context.get('keepDateAndDistrib'):
+            if 'confirmed_delivery_date' not in default:
+                default['confirmed_delivery_date'] = False
+            if 'date_planned' not in default:
+                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+        return super(sale_order_line, self).copy_data(cr, uid, id, default=default, context=context)
     
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
         '''
@@ -1313,41 +1378,50 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
         # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.purchase_id:
-                result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date,})
-            if obj.sale_id:
-                # rts is a mandatory field
-                if obj.subtype == 'standard':
-                    # rts + shipment lt
-                    shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
-                    rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
-                    rts = rts + relativedelta(days=shipment_lt or 0)
-                    rts = rts.strftime(db_date_format)
-                    result.setdefault(obj.id, {}).update({'min_date': rts,})
-                if obj.subtype == 'picking':
-                    # rts
-                    result.setdefault(obj.id, {}).update({'min_date': obj.sale_id.ready_to_ship_date,})
-                if obj.subtype == 'ppl':
-                    # today
-                    today = time.strftime(db_date_format)
-                    result.setdefault(obj.id, {}).update({'min_date': today,})
+            if obj.manual_min_date_stock_picking:
+                result.setdefault(obj.id, {}).update({'min_date': obj.manual_min_date_stock_picking})
+            else:
+                if obj.purchase_id:
+                    result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date})
+                if obj.sale_id:
+                    # rts is a mandatory field
+                    if obj.subtype == 'standard':
+                        # rts + shipment lt
+                        shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                        rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
+                        rts = rts + relativedelta(days=shipment_lt or 0)
+                        rts = rts.strftime(db_date_format)
+                        result.setdefault(obj.id, {}).update({'min_date': rts})
+                    elif obj.subtype == 'picking':
+                        # rts
+                        result.setdefault(obj.id, {}).update({'min_date': obj.sale_id.ready_to_ship_date})
+                    elif obj.subtype == 'ppl':
+                        # today
+                        today = time.strftime(db_date_format)
+                        result.setdefault(obj.id, {}).update({'min_date': today})
                     
         return result
     
     def _set_minimum_date(self, cr, uid, ids, name, value, arg, context=None):
         '''
-        call super
+        set the manual conterpart of min_date
         '''
         if context is None:
             context = {}
-        result = super(stock_picking, self)._set_minimum_date(cr, uid, ids, name, value, arg, context=context)
-        return result
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
+        return True
 
     _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
                 'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
                                             method=True, store=True, type='datetime', string='Expected Date', select=1,
                                             help="Expected date for the picking to be processed"),
+                'manual_min_date_stock_picking': fields.date(string='Manual Date'),
                 }
+    
+    _defaults = {'manual_min_date_stock_picking': False}
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):

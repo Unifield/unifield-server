@@ -60,10 +60,28 @@
             <field name="analytic_journal_id" ref="od_analytic_journal"/>
         </record>
 
+        <record id="hq_analytic_journal" model="account.analytic.journal">
+            <field name="name">Analytic HQ</field>
+            <field name="code">AHQ</field>
+            <field name="type">hq</field>
+        </record>
         <record id="hq_journal" model="account.journal">
             <field name="name">HQ</field>
             <field name="code">HQ</field>
             <field name="type">hq</field>
+            <field name="analytic_journal_id" ref="hq_analytic_journal"/>
+        </record>
+
+        <record id="hq_analytic_journal_fields" model="account.analytic.journal">
+            <field name="name">HQ - Field expenses</field>
+            <field name="code">AHQ-Exp</field>
+            <field name="type">hq</field>
+        </record>
+        <record id="hq_journal_fields" model="account.journal">
+            <field name="name">HQ - Field expenses</field>
+            <field name="code">HQ-Exp</field>
+            <field name="type">hq</field>
+            <field name="analytic_journal_id" ref="hq_analytic_journal_fields"/>
         </record>
 
         <record id="hr_analytic_journal" model="account.analytic.journal">
@@ -83,7 +101,7 @@
             <field name="code">STO</field>
             <field name="type">stock</field>
         </record>
-        
+
         <record id="bank_analytic_journal" model="account.analytic.journal">
             <field name="name">Bank</field>
             <field name="code">BNK</field>
@@ -107,7 +125,7 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.1020" />
             <field name="analytic_journal_id" ref="bank_analytic_journal"/>
         </record>
-        
+
         <record id="cash_analytic_journal" model="account.analytic.journal">
             <field name="name">Cash</field>
             <field name="code">CAS</field>
@@ -131,7 +149,7 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.1010" />
             <field name="analytic_journal_id" ref="cash_analytic_journal"/>
         </record>
-        
+
         <record id="cheque_analytic_journal" model="account.analytic.journal">
             <field name="name">Cheque</field>
             <field name="code">CHK</field>
@@ -155,19 +173,18 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.3001" />
             <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
-        
+
         <record id="account_journal.engagement_journal" model="account.analytic.journal">
             <field name="name">Engagement Journal</field>
             <field name="code">ENG</field>
             <field name="type">engagement</field>
         </record>
-        
+
         <record id="analytic_miscellaneous_transactions" model="account.analytic.journal">
             <field name="name">Miscellaneous Transactions Journal</field>
             <field name="code">AMT</field>
             <field name="type">general</field>
         </record>
-        
         <record id="miscellaneous_transactions" model="account.journal">
             <field name="name">Miscellaneous Transactions</field>
             <field name="code">MT</field>
@@ -175,13 +192,12 @@
             <field name="default_debit_account_id" ref="msf_chart_of_account.6940" />
             <field name="analytic_journal_id" ref="analytic_miscellaneous_transactions"/>
         </record>
-        
+
         <record id="msf_accrual.analytic_accrual_journal" model="account.analytic.journal">
             <field name="name">Accruals</field>
             <field name="code">AC</field>
             <field name="type">general</field>
         </record>
-        
         <record id="msf_accrual.accrual_journal" model="account.journal">
             <field name="name">Accruals</field>
             <field name="code">AC</field>

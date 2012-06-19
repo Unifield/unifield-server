@@ -233,8 +233,11 @@ class product_product(osv.osv):
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
            context = {}
-
-        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        
+        ctx = context.copy()
+        if 'location' in context and type(context.get('location')) == type([]):
+            ctx.update({'location': context.get('location')[0]})
+        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=ctx, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
             line_view = """<tree string="Historical consumption">

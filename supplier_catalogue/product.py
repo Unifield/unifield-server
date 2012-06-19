@@ -58,6 +58,8 @@ class product_supplierinfo(osv.osv):
         new_res = [] 
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
+        if count:
+            return res
         
         if count:
             return res
@@ -202,10 +204,11 @@ class product_product(osv.osv):
             one_product = product_ids
             product_ids = [product_ids]
             
-        for product in prod_obj.browse(cr, uid, product_ids, context=context):            
+        for product in prod_obj.browse(cr, uid, product_ids, context=context):
+            info_prices = []            
             sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
                                                          ('product_id', '=', product.product_tmpl_id.id)], 
-                                                         order='sequence asc', limit=1, context=context)
+                                                         order='sequence asc', context=context)
                 
             domain = [('min_quantity', '<=', product_qty),
                       ('uom_id', '=', product_uom_id),
@@ -220,7 +223,7 @@ class product_product(osv.osv):
                 domain.append(('suppinfo_id.sequence', '=', min_seq))
                 domain.append(('suppinfo_id', 'in', sequence_ids))
             
-            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
                 
             if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
