@@ -158,6 +158,7 @@
 					<field name="invoice_state"/>
 					<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
 					<field name="state"/>
+					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
 				</tree>
@@ -400,7 +401,7 @@
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
-			<field name="domain">[('type','=','out'), ('subtype', 'in', ['picking','ppl'])]</field>
+			<field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
 			<field name="context">{'picking_screen':True, 'test':True, 'search_default_not_empty':1,}</field>
 			<!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
 			<field name="search_view_id" ref="view_picking_ticket_search"/>
@@ -663,7 +664,7 @@
 			<field name="view_mode">calendar</field>
 			<field name="act_window_id" ref="action_ppl"/>
 		</record>
-		<menuitem action="action_ppl" id="menu_action_ppl" parent="menu_warehouse_deliveries" sequence="5"/>
+		<menuitem action="action_ppl" id="menu_action_ppl" parent="menu_warehouse_deliveries" sequence="5" />
 		<!-- Changed name to 'Packing' -->
 		<record id="view_packing_tree" model="ir.ui.view">
 			<field name="name">packing.tree</field>
