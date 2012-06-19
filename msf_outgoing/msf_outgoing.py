@@ -345,8 +345,22 @@ class shipment(osv.osv):
             self.log(cr, uid, shipment_id, _('The new Shipment %s has been created.')%(shipment_name,))
             # the shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
+
         # TODO which behavior
-        return {'type': 'ir.actions.act_window_close'}
+        #return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
+        view_id = view_id and view_id[1] or False
+        return {
+            'name':_("Shipment"),
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'res_model': 'shipment',
+            'res_id': shipment_id,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
     
     def return_packs(self, cr, uid, ids, context=None):
         '''
@@ -464,7 +478,20 @@ class shipment(osv.osv):
         result = self.complete_finished(cr, uid, partial_datas.keys(), context=context)
         
         # TODO which behavior
-        return {'type': 'ir.actions.act_window_close'}
+        #return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = view_id and view_id[1] or False
+        return {
+            'name':_("Picking Ticket"),
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'res_model': 'stock.picking',
+            'res_id': draft_picking_id ,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
     
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
         '''
@@ -658,6 +685,21 @@ class shipment(osv.osv):
         self.complete_finished(cr, uid, partial_datas.keys(), context=context)
         
         # TODO which behavior
+        #return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
+        view_id = view_id and view_id[1] or False
+        return {
+            'name':_("Shipment"),
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'res_model': 'shipment',
+            'res_id': draft_shipment_id,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
+
         return {'type': 'ir.actions.act_window_close'}
         
     def action_cancel(self, cr, uid, ids, context=None):
@@ -1959,7 +2001,6 @@ class stock_picking(osv.osv):
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
             view_id = view_id and view_id[1] or False
-            # display newly created picking ticket
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
                     'view_id': [view_id],
@@ -2055,13 +2096,12 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
-        # display newly created picking ticket
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
                 'view_type': 'form',
                 'res_model': 'stock.picking',
-                'res_id': pick.id,
+                'res_id': new_pick_id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
@@ -2196,19 +2236,18 @@ class stock_picking(osv.osv):
             # if the flow type is in quick mode, we perform the ppl steps automatically
             if pick.flow_type == 'quick':
                 create_picking_obj.quick_mode(cr, uid, new_ppl, context=context)
-        
+
         # TODO which behavior
         #return {'type': 'ir.actions.act_window_close'}
         data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
         view_id = view_id and view_id[1] or False
-        # display newly created picking ticket
-        return {'name':_("Picking Ticket"),
+        return {'name':_("Pre-Packing List"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
                 'view_type': 'form',
                 'res_model': 'stock.picking',
-                'res_id': pick.id,
+                'res_id': new_ppl.id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
@@ -2338,15 +2377,14 @@ class stock_picking(osv.osv):
         # TODO which behavior
         #return {'type': 'ir.actions.act_window_close'}
         data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
-        # display newly created picking ticket
-        return {'name':_("Pre-Packing List"),
+        return {'name':_("Shipment"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
                 'view_type': 'form',
-                'res_model': 'stock.picking',
-                'res_id': pick.id,
+                'res_model': 'shipment',
+                'res_id': new_packing.shipment_id.id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
@@ -2436,20 +2474,19 @@ class stock_picking(osv.osv):
                 # TODO THIS DOESNT WORK - still done state - replace with trigger for now
                 #wf_service.trg_validate(uid, 'stock.picking', picking.id, 'return_cancel', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
-                
+
         # TODO which behavior
         #return {'type': 'ir.actions.act_window_close'}
         data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
-        # display newly created picking ticket
         return {
-            'name':_("Pre-Packing List"),
+            'name':_("Picking Ticket"),
             'view_mode': 'form,tree',
             'view_id': [view_id],
             'view_type': 'form',
             'res_model': 'stock.picking',
-            'res_id': picking.id,
+            'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
         }
