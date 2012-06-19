@@ -29,11 +29,37 @@ class allocation_stock_setup(osv.osv_memory):
     _name = 'allocation.stock.setup'
     _inherit = 'res.config'
     
+    def _get_allocation_ok(self, cr, uid, ids, field_name, context=None):
+        '''
+        Return True if allocated locations are empty and no in progress cross-docking PO
+        '''
+        res = {}
+        
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = True
+            if wiz.unallocated:
+                # Search all cross-docking PO
+                po_ids = self.pool.get('purchase.order').search(cr, uid, [('cross_docking_ok', '=', True)], context=context)
+                if po_ids:
+                    res[wiz.id] = False
+                    continue
+                
+                # Search all cross-docking locations
+                cross_loc_ids = self.pool.get('stock.location').search(cr, uid, [('cross_docking_location_ok', '=', True)], context=context)
+                product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
+                for product_id in product_ids:
+                    for loc_id in cross_loc_ids:
+                        if self.pool.get('stock.location')._product_get(cr, uid, loc_id, product_id, context=context):
+                            res[wiz.id] = False
+                            continue
+        return res
+    
     _columns = {
         'allocation_setup': fields.selection([('allocated', 'Allocated'),
                                               ('unallocated', 'Unallocated'),
                                               ('mixed', 'Mixed')], 
                                               string='Allocated stocks', required=True),
+        'allocation_ok': fields.function(_get_allocation_ok, string='Error !', type='boolean', store=False, method=True),
     }
     
     def default_get(self, cr, uid, fields, context=None):

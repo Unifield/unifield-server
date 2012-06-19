@@ -18,8 +18,6 @@
 	    	<field name="restart">never</field>
 	    </record>
 	    
-	    <function name="execute" model="res.config.view"/>
-	    
 	    <record id="base_setup.base_setup_company_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="16" />
 	    	<field name="restart">always</field>
@@ -30,25 +28,19 @@
 	    	<field name="restart">never</field>
 	    </record>
 	    
-	    <function name="execute" model="base.setup.installer" />
-	    
 	    <record id="base_report_designer.report_designer_installer_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="4" />
 	    	<field name="restart">never</field>
 	    </record>
-	    
-	    <function name="execute" model="base_report_designer.installer" />
 	    
 	    <record id="hr.hr_installer_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="5" />
 	    	<field name="restart">never</field>
 	    </record>
 	    
-	    <function name="execute" model="hr.installer" />
-	    
 	    <record id="account.account_configuration_installer_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="6" />
-	    	<field name="restart">on_skip</field>
+	    	<field name="restart">onskip</field>
 	    </record>
 	    
 	    <record id="purchase_double_validation.config_wizard_step_purchase_limit_amount" model="ir.actions.todo">
@@ -56,36 +48,25 @@
 	    	<field name="restart">never</field>
 	    </record>
 	    
-	    <function name="execute" model="purchase.double.validation.installer" />
-	    
 	    <record id="sale.sale_installer_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="8" />
 	    	<field name="restart">never</field>
 	    </record>
-	    
-	    <function name="execute" model="sale.installer" />
 	    
 	    <record id="account.account_installer_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="12" />
 	    	<field name="restart">never</field>
 	    </record>
 	    
-	    <function name="execute" model="account.installer.modules" />
-	    
 	    <record id="base.config_wizard_step_user" model="ir.actions.todo">
 	    	<field name="sequence" eval="25" />
 	    	<field name="restart">never</field>
 	    </record>
 	    
-	    <function name="execute" model="res.config.users" />
-	    
 	    <record id="sale.config_wizard_step_sale_picking_policy" model="ir.actions.todo">
 	    	<field name="sequence" eval="9" />
 	    	<field name="restart">never</field>
-	    </record>
-	    
-	    <function name="execute" model="sale.config.picking_policy" />
-	    
+	    </record>	    
 		
 	</data>
 </openerp>
