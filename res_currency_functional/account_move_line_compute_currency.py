@@ -141,6 +141,7 @@ class account_move_line_compute_currency(osv.osv):
                 'move_id': move_id,
                 'date': oldiest_date or current_date,
                 'source_date': oldiest_date or current_date,
+                'document_date': oldiest_date or current_date,
                 'journal_id': journal_id,
                 'period_id': period_id,
                 'partner_id': partner_id,

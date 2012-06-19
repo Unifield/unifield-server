@@ -41,6 +41,7 @@ class wizard_import_cheque_lines(osv.osv_memory):
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date_maturity': fields.date('Due Date', readonly=True),
         'date': fields.date('Posting Date', readonly=False, required=True),
+        'document_date': fields.date('Document Date', readonly=False, required=True),
         'amount_to_pay': fields.integer('Amount to pay', readonly=True),
         'amount_currency': fields.integer('Amount currency', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
@@ -65,6 +66,7 @@ class wizard_import_cheque(osv.osv_memory):
         'period_id': fields.many2one('account.period', string="Period", required=True, help="Useful for filtering account move line that are in the same period"),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
         'date': fields.date('Date', required=False),
+        'document_date': fields.date('Document Date', required=False),
     }
 
     _defaults = {
@@ -87,6 +89,7 @@ class wizard_import_cheque(osv.osv_memory):
         imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
         new_lines = []
         date = wizard.date or None
+        document_date = wizard.document_date or None
         for line in wizard.line_ids:
             if line.id not in imported_lines:
                 if not date:
@@ -104,11 +107,12 @@ class wizard_import_cheque(osv.osv_memory):
                     'amount_currency': line.amount_currency or None,
                     'currency_id': line.currency_id.id or None,
                     'wizard_id': wizard.id or None,
+                    'document_date': document_date or None,
                 }
                 new_lines.append((0, 0, vals))
         
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
-        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': ''}, context=context)
+        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
@@ -145,6 +149,7 @@ class wizard_import_cheque(osv.osv_memory):
                 'name': 'Imported Cheque: ' + (line.name or line.ref or ''),
                 'ref': line.ref,
                 'date': _get_date_in_period(self, cr, uid, imported_line.date or curr_date, wizard.period_id.id, context=context),
+                'document_date': imported_line.document_date,
                 'statement_id': wizard.statement_id.id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
