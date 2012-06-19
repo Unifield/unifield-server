@@ -139,6 +139,7 @@ class account_invoice(osv.osv):
                     'partner_type_mandatory': True,
                     'currency_id': inv.currency_id.id,
                     'name': 'Down payment for ' + ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids]),
+                    'document_date': inv.document_date,
                 })
                 # create dp counterpart line
                 dp_account = self.pool.get('account.move.line').read(cr, uid, el[0], ['account_id']).get('account_id', False)
