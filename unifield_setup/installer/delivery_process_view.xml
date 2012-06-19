@@ -41,8 +41,8 @@
 
     <record id="delivery_process_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_delivery_process_setup"/>
-        <field name="sequence">15</field>
-        <field name="restart">onskip</field>
+        <field name="sequence">19</field>
+        <field name="restart">always</field>
     </record>
   </data>
 </openerp>

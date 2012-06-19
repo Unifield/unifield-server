@@ -150,7 +150,7 @@ class purchase_order(osv.osv):
         else:
             setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
         
-        res.update({'unallocation_ok': False})
+        res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
         if setup.allocation_setup == 'unallocated':
             res.update({'unallocation_ok': True})
             

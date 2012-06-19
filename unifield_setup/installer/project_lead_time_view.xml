@@ -42,8 +42,8 @@
 
     <record id="project_leadtime_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_project_leadtime_setup"/>
-        <field name="sequence">3</field>
-        <field name="restart">onskip</field>
+        <field name="sequence">17</field>
+        <field name="restart">always</field>
     </record>
   </data>
 </openerp>
