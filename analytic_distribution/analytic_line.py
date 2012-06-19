@@ -217,7 +217,9 @@ class analytic_line(osv.osv):
         # Process regarding account_type
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
-                if aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
+                if aline.account_id and aline.account_id.id == msf_private_fund:
+                    res.append(aline.id)
+                elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
                     if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
                         res.append(aline.id)
         elif account_type == 'FUNDING':
