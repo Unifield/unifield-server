@@ -193,7 +193,7 @@ class check_common(osv.osv):
             message += "failed (Fields list should be a list of string)!\n"
             error = True
         except KeyError:
-            message += "failed (Field doesn't exist for the selected model/object)!\n"
+            message += "failed (Field %s doesn't exist for the selected model/object)!\n" % base_field
             error = True
         except:
             message += "failed! (Syntax Error : not a python expression) \n"
@@ -280,7 +280,7 @@ class check_common(osv.osv):
             fields = []
             ir_model_fields = self.pool.get('ir.model.fields')
             model_ids = self._get_all_model_ids(cr, uid, rec.model_id)
-            fields_ids = ir_model_fields.search(cr, uid, [('model','in', model_ids)], context=context)
+            fields_ids = ir_model_fields.search(cr, uid, [('model_id','in', model_ids)], context=context)
             fields = ir_model_fields.browse(cr, uid, fields_ids, context=context)
             fields = [x.name for x in fields]
             if not rec.owner_field in fields: raise KeyError
