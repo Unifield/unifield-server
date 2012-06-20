@@ -100,7 +100,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
             for distrib_id in lines:
                 for line in lines[distrib_id]:
                     # Update distribution
-                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, [distrib_id], [line.account_id.id], account_id, context=context)
+                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id, account_id, context=context)
                     # Then update analytic line
                     self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
