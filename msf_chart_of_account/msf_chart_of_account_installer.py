@@ -16,6 +16,15 @@ class msf_chart_of_account_installer(osv.osv_memory):
         'counterpart_hq_entries_default_account': fields.many2one('account.account', string="Default counterpart", domain="[('type', '!=', 'view')]", 
             help="Account that will be used as counterpart for HQ Validated Entries.")
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(msf_chart_of_account_installer, self).default_get(cr, uid, fields, context=context)
+        
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if instance_id:
+            res['instance_id'] = instance_id.id
+        
+        return res
 
     def get_inter(self, cr, uid, *a, **b):
         try:
