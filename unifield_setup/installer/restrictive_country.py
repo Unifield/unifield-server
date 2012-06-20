@@ -67,6 +67,10 @@ class restrictive_country_setup(osv.osv_memory):
         country_ids = []
         for country in payload.restrict_country_ids:
             country_ids.append(country.id)
+            
+        product_ids = self.pool.get('product.product').search(cr, uid, [('restricted_country', '=', True), ('country_restriction', 'not in', country_ids)])
+        if product_ids:
+            raise osv.except_osv(_('Error'), _('You cannot change the restrictive countries because one or more products have a restriction on a country which is not in the new selection.'))
         
         country_obj.write(cr, uid, country_ids, {'is_restrictive': True}, context=context)
     
