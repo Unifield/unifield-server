@@ -156,6 +156,15 @@ class account_invoice(osv.osv):
         default.update({'period_id': False,})
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
+    def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
+        """
+        Add document date to account_move_line before pay and reconcile
+        """
+        for line in lines:
+            if line[2] and 'date' in line[2] and not line[2].get('document_date', False):
+                line[2].update({'document_date': line[2].get('date')})
+        return lines
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
