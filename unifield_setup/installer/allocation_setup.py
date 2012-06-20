@@ -29,37 +29,32 @@ class allocation_stock_setup(osv.osv_memory):
     _name = 'allocation.stock.setup'
     _inherit = 'res.config'
     
-    def _get_allocation_ok(self, cr, uid, ids, field_name, context=None):
-        '''
-        Return True if allocated locations are empty and no in progress cross-docking PO
-        '''
-        res = {}
-        
-        for wiz in self.browse(cr, uid, ids, context=context):
-            res[wiz.id] = True
-            if wiz.unallocated:
-                # Search all cross-docking PO
-                po_ids = self.pool.get('purchase.order').search(cr, uid, [('cross_docking_ok', '=', True)], context=context)
-                if po_ids:
-                    res[wiz.id] = False
-                    continue
-                
-                # Search all cross-docking locations
-                cross_loc_ids = self.pool.get('stock.location').search(cr, uid, [('cross_docking_location_ok', '=', True)], context=context)
-                product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
-                for product_id in product_ids:
-                    for loc_id in cross_loc_ids:
-                        if self.pool.get('stock.location')._product_get(cr, uid, loc_id, product_id, context=context):
-                            res[wiz.id] = False
-                            continue
-        return res
-    
     _columns = {
         'allocation_setup': fields.selection([('allocated', 'Allocated'),
                                               ('unallocated', 'Unallocated'),
                                               ('mixed', 'Mixed')], 
                                               string='Allocated stocks', required=True),
-        'allocation_ok': fields.function(_get_allocation_ok, string='Error !', type='boolean', store=False, method=True),
+        'error_ok': fields.boolean(string='Error'),
+        'error_msg': fields.text(string='Error', readonly=True),
+        'error_po_ok': fields.boolean(string='Error'),
+        'error_cross_ok': fields.boolean(string='Error'),
+        'error_central_ok': fields.boolean(string='Error'),
+        'error_location_ok': fields.boolean(string='Error'),
+        'error_po_ids': fields.many2many('purchase.order', 'allocated_purchase_order_config_rel',
+                                         'wizard_id', 'order_id', string='PO'),
+        'error_sm_cross_ids': fields.many2many('stock.picking', 'allocated_stock_picking_config_rel',
+                                               'wizard_id', 'picking_id', string='Picking'),
+        'error_sm_central_ids': fields.many2many('stock.picking', 'allocated_stock_picking_central_config_rel',
+                                               'wizard_id', 'picking_id', string='Picking'),
+        'error_location_ids': fields.many2many('stock.location', 'allocated_stock_location_config_rel',
+                                               'wizard_id', 'location_id', string='Location'),
+    }
+    
+    _defaults = {
+        'error_msg': lambda *a: '''You have some documents which block the possibility to change the Allocated stocks configuration to Unallocated.
+These documents can be PO not done with Cross-docking checked, stock moves to/from a cross-docking or central stock location.
+        
+Please click on the below buttons to see the different blocking documents.''',
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -80,6 +75,41 @@ class allocation_stock_setup(osv.osv_memory):
         
         return res
         
+    def _get_allocated_mvmt(self, cr, uid):
+        '''
+        Search if unallocated PO and moves not done exist
+        '''
+        po_ids = self.pool.get('purchase.order').search(cr, uid, [('cross_docking_ok', '=', True), ('state', 'not in', ['cancel', 'done'])])
+        
+        cross_loc_ids = self.pool.get('stock.location').search(cr, uid, [('cross_docking_location_ok', '=', True)])
+        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']),
+                                                                '|', 
+                                                                ('location_id', 'in', cross_loc_ids),
+                                                                ('location_dest_id', 'in', cross_loc_ids)])
+        picking_cross_ids = []
+        for move in self.pool.get('stock.move').browse(cr, uid, move_ids):
+            picking_cross_ids.append(move.picking_id.id)
+            
+        central_loc_ids = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', True)])
+        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']),
+                                                                '|', 
+                                                                ('location_id', 'in', central_loc_ids),
+                                                                ('location_dest_id', 'in', central_loc_ids)])
+        picking_central_ids = []
+        for move in self.pool.get('stock.move').browse(cr, uid, move_ids):
+            picking_central_ids.append(move.picking_id.id)
+        
+        
+        all_location_ids = cross_loc_ids + central_loc_ids
+        nok_location_ids = []
+        for location_id in all_location_ids:
+            product_qty = self.pool.get('stock.location')._product_virtual_get(cr, uid, location_id)
+            for product in product_qty:
+                if product_qty[product]:
+                    nok_location_ids.append(location_id)
+                    continue
+        
+        return po_ids, picking_cross_ids, picking_central_ids, nok_location_ids
     
     def execute(self, cr, uid, ids, context=None):
         '''
@@ -112,6 +142,27 @@ class allocation_stock_setup(osv.osv_memory):
                                     med_loc_id,
                                     log_loc_id,], {'active': True}, context=context)            
         elif payload.allocation_setup == 'unallocated':
+            po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid)
+            if po_ids or picking_cross_ids:
+                self.write(cr, uid, [payload.id], {'allocation_setup': 'unallocated',
+                                                   'error_ok': True,
+                                                   'error_po_ok': po_ids and True or False,
+                                                   'error_cross_ok': picking_cross_ids and True or False,
+                                                   'error_central_ok': picking_central_ids and True or False,
+                                                   'error_location_ok': nok_location_ids and True or False,
+                                                   'error_po_ids': [(6,0,po_ids)],
+                                                   'error_sm_cross_ids': [(6,0,picking_cross_ids)],
+                                                   'error_sm_central_ids': [(6,0,picking_central_ids)],
+                                                   'error_location_ids': [(6,0,nok_location_ids)]})
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'view_allocation_stock_setup')[1]
+                return {
+                        'res_id': payload.id,
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'view_id': [view_id],
+                        'res_model': 'allocation.stock.setup',
+                        'type': 'ir.actions.act_window',
+                        'target': 'new',}
             # Inactive allocated locations
             loc_obj.write(cr, uid, [cross_docking_loc_id,
                                     med_loc_id,
@@ -128,5 +179,53 @@ class allocation_stock_setup(osv.osv_memory):
                                     un_log_loc_id], {'active': True}, context=context)
     
         setup_obj.write(cr, uid, setup_ids, {'allocation_setup': payload.allocation_setup}, context=context)
+        
+    def go_to_po(self, cr, uid, ids, context=None):
+        payload = self.browse(cr, uid, ids[0])
+        po_ids = []
+        for po in payload.error_po_ids:
+            po_ids.append(po.id)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', po_ids)],
+                'target': 'current'}
+        
+    def go_to_cross(self, cr, uid, ids, context=None):
+        payload = self.browse(cr, uid, ids[0])
+        pick_ids = []
+        for pick in payload.error_sm_cross_ids:
+            pick_ids.append(pick.id)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', pick_ids)],
+                'target': 'current'}
+        
+    def go_to_central(self, cr, uid, ids, context=None):
+        payload = self.browse(cr, uid, ids[0])
+        pick_ids = []
+        for pick in payload.error_sm_central_ids:
+            pick_ids.append(pick.id)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', pick_ids)],
+                'target': 'current'}
+        
+    def go_to_location(self, cr, uid, ids, context=None):
+        payload = self.browse(cr, uid, ids[0])
+        loc_ids = []
+        for loc in payload.error_location_ids:
+            loc_ids.append(loc.id)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.location',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', loc_ids)],
+                'target': 'current'}
         
 allocation_stock_setup()

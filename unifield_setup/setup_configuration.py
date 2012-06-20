@@ -71,4 +71,14 @@ class unifield_setup_configuration(osv.osv):
     
 unifield_setup_configuration()
 
+class res_config_view(osv.osv_memory):
+    _name = 'res.config.view'
+    _inherit = 'res.config.view'
+
+    _defaults={
+        'view': lambda *a: 'extended',
+    }
+
+res_config_view()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
