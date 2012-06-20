@@ -39,11 +39,9 @@ class ir_model_field(osv.osv):
     _inherit = 'ir.model.fields'
    
     def search(self, cr, uid, args, offset=0, limit=80, order='', context=None, count=False):
-        print 'before', args
         for index, arg in enumerate(args):
             if isinstance(arg, (list, tuple)) and arg[0] == 'model_id' and arg[1] == 'in' and isinstance(arg[2], (list, tuple)) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3 and arg[2][0][0] ==6:
                 args[index] = ('model_id', 'in', arg[2][0][2])
-        print 'after', args
         return super(ir_model_field, self).search(cr, uid, args, offset, limit, order, context, count)
      
 ir_model_field()
