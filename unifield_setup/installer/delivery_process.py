@@ -33,6 +33,23 @@ class delivery_process_setup(osv.osv_memory):
         'delivery_process': fields.selection([('simple', 'Simple OUT'), ('complex', 'PICK/PACK/SHIP')], string='Delivery process', required=True),
     }
     
+    def _check_not_done_picking(self, cr, uid):
+        shipment_ids = self.pool.get('shipment').search(cr, uid, [('state', 'not in', ['delivered', 'cancel'])])
+        picking_ids = self.pool.get('stock.picking').search(cr, uid, [('subtype', '!=', 'standard'), ('state', 'not in', ['cancel', 'done'])])
+        
+        return (picking_ids or shipment_ids) and True or False
+    
+    def delivery_process_on_change(self, cr, uid, ids, process, context=None):
+        res = {}
+        
+        if process == 'simple':
+            if self._check_not_done_picking(cr, uid):
+                res.update({'warning': {'title': 'Warning',
+                                        'message': '''You have some Picking Tickets, Packing Lists or Shipments not done or cancelled. 
+So, you cannot choose 'Simple OUT' as Delivery process while these documents are not done/cancelled !'''}})
+        
+        return res
+    
     def default_get(self, cr, uid, fields, context=None):
         '''
         Display the default value for delivery process
@@ -78,6 +95,9 @@ class delivery_process_setup(osv.osv_memory):
                     packing_menu_id]
             
         if payload.delivery_process == 'simple':
+            if self._check_not_done_picking(cr, uid):
+                raise osv.except_osv(_('Error'), _('''You have some Picking Tickets, Packing Lists or Shipments not done or cancelled. 
+So, you cannot choose 'Simple OUT' as Delivery process while these documents are not done/cancelled !'''))
             # In simple configuration, remove the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': False}, context=context)
         else:

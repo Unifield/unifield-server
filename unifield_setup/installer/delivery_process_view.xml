@@ -22,7 +22,7 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="delivery_process" />
+              	<field name="delivery_process" on_change="delivery_process_on_change(delivery_process)" />
               </group>
            </group>
         </data>

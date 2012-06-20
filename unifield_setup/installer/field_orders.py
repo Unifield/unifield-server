@@ -79,6 +79,9 @@ class field_orders_setup(osv.osv_memory):
             # If the feature is not activate, inactive the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': True}, context=context)
         else:
+            order_ids = self.pool.get('sale.order').search(cr, uid, [('procurement_request', '=', False), ('state', 'not in', ['draft', 'cancel', 'done'])])
+            if order_ids:
+                raise osv.except_osv(_('Error'), _('You cannot de-activate the field orders feature, because some field orders are currently not done/cancelled.'))
             # In complex configuration, added the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': False}, context=context)
     

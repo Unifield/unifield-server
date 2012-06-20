@@ -127,6 +127,11 @@ class project_addresses(osv.osv_memory):
             else:
                 address_obj.create(cr, uid, dict(ship_address_data, partner_id=int(company.partner_id)),
                         context=context)
+        else:
+            ship_address = address_obj.search(cr, uid, [('type', '=', 'delivery'), ('partner_id', '=', company.partner_id.id)], context=context)
+            if ship_address:
+                address_obj.unlink(cr, uid, ship_address[0], context=context)
+                
         if payload.bill_street or payload.bill_street2 or payload.bill_zip or payload.bill_city \
            or payload.bill_email or payload.bill_phone or payload.bill_country_id:    
             bill_address_data = {
@@ -148,6 +153,10 @@ class project_addresses(osv.osv_memory):
             else:
                 address_obj.create(cr, uid, dict(bill_address_data, partner_id=int(company.partner_id)),
                     context=context)
+        else:
+            bill_address = address_obj.search(cr, uid, [('type', '=', 'invoice'), ('partner_id', '=', company.partner_id.id)], context=context)
+            if bill_address:
+                address_obj.unlink(cr, uid, bill_address[0], context=context)
             
         return res
     
