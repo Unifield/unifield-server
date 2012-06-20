@@ -70,6 +70,8 @@ class procurement_request(osv.osv):
     #@@@end override
     
     _columns = {
+        'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
+        domain=[('usage', '=', 'internal')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'requested_date': fields.date(string='Requested date', states={'draft': [('readonly', False)]}, readonly=True),

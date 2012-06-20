@@ -38,6 +38,7 @@
                         <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="requestor" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="location_requestor_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 						<field name="requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" />
                         <field name="origin" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     </group>
@@ -45,7 +46,8 @@
                         <page string="Products">
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'in', ['done', 'validated'])]}">
                                 <tree editable="top" string="Products">
-                                    <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, type)" />
+                                    <field name="comment" string="Comment instead of the product"/>
                                     <field name="name" invisible="1" />
                                     <field name="product_uom" />
                                     <field name="product_uom_qty" />
@@ -59,15 +61,124 @@
 					    attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'done', 'exception'))]}"/>
                                 </tree>
                                 <form>
-                                   <field name="product_id" colspan="4" />
-                                   <field name="product_uom_qty" />
-                                   <field name="product_uom" />
-                                   <field name="type" />
-                                   <newline />
-                                   <field name="notes" colspan="4"/>
-                                   <field name="supplier" />
-                                   <field name="latest" />
-                                   
+                                <notebook>
+                                    <page string="Order Line">
+	                                   <field name="product_id" colspan="4" />
+	                                   <field name="product_uom_qty" />
+	                                   <field name="product_uom" />
+	                                   <field name="type" />
+	                                   <newline />
+	                                   <field name="notes" colspan="4"/>
+	                                   <field name="supplier" />
+	                                   <field name="latest" />
+	                                   <field name="state" />
+                                   </page>
+
+			                        <!-- EXACT COPY-PASTE FROM product_nomenclature_view.xml -->
+			                        <page string="Nomenclature Selection">
+			                        
+			                            <group colspan="4" col="2">
+			                                
+			                                <field name="nomenclature_code" colspan="2" invisible="True" />
+			                                <field name="nomenclature_description" colspan="2" readonly="True" />
+			                                <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}" />
+			                            
+			                            </group>
+			                            <newline />
+			
+			                            <group colspan="2" col="5">
+			                                <separator string="Mandatory Levels" colspan="5" />
+			
+			                                <group colspan="4" col="2">
+			                                    <field name="nomen_manda_0"
+			                                        domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+			                                        widget="selection"
+			                                        on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+			                                        attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_manda_1"
+			                                        domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
+			                                        widget="selection"
+			                                        get_selection="get_nomen"
+			                                        on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_manda_2"
+			                                        domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+			                                        widget="selection"
+			                                        get_selection="get_nomen"
+			                                        on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_manda_3"
+			                                        domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"
+			                                        widget="selection"
+			                                        get_selection="get_nomen"
+			                                        on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                </group>
+			
+			                            </group>
+			
+			                            <group colspan="2" col="5">
+			                                <separator string="Optional Levels" colspan="4" />
+			
+			
+			                                <group colspan="4" col="2">
+			                                    <!--
+			                                        Added False as parent_id clause to enable global optional
+			                                        levels (for med, log,...)
+			                                    -->
+			                                    <field name="nomen_sub_0"
+			                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+			                                        widget="selection"
+			                                        get_selection="get_sub_nomen"
+			                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_sub_1"
+			                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+			                                        widget="selection"
+			                                        get_selection="get_sub_nomen"
+			                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_sub_2"
+			                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+			                                        widget="selection"
+			                                        get_selection="get_sub_nomen"
+			                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_sub_3"
+			                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+			                                        widget="selection"
+			                                        get_selection="get_sub_nomen"
+			                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_sub_4"
+			                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+			                                        widget="selection"
+			                                        get_selection="get_sub_nomen"
+			                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                    <field name="nomen_sub_5"
+			                                        domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+			                                        widget="selection"
+			                                        get_selection="get_sub_nomen"
+			                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+			                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+			                                    />
+			                                </group>
+			
+			                            </group>
+			                        </page>
+			                        <!-- END COPY -->
+
+                                </notebook>
                                 </form>
                             </field>
                             <group colspan="4" col="6">
