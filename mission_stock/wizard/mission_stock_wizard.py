@@ -79,7 +79,7 @@ class mission_stock_wizard(osv.osv_memory):
             
         wiz_id = self.browse(cr, uid, ids, context=context)
         c = context.copy()
-        c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation == 'yes' and True or False})
+        c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation == 'true' and True or False})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.mission.report.line',
