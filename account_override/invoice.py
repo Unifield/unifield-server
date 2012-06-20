@@ -95,7 +95,8 @@ class account_invoice(osv.osv):
         # Process invoices
         for i in self.browse(cr, uid, ids):
             if not i.date_invoice:
-                self.write(cr, uid, i.id, {'date_invoice': time.strftime('%Y-%m-%d')})
+                self.write(cr, uid, i.id, {'date_invoice': strftime('%Y-%m-%d')})
+                i = self.browse(cr, uid, i.id) # This permit to refresh the browse of this element
             if not i.document_date and i.from_yml_test:
                 self.write(cr, uid, i.id, {'document_date': i.date_invoice})
             if not i.document_date and not i.from_yml_test:
