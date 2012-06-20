@@ -63,7 +63,8 @@ class account_move_line_compute_currency(osv.osv):
 
     def create_addendum_line(self, cr, uid, lines, total, context=None):
         """
-        Create an addendum line
+        Create an addendum line.
+        posting_date and document_date should be the oldiest date from all lines!
         """
         current_date = time.strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
