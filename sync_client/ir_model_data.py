@@ -192,6 +192,7 @@ class ir_model_data_sync(osv.osv):
         model = ir_record.model
         id = ir_record.res_id
         obj = self.pool.get(model)
+        #TODO do sql 
         fields_ref = obj.fields_get(cr, uid, context=context)
         if fields_ref.get('active'):
             domain = [('id', '=', id), '|', ('active', '=', True), ('active', '=', False)]
