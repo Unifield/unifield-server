@@ -308,10 +308,10 @@ class update_received(osv.osv):
             #check that the record is imported
             fields_ref = self.pool.get(update.model.model).fields_get(cr, uid, context=context)
             rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')], context=context)
-            
-            if not (rec_id):
+
+            if not rec_id:
                 self.__logger.debug("%s , %s" % (fields, values))
-                raise Exception, "Exception detected! \n Import data res %s %s" % (res, rec_id)
+                raise Exception, "Import data error:\nid=%s\nres=%s" % (rec_id, res)
             if res and res[2]:
                 if res[0] != 1:
                     message.append(res[2])
