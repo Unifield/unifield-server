@@ -18,3 +18,7 @@
 "product",150,"Product Base Data : Product","product.product",,"True","sd.type_sec_id","Down","[]","['default_code', 'international_status', 'name_template', 'name', 'nomen_manda_0/id', 'nomen_manda_1/id', 'nomen_manda_2/id', 'nomen_manda_3/id']",0,"valid"
 "product_nom",140,"Product Base Data : Product Nomenclature","product.nomenclature",,"True","sd.type_sec_id","Down","[]","['name','type']",0,"valid"
 "product_nom_tree",141,"Product Base Data : Product Nomenclature Tree","product.nomenclature",,"True","sd.type_sec_id","Down","[('parent_id', '!=', '')]","['parent_id/id']",0,"valid"
+"account_move","90","Finance: Account Move","account.move",,"True","sd.type_sec_id","Up","[]","['date','journal_id/id','narration','period_id/id','ref']",0,"valid"
+"account_move_line","91","Finance: Account Move Line","account.move.line",,"True","sd.type_sec_id","Up","[]","['account_id/id','analytic_account_id/id','blocked','credit_currency','date','date_created','date_maturity','debit_currency','invoice/id','journal_id/id','move_id/id','name','narration','period_id/id','reconcile_id/id','reconcile_partial_id/id','reconcile_total_partial_id/id','ref','statement_id/id']",0,"valid"
+"account_move_line_state","92","Finance: Account Move Line State","account.move.line",,"True","sd.type_sec_id","Up","[]","['state']",0,"valid"
+"account_move_state","93","Finance: Account Move State","account.move",,"True","sd.type_sec_id","Up","[]","['state']",0,"valid"
