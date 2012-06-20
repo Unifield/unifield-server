@@ -224,10 +224,47 @@ class stock_picking(osv.osv):
         pathname = path.join('msf_cross_docking', 'data/msf_cross_docking_data.xml')
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'msf_cross_docking', file, {}, mode='init', noupdate=False)
+        
+    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the Unifield configuration value
+        '''
+        res = {}
+        
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        for order in ids:
+            res[order] = setup.allocation_setup
+        
+        return res
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),
+        'allocation_setup': fields.function(_get_allocation_setup, type='selection', 
+                                            selection=[('allocated', 'Allocated'),
+                                                       ('unallocated', 'Unallocated'),
+                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
+        
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        res.update({'allocation_setup': setup.allocation_setup})
+        
+        return res
     
     '''
     do_partial(=function which is originally called from delivery_mechanism) modification 
@@ -269,6 +306,17 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
+        
+        # Check the allocation setup
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        if setup.allocation_setup == 'unallocated':
+            raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
+        
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
@@ -336,10 +384,19 @@ class stock_picking(osv.osv):
         res = {}
         if not wiz_ids:
             return res
+        
+# ------ check the allocation setup ------------------------------------------------------------------------------
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+# ----------------------------------------------------------------------------------------------------------------
 
 # ------ referring to locations 'cross docking' and 'stock' ------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+        if setup.allocation_setup != 'unallocated':        
+            cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
 # ----------------------------------------------------------------------------------------------------------------
         partial_picking_obj = self.pool.get('stock.partial.picking')
@@ -349,6 +406,8 @@ class stock_picking(osv.osv):
             """For incoming shipment """
             # we check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
             if var.dest_type == 'to_cross_docking':
+                if setup.allocation_setup == 'unallocated':
+                    raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is "default"and we do not want that info on INCOMING shipment
                 var.source_type = None
                 product_id = values['product_id']
@@ -399,8 +458,30 @@ class stock_move(osv.osv):
     'MOVE_cross_docking_ok' for not being in conflict with the other 'cross_docking_ok' in the stock.picking object 
     which also uses attrs according to the value of cross_docking_ok'.
     """
+    
+    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the Unifield configuration value
+        '''
+        res = {}
+        
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        for order in ids:
+            res[order] = setup.allocation_setup
+        
+        return res
+    
     _columns = {
         'move_cross_docking_ok': fields.boolean('Cross docking'),
+        'allocation_setup': fields.function(_get_allocation_setup, type='selection', 
+                                            selection=[('allocated', 'Allocated'),
+                                                       ('unallocated', 'Unallocated'),
+                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -409,6 +490,15 @@ class stock_move(osv.osv):
         else we keep the default values i.e. "Input"
         """
         default_data = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        default_data.update({'allocation_setup': setup.allocation_setup})
+        
         if context is None:
             context = {}
         purchase_id = context.get('purchase_id', [])
@@ -430,6 +520,17 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # Check the allocation setup
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        if setup.allocation_setup == 'unallocated':
+            raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
+            
         obj_data = self.pool.get('ir.model.data')
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
 
