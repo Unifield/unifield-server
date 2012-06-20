@@ -27,6 +27,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 import logging
+import datetime
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -93,10 +94,15 @@ class account_invoice(osv.osv):
         res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
         # Process invoices
         for i in self.browse(cr, uid, ids):
+            if not i.date_invoice:
+                self.write(cr, uid, i.id, {'date_invoice': time.strftime('%Y-%m-%d')})
             if not i.document_date and i.from_yml_test:
-                self.write(cr, uid, i.id, {'document_date': strftime('%Y-%m-%d')})
+                self.write(cr, uid, i.id, {'document_date': i.date_invoice})
             if not i.document_date and not i.from_yml_test:
                 raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
+            # Posting date should not be done BEFORE document date
+            if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return res
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
