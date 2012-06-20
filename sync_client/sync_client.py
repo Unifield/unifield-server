@@ -103,6 +103,7 @@ class entity(osv.osv, Thread):
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
+        'is_syncing' : fields.boolean("Is Currently Syncing?"),
     }
     
     _constraints = [
@@ -431,16 +432,28 @@ class entity(osv.osv, Thread):
         self.start()
         return True
         
-    
-
     def sync(self, cr, uid, context=None):
         context = context or {}
         # Init log dict for sync.monitor
-        log = {'error':'','data_pull':'null','status':'in-progress',
-            'msg_pull':'null','data_push':'null','msg_push':'null',}
+        log = {
+            'error' : '',
+            'status' : 'in-progress',
+            'data_pull' : 'null',
+            'msg_pull' : 'null',
+            'data_push' : 'null',
+            'msg_push' : 'null',
+        }
+        entity_id = self.get_entity(cr, uid, context).id
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()
-        if self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+        if self.browse(cr, uid, entity_id).is_syncing:
+            log['error'] += "Skipped: another synchronization is currently in progress. Please try again later."
+            log['status'] = 'failed'
+        elif not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
+            log['status'] = 'failed'
+        else:
+            self.write(cr, uid, entity_id, {'is_syncing':True})
             # Start pulling data
             log['data_pull'] = 'in-progress';
             self.pool.get('sync.monitor').write(cr, uid, log_id, log)
@@ -461,9 +474,7 @@ class entity(osv.osv, Thread):
             self.pool.get('sync.monitor').write(cr, uid, log_id, log)
             cr.commit()
             self.push_message(cr, uid, log, context=context)
-        else:
-            log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
-            log['status'] = 'failed'
+            self.write(cr, uid, entity_id, {'is_syncing':False})
         # Determine final status
         log.update({'end':datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'status': 'failed' if 'failed' in [v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]  else 'ok'})

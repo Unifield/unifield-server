@@ -43,7 +43,10 @@ class sync_monitor(osv.osv):
     }
 
     def _get_default_sequence(self, cr, uid, context=None):
-        return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
+        try:
+            return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
+        except:
+            return self.browse(cr, uid, self.search(cr, uid, [], limit=1, order='sequence desc')).sequence
         
     _defaults = {
         'start' : lambda *a : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
