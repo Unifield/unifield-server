@@ -30,13 +30,12 @@ class currency_setup(osv.osv_memory):
     _inherit = 'res.config'
     
     _columns = {
-        'functional_id': fields.many2one('res.currency', string='Functional currency', domain=[('active', 'in', ('t', 'f'))]),
+        'functional_id': fields.many2one('res.currency', string='Functional currency', 
+                                         required=True),
         'esc_ids': fields.many2many('res.currency', 'esc_currency_rel', 'wiz_id', 'currency_id',
-                                    string='ESC Currencies', domain=[('active', 'in', ('t', 'f'))],
-                                    help="Currencies used by the ESC"),
+                                    string='ESC Currencies', help="Currencies used by the ESC"),
         'section_ids': fields.many2many('res.currency', 'section_currency_rel', 'wiz_id', 'currency_id',
-                                    string='Section Currencies', domain=[('active', 'in', ('t', 'f'))],
-                                    help="Currencies used by the Sections"),
+                                    string='Section Currencies', help="Currencies used by the Sections"),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -52,8 +51,8 @@ class currency_setup(osv.osv_memory):
         section_ids = currency_obj.search(cr, uid, [('is_section_currency', '=', True)], context=context)
         
         res['functional_id'] = company_id.currency_id.id
-        res['esc_ids'] = [(6, 0, esc_ids)]
-        res['section_ids'] = [(6, 0, section_ids)] 
+        res['esc_ids'] = esc_ids
+        res['section_ids'] = section_ids
         
         return res
     

@@ -22,7 +22,11 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              		
+              	<field name="functional_id" />
+              	<separator colspan="5" string="ESC currencies" />
+              	<field name="esc_ids" colspan="5" nolabel="1" string="" />
+              	<separator colspan="5" string="Section currencies" />
+              	<field name="section_ids" colspan="5" nolabel="1" />
               </group>
            </group>
         </data>
