@@ -387,6 +387,7 @@ class res_currency(osv.osv):
         return dom  
     
     _columns = {
+        # @JF : Also defined on UF-1071 (Configuration wizard)
         'is_section_currency': fields.boolean(string='Functional currency', 
                                         help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
         'is_esc_currency': fields.boolean(string='ESC currency', 
