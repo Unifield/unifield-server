@@ -162,6 +162,8 @@ class account_move_line(osv.osv):
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('AML: set document_date')
             vals['document_date'] = strftime('%Y-%m-%d')
+        if not vals.get('document_date') and vals.get('date'):
+            vals.update({'document_date': vals.get('date')})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
 account_move_line()
