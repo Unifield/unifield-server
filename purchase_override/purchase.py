@@ -218,6 +218,17 @@ class purchase_order(osv.osv):
         data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
         if data_id:
             local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
+            
+        if order_type == 'loan':
+            setup_obj = self.pool.get('unifield.setup.configuration')
+            setup_ids = setup_obj.search(cr, uid, [])
+            if not setup_ids:
+                setup_ids = [setup_obj.create(cr, uid, {})]
+                
+            if not setup_obj.browse(cr, uid, setup_ids[0]).field_orders_ok:
+                return {'value': {'order_type': 'regular'},
+                        'warning': {'title': 'Error',
+                                    'message': 'The Field orders feature is not activated on your system, so, you cannot create a Loan Purchase Order !'}}
         
         if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
             v['invoice_method'] = 'manual'
