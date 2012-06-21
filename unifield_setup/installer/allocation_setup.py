@@ -178,7 +178,8 @@ Please click on the below buttons to see the different blocking documents.''',
                                     log_loc_id,
                                     un_log_loc_id], {'active': True}, context=context)
     
-        setup_obj.write(cr, uid, setup_ids, {'allocation_setup': payload.allocation_setup}, context=context)
+        setup_obj.write(cr, uid, setup_ids, {'allocation_setup': payload.allocation_setup, 
+                                             'unallocated_ok': payload.allocation_setup in ['unallocated', 'mixed']}, context=context)
         
     def go_to_po(self, cr, uid, ids, context=None):
         payload = self.browse(cr, uid, ids[0])

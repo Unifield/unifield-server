@@ -22,7 +22,8 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="lang_id" widget="selection" />
+              	<field name="lang_id" widget="selection" colspan="5" />
+              	<label colspan="5" string="If you change the default language, you should disconect you and re-login to activate the new language." />
               </group>
            </group>
         </data>

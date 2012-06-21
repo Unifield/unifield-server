@@ -48,6 +48,7 @@ class unifield_setup_configuration(osv.osv):
         'allocation_setup': fields.selection([('allocated', 'Allocated'),
                                               ('unallocated', 'Unallocated'),
                                               ('mixed', 'Mixed')], string='Allocated stocks'),
+        'unallocated_ok': fields.boolean(string='System uses the unallocated stocks'),
         'sale_price': fields.float(digits=(16,2), string='Fields price percentage',
                                    help='This percentage will be applied on field price from product form view.'),
         'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
@@ -63,6 +64,7 @@ class unifield_setup_configuration(osv.osv):
         'sale_price': lambda *a: 0.00,
         'field_orders_ok': lambda *a: True,
         'lang_id': lambda *a: 'en_MF',
+        'unallocated_ok': lambda *a: False,
     }
     
     _constraints = [
