@@ -311,7 +311,7 @@ class analytic_distribution(osv.osv):
         for distrib in self.browse(cr, uid, ids, context=context):
             vals.update({'distribution_id': distrib.id,})
             # create lines
-            for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
+            for distrib_lines, distrib_type in [(distrib.funding_pool_lines, 'fp'), (distrib.free_1_lines, 'free1'), (distrib.free_2_lines, 'free2')]:
                 for distrib_line in distrib_lines:
                     context.update({'date': source_date or date}) # for amount computing
                     anal_amount = (distrib_line.percentage * amount) / 100
@@ -323,6 +323,7 @@ class analytic_distribution(osv.osv):
                         'cost_center_id': False,
                         'destination_id': False,
                         'distrib_line_id': distrib_line.id,
+                        'line_type': distrib_type,
                     })
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':

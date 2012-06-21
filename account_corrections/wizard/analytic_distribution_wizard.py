@@ -128,31 +128,39 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Search old line and new lines
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
         wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
-
+        to_create = []
+        to_override = []
+        to_delete = []
         period_closed = ml.period_id.state == 'done'
 
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
             if wiz_line.distribution_line_id.id not in old_line_ids:
+                # new distribution line
                 #if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 #    raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
                 to_create.append(wiz_line)
             else:
+                # existing line, test modifications
                 if wiz_line.distribution_line_id.analytic_id.id != wiz_line.analytic_id.id \
                     or wiz_line.distribution_line_id.percentage != wiz_line.percentage:
                     # FP account changed or % modified
                     if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.distribution_line_id.analytic_id.id]):
                         raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.distribution_line_id.analytic_id.code))
 
-                if wiz_line.distribution_line_id.cost_center_id.id != wiz_line.cost_center_id.id \
-                    or wiz_line.distribution_line_id.destination_id.id != wiz_line.destination_id.id:
+                if (wiz_line.distribution_line_id.cost_center_id.id != wiz_line.cost_center_id.id or
+                        wiz_line.distribution_line_id.destination_id.id != wiz_line.destination_id.id or
+                        wiz_line.distribution_line_id.percentage != wiz_line.percentage):
                     if period_closed:
                         to_reverse.append(wiz_line)
                     else:
                         to_override.append(wiz_line)
+                elif wiz_line.distribution_line_id.analytic_id.id != wiz_line.analytic_id.id:
+                    to_override.append(wiz_line)
 
                 old_line_ok.append(wiz_line.distribution_line_id.id)
 
-        for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, [ x in old_line_ids if x not in old_line_ok]):
+        for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
+            # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
             if period_closed:
@@ -160,29 +168,53 @@ class analytic_distribution_wizard(osv.osv_memory):
             else:
                 to_reverse.append(wiz_line)
 
+        for line in to_create:
+            pass
+            # create the new distrib line
+            # create the ana line
 
         for line in to_delete:
             # delete distrib line
+            self.pool.get('analytic.distribution.wizard.fp.lines').unlink(cr, uid, [line.distribution_line_id.id])
             # delete associated analytic line
+            to_delete = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_in', '=', line.distribution_line_id.id), ('line_type', '=', 'fp')])
+            self.pool.get('account.analytic.line').unlink(cr, uid, to_delete)
+
         for line in to_reverse:
             # reverse the line
-            to_reverse = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_in', '=', line.distribution_line_id.id)]) # and type=fp
-            self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse)
-            # Mark old lines as non reallocatable (ana_ids)
-            self.pool.get('account.analytic.line').write(cr, uid, tor_ana_ids, {'is_reallocated': True,})
+            to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_in', '=', line.distribution_line_id.id), ('line_type', '=', 'fp'), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids)
+            # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
+            self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
             # update the distrib line
+            # TODO: source date ?
             self.pool.get('analytic.distribution.wizard.fp.lines').write(cr, uid, [line.distribution_line_id.id], {
-                    'source_date':
-                    'analytic_id':
-                    'cost_center_id':
-                    'percentage':
+                    'analytic_id': line.analytic_id.id,
+                    'cost_center_id': line.cost_center_id.id,
+                    'percentage': line.percentage,
+                    'destination_id': line.destination_id.id
                 })
             # TODO: create the new ana line ?
+
         for line in to_override:
             # update the ana line
+            to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_in', '=', line.distribution_line_id.id), ('line_type', '=', 'fp'), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
+                    'account_id': line.analytic_id.id,
+                    'cost_center_id': line.cost_center_id.id,
+                    'destination_id': line.destination_id.id,
+                    # TODO: 'amount': ,
+                })
             # update the distib line
+            self.pool.get('analytic.distribution.wizard.fp.lines').write(cr, uid, [line.distribution_line_id.id], {
+                    'analytic_id': line.analytic_id.id,
+                    'cost_center_id': line.cost_center_id.id,
+                    'percentage': line.percentage,
+                    'destination_id': line.destination_id.id
+                })
 
-
+    """
+OLD STUFF
                 if wiz_line.distribution_line_id.id not in old_line_ids:
                     amount = (ml.debit_currency - ml.credit_currency) * wiz_line.percentage / 100
                     func_amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount, round=False, context=context)
@@ -307,6 +339,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if to_update:
             to_update = flatten(to_update)
         return True, to_update
+"""
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
