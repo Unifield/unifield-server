@@ -119,6 +119,9 @@ class stock_mission_report(osv.osv):
         '''
         if not context:
             context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         # Open a new cursor : Don't forget to close it at the end of method   
         cr = pooler.get_db(cr.dbname).cursor()
@@ -127,9 +130,10 @@ class stock_mission_report(osv.osv):
         
         product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
         report_ids = self.search(cr, uid, [('local_report', '=', True)], context=context)
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         line_ids = []
         
-        if not report_ids:
+        if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
             c = context.copy()
             c.update({'no_update': True})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
