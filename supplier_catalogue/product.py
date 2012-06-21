@@ -262,4 +262,18 @@ class product_pricelist(osv.osv):
     
 product_pricelist()
 
+class res_currency(osv.osv):
+    _name = 'res.currency'
+    _inherit = 'res.currency'
+    
+    _columns = {
+        # @JF : Also defined on UF-1047 (Currency Logic)
+        'is_section_currency': fields.boolean(string='Functional currency', 
+                                        help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
+        'is_esc_currency': fields.boolean(string='ESC currency', 
+                                        help='If this box is checked, this currency is used as a currency for at least one ESC.'),
+    }
+    
+res_currency()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
