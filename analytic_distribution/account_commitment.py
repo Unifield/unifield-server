@@ -60,6 +60,7 @@ class account_commitment(osv.osv):
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
+        'document_date': fields.date(string="Document Date", readonly=True, required=True),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
@@ -72,6 +73,7 @@ class account_commitment(osv.osv):
         'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment') or '',
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
+        'document_date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
         'from_yml_test': lambda *a: False,
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], limit=1, context=c)[0]
@@ -266,6 +268,8 @@ class account_commitment(osv.osv):
         periods = get_period_from_date(self, cr, uid, date, context=context)
         if periods:
             vals['period_id'] = periods[0]
+        # Update document_date
+        vals['document_date'] = date or strftime('%Y-%m-%d')
         return {'value': vals}
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
@@ -296,8 +300,9 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
-                        cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
-                        c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+                        cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.document_date or c.date or False, 
+                        c.purchase_id and c.purchase_id.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
+                        cl.id, context=context)
         return True
 
     def action_commitment_open(self, cr, uid, ids, context=None):
@@ -437,8 +442,8 @@ class account_commitment_line(osv.osv):
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
                 ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or ''
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], cl.commit_id and cl.commit_id.name or 'Commitment voucher line', cl.commit_id.date, amount, 
-                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, 
-                    commitment_line_id=cl.id, context=context)
+                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, (cl.commit_id and cl.commit_id.document_date) or (cl.commit_id and cl.commit_id.date) or False, 
+                    ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, commitment_line_id=cl.id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):
