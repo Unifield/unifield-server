@@ -20,8 +20,8 @@
         <menuitem id="menu_base_partner" 
                   name="Orders"
                   icon="terp-partner"
-                  web_icon="data/sales.png"
-                  web_icon_hover="data/sales-hover.png"
+                  web_icon="images/partner.jpg"
+                  web_icon_hover="images/partner_hover.jpg"
                   sequence="3" />
 
         <record id="open_partner_tree" model="ir.actions.act_window">
@@ -60,10 +60,15 @@
                   
         <menuitem id="menu_supply_config" 
                   name="Supply Configuration" 
-                  action="product.product_normal_action"
+                  web_icon="images/supply.png"
                   web_icon_hover="images/supply_hover.png"
                   sequence="7"
                   />
+                  
+        <menuitem id="product_attributes.menu_product_config" 
+        name="Configuration" 
+        parent="menu_supply_config" 
+        sequence="20" />
                   
         <menuitem id="base.menu_administration"
                   name="Administration" 
@@ -86,5 +91,20 @@
                   web_icon_hover="images/hr-hover.png"
                   sequence="10"/>
                   
+        <!-- Asset Events in SALES>Products>Assets -->
+        <menuitem action="product_asset.asset_event_normal_action" 
+            id="product_asset.menu_asset_event_sales"
+            name = "Asset events &amp; follow up"
+            parent="product_asset.menu_asset_sales" sequence="1" />
+                  
+        <menuitem action="product_asset.asset_type_normal_action" 
+                  id="product_asset.menu_asset_type_sales"
+                  parent="product_attributes.menu_product_config" 
+                  sequence="1" />
+                  
+        <delete model="ir.ui.menu" id="product_nomenclature.menu_products_nomenclature_sales"/>
+        <delete model="ir.ui.menu" id="product.menu_products_category"/>
+        <delete model="ir.ui.menu" id="product.menu_product_ul_form_action"/>
+            
     </data>
 </openerp>
