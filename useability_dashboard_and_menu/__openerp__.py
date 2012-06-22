@@ -25,6 +25,10 @@
     "depends": [
                 "sale", 
                 "purchase", 
+                "product_attributes",
+                "product_asset",
+                "product_nomenclature",
+                "tender_flow",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -36,6 +40,9 @@
     ],
     'update_xml': [
                    "menu/main_menu.xml",
+                   "menu/product_menu.xml",
+                   "view/purchase_view.xml",
+                   "dashboard/board_purchase_view.xml",
     ],
     'demo_xml': [
     ],
