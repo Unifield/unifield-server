@@ -92,7 +92,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
-			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
+			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order'}</field>
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
@@ -148,15 +148,13 @@
 				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking Tickets">
 					<field name="name"/>
 					<field name="partner_id2" />
+					<field name="backorder_id" groups="base.group_extended"/>
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
-					<field name="backorder_id" groups="base.group_extended"/>
-					<field name="invoice_state"/>
-					<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
 					<field name="state"/>
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
@@ -334,16 +332,16 @@
 						<separator orientation="vertical"/>
 						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
 						<separator orientation="vertical"/>
-						<filter icon="terp-dolar" name="to_invoice" string="To Invoice" domain="[('invoice_state','=','2binvoiced')]" help="Delivery orders to invoice"/>
-						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
 						<separator orientation="vertical"/>
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+						<newline />
 						<field name="reason_type_id" widget="selection" />
-						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
+						<field name="date" />
+						<field name="min_date" />
 					</group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
@@ -370,7 +368,11 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '=', 'draft')]</field>
-			<field name="context">{'contact_display':'partner_address', 'search_default_sale_id':1, 'group_by_no_leaf':0, 'group_by':'origin'}</field>
+			<field name="context">{'contact_display':'partner_address',
+								   'picking_type': 'picking_ticket', 
+				                   'search_default_sale_id':1, 
+				                   'group_by_no_leaf':0, 
+				                   'group_by':'origin'}</field>
 			<field name="search_view_id" ref="view_picking_ticket_search"/>
 			<field name="help">This is the list of draft picking tickets.</field>
 		</record>
@@ -401,7 +403,10 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
-			<field name="context">{'picking_screen':True, 'test':True, 'search_default_not_empty':1}</field>
+			<field name="context">{'picking_screen':True,
+								   'picking_type': 'picking_ticket', 
+								   'test':True, 
+								   'search_default_not_empty':1}</field>
 			<!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
 			<field name="search_view_id" ref="view_picking_ticket_search"/>
 			<field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>

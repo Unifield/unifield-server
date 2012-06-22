@@ -18,7 +18,19 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': [],
+                                    'client_print_multi': ['Labels'],
+                                    'client_action_relate': [],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        delivery_accepted_values = {'client_action_multi': [],
+                                    'client_print_multi': ['Labels'],
+                                    'client_action_relate': [''],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        picking_accepted_values = {'client_action_multi': [],
+                                    'client_print_multi': ['Picking Ticket', 'Pre-Packing List', 'Labels'],
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
@@ -32,6 +44,16 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in internal_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('picking_type', False) == 'delivery_order' and 'stock.picking' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in delivery_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('picking_type', False) == 'delivery_order' and 'stock.picking' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in picking_accepted_values[key2]:
                     new_values.append(v)
  
         return new_values
