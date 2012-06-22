@@ -147,6 +147,8 @@
 				<xpath expr="/tree/field[@name='origin']" position="after">
 					<field name="reason_type_id" />
 				</xpath>
+				<xpath expr="/tree/field[@name='stock_journal_id']" position="replace" />
+				<xpath expr="/tree/field[@name='invoice_state']" position="replace" />
 			</data>
 		</field>
 	</record>
@@ -247,14 +249,26 @@
             <field name="inherit_id" ref="stock.view_picking_internal_search" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group/field[@name='name']" position="before">
+                	<xpath expr="/search//filter[@name='confirmed']" position="after">
+                		<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
+                	</xpath>
+                    <xpath expr="/search/group/field[@name='origin']" position="after">
                         <field name="reason_type_id" widget="selection" />
                     </xpath>
+                    <xpath expr="/search//field[@name='stock_journal_id']" position="replace" />
+                    <xpath expr="/search//field[@name='company_id']" position="replace" />
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
                         <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
                     </xpath>
+                    
                 </data>
             </field>
+        </record>
+        
+        <record id="stock.action_picking_tree6" model="ir.actions.act_window">
+        	<field name="context">{'contact_display': 'partner_address',
+        						   "search_default_available":1,
+        						   'picking_type': 'internal_move'}</field>
         </record>
 
     </data>

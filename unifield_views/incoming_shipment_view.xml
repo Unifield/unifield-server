@@ -62,7 +62,9 @@
         </record>
         
         <record id="stock.action_picking_tree4" model="ir.actions.act_window">
-        	<field name="context">{'picking_type': 'incoming_shipment'}</field>
+        	<field name="context">{'contact_display': 'partner_address',
+        						   'picking_type': 'incoming_shipment',
+        						   "search_default_available":1}</field>
         </record>
 		
 	</data>	
