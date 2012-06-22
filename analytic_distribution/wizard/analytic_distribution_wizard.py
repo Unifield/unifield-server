@@ -79,6 +79,9 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         amount = abs(res.get('amount', 0.0))
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
+            if 'destination_id' in fields and wiz[0].account_id:
+                res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
+
             total_amount = wiz[0].total_amount
             if mode == 'percentage':
                 res['amount'] = abs((total_amount * percentage) / 100.0)
