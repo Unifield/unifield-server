@@ -438,13 +438,11 @@
 				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
 					<field name="name"/>
 					<field name="partner_id2"/>
+					<field name="backorder_id" groups="base.group_extended"/>
 					<field name="origin"/>
 					<field name="reason_type_id" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pack Date" />
-					<field name="backorder_id" groups="base.group_extended"/>
-					<field name="invoice_state"/>
-					<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
 					<field name="state"/>
 					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 				</tree>
@@ -622,6 +620,8 @@
 						<field name="origin"/>
 						<field name="reason_type_id" widget="selection" />
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
+						<field name="date" />
+						<field name="min_date" />
 					</group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
@@ -646,7 +646,9 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
-			<field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'search_default_available':1}</field>
+			<field name="context">{'contact_display': 'partner_address', 'ppl_screen':True,
+								   'picking_type': 'picking_ticket', 
+								   'search_default_available':1}</field>
 			<!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
 			<field name="search_view_id" ref="view_ppl_search"/>
 			<field name="help">This is the list of all ppl that have been picked.</field>
