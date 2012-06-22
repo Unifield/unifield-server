@@ -168,7 +168,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
             if period_closed:
                 # reverse the line
-                to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', wiz_line.id), ('line_type', '=', 'fp')])
+                to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
                 self.pool.get('account.analytic.line').unlink(cr, uid, to_reverse_ids)
                 # delete the distribution line
                 wiz_line.unlink()
@@ -198,12 +198,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             # delete distrib line
             self.pool.get('funding.pool.distribution.line').unlink(cr, uid, [line.id])
             # delete associated analytic line
-            to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', line.id), ('line_type', '=', 'fp')])
+            to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.id)])
             self.pool.get('account.analytic.line').unlink(cr, uid, to_delete_ids)
 
         for line in to_reverse:
             # reverse the line
-            to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', line.distribution_line_id.id), ('line_type', '=', 'fp'), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids)
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
             self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
@@ -223,7 +223,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
         for line in to_override:
             # update the ana line
-            to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', line.distribution_line_id.id), ('line_type', '=', 'fp'), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             ctx = {'date': orig_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)

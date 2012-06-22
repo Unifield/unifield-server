@@ -48,7 +48,7 @@ class account_move_line(osv.osv):
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
                 # create lines
-                for distrib_lines, distrib_type in [(distrib_obj.funding_pool_lines, 'fp'), (distrib_obj.free_1_lines, 'free1'), (distrib_obj.free_2_lines, 'free2')]:
+                for distrib_lines in [distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.source_date or obj_line.date})
                         anal_amount = distrib_line.percentage*amount/100
@@ -66,8 +66,7 @@ class account_move_line(osv.osv):
                                      'distribution_id': distrib_obj.id,
                                      'user_id': uid,
                                      'currency_id': obj_line.currency_id.id,
-                                     'distrib_line_id': distrib_line.id,
-                                     'line_type': distrib_type,
+                                     'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':

@@ -111,7 +111,7 @@ class distribution_line(osv.osv):
         'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
 
-    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, source_date=False, ltype='fp', name=False, context=None):
+    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, source_date=False, name=False, context=None):
         '''
         Creates an analytic lines from a distribution line and an account.move.line
         '''
@@ -138,10 +138,9 @@ class distribution_line(osv.osv):
                 'move_id': move_line.id,
                 'name': name or move_line.name,
                 'distrib_id': line.distribution_id.id,
-                'distrib_line_id': line.id,
-                'line_type': ltype,
+                'distrib_line_id': '%s,%s'%(self._name, line.id),
             }
-            if ltype == 'fp':
+            if self._name == 'funding.pool.distribution.line':
                 vals.update({
                     'destination_id': line.destination_id and line.destination_id.id or False,
                     'cost_center_id': line.cost_center_id and line.cost_center_id.id or False,
@@ -351,7 +350,7 @@ class analytic_distribution(osv.osv):
         for distrib in self.browse(cr, uid, ids, context=context):
             vals.update({'distribution_id': distrib.id,})
             # create lines
-            for distrib_lines, distrib_type in [(distrib.funding_pool_lines, 'fp'), (distrib.free_1_lines, 'free1'), (distrib.free_2_lines, 'free2')]:
+            for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                 for distrib_line in distrib_lines:
                     context.update({'date': source_date or date}) # for amount computing
                     anal_amount = (distrib_line.percentage * amount) / 100
@@ -362,8 +361,7 @@ class analytic_distribution(osv.osv):
                         'account_id': distrib_line.analytic_id.id,
                         'cost_center_id': False,
                         'destination_id': False,
-                        'distrib_line_id': distrib_line.id,
-                        'line_type': distrib_type,
+                        'distrib_line_id': '%s,%s'%(distrib_lines._name, distrib_line.id),
                     })
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':

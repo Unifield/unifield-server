@@ -76,8 +76,7 @@ class analytic_line(osv.osv):
         'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
-        'distrib_line_id': fields.integer('Distribution Line ID'),
-        'line_type': fields.selection([('fp', 'fp'), ('free1', 'free1'), ('free2', 'free2')], "Line Type"),
+        'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
     }
 
     _defaults = {
