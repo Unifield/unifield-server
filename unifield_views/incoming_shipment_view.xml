@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+		
+		<record id="stock.view_picking_in_search" model="ir.ui.view">
+			<field name="name">unifield.stock.picking.in.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Incoming Shipments">
+                    <group col="8" colspan="4">
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Incoming Shipments Available" />
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Incoming Shipments already processed"/>
+                        <separator orientation="vertical" />
+                        <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
+                        <separator orientation="vertical"/>
+                        <field name="name" string="Reference" />
+                        <field name="partner_id"/>
+                        <field name="origin"/>
+                        <field name="order_category" />
+                        <field name="reason_type_id" widget="selection" />
+                        <field name="date" string="Creation date" />
+                        <field name="min_date" string="Expected date" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="4" col="8">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+                        <separator orientation="vertical" />
+                        <filter icon="terp-stock_effects-object-colorize" name="state" string="State" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+                        <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
+                    </group>
+                </search>
+			</field>
+		</record>
+		
+		<record id="stock.view_picking_in_tree" model="ir.ui.view">
+            <field name="name">unifield.stock.picking.in.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="blue:state in ('draft');grey:state in ('done');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking list">
+                    <field name="name"/>
+                    <field name="partner_id" />
+                    <field name="backorder_id" groups="base.group_extended"/>
+                    <field name="origin"/>
+                    <field name="order_category" />
+                    <field name="reason_type_id" widget="selection" />
+                    <field name="date"/>
+                    <field name="min_date" string="Expected Receipt Date" />
+                    <field name="invoice_state" groups="base.group_extended"/>
+                    <field name="state"/>
+                    <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                    <button name="button_cancel" states="assigned,confirmed,draft" string="Cancel" icon="gtk-cancel" confirm="This operation will cancel the shipment. Do you want to continue?" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock.action_picking_tree4" model="ir.actions.act_window">
+        	<field name="context">{'picking_type': 'incoming_shipment'}</field>
+        </record>
+		
+	</data>	
+</openerp>

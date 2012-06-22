@@ -165,7 +165,7 @@
 		</field>
 	</record>
 
-	<record id="inherit_view_picking_in_tree" model="ir.ui.view">
+	<!-- <record id="inherit_view_picking_in_tree" model="ir.ui.view">
 		<field name="name">inherit.view.picking.in.tree</field>
 		<field name="model">stock.picking</field>
 		<field name="type">tree</field>
@@ -177,9 +177,9 @@
 				</xpath>
 			</data>
 		</field>
-	</record>
+	</record> -->
 
-        <record id="inherit_view_picking_in_search" model="ir.ui.view">
+        <!-- <record id="inherit_view_picking_in_search" model="ir.ui.view">
             <field name="name">inherit.view.picking.in.search</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
@@ -197,7 +197,7 @@
                     </xpath>
                 </data>
             </field>
-        </record>
+        </record> -->
         
         <record id="inherit_view_picking_out_search" model="ir.ui.view">
             <field name="name">inherit.view.picking.out.search</field>
