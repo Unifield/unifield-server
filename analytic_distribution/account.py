@@ -94,7 +94,7 @@ class account_destination_link(osv.osv):
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, store=True),
     }
 
-    _order = 'name ASC'
+    _order = 'account_id'
 
 account_destination_link()
 
