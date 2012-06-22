@@ -45,6 +45,7 @@ class analytic_account(osv.osv):
         'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
         'destination_ids': fields.many2many('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
         'tuple_destination_account_ids': fields.many2many('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
+        'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
     }
     
     _defaults ={
