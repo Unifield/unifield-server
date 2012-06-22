@@ -33,7 +33,7 @@ class account_mcdb(osv.osv_memory):
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
         'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic Journal Code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register Code"), # Change into many2many ?
-        'company_id': fields.many2one('res.company', string="Proprietary instance"),
+        'instance_id': fields.many2one('msf.instance', string="Proprietary instance"),
         'posting_date_from': fields.date('First posting date'),
         'posting_date_to': fields.date('Ending posting date'),
         'document_date_from': fields.date('First document date'),
@@ -254,7 +254,7 @@ class account_mcdb(osv.osv_memory):
                             continue
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
-            for m2o in [('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
+            for m2o in [('abs_id', 'statement_id'), ('instance_id', 'instance_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
                 ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))

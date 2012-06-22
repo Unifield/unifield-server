@@ -69,9 +69,10 @@ class msf_budget(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         res = super(msf_budget, self).create(cr, uid, vals, context=context)
-        # If the "parent" budget does not exist, create it.
+        # If the "parent" budget does not exist and we're not on the proprietary instance level already, create it.
         budget = self.browse(cr, uid, res, context=context)
-        if budget.cost_center_id and budget.cost_center_id.parent_id:
+        prop_instance_cost_center = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.cost_center_id.id
+        if budget.cost_center_id and budget.cost_center_id.id != prop_instance_cost_center and budget.cost_center_id.parent_id:
             parent_cost_center = budget.cost_center_id.parent_id
             parent_budget_ids = self.search(cr,
                                             uid,
@@ -114,27 +115,22 @@ class msf_budget(osv.osv):
     
     def budget_summary_open_window(self, cr, uid, ids, context=None):
         parent_line_id = False
-        fiscalyear_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<=', datetime.date.today()),
-                                                                              ('date_stop', '>=', datetime.date.today())], context=context)
-        if len(fiscalyear_ids) == 0:
-            raise osv.except_osv(_('Warning !'), _("The fiscal year for the current date is not defined!"))
-        else:
-            fiscalyear_id = fiscalyear_ids[0]
-            cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', False)], context=context)                       
-            if len(cost_center_ids) != 0:
-                cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
-                                                        AND cost_center_id = %s \
-                                                        AND state != 'draft' \
-                                                        ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
-                                                        (fiscalyear_id,
-                                                         cost_center_ids[0]))
-                if cr.rowcount:
-                    # A budget was found
-                    budget_id = cr.fetchall()[0][0]
-                    parent_line_id = self.pool.get('msf.budget.summary').create(cr,
-                                                                                uid,
-                                                                                {'budget_id': budget_id},
-                                                                                context=context)
+        fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
+        cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', False)], context=context)                       
+        if len(cost_center_ids) != 0:
+            cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
+                                                    AND cost_center_id = %s \
+                                                    AND state != 'draft' \
+                                                    ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
+                                                    (fiscalyear_id,
+                                                     cost_center_ids[0]))
+            if cr.rowcount:
+                # A budget was found
+                budget_id = cr.fetchall()[0][0]
+                parent_line_id = self.pool.get('msf.budget.summary').create(cr,
+                                                                            uid,
+                                                                            {'budget_id': budget_id},
+                                                                            context=context)
         
         return {
                'type': 'ir.actions.act_window',

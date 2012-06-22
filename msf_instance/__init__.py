@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,11 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-import wizard_budget_import_finish
-import wizard_budget_import_confirm
-import wizard_budget_import
-import wizard_budget_criteria_export
-import wizard_local_expenses
+import msf_instance
+import res_company
+import add_instance
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
