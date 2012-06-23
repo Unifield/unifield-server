@@ -24,20 +24,10 @@
                   web_icon_hover="images/partner_hover.jpg"
                   sequence="3" />
 
-        <record id="open_partner_tree" model="ir.actions.act_window">
-            <field name="name">Partners</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">res.partner</field>
-            <field name="view_type">form</field>
-            <field name="search_view_id" ref="base.view_res_partner_filter"/>
-            <field name="help">We display here both Customers an Suppliers.</field>
-        </record>
-
         <menuitem id="menu_partner" 
                   name="Partners" 
                   web_icon="images/partner.jpg"
                   web_icon_hover="images/partner_hover.jpg"
-                  action="open_partner_tree"
                   sequence="4" 
                 />
                   

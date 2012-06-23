@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="board_sales_manager_form" model="ir.ui.view">
+            <field name="name">board.sales.manager.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.board_sales_manager_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <!-- REPLACE -->
+                    <xpath expr="/form/hpaned/child1/action[@name='%(sale.action_quotation_for_sale)d']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/hpaned/child2/action[@name='%(sale.action_sales_by_salesman)d']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/hpaned/child2/action[@name='%(sale.action_sales_product_total_price)d']" position="replace">
+                    </xpath>
+                    <!-- MOVED -->
+                    <xpath expr="/form/hpaned/child1/action[@name='%(sale.action_view_sales_by_month)d']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/hpaned/child2" position="inside">
+                        <action width="510" name="%(sale.action_view_sales_by_month)d" string="Sales by Month"/>
+                    </xpath>
+                    <!-- ADD -->
+                    <xpath expr="/form/hpaned/child1" position="inside">
+                        <action name="%(sourcing.sourcing_line_action)d" string="Order sourcing (to be sourced)"/>
+                    </xpath>
+                    <xpath expr="/form/hpaned/child1" position="inside">
+                        <action name="%(sale.action_order_form)d" string="Field Order"/>
+                    </xpath>
+                    <xpath expr="/form/hpaned/child1" position="inside">
+                        <action name="%(procurement_request.action_procurement_request)d" string="Internal Request"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

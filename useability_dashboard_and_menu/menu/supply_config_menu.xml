@@ -26,17 +26,39 @@
         parent="menu_supply_config" 
         groups = 'base.group_no_one'
         sequence="21" />
-        <!-- Address book, Product, Pricelists -->
         
-        <menuitem id="base.menu_procurement_management_supplier" 
+        <menuitem id="base.menu_config_address_book" 
         name="Address Book" 
         parent="menu_supply_config" 
         sequence="12" />
+        
+        <menuitem id="base.menu_country_partner" 
+        parent="base.menu_config_address_book"  />
+        
+        <menuitem 
+            id="purchase_override.menu_supplier_address_form" 
+            name="Address Book"
+            parent="base.menu_config_address_book" />
         
         <menuitem id="purchase.menu_purchase_config_pricelist" 
         name="Pricelists" 
         parent="menu_supply_config" 
         sequence="13" />
+        
+        <menuitem id="product.menu_product_price_type" 
+        name="Price Types"
+        parent="purchase.menu_purchase_config_pricelist" />
+    
+        <!-- we move the menu configuration of product (without asset type and product configuration) withon the menu 'supply main config' -->
+        <menuitem id="base.menu_base_config" 
+        name="Configuration" 
+        parent="menu_supply_config" 
+        sequence="21" />
+    
+        <menuitem id="sale.menu_action_shop_form" 
+        name="Shop" 
+        parent="menu_supply_config" 
+        sequence="14" />
     
     </data>
 </openerp>

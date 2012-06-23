@@ -2,12 +2,11 @@
 <openerp>
     <data>
     
-     <menuitem 
-          name="Purchase Followup"
-          id="menu_purchase_followup"
-          parent="purchase.menu_procurement_management"
-          sequence="2"/>
-          
+        <menuitem 
+            id="menu_purchase_followup"
+            name="Purchase Followup"
+            parent="purchase.menu_procurement_management"
+            sequence="2"/>
     
     </data>
 </openerp>

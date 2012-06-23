@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <!-- This first menu will be the parent of all the menu that we want to hide -->
+        <menuitem id="menu_hidden" 
+                  name="Hidden Menu" 
+                  sequence="1"
+                  groups= 'base.group_no_one' 
+                />
+    
+        <menuitem id="product_nomenclature.menu_products_nomenclature_sales" 
+        parent="menu_hidden" />
+        <menuitem id="product.menu_products_category" 
+        parent="menu_hidden"/>
+        <menuitem id="product.menu_product_ul_form_action" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="base.menu_procurement_management_supplier" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="base.menu_base_config" 
+        parent="menu_hidden"/>
+        
+    </data>
+</openerp>

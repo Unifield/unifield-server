@@ -30,6 +30,7 @@
                 "product_nomenclature",
                 "tender_flow",
                 "purchase_followup",
+                "sales_followup",
                 "supplier_catalogue",
     ],
     "author": "TeMPO Consulting, MSF",
@@ -47,10 +48,13 @@
                    "menu/supply_config_menu.xml",
                    "menu/warehouse_menu.xml",
                    "menu/partner_menu.xml",
+                   "menu/sale_menu.xml",
+                   "menu/hidden_menu.xml",
                    
                    "view/purchase_view.xml",
                    
                    "dashboard/board_purchase_view.xml",
+                   "dashboard/board_sale_view.xml",
     ],
     'demo_xml': [
     ],
