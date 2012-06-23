@@ -10,8 +10,10 @@
     
         <menuitem id="product_nomenclature.menu_products_nomenclature_sales" 
         parent="menu_hidden" />
+        
         <menuitem id="product.menu_products_category" 
         parent="menu_hidden"/>
+        
         <menuitem id="product.menu_product_ul_form_action" 
         parent="menu_hidden"/>
         
@@ -20,6 +22,12 @@
         
         <menuitem id="base.menu_base_config" 
         parent="menu_hidden"/>
+        
+        <menuitem id="base.menu_action_res_bank_form" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="product_attributes.menu_product_config" 
+        parent="menu_hidden"  />
         
     </data>
 </openerp>

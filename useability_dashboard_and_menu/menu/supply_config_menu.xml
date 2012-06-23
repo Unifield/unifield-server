@@ -1,22 +1,49 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-        
-        <!-- we move the menu configuration of purchase within the menu 'supply main config' -->
-        <menuitem id="product_attributes.menu_product_config" 
-        name="Configuration" 
+    <!-- PRODUCT -->
+        <menuitem id="purchase.menu_product_in_config_purchase" 
+        name="Product" 
         parent="menu_supply_config" 
-        groups = 'base.group_no_one'
-        sequence="20" />
-         <!--Asset Types, Product -->
+        sequence="9" />
         
-        <menuitem id="product_asset.menu_asset_type_sales" 
-        name="Asset Types" 
+        <menuitem id="product_nomenclature.menu_product_nomenclature_action_form" 
+        parent="purchase.menu_product_in_config_purchase" 
+        sequence="10" />
+        
+    <!-- PARTNER -->
+        <menuitem id="base.menu_config_address_book" 
+        name="Partner" 
         parent="menu_supply_config" 
         sequence="10" />
         
-        <menuitem id="purchase.menu_product_in_config_purchase" 
-        name="Product" 
+        <menuitem id="base.menu_partner_category_form" 
+        parent="base.menu_config_address_book"  />
+        <!-- ADRESSES -->
+        <menuitem id="config_adresses" 
+        name="Adresses"
+        parent="base.menu_config_address_book"  />
+        
+	        <menuitem id="base.menu_country_partner" 
+	        parent="config_adresses" 
+	        sequence="10"/>
+	        
+	        <menuitem 
+	            id="base.menu_partner_title_partner" 
+	            parent="config_adresses" 
+	            sequence="11"/>
+	            
+            <menuitem 
+                id="base.menu_partner_title_contact" 
+                parent="config_adresses" 
+                sequence="12"/>
+    <!-- ORDER -->
+        <menuitem id="base.menu_sale_config_sales" 
+        parent="menu_supply_config" 
+        sequence="14" />
+        
+        <menuitem id="product_asset.menu_asset_type_sales" 
+        name="Asset Types" 
         parent="menu_supply_config" 
         sequence="11" />
         
@@ -26,19 +53,6 @@
         parent="menu_supply_config" 
         groups = 'base.group_no_one'
         sequence="21" />
-        
-        <menuitem id="base.menu_config_address_book" 
-        name="Address Book" 
-        parent="menu_supply_config" 
-        sequence="12" />
-        
-        <menuitem id="base.menu_country_partner" 
-        parent="base.menu_config_address_book"  />
-        
-        <menuitem 
-            id="purchase_override.menu_supplier_address_form" 
-            name="Address Book"
-            parent="base.menu_config_address_book" />
         
         <menuitem id="purchase.menu_purchase_config_pricelist" 
         name="Pricelists" 
@@ -54,11 +68,6 @@
         name="Configuration" 
         parent="menu_supply_config" 
         sequence="21" />
-    
-        <menuitem id="sale.menu_action_shop_form" 
-        name="Shop" 
-        parent="menu_supply_config" 
-        sequence="14" />
     
     </data>
 </openerp>
