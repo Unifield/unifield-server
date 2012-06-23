@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <!-- we move the menu configuration of purchase within the menu 'supply main config' -->
+        <menuitem id="product_attributes.menu_product_config" 
+        name="Configuration" 
+        parent="menu_supply_config" 
+        groups = 'base.group_no_one'
+        sequence="20" />
+         <!--Asset Types, Product -->
+        
+        <menuitem id="product_asset.menu_asset_type_sales" 
+        name="Asset Types" 
+        parent="menu_supply_config" 
+        sequence="10" />
+        
+        <menuitem id="purchase.menu_product_in_config_purchase" 
+        name="Product" 
+        parent="menu_supply_config" 
+        sequence="11" />
+        
+        <!-- we move the menu configuration of product (without asset type and product configuration) withon the menu 'supply main config' -->
+        <menuitem id="purchase.menu_purchase_config_purchase" 
+        name="Configuration" 
+        parent="menu_supply_config" 
+        groups = 'base.group_no_one'
+        sequence="21" />
+        <!-- Address book, Product, Pricelists -->
+        
+        <menuitem id="base.menu_procurement_management_supplier" 
+        name="Address Book" 
+        parent="menu_supply_config" 
+        sequence="12" />
+        
+        <menuitem id="purchase.menu_purchase_config_pricelist" 
+        name="Pricelists" 
+        parent="menu_supply_config" 
+        sequence="13" />
+    
+    </data>
+</openerp>

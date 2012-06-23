@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <!-- This first menu will be the parent of all the menu that we want to hide -->
+        <menuitem id="menu_hidden" 
+                  name="Hidden Menu" 
+                  sequence="1"
+                  groups= 'base.group_no_one' 
+                />
+    
+        <menuitem id="product_nomenclature.menu_products_nomenclature_sales" 
+        parent="menu_hidden" />
+        <menuitem id="product.menu_products_category" 
+        parent="menu_hidden"/>
+        <menuitem id="product.menu_product_ul_form_action" 
+        parent="menu_hidden"/>
+            
+        <!-- Asset Events in SALES>Products>Assets -->
+        <menuitem action="product_asset.asset_event_normal_action" 
+            id="product_asset.menu_asset_event_sales"
+            name = "Asset events &amp; follow up"
+            parent="product_asset.menu_asset_sales" sequence="1" />
+                  
+        <menuitem action="product_asset.asset_type_normal_action" 
+                  id="product_asset.menu_asset_type_sales"
+                  parent="product_attributes.menu_product_config" 
+                  sequence="1" />
+                  
+        <menuitem id="purchase.menu_purchase_rfq" 
+                  action="purchase.purchase_rfq"
+                  name="Purchase Order Draft"
+                  sequence="2" 
+                  parent="purchase.menu_procurement_management" />
+            
+    </data>
+</openerp>
