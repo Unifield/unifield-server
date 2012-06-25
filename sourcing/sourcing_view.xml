@@ -64,7 +64,7 @@
 					<field name="rts" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 					<field name="po_cft"
-						on_change="onChangePoCft(po_cft, company_id)" 
+						on_change="onChangePoCft(po_cft, company_id, procurement_request)" 
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
