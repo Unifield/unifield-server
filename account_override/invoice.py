@@ -45,6 +45,7 @@ class account_invoice(osv.osv):
 
     _defaults = {
         'from_yml_test': lambda *a: False,
+        'date_invoice': lambda *a: strftime('%Y-%m-%d'),
     }
 
     def create_sequence(self, cr, uid, vals, context=None):
