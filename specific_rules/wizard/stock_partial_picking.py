@@ -117,6 +117,11 @@ class stock_partial_picking(osv.osv_memory):
         move = kwargs.get('move')
         assert move, 'move is missing'
         
+	if move.batch_number_check and not move.prodlot_id:
+            raise osv.except_osv(_('Error'), _('No Batch Number set for Batch Number mandatory product(s).'))
+	if move.expiry_date_check and not move.expiry_date:
+            raise osv.except_osv(_('Error'), _('No Expiry Date set for Expiry Date mandatory product(s).'))
+
         # if only expiry date mandatory, and not batch management
         if move.expiry_date_check and not move.batch_number_check:        
             # if no production lot
