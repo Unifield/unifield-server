@@ -29,6 +29,9 @@ from tools.translate import _
 import logging
 from workflow.wkf_expr import _eval_expr
 
+from sale_override import SALE_ORDER_SPLIT_SELECTION
+from sale_override import SALE_ORDER_LINE_STATE_SELECTION
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -36,8 +39,12 @@ class sale_order(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
+        
+        - reset split flag to original value (field order flow)
         '''
-        return super(sale_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
+        return super(sale_order, self).copy(cr, uid, id, default={'loan_id': False,
+                                                                  'split_type_sale_order': 'original_sale_order',
+                                                                  'original_so_id_sale_order': False}, context=context)
     
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -154,6 +161,8 @@ class sale_order(osv.osv):
   - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
   - The 'Invoice On Order After Delivery' choice will generate the draft invoice based on sales order after all picking lists have been finished.
   - The 'Invoice From The Picking' choice is used to create an invoice during the picking process."""),
+        'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
+        'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
     }
     
     _defaults = {
@@ -164,6 +173,7 @@ class sale_order(osv.osv):
         'from_yml_test': lambda *a: False,
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'order_policy': lambda *a: 'picking',
+        'split_type_sale_order': 'original_sale_order',
     }
 
     def _check_own_company(self, cr, uid, company_id, context=None):
@@ -213,6 +223,80 @@ class sale_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
 
+        return True
+    
+    def wkf_split(self, cr, uid, ids, context=None):
+        '''
+        split function for sale order: original -> stock, esc, local purchase
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        line_obj = self.pool.get('sale.order.line')
+        fields_tools = self.pool.get('fields.tools')
+        wf_service = netsvc.LocalService("workflow")
+        
+        # must be original-sale-order to reach this method
+        for so in self.browse(cr, uid, ids, context=context):
+            # links to split Fo
+            split_fo_dic = {'esc_split_sale_order': False,
+                            'stock_split_sale_order': False,
+                            'local_purchase_split_sale_order': False}
+            # check we are allowed to be here
+            if so.split_type_sale_order != 'original_sale_order':
+                raise osv.except_osv(_('Error'), _('You cannot split a Fo which has already been split.'))
+            # loop through lines
+            for line in so.order_line:
+                # check that each line must have a supplier specified
+                if not line.supplier and line.type == 'make_to_order' and line.po_cft in ('po', 'dpo'):
+                    raise osv.except_osv(_('Error'), _('Supplier is not defined for all Field Order lines.'))
+                fo_type = False
+                # get corresponding type
+                if line.type == 'make_to_stock':
+                    fo_type = 'stock_split_sale_order'
+                elif line.supplier.partner_type == 'esc':
+                    fo_type = 'esc_split_sale_order'
+                else:
+                    fo_type = 'local_purchase_split_sale_order'
+                # do we have already a link to Fo
+                if not split_fo_dic[fo_type]:
+                    # try to find corresponding stock split sale order
+                    so_ids = self.search(cr, uid, [('original_so_id_sale_order', '=', so.id),
+                                                   ('split_type_sale_order', '=', fo_type)], context=context)
+                    if so_ids:
+                        # the fo already exists
+                        split_fo_dic[fo_type] = so_ids[0]
+                    else:
+                        # we create a new Fo for the corresponding type -> COPY we empty the lines
+                        # generate the name of new fo
+                        selec_name = fields_tools.get_selection_name(cr, uid, self, 'split_type_sale_order', fo_type, context=context)
+                        fo_name = so.name + '-' + selec_name
+                        split_id = self.copy(cr, uid, so.id, {'name': selec_name,
+                                                              'order_line': [],
+                                                              'split_type_sale_order': fo_type,
+                                                              'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
+                        # log the action of split
+                        self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
+                        split_fo_dic[fo_type] = split_id
+                # copy the line to the split Fo - force the state to 'sourced'
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'state': 'sourced'}, context=dict(context, keepDateAndDistrib=True))
+            # the sale order is treated, we process the workflow of the new so
+            for to_treat in [x for x in split_fo_dic.values() if x]:
+                wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
+                wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
+        
+        return True
+    
+    def wkf_split_done(self, cr, uid, ids, context=None):
+        '''
+        split done function for sale order
+        '''
+        self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
     def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
@@ -473,6 +557,64 @@ class sale_order(osv.osv):
                 res = _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
 
         return True
+    
+    def action_ship_proc_create(self, cr, uid, ids, context=None):
+        '''
+        process logic at ship_procurement activity level
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        wf_service = netsvc.LocalService("workflow")
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            proc_ids = []
+            for line in order.order_line:
+                proc_id = False
+                date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
+                date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
+
+                # when the line is sourced, we already get a procurement for the line
+                # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
+                if line.state in ['sourced', 'done']:
+                    continue
+
+                if line.product_id:
+                    proc_data = {'name': line.name,
+                                 'origin': order.name,
+                                 'date_planned': date_planned,
+                                 'product_id': line.product_id.id,
+                                 'product_qty': line.product_uom_qty,
+                                 'product_uom': line.product_uom.id,
+                                 'product_uos_qty': (line.product_uos and line.product_uos_qty)\
+                                 or line.product_uom_qty,
+                                 'product_uos': (line.product_uos and line.product_uos.id)\
+                                 or line.product_uom.id,
+                                 'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                                 'procure_method': line.type,
+                                 'move_id': False, # will be completed at ship state in action_ship_create method
+                                 'property_ids': [(6, 0, [x.id for x in line.property_ids])],
+                                 'company_id': order.company_id.id,
+                                 }
+                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order,)
+                    proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
+                    proc_ids.append(proc_id)
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
+                    
+            for proc_id in proc_ids:
+                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                
+            # the Fo is sourced we set the state
+            self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
+            # display message for sourced
+            self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
+            
+        return True
 
 sale_order()
 
@@ -481,9 +623,14 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    _columns = {
-        'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
-    }
+    _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
+                help='* The \'Draft\' state is set when the related sales order in draft state. \
+                    \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
+                    \n* The \'Exception\' state is set when the related sales order is set as exception. \
+                    \n* The \'Done\' state is set when the sales order line has been picked. \
+                    \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
+                }
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''

@@ -433,17 +433,19 @@ class sourcing_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
+            # corresponding state for the lines: IR: confirmed, FO: sourced
+            state_to_use = sl.sale_order_id.procurement_request and 'confirmed' or 'sourced'
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
             
             if sl.type == 'make_to_order' and sl.po_cft in ('po', 'dpo') and not sl.supplier:
-                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before confirming the line"))
+                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
             
             # set the corresponding sale order line to 'confirmed'
-            result.append((sl.id, sl.sale_order_line_id.write({'state':'confirmed'}, context)))
+            result.append((sl.id, sl.sale_order_line_id.write({'state': state_to_use}, context)))
             # check if all order lines have been confirmed
             linesConfirmed = True
             for ol in sl.sale_order_id.order_line:
-                if ol.state != 'confirmed':
+                if ol.state != state_to_use:
                     linesConfirmed = False
                     break
                 
