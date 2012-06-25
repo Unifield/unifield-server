@@ -159,7 +159,7 @@ class account_move_line(osv.osv):
         Check that document's date is done BEFORE posting date
         """
         for aml in self.browse(cr, uid, ids):
-            if aml.document_date and aml.date_invoice and aml.date_invoice < aml.document_date:
+            if aml.document_date and aml.date and aml.date < aml.document_date:
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
@@ -175,13 +175,13 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
         Check document_date and date validity
         """
         if not context:
             context = {}
-        res = super(account_move_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         self._check_document_date(cr, uid, ids)
         return res
 
