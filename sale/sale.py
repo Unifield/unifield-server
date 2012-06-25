@@ -49,6 +49,10 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
 
+    def _hook_copy_default(self, cr, uid, id, *args, **kwargs):
+        default = kwargs['default']
+        return default
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -58,8 +62,8 @@ class sale_order(osv.osv):
             'invoice_ids': [],
             'picking_ids': [],
             'date_confirm': False,
-            'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order'),
         })
+        default = self._hook_copy_default(cr, uid, default=default, id=id, context=context)
         return super(sale_order, self).copy(cr, uid, id, default, context=context)
 
     def _amount_line_tax(self, cr, uid, line, context=None):
