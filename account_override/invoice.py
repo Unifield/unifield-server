@@ -90,6 +90,8 @@ class account_invoice(osv.osv):
         """
         Check that document's date is done BEFORE posting date
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for i in self.browse(cr, uid, ids):
             if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
