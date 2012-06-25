@@ -27,6 +27,7 @@ import re
 import decimal_precision as dp
 from time import strftime
 import logging
+from tools.translate import _
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -153,6 +154,15 @@ class account_move_line(osv.osv):
             res = res[0]
         return res
 
+    def _check_document_date(self, cr, uid, ids):
+        """
+        Check that document's date is done BEFORE posting date
+        """
+        for aml in self.browse(cr, uid, ids):
+            if aml.document_date and aml.date_invoice and aml.date_invoice < aml.document_date:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        return True
+
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Filled in 'document_date' if we come from tests
@@ -161,7 +171,19 @@ class account_move_line(osv.osv):
             context = {}
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
+        if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
+            raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date and date validity
+        """
+        if not context:
+            context = {}
+        res = super(account_move_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_document_date(cr, uid, ids)
+        return res
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
