@@ -97,7 +97,7 @@ class account_analytic_line(osv.osv):
         Check that document's date is done BEFORE posting date
         """
         for aal in self.browse(cr, uid, ids):
-            if aal.document_date and aal.date and aal.date < i.document_date:
+            if aal.document_date and aal.date and aal.date < aal.document_date:
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
