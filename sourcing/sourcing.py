@@ -359,7 +359,7 @@ class sourcing_line(osv.osv):
                 domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
             else:
                 return {'warning': {'title': 'Warning',
-                                    'message': 'You cannot source an Internal request line with a Direct Purchase Order. Use a standard Purchase order instaed'},
+                                    'message': 'You cannot source an Internal request line with a Direct Purchase Order. Use a standard Purchase order instead'},
                         'value': {'po_cft': 'po'}}
     
         return {'domain': domain}
