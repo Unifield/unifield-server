@@ -29,5 +29,15 @@
         <menuitem id="product_attributes.menu_product_config" 
         parent="menu_hidden"  />
         
+        <!-- Hide Packs, not used in Unifield -->
+        <menuitem id="stock.menu_action_tracking_form" 
+        parent="menu_hidden"  />
+        
+        <menuitem id="stock.menu_warehouse_config" 
+        parent="menu_hidden"  />
+        
+        <menuitem id="stock.menu_product_in_config_stock" 
+        parent="menu_hidden"  />
+        
     </data>
 </openerp>

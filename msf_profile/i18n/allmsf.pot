@@ -26057,7 +26057,7 @@ msgstr ""
 #: model:ir.ui.menu,name:procurement_report.menu_report_procurement_policies
 #: view:report.procurement.policies:0
 msgid "Procurement Rules Analysis"
-msgstr ""
+msgstr "Replenishment Rules Analysis"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.action_product_price_list

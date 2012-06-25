@@ -47,7 +47,7 @@
         parent="menu_supply_config" 
         sequence="11" />
         
-        <!-- we move the menu configuration of product (without asset type and product configuration) withon the menu 'supply main config' -->
+        <!-- we move the menu configuration of product (without asset type and product configuration) within the menu 'supply main config' -->
         <menuitem id="purchase.menu_purchase_config_purchase" 
         name="Configuration" 
         parent="menu_supply_config" 
@@ -63,11 +63,69 @@
         name="Price Types"
         parent="purchase.menu_purchase_config_pricelist" />
     
-        <!-- we move the menu configuration of product (without asset type and product configuration) withon the menu 'supply main config' -->
+        <!-- we move the menu configuration of product (without asset type and product configuration) within the menu 'supply main config' -->
         <menuitem id="base.menu_base_config" 
         name="Configuration" 
         parent="menu_supply_config" 
         sequence="21" />
+        
+        <!-- we move the menu configuration of warehouse within the menu 'supply main warehouse configuration' -->
+        <menuitem id="stock.menu_stock_configuration" 
+        name="Warehouse Configuration" 
+        parent="menu_supply_config" 
+        sequence="22" />
+            
+            <!-- WAREHOUSE -->
+            <menuitem id="menu_reg_wh_mngt" 
+            name="Regular Warehouse Management"
+            parent="stock.menu_stock_configuration" 
+            sequence="7" />
+                
+                <menuitem id="msf_config_locations.menu_stock_location_configuration_wizard"
+                  action="msf_config_locations.action_stock_location_configuration_wizard"
+                  parent="menu_reg_wh_mngt" 
+                  sequence="10"/>
+                  
+                <menuitem id="msf_config_locations.menu_stock_remove_location_wizard"
+                  action="msf_config_locations.action_stock_remove_location_wizard"
+                  parent="menu_reg_wh_mngt" 
+                  sequence="11"/>
+                  
+                <menuitem id="msf_outgoing.menu_action_pack_type_tree" 
+                action="msf_outgoing.action_pack_type_tree" 
+                groups="base.group_extended"
+                parent="menu_reg_wh_mngt"
+                sequence="12" />
+                
+            <menuitem id="menu_adv_wh_mngt" 
+            name="Advanced Warehouse Management"
+            parent="stock.menu_stock_configuration" 
+            sequence="8" />
+                
+                <menuitem action="stock.action_location_form" 
+                id="stock.menu_action_location_form" 
+                parent="menu_adv_wh_mngt"
+                sequence="10" />
+                
+                <menuitem action="stock.action_warehouse_form" 
+                id="stock.menu_action_warehouse_form" 
+                parent="menu_adv_wh_mngt"
+                sequence="12" />
+                
+                <menuitem action="stock.action_incoterms_tree" 
+                id="stock.menu_action_incoterm_open" 
+                parent="menu_adv_wh_mngt" 
+                sequence="13"/>
+                
+            <menuitem id="menu_report_cust" 
+            name="Report Customization"
+            parent="stock.menu_stock_configuration" 
+            sequence="9" />
+            
+                <menuitem action="msf_outgoing.action_labels_tree" 
+                id="msf_outgoing.menu_report_custo_labels" 
+                parent="menu_report_cust" 
+                 sequence="7"/>
     
     </data>
 </openerp>
