@@ -86,6 +86,15 @@ class account_invoice(osv.osv):
         vals.update({'sequence_id': res_seq,})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
+    def _check_document_date(self, cr, uid, ids):
+        """
+        Check that document's date is done BEFORE posting date
+        """
+        for i in self.browse(cr, uid, ids):
+            if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        return True
+
     def action_date_assign(self, cr, uid, ids, *args):
         """
         Check Document date.
@@ -102,9 +111,8 @@ class account_invoice(osv.osv):
                 self.write(cr, uid, i.id, {'document_date': i.date_invoice})
             if not i.document_date and not i.from_yml_test:
                 raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
-            # Posting date should not be done BEFORE document date
-            if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        # Posting date should not be done BEFORE document date
+        self._check_document_date(cr, uid, ids)
         return res
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
@@ -165,6 +173,16 @@ class account_invoice(osv.osv):
             if line[2] and 'date' in line[2] and not line[2].get('document_date', False):
                 line[2].update({'document_date': line[2].get('date')})
         return lines
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
+        self._check_document_date(cr, uid, ids)
+        return res
 
 account_invoice()
 
