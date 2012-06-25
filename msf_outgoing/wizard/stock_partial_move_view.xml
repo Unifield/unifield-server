@@ -126,6 +126,7 @@
                     <field name="to_pack" readonly="True" />
                     <field name="num_of_packs" readonly="True" />
                     <field name="pack_type" readonly="True" />
+                    <field name="volume" readonly="True" />
 					<field name="weight" readonly="True" />
 					<field name="selected_number" string="Number to Ship" />
 					<field name="selected_weight" string="Weight to Ship [kg]" readonly="True" />

@@ -334,6 +334,13 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             values['selected_weight'] = selected_weight
                     
         return result
+
+    def _get_volume(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        for memory_move in self.browse(cr, uid, ids, context=context):
+            mm = ( memory_move.length * memory_move.width * memory_move.height ) / 1000000
+            result[memory_move.id] = mm
+        return result
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -346,6 +353,8 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
                 'selected_number': fields.integer(string='Selected Number'),
                 # functions
+
+                'volume': fields.function(_get_volume, method=True, type='float', string='Volume [m³]',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals_X',), # old_multi get_vals
                 }

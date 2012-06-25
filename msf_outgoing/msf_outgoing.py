@@ -924,6 +924,13 @@ class pack_family_memory(osv.osv_memory):
                         raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
+
+    def _get_volume(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        for shipment in self.browse(cr, uid, ids, context=context):
+            vol = ( shipment.length * shipment.width * shipment.height ) / 1000000
+            result[shipment.id] = vol
+        return result
     
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
@@ -936,6 +943,8 @@ class pack_family_memory(osv.osv_memory):
                 'length' : fields.float(digits=(16,2), string='Length [cm]'),
                 'width' : fields.float(digits=(16,2), string='Width [cm]'),
                 'height' : fields.float(digits=(16,2), string='Height [cm]'),
+                'volume': fields.function(_get_volume, method=True, type='float', string='Volume [m³]',),
+
                 'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
                 # functions
                 'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
