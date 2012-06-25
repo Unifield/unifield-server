@@ -65,7 +65,7 @@ class wizard_import_cheque(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter cheque regarding currency."),
         'period_id': fields.many2one('account.period', string="Period", required=True, help="Useful for filtering account move line that are in the same period"),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
-        'date': fields.date('Date', required=False),
+        'date': fields.date('Posting Date', required=False),
         'document_date': fields.date('Document Date', required=False),
     }
 
