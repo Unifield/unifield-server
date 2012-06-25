@@ -197,9 +197,7 @@
 								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
             		</xpath>
             		
-            		<!-- <button name="%(stock.action_partial_move_server)d" position="attributes">
-            			<attribute name="invisible">1</attribute>
-            		</button> -->
+            		
             	
             	</data>
             </field>
@@ -491,9 +489,6 @@
             			<attribute name="invisible">1</attribute>
             		</button>
             		
-            		<!-- <button name="%(stock.action_partial_move_server)d" position="attributes">
-            			<attribute name="invisible">1</attribute>
-            		</button> -->
             	
             	</data>
             </field>

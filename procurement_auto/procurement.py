@@ -65,8 +65,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         return res
     
     _columns = {
-        'sequence': fields.integer(string='Order', required=True, help='A higher order value means a low priority'),
-        'name': fields.char(size=64, string='Name', required=True),
+        'sequence': fields.integer(string='Order', required=False, help='A higher order value means a low priority'),
+        'name': fields.char(size=64, string='Reference', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),

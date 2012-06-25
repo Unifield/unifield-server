@@ -11,7 +11,6 @@
                     <group colspan="2" col="2">
                         <separator string="General Information" />
                         <field name="name" />
-                        <field name="sequence" />
                         <field name="product_id" invisible='1'/>
                     </group>
                     <group colspan="2" col="2">
@@ -95,8 +94,18 @@
                         <!-- <field name="product_ids" nolabel="1" colspan="4" domain="[('fnct_categ_id', '=', category_id)]"/>
                          -->
                         <field name="product_ids" nolabel="1" colspan="4" 
-                        domain="[('list_ids', '=', parent.sublist_id)]"
-                        />
+                        domain="[('list_ids', '=', parent.sublist_id)]">
+                        	<tree string="Products">
+                        		<field name="default_code" />
+                        		<field name="name" />
+                        		<field name="uom_id" string="UoM" />
+                        		<field name="type" />
+                        		<field name="qty_available" />
+                        		<field name="virtual_available" />
+                        		<field name="product_amc" string="AMC" />
+                        		<field name="monthly_consumption" string="FMC" />
+                        	</tree>
+                        </field>
                     </group>
                 </form>
             </field>
@@ -108,14 +117,42 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Order Cycle">
-                    <field name="sequence" select="1"/>
                     <field name="name" />
                     <field name="product_id" invisible='1'/>
                     <field name="warehouse_id" />
                     <field name="location_id" />
                     <field name="frequence_id" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
                 </tree>
             </field>
+        </record>
+        
+        <record id="order_cycle_search_view" model="ir.ui.view">
+        	<field name="name">order.cycle.search.view</field>
+        	<field name="model">stock.warehouse.order.cycle</field>
+        	<field name="type">search</field>
+        	<field name="arch" type="xml">
+        		<search string="Order Cycle">
+        			<group expand="1" string="Filters...">
+        			 	<field name="name" default_focus="1" colspan="4" />
+        			 	<field name="location_id" eval="context.get('location_id', False)" colspan="4" />
+	                </group>
+	                <newline/>
+	                <group expand="1" string="Group By...">
+	                	<filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
+	                </group>
+        		</search>
+        	</field>
         </record>
         
         <record id="action_order_cycle_tree" model="ir.actions.act_window">

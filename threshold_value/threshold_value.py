@@ -29,7 +29,7 @@ class threshold_value(osv.osv):
     _description = 'Threshold value'
     
     _columns = {
-        'name': fields.char(size=128, string='Name', required=True),
+        'name': fields.char(size=128, string='Reference', required=True),
         'active': fields.boolean(string='Active'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
