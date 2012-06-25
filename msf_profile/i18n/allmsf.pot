@@ -3634,7 +3634,7 @@ msgstr ""
 #. module: sale
 #: model:ir.actions.report.xml,name:sale.report_sale_order
 msgid "Quotation / Order"
-msgstr ""
+msgstr "Order"
 
 #. module: base
 #: model:res.country,name:base.ls
