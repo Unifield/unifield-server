@@ -368,8 +368,9 @@ class purchase_order(osv.osv):
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-                    move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-                    move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
+                    if proc.move_id:
+	                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
+        	        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
                     proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
                     
         return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)
