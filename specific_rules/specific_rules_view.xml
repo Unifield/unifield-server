@@ -197,9 +197,9 @@
 								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
             		</xpath>
             		
-            		<button name="%(stock.action_partial_move_server)d" position="attributes">
+            		<!-- <button name="%(stock.action_partial_move_server)d" position="attributes">
             			<attribute name="invisible">1</attribute>
-            		</button>
+            		</button> -->
             	
             	</data>
             </field>
@@ -491,9 +491,9 @@
             			<attribute name="invisible">1</attribute>
             		</button>
             		
-            		<button name="%(stock.action_partial_move_server)d" position="attributes">
+            		<!-- <button name="%(stock.action_partial_move_server)d" position="attributes">
             			<attribute name="invisible">1</attribute>
-            		</button>
+            		</button> -->
             	
             	</data>
             </field>
@@ -598,7 +598,7 @@
 				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}</attribute>
 			</xpath>
             	
-            		<button name="%(stock.action_partial_move_server)d" position="after">
+            		<button name="action_assign" position="after">
             			<field name="lot_check" />
 	                   	<field name="exp_check" />
 	                   	<field name="kc_check" />
@@ -608,10 +608,6 @@
             		</button>
             		
             		<button name="action_assign" position="attributes">
-            			<attribute name="invisible">1</attribute>
-            		</button>
-            		
-            		<button name="%(stock.action_partial_move_server)d" position="attributes">
             			<attribute name="invisible">1</attribute>
             		</button>
             	

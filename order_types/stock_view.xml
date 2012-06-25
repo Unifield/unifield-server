@@ -165,8 +165,6 @@
                     <xpath expr="/search/group[2]/field[@name='prodlot_id']" position="after">
                         <group> 
                             <separator string="Order Traceability" />
-                            <field name="order_type" />
-                            <field name="order_category" />
                             <field name="order_priority" />
                         </group>
                     </xpath>
