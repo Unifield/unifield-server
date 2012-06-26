@@ -66,6 +66,7 @@ class account_move_line(osv.osv):
                                      'distribution_id': distrib_obj.id,
                                      'user_id': uid,
                                      'currency_id': obj_line.currency_id.id,
+                                     'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
