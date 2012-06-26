@@ -19,19 +19,6 @@
 				  sequence="20" 
 				  groups="stock.group_stock_manager"/>
 				  
-		<record id="view_compute_schedulers_wizard" model="ir.ui.view">
-            <field name="name">view.compute.schedules.wizard</field>
-            <field name="model">procurement.order.compute.all</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="procurement.view_compute_schedulers_wizard" />
-            <field name="arch" type="xml">
-            	<xpath expr="/form//button[@name='procure_calculation']" position="replace">
-            		<button name="procure_calculation" string="Compute POs Creation"
-                			colspan="1" type="object" icon="gtk-ok" />
-            	</xpath>
-            </field>
-        </record>
-		    
 		
     	<record id="procurement_rules_report_tree_view" model="ir.ui.view">
     		<field name="name">procurement.rules.report.tree.view</field>
