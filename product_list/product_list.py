@@ -230,6 +230,8 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        'name': fields.char(size=60, string='DESCRIPTION', required=True),
+        'default_code' : fields.char('CODE', size=14),
     }
 
 product_product()
