@@ -26,8 +26,9 @@
                     <field name="nbr" sum="# of Lines"/>
                     <field name="quantity" sum="Quantity"/>
                     <field name="price_average" sum="Average Price" invisible="1" />
-                    <field name="price_total" sum="Total Price"/>
-                    <field name="price_standard" sum="Products Value"/>
+                    <field name="price_total" sum="Subtotal"/>
+                    <field name="currency_id" />
+                    <field name="price_standard" sum="Products Value" invisible="1"/>
                     <field name="negociation" widget="progressbar"/>
                     <field name="delay" sum="Days to Validate"/>
                     <field name="delay_pass" sum="Days to Deliver"/>

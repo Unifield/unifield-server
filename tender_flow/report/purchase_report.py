@@ -92,6 +92,7 @@ class purchase_report(osv.osv):
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
     }
     _order = 'name desc,price_total desc'
     def init(self, cr):
@@ -135,7 +136,8 @@ class purchase_report(osv.osv):
                     avg(100.0 * (l.price_unit*l.product_qty*u.factor*(1/rcr_fr.rate)) / NULLIF(t.standard_price*l.product_qty*u.factor, 0.0))::decimal(16,2) as negociation,
 
                     sum(t.standard_price*l.product_qty*u.factor*(1/rcr_fr.rate))::decimal(16,2) as price_standard,
-                    (sum(l.product_qty*l.price_unit*(1/rcr_fr.rate))/NULLIF(sum(l.product_qty*u.factor*(1/rcr_fr.rate)),0.0))::decimal(16,2) as price_average
+                    (sum(l.product_qty*l.price_unit*(1/rcr_fr.rate))/NULLIF(sum(l.product_qty*u.factor*(1/rcr_fr.rate)),0.0))::decimal(16,2) as price_average,
+                    1 as currency_id
                 from purchase_order s
                     left join purchase_order_line l on (s.id=l.order_id)
                         left join product_product p on (l.product_id=p.id)
@@ -180,5 +182,20 @@ class purchase_report(osv.osv):
 
             )
         """)
+        
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+        '''
+        Add functional currency on all lines
+        '''
+        res = super(purchase_report, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        if self._name == 'purchase.report':
+            for data in res:
+                # If no information to display, don't display the currency
+                if not '__count' in data or data['__count'] != 0:
+                    currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+                    data.update({'currency_id': (currency.id, currency.name)})
+                
+        return res
+        
 purchase_report()
 
