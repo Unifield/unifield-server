@@ -57,7 +57,7 @@
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='minimum_planned_date']" position="replace" />
+                    <!--<xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='minimum_planned_date']" position="replace" />-->
 	            </data>
             </field>
         </record>

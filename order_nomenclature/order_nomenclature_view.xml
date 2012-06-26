@@ -47,8 +47,17 @@
 	                        context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
 	                        on_change="product_packaging_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)"
 	                        domain="[('product_id','=',product_id)]"
-	                        groups="base.group_extended"/>
+	                        groups="base.group_extended"
+                            invisible="1" />
 					</xpath>
+
+					<xpath expr="//form//page[@string='Order Line']/field[@name='currency_id']" position="attributes">
+                         <attribute name="invisible">True</attribute>
+					</xpath>
+					<xpath expr="//form//page[@string='Order Line']/field[@name='currency_id']" position="after">
+                        <newline />
+					</xpath>
+
 				
 					<!-- EXACT COPY SO-> Po -->
 					<xpath expr="//form//page[@string='Order Line']/field[@name='name']" position="replace"></xpath>
@@ -82,14 +91,14 @@
 										widget="selection"
                                         get_selection="get_nomen"
                                         on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                        attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_manda_2"
 										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
 										widget="selection"
                                         get_selection="get_nomen"
                                         on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                                        attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                        attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_manda_3"
 										domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"

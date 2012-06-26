@@ -9,6 +9,22 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
+
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']/group[2]" position="replace" >
+                    </xpath>
+
+
+
+                   <xpath expr="/form/notebook/page[@string='Notes']" position="before" >
+                        <page string="Invoices" > 
+                            <group colspan="2" col="2">
+                                <separator string="Invoice Control" colspan="2"/>
+                                <field name="invoice_method"/>
+                                <field name="fiscal_position" widget="selection"/>
+                            </group>
+                        </page>
+                   </xpath>
+
                 	
                 	<xpath expr="/form//field[@name='warehouse_id']" position="replace">
                 		<field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
@@ -26,7 +42,7 @@
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="details" />
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="replace">
+                    <xpath expr="/form/notebook/page//field[@name='invoice_method']" position="replace">
                         <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
@@ -50,6 +66,35 @@
                     	<button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
                     		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
                     </xpath>
+
+                    <xpath expr="/form/notebook//page[@string='Purchase Order']/group[2]" position="replace" >
+                    </xpath>
+
+                    <xpath expr="/form/notebook" position="after" >
+                        <group colspan="4" col="14">
+                            <field name="state" readonly="1"/>
+                            <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
+                            <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
+                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
+                            <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/>
+                            <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
+                            <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
+                            <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
+                            <button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward" type="object" />
+                            <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
+                            <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
+                            <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
+                            <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
+                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
+                        </group>
+                    </xpath>
+
+
+
+
+
+
 
                 </data>
             </field>
