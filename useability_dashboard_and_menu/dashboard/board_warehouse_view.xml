@@ -28,8 +28,7 @@
         </record>
 
         <menuitem id="stock.menu_stock_root" 
-        name="Dashboard"  
-        sequence="0" 
+        name="Warehouse"  
         action="open_board_warehouse_unifield"/>
         
     </data>

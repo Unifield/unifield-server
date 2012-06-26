@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <!-- GRAPH SALE.ORDER.LINE per customer per month (for the last 3 months) per 1st level of nomenclature-->
-         <record id="sale_order_groupby_nomen0_and_cust_graph" model="ir.ui.view">
-             <field name="name">sale.order.groupby.nomen0.and.cust.graph.view</field>
-             <field name="model">sale.order</field>
-             <field name="type">graph</field>
-             <field name="arch" type="xml">
-                <graph string="Number of sale order line for the 3 last months" type="bar">
-                    <field name="partner_id" group="1" />
-                    <field name="nb_of_lines" operator="+"/>
-                </graph>
-             </field>
-        </record>
-        
-        <record id="open_graph_sale_order_groupby_nomen0_and_cust" model="ir.actions.act_window">
-                <field name="name">Sale order group by nomenclature and customer</field>
-                <field name="res_model">sale.order</field>
-                <field name="type">ir.actions.act_window</field>
-                <field eval="3" name="sequence"/>
-                <field name="view_type">form</field>
-                <field name="view_mode">tree,form, graph</field>
-                <field name="view_id" ref="sale_order_groupby_nomen0_and_cust_graph"/>
-                <field name="context">context</field>
-        </record>
+    <!--This views used in board_sale module -->
+    <record id="view_sales_by_partner_graph" model="ir.ui.view">
+         <field name="name">sales.by.partner.graph</field>
+         <field name="model">sale.report</field>
+         <field name="type">graph</field>
+         <field name="arch" type="xml">
+             <graph string="Lines by Partner" type="bar">
+                 <field name="partner_id" />
+                 <field name="nbr" operator="+"/>
+             </graph>
+         </field>
+    </record>
+
+   <record id="action_lines_by_partner" model="ir.actions.act_window">
+        <field name="name">Sales per Customer in last 90 days</field>
+        <field name="res_model">sale.report</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">graph,tree</field>
+        <field name="domain">[('state','=','done'),('date','&lt;=', time.strftime('%Y-%m-%d')),('date','&gt;',(datetime.date.today()-datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]</field>
+        <field name="view_id" ref="view_sales_by_partner_graph"/>
+        <field name="context">{'search_default_Customer':1}</field>
+    </record>
     
     
         <record id="board_sales_manager_form" model="ir.ui.view">
@@ -59,7 +58,7 @@
                         <action name="%(procurement_request.action_procurement_request)d" string="Internal Request"/>
                     </xpath>
                     <xpath expr="/form/hpaned/child2" position="inside">
-                        <action name="%(open_graph_sale_order_groupby_nomen0_and_cust)d" string="Line per customer, per nomenclature in the last 90 days"/>
+                        <action name="%(action_lines_by_partner)d" string="Line per customer, in the last 90 days"/>
                     </xpath>
                 </data>
             </field>
