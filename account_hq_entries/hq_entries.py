@@ -263,7 +263,6 @@ class hq_entries(osv.osv):
         """
         Get state of distribution:
          - if compatible with the line, then "valid"
-         - if no distribution on the line, then "none"
          - all other case are "invalid"
         """
         if isinstance(ids, (int, long)):
@@ -276,29 +275,67 @@ class hq_entries(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        # Browse all given lines
+        # Browse all given lines to check analytic distribution validity
+        ## TO CHECK:
+        # A/ if CC = dummy CC
+        # B/ if FP = MSF Private FUND
+        # C/ (account/DEST) in FP except B
+        # D/ CC in FP except when B
+        # E/ DEST in list of available DEST in ACCOUNT
+        ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
+        ## CC is mandatory, so always available:
+        # 1/ no FP, no DEST => Distro = valid
+        # 2/ FP, no DEST => Check D except B
+        # 3/ no FP, DEST => Check E
+        # 4/ FP, DEST => Check C, D except B, E
+        ## 
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = 'invalid'
-            if line.cost_center_id and line.analytic_id:
-                if line.analytic_id.id == fp_id:
-                    res[line.id] = 'valid'
-                    continue
-                if line.account_id.id in [x.id for x in line.analytic_id.account_ids] and line.cost_center_id.id in [x.id for x in line.analytic_id.cost_center_ids]:
-                    res[line.id] = 'valid'
-                    continue
-            elif line.cost_center_id and not line.analytic_id:
-                res[line.id] = 'valid'
+            res[line.id] = 'valid' # by default
+            #### SOME CASE WHERE DISTRO IS OK
+            # if account is not expense, so it's valid
+            if line.account_id and line.account_id.user_type_code and line.account_id.user_type_code != 'expense':
                 continue
-            else:
-                res[line.id] = 'none'
+            # if just a cost center, it's also valid! (CASE 1/)
+            if not line.analytic_id and not line.destination_id:
+                continue
+            # if FP is MSF Private Fund and no destination_id, then all is OK.
+            if line.analytic_id and line.analytic_id.id == fp_id and not line.destination_id:
+                continue
+            #### END OF CASES
+            if line.analytic_id and not line.destination_id: # CASE 2/
+                # D Check, except B check
+                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+            elif not line.analytic_id and line.destination_id: # CASE 3/
+                # E Check
+                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                    res[line.id] = 'invalid'
+                    continue
+            else: # CASE 4/
+                # C Check, except B
+                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids] and line.analytic_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+                # D Check, except B check
+                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+                # E Check
+                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                    res[line.id] = 'invalid'
+                    continue
         return res
 
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True),
-        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True),
-        'free_1_id': fields.many2one('account.analytic.account', "Free 1"),
-        'free_2_id': fields.many2one('account.analytic.account', "Free 2"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
         'date': fields.date("Posting Date", readonly=True),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
