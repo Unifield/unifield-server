@@ -105,7 +105,7 @@ class message(osv.osv):
     def recovery(self, cr, uid, entity, start_seq, context=None):
         ids = self.search(cr, uid, [('sequence', '>', start_seq), ('destination', '=', entity.id)], context=context)
         if ids:
-            print "recovery", ids
+            self.__logger.debug("recovery %s" % ids)
             self.write(cr, uid, ids, {'sent' : False}, context=context)
             self.__logger.debug("These ids will be recovered: %s" % str(ids))
         else:

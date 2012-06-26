@@ -24,7 +24,7 @@ from osv import fields
 import tools
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
-
+import logging
 from tools.safe_eval import safe_eval as eval
 
 class update(osv.osv):
@@ -35,6 +35,8 @@ class update(osv.osv):
     """
     _name = "sync.server.update"
     _rec_name = 'source'
+    
+    __logger = logging.getLogger('sync.server')
 
     _columns = {
         'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
@@ -105,7 +107,7 @@ class update(osv.osv):
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
                 if not update.owner:
-                    print "No owner specified even if in bi-private rule! => Works like a bidirectional rule"
+                    self.__logger.warning("No owner specified even if in bi-private rule! => Works like a bidirectional rule")
                     privates = [entity.id]
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
@@ -123,7 +125,6 @@ class update(osv.osv):
                 for group in entity.group_ids:
                     if group.id in s_group:
                         update_to_send.append(update)
-                        print "Update prepared for %s (source %s)" % (entity.name, update.source.name)
         return update_to_send
 
     def _save_puller(self, cr, uid, ids, context, entity_id):
@@ -145,9 +146,10 @@ class update(osv.osv):
         update_to_send = self.get_update_to_send(cr, uid, entity, ids, context)
         #offset + limit 
         update_to_send = update_to_send[offset:offset+max_size]
+        self.__logger.debug("Update to send to %s : %s" % (entity.name, update_to_send))
         self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
-            print "No update to send to %s" %(entity.name,)
+            self.__logger("No update to send to %s" % (entity.name,))
             return False
         update_master = update_to_send[0]
         complete_fields = self.get_additional_forced_field(update_master) 

@@ -30,6 +30,7 @@ import pprint
 import sync_data
 from sync_client.ir_model_data import link_with_ir_model, dict_to_obj
 pp = pprint.PrettyPrinter(indent=4)
+import logging
 
 from tools.safe_eval import safe_eval as eval
 
@@ -52,7 +53,6 @@ class local_message_rule(osv.osv):
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
         for data in data_list:
-            print "rules_data", data
             model_name = data.get('model')
             model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
             if not model_id:
@@ -161,7 +161,7 @@ message_to_send()
 class message_received(osv.osv):
     _name = "sync.client.message_received"
     _rec_name = 'identifier'
-
+    __logger = logging.getLogger('sync.client')
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sequence': fields.integer('Sequence', readonly = True),
@@ -225,7 +225,7 @@ class message_received(osv.osv):
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
                 log += tools.ustr(e)
-                print log
+                self.__logger.error(log)
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True
 

@@ -24,6 +24,7 @@ from osv import fields
 import sync_common.common
 from tools.translate import _
 from datetime import datetime
+import logging
 
 _field2type = {
     'text'      : 'str',
@@ -51,6 +52,8 @@ class sync_rule(osv.osv):
 
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
+    
+    __logger = logging.getLogger('sync.server')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -61,9 +64,7 @@ class sync_rule(osv.osv):
         return res
 
     def _get_model_name(self, cr, uid, ids, field, value, args, context=None):
-        print "sync rule set model_id", field, value, args
         model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',value)], context=context)
-        print "model", model_ids
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
@@ -225,8 +226,6 @@ class sync_rule(osv.osv):
         errors = []
         for rule in self.browse(cr, uid, ids, context=context):
             for value in rule.forced_values_sel:
-                
-                print value
                 # Get field information
                 field = self.pool.get('ir.model.fields').read(cr, uid, value.name.id, ['name','model','ttype'])
                 # Try to evaluate value and stringify it on failed
@@ -257,7 +256,6 @@ class sync_rule(osv.osv):
         self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid' }, context=context)
         sel = {}
         errors = []
-        print "compute fallback value"
         for rule in self.browse(cr, uid, ids, context=context):
             for value in rule.fallback_values_sel:
                 field = self.pool.get('ir.model.fields').read(cr, uid, value.name.id, ['name','model','ttype'], context=context)
@@ -275,7 +273,6 @@ class sync_rule(osv.osv):
         return True 
     
     def invalidate(self, cr, uid, ids, model_ref, context=None):
-        print model_ref
         model = ''
         model_ids = []
         if model_ref:
@@ -294,7 +291,6 @@ class sync_rule(osv.osv):
     
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
-            print values.get('included_fields_sel')
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
         
         if not isinstance(ids, (list, tuple)):

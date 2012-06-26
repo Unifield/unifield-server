@@ -160,14 +160,14 @@ class entity(osv.osv, Thread):
             if cont or entity.state == 'init':
                 self.create_update(cr, uid, context=context)
                 cont = True
-                print "init"
+                self.__logger.info("init")
             if cont or entity.state == 'update_send':
                 self.send_update(cr, uid, context=context)
                 cont = True
-                print "sent update"
+                self.__logger.info("sent update")
             if cont or entity.state == 'update_validate':
                 self.validate_update(cr, uid, context=context)
-                print "validate update"
+                self.__logger.info("validate update")
             log['data_push'] = 'ok'
         except Exception, e:
             log = self._log_error(log, e)
@@ -218,8 +218,12 @@ class entity(osv.osv, Thread):
             return False
         
         send_more = True
+        i = 0
         while send_more:
+            if i % 20 == 0:
+                self.__logger.debug("send package %s" % i)
             send_more = send_package(entity.id)
+            i += 1
         #state update_send => update_validate
     def validate_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -280,13 +284,11 @@ class entity(osv.osv, Thread):
         offset = entity.update_offset
         #Already up-to-date
         if last_seq >= max_seq:
-            #print "already up-to-date"
             last = True
         while not last:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, recover, context)
             if res and res[0]:
-                #print "retreive packet", res
                 nb_upate = self.pool.get('sync.client.update_received').unfold_package(cr, uid, res[1], context=context)
                 #unfold packet with res[1]
                 last = res[2]
@@ -444,12 +446,13 @@ class entity(osv.osv, Thread):
             'msg_push' : 'null',
         }
         entity_id = self.get_entity(cr, uid, context).id
+        if self.browse(cr, uid, entity_id).is_syncing:
+            return False
+        
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()
-        if self.browse(cr, uid, entity_id).is_syncing:
-            log['error'] += "Skipped: another synchronization is currently in progress. Please try again later."
-            log['status'] = 'failed'
-        elif not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+        
+        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
             log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
             log['status'] = 'failed'
         else:
@@ -545,7 +548,7 @@ class sync_server_connection(osv.osv):
         'port' : 8070,
         'protocol': 'netrpc',
         'login' : 'admin',
-        'max_size' : 5,
+        'max_size' : 200,
     }
     
     def _get_connection_manager(self, cr, uid, context=None):

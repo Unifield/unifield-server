@@ -446,7 +446,7 @@ entity()
 
 class sync_manager(osv.osv):
     _name = "sync.server.sync_manager"
-    
+    __logger = logging.getLogger('sync.server')
     
     """
         Data synchronization
@@ -504,7 +504,7 @@ class sync_manager(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an error message if a is False
         """
-        print entity, packet
+        self.__logger.debug("message receive from %s, %s" % (entity, packet))
         res = self.pool.get("sync.server.update").unfold_package(cr, 1, entity, packet, context=context)
         return (True, res)
             

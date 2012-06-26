@@ -116,7 +116,7 @@ class update_to_send(osv.osv):
     """
     _name = "sync.client.update_to_send"
     _rec_name = 'values'
-
+    __logger = logging.getLogger('sync.client')
 
     _columns = {
         'values':fields.text('Values', size=128, readonly=True),
@@ -170,7 +170,6 @@ class update_to_send(osv.osv):
                     values[i] = ''
 
             owner = obj.get_destination_name(cr, uid, [id], rule.owner_field, context=context)[id]
-            print "owner:",owner
 
             data = {
                 'session_id' : session_id,
@@ -182,6 +181,7 @@ class update_to_send(osv.osv):
                 'fields' : tools.ustr(included_fields),
                 'owner' : owner,
             }
+            self.__logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
 
             self.create(cr,uid, data, context=context)
             
@@ -207,9 +207,9 @@ class update_to_send(osv.osv):
                            'owner' : update.owner,
                            })
             ids_in_package.append(update.id)
-        print "values:",values
         data['load'] = values
         #for update in 
+        self.__logger.debug("package create for %s" % (ids_in_package))
         return (ids_in_package, data)
     
     def sync_finished(self, cr, uid, update_ids, context=None):
@@ -218,7 +218,8 @@ class update_to_send(osv.osv):
         for update in self.browse(cr, uid, update_ids, context=context):
             model_data_pool.write(cr, uid, update.xml_id.id, {'sync_date' : update.sync_date, 'version' : update.version})
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)    
-
+        self.__logger.debug("Pushed finished")
+        
     _order = 'id asc'
 update_to_send()
 
@@ -270,11 +271,12 @@ class update_received(osv.osv):
                 'owner' : load_item['owner_name'],
             })
             self.create(cr, uid, data ,context=context)
+        self.__logger.debug("Unfold package %s" % model_id[0])
         return len(packet['load'])
     
     def execute_update(self, cr, uid, context=None):
         update_ids = self.search(cr, uid, [('run', '=', False)], context=context)
-        print "update_ids", update_ids
+        self.__logger.debug("Execute Update %s" % update_ids)
         self.run(cr, uid, update_ids, context)
             
     def single_update_execution(self, cr, uid, update, context=None):  
@@ -308,7 +310,7 @@ class update_received(osv.osv):
             #check that the record is imported
             fields_ref = self.pool.get(update.model.model).fields_get(cr, uid, context=context)
             rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')], context=context)
-
+            self.__logger.debug("Import data %s" % rec_id)
             if not rec_id:
                 self.__logger.debug("%s , %s" % (fields, values))
                 raise Exception, "Import data error:\nid=%s\nres=%s" % (rec_id, res)
