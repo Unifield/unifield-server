@@ -100,6 +100,7 @@
         "supplier_catalogue",
         "msf_cross_docking",
         "msf_processes",
+        "useability_dashboard_and_menu",
     ],
     "update_xml": [
         "report.xml",
