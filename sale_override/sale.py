@@ -314,36 +314,6 @@ class sale_order(osv.osv):
         Hook the message displayed on sale order confirmation
         '''
         return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
-    
-    def action_wait(self, cr, uid, ids, *args):
-        '''
-        Checks if the invoice should be create from the sale order
-        or not
-        '''
-        line_obj = self.pool.get('sale.order.line')
-        lines = []
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        for order in self.browse(cr, uid, ids):
-            if len(order.order_line) < 1:
-                raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-                for line in order.order_line:
-                    lines.append(line.id)
-            elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-                for line in order.order_line:
-                    lines.append(line.id)
-# COMMENTED because of SP4 WM 12: Invoice Control
-#            elif not order.from_yml_test:
-#                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-    
-        if lines:
-            line_obj.write(cr, uid, lines, {'invoiced': 1})
-            
-        return super(sale_order, self).action_wait(cr, uid, ids, args)
 
     def action_purchase_order_create(self, cr, uid, ids, context=None):
         '''
@@ -581,15 +551,34 @@ class sale_order(osv.osv):
         # objects
         wf_service = netsvc.LocalService("workflow")
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        line_obj = self.pool.get('sale.order.line')
+        
+        lines = []
         
         for order in self.browse(cr, uid, ids, context=context):
+            # from action_wait msf_order_dates
             # deactivated
-            if not obj.delivery_confirmed_date and False:
+            if not order.delivery_confirmed_date and False:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
-            for line in obj.order_line:
+            for line in order.order_line:
                 if not line.confirmed_delivery_date:
-                    line.write({'confirmed_delivery_date': obj.delivery_confirmed_date})
+                    line.write({'confirmed_delivery_date': order.delivery_confirmed_date})
+                    
+            # from action_wait sale_override
+            if len(order.order_line) < 1:
+                raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
+            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
+                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+                for line in order.order_line:
+                    lines.append(line.id)
+            elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
+                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+                for line in order.order_line:
+                    lines.append(line.id)
+# COMMENTED because of SP4 WM 12: Invoice Control
+#            elif not order.from_yml_test:
+#                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
             
             # created procurements
             proc_ids = []
@@ -632,8 +621,21 @@ class sale_order(osv.osv):
             self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
             # display message for sourced
             self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
-            
+        
+        if lines:
+            line_obj.write(cr, uid, lines, {'invoiced': 1})
         return True
+    
+    def test_lines(self, cr, uid, ids, context=None):
+        '''
+        return True if all lines are 'confirmed'
+        '''
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if line.state != 'confirmed':
+                    return False
+        return True
+        
 
 sale_order()
 

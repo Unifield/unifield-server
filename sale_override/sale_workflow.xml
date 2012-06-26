@@ -103,7 +103,7 @@
         <record id="trans_ship_procurement_router" model="workflow.transition">
             <field name="act_from" ref="act_sale_order_ship_procurement"/>
             <field name="act_to" ref="sale.act_router"/>
-            <field name="condition">False</field>
+            <field name="condition">test_lines()</field>
         </record>
 
     </data>
