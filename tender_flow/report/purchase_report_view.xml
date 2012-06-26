@@ -22,14 +22,14 @@
                     <field name="validator" invisible="1"/>
                     <field name="company_id" invisible="1"/>
                     <field name="state" invisible="1"/>
-                    <field name="location_id" invisible="1"/>
+                    <field name="cost_center_id" invisible="1" />
                     <field name="nbr" sum="# of Lines"/>
                     <field name="quantity" sum="Quantity"/>
                     <field name="price_average" sum="Average Price" invisible="1" />
                     <field name="price_total" sum="Subtotal"/>
                     <field name="currency_id" />
-                    <field name="price_standard" sum="Products Value" invisible="1"/>
-                    <field name="negociation" widget="progressbar"/>
+                    <!-- <field name="price_standard" sum="Products Value" invisible="0"/>
+                    <field name="negociation" widget="progressbar"/> -->
                     <field name="delay" sum="Days to Validate"/>
                     <field name="delay_pass" sum="Days to Deliver"/>
                     <field name="order_type" invisible="1" />
@@ -92,7 +92,7 @@
                     <field name="user_id"/>
                     <field name="validator"/>
                     <separator orientation="vertical"/>
-                    <field name="location_id"/>
+                    <field name="cost_center_id"/>
                     <field name="warehouse_id" widget="selection"/>
                     <separator orientation="vertical"/>
                     <field name="company_id" groups="base.group_multi_company"/>
@@ -107,7 +107,7 @@
                     <separator orientation="vertical"/>
                     <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>
                     <separator orientation="vertical"/>
-                    <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                    <filter string="Family" icon="terp-translate" domain="[]" context="{'group_by':'category_id'}"/>
                     <separator orientation="vertical"/>
                     <filter string="Supplier" name="group_partner_id" icon="terp-personal" context="{'group_by':'partner_id'}"/>
                     <filter string="Responsible" name="Responsible" icon="terp-personal" context="{'group_by':'user_id'}"/>
@@ -117,7 +117,7 @@
                     <filter string="Category" name="group_category_id" icon="terp-accessories-archiver" context="{'group_by':'category_id'}"/>
                     <filter string="Reference UOM" name="group_product_uom" icon="terp-accessories-archiver" context="{'group_by':'product_uom'}"/>
                     <filter string="Warehouse" icon="terp-go-home" context="{'group_by':'warehouse_id'}" groups="base.group_extended"/>
-                    <filter string="Destination" icon="terp-gtk-jump-to-ltr" context="{'group_by':'location_id'}"/>
+                    <filter string="Cost Center" icon="terp-gtk-jump-to-ltr" context="{'group_by':'cost_center_id'}"/>
                     <separator orientation="vertical"/>
                     <filter string="State" icon="terp-stock_effects-object-colorize" context="{'group_by':'state'}"/>
                     <separator orientation="vertical"/>
