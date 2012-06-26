@@ -102,29 +102,36 @@ class report_pdf_engagement(report_sxw.rml_parse):
         
         if purchase_order:
             for po_line in purchase_order.order_line:
+                expense_account_id = False
                 # TBD: only lines with products and expense accounts on those products are accounted at the moment
                 if po_line.product_id and \
                    po_line.product_id.property_account_expense:
                     expense_account_id = po_line.product_id.property_account_expense.id
+                elif po_line.product_id and \
+                     po_line.product_id.categ_id and \
+                     po_line.product_id.categ_id.property_account_expense_categ:
+                    expense_account_id = po_line.product_id.categ_id.property_account_expense_categ.id
+                else:
+                    continue
                         
-                    if po_line.analytic_distribution_id:
-                        # a line has a distribution
-                        self._add_purchase_order_amount(cr,
-                                                        uid,
-                                                        po_line,
-                                                        po_line.analytic_distribution_id,
-                                                        functional_currency_id,
-                                                        expense_account_id,
-                                                        temp_data)
-                    elif purchase_order.analytic_distribution_id:
-                        # a line does not have a distribution, but there is a header one
-                        self._add_purchase_order_amount(cr,
-                                                        uid,
-                                                        po_line,
-                                                        purchase_order.analytic_distribution_id,
-                                                        functional_currency_id,
-                                                        expense_account_id,
-                                                        temp_data)
+                if po_line.analytic_distribution_id:
+                    # a line has a distribution
+                    self._add_purchase_order_amount(cr,
+                                                    uid,
+                                                    po_line,
+                                                    po_line.analytic_distribution_id,
+                                                    functional_currency_id,
+                                                    expense_account_id,
+                                                    temp_data)
+                elif purchase_order.analytic_distribution_id:
+                    # a line does not have a distribution, but there is a header one
+                    self._add_purchase_order_amount(cr,
+                                                    uid,
+                                                    po_line,
+                                                    purchase_order.analytic_distribution_id,
+                                                    functional_currency_id,
+                                                    expense_account_id,
+                                                    temp_data)
                 
             # PO data is filled, now to the temp_data
             # Get the corresponding fiscal year (delivery confirmed date or delivery requested date)
@@ -138,7 +145,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 for cost_center_id in cost_center_ids:
                     expense_account_ids = temp_data[cost_center_id].keys()
                     # Create the actual domain
-                    actual_domain = [('account_id', 'in', cost_center_ids)]
+                    actual_domain = [('cost_center_id', '=', cost_center_id)]
                     actual_domain.append(('date', '>=', fiscalyear.date_start))
                     actual_domain.append(('date', '<=', fiscalyear.date_stop))
                     # get only wanted accounts
@@ -150,6 +157,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                                                functional_currency_id,
                                                                                actual_domain,
                                                                                context=context)
+                    # we only save the main accounts, not the destinations (new key: account id only)
+                    actuals = dict([(item[0], actuals[item]) for item in actuals if item[1] is False])
                     
                     for account_id in actuals.keys():
                         if account_id in expense_account_ids:
@@ -171,6 +180,9 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         budget_line_ids = pool.get('msf.budget.line').search(cr, uid, [('budget_id', '=', cr.fetchall()[0][0]),
                                                                                        ('account_id', 'in', expense_account_ids)], context=context)
                         budget_amounts = pool.get('msf.budget.line')._get_budget_amounts(cr, uid, budget_line_ids, context=context)
+                        # we only save the main accounts, not the destinations (new key: account id only)
+                        budget_amounts = dict([(item[0], budget_amounts[item]) for item in budget_amounts if item[1] is False])
+                        
                         for account_id in budget_amounts.keys():
                             # sum the values, we only need the total
                             total_budget = int(round(sum(budget_amounts[account_id])))

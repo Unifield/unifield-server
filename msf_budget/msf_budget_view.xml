@@ -62,7 +62,7 @@
                     <field name="currency_id" readonly="1"/>
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
-                            <field name="account_id" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
+                            <field name="name"/>
                             <field name="budget_amount" real_sum="Budget Amount"/>
                             <field name="actual_amount" real_sum="Actual Amount"/>
                             <field name="balance" real_sum="Balance"/>
@@ -71,7 +71,7 @@
                         </tree>
                         <form string="Budget Line">
                             <group colspan="4">
-                                <field name="account_id" colspan="2" readonly="1"/>
+                                <field name="name" colspan="2" readonly="1"/>
 	                            <field name="budget_amount" colspan="1" readonly="1"/>
 	                            <field name="actual_amount" colspan="1" readonly="1"/>
 	                            <field name="balance" colspan="1" readonly="1"/>

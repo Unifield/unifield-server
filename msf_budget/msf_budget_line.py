@@ -72,7 +72,7 @@ class msf_budget_line(osv.osv):
             cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
                     
             # Create search domain (one search for all analytic lines)
-            actual_domain = [('account_id', 'in', cost_center_ids)]
+            actual_domain = [('cost_center_id', 'in', cost_center_ids)]
             actual_domain.append(('date', '>=', budget.fiscalyear_id.date_start))
             actual_domain.append(('date', '<=', budget.fiscalyear_id.date_stop))
             # 3. commitments
@@ -99,14 +99,16 @@ class msf_budget_line(osv.osv):
             if budget.type == 'normal':
                 # Budget values are stored in lines; just retrieve and add them
                 for budget_line in self.browse(cr, uid, ids, context=context):
+                    budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
                     if budget_line.budget_values:
-                        res[budget_line.account_id.id] = eval(budget_line.budget_values)
+                        res[budget_line.account_id.id, budget_line_destination_id] = eval(budget_line.budget_values)
                     else:
-                        res[budget_line.account_id.id] = [0] * 12
+                        res[budget_line.account_id.id, budget_line_destination_id] = [0] * 12
             else:
                 # fill with 0s
                 for budget_line in self.browse(cr, uid, ids, context=context):
-                    res[budget_line.account_id.id] = [0] * 12
+                    budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
+                    res[budget_line.account_id.id, budget_line_destination_id] = [0] * 12
                 # Not stored in lines; retrieve child budgets, get their budget values and add
                 cost_center_list = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
                 # For each cost center, get the latest non-draft budget
@@ -129,12 +131,13 @@ class msf_budget_line(osv.osv):
                                                      context=context)
                         child_budget_amounts = self._get_budget_amounts(cr, uid, child_line_ids, context=context)
                         for child_line in self.browse(cr, uid, child_line_ids, context=context):
-                            if child_line.account_id.id not in res:
-                                res[child_line.account_id.id] = child_budget_amounts[child_line.account_id.id]
+                            child_line_destination_id = child_line.destination_id and child_line.destination_id.id or False
+                            if (child_line.account_id.id, child_line_destination_id) not in res:
+                                res[child_line.account_id.id, child_line_destination_id] = child_budget_amounts[child_line.account_id.id, child_line_destination_id]
                             else:
-                                res[child_line.account_id.id] = [sum(pair) for pair in 
-                                                                 zip(child_budget_amounts[child_line.account_id.id],
-                                                                     res[child_line.account_id.id])]
+                                res[child_line.account_id.id, child_line_destination_id] = [sum(pair) for pair in 
+                                                                                                             zip(child_budget_amounts[child_line.account_id.id, child_line_destination_id],
+                                                                                                             res[child_line.account_id.id, child_line_destination_id])]
 
         return res
     
@@ -172,10 +175,11 @@ class msf_budget_line(osv.osv):
         
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
+            budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
             line_amounts = self._compute_total_amounts(cr,
                                                        uid,
-                                                       budget_amounts[budget_line.account_id.id],
-                                                       actual_amounts[budget_line.account_id.id],
+                                                       budget_amounts[budget_line.account_id.id, budget_line_destination_id],
+                                                       actual_amounts[budget_line.account_id.id, budget_line_destination_id],
                                                        context=context)
             actual_amount = line_amounts['actual_amount']
             budget_amount = line_amounts['budget_amount']
@@ -209,11 +213,16 @@ class msf_budget_line(osv.osv):
                 
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
+            budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
             if budget_line.line_type == 'view' or ('granularity' in context and context['granularity'] == 'all'):
-                line_actual_amounts = actual_amounts[budget_line.account_id.id]
-                line_budget_amounts = budget_amounts[budget_line.account_id.id]
+                line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
+                line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
                 
-                line_values = [budget_line.account_id.code + " " + budget_line.account_id.name]
+                line_name = budget_line.account_id.code
+                if budget_line.destination_id:
+                    line_name += " " + budget_line.destination_id.code
+                line_name += " " + budget_line.account_id.name
+                line_values = [line_name]
                 if 'breakdown' in context and context['breakdown'] == 'month':
                     # Need to add breakdown values
                     for i in range(month_stop):
@@ -233,9 +242,25 @@ class msf_budget_line(osv.osv):
             
         return res
     
+    def _get_name(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        result = self.browse(cr, uid, ids, context=context)
+        res = {}
+        for rs in result:
+            account = rs.account_id
+            name = account.code 
+            if rs.destination_id:
+                name += " "
+                name += rs.destination_id.code
+            name += " "
+            name += account.name
+            res[rs.id] = name
+        return res
+    
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
+        'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '!=', 'DEST')]),
+        'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True"),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
         'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
         'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
@@ -244,7 +269,8 @@ class msf_budget_line(osv.osv):
         'parent_id': fields.many2one('msf.budget.line', 'Parent Line'),
         'child_ids': fields.one2many('msf.budget.line', 'parent_id', 'Child Lines'),
         'line_type': fields.selection([('view','View'),
-                                       ('normal','Normal')], 'Line type', required=True),
+                                       ('normal','Normal'),
+                                       ('destination', 'Destination')], 'Line type', required=True),
     }
     
     _defaults = {
@@ -255,46 +281,62 @@ class msf_budget_line(osv.osv):
         # Method to check if the used account has a parent,
         # and retrieve or create the corresponding parent line.
         # It also adds budget values to parent lines
+        parent_account_id = False
+        parent_line_ids = []
         if 'account_id' in vals and 'budget_id' in vals:
-            # search for budget line
-            account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
-            chart_of_account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
-            if account.parent_id and account.parent_id.id not in chart_of_account_ids:
-                parent_account_id = account.parent_id.id
-                parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
-                                                        ('budget_id', '=', vals['budget_id'])], context=context)
-                if len(parent_line_ids) > 0:
-                    # Parent line exists
-                    if 'budget_values' in vals:
-                        # we add the budget values to the parent one
-                        parent_line = self.browse(cr, uid, parent_line_ids[0], context=context)
-                        parent_budget_values = [sum(pair) for pair in zip(eval(parent_line.budget_values),
-                                                                          eval(vals['budget_values']))]
-                        # write parent
-                        super(msf_budget_line, self).write(cr,
-                                                           uid,
-                                                           parent_line_ids,
-                                                           {'budget_values': str(parent_budget_values)},
-                                                           context=context)
-                        # use method on parent with original budget values
-                        self.get_parent_line(cr,
-                                             uid,
-                                             {'account_id': parent_line.account_id.id,
-                                              'budget_id': parent_line.budget_id.id,
-                                              'budget_values': vals['budget_values']},
-                                             context=context)
-                    # add parent id to vals
-                    vals.update({'parent_id': parent_line_ids[0]})
+            if 'destination_id' in vals:
+                # Special case: the line has a destination, so the parent is a line
+                # with the same account and no destination
+                parent_account_id = vals['account_id']
+                parent_line_ids = self.search(cr, uid, [('account_id', '=', vals['account_id']),
+                                                        ('budget_id', '=', vals['budget_id']),
+                                                        ('line_type', '=', 'normal')], context=context)
+            else:
+                # search for budget line
+                account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
+                chart_of_account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
+                if account.parent_id and account.parent_id.id in chart_of_account_ids:
+                    # no need to create the parent
+                    return
                 else:
-                    # Create parent line and add it to vals, except if it's the main parent
-                    parent_vals = {'budget_id': vals['budget_id'],
-                                   'account_id': parent_account_id,
-                                   'line_type': 'view'}
-                    # default parent budget values: the one from the (currently) only child
-                    if 'budget_values' in vals:
-                        parent_vals.update({'budget_values': vals['budget_values']})
-                    parent_budget_line_id = self.create(cr, uid, parent_vals, context=context)
-                    vals.update({'parent_id': parent_budget_line_id})
+                    parent_account_id = account.parent_id.id
+                    parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
+                                                            ('budget_id', '=', vals['budget_id'])], context=context)
+            if len(parent_line_ids) > 0:
+                # Parent line exists
+                if 'budget_values' in vals:
+                    # we add the budget values to the parent one
+                    parent_line = self.browse(cr, uid, parent_line_ids[0], context=context)
+                    parent_budget_values = [sum(pair) for pair in zip(eval(parent_line.budget_values),
+                                                                      eval(vals['budget_values']))]
+                    # write parent
+                    super(msf_budget_line, self).write(cr,
+                                                       uid,
+                                                       parent_line_ids,
+                                                       {'budget_values': str(parent_budget_values)},
+                                                       context=context)
+                    # use method on parent with original budget values
+                    self.get_parent_line(cr,
+                                         uid,
+                                         {'account_id': parent_line.account_id.id,
+                                          'budget_id': parent_line.budget_id.id,
+                                          'budget_values': vals['budget_values']},
+                                         context=context)
+                # add parent id to vals
+                vals.update({'parent_id': parent_line_ids[0]})
+            else:
+                # Create parent line and add it to vals, except if it's the main parent
+                parent_vals = {'budget_id': vals['budget_id'],
+                               'account_id': parent_account_id}
+                if 'line_type' in vals and vals['line_type'] == 'destination':
+                    parent_vals['line_type'] = 'normal'
+                else:
+                    parent_vals['line_type'] = 'view'
+                # default parent budget values: the one from the (currently) only child
+                if 'budget_values' in vals:
+                    parent_vals.update({'budget_values': vals['budget_values']})
+                parent_budget_line_id = self.create(cr, uid, parent_vals, context=context)
+                vals.update({'parent_id': parent_budget_line_id})
         return
             
     
@@ -305,14 +347,6 @@ class msf_budget_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         self.get_parent_line(cr, uid, vals, context=context)
         return super(msf_budget_line, self).write(cr, uid, ids, vals, context=context)
-    
-    def name_get(self, cr, user, ids, context=None):
-        result = self.browse(cr, user, ids, context=context)
-        res = []
-        for rs in result:
-            account = rs.account_id
-            res += [(rs.id, account.code + " " + account.name)]
-        return res
     
 msf_budget_line()
 

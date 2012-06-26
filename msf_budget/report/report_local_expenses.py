@@ -70,7 +70,7 @@ class report_local_expenses(WebKitParser):
             # Cost Center
             cost_center = pool.get('account.analytic.account').browse(cr, uid, data['form']['cost_center_id'], context=context)
             cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cost_center)
-            domain.append(('account_id', 'in', cost_center_ids))
+            domain.append(('cost_center_id', 'in', cost_center_ids))
             # Add cost center to header
             header_data.append(['Cost center:', cost_center.name])
             # Dates
@@ -92,6 +92,10 @@ class report_local_expenses(WebKitParser):
                                                                         data['form']['output_currency_id'],
                                                                         domain,
                                                                         context=context)
+            # we only save the main accounts, not the destinations (new key: account id only)
+            expenses = dict([(item[0], expenses[item]) for item in expenses if item[1] is False])
+            
+            
             # make the total row
             if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
                 total_line = [0] * month_stop

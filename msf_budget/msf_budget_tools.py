@@ -31,7 +31,7 @@ class msf_budget_tools(osv.osv):
            browse_account.parent_id.id and \
            browse_account.parent_id.id not in chart_of_account_ids and \
            browse_account.parent_id.id not in account_list:
-            account_list.append(browse_account.parent_id.id)
+            account_list.append((browse_account.parent_id.id, False))
             self._get_account_parent(browse_account.parent_id, account_list, chart_of_account_ids)
         return
     
@@ -43,22 +43,28 @@ class msf_budget_tools(osv.osv):
         # get normal expense accounts
         general_account_ids = account_obj.search(cr, uid, [('user_type_code', '=', 'expense'),
                                                            ('type', '!=', 'view')], context=context)
-        view_account_ids = []
+        expense_account_ids = [(account_id, False) for account_id in general_account_ids]
         # go through parents
         for account in account_obj.browse(cr, uid, general_account_ids, context=context):
-            self._get_account_parent(account, view_account_ids, chart_of_account_ids)
-        return {'general_accounts': general_account_ids,
-                'view_accounts': view_account_ids}
+            self._get_account_parent(account, expense_account_ids, chart_of_account_ids)
+        return expense_account_ids
 
-    def _create_view_line_amounts(self, cr, uid, account_id, actual_amounts, context=None):
-        if account_id not in actual_amounts:
-            account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
+    def _create_expense_account_line_amounts(self, cr, uid, account_destination_tuple, actual_amounts, context=None):
+        if account_destination_tuple not in actual_amounts:
+            account = self.pool.get('account.account').browse(cr, uid, account_destination_tuple[0], context=context)
             result = [0] * 12
-            for child_account in account.child_id:
-                if child_account.id not in actual_amounts:
-                    self._create_view_line_amounts(cr, uid, child_account.id, actual_amounts, context=context)
-                result = [sum(pair) for pair in zip(result, actual_amounts[child_account.id])]
-            actual_amounts[account_id] = result
+            if account.type == 'view':
+                # children are accounts
+                for child_account in account.child_id:
+                    if (child_account.id, False) not in actual_amounts:
+                        self._create_expense_account_line_amounts(cr, uid, (child_account.id, False), actual_amounts, context=context)
+                    result = [sum(pair) for pair in zip(result, actual_amounts[child_account.id, False])]
+            else:
+                # children are account, destination tuples (already in actual_amounts)
+                # get all tuples starting with (account_id)
+                for account_destination in [tuple for tuple in actual_amounts.keys() if tuple[0] == account_destination_tuple[0] and tuple[1] is not False]:
+                    result = [sum(pair) for pair in zip(result, actual_amounts[account_destination])]
+            actual_amounts[account_destination_tuple[0], False] = result
         return
     
     def _get_cc_children(self, browse_cost_center, cost_center_list):
@@ -79,22 +85,39 @@ class msf_budget_tools(osv.osv):
             self._get_cc_children(browse_cost_center, cost_center_list)
             return cost_center_list
     
+    def _create_account_destination_domain(self, account_destination_list):
+        if len(account_destination_list) == 0:
+            return ['&',
+                    ('general_account_id', 'in', []),
+                    ('destination_id', 'in', [])]
+        elif len(account_destination_list) == 1:
+            return ['&',
+                    ('general_account_id', '=', account_destination_list[0][0]),
+                    ('destination_id', '=', account_destination_list[0][1])]
+        else:
+            return ['|'] + self._create_account_destination_domain([account_destination_list[0]]) + self._create_account_destination_domain(account_destination_list[1:])
+    
     def _get_actual_amounts(self, cr, uid, output_currency_id, domain=[], context=None):
         # Input: domain for the selection of analytic lines (cost center, date, etc...)
-        # Output: a dict of list {general_account_id: [jan_actual, feb_actual,...]}
+        # Output: a dict of list {(general_account_id, destination_id): [jan_actual, feb_actual,...]}
         res = {}
         if context is None:
             context = {}
+        destination_obj = self.pool.get('account.destination.link')
+        # list to store every existing destination link in the system
+        destination_link_ids = destination_obj.search(cr, uid, [], context=context)
+        account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
+                                   for dest
+                                   in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
         
-        # list to store every account in the budget (normal only for the time being)
         account_ids = self._get_expense_accounts(cr, uid, context=context)
         
         # Fill all general accounts
-        for account_id in account_ids['general_accounts']:
-            res[account_id] = [0] * 12
+        for account_id, destination_id in account_destination_ids:
+            res[account_id, destination_id] = [0] * 12
                     
         # fill search domain (one search for all analytic lines)
-        domain.append(('general_account_id', 'in', account_ids['general_accounts']))
+        domain += self._create_account_destination_domain(account_destination_ids)
         
         # Analytic domain is now done; lines are retrieved and added
         analytic_line_obj = self.pool.get('account.analytic.line')
@@ -117,15 +140,15 @@ class msf_budget_tools(osv.osv):
                                                                   context=date_context)
             # add the amount to correct month
             month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
-            res[analytic_line.general_account_id.id][month - 1] += round(actual_amount)
+            res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount)
             
         # after all lines are parsed, absolute of every column
         for line in res.keys():
             res[line] = map(abs, res[line])
                 
         # do the view lines
-        for account_id in account_ids['view_accounts']:
-            self._create_view_line_amounts(cr, uid, account_id, res, context=context)
+        for account_destination_tuple in account_ids:
+            self._create_expense_account_line_amounts(cr, uid, account_destination_tuple, res, context=context)
         
         return res
     
