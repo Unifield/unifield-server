@@ -1,40 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <record id="board_warehouse_form" model="ir.ui.view">
-            <field name="name">board.warehouse.form</field>
+        <record id="board_warehouse_form_default" model="ir.ui.view">
+            <field name="name">board.warehouse.form.default</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="stock.board_warehouse_form" />
             <field name="arch" type="xml">
-                <data>
-                    <!-- REPLACE ALL -->
-                    <xpath expr="/form/hpaned/child1/action[@name='%(stock.action_incoming_product_board)d']" position="replace">
-                    </xpath>
-                    <xpath expr="/form/hpaned/child1/action[@name='%(stock.action_outgoing_product_board)d']" position="replace">
-                    </xpath>
-                    <xpath expr="/form/hpaned/child2/action[@name='%(stock.action_stock_incoming_product_delay)d']" position="replace">
-                    </xpath>
-                    <xpath expr="/form/hpaned/child2/action[@name='%(stock.action_stock_outgoing_product_delay)d']" position="replace">
-                    </xpath>
-                    <xpath expr="/form/hpaned/child1/action[@name='%(procurement.procurement_action_board)d']" position="replace">
-                    </xpath>
-                    
-                    <!-- ADD ALL -->
-                    <xpath expr="/form/hpaned/child1" position="inside">
-                        <action name="%(stock.action_picking_tree4)d" string="Incoming Shipment"/>
-                    </xpath>
-                    <xpath expr="/form/hpaned/child1" position="inside">
-                        <action name="%(stock.action_outgoing_product_board)d" string="Outgoing delivery"/>
-                    </xpath>
-                    <xpath expr="/form/hpaned/child1" position="inside">
-                        <action name="%(stock.action_out_picking_move)d" string="Deliver Products"/>
-                    </xpath>
-                    <xpath expr="/form/hpaned/child1" position="inside">
-                        <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" />
-                    </xpath>
-                </data>
+                <form string="Warehouse board">
+                    <hpaned position="100">
+                        <child1>
+                            <action name="%(stock.action_picking_tree4)d" string="Incoming Shipment"/>
+                            <action name="%(stock.action_outgoing_product_board)d" string="Outgoing delivery"/>
+                            <action name="%(stock.action_out_picking_move)d" string="Deliver Products"/>
+                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" />
+                        </child1>
+                    </hpaned>
+                </form>
             </field>
         </record>
+        
+        <record id="open_board_warehouse_unifield" model="ir.actions.act_window">
+            <field name="name">Warehouse Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="board_warehouse_form_default"/>
+        </record>
+
+        <menuitem id="stock.menu_stock_root" 
+        name="Dashboard"  
+        sequence="0" 
+        action="open_board_warehouse_unifield"/>
+        
     </data>
 </openerp>

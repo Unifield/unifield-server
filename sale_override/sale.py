@@ -483,6 +483,7 @@ class sale_order_line(osv.osv):
 
     _columns = {
         'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+        'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
     }
 
     def open_split_wizard(self, cr, uid, ids, context=None):
