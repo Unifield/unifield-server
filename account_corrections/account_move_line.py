@@ -566,7 +566,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             else:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context)
-            # Do process on analytic distribution:
+            # Do process on analytic distribution: 
             # 1/ copy old distribution_id on new correction line
             # 2/ delete old distribution on original move line
 #            if ml.analytic_distribution_id:

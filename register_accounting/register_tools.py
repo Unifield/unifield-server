@@ -85,6 +85,9 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
                 self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
                 return True
             cr.execute(sql)
+    # Delete values for Third Parties if no value given
+    elif name == 'partner_type' and not value:
+        cr.execute("UPDATE %s SET employee_id = Null, register_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
     return True
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):

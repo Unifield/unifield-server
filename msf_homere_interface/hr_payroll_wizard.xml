@@ -94,6 +94,24 @@
                 </form>
             </field>
         </record>
+        
+        <record id="payroll_import_error" model="ir.ui.view">
+            <field name="name">payroll.import.error</field>
+            <field name="model">hr.payroll.import.confirmation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Errors">
+                    <label string="Errors" colspan="4" align="0.0"/>
+                    <group colspan="4" col="6">
+                        <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
+                        <field name="nberrors" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
+                    </group>
+                    <field name="errors" colspan="4" nolabel="1" />
+                    <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2" />
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
 
         <record id="payroll_import_wizard" model="ir.ui.view">
             <field name="name">payroll.import.wizard</field>
