@@ -74,7 +74,7 @@ class report_stock_move(osv.osv):
         'location_dest_id': fields.many2one('stock.location', 'Dest. Location', readonly=True, select=True, help="Location where the system will stock the finished products."),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True),
         'product_qty':fields.integer('Quantity',readonly=True),
-        'categ_id': fields.many2one('product.category', 'Product Category', ),
+        'categ_id': fields.many2one('product.category', 'Family', ),
         'product_qty_in':fields.integer('In Qty',readonly=True),
         'product_qty_out':fields.integer('Out Qty',readonly=True),
         'value' : fields.float('Total Value', required=True),
@@ -93,6 +93,7 @@ class report_stock_move(osv.osv):
         'origin': fields.related('picking_id','origin',type='char', size=64, relation="stock.picking", string="Origin", store=True),
         'move': fields.many2one('stock.move', string='Move'),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
     }
 
     def init(self, cr):
@@ -128,7 +129,8 @@ class report_stock_move(osv.osv):
                         al.reason_type_id as reason_type_id,
                         coalesce(al.type, 'other') as type,
                         al.stock_journal as stock_journal,
-                        sum(al.in_value - al.out_value) as value
+                        sum(al.in_value - al.out_value) as value,
+                        1 as currency_id
                     FROM (SELECT
                         CASE WHEN sp.type in ('out') THEN
                             sum(sm.product_qty * pu.factor)
@@ -201,5 +203,19 @@ class report_stock_move(osv.osv):
             fields = []
         context['with_expiry'] = 1
         return super(report_stock_move, self).read(cr, uid, ids, fields, context, load)
+    
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+        '''
+        Add functional currency on all lines
+        '''
+        res = super(report_stock_move, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        if self._name == 'report.stock.move':
+            for data in res:
+                # If no information to display, don't display the currency
+                if not '__count' in data or data['__count'] != 0:
+                    currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+                    data.update({'currency_id': (currency.id, currency.name)})
+                
+        return res
 
 report_stock_move()
