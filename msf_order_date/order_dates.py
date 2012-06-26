@@ -772,24 +772,6 @@ class purchase_order(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
     
-    def wkf_approve_order(self, cr, uid, ids, context=None):
-        '''
-        Checks if the Delivery Confirmed Date has been filled
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        
-        for order in self.browse(cr, uid, ids, context=context):
-            if not order.delivery_confirmed_date:
-                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
-            # for all lines, if the confirmed date is not filled, we copy the header value
-            for line in order.order_line:
-                if not line.confirmed_delivery_date:
-                    line.write({'confirmed_delivery_date': order.delivery_confirmed_date,}, context=context)
-            
-        return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
 purchase_order()
 

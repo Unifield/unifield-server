@@ -375,7 +375,11 @@ stock moves which are already processed : '''
         1/ if all purchase line could take an analytic distribution
         2/ if a commitment voucher should be created after PO approbation
         
-        originally in purchase.py from analytic_distribution_supply
+        _> originally in purchase.py from analytic_distribution_supply
+        
+        Checks if the Delivery Confirmed Date has been filled
+        
+        _> originally in order_dates.py from msf_order_date
         """
         # Some verifications
         if not context:
@@ -398,6 +402,13 @@ stock moves which are already processed : '''
                         ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
                             'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
                         break
+            # msf_order_date checks
+            if not po.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # for all lines, if the confirmed date is not filled, we copy the header value
+            for line in po.order_line:
+                if not line.confirmed_delivery_date:
+                    line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
             if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
