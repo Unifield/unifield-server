@@ -18,7 +18,7 @@
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
-                    <field name="destination_id"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, account_id)"/>
                     <field name="cost_center_id"/>
                     <field name="analytic_id"/>
                     <field name="free_1_id"/>
