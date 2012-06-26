@@ -40,11 +40,21 @@ class sale_order(osv.osv):
         '''
         Delete the loan_id field on the new sale.order
         
-        - reset split flag to original value (field order flow)
+        - reset split flag to original value (field order flow) if not in default
         '''
-        return super(sale_order, self).copy(cr, uid, id, default={'loan_id': False,
-                                                                  'split_type_sale_order': 'original_sale_order',
-                                                                  'original_so_id_sale_order': False}, context=context)
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        
+        default.update({'loan_id': False})
+        # if splitting related attributes are not set with default values, we reset their values
+        if 'split_type_sale_order' not in default:
+            default.update({'split_type_sale_order': 'original_sale_order'})
+        if 'original_so_id_sale_order' not in default:
+            default.update({'original_so_id_sale_order': False})
+        
+        return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
     
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -275,7 +285,7 @@ class sale_order(osv.osv):
                         # generate the name of new fo
                         selec_name = fields_tools.get_selection_name(cr, uid, self, 'split_type_sale_order', fo_type, context=context)
                         fo_name = so.name + '-' + selec_name
-                        split_id = self.copy(cr, uid, so.id, {'name': selec_name,
+                        split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
                                                               'split_type_sale_order': fo_type,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
