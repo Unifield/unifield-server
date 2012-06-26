@@ -149,7 +149,7 @@ class update(osv.osv):
         self.__logger.debug("Update to send to %s : %s" % (entity.name, update_to_send))
         self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
-            self.__logger("No update to send to %s" % (entity.name,))
+            self.__logger.debug("No update to send to %s" % (entity.name,))
             return False
         update_master = update_to_send[0]
         complete_fields = self.get_additional_forced_field(update_master) 
