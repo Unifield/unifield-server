@@ -249,6 +249,12 @@
         <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
         <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
+        
+        <!-- Picking on Purchase menu -->
+        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
+        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
+        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" />
+        
     
     </data>
 </openerp>
