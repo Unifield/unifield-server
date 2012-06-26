@@ -23,7 +23,7 @@
 
 import res_company
 import account_move_line
-import debit_note
+import invoice
 import wizard
 import report
 

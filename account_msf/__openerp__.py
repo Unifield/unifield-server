@@ -35,7 +35,7 @@
     "update_xml" : [
         'board_account_view.xml',
         'res_company_view.xml',
-        'debit_note_view.xml',
+        'invoice_view.xml',
         'wizard_view.xml',
     ],
     "demo_xml" : [],
