@@ -583,6 +583,15 @@ class sale_order(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         
         for order in self.browse(cr, uid, ids, context=context):
+            # deactivated
+            if not obj.delivery_confirmed_date and False:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # for all lines, if the confirmed date is not filled, we copy the header value
+            for line in obj.order_line:
+                if not line.confirmed_delivery_date:
+                    line.write({'confirmed_delivery_date': obj.delivery_confirmed_date})
+            
+            # created procurements
             proc_ids = []
             for line in order.order_line:
                 proc_id = False

@@ -1155,21 +1155,6 @@ class sale_order(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
     
-    def action_wait(self, cr, uid, ids, *args):
-        '''
-        check delivery_confirmed_date field
-        '''
-        for obj in self.browse(cr, uid, ids):
-            # deactivated
-            if not obj.delivery_confirmed_date and False:
-                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
-            # for all lines, if the confirmed date is not filled, we copy the header value
-            for line in obj.order_line:
-                if not line.confirmed_delivery_date:
-                    line.write({'confirmed_delivery_date': obj.delivery_confirmed_date,})
-            
-        return super(sale_order, self).action_wait(cr, uid, ids, args)
-    
     def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
