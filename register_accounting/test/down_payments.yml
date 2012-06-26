@@ -44,7 +44,7 @@
     partner_id: res_partner_supplier_wood_0
     amount: -100
     date: !eval time.strftime('%Y-05-02')
-    document_date: !eval time.strftime('%Y-05-06')
+    document_date: !eval time.strftime('%Y-05-01')
     sequence: 1
     statement_id: account_bank_statement_3
     down_payment_id: po1
