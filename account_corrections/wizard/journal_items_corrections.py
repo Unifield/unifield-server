@@ -235,7 +235,7 @@ class journal_items_corrections(osv.osv_memory):
         res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
-    def action_confirm(self, cr, uid, ids, distrib_id=False, context=None):
+    def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
         Do a correction from the given line
         """

@@ -13,7 +13,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/field[@name='categ']" position="replace" >
-                        <field name="categ" on_change="onchange_categ(categ)" />
+                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
                     </xpath>
                 </data>
             </field>
@@ -33,7 +33,9 @@
                         />
                     </xpath>
                     <field name="location_id" position= "replace">
-                        <field name="location_id" attrs="{'readonly':['|', ('state', 'not in', ['draft', 'confirmed']), ('cross_docking_ok','=', True)], 'invisible': [('order_type', '=', 'direct')]}"/>
+                        <field name="location_id" 
+                        attrs="{'readonly':['|', ('state', 'not in', ['draft', 'confirmed']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"
+                        on_change="onchange_location_id(location_id,categ)"/>
                     </field>
                 </data>
             </field>

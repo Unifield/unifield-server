@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+		<!-- Process process -->
+        
+        <record id="msf_outgoing.process_process_ship0" model="process.process">
+            <field eval="&quot;&quot;&quot;Shipment&quot;&quot;&quot;" name="name"/>
+            <field name="model_id" ref="msf_outgoing.model_shipment"/>
+            <field eval="1" name="active"/>
+        </record>
+        
+        <!-- Process Node outgoing -->
+        
+		<record id="msf_outgoing.process_node_ship_shipped" model="process.node">
+            <field name="menu_id" ref="msf_outgoing.menu_action_shipment"/>
+            <field name="model_id" ref="msf_outgoing.model_shipment"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Shipment - shipped&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Shipped state of shipment.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_ship0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('shipped', 'done', 'delivered')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="1" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_ship_done" model="process.node">
+            <field name="menu_id" ref="msf_outgoing.menu_action_shipment"/>
+            <field name="model_id" ref="msf_outgoing.model_shipment"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Shipment - closed&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Closed state of shipment.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_ship0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('done', 'delivered')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_ship_delivered" model="process.node">
+            <field name="menu_id" ref="msf_outgoing.menu_action_shipment"/>
+            <field name="model_id" ref="msf_outgoing.model_shipment"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Shipment - delivered&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Delivered state of shipment.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_ship0"/>
+            <field eval="&quot;&quot;&quot;object.state == 'delivered'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <!-- Transition Node -->
+        
+        <record id="msf_outgoing.process_transition_ship_shipped_done" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From shipped to closed.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From shipped to closed.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_ship_shipped"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_ship_done"/>
+        </record>
+        
+        <record id="msf_outgoing.process_transition_ship_done_delivered" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From closed to delivered.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From closed to delivered.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_ship_done"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_ship_delivered"/>
+        </record>
+        
+    </data>
+</openerp>

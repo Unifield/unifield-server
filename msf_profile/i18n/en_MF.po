@@ -274,7 +274,7 @@ msgstr "Field Shop"
 #. module: sale
 #: model:process.node,name:sale.process_node_saleorderprocurement0
 msgid "Sales Order Requisition"
-msgstr "Field Order Requisition"
+msgstr "Field Order"
 
 #. module: sale
 #: view:sale.report:0
@@ -410,7 +410,6 @@ msgstr "Margins in Field Orders"
 #: model:ir.model,name:res_currency_functional.model_sale_order
 #: model:ir.model,name:sale.model_sale_order
 #: model:process.node,name:sale.process_node_order0
-#: model:process.node,name:sale.process_node_saleorder0
 #: model:res.request.link,name:sale.req_link_sale_order
 #: view:sale.order:0
 #: field:stock.picking,sale_id:0

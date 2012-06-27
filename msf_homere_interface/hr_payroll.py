@@ -187,7 +187,7 @@ class hr_payroll(osv.osv):
                 fp_id = 0
             fp_fields = form.xpath('//field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), '&', ('tuple_destination_account_ids.account_id', '=', account_id), ('tuple_destination_account_ids.destination_id', '=', destination_id), ('id', '=', %s)]" % fp_id)
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
             # Change Destination field
             dest_fields = form.xpath('//field[@name="destination_id"]')
             for field in dest_fields:

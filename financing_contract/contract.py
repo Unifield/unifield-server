@@ -25,6 +25,7 @@ import datetime
 class financing_contract_funding_pool_line(osv.osv):
     # 
     _name = "financing.contract.funding.pool.line"
+    _description = "Funding pool line"
     
     _columns = {
         'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),

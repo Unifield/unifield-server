@@ -202,6 +202,10 @@
 						<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="attributes">
 							<attribute name="domain">[('usage', '=', 'supplier')]</attribute>
 	                	</xpath>
+	                	
+	                	<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="attributes">
+	                		<attribute name="domain">[('usage', '=', 'supplier')]</attribute>
+	                	</xpath>
 
 						<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
 							<field name="product_type" invisible="1" />

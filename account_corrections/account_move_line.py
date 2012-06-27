@@ -446,7 +446,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     'credit': ml.debit,
                     'amount_currency': amt,
                     'reversal_line_id': ml.id,
-                    'source_date': ml.date,
+                    'source_date': ml.source_date or ml.date,
                     'reversal': True,
                 })
                 # Add distribution if new one
@@ -561,15 +561,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'source_date': ml.date,
                 'have_an_historic': True,
             }
+            if distrib_id:
+                cor_vals['analytic_distribution_id'] = distrib_id
+            else:
+                cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context)
-            # Do process on analytic distribution:
+            # Do process on analytic distribution: 
             # 1/ copy old distribution_id on new correction line
             # 2/ delete old distribution on original move line
-            if ml.analytic_distribution_id:
-                analytic_distribution_id = ml.analytic_distribution_id and ml.analytic_distribution_id.id or False
-                if distrib_id:
-                    analytic_distribution_id = distrib_id
-                self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': analytic_distribution_id,}, context=context)
+#            if ml.analytic_distribution_id:
+#                analytic_distribution_id = ml.analytic_distribution_id and ml.analytic_distribution_id.id or False
+#                if distrib_id:
+#                    analytic_distribution_id = distrib_id
+#                self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': analytic_distribution_id,}, context=context)
             # Update register line if exists
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
@@ -577,15 +581,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
-            # Copy old journal attached to old distribution. Copy those from first line
-            if ml.analytic_distribution_id:
-                cl = self.browse(cr, uid, [correction_line_id], context=context)[0]
-                cl_journal = ml.journal_id.analytic_journal_id.id
-                first_line_id = self.get_first_corrected_line(cr, uid, ml.id, context=context).get(str(ml.id), False)
-                if first_line_id:
-                    first_line = self.browse(cr, uid, [first_line_id], context=context)[0]
-                    cl_journal = first_line.journal_id and first_line.journal_id.analytic_journal_id and first_line.journal_id.analytic_journal_id.id or cl_journal
-                self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_distribution_id.analytic_lines], {'journal_id': cl_journal}, context=context)
+#            # Copy old journal attached to old distribution. Copy those from first line
+#            if ml.analytic_distribution_id:
+#                cl = self.browse(cr, uid, [correction_line_id], context=context)[0]
+##                cl_journal = ml.journal_id.analytic_journal_id.id
+#                first_line_id = self.get_first_corrected_line(cr, uid, ml.id, context=context).get(str(ml.id), False)
+#                if first_line_id:
+#                    first_line = self.browse(cr, uid, [first_line_id], context=context)[0]
+#                    cl_journal = first_line.journal_id and first_line.journal_id.analytic_journal_id and first_line.journal_id.analytic_journal_id.id or cl_journal
+#                self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_distribution_id.analytic_lines], {'journal_id': cl_journal}, context=context)
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
         return success_move_line_ids

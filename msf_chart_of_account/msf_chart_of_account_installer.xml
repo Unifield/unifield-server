@@ -25,6 +25,8 @@
                   <field name="import_invoice_default_account" />
                   <newline/>
                   <field name="instance_id" domain="[('state', '=', 'draft')]"/>
+                  <field name="expat_salaries_default_account" />
+                  <field name="counterpart_hq_entries_default_account" />
                 </group>
               </data>
             </field>
