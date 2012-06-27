@@ -59,7 +59,7 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="stock.view_move_search" />
             <field name="arch" type="xml">
-                <xpath expr="/search/group/field[@name='date']" position="after">
+                <xpath expr="/search//field[@name='prodlot_id']" position="before">
                     <field name="order_type" />
                     <field name="order_category" />
                     <field name="order_priority" />
@@ -168,6 +168,8 @@
                             <field name="order_priority" />
                         </group>
                     </xpath>
+                    
+                    <xpath expr="/search//filter[@string='Available']" position="replace" />
                 </data>
             </field>
         </record>

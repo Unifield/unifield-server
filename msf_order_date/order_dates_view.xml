@@ -213,6 +213,8 @@
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Move Date</attribute>
             		</field>
+            		
+            		<xpath expr="/tree/button[@name='action_process']" position="replace" />
             	
             	</data>
             </field>

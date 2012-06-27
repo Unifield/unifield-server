@@ -290,6 +290,10 @@
 
                     <xpath expr="/tree" position="attributes">
                         <attribute name="string">Batch numbers</attribute>
+                        <attribute name="editable">top</attribute>
+                        <attribute name="noteditable">1</attribute>
+                        <attribute name="hide_new_button">1</attribute>
+                        <attribute name="hide_delete_button">1</attribute>
                     </xpath>
             	
             		<field name="ref" position="replace">
@@ -698,8 +702,10 @@
 	                <xpath expr="//tree[@string='Products']//field[@name='product_id']" position="replace">
 	                	<field context="location=location_id,uom=product_uom,to_date=parent.date,compute_child=False" name="product_id" on_change="on_change_product_id_specific_rules(location_id,product_id,prod_lot_id,product_uom,parent.date)"  domain="[('type','not in',('service','service_recep'))]" />
 	                </xpath>
+	                
+	                <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace" />
                 
-                    <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace">
+                    <xpath expr="//tree[@string='Products']//field[@name='product_qty']" position="before">
                         <field name="prod_lot_id"
                         	on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
                         	groups="base.group_extended"
@@ -814,6 +820,8 @@
                 </xpath>
             </field>
         </record>
+        
+        <delete id="stock.action_tracking_form" model="ir.actions.act_window" />
 
 	</data>
 </openerp>

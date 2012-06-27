@@ -148,7 +148,7 @@
         </record>
         
         <record id="action_real_average_consumption" model="ir.actions.act_window">
-            <field name="name">Real consumption reports</field>
+            <field name="name">Real consumption</field>
             <field name="res_model">real.average.consumption</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -165,7 +165,7 @@
         
         <menuitem
              id="warehouse_consumption_menu"
-             name="Consumption"
+             name="Consumption reports"
              sequence="-20"
              parent="stock.next_id_61" />
              
@@ -282,7 +282,7 @@
         </record>
         
         <record id="action_monthly_review_consumption" model="ir.actions.act_window">
-            <field name="name">Monthly consumptions</field>
+            <field name="name">Monthly consumption</field>
             <field name="res_model">monthly.review.consumption</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

@@ -80,12 +80,11 @@
                     </xpath>
 					<xpath expr="/search//field[@name='state']" position="replace" />
 
-					<xpath expr="/search/group/field[@name='address_id']" position="after">
-			    		<field name="state" />
+					<!-- <xpath expr="/search/group/field[@name='address_id']" position="after">
         	            <field name="reason_type_id" widget="selection" />
 			    		<newline />
 	                    <field name="comment" />
-					</xpath>
+					</xpath> -->
 
 					<xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
                         <separator />
@@ -121,7 +120,7 @@
                     </xpath>
                     
 			 		<xpath expr="/search/group/field[@name='origin']" position="before">
-						<field name="name" />
+						<field name="picking_id" />
 						<field name="reason_type_id" widget="selection" />
 					</xpath>
 					<xpath expr="/search//field[@name='product_id']" position="after">
@@ -152,7 +151,7 @@
                     </xpath>
                     
                     <xpath expr="/search//field[@name='origin']" position="before">
-                    	<field name="name" />
+                    	<field name="picking_id" />
                     	<field name="reason_type_id" widget="selection" />
                     </xpath>
                     

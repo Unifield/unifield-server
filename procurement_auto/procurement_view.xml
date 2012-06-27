@@ -101,6 +101,7 @@
         			<group expand="1" string="Filters...">
         			 	<field name="name" default_focus="1" colspan="4" />
         			 	<field name="location_id" eval="context.get('location_id', False)" colspan="4" />
+        			 	<field name="product_ids" widget="many2one" string="Product" />
 	                </group>
 	                <newline/>
 	                <group expand="1" string="Group By...">
