@@ -132,7 +132,7 @@
             <field name="type">tree</field>
             <field name="priority">19</field>
             <field name="arch" type="xml">
-                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
+                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" hide_new_button="1">
                     <field name="date_invoice" string="Donation certificate"/>
                     <field name="number"/>
                     <field name="partner_id"/>
