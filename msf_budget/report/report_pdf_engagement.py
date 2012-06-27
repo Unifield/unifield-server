@@ -145,11 +145,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 for cost_center_id in cost_center_ids:
                     expense_account_ids = temp_data[cost_center_id].keys()
                     # Create the actual domain
-<<<<<<< TREE
                     actual_domain = [('cost_center_id', '=', cost_center_id)]
-=======
-                    actual_domain = [('account_id', '=', cost_center_id)]
->>>>>>> MERGE-SOURCE
                     actual_domain.append(('date', '>=', fiscalyear.date_start))
                     actual_domain.append(('date', '<=', fiscalyear.date_stop))
                     # get only wanted accounts
