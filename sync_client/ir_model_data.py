@@ -463,7 +463,7 @@ def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
                 
             """
             if field[0] == 'id':
-                json_data[field[0]] = self.get_xml_id(cr, uid, [row.id]).get(row.id)
+                json_data[field[0]] = row.get_xml_id(cr, uid, [row.id]).get(row.id)
             elif field[0] == '.id':
                 json_data[field[0]] = row.id
             else: #TODO manage more case maybe selection or reference
