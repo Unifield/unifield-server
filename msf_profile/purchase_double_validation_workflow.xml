@@ -4,7 +4,7 @@
 
          <record id="purchase.trans_confirmed_router" model="workflow.transition">
             <field name="condition">amount_total &gt;= 0</field>
-            <field name="signal">purchase_confirmed_wait</field>
+            <field name="signal">purchase_approve</field>
             <field name="group_id" ref="purchase.group_purchase_manager"/>
         </record>
 

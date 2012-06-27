@@ -422,24 +422,51 @@ stock moves which are already processed : '''
         # set the state to confirmed_wait
         self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
         # sale order lines with modified state
-        so_line_ids = []
+        proc_ids = []
+        
         for po in self.browse(cr, uid, ids, context=context):
             for line in po.order_line:
                 if line.procurement_id:
-                    sol_id = sol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
-                    so_line_ids.append(sol_id)
+                    proc_ids.append(line.procurement_id.id)
         # update related sale order lines to confirmed
-        sol_obj.write(cr, uid, so_line_ids, {'state': 'confirmed'}, context=context)
+        sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
         
         return True
     
     def all_po_confirmed(self, cr, uid, ids, context=None):
         '''
         condition for the po to leave the act_confirmed_wait state
+        
+        if the po is from scratch (no procurement), or from replenishment mechanism (procurement but no sale order line)
+        the method will return True and therefore the po workflow is not blocked
         '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
         
-        return False
+        # corresponding sale order
+        proc_ids = []
+        # we check that all corresponding sale order lines are in state 'confirmed'
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id:
+                    proc_ids.append(line.procurement_id.id)
+                    
+        sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        if sol_ids:
+            # list of dictionaries for each sale order line
+            datas = sol_obj.read(cr, uid, sol_ids, ['state'], context=context)
+            for data in datas:
+                if data['state'] != 'confirmed':
+                    return False
+        return True
     
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
