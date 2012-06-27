@@ -72,6 +72,7 @@ class account_journal(osv.osv):
                 ('general', 'General'), 
                 ('situation', 'Opening/Closing Situation'),
                 ('cur_adj', 'Currency Adjustement'),
+                ('inkind', 'In-kind Donation'),
         ]
     
     _columns = {

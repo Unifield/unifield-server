@@ -206,5 +206,18 @@
             <field name="instance_id" search="[]" use="name" model="res.company" />
             <field name="analytic_journal_id" ref="msf_accrual.analytic_accrual_journal"/>
         </record>
+
+        <record id="account_journal.analytic_inkind_journal" model="account.analytic.journal">
+            <field name="name">Analytic In-kind Donation</field>
+            <field name="code">AIKD</field>
+            <field name="type">inkind</field>
+        </record>
+        <record id="account_journal.inkind_journal" model="account.journal">
+            <field name="name">In-kind Donation</field>
+            <field name="code">IKD</field>
+            <field name="type">inkind</field>
+            <field name="analytic_journal_id" ref="account_journal.analytic_inkind_journal"/>
+        </record>
+
     </data>
 </openerp>
