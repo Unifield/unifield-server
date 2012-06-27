@@ -363,7 +363,7 @@ class stock_location(osv.osv):
     def _product_virtual_get(self, cr, uid, id, product_ids=False, context=None, states=['done']):
         return self._product_all_get(cr, uid, id, product_ids, context, ['confirmed', 'waiting', 'assigned', 'done'])
 
-    def _product_reserve(self, cr, uid, ids, product_id, product_qty, context=None, lock=False):
+    def _product_reserve(self, cr, uid, ids, product_id, product_qty, location_dest_id, context=None, lock=False):
         """
         Attempt to find a quantity ``product_qty`` (in the product's default uom or the uom passed in ``context``) of product ``product_id``
         in locations with id ``ids`` and their child locations. If ``lock`` is True, the stock.move lines
@@ -391,6 +391,8 @@ class stock_location(osv.osv):
             context = {}
         pool_uom = self.pool.get('product.uom')
         for id in self.search(cr, uid, [('location_id', 'child_of', ids)], order="parent_left"):
+            if id == location_dest_id:
+                continue
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
@@ -2030,7 +2032,7 @@ class stock_move(osv.osv):
                 continue
             if move.state in ('confirmed', 'waiting'):
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, {'uom': move.product_uom.id}, lock=True)
+                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, move.location_dest_id.id ,{'uom': move.product_uom.id}, lock=True)
                 if res:
                     #_product_available_test depends on the next status for correct functioning
                     #the test does not work correctly if the same product occurs multiple times
