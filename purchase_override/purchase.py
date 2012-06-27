@@ -386,8 +386,12 @@ stock moves which are already processed : '''
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Analytic distribution verification
+        
+        # objects
         ana_obj = self.pool.get('analytic.distribution')
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # Analytic distribution verification
         for po in self.browse(cr, uid, ids, context=context):
             if not po.analytic_distribution_id:
                 for line in po.order_line:
@@ -409,18 +413,32 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+        
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
             if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
-        # set the state to confirmed_waiting
-        self.write(cr, uid, ids, {'state': 'confirmed_waiting'}, context=context)
+                
+        # set the state to confirmed_wait
+        self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
+        # sale order lines with modified state
+        so_line_ids = []
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id:
+                    sol_id = sol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
+                    so_line_ids.append(sol_id)
+        # update related sale order lines to confirmed
+        sol_obj.write(cr, uid, so_line_ids, {'state': 'confirmed'}, context=context)
+        
         return True
     
     def all_po_confirmed(self, cr, uid, ids, context=None):
         '''
         condition for the po to leave the act_confirmed_wait state
         '''
+        
+        
         return False
     
     def wkf_approve_order(self, cr, uid, ids, context=None):

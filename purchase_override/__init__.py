@@ -12,7 +12,7 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('draft', 'Draft'),
     ('wait', 'Waiting'),
     ('confirmed', 'Validated'),
-    ('confirmed_waiting', 'Confirmed (waiting)'),
+    ('confirmed_wait', 'Confirmed (waiting)'),
     ('approved', 'Confirmed'),
     ('except_picking', 'Receipt Exception'),
     ('except_invoice', 'Invoice Exception'),
