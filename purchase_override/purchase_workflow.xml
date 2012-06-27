@@ -105,7 +105,7 @@
         <!-- CONFIRMED_WAIT state -->
         
         <record id="act_confirmed_wait" model="workflow.activity">
-            <field name="wkf_id" ref="purchase_order"/>
+            <field name="wkf_id" ref="purchase.purchase_order"/>
             <field name="name">confirmed_wait</field>
             <field name="kind">function</field>
             <field name="action">wkf_confirm_wait_order()</field>
