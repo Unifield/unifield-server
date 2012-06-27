@@ -68,7 +68,11 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_credit = 0
             
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id']):
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id']):
+                account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
+                if not account_id:
+                    raise osv.except_osv(_('Error'), _('An account is missing!'))
+                account = self.pool.get('account.account').browse(cr, uid, account_id)
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
@@ -77,6 +81,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     fp_id = private_fund_id
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
                 f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
+                destination_id = (line.get('destination_id') and line.get('destination_id')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                 if distrib_id:
                     common_vals = {
@@ -88,9 +93,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id,})
+                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id, 'destination_id': destination_id})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                    del common_vals['cost_center_id']
+                    del common_vals['cost_center_id', 'destination_id']
                     if f1_id:
                         common_vals.update({'analytic_id': f1_id,})
                         self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
@@ -98,7 +103,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
                 vals = {
-                    'account_id': line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False,
+                    'account_id': account_id,
                     'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.get('date'),
