@@ -224,6 +224,9 @@ class stock_location(osv.osv):
         'scrap_location': False,
     }
 
+    def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
+        return kwargs.get('result', None)
+
     def chained_location_get(self, cr, uid, location, partner=None, product=None, context=None):
         """ Finds chained location
         @param location: Location id
@@ -237,6 +240,7 @@ class stock_location(osv.osv):
                 result = partner.property_stock_customer
         elif location.chained_location_type == 'fixed':
             result = location.chained_location_id
+        result = self._hook_chained_location_get(cr, uid, context=context, location=location, partner=partner, product=product, result=result)
         if result:
             return result, location.chained_auto_packing, location.chained_delay, location.chained_journal_id and location.chained_journal_id.id or False, location.chained_company_id and location.chained_company_id.id or False, location.chained_picking_type
         return result
@@ -814,7 +818,7 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines]
+            move_ids = [x.id for x in pick.move_lines if x.state == 'assigned']
             move_obj.cancel_assign(cr, uid, move_ids)
             wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
         return True
@@ -1852,6 +1856,8 @@ class stock_move(osv.osv):
         @return: Dictionary containing destination location with chained location type.
         """
         result = {}
+        if context is None:
+            context = {}
         for m in moves:
             dest = self.pool.get('stock.location').chained_location_get(
                 cr,
@@ -1862,7 +1868,7 @@ class stock_move(osv.osv):
                 context
             )
             if dest:
-                if dest[1] == 'transparent':
+                if dest[1] == 'transparent' and context.get('action_confirm', False):
                     newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
                     self.write(cr, uid, [m.id], {
                         'date': newdate,
@@ -1877,7 +1883,7 @@ class stock_move(osv.osv):
                     for pick_id in res2.keys():
                         result.setdefault(pick_id, [])
                         result[pick_id] += res2[pick_id]
-                else:
+                elif not context.get('action_confirm', False):
                     result.setdefault(m.picking_id, [])
                     result[m.picking_id].append( (m, dest) )
         return result
@@ -1947,6 +1953,10 @@ class stock_move(osv.osv):
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
                 wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
+                # Make the stock moves available
+                picking_obj.action_assign(cr, uid, [pickid], context=context)
+                picking_obj.log_picking(cr, uid, [pickid], context=context)
         if new_moves:
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
@@ -1962,7 +1972,9 @@ class stock_move(osv.osv):
         moves = self.browse(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
 
-        self.create_chained_picking(cr, uid, moves, context)
+        ctx = context.copy()
+        ctx.update({'action_confirm': True})
+        self.create_chained_picking(cr, uid, moves, context=ctx)
         return []
     
     def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
@@ -2272,6 +2284,9 @@ class stock_move(osv.osv):
 
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+            
+        moves = self.browse(cr, uid, move_ids, context=context)
+        self.create_chained_picking(cr, uid, moves, context)
 
         return True
 
@@ -2553,6 +2568,9 @@ class stock_move(osv.osv):
                 too_many.append(move)
 
             # Average price computation
+            # Average and chaining with type='in' 
+            #old_moves = self.search(cr, uid, [('type', '=', 'in'), ('move_dest_id', '=', move.id)], context=context)
+            #if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not old_moves:
             if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
                 product = product_obj.browse(cr, uid, move.product_id.id)
                 move_currency_id = move.company_id.currency_id.id
