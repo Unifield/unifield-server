@@ -33,6 +33,7 @@
         'view/picking_in_view.xml',
         'view/purchase_view.xml',
         'view/sale_view.xml',
+        'view/stock_view.xml',
     ],
     'test': [
     ],
