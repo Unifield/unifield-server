@@ -38,47 +38,7 @@ class purchase_order_sync(osv.osv):
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
     }
     
-    def get_partner_id(self, cr, uid, partner_name, context=None):
-        print "get Partner"
-        ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', partner_name)], context=context)
-        if ids:
-            return ids[0]
-        return self.pool.get('res.partner').create(cr, uid, {'name' : partner_name}, context=context)
-    def get_partner_address_id(self, cr, uid, partner_id, context=None):
-        partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
-        if partner.address:
-            return partner.address[0].id
-        else:
-            return self.pool.get('res.partner.address').create(cr, uid, {'name' : partner.name, 'partner_id' : partner.id} ,context=context)
-    def get_price_list_id(self, cr, uid, partner_id, context=None):
-        part = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
-        return part.property_product_pricelist and part.property_product_pricelist.id or False
-    
-    def get_lines(self, cr, uid, po_info, context=None):
-        line_result = []
-        for line in po_info.order_line:
-            line_result.append((0, 0, {'name' : line.name , 
-                                       'product_id' : self.get_product_id(cr, uid, line.product_id), 
-                                       'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), 
-                                       'product_qty' : line.product_uom_qty, 
-                                      'price_unit' : line.price_unit,
-                                      'date_planned' : '2011-12-09'})) #TODO change for real case
-        return line_result 
-    def get_product_id(self, cr, uid, product_id):
-        ids = self.pool.get('product.product').search(cr, uid, [('name', '=', product_id.name)])
-        if ids:
-            return ids[0]
-        return self.pool.get('product.product').create(cr, uid, {'name' : product_id.name})
-    
-    def get_uom_id(self, cr, uid, uom_name, context=None):
-        ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', uom_name)], context=context)
-        if ids:
-            return ids[0]
-        return self.pool.get('product.uom').create(cr, uid, {'name' : uom_name}, context=context)
         
-    def get_location(self, cr, uid, partner_id, context=None):
-        return self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_stock_customer.id
-
     def create_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
@@ -97,6 +57,56 @@ class purchase_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         return res_id
         
+    def validated_fo_to_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
+        print "The FO got validated, some info will be syncing to the original PO", source
+        
+        so_po_common = self.pool.get('so.po.common')
+        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+        lines = so_po_common.get_lines(cr, uid, so_info, context)
+        
+        #default = self.default_get(cr, uid, ['name'], context=context)
+        
+        data = {                        #'partner_ref' : source + "." + so_info.name,
+                                        'partner_id' : partner_id,
+                                        'partner_address_id' :  address_id,
+                                        'pricelist_id' : so_po_common.get_price_list_id(cr, uid, partner_id, context),
+                                        'location_id' : so_po_common.get_location(cr, uid, partner_id, context),
+                                        'note' : so_info.notes,
+                                        'details' : so_info.details,
+                                        'delivery_confirmed_date' : so_info.delivery_confirmed_date,
+                                        'est_transport_lead_time' : so_info.est_transport_lead_time,
+                                        'transport_type' : so_info.transport_type,
+                                        'ready_to_ship_date' : so_info.ready_to_ship_date,
+                                        'details' : so_info.details,
+                                        
+                                        'order_line' : lines}
+
+                                        #'analytic_distribution_id' : self.ppol.dsdasas.copy(analytic_distrib.id),
+        rec_id = so_po_common.get_record_id(cr, uid, context, so_info.analytic_distribution_id)
+        if rec_id:
+            data['analytic_distribution_id'] = rec_id 
+        
+        # Get the Id of the original PO to update these info back 
+        po_ref = so_info.client_order_ref
+        if not po_ref:
+            return False
+        po_split = po_ref.split('.')
+        if len(po_split) != 2:
+            return False
+
+        po_name = po_split[1]
+        ids = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        if not ids:
+            return False
+        
+        default = {}
+        default.update(data)
+        
+        res_id = self.write(cr, uid, ids, default , context=context)
+        return res_id
         
     def confirm_po(self, cr, uid, source, so_info, context=None):
         if not context:
@@ -114,4 +124,5 @@ class purchase_order_sync(osv.osv):
         ids = self.search(cr, uid, [('name', '=', name)])
         self.write(cr, uid, ids, {'sended_by_supplier' : True}, context=context)
         return True
+
 purchase_order_sync()
