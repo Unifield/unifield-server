@@ -132,10 +132,7 @@ class financing_contract_format_line(osv.osv):
                 account_domain = self._create_account_destination_domain(account_destination_ids)
                 # create the final domain
                 date_domain = eval(general_domain['date_domain'])
-                if  domain_type == 'allocated':
-                    return [date_domain[0], date_domain[1]] + account_domain + [eval(general_domain['funding_pool_domain'])]
-                else: 
-                    return [date_domain[0], date_domain[1]] + account_domain + [eval(general_domain['funding_pool_domain']), eval(general_domain['cost_center_domain'])]
+                return [date_domain[0], date_domain[1]] + account_domain + [eval(general_domain['funding_pool_domain']), eval(general_domain['cost_center_domain'])]
             else:
                 # Dates are not set (since we are probably in a donor).
                 # Return False
