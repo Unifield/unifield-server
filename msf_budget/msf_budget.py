@@ -53,7 +53,9 @@ class msf_budget(osv.osv):
         'decision_moment_order': fields.related('decision_moment_id', 'order', string="Decision Moment Order", readonly=True, store=True, type="integer"),
         'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'display_type': fields.selection([('all', 'All lines'), ('view', 'View lines only')], string="Display type"),
+        'display_type': fields.selection([('all', 'Expenses and destinations'),
+                                          ('expense', 'Expenses only'),
+                                          ('view', 'Parent expenses only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly="True"),
     }
@@ -109,7 +111,14 @@ class msf_budget(osv.osv):
             display_types[budget['id']] = budget['display_type']
             
         for budget_id in ids:
-            self.write(cr, uid, [budget_id], {'display_type': display_types[budget_id] == 'all' and 'view' or 'all'}, context=context)
+            result = 'all'
+            if display_types[budget_id] == 'all':
+                result = 'expense'
+            elif display_types[budget_id] == 'expense':
+                result = 'view'
+            elif display_types[budget_id] == 'view':
+                result = 'all'
+            self.write(cr, uid, [budget_id], {'display_type': result}, context=context)
         return True
     
     

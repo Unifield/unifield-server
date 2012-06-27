@@ -46,7 +46,8 @@ class one2many_budget_lines(fields.one2many):
             for budget_line in  budget_line_obj.read(cr, uid, budget_line_ids, ['line_type', 'budget_id'], context=context):
                 budget_id = budget_line['budget_id'][0]
                 if display_type[budget_id] == 'all' \
-                or (display_type[budget_id] == 'view' and budget_line['line_type'] == 'view'):
+                or (display_type[budget_id] == 'view' and budget_line['line_type'] == 'view') \
+                or (display_type[budget_id] == 'expense' and budget_line['line_type'] != 'destination'):
                     res[budget_id].append(budget_line['id'])
         return res
 
@@ -214,7 +215,9 @@ class msf_budget_line(osv.osv):
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
             budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
-            if budget_line.line_type == 'view' or ('granularity' in context and context['granularity'] == 'all'):
+            if budget_line.line_type == 'view' \
+                or ('granularity' in context and context['granularity'] == 'all') \
+                or ('granularity' in context and context['granularity'] == 'expense' and budget_line.line_type != 'destination'):
                 line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
                 line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
                 
