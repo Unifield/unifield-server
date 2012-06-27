@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import re
+from lxml import etree
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -90,6 +91,7 @@ class account_invoice(osv.osv):
 
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
+        'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
@@ -98,11 +100,13 @@ class account_invoice(osv.osv):
 
     _defaults = {
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
+        'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
     }
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
         """
-        Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note
+        Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note.
+        Change it to "In-kind donation" if this invoice is an In-kind donation.
         """
         if not context:
             context = {}
@@ -111,6 +115,11 @@ class account_invoice(osv.osv):
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, 'Debit Note', message, 1)
+        if self.read(cr, uid, id, ['is_inkind_donation']).get('is_inkind_donation', False) is True:
+            pattern = re.compile('^(Invoice)')
+            m = re.match(pattern, message)
+            if m and m.groups():
+                message = re.sub(pattern, 'In-kind Donation', message, 1)
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def _refund_cleanup_lines(self, cr, uid, lines):
@@ -232,6 +241,21 @@ class account_invoice(osv.osv):
         if res and self.action_reconcile_imported_invoice(cr, uid, ids, context):
             return True
         return False
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        """
+        Rename Supplier/Customer to "Donor" if view_type == tree
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('is_inkind_donation', False):
+            doc = etree.XML(res['arch'])
+            nodes = doc.xpath("//field[@name='partner_id']")
+            for node in nodes:
+                node.set('string', _('Donor'))
+            res['arch'] = etree.tostring(doc)
+        return res
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
