@@ -101,6 +101,27 @@
             <field name="flow_stop">True</field>
             <field name="join_mode">AND</field>
         </record>
+        
+        <!-- CONFIRMED_WAIT state -->
+        
+        <record id="act_confirmed_wait" model="workflow.activity">
+            <field name="wkf_id" ref="purchase_order"/>
+            <field name="name">confirmed_wait</field>
+            <field name="kind">function</field>
+            <field name="action">wkf_confirm_wait_order()</field>
+        </record>
+        
+        <record id="trans_confirmed_confirmed_wait" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_confirmed" />
+            <field name="act_to" ref="act_confirmed_wait" />
+            <field name="signal">purchase_confirmed_wait</field>
+        </record>
+        
+        <record id="trans_confirmed_wait_router" model="workflow.transition">
+            <field name="act_from" ref="act_confirmed_wait" />
+            <field name="act_to" ref="purchase.act_router" />
+            <field name="condition">all_po_confirmed()</field>
+        </record>
 
     </data>
 </openerp>

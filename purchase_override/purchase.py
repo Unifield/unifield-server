@@ -41,7 +41,7 @@ class purchase_order_confirm_wizard(osv.osv):
     def validate_order(self, cr, uid, ids, context=None):
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids, context=context):
-            wf_service.trg_validate(uid, 'purchase.order', wiz.order_id.id, 'purchase_approve', cr)
+            wf_service.trg_validate(uid, 'purchase.order', wiz.order_id.id, 'purchase_confirmed_wait', cr)
         return {'type': 'ir.actions.act_window_close'}
     
 purchase_order_confirm_wizard()
@@ -365,7 +365,7 @@ stock moves which are already processed : '''
                             'target': 'new'}
             
             # If no errors, validate the DPO
-            wf_service.trg_validate(uid, 'purchase.order', order.id, 'purchase_approve', cr)
+            wf_service.trg_validate(uid, 'purchase.order', order.id, 'purchase_confirmed_wait', cr)
             
         return True
     
@@ -413,7 +413,15 @@ stock moves which are already processed : '''
         for po in self.browse(cr, uid, ids, context=context):
             if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        # set the state to confirmed_waiting
+        self.write(cr, uid, ids, {'state': 'confirmed_waiting'}, context=context)
         return True
+    
+    def all_po_confirmed(self, cr, uid, ids, context=None):
+        '''
+        condition for the po to leave the act_confirmed_wait state
+        '''
+        return False
     
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
