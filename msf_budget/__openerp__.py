@@ -38,7 +38,7 @@
         'wizard/wizard_budget_criteria_export_view.xml'
     ],
     'test': [
-        #'test/budget_test.yml'
+        'test/budget_test.yml'
     ],
     'installable': True,
     'active': False,

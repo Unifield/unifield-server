@@ -103,7 +103,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
         if purchase_order:
             for po_line in purchase_order.order_line:
                 expense_account_id = False
-                # TBD: only lines with products and expense accounts on those products are accounted at the moment
+                
                 if po_line.product_id and \
                    po_line.product_id.property_account_expense:
                     expense_account_id = po_line.product_id.property_account_expense.id

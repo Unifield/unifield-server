@@ -9,13 +9,35 @@
     name: Expense
     sign: 1
 -
+  ...a destination, ...
+-
+  !record {model: account.analytic.account, id: test_destination}:
+    name: "Test Destination"
+    code: "DESTINATION"
+    category: DEST
+-
+  ...an "chart of accounts" account, ...
+-
+  !record {model: account.account, id: test_chart_of_accounts}:
+    name: "MSF Chart of Accounts"
+    code: "MSF"
+    user_type: account_account_type_expense0
+    type: view
+-
   ...an account, ...
 -
   !record {model: account.account, id: test_expense}:
     name: "Test Expense"
     code: "TEST"
     user_type: account_account_type_expense0
-    type: payable 
+    type: payable
+    parent_id: test_chart_of_accounts
+-
+  ...a destination link, ...
+-
+  !record {model: account.destination.link, id: test_destination_link}:
+    account_id: test_expense
+    destination_id: test_destination
 -
  ...a cost center...
 -
@@ -39,8 +61,8 @@
     category: FUNDING
     cost_center_ids:
       - analytic_account_OC2
-    account_ids:
-      - test_expense
+    tuple_destination_account_ids:
+      - test_destination_link
 -
  ...a funding pool...
 -
@@ -51,8 +73,8 @@
     cost_center_ids:
       - analytic_account_OC1
       - analytic_account_OC2
-    account_ids:
-      - test_expense
+    tuple_destination_account_ids:
+      - test_destination_link
 -
   I set the company currency's rate to 1 for the move
 -
@@ -139,11 +161,13 @@
     funding_pool_lines:
     - analytic_id: analytic_distribution.analytic_account_msf_private_funds
       cost_center_id: analytic_account_OC1
+      destination_id: test_destination
       percentage: 50
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     - analytic_id: analytic_account_FP1
-      cost_center_id: analytic_account_OC1
+      cost_center_id: analytic_account_OC2
+      destination_id: test_destination
       percentage: 50
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
@@ -152,22 +176,30 @@
 -
   !record {model: analytic.distribution, id: distribution_test_2}:
     cost_center_lines: 
-    - analytic_id: analytic_account_OC1
+    - analytic_id: analytic_account_OC2
       percentage: 80
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
-    - analytic_id: analytic_account_OC2
+    - analytic_id: analytic_account_OC1
       percentage: 20
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
-    - analytic_id: analytic_account_FP2
-      cost_center_id: analytic_account_OC1
-      percentage: 80
+    - analytic_id: analytic_account_FP1
+      cost_center_id: analytic_account_OC2
+      destination_id: test_destination
+      percentage: 40
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     - analytic_id: analytic_account_FP2
       cost_center_id: analytic_account_OC2
+      destination_id: test_destination
+      percentage: 40
+      currency_id: base.CHF
+      date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    - analytic_id: analytic_account_FP2
+      cost_center_id: analytic_account_OC1
+      destination_id: test_destination
       percentage: 20
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
@@ -206,8 +238,21 @@
   I create a decision moment
 -
   !record {model: msf.budget.decision.moment, id: decision1}:
-    name: Do not forget the tests
+    name: Decision moment 1
     order: 100
+-
+  I create an instance
+-
+  !record {model: msf.instance, id: test_instance}:
+    code: TSTINSTANCE
+    name: Test Instance
+    level: section
+    cost_center_id: analytic_account_OC1
+-
+  I add the instance to the default company
+-
+  !python {model: res.company}: |
+    self.write(cr, uid, [uid], {'instance_id': ref("test_instance")})
 -
   Now that lines are here, time for the budget
 -
@@ -227,8 +272,9 @@
   !record {model: msf.budget.line, id: budget_line_test}:
     budget_id: budget_test
     account_id: test_expense
+    destination_id: test_destination
     budget_values: '[3323232,455,2221,55542,21,555,2113,345,2212,766,33356,222]'
-    line_type: 'normal'
+    line_type: 'destination'
       
 -
   Check budget, actual, percentage, balance for the line
@@ -236,6 +282,6 @@
   !python {model: msf.budget.line}: |
      budget_line = self.browse(cr, uid, ref("budget_line_test"), context={})
      assert budget_line.budget_amount == 3421040, ("Not the correct budget amount!")
-     assert budget_line.actual_amount == 1424200.0, ("Not the correct actual amount!")
-     assert budget_line.balance == 1996840.0, ("Not the correct balance!")
-     assert budget_line.percentage == 42.0, ("Not the correct percentage!")
+     assert budget_line.actual_amount == 462100.0, ("Not the correct actual amount!")
+     assert budget_line.balance == 2958940.0, ("Not the correct balance!")
+     assert budget_line.percentage == 14.0, ("Not the correct percentage!")
