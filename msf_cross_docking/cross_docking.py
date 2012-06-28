@@ -151,6 +151,8 @@ class purchase_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         if vals.get('order_type') == 'direct':
             vals.update({'cross_docking_ok': False})
+        if 'categ' in vals and vals['categ'] in ['service', 'transport']:
+            vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return super(purchase_order, self).create(cr, uid, vals, context=context)
