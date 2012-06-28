@@ -117,10 +117,24 @@
             <field name="signal">purchase_confirmed_wait</field>
         </record>
         
-        <record id="trans_confirmed_wait_router" model="workflow.transition">
+        <!-- TRIGGER_SO_PO state -->
+        
+        <record id="act_trigger_so_po" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order"/>
+            <field name="name">trigger_so_po</field>
+            <field name="kind">function</field>
+            <field name="action">wkf_confirm_trigger()</field>
+        </record>
+        
+        <record id="trans_confirmed_wait_trigger_so_po" model="workflow.transition">
             <field name="act_from" ref="act_confirmed_wait" />
-            <field name="act_to" ref="purchase.act_router" />
+            <field name="act_to" ref="act_trigger_so_po" />
             <field name="condition">all_po_confirmed()</field>
+        </record>
+        
+        <record id="trans_trigger_so_po_router" model="workflow.transition">
+            <field name="act_from" ref="act_trigger_so_po" />
+            <field name="act_to" ref="purchase.act_router" />
         </record>
 
     </data>

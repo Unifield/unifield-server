@@ -441,6 +441,9 @@ stock moves which are already processed : '''
         
         if the po is from scratch (no procurement), or from replenishment mechanism (procurement but no sale order line)
         the method will return True and therefore the po workflow is not blocked
+        
+        only 'make_to_order' sale order lines are checked, we dont care on state of 'make_to_stock' sale order line
+        _> anyway, thanks to Fo split, make_to_stock and make_to_order so lines are separated in different sale orders
         '''
         # Some verifications
         if not context:
@@ -453,19 +456,88 @@ stock moves which are already processed : '''
         
         # corresponding sale order
         proc_ids = []
-        # we check that all corresponding sale order lines are in state 'confirmed'
+        # we check that all sale order lines of all corresponding sale order are in state 'confirmed'
         for po in self.browse(cr, uid, ids, context=context):
             for line in po.order_line:
                 if line.procurement_id:
                     proc_ids.append(line.procurement_id.id)
                     
         sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        so_ids = []
+        
+        # if we have sol_ids, we are treating a po which is make_to_order from sale order
         if sol_ids:
             # list of dictionaries for each sale order line
-            datas = sol_obj.read(cr, uid, sol_ids, ['state'], context=context)
+            datas = sol_obj.read(cr, uid, sol_ids, ['state', 'order_id'], context=context)
+            # we retrieve the list of sale order ids
             for data in datas:
-                if data['state'] != 'confirmed':
-                    return False
+                if data['order_id'][0] not in so_ids:
+                    so_ids.append(data['order_id'][0])
+            # we retrieve the list of ids of all sale order line if type 'make_to_order' with state != 'confirmed'
+            all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', so_ids),
+                                                                 ('type', '=', 'make_to_order'),
+                                                                 ('state', '!=', 'confirmed')], context=context)
+            # if any lines exist, we return False
+            if all_sol_not_confirmed_ids:
+                return False
+            
+        return True
+    
+    def wkf_confirm_trigger(self, cr, uid, ids, context=None):
+        '''
+        trigger corresponding so then po
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        proc_obj = self.pool.get('procurement.order')
+        wf_service = netsvc.LocalService("workflow")
+        
+        # corresponding sale order
+        proc_ids = []
+        # we get all procurement ids
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id:
+                    proc_ids.append(line.procurement_id.id)
+                    
+        sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        so_ids = []
+        
+        # if we have sol_ids, we are treating a po which is make_to_order from sale order
+        if sol_ids:
+            # list of dictionaries for each sale order line
+            datas = sol_obj.read(cr, uid, sol_ids, ['state', 'order_id'], context=context)
+            # we retrieve the list of sale order ids
+            for data in datas:
+                if data['order_id'][0] not in so_ids:
+                    so_ids.append(data['order_id'][0])
+        
+        # we trigger all the corresponding sale order
+        for so_id in so_ids:
+            wf_service.trg_write(uid, 'sale.order', so_id, cr)
+        
+        # we gather all concerned proc
+        proc_ids = []
+        for so in so_obj.browse(cr, uid, so_ids, context=context):
+            for line in so.order_line:
+                if line.type == 'make_to_order' and line.procurement_id:
+                    proc_ids.append(line.procurement_id.id)
+        # we gather all concerned po
+        po_ids = []
+        for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
+            if proc.purchase_id and proc.purchase_id.id not in po_ids:
+                po_ids.append(proc.purchase_id.id)
+        # we trigger pos
+        for po_id in po_ids:
+            wf_service.trg_trigger(uid, 'purchase.order', po_id, cr)
+        
         return True
     
     def wkf_approve_order(self, cr, uid, ids, context=None):

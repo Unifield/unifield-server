@@ -628,11 +628,11 @@ class sale_order(osv.osv):
     
     def test_lines(self, cr, uid, ids, context=None):
         '''
-        return True if all lines are 'confirmed'
+        return True if all lines of type 'make_to_order' are 'confirmed'
         '''
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
-                if line.state != 'confirmed':
+                if line.type == 'make_to_order' and line.state != 'confirmed':
                     return False
         return True
         
