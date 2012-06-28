@@ -235,6 +235,8 @@
         		</form>
         	</field>
         </record>
+
+		<menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
         
 	<!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
