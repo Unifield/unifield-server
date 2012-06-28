@@ -127,6 +127,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'corrected': False,
             'reversal': False,
         })
+        # Add default date if no one given
+        if not 'date' in default:
+            default.update({'date': strftime('%Y-%m-%d')})
         return super(account_move_line, self).copy(cr, uid, id, default, context=context)
 
     def get_corrections_history(self, cr, uid, ids, context=None):
