@@ -44,6 +44,7 @@
     ],
     'update_xml': [
         "setup_data.xml",
+        "unifield_setup_data.xml",
         # Installer views
         "installer/project_addresses_view.xml",
         "installer/project_lead_time_view.xml",
