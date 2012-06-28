@@ -104,11 +104,7 @@
             <field name="model">stock.warehouse.order.cycle</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-<<<<<<< TREE
-                <tree string="Order Cycle">
-=======
                 <tree string="Order Cycle rules">
->>>>>>> MERGE-SOURCE
                     <field name="name" />
                     <field name="warehouse_id" />
                     <field name="location_id" />
@@ -127,11 +123,11 @@
         	<field name="model">stock.warehouse.order.cycle</field>
         	<field name="type">search</field>
         	<field name="arch" type="xml">
-<<<<<<< TREE
         		<search string="Order Cycle">
         			<group expand="1" string="Filters...">
         			 	<field name="name" default_focus="1" colspan="4" />
         			 	<field name="location_id" eval="context.get('location_id', False)" colspan="4" />
+        			 	<field name="product_line_ids" widget="many2one" />
 	                </group>
 	                <newline/>
 	                <group expand="1" string="Group By...">
@@ -143,12 +139,6 @@
                         <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
                         <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
 	                </group>
-=======
-        		<search string="Order cycle rules">
-        			<field name="name" />
-        			<field name="warehouse_id" widget="selection" />
-        			<field name="location_id" widget="selection" domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]" />
->>>>>>> MERGE-SOURCE
         		</search>
         	</field>
         </record>
