@@ -19,4 +19,18 @@
 #
 ##############################################################################
 
-import publisher_warranty
+from osv import osv
+from tools import cache
+
+class publisher_warranty_contract(osv.osv):
+    _inherit = 'publisher_warranty.contract'
+
+    @cache(skiparg=3)
+    def get_default_livechat_text(self, cr, uid):
+        """
+        We hide the button 'Support' on the top right of the screen
+        """
+        return ''
+
+publisher_warranty_contract()
+
