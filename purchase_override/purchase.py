@@ -387,7 +387,7 @@ stock moves which are already processed : '''
             todo2 = []
             todo3 = []
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
-                         order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                         order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
                 line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
 
@@ -502,14 +502,20 @@ stock moves which are already processed : '''
     def action_invoice_create(self, cr, uid, ids, *args):
         '''
         Override this method to check the purchase_list box on invoice
-        when the invoice comes from a purchase list
+        when the invoice comes from a purchase list.
+        Change journal to an inkind journal if we comes from a In-kind Donation PO
         '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
+        inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
         
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
+            if order.order_type == 'in_kind':
+                if not inkind_journal_ids:
+                    raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
+                self.pool.get('account.invoice').write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True})
         
         return invoice_id
     
