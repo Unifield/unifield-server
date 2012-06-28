@@ -93,6 +93,7 @@ class purchase_report(osv.osv):
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'currency_id': fields.many2one('res.currency', string='Currency'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', readonly=True),
+        'location_id': fields.many2one('stock.location', string='Location'),
     }
     _order = 'name desc,price_total desc'
     def init(self, cr):
@@ -112,6 +113,7 @@ class purchase_report(osv.osv):
                     s.dest_address_id,
                     s.pricelist_id,
                     s.validator,
+                    s.location_id as location_id,
                     s.warehouse_id as warehouse_id,
                     (case when cc.percentage is not null then
                         cc.analytic_id
@@ -177,6 +179,7 @@ class purchase_report(osv.osv):
                     ccp.analytic_id,
                     ccp.percentage,
                     s.partner_id,
+                    s.location_id,
                     l.price_unit,
                     s.date_approve,
                     l.date_planned,

@@ -66,7 +66,8 @@
                     <field name="validator" invisible="1"/>
                     <field name="company_id" invisible="1"/>
                     <field name="state" invisible="1"/>
-                    <field name="location_id" invisible="1"/>
+                    <field name="cost_center_id" invisible="1"/>
+                    <field name="location_id" invisible="1" />
                 </tree>
             </field>
         </record>
