@@ -11,7 +11,6 @@
                     <group colspan="2" col="2">
                         <separator string="General Information" />
                         <field name="name" />
-                        <field name="product_id" invisible='1'/>
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Locations" />
@@ -39,9 +38,6 @@
                         <label string="In months" colspan="4" align="0.0"/>
                         <field name="safety_stock_time" />
                         <label string="In months (will be converted into quantity regarding monthly consumption)" colspan="4" align="0.0"/>
-                        <field name="safety_stock" />
-                        <label string="(warning, UoM has to be coherent)" colspan="4" align="0.0"/>
-                        <label />
                         <newline />
                         <group name="consumption calculation" colspan="6" col="6">
 	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'past')" />
@@ -91,19 +87,11 @@
 
                     <group colspan="4" col="4" >
                         <separator colspan="4" string="Products that will be included in the current policy" />
-                        <!-- <field name="product_ids" nolabel="1" colspan="4" domain="[('fnct_categ_id', '=', category_id)]"/>
-                         -->
-                        <field name="product_ids" nolabel="1" colspan="4" 
-                        domain="[('list_ids', '=', parent.sublist_id)]">
-                        	<tree string="Products">
-                        		<field name="default_code" />
-                        		<field name="name" />
-                        		<field name="uom_id" string="UoM" />
-                        		<field name="type" />
-                        		<field name="qty_available" />
-                        		<field name="virtual_available" />
-                        		<field name="product_amc" string="AMC" />
-                        		<field name="monthly_consumption" string="FMC" />
+                        <field name="product_ids" nolabel="1" colspan="4" mode="tree">
+                        	<tree string="Products" editable="top">
+                        		<field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id)]" />
+                        		<field name="uom_id" domain="[('uom_by_product', '=', product_id)]" />
+                        		<field name="safety_stock" />
                         	</tree>
                         </field>
                     </group>
@@ -116,9 +104,12 @@
             <field name="model">stock.warehouse.order.cycle</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
+<<<<<<< TREE
                 <tree string="Order Cycle">
+=======
+                <tree string="Order Cycle rules">
+>>>>>>> MERGE-SOURCE
                     <field name="name" />
-                    <field name="product_id" invisible='1'/>
                     <field name="warehouse_id" />
                     <field name="location_id" />
                     <field name="frequence_id" />
@@ -136,6 +127,7 @@
         	<field name="model">stock.warehouse.order.cycle</field>
         	<field name="type">search</field>
         	<field name="arch" type="xml">
+<<<<<<< TREE
         		<search string="Order Cycle">
         			<group expand="1" string="Filters...">
         			 	<field name="name" default_focus="1" colspan="4" />
@@ -151,6 +143,12 @@
                         <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
                         <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
 	                </group>
+=======
+        		<search string="Order cycle rules">
+        			<field name="name" />
+        			<field name="warehouse_id" widget="selection" />
+        			<field name="location_id" widget="selection" domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]" />
+>>>>>>> MERGE-SOURCE
         		</search>
         	</field>
         </record>
