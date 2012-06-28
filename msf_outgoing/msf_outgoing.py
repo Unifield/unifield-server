@@ -959,7 +959,7 @@ class pack_family_memory(osv.osv_memory):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Volume[cm²]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[cm²]', multi='get_vals',),
                 }
     
     _defaults = {'shipment_id': False,
