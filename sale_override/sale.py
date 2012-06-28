@@ -293,7 +293,7 @@ class sale_order(osv.osv):
             
             purchase = purchase_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' is created.") % (purchase.name,)
+            message = _("Loan counterpart '%s' has been created.") % (purchase.name,)
             
             purchase_obj.log(cr, uid, order_id, message)
         
