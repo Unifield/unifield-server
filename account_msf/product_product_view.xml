@@ -1,0 +1,20 @@
+<openerp>
+    <data>
+    
+        <record id="product_normal_form_view" model="ir.ui.view">
+            <field name="name">product.normal.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <page string="Accounting" position="inside">
+                    <group colspan="4" col="2">
+                        <separator string="Donation Properties"/>
+                        <field name="donation_expense_account"/>
+                    </group>
+                </page>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

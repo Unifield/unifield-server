@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,31 +21,17 @@
 #
 ##############################################################################
 
-{
-    "name" : "Accounting for MSF",
-    "version" : "1.0",
-    "description" : """
-        This module aims to add some elements in accounting for MSF.
-    """,
-    "author" : "TeMPO Consulting, MSF",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", "purchase_msf", "register_accounting"],
-    "init_xml" : [],
-    "update_xml" : [
-        'board_account_view.xml',
-        'res_company_view.xml',
-        'invoice_view.xml',
-        'wizard_view.xml',
-        'product_product_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [
-        'test/accounting_data.yml',
-        'test/intersection_flow.yml',
-    ],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
 
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+
+    _columns = {
+        'donation_expense_account': fields.many2one('account.account', "Expense Account", 
+            domain="[('user_type.code', '=', 'expense'), ('type', '!=', 'view')]"),
+    }
+
+product_product()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
