@@ -168,6 +168,7 @@
                         <group colspan="2" col="1" groups="account.group_account_user">
                             <label align="0.0" string="(keep empty to use the current period)"/>
                         </group>
+                        <newline/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
                         <field name="analytic_distribution_id" invisible="1"/>
@@ -202,18 +203,16 @@
                             </field>
                             <group col="8" colspan="4">
                                 <label string="" colspan="3"/>
-                                <field name="reconciled"/>
-                                <field name="amount_total"/>
-                                <label string="" colspan="3"/>
                                 <field name="state"/>
-                                <field name="residual"/>
+                                <field name="amount_total"/>
                             </group>
-                            <group col="8" colspan="4" groups="base.group_user">
-                                <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
-                                <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
-                                <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                                <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
-                                <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
+                            <group col="2" colspan="4" groups="base.group_user" states="draft">
+                                <label string=""/>
+                                <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
+                            </group>
+                            <group col="2" colspan="4" groups="base.group_user" states="open,paid">
+                                <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel"/>
+                                <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid"/>
                             </group>
                         </page>
                     </notebook>
