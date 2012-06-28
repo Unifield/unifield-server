@@ -236,10 +236,10 @@
           <para style="terp_tblheader_Details">Requested Date</para>
         </td>
         <td>
-          <para style="P4">Reference</para>
+          <para style="P4">CODE</para>
         </td>
         <td>
-          <para style="P4">Description</para>
+          <para style="P4">DESCRIPTION</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Right">Quantity</para>
