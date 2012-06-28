@@ -117,12 +117,14 @@
 	                    <field name="hidden_batch_management_mandatory" invisible="True" />
 	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="lot_check" />
-	                   	<field name="exp_check" />
-	                   	<field name="kc_check" />
-	           			<field name="ssl_check" invisible="True" />
-	           			<field name="dg_check" />
-	           			<field name="np_check" />
+						<group colspan="4" col="10">
+							<field name="lot_check" />
+		                   	<field name="exp_check" />
+		                   	<field name="kc_check" />
+		           			<field name="ssl_check" invisible="True" />
+		           			<field name="dg_check" />
+		           			<field name="np_check" />
+	           			</group>
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">

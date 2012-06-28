@@ -69,9 +69,7 @@
                     <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='auto_picking']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='invoice_state']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
-                    </xpath>
+                    <xpath expr="/form//field[@name='invoice_state']" position="replace" />
                     <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='date_done']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
@@ -114,9 +112,7 @@
                     <xpath expr="/form/group/group/field[@name='date']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form/group/group/field[@name='invoice_state']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
-                    </xpath>
+                    <xpath expr="/form//field[@name='invoice_state']" position="replace" />
                     <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='auto_picking']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
@@ -158,9 +154,7 @@
                     <xpath expr="/form/group/group/field[@name='purchase_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form/group/group/field[@name='invoice_state']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
-                    </xpath>
+                    <xpath expr="/form/group/group/field[@name='invoice_state']" position="replace" />
                     <xpath expr="/form/notebook/page[@string='Additional Info']/field[@name='type']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                     </xpath>

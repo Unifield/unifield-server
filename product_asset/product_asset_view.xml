@@ -10,7 +10,7 @@
 			<field name="inherit_id" ref="stock.view_picking_form" />
 			<field name="arch" type="xml">
 				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_uom']"
 						position="after">
 						<field name="asset_id" />
 					</xpath>
@@ -27,7 +27,7 @@
 			<field name="inherit_id" ref="stock.view_picking_in_form" />
 			<field name="arch" type="xml">
 				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_uom']"
 						position="after">
 						<field name="asset_id" />
 					</xpath>
@@ -44,7 +44,7 @@
 			<field name="inherit_id" ref="stock.view_picking_out_form" />
 			<field name="arch" type="xml">
 				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_uom']"
 						position="after">
 						<field name="asset_id" />
 					</xpath>
