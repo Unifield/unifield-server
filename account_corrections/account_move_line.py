@@ -682,4 +682,23 @@ receivable, item have not been corrected, item have not been reversed and accoun
         return success_move_line_ids
 
 account_move_line()
+
+class account_move(osv.osv):
+    _name = 'account.move'
+    _inherit = 'account.move'
+
+    def reverse(self, cr, uid, ids):
+        """
+        Reverse move
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        reversed_move = []
+        for m in self.browse(cr, uid, ids):
+            res_reverse = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id])
+            if res_reverse:
+                reversed_move.append(m.id)
+        return reversed_move
+
+account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
