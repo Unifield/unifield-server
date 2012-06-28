@@ -38,7 +38,7 @@
     		<field name="model">procurement.rules.report</field>
     		<field name="type">tree</field>
     		<field name="arch" type="xml">
-    			<tree string="Procurement Rules Analysis" editable="top" noteditable="1"
+    			<tree string="Replenishment Rules Analysis" editable="top" noteditable="1"
     				hide_new_button="1" hide_delete_button="1"
     				colors="red: auto_supply_ok=='no' and order_cycle_ok=='no' and min_max_ok=='no' and threshold_ok=='no'">
     				<field name="product_id" />
@@ -93,7 +93,7 @@
     	</record>
     	
     	<record id="action_procurement_rules_report" model="ir.actions.act_window">
-    		<field name="name">Procurement Rules Analysis</field>
+    		<field name="name">Replenishment Rules Analysis</field>
     		<field name="res_model">procurement.rules.report</field>
     		<field name="view_type">form</field>
     		<field name="view_mode">tree,form</field>
