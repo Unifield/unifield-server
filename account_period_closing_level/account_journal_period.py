@@ -33,7 +33,7 @@ class account_journal_period(osv.osv):
             period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
             # If the period is not open, the move line/account journal period are not created.
             if period.state == 'created':
-                raise osv.except_osv(_('Error !'), _('Period is not open!'))
+                raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open!') % (period.name,))
             elif period.state != 'done':
                 vals['state'] = 'draft'
             else:

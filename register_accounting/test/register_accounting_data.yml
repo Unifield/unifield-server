@@ -216,6 +216,19 @@
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
 -
+  I create a Down Payment account
+-
+  !record {model: account.account, id: account_account_down_payment_0}:
+    name: Advance for suppliers
+    code: '4203-down-payment-test'
+    type: receivable
+    user_type: account_account_type_receivable0
+    type_for_register: down_payment
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: 1
+-
   I create Supplier 401 Payable Account.
 -
   !record {model: account.account, id: account_account_payable_supplier0}:
@@ -432,6 +445,13 @@
           field: reconcile_id
           sequence: 20
 -
+  I create an analytic Cash Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_cash_journal}:
+    code: CASH
+    name: Analytic Cash Journal
+    type: cash
+-
   I create a Cash Journal
 -
   !record {model: account.journal, id: account_journal_cash_0}:
@@ -442,6 +462,7 @@
     view_id: account_journal_view0
     default_debit_account_id: account_account_cash0
     default_credit_account_id: account_account_cash0
+    analytic_journal_id: account_analytic_cash_journal
     allow_date: 0
 -
   I create a Cash Journal in CHF
@@ -590,6 +611,7 @@
     city: Oberhausbergen
     phone: +33 3 88 56 82 10
     email: info@tempo-consulting.fr
+    partner_id: res_partner_supplier_wood_0
 -
   I create a Cheque USD Register
 -
@@ -649,7 +671,7 @@
 -
   !record {model: product.product, id: product_basic_finance_0}:
     categ_id: product.cat0
-    cost_method: standard
+    cost_method: average
     mes_type: fixed
     name: Basic product for finance tests
     price_margin: 2.0

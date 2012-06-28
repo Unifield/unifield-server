@@ -309,9 +309,9 @@ class account_move_line_compute_currency(osv.osv):
     def check_date(self, cr, uid, vals):
         # check that date is in period
         if 'period_id' in vals and 'date' in vals:
-            period = self.pool.get('account.period').read(cr, uid, vals['period_id'], ['date_start', 'date_stop'])
+            period = self.pool.get('account.period').read(cr, uid, vals['period_id'], ['name', 'date_start', 'date_stop'])
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
-                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % (period.name or '',))
+                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % (period.get('name') or '',))
 
     def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
         newvals = {}

@@ -813,7 +813,31 @@ class analytic_distribution_wizard(osv.osv_memory):
                 }
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        
+        return_wiz =  {'type': 'ir.actions.act_window_close'}
+        if context.get("from_cash_return_analytic_dist"):
+            # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            cash_return_line_id = context.get('cash_return_line_id')
+            
+            distr_id = False
+            if wiz and wiz.distribution_id and wiz.distribution_id.id: 
+                distr_id = wiz.distribution_id.id
+            # write the distribution analytic to this cash return line    
+            self.pool.get('wizard.advance.line').write(cr, uid, [cash_return_line_id], {'analytic_distribution_id': distr_id}, context=context)
+            return_wiz = {
+                 'name': "Cash Return- Wizard",
+                    'type': 'ir.actions.act_window',
+                    'res_model': wizard_name,
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': wizard_id,
+                    'context': context,
+                 }
+
+        return return_wiz
 
     def validate(self, cr, uid, wizard_id, context=None):
         """

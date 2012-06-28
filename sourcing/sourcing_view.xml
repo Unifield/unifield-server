@@ -7,6 +7,7 @@
 			<field name="name">sale.order.form</field>
 			<field name="model">sale.order</field>
 			<field name="type">form</field>
+			<field name="priority">500</field>
 			<field name="inherit_id" ref="sale.view_order_form" />
 			<field name="arch" type="xml">
 				<data>
@@ -15,6 +16,11 @@
 						<field name="supplier" invisible="True" />
 						<field name="po_cft" invisible="True" />
 					</field>
+					
+					<xpath expr="/form/notebook/page//button[@name='order_confirm']" position="replace">
+						<button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
+                    	<button name="order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply"/>
+                    </xpath>
 
 				</data>
 			</field>
@@ -57,7 +63,9 @@
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-					<field name="po_cft" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+					<field name="po_cft"
+						on_change="onChangePoCft(po_cft, company_id, procurement_request)" 
+						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />

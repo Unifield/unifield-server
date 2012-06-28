@@ -26,6 +26,10 @@
                             <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                             <field name="analytic_journal_id" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                         </group>
+                        <group colspan="4" col="4">
+                            <label string="" colspan="2"/>
+                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
+                        </group>
                     </form>
                 </form>
             </field>

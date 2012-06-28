@@ -55,10 +55,10 @@ class wizard_interactive_report(osv.osv_memory):
                      line.name,
                      locale.format("%d", line_allocated_budget, grouping=True),
                      locale.format("%d", line_allocated_real, grouping=True),
-                     '' if line_allocated_real == 0 else str(locale.format("%d", round(line_allocated_real/line_allocated_budget * 100), grouping=True)) + "%",
+                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format("%d", round(line_allocated_real/line_allocated_budget * 100), grouping=True)) + "%",
                      locale.format("%d", line_project_budget, grouping=True),
                      locale.format("%d", line_project_real, grouping=True),
-                     '' if line_project_real == 0 else str(locale.format("%d", round(line_project_real/line_project_budget * 100), grouping=True)) + "%"])
+                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format("%d", round(line_project_real/line_project_budget * 100), grouping=True)) + "%"])
         
         for child_line in line.child_ids:
             max_parent_hierarchy = self._create_reporting_line(cr, uid, reporting_currency_id, child_line, parent_hierarchy + 1, data, out_currency_id, context)
@@ -140,10 +140,10 @@ class wizard_interactive_report(osv.osv_memory):
                                'TOTAL',
                                locale.format("%d", total_allocated_budget, grouping=True),
                                locale.format("%d", total_allocated_real, grouping=True),
-                               '' if total_allocated_real == 0 else str(locale.format("%d", round(total_allocated_real/total_allocated_budget * 100), grouping=True)) + "%",
+                               '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format("%d", round(total_allocated_real/total_allocated_budget * 100), grouping=True)) + "%",
                                locale.format("%d", total_project_budget, grouping=True),
                                locale.format("%d", total_project_real, grouping=True),
-                               '' if total_project_real == 0 else str(locale.format("%d", round(total_project_real/total_project_budget * 100), grouping=True)) + "%"]]
+                               '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format("%d", round(total_project_real/total_project_budget * 100), grouping=True)) + "%"]]
 
 
         # Now, do the hierarchy

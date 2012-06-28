@@ -128,6 +128,8 @@ class account_move_line(osv.osv):
         'is_write_off': lambda *a: False,
     }
 
+    _order = 'move_id DESC'
+
     def _accounting_balance(self, cr, uid, ids, context=None):
         """
         Get the accounting balance of given lines
