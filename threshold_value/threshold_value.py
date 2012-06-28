@@ -28,6 +28,36 @@ class threshold_value(osv.osv):
     _name = 'threshold.value'
     _description = 'Threshold value'
     
+    def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns a list of products for the rule
+        '''
+        res = {}
+        
+        for rule in self.browse(cr, uid, ids, context=context):
+            res[rule.id] = []
+            for line in rule.line_ids:
+                res[rule.id].append(line.product_id.id)
+        
+        return res
+    
+    def _src_product_ids(self, cr, uid, obj, name, args, context=None):
+        if not context:
+            context = {}
+            
+        res = []
+            
+        for arg in args:
+            if arg[0] == 'product_ids':
+                rule_ids = []
+                line_ids = self.pool.get('threshold.value.line').search(cr, uid, [('product_id', arg[1], arg[2])])
+                for l in self.pool.get('threshold.value.line').browse(cr, uid, line_ids):
+                    if l.threshold_value_id.id not in rule_ids:
+                        rule_ids.append(l.threshold_value_id.id)
+                res.append(('id', 'in', rule_ids))
+                
+        return res
+    
     _columns = {
         'name': fields.char(size=128, string='Reference', required=True),
         'active': fields.boolean(string='Active'),
@@ -49,6 +79,8 @@ class threshold_value(osv.osv):
         'supplier_lt': fields.boolean(string='Product\'s supplier LT'),
         'line_ids': fields.one2many('threshold.value.line', 'threshold_value_id', string="Products"),
         'fixed_line_ids': fields.one2many('threshold.value.line', 'threshold_value_id2', string="Products"),
+        'product_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
+                                    type='many2many', relation='product.product', method=True, string='Products'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),

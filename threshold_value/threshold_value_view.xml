@@ -126,6 +126,7 @@
         			 	<field name="name" default_focus="1" />
         			 	<field name="location_id" eval="context.get('location_id', False)" />
         			 	<field name="compute_method" />
+        			 	<field name="product_ids" widget="many2one" />
 	                </group>
 	                <newline/>
 	                <group expand="1" string="Group By...">
