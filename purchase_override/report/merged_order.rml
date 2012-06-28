@@ -257,10 +257,10 @@
     <blockTable colWidths="85.0,130.0,50.0,60.0,80.0,60.0,70.0" repeatRows="1" style="Table_Header_Pur_ord_Line">
       <tr>
         <td>
-          <para style="terp_tblheader_General">Reference</para>
+          <para style="terp_tblheader_General">CODE</para>
         </td>
         <td>
-          <para style="terp_tblheader_General">Description</para>
+          <para style="terp_tblheader_General">DESCRIPTION</para>
         </td>
         <td>
           <para style="terp_tblheader_General">Taxes</para>
