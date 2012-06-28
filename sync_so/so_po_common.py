@@ -85,14 +85,14 @@ class so_po_common(osv.osv_memory):
             
             if line.product_id:
                 values['name'] = line.product_id.name
-            else:
-                values['name'] = line.comment
+#            else:
+#                values['name'] = line.comment
                 
-            if 'product_uom_qty' in line_dict:
-                values['product_uom_qty'] = line.product_uom_qty
+            if 'product_uom_qty' in line_dict: # come from the SO
+                values['product_qty'] = line.product_uom_qty
 
-            if 'product_qty' in line_dict:
-                values['product_qty'] = line.product_qty
+            if 'product_qty' in line_dict: # come from the PO
+                values['product_uom_qty'] = line.product_qty
             
             if 'date_planned' in line_dict:
                 values['date_planned'] = line.date_planned 
