@@ -30,8 +30,8 @@
                 <field name="product_qty" sum="Total quantity"/>
                 <field name="product_qty_in" sum="Total incoming quantity" />
                 <field name="product_qty_out" sum="Total outgoing quantity"/>
-                <field name="value"  sum="Total value"/>
-                <field name="currency_id" />
+                <!-- <field name="value"  sum="Total value"/>
+                <field name="currency_id" /> -->
                 <field name="day_diff1"/>
                 <field name="day_diff"/>
                 <field name="day_diff2" string="Delay(Days)"/>

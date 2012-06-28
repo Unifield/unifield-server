@@ -462,6 +462,7 @@
         
         <delete model="ir.actions.act_window" id="stock.action_view_stock_fill_inventory" />
         <delete model="ir.actions.act_window" id="stock.action_view_stock_merge_inventories" />
+        <delete model="ir.ui.menu" id="stock.action_stock_inventory_report" />
 
     </data>
 </openerp>

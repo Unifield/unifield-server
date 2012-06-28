@@ -57,16 +57,6 @@ class report_stock_move(osv.osv):
                     res[report.id]['order_type'] = order.order_type
         
         return res
-    
-    def _get_currency_id(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        
-        func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        
-        for move_id in ids:
-            res[move_id] = func_currency_id
-            
-        return res
 
     _columns = {
         'date': fields.date('Date', readonly=True),
@@ -88,7 +78,7 @@ class report_stock_move(osv.osv):
         'product_qty_in':fields.integer('In Qty',readonly=True),
         'product_qty_out':fields.integer('Out Qty',readonly=True),
         'value' : fields.float('Total Value', required=True),
-        'currency_id': fields.function(_get_currency_id, method=True, string='Currency', store=False, type='many2one', relation='res.currency'),
+        'currency_id': fields.many2one('res.currency', string='Currency', required=True),
         'day_diff2':fields.float('Lag (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff1':fields.float('Planned Lead Time (Days)',readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff':fields.float('Execution Lead Time (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
@@ -212,5 +202,19 @@ class report_stock_move(osv.osv):
             fields = []
         context['with_expiry'] = 1
         return super(report_stock_move, self).read(cr, uid, ids, fields, context, load)
+    
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+        '''
+        Add functional currency on all lines
+        '''
+        res = super(report_stock_move, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        if self._name == 'report.stock.move':
+            for data in res:
+                # If no information to display, don't display the currency
+                if not '__count' in data or data['__count'] != 0:
+                    currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+                    data.update({'currency_id': (currency.id, currency.name)})
+                
+        return res
 
 report_stock_move()
