@@ -211,7 +211,7 @@
                                 <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="open,paid">
-                                <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel"/>
+                                <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel" confirm="Do you confirm Donation received cancellation?"/>
                                 <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid"/>
                             </group>
                         </page>

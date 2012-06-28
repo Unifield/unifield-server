@@ -257,5 +257,21 @@ class account_invoice(osv.osv):
             res['arch'] = etree.tostring(doc)
         return res
 
+    def action_cancel(self, cr, uid, ids, *args):
+        """
+        Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
+        """
+        to_cancel = []
+        for i in self.browse(cr, uid, ids):
+            if i.is_inkind_donation:
+                move_id = i.move_id.id
+                tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id])
+                # If success change invoice to cancel and detach move_id
+                if tmp_res:
+                    self.write(cr, uid, [move_id], {'state': 'cancel', 'move_id':False})
+                continue
+            to_cancel.append(i.id)
+        return super(account_invoice, self).action_cancel(cr, uid, to_cancel, args)
+
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
