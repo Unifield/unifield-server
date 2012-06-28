@@ -67,10 +67,10 @@ class res_partner(osv.osv):
         if not args:
             return []
         if args[0][2]:
-           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type'])
-           if t['type'] == 'payable':
+           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type', 'type_for_register'])
+           if t['type'] == 'payable' and t['type_for_register'] != 'down_payment':
                return [('property_account_payable', '=', args[0][2])]
-           if t['type'] == 'receivable':
+           if t['type'] == 'receivable' and t['type_for_register'] != 'down_payment':
                 return [('property_account_receivable', '=', args[0][2])]
         return []
 
@@ -700,6 +700,26 @@ class account_bank_statement_line(osv.osv):
             ret[i['id']] = len(i['imported_invoice_line_ids'])
         return ret
 
+    def _get_down_payment_state(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Verify down payment eligibility:
+         - account should be a down_payment type for register
+         - amount should be negative
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse elements
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.account_id and line.account_id.user_type and line.account_id.type_for_register == 'down_payment' and line.amount < 0.0:
+                res[line.id] = True
+        return res
+
     def _get_transfer_with_change_state(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
         If account is a transfer with change, then True. Otherwise False.
@@ -745,10 +765,13 @@ class account_bank_statement_line(osv.osv):
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', 
             string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
+        'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?", 
+            type='boolean', store=False),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", 
             help="This move line has been taken for create an Import Cheque in a bank register."),
         'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?", 
             type='boolean', store=False),
+        'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
     }
 
@@ -972,6 +995,9 @@ class account_bank_statement_line(osv.osv):
         # Delete 'from_import_cheque_id' field not to break the account move line write
         if 'from_import_cheque_id' in move_line_values:
             del(move_line_values['from_import_cheque_id'])
+        # Delete down_payment value not to be given to account_move_line
+        if 'down_payment_id' in move_line_values:
+            del(move_line_values['down_payment_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
@@ -1249,6 +1275,25 @@ class account_bank_statement_line(osv.osv):
             return True
         return False
 
+    def create_down_payment_link(self, cr, uid, ids, context=None):
+        """
+        Copy down_payment link to right move line
+        """
+        # some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # browse all bank statement line
+        for absl in self.browse(cr, uid, ids):
+            if not absl.is_down_payment:
+                continue
+            move_ids = [x.id or None for x in absl.move_ids]
+            # Search line that have same account for given register line
+            line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', 'in', move_ids)])
+            # Add down_payment link
+            for line_id in line_ids:
+                self.pool.get('account.move.line').write(cr, uid, [line_id], {'down_payment_id': absl.down_payment_id.id})
+        return True
+
     def create(self, cr, uid, values, context=None):
         """
         Create a new account bank statement line with values
@@ -1289,7 +1334,13 @@ class account_bank_statement_line(osv.osv):
             if saveddate:
                 values['date'] = saveddate
         # Update the bank statement lines with 'values'
-        return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        # Amount verification regarding Down payments
+        for line in self.browse(cr, uid, ids):
+            if line.is_down_payment and line.down_payment_id:
+                if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.id, line.down_payment_id.id, context=context):
+                    raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
+        return res
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
@@ -1316,6 +1367,8 @@ class account_bank_statement_line(osv.osv):
             'sequence_for_reference': False,
             'state': 'draft',
             'transfer_amount': False,
+            'transfer_currency': False,
+            'down_payment_id': False,
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
@@ -1346,9 +1399,17 @@ class account_bank_statement_line(osv.osv):
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
+
                 if absl.is_transfer_with_change:
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
+
+                if absl.is_down_payment and not absl.down_payment_id:
+                    raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
+                elif absl.is_down_payment:
+                    self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
+                    self.create_down_payment_link(cr, uid, absl.id, context=context)
+
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard
@@ -1515,6 +1576,45 @@ class account_bank_statement_line(osv.osv):
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
 
+    def button_down_payment(self, cr, uid, ids, context=None):
+        """
+        Open Down Payment wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        vals = {}
+        register_line = self.browse(cr, uid, ids[0], context=context)
+        vals.update({'register_line_id': register_line.id})
+        if register_line and register_line.down_payment_id:
+            vals.update({'purchase_id': register_line.down_payment_id.id})
+        if register_line and register_line.state and register_line.state != 'hard':
+            vals.update({'state': 'draft'})
+        if register_line and register_line.currency_id:
+            vals.update({'currency_id': register_line.currency_id.id})
+        if register_line and register_line.partner_id:
+            vals.update({'partner_id': register_line.partner_id.id})
+        wiz_id = self.pool.get('wizard.down.payment').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+            'register_line_id': ids[0],
+        })
+        return {
+            'name': _("Down Payment"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.down.payment',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
     def button_transfer(self, cr, uid, ids, context=None):
         """
         Open Transfer with change wizard
@@ -1525,6 +1625,7 @@ class account_bank_statement_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
+        vals = {}
         absl = self.browse(cr, uid, ids[0], context=context)
         if absl.account_id and absl.account_id.type_for_register and absl.account_id.type_for_register != 'transfer':
             raise osv.except_osv(_('Error'), _('Open transfer with change wizard is only possible with transfer account in other currency!'))
@@ -1574,17 +1675,20 @@ class account_bank_statement_line(osv.osv):
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
-            account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
-            acc_type = account.type_for_register
-            if acc_type in ['transfer', 'transfer_same']:
+            a = acc_obj.read(cr, uid, account_id, ['type_for_register'])
+            if a['type_for_register'] in ['transfer', 'transfer_same']:
                 # UF-428: transfer type shows only Journals instead of Registers as before
                 third_type = [('account.journal', 'Journal')]
                 third_required = True
                 third_selection = 'account.journal,0'
-            elif acc_type == 'advance':
+            elif a['type_for_register'] == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
+            elif a['type_for_register'] == 'down_payment':
+                third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
 
     def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context=None):

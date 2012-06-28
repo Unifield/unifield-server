@@ -349,13 +349,18 @@ class sourcing_line(osv.osv):
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
-    def onChangePoCft(self, cr, uid, id, po_cft, company_id, context=None):
+    def onChangePoCft(self, cr, uid, id, po_cft, company_id, procurement_request=False, context=None):
         '''
         if po_cft == 'direct', add a domain on supplier
         '''
         domain = {}
         if po_cft == 'dpo':
-            domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
+            if not procurement_request:
+                domain.update({'supplier': [('id', '!=', company_id), ('partner_type', 'in', ('external', 'esc'))]})
+            else:
+                return {'warning': {'title': 'Warning',
+                                    'message': 'You cannot source an Internal request line with a Direct Purchase Order. Use a standard Purchase order instead'},
+                        'value': {'po_cft': 'po'}}
     
         return {'domain': domain}
     

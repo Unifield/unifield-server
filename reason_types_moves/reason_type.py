@@ -491,11 +491,25 @@ class stock_location(osv.osv):
                     loc_ids.append(output_loc_id)
                     res.append(('id', 'in', loc_ids))
                 elif arg[2] == 'src':
-                    output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
-                    loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', output_loc_id)])
+                    warehouse_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+                    output_loc_ids = []
+                    input_loc_ids = []
+                    output_ids = []
+                    input_ids = []
+                    for w in self.pool.get('stock.warehouse').browse(cr, uid, warehouse_ids, context=context):
+                        output_ids.append(w.lot_output_id.id)
+                        input_ids.append(w.lot_input_id.id)
+                        
+                    for loc_id in output_ids:
+                        output_loc_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', loc_id)], context=context))
+                    for loc_id in input_ids:
+                        input_loc_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', loc_id)], context=context))
+                    
                     res.append(('quarantine_location', '=', False))
                     res.append(('usage', '=', 'internal'))
-                    res.append(('id', 'not in', loc_ids))
+                    res.append(('cross_docking_location_ok', '=', False))
+                    res.append(('id', 'not in', output_loc_ids))
+                    res.append(('id', 'not in', input_loc_ids))
                     
         return res
                     

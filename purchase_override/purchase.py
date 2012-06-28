@@ -1117,7 +1117,10 @@ class purchase_order_line(osv.osv):
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
         
-        if context and context.get('purchase_id') and state == 'draft':
+        if product and not uom:
+            uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
+        
+        if context and context.get('purchase_id') and state == 'draft' and product:    
             domain = [('product_id', '=', product), 
                       ('product_uom', '=', uom), 
                       ('order_id', '=', context.get('purchase_id'))]
@@ -1140,13 +1143,14 @@ class purchase_order_line(osv.osv):
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
+        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
+            info_prices = []
             sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
                                                      ('product_id', '=', tmpl_id)], 
-                                                     order='sequence asc', limit=1, context=context)
+                                                     order='sequence asc', context=context)
             domain = [('uom_id', '=', uom),
                       ('currency_id', '=', currency_id),
                       '|', ('valid_from', '<=', date_order),
@@ -1157,8 +1161,9 @@ class purchase_order_line(osv.osv):
             if sequence_ids:
                 min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
                 domain.append(('suppinfo_id.sequence', '=', min_seq))
+                domain.append(('suppinfo_id', 'in', sequence_ids))
         
-            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='min_quantity asc, id desc', limit=1, context=context)
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
@@ -1194,7 +1199,10 @@ class purchase_order_line(osv.osv):
         
         return res
 
-    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, change_price_ok, state, old_price_unit, context=None):
+    def price_unit_change(self, cr, uid, ids, fake_id, price_unit, product_id, 
+                          product_uom, product_qty, pricelist, partner_id, date_order, 
+                          change_price_ok, state, old_price_unit, 
+                          nomen_manda_0=False, comment=False, context=None):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
@@ -1202,6 +1210,7 @@ class purchase_order_line(osv.osv):
 
         if context is None:
             context = {}
+            
         if not product_id or not product_uom or not product_qty:
             return res
         

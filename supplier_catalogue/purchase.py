@@ -48,10 +48,11 @@ class purchase_order_line(osv.osv):
         
         currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist, context=context).currency_id.id
         
+        info_prices = []
         sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                     ('product_id', '=', product_id.product_tmpl_id.id)], 
-                                                     order='sequence asc', limit=1, context=context)
-            
+                                                         ('product_id', '=', product_id.product_tmpl_id.id)], 
+                                                         order='sequence asc', context=context)
+                
         domain = [('min_quantity', '<=', product_qty),
                   ('uom_id', '=', product_uom_id),
                   ('currency_id', '=', currency_id),
@@ -63,8 +64,9 @@ class purchase_order_line(osv.osv):
         if sequence_ids:
             min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
             domain.append(('suppinfo_id.sequence', '=', min_seq))
+            domain.append(('suppinfo_id', 'in', sequence_ids))
         
-        info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+            info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
             
         if info_prices:
 #            info = partner_price.browse(cr, uid, info_price, context=context)[0]

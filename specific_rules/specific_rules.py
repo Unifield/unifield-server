@@ -534,7 +534,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done' and move.location_id.id != move.location_dest_id.id and move.dpo_id:
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.batch_management:
                     if not move.prodlot_id and move.product_qty:
                         return False
@@ -546,7 +546,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done' and move.location_id.id != move.location_dest_id.id and move.dpo_id:
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.perishable:
                     if not move.prodlot_id and move.product_qty:
                         return False
