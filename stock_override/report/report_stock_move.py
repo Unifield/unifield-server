@@ -129,7 +129,8 @@ class report_stock_move(osv.osv):
                         al.reason_type_id as reason_type_id,
                         coalesce(al.type, 'other') as type,
                         al.stock_journal as stock_journal,
-                        sum(al.in_value - al.out_value) as value
+                        sum(al.in_value - al.out_value) as value,
+                        1 as currency_id
                     FROM (SELECT
                         CASE WHEN sp.type in ('out') THEN
                             sum(sm.product_qty * pu.factor)
