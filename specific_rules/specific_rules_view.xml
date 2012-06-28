@@ -715,7 +715,9 @@
                         <field name="expiry_date"
                         	on_change="change_expiry(expiry_date, product_id, type_check)"
                         	attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
-            			
+                      </xpath>
+                        	
+            		<xpath expr="//tree[@string='Products']//field[@name='product_uom']" position="after">
             			<field name="hidden_perishable_mandatory" invisible="True" />
             			<field name="hidden_batch_management_mandatory" invisible="True" />
             			<field name="type_check" invisible="True" />
