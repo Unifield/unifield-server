@@ -95,7 +95,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id, 'destination_id': destination_id})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                    del common_vals['cost_center_id', 'destination_id']
+                    del common_vals['cost_center_id']
+                    del common_vals['destination_id']
                     if f1_id:
                         common_vals.update({'analytic_id': f1_id,})
                         self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
@@ -220,22 +221,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ('cost_center_id', '=', line.cost_center_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            cc_old_lines = ana_line_obj.search(cr, uid, [
-                ('account_id', '=', line.cost_center_id_first_value.id),
-                ('move_id', '=', all_lines[line.id])
-                ])
-            ana_line_obj.reverse(cr, uid, cc_old_lines+fp_old_lines)
+            ana_line_obj.reverse(cr, uid, fp_old_lines)
             # create new lines
-            ana_line_obj.copy(cr, uid, cc_old_lines[0], {'date': current_date, 'source_date': line.date, 'account_id': line.cost_center_id.id})
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id})
             # update old ana lines
-            ana_line_obj.write(cr, uid, fp_old_lines+cc_old_lines, {'is_reallocated': True})
+            ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
         for line in cc_account_change:
             # call correct_account with a new arg: new_distrib
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
                 corrected_distrib={
-                    # TODO: ?? source date ??
                     'cost_center_lines': [(0, 0, {
                             'percentage': 100, 
                             'analytic_id': line.cost_center_id.id,
