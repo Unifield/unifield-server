@@ -56,12 +56,23 @@ class so_po_common(osv.osv_memory):
             return ir_data.res_id
         return False
 
+    def get_original_po_id(self, cr, uid, po_ref, context):
+        # Get the Id of the original PO to update these info back 
+        if not po_ref:
+            return False
+        po_split = po_ref.split('.')
+        if len(po_split) != 2:
+            return False
+
+        po_name = po_split[1]
+        return self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
+
     def get_lines(self, cr, uid, line_values, context=None):
         line_result = []
+        
         for line in line_values.order_line:
                 
-            values = {'name' : line.product_id and line.product_id.name or False,
-                      'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), # PLEASE Use the get_record_id!!!!!
+            values = {'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), # PLEASE Use the get_record_id!!!!!
                       #'analytic_distribution_id' : self.ppol.dsdasas.copy(analytic_distrib.id),
                       'comment' : line.comment,
                       'have_analytic_distribution_from_header' : line.have_analytic_distribution_from_header,
@@ -71,11 +82,17 @@ class so_po_common(osv.osv_memory):
                       'price_unit' : line.price_unit}
 
             line_dict = line.to_dict()
+            
+            if line.product_id:
+                values['name'] = line.product_id.name
+            else:
+                values['name'] = line.comment
+                
             if 'product_uom_qty' in line_dict:
-                values['product_uom_qty'] = line.product_uom_qty,
+                values['product_uom_qty'] = line.product_uom_qty
 
             if 'product_qty' in line_dict:
-                values['product_qty'] = line.product_qty,
+                values['product_qty'] = line.product_qty
             
             if 'date_planned' in line_dict:
                 values['date_planned'] = line.date_planned 

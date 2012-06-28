@@ -65,6 +65,13 @@ class purchase_order_sync(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+
+        # get the PO id        
+        po_ids = so_po_common.get_original_po_id(cr, uid, client_order_ref, context, entry)
+        if not po_ids:
+            print "The original PO does not exist"
+            return False
+        
         lines = so_po_common.get_lines(cr, uid, so_info, context)
         
         #default = self.default_get(cr, uid, ['name'], context=context)
@@ -85,27 +92,15 @@ class purchase_order_sync(osv.osv):
                                         'order_line' : lines}
 
                                         #'analytic_distribution_id' : self.ppol.dsdasas.copy(analytic_distrib.id),
+                                        
         rec_id = so_po_common.get_record_id(cr, uid, context, so_info.analytic_distribution_id)
         if rec_id:
             data['analytic_distribution_id'] = rec_id 
         
-        # Get the Id of the original PO to update these info back 
-        po_ref = so_info.client_order_ref
-        if not po_ref:
-            return False
-        po_split = po_ref.split('.')
-        if len(po_split) != 2:
-            return False
-
-        po_name = po_split[1]
-        ids = self.search(cr, uid, [('name', '=', po_name)], context=context)
-        if not ids:
-            return False
-        
         default = {}
         default.update(data)
         
-        res_id = self.write(cr, uid, ids, default , context=context)
+        res_id = self.write(cr, uid, po_ids, default , context=context)
         return res_id
         
     def confirm_po(self, cr, uid, source, so_info, context=None):
