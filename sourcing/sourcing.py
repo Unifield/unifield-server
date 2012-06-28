@@ -596,12 +596,11 @@ class sale_order(osv.osv):
         - allow to customize the execution condition
         '''
         line = kwargs['line']
+        result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         
-        if line.type == 'make_to_stock' and line.order_id.procurement_request:
-            return False
-
-        return True
-    
+        # if make_to_stock and procurement_request, no procurement is created
+        return result and not(line.type == 'make_to_stock' and line.order_id.procurement_request)
+        
     def order_confirm_method(self, cr, uid, ids, context=None):
         '''
         wrapper for confirmation wizard

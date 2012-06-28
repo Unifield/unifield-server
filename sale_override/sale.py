@@ -477,7 +477,19 @@ class sale_order(osv.osv):
         
         result = result and not line.order_id.procurement_request
         return result
-
+    
+    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to customize the execution condition
+        '''
+        line = kwargs['line']
+        result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
+        
+        # for new Fo split logic, we create procurement order in action_ship_create only for IR
+        return result and line.order_id.procurement_request
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
