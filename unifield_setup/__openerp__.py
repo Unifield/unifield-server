@@ -24,6 +24,7 @@
     "version": "1.0",
     "depends": [
                 "base",
+                "base_setup",
                 "product",
                 "product_attributes",
                 "base_setup",
