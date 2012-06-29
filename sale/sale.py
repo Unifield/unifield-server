@@ -737,6 +737,7 @@ class sale_order(osv.osv):
         picking_id = False
         move_obj = self.pool.get('stock.move')
         proc_obj = self.pool.get('procurement.order')
+        pol_obj = self.pool.get('purchase.order.line')
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         for order in self.browse(cr, uid, ids, context=context):
             proc_ids = []
@@ -793,8 +794,18 @@ class sale_order(osv.osv):
                     # hook for stock move data modification
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
-
-                if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line,):
+                    # we update the procurement and the purchase orderS if we are treating a Fo which is not shipping_exception
+                    # Po is only treated if line is make_to_stock
+                    # IN nor OUT are not yet (or just) created, we theoretically wont have problem with backorders and co
+                    if order.state != 'shipping_except' and not order.procurement_request:
+                        # corresponding procurement order
+                        proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
+                        # corresponding purchase order, if it exists (make_to_stock)
+                        if line.type == 'make_to_stock':
+                            po_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
+                            pol_obj.write(cr, uid, po_update_ids, {'move_dest_id': move_id}, context=context)
+                            
+                if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order):
                     proc_data = {'name': line.name,
                                  'origin': order.name,
                                  'date_planned': date_planned,
@@ -811,7 +822,7 @@ class sale_order(osv.osv):
                                  'property_ids': [(6, 0, [x.id for x in line.property_ids])],
                                  'company_id': order.company_id.id,
                                  }
-                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order,)
+                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data)
                     proc_ids.append(proc_id)
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id})
@@ -824,7 +835,8 @@ class sale_order(osv.osv):
                                         for mov in move_obj.browse(cr, uid, mov_ids):
                                             move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
                                             proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
-
+            
+            
             val = {}
 
             if self._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, picking_id=picking_id,):
