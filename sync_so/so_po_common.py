@@ -73,8 +73,10 @@ class so_po_common(osv.osv_memory):
         po_line_obj = self.pool.get('purchase.order.line')
         po_ids = False
         if so_line:
-            # get the PO id        
-            po_ids = self.get_original_po_id(cr, uid, line_values.client_order_ref, context)
+            # get the PO id
+            line_values_dict = line_values.to_dict()
+            if 'client_order_ref' in line_values_dict: 
+                po_ids = self.get_original_po_id(cr, uid, line_values.client_order_ref, context)
         
         for line in line_values.order_line:
             values = {'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), # PLEASE Use the get_record_id!!!!!
@@ -90,8 +92,6 @@ class so_po_common(osv.osv_memory):
             
             if line.product_id:
                 values['name'] = line.product_id.name
-#            else:
-#                values['name'] = line.comment
                 
             if 'product_uom_qty' in line_dict: # come from the SO
                 values['product_qty'] = line.product_uom_qty
