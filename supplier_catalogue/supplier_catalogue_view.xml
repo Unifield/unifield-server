@@ -220,7 +220,8 @@
 		<!-- Menu in Purchases / Configuration -->
 		<menuitem id="menu_supplier_catalogue"
 				  action="action_supplier_catalogue_list"
-				  parent="purchase.menu_purchase_config_purchase" />
+				  parent="account.menu_finance_payables" 
+                  sequence="1000" />
 		
 		<!-- Menu in Purchases / Configuration -->		  
 		<!-- <menuitem id="menu_supplier_catalogue_line"
