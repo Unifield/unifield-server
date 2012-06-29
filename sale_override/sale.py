@@ -486,10 +486,12 @@ class sale_order(osv.osv):
         - allow to customize the execution condition
         '''
         line = kwargs['line']
+        order = kwargs['order']
         result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         
-        # for new Fo split logic, we create procurement order in action_ship_create only for IR
-        return result and line.order_id.procurement_request
+        # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
+        # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
+        return result and (line.order_id.procurement_request or order.state == 'shipping_except')
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
