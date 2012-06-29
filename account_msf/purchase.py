@@ -22,34 +22,34 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class purchase_order(osv.osv):
-  _name = 'purchase.order'
-  _inherit = 'purchase.order'
+    _name = 'purchase.order'
+    _inherit = 'purchase.order'
 
-  def create(self, cr, uid, vals, context=None):
-    '''
-    Change invoice method for in-kind donation PO to 'order' after its creation
-    '''
-    if not context:
-        context = {}
-    res = super(purchase_order, self).create(cr, uid, vals, context)
-    if vals.get('order_type', False) and vals.get('order_type') == 'in_kind':
-      vals.update({'invoice_method': 'order'})
-    
-    return res
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Change invoice method for in-kind donation PO to 'order' after its creation
+        '''
+        if not context:
+            context = {}
+        res = super(purchase_order, self).create(cr, uid, vals, context)
+        if vals.get('order_type', False) and vals.get('order_type') == 'in_kind':
+          vals.update({'invoice_method': 'order'})
 
+        return res
 
-  def write(self, cr, uid, ids, vals, context=None):
-    """
-    Change invoice method for in-kind donation PO after a write
-    """
-    if not context:
-        context = {}
-    res = super(purchase_order, self).write(cr, uid, ids, vals, context)
-    if vals.get('order_type', False) and vals.get('order_type') == 'in_kind':
-      cr.execute("UPDATE purchase_order SET invoice_method = 'order' WHERE id in %s", (tuple(ids),))
-    return res
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Change invoice method for in-kind donation PO after a write
+        """
+        if not context:
+            context = {}
+        res = super(purchase_order, self).write(cr, uid, ids, vals, context)
+        if vals.get('order_type', False) and vals.get('order_type') == 'in_kind':
+          cr.execute("UPDATE purchase_order SET invoice_method = 'order' WHERE id in %s", (tuple(ids),))
+        return res
 
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False):
         """
@@ -60,6 +60,37 @@ class purchase_order(osv.osv):
             v = res.get('value', {})
             v.update({'invoice_method': 'order'})
             res.update({'value': v})
+        return res
+
+    def action_invoice_create(self, cr, uid, ids, *args):
+        """
+        Change some data on invoice resulting from a Donation PO
+        """
+        # Retrieve some data
+        res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
+        for po in self.browse(cr, uid, ids):
+            if po.order_type == 'in_kind':
+                if not journal_ids:
+                    raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
+                self.pool.get('account.invoice').write(cr, uid, [x.id for x in po.invoice_ids], {'journal_id': journal_ids[0]})
+        return res
+
+    def inv_line_create(self, cr, uid, account_id, order_line):
+        """
+        Change account_id regarding product
+        """
+        # Retrieve data
+        res = super(purchase_order, self).inv_line_create(cr, uid, account_id, order_line)
+        # Change account_id regarding Donation expense account in Product first, then in Product Category
+        if res and res[2]:
+            account_id = (order_line.product_id and order_line.product_id.donation_expense_account and order_line.product_id.donation_expense_account.id) \
+                or (order_line.product_id.categ_id and order_line.product_id.categ_id.donation_expense_account and order_line.product_id.categ_id.donation_expense_account.id) \
+                or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('No donation expense account defined for this PO Line: %s') % (order_line.name or '',))
+            res[2].update({'account_id': account_id,})
+        # Return result
         return res
 
 purchase_order()
