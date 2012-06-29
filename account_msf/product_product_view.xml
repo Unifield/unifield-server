@@ -1,6 +1,6 @@
 <openerp>
     <data>
-    
+
         <record id="product_normal_form_view" model="ir.ui.view">
             <field name="name">product.normal.form.inherit</field>
             <field name="model">product.product</field>
@@ -15,6 +15,21 @@
                 </page>
             </field>
         </record>
-        
+
+        <record id="view_category_property_form" model="ir.ui.view">
+            <field name="name">product.category.property.form.inherit</field>
+            <field name="model">product.category</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_category_form_view"/>
+            <field name="arch" type="xml">
+                <form position="inside">
+                    <group col="2" colspan="2">
+                        <separator string="Donation Properties" colspan="2"/>
+                        <field name="donation_expense_account"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

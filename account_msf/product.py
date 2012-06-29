@@ -34,4 +34,15 @@ class product_product(osv.osv):
     }
 
 product_product()
+
+class product_category(osv.osv):
+    _name = 'product.category'
+    _inherit = 'product.category'
+
+    _columns = {
+        'donation_expense_account': fields.many2one('account.account', "Expense Account", 
+            domain="[('user_type.code', '=', 'expense'), ('type', '!=', 'view')]"),
+    }
+
+product_category()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
