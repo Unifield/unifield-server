@@ -45,12 +45,13 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_4}:
     line_ids:
+
         - name: Transfer to a CashBox
           date: !eval time.strftime('%Y-06-10')
           account_id: account_account_transfer_0
           amount: -1000.0
           transfer_amount: 1000.0
-          transfer_journal_id: account_bank_statement_5
+          transfer_journal_id: account_journal_cash_0
 -
   I click on a button to hard post this line
 -
@@ -69,7 +70,7 @@
           account_id: account_account_transfer_0
           amount: 1000.0
           transfer_amount: 1000.0
-          transfer_journal_id: account_bank_statement_4
+          transfer_journal_id: account_journal_bank_0
 -
   I click on a button to hard post this line
 -
