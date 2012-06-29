@@ -48,7 +48,7 @@ class sale_order_sync(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
-        lines = so_po_common.get_lines(cr, uid, po_info, context)
+        lines = so_po_common.get_lines(cr, uid, po_info, False, context)
         default = self.default_get(cr, uid, ['name'], context=context)
         data = {                        'client_order_ref' : source + "." + po_info.name,
                                         'partner_id' : partner_id,
@@ -75,7 +75,7 @@ class sale_order_sync(osv.osv):
         default.update(data)
         res_id = self.create(cr, uid, default , context=context)
         return True
-    
+
     def picking_received(self, cr, uid, source, picking_info, context=None):
         if not context:
             context = {}

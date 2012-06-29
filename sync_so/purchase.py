@@ -57,6 +57,26 @@ class purchase_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         return res_id
         
+    def po_update_fo(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
+        print "PO updates FO on the state", source
+
+        po_ids = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
+        if not po_ids:
+            print "The original PO does not exist"
+            return False
+        
+        name = so_info.client_order_ref.split('.')[1]
+        ids = self.search(cr, uid, [('name', '=', name)])
+        
+        wf_service = netsvc.LocalService("workflow")
+        return wf_service.trg_validate(uid, 'purchase.order', ids[0], 'purchase_confirm', cr)
+
+        default.update(data)
+        res_id = self.create(cr, uid, default , context=context)
+        return res_id        
+        
     def validated_fo_to_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
@@ -67,14 +87,12 @@ class purchase_order_sync(osv.osv):
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
 
         # get the PO id        
-        po_ids = so_po_common.get_original_po_id(cr, uid, client_order_ref, context, entry)
+        po_ids = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
         if not po_ids:
             print "The original PO does not exist"
             return False
         
-        lines = so_po_common.get_lines(cr, uid, so_info, context)
-        
-        #default = self.default_get(cr, uid, ['name'], context=context)
+        lines = so_po_common.get_lines(cr, uid, so_info, True, context)
         
         data = {                        #'partner_ref' : source + "." + so_info.name,
                                         'partner_id' : partner_id,
@@ -88,11 +106,8 @@ class purchase_order_sync(osv.osv):
                                         'transport_type' : so_info.transport_type,
                                         'ready_to_ship_date' : so_info.ready_to_ship_date,
                                         'details' : so_info.details,
-                                        
                                         'order_line' : lines}
 
-                                        #'analytic_distribution_id' : self.ppol.dsdasas.copy(analytic_distrib.id),
-                                        
         rec_id = so_po_common.get_record_id(cr, uid, context, so_info.analytic_distribution_id)
         if rec_id:
             data['analytic_distribution_id'] = rec_id 
@@ -107,10 +122,17 @@ class purchase_order_sync(osv.osv):
         if not context:
             context = {}
         name = so_info.client_order_ref.split('.')[1]
-        ids = self.search(cr, uid, [('name', '=', name)])
+        po_ids = self.search(cr, uid, [('name', '=', name)])
+        values = {}
+        values['delivery_confirmed_date'] = so_info.delivery_confirmed_date
+        
+        res_id = self.write(cr, uid, po_ids, values , context=context)
+        if not res_id:
+            print "Missing delivery confirmed date!"
+            return False
+        
         wf_service = netsvc.LocalService("workflow")
-        return wf_service.trg_validate(uid, 'purchase.order', ids[0], 'purchase_confirm', cr)
-    
+        return wf_service.trg_validate(uid, 'purchase.order', po_ids[0], 'purchase_approve', cr)
     
     def picking_send(self, cr, uid, source, picking_info, context=None):
         if not context:

@@ -67,11 +67,16 @@ class so_po_common(osv.osv_memory):
         po_name = po_split[1]
         return self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
 
-    def get_lines(self, cr, uid, line_values, context=None):
+    def get_lines(self, cr, uid, line_values, so_line=True, context=None):
         line_result = []
         
+        po_line_obj = self.pool.get('purchase.order.line')
+        po_ids = False
+        if so_line:
+            # get the PO id        
+            po_ids = self.get_original_po_id(cr, uid, line_values.client_order_ref, context)
+        
         for line in line_values.order_line:
-                
             values = {'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), # PLEASE Use the get_record_id!!!!!
                       #'analytic_distribution_id' : self.ppol.dsdasas.copy(analytic_distrib.id),
                       'comment' : line.comment,
@@ -123,8 +128,18 @@ class so_po_common(osv.osv_memory):
             rec_id = self.get_record_id(cr, uid, context, line.analytic_distribution_id)
             if rec_id:
                 values['analytic_distribution_id'] = rec_id 
+            
+            if po_ids:
+                # TEMPORARY SOLUTION!!!!! THE PROPER ONE MUST BE TO RETRIEVE THE DB_ID OF THE LINE!!!!
+                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('line_number', '=', line.line_number), ('order_id', '=', po_ids[0])], context=context)
                 
-            line_result.append((0, 0, values))
+#                ir_data = self.pool.get('ir.model.data').get_ir_record(cr, uid, line.id, context=context)
+                if line_ids:
+                    line_result.append((1, line_ids[0], values))
+                else:     
+                    line_result.append((0, 0, values))
+            else:
+                line_result.append((0, 0, values))
 
         return line_result 
     
