@@ -24,16 +24,16 @@
     'category': 'Stock',
     'author': 'MSF, TeMPO Consulting, Smile',
     'developer': 'Matthieu Choplin',
-    'depends': ['base'],
+    'depends': ['base', 'msf_outgoing'],
     'description': '''
     ''',
     'init_xml': [],
     'update_xml': [
         'view/base.xml',
-        'view/picking_in_view.xml',
         'view/purchase_view.xml',
         'view/sale_view.xml',
         'view/stock_view.xml',
+        'view/delivery_mecanism_view.xml',
     ],
     'test': [
     ],
