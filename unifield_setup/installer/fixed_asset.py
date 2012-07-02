@@ -1,0 +1,71 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 
+##############################################################################
+
+from osv import osv
+from osv import fields
+
+from tools.translate import _
+
+
+class fixed_asset_setup(osv.osv_memory):
+    _name = 'fixed.asset.setup'
+    _inherit = 'res.config'
+    
+    _columns = {
+        'fixed_asset_ok': fields.boolean(string='System will manage the Fixed asset ?'),
+    }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Display the default value for fixed asset
+        '''
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        
+        res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context)
+        
+        setup_ids = setup_obj.search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+            
+        setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
+        
+        res['fixed_asset_ok'] = setup_id.fixed_asset_ok
+        
+        return res
+        
+    
+    def execute(self, cr, uid, ids, context=None):
+        '''
+        Fill the fixed_asset_ok field and active/de-activate the feature
+        '''
+        assert len(ids) == 1, "We should only get one object from the form"
+        payload = self.browse(cr, uid, ids[0], context=context)
+        
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        data_obj = self.pool.get('ir.model.data')
+        
+        setup_ids = setup_obj.search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+    
+        setup_obj.write(cr, uid, setup_ids, {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
+        
+fixed_asset_setup()

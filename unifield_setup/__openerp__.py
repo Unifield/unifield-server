@@ -53,6 +53,7 @@
         "installer/field_orders_view.xml",
         "installer/lang_setup_view.xml",
         "installer/currency_setup_view.xml",
+        "installer/fixed_asset_view.xml",
         # Security and access rights
         "security/ir.model.access.csv",
     ],

@@ -28,3 +28,4 @@ import restrictive_country
 import field_orders
 import lang_setup
 import currency_setup
+import fixed_asset

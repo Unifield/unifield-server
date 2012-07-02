@@ -34,6 +34,7 @@ class allocation_stock_setup(osv.osv_memory):
                                               ('unallocated', 'Unallocated'),
                                               ('mixed', 'Mixed')], 
                                               string='Allocated stocks', required=True),
+        'unallocated_ok': fields.selection([('yes', 'Yes'), ('no', 'No')], string='System will use unallocated moves on finance side ?', readonly=True),
         'error_ok': fields.boolean(string='Error'),
         'error_msg': fields.text(string='Error', readonly=True),
         'error_po_ok': fields.boolean(string='Error'),
@@ -72,8 +73,15 @@ Please click on the below buttons to see the different blocking documents.''',
             setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
         
         res['allocation_setup'] = setup_id.allocation_setup
+        res['unallocated_ok'] = setup_id.unallocated_ok and 'yes' or 'no'
         
         return res
+    
+    def allocation_on_change(self, cr, uid, ids, allocation_setup='allocated', context=None):
+        if allocation_setup in ('mixed', 'unallocated'):
+            return {'value': {'unallocated_ok': 'yes'}}
+        
+        return {'value': {'unallocated_ok': 'no'}}    
         
     def _get_allocated_mvmt(self, cr, uid):
         '''

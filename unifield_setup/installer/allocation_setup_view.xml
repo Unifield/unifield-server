@@ -22,7 +22,8 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="allocation_setup" />
+              	<field name="allocation_setup" on_change="allocation_on_change(allocation_setup)" />
+              	<field name="unallocated_ok" readonly="1" />
               	<group colspan="5" col="4" attrs="{'invisible': [('error_ok', '=', False)]}">
 	              	<separator colspan="4" string="Error" />
 	              	<field name="error_ok" invisible="1" />
