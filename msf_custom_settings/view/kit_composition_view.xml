@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="view_composition_kit_form" model="ir.ui.view">
+            <field name="name">composition.kit.form</field>
+            <field name="model">composition.kit</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="kit.view_composition_kit_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_duplicate_button'>1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

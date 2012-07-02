@@ -34,6 +34,9 @@
         'view/sale_view.xml',
         'view/stock_view.xml',
         'view/delivery_mecanism_view.xml',
+        'view/batch_view.xml',
+        'view/kit_composition_view.xml',
+        'view/asset_view.xml',
     ],
     'test': [
     ],
