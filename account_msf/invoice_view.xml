@@ -150,7 +150,7 @@
             <field name="name">inkind.donation.form</field>
             <field name="model">account.invoice</field>
             <field name="type">form</field>
-            <field name="priority">60</field>
+            <field name="priority">63</field>
             <field name="arch" type="xml">
                 <form string="In-kind Donation" hide_duplicate_button="1">
                     <group colspan="4" col="8">
@@ -176,7 +176,8 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Invoice">
-                            <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" groups="account.group_account_user"/>
+                            <field invisible="1" domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" groups="account.group_account_user"/>
+                            <field name="fake_account_id"/>
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="name"/>
@@ -235,7 +236,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.invoice_form"/>
-            <field name="priority">65</field>
+            <field name="priority">61</field>
             <field name="arch" type="xml">
                 <data>
                     <field name="fiscal_position" position="replace"/>

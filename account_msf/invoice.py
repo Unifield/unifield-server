@@ -89,6 +89,15 @@ class account_invoice(osv.osv):
         ]
         return dom1+[('is_debit_note', '=', False)]
 
+    def _get_fake_account_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Get account_id field content
+        """
+        res = {}
+        for i in self.browse(cr, uid, ids):
+            res[i.id] = i.account_id and i.account_id.id or False
+        return res
+
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
@@ -96,6 +105,7 @@ class account_invoice(osv.osv):
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
+        'fake_account_id': fields.function(_get_fake_account_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
     }
 
     _defaults = {
@@ -121,6 +131,16 @@ class account_invoice(osv.osv):
             if m and m.groups():
                 message = re.sub(pattern, 'In-kind Donation', message, 1)
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
+
+    def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False):
+        """
+        Update fake_account_id field regarding account_id result
+        """
+        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
+        if res.get('value', False) and 'account_id' in res['value']:
+            res['value'].update({'fake_account_id': res['value'].get('account_id')})
+        return res
 
     def _refund_cleanup_lines(self, cr, uid, lines):
         """
