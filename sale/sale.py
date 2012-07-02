@@ -709,6 +709,15 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         pass
+    
+    def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 02
+        '''
+        pass
 
     def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -737,7 +746,6 @@ class sale_order(osv.osv):
         picking_id = False
         move_obj = self.pool.get('stock.move')
         proc_obj = self.pool.get('procurement.order')
-        pol_obj = self.pool.get('purchase.order.line')
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         for order in self.browse(cr, uid, ids, context=context):
             proc_ids = []
@@ -794,17 +802,10 @@ class sale_order(osv.osv):
                     # hook for stock move data modification
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
-                    # we update the procurement and the purchase orderS if we are treating a Fo which is not shipping_exception
-                    # Po is only treated if line is make_to_stock
-                    # IN nor OUT are not yet (or just) created, we theoretically wont have problem with backorders and co
-                    if order.state != 'shipping_except' and not order.procurement_request:
-                        # corresponding procurement order
-                        proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
-                        # corresponding purchase order, if it exists (make_to_stock)
-                        if line.type == 'make_to_stock':
-                            po_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
-                            pol_obj.write(cr, uid, po_update_ids, {'move_dest_id': move_id}, context=context)
-                            
+                    
+                    # customer code execution position 02
+                    self._hook_ship_create_execute_specific_code_02(cr, uid, ids, context=context, order=order, line=line, move_id=move_id)
+                    
                 if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order):
                     proc_data = {'name': line.name,
                                  'origin': order.name,
