@@ -665,6 +665,45 @@ class sale_order(osv.osv):
             line_obj.write(cr, uid, lines, {'invoiced': 1})
         return True
     
+    def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 02
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        move_obj = self.pool.get('stock.move')
+        pol_obj = self.pool.get('purchase.order.line')
+        proc_obj = self.pool.get('procurement.order')
+        order = kwargs['order']
+        line = kwargs['line']
+        move_id = kwargs['move_id']
+        
+        # we update the procurement and the purchase orderS if we are treating a Fo which is not shipping_exception
+        # Po is only treated if line is make_to_stock
+        # IN nor OUT are not yet (or just) created, we theoretically wont have problem with backorders and co
+        if order.state != 'shipping_except' and not order.procurement_request:
+            # if the procurement already has a stock move linked to it (during action_confirm of procurement order), we cancel it
+            if line.procurement_id.move_id:
+                # dont use action_cancel actually, because there is not stock picking or related stock moves
+                move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
+                #move_obj.write(cr, uid, [line.procurement_id.move_id.id], {'state': 'cancel'}, context=context)
+            # corresponding procurement order
+            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
+            # corresponding purchase order, if it exists (make_to_order)
+            if line.type == 'make_to_order':
+                pol_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
+                pol_obj.write(cr, uid, pol_update_ids, {'move_dest_id': move_id}, context=context)
+                
+        return True
+    
     def test_lines(self, cr, uid, ids, context=None):
         '''
         return True if all lines of type 'make_to_order' are 'confirmed'
