@@ -309,6 +309,31 @@ class sale_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
+    def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
+        '''
+        receive the list of sale order ids
+        
+        return the list of purchase order ids corresponding (through procurement process)
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # procurement ids list
+        po_ids = []
+        
+        for so in self.browse(cr, uid, ids, context=context):
+            for line in so.order_line:
+                if line.procurement_id:
+                    if line.procurement_id.purchase_id:
+                        if line.procurement_id.purchase_id.id not in po_ids:
+                            po_ids.append(line.procurement_id.purchase_id.id)
+        
+        # return the purchase order ids
+        return po_ids
+    
     def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
         '''
         Hook the message displayed on sale order confirmation
