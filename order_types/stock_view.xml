@@ -169,17 +169,5 @@
             </field>
         </record>
         
-        <record id="order_types_stock_picking_in_certificate_donation" model="ir.ui.view">
-            <field name="name">order.types.stock.picking.in.certificate.donation</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form" />
-            <field name="arch" type="xml">
-                <xpath expr="/form/notebook//field[@name='type']" position="after">
-                    <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}" />
-                </xpath>
-            </field>
-        </record>
-        
     </data>
 </openerp>
