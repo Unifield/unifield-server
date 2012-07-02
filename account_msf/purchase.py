@@ -81,12 +81,12 @@ class purchase_order(osv.osv):
 
     def inv_line_create(self, cr, uid, account_id, order_line):
         """
-        Change account_id regarding product
+        Change account_id regarding product if the order line come from a In-kind Donation PO
         """
         # Retrieve data
         res = super(purchase_order, self).inv_line_create(cr, uid, account_id, order_line)
         # Change account_id regarding Donation expense account in Product first, then in Product Category
-        if res and res[2]:
+        if res and res[2] and order_line.order_id and order_line.order_id.order_type == 'in_kind':
             account_id = (order_line.product_id and order_line.product_id.donation_expense_account and order_line.product_id.donation_expense_account.id) \
                 or (order_line.product_id.categ_id and order_line.product_id.categ_id.donation_expense_account and order_line.product_id.categ_id.donation_expense_account.id) \
                 or False
