@@ -495,9 +495,8 @@ class stock_move(osv.osv):
         
         setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
         if not setup_ids:
-            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
-        else:
-            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+            setup_ids = [self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context)]
+        setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
         
         default_data.update({'allocation_setup': setup.allocation_setup})
         
