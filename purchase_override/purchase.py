@@ -549,13 +549,13 @@ stock moves which are already processed : '''
         # from all so, list all corresponding po second level
         all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
         
-        # we trigger all the corresponding sale order
+        # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)
             
-        # we trigger pos of all sale orders
+        # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
-            wf_service.trg_trigger(uid, 'purchase.order', po_id, cr)
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
         
         return True
     
