@@ -1671,7 +1671,6 @@ class orm_template(object):
             resaction = ir_values_obj.get(cr, user, 'action',
                     'client_action_multi', [(self._name, False)], False,
                     context)
-
             resrelate = ir_values_obj.get(cr, user, 'action',
                     'client_action_relate', [(self._name, False)], False,
                     context)
