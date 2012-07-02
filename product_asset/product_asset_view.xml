@@ -189,7 +189,7 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Asset Form">
-					<field name="name" />
+					<field name="name"  />
 					<field name="asset_type_id" widget="selection" />
 					<field name="product_id" domain="[('subtype', '=', 'asset')]" />
 					<field name="serial_nb" />
@@ -360,7 +360,7 @@
 
 		<!-- Asset Types in SALES>Products>Asssets -->
 		<menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
-			parent="product.prod_config_main" sequence="1" />
+			parent="product_attributes.menu_product_config" sequence="1000" />
 
 	</data>
 </openerp>

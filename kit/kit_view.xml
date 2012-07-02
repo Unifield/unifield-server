@@ -7,7 +7,7 @@
             <field name="model">composition.kit</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-            	<form string="Kit Composition">
+            	<form string="Kit Composition" hide_duplicate_button="1" >
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
 	                        <field name="composition_type" invisible="True" />

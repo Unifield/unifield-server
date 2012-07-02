@@ -503,7 +503,7 @@
             <field name="model">stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="grey:state in ('cancel')" string="Moves"  noteditable="1" hide_delete_button="1" 	hide_new_button="1">
+                <tree colors="grey:state in ('cancel')" string="Moves"  noteditable="1" hide_delete_button="1" 	hide_new_button="1" editable="top">
                         <field name="name" />
                         <field name="picking_id" string="Reference"/>
                         <field name="origin"/>

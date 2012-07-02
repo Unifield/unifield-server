@@ -50,7 +50,25 @@
                 </search>
             </field>
         </record>
-        
+
+
+        <record id="product_list_tree_view" model="ir.ui.view">
+            <field name="name">product.list.tree.view</field>
+            <field name="model">product.list</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product list">
+                    <field name="name" />
+                    <field name="ref" />
+                    <field name="type" />
+                    <field name="standard_list_ok" />
+                    <field name="order_list_print_ok" />
+                    <field name="nb_products" />
+                </tree>
+            </field>
+        </record>
+
+
         <record id="product_list_form_view" model="ir.ui.view">
             <field name="name">product.list.form.view</field>
             <field name="model">product.list</field>
