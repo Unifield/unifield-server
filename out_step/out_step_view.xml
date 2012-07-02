@@ -1,27 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-    <data>
-    
-    	<record id="view_picking_out_form" model="ir.ui.view">
-            <field name="name">stock.picking.out.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_out_form" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-					<xpath expr="//page[@string='Products']/group[@col='12']/field[@name='state']" position="replace">
-						<field name="state" invisible="True" />
-            			<field name="subtype" invisible="True" />
-            			<field name="delivered" invisible="True" />
-           				<field name="state_hidden" />
-           				<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}" />
-					</xpath>
-            	
-            	</data>
-            </field>
-		</record>
-		
+	<data>
 		
 		<record id="view_picking_out_tree" model="ir.ui.view">
             <field name="name">stock.picking.out.tree</field>

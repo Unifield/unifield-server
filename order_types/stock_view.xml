@@ -156,18 +156,5 @@
             </field>
         </record>
         
-        <record id="order_types_stock_picking_out_certificate_donation" model="ir.ui.view">
-            <field name="name">order.types.stock.picking.out.certificate.donation</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_out_form" />
-            <field name="arch" type="xml">
-                <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='action_process']" position="after">
-                    <field name="certificate_donation" invisible="1" />
-                    <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}" />
-                </xpath>
-            </field>
-        </record>
-        
     </data>
 </openerp>
