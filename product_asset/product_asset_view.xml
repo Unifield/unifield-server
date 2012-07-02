@@ -2,23 +2,6 @@
 <openerp>
 	<data>
 
-		<!-- internal moves -->
-		<record id="view_picking_form" model="ir.ui.view">
-			<field name="name">stock.picking.form</field>
-			<field name="model">stock.picking</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="stock.view_picking_form" />
-			<field name="arch" type="xml">
-				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_uom']"
-						position="after">
-						<field name="asset_id" />
-					</xpath>
-				</data>
-			</field>
-		</record>
-
-
 		<!-- incoming shipments -->
 		<record id="view_picking_in_form" model="ir.ui.view">
 			<field name="name">stock.picking.in.form</field>

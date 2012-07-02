@@ -182,23 +182,6 @@
             </field>
        </record>
        
-       <record id="view_picking_form" model="ir.ui.view">
-            <field name="name">stock.picking.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_form" />
-            <field eval="12" name="priority"/>
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
-            			<field name="order_category" />
-            		</xpath>
-            	
-            	</data>
-            </field>
-       </record>
-       
        <record id="view_picking_internal_search" model="ir.ui.view">
             <field name="name">stock.picking.internal.search</field>
             <field name="model">stock.picking</field>
