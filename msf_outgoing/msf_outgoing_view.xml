@@ -223,10 +223,10 @@
 									<field name="asset_id" />
 									<field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
 									<field name="expired_date" />
-									<field name="kc_dg" />
+									<field name="kc_dg" invisible="1" />
 									<field name="location_id" string="Src. Loc"  />
 									<field name="location_dest_id" string="Dest. Loc" />
-									<field name="virtual_available" />
+									<field name="virtual_available" invisible="1" />
 									<field name="date" string="Actual Pick Date" />
 									<field name="state"/>
 									<field name="lot_check" />
@@ -241,13 +241,12 @@
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />
                                         <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)" colspan="4" />
-										<field name="asset_id" />
                                         <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
-										<field name="product_uom" string="Unit Of Measure" colspan="4" />
+										<field name="product_uom" string="Unit Of Measure" colspan="2" />
 										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
 										<field groups="product.group_uos" name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
+										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -257,30 +256,33 @@
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
 										<field name="location_dest_id" readonly="1" on_change="location_dest_change(location_dest_id)" />
 									</group>
+									<group colspan="2" col="4" groups="base.group_extended">
+										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
+										<field name="hidden_batch_management_mandatory" invisible="True" />
+										<field name="hidden_perishable_mandatory" invisible="True" />
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
+										<field name="prodlot_id" groups="base.group_extended"
+											context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+											'search_default_real': True}"
+											domain="[('product_id','=?',product_id), ('check_type','=', True)]"
+											on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2"
+											attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
+										<field name="expired_date" />
+										<field name="asset_id" />
+										<group colspan="4" col="10">
+											<field name="lot_check" />
+											<field name="exp_check" />
+											<field name="kc_check" />
+											<field name="ssl_check" invisible="True" />
+											<field name="dg_check" />
+											<field name="np_check" />
+										</group>
+									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />
 										<field name="create_date" invisible="1"/>
 										<field name="date" string="Actual Pick Date" />
 										<field name="date_expected" string="Expected Pick Date" />
-									</group>
-									<group colspan="2" col="4" groups="base.group_extended">
-										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
-										<field name="prodlot_id" groups="base.group_extended"
-										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-										'search_default_real': True}"
-										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
-										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
-										<field name="hidden_batch_management_mandatory" invisible="True" />
-										<field name="hidden_perishable_mandatory" invisible="True" />
-										<field name="expired_date" />
-										<field name="lot_check" />
-										<field name="exp_check" />
-										<field name="kc_check" />
-										<field name="ssl_check" invisible="True" />
-										<field name="dg_check" />
-										<field name="np_check" />
 									</group>
 									<label string="" colspan="4"/>
 									<field name="state"/>
@@ -305,10 +307,10 @@
 							</group>
 						</page>
 						<page string="Additional info" groups="base.group_extended,base.group_multi_company">
-							<field name="auto_picking" groups="base.group_extended"/>
+							<field name="auto_picking" groups="base.group_extended" invisible="1"/>
 							<field name="date_done" groups="base.group_extended"/>
-							<field name="move_type" groups="base.group_extended"/>
-							<field name="type" groups="base.group_extended"/>
+							<field name="move_type" groups="base.group_extended" invisible="1"/>
+							<field name="type" groups="base.group_extended" invisible="1"/>
 							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
 						</page>
 						<page string="Notes">
@@ -527,13 +529,12 @@
 										<separator colspan="4" string="Move Information"/>
 										<field name="name" invisible="1" colspan="4" />
                                         <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
-										<field name="asset_id" />
                                         <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="4" />
 										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
 										<field groups="product.group_uos" name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
+										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -541,30 +542,33 @@
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
 										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" readonly="1" />
 									</group>
+									<group colspan="2" col="4" groups="base.group_extended">
+										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
+										<field name="hidden_batch_management_mandatory" invisible="True" />
+										<field name="hidden_perishable_mandatory" invisible="True" />
+										<field name="prodlot_id" groups="base.group_extended"
+										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+										'search_default_real': True}"
+										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
+										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2"
+										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
+										<field name="expired_date" />
+										<field name="asset_id" colspan="4" />
+										<group colspan="4" col="10">
+											<field name="lot_check" />
+											<field name="exp_check" />
+											<field name="kc_check" />
+											<field name="ssl_check" invisible="True" />
+											<field name="dg_check" />
+											<field name="np_check" />
+										</group>
+									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />
 										<field name="create_date" invisible="1"/>
 										<field name="date" string="Actual Pack Date" />
 										<field name="date_expected" string="Expected Pack Date" />
-									</group>
-									<group colspan="2" col="4" groups="base.group_extended">
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
-										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
-										<field name="prodlot_id" groups="base.group_extended"
-										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-										'search_default_real': True}"
-										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
-										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
-										<field name="hidden_batch_management_mandatory" invisible="True" />
-										<field name="hidden_perishable_mandatory" invisible="True" />
-										<field name="expired_date" />
-										<field name="lot_check" />
-										<field name="exp_check" />
-										<field name="kc_check" />
-										<field name="ssl_check" invisible="True" />
-										<field name="dg_check" />
-										<field name="np_check" />
 									</group>
 									<label string="" colspan="4"/>
 									<field name="state"/>
@@ -587,11 +591,11 @@
 							</group>
 						</page>
 						<page string="Additional info" groups="base.group_extended,base.group_multi_company">
-							<field name="auto_picking" groups="base.group_extended"/>
+							<field name="auto_picking" groups="base.group_extended" invisible="1" />
 							<field name="date_done" groups="base.group_extended"/>
-							<field name="move_type" groups="base.group_extended"/>
-							<field name="type" groups="base.group_extended"/>
-							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
+							<field name="move_type" groups="base.group_extended" invisible="1"/>
+							<field name="type" groups="base.group_extended" invisible="1"/>
+							<field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
 						</page>
 						<page string="Notes">
 							<field colspan="4" name="note" nolabel="1"/>
