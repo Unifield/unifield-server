@@ -32,7 +32,7 @@ class stock_picking(osv.osv):
         '''
         Possibility to change the message: we want to have only Picking report in the right panel
         '''
-        context.update({'picking_screen': True}, {'from_so':True})
+        context.update({'picking_screen': True, 'from_so':True})
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
 
     def button_remove_line(self, cr, uid, ids, context=None):
@@ -52,15 +52,25 @@ class stock_picking(osv.osv):
         '''
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {}
-            for f in fields:
-                result[obj.id].update({f:False,})
+            result[obj.id] = False
             if obj.sale_id :
-                result[obj.id]['sale_id'] = obj.sale_id
+                result[obj.id] = obj.sale_id.id
+        return result
+
+    def _vals_get_bool(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get boolean
+        '''
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = False
+            if obj.sale_id :
+                result[obj.id] = True
         return result
 
     _columns={
         'sale_id_hidden': fields.function(_vals_get_sale, method=True, type='many2one', relation='sale.order', string='Sale', store=False),
+        'from_so_ok': fields.function(_vals_get_bool, method=True, type='boolean', string='Comes from a Field Order', store=False),
     }
 
 stock_picking()
