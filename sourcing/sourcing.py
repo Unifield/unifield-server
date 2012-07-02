@@ -712,17 +712,18 @@ class sale_order_line(osv.osv):
             else:
                 deliveryDate = product.delay_for_supplier 
 
-        # type
+        # if type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type'):
             vals['type'] = 'make_to_stock'
+            vals['po_cft'] = False
         
-        # fill po/cft : by default, if mto -> po, if mts -> False
-        pocft = False
-        if vals['type'] == 'make_to_order':
-            pocft = 'po'
+        # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
+        if not vals['po_cft'] and vals['type'] == 'make_to_order':
+            vals['po_cft'] = 'po'
+        elif vals['type'] == 'make_to_stock':
+            vals['po_cft'] = False
         
-        # fill the default pocft and supplier
-        vals.update({'po_cft': pocft})
+        # fill the supplier
         vals.update({'supplier': sellerId})
         
         # create the new sale order line
@@ -748,7 +749,7 @@ class sale_order_line(osv.osv):
                   'sale_order_line_id': result,
                   'customer_id': customer_id,
                   'supplier': sellerId,
-                  'po_cft': pocft,
+                  'po_cft': vals['po_cft'],
                   'estimated_delivery_date': estDeliveryDate,
                   'rts': time.strftime('%Y-%m-%d'),
                   'type': vals['type'],
