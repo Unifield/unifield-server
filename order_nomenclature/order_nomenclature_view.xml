@@ -52,7 +52,7 @@
 					</xpath>
 
 					<xpath expr="//form//page[@string='Order Line']/field[@name='currency_id']" position="attributes">
-                         <attribute name="invisible">True</attribute>
+                         <attribute name="invisible">False</attribute>
 					</xpath>
 					<xpath expr="//form//page[@string='Order Line']/field[@name='currency_id']" position="after">
                         <newline />

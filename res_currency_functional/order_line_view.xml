@@ -52,13 +52,14 @@
                             <field name="amount_untaxed" sum="Untaxed amount"/>
                             <field name="amount_tax"/>
                             <field name="amount_total" sum="Total amount"/>
-                            <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
 	                        <newline/>
 	                        <field name="functional_currency_id" readonly="1"/>
 	                        <field name="functional_amount_untaxed"/>
 	                        <field name="functional_amount_tax"/>
 	                        <field name="functional_amount_total"/>
                         </group>
+                        <newline />
+                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                     </group>
                 </data>
             </field>

@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+
+
+        <record id="purchase_order_line_form_view_over" model="ir.ui.view">
+            <field name="name">purchase.order.line.form.view.over</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook//page[@string='History']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/notebook//page[@string='Invoicing']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
     
         <record id="purchase_order_type_form_view" model="ir.ui.view">
             <field name="name">purchase.order.type.form.view</field>
@@ -13,6 +29,19 @@
                     <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']/group[2]" position="replace" >
                     </xpath>
 
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//separator[@string='Purchase Control']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//field[@name='validator']" position="attributes" >
+                        <attribute name="invisible">1</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//field[@name='date_approve']" position="attributes" >
+                        <attribute name="invisible">1</attribute>
+                    </xpath>
+
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//separator[@string='Invoices']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//field[@name='invoice_ids']" position="replace" >
+                    </xpath>
 
 
                    <xpath expr="/form/notebook/page[@string='Notes']" position="before" >
@@ -22,6 +51,9 @@
                                 <field name="invoice_method"/>
                                 <field name="fiscal_position" widget="selection"/>
                             </group>
+                        	<separator string="Invoices" colspan="4"/>
+                        	<newline/>
+                        	<field name="invoice_ids" groups="base.group_extended" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
                         </page>
                    </xpath>
 
@@ -69,6 +101,14 @@
 
                     <xpath expr="/form/notebook//page[@string='Purchase Order']/group[2]" position="replace" >
                     </xpath>
+
+
+                    <xpath expr="/form/notebook//page[@string='Purchase Order']/group" position="replace" >
+                            <group col="7" colspan="4">
+                            </group>
+                    </xpath>
+
+
 
                     <xpath expr="/form/notebook" position="after" >
                         <group colspan="4" col="14">

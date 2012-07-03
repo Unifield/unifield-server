@@ -10,11 +10,12 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group//field[@name='shop_id']" position="replace">
-                        <field name="warehouse_id" />
+                        <field name="warehouse_id" required="1" />
                     </xpath>
 
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
                          <attribute name="string">Invoiced</attribute>
+                         <attribute name="attrs">{'invisible': [('intl_customer_ok', '=', False)]}</attribute>
                     </xpath>
 
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='Extra Info']" position="replace">
@@ -85,7 +86,7 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//page[@string='History']" position="replace">
-                        <page string="History" groups="base.group_extended">
+                        <page string="History" groups="base.group_extended" attrs="{'invisible': [( 'intl_customer_ok', '=', False )]}">
                             <separator colspan="4" string="Invoices"/>
                             <field colspan="4" name="invoice_ids" nolabel="1" context="{'form_view_ref':'account.invoice_form'}"/>
                         </page>
@@ -102,7 +103,8 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')], 'invisible': [('intl_customer_ok', '=', False)]  }</attribute>
+
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='user_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
