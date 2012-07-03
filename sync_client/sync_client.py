@@ -139,7 +139,7 @@ class entity(osv.osv, Thread):
         traceback.print_exc(file=tb)
         log['error'] = "Push update: " + self._handle_error(e) + tb.getvalue() 
         log['data_push'] = 'failed'
-        self.__logger.debug(log['error'])
+        self.__logger.error(log['error'])
         return log
        
     """
@@ -326,9 +326,7 @@ class entity(osv.osv, Thread):
         except Exception, e:
             log = self._log_error(log, e)
             
-        #except Exception, e:
-            #log['error'] += "Push message: " + self._handle_error(e)
-            #log['msg_push'] = 'failed'
+        
         return True
         #init => init
         

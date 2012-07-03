@@ -31,6 +31,7 @@ import sync_data
 from sync_client.ir_model_data import link_with_ir_model, dict_to_obj
 pp = pprint.PrettyPrinter(indent=4)
 import logging
+import sync_common.common
 
 from tools.safe_eval import safe_eval as eval
 
@@ -226,6 +227,8 @@ class message_received(osv.osv):
                 log = "Something go wrong with the call %s \n" % message.remote_call
                 log += tools.ustr(e)
                 self.__logger.error(log)
+                error = sync_common.common.c_log_error(e, self.__logger)
+                log += tools.ustr(error)
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True
 

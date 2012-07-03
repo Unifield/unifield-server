@@ -239,7 +239,8 @@ class sync_rule(osv.osv):
                         # Evaluate date/datetime
                         if field['ttype'] == 'date': datetime.strptime(value, '%Y-%m-%d')
                         if field['ttype'] == 'datetime': datetime.strptime(value, '%Y-%m-%d %H:%M')
-                except:
+                except Exception, e:
+                    sync_common.common.c_log_error(e, self.__logger)
                     errors.append("%s: type %s incompatible with field of type %s" % (field['name'], type(value).__name__, field['ttype']))
                     continue
                 sel[str(field['name'])] = value
@@ -362,6 +363,8 @@ class message_rule(osv.osv):
 
     _name = "sync_server.message_rule"
     _description = "Message Rule"
+    
+    __logger = logging.getLogger('sync.server')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -473,7 +476,8 @@ class message_rule(osv.osv):
             try:
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
                 if not field_ids: raise StandardError
-            except:
+            except Exception, e:
+                sync_common.common.c_log_error(e, self.__logger)
                 message.append("failed! Field %s doesn't exist\n" % rec.destination_name)
                 error = True
             else:

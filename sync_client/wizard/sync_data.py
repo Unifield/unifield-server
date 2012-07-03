@@ -32,6 +32,7 @@ import traceback
 from sync_client.ir_model_data import link_with_ir_model
 
 import logging
+import sync_common.common
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -322,10 +323,8 @@ class update_received(osv.osv):
                 rollback = True
                 
         except Exception, e:
-            tb = StringIO.StringIO()
-            traceback.print_exc(file=tb)
-            self.__logger.debug(tb.getvalue())
-            message.append(tb.getvalue())
+            error = sync_common.common.c_log_error(e, self.__logger)
+            message.append(error)
             run = False
         #TODO problem
         #6 set version and sync_date
@@ -333,7 +332,8 @@ class update_received(osv.osv):
             xml_id = values[fields.index('id')]
             self.pool.get('ir.model.data').sync(cr, uid, xml_id, version=update.version, context=context)
         except ValueError, e:
-            message.append(str(e))
+            error = sync_common.common.c_log_error(e, self.__logger)
+            message.append(error)
                 
         message_str = "\n".join(message)
         self.write(cr, uid, update.id, {'run' : run, 'log' : message_str}, context=context)
@@ -348,6 +348,7 @@ class update_received(osv.osv):
                 if not rollback:
                     cr.execute("RELEASE SAVEPOINT exec_update")
             except Exception, e:
+                error = sync_common.common.c_log_error(e, self.__logger)
                 cr.execute("ROLLBACK TO SAVEPOINT exec_update")
         return True
         

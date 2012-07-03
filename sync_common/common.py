@@ -1,5 +1,8 @@
 from osv import osv
 import tools
+import logging
+import StringIO
+import traceback
 
 MODELS_TO_IGNORE=[
         'ir.%',
@@ -313,5 +316,19 @@ class check_common(osv.osv):
         return recur_get_model(model, [])
             
 check_common()
+def _handle_error(e):
+    try:
+        msg = list(e)
+        if e[-1] != "\n": 
+            e.append("\n")
+        return "".join(e)
+    except: 
+        return str(e) + "\n"
 
+def c_log_error(self, e, logger):
+    tb = StringIO.StringIO()
+    traceback.print_exc(file=tb)
+    error =  _handle_error(e) + tb.getvalue() 
+    logger.error(error)
+    return error
 
