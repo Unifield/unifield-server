@@ -82,5 +82,14 @@ class account_move_line(osv.osv):
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
         return True
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Delete analytic lines before unlink move lines
+        """
+        # Search analytic lines
+        ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
+        self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
+        return super(account_move_line, self).unlink(cr, uid, ids)
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

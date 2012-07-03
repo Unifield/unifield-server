@@ -207,6 +207,41 @@ class purchase_order(osv.osv):
             self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_id})
         return True
 
+    def wkf_approve_order(self, cr, uid, ids, context=None):
+        """
+        Checks:
+        1/ if all purchase line could take an analytic distribution
+        2/ if a commitment voucher should be created after PO approbation
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Analytic distribution verification
+        ana_obj = self.pool.get('analytic.distribution')
+        for po in self.browse(cr, uid, ids, context=context):
+            if not po.analytic_distribution_id:
+                for line in po.order_line:
+                    if po.from_yml_test:
+                        continue
+                    if not line.analytic_distribution_id:
+                        try:
+                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                                'analytic_account_project_dummy')
+                        except ValueError:
+                            dummy_cc = 0
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
+                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        break
+        # Default behaviour
+        res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+        # Create commitments for each PO only if po is "from picking"
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind':
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        return res
+
     def _finish_commitment(self, cr, uid, ids, context=None):
         """
         Change commitment(s) to Done state from given Purchase Order.

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,13 +21,28 @@
 #
 ##############################################################################
 
-import res_company
-import res_partner
-import account_move_line
-import invoice
-import wizard
-import report
-import purchase
-import product
+from osv import osv
+from osv import fields
 
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+
+    _columns = {
+        'donation_expense_account': fields.many2one('account.account', "Expense Account", 
+            domain="[('user_type.code', '=', 'expense'), ('type', '!=', 'view')]"),
+    }
+
+product_product()
+
+class product_category(osv.osv):
+    _name = 'product.category'
+    _inherit = 'product.category'
+
+    _columns = {
+        'donation_expense_account': fields.many2one('account.account', "Expense Account", 
+            domain="[('user_type.code', '=', 'expense'), ('type', '!=', 'view')]"),
+    }
+
+product_category()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
