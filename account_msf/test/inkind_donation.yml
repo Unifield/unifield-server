@@ -1,0 +1,120 @@
+-
+  I create a partner with a donation payable account and another account
+-
+  !record {model: res.partner, id: supplier1}:
+    name: S1
+    supplier: True
+    partner_type: external
+    property_account_payable: account_account_payable_customer0
+    donation_payable_account: account_account_payable_donation0
+-
+    I create the address for S1
+-
+  !record {model: res.partner.address, id: address1}:
+    name: S1
+    partner_id: supplier1
+-
+  I create a product with a donation expense account and another account
+-
+  !record {model: product.product, id: product1}:
+    cost_method: standard
+    mes_type: fixed
+    name: P1
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier1
+    donation_expense_account: account_account_expense1
+    property_account_expense: account_account_expense0
+-
+  I create an in-kind donation PO with this partner
+-
+  !record {model: purchase.order, id: inkind0}:
+    order_type: in_kind
+    name: Inkind0
+    partner_id: supplier1
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+    location_id: stock.stock_location_stock
+    partner_address_id: address1
+    pricelist_id: purchase.list0
+-
+  We create a line for this purchase order
+-
+  !record {model: purchase.order.line, id: inkind0_l1}:
+    product_uom: product.product_uom_unit
+    product_id: product1
+    order_id: inkind0
+    price_unit: 1.50
+    product_qty: 10
+    name: P1
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+  I validate PO
+-
+  !workflow {model: purchase.order, action: purchase_confirm, ref: inkind0}
+-
+  Then I confirm the PO
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: inkind0}
+-
+  Then I check that no commitment is attached to this PO
+-
+  !python {model: account.commitment}: |
+    search_ids = self.search(cr, uid, [('purchase_id', '=', ref("inkind0"))])
+    assert len(search_ids) == False, "A commitment should not be attached to this PO!"
+-
+  I check that an invoice have been created with a inkind donation journal and right accounts (payable for partner and expense for product)
+-
+  !python {model: purchase.order}: |
+    for po in self.browse(cr, uid, [ref("inkind0")]):
+        assert po.invoice_ids != False, "No invoice for this PO!"
+        for inv in po.invoice_ids:
+            assert inv.journal_id.type == 'inkind', "Invoice is not on a In-kind donation journal!"
+            assert inv.account_id.id == po.partner_id.donation_payable_account.id, "No donation payable account given for this invoice!"
+            for line in inv.invoice_line:
+                assert line.account_id.id == ref("account_account_expense1"), "Account on Invoice line is not a donation expense account!"
+-
+  I open the invoice and verify that analytic lines have been created
+-
+  !python {model: account.invoice}: |
+    for inv in self.browse(cr, uid, self.search(cr, uid, [('is_inkind_donation', '=', True)])):
+        import netsvc
+        wf_service = netsvc.LocalService("workflow")
+        # Add a distribution on invoice
+        self.write(cr, uid, [inv.id], {'from_yml_test': False, 'analytic_distribution_id': ref("analytic_distrib1")})
+        # Validate invoice
+        wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
+        # Search analytic lines
+        search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('ref', '=', "Inkind0")])
+        assert len(search_ids) == 2, "Bad generation of analytic lines!"
+-
+  Then I cancel invoice and check that analytic lines have been reversed
+-
+  !python {model: account.invoice}: |
+    for inv in self.browse(cr, uid, self.search(cr, uid, [('is_inkind_donation', '=', True)])):
+        import netsvc
+        wf_service = netsvc.LocalService("workflow")
+        # Fetch some infos
+        move_id = inv.move_id.id
+        move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', move_id)])
+        # Cancel invoice
+        wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_cancel', cr)
+        # Check that 4 analytic lines exists for this invoice
+        reversed_ids = self.pool.get('account.analytic.line').search(cr, uid, [('is_reversal', '=', True), ('amount', '=', 15.0)])
+        assert len(reversed_ids) == 2, "Invoice have not been reversed"

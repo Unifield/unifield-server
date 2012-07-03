@@ -428,6 +428,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                         if ml.id != first_line_id:
                             to_reverse.append(ml.id)
             # Browse all move lines and change information
+            new_ml_ids = []
             for ml in self.browse(cr, uid, to_reverse, context=context):
                 amt = -1 * ml.amount_currency
                 name = self.join_without_redundancy(ml.name, 'REV')
@@ -461,8 +462,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 # Only add line ID that appear in IDS (success move lines)
                 if ml.id in ids:
                     success_move_line_ids.append(ml.id)
+                new_ml_ids.append(new_line_id)
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
+            # Update analytic lines data (reversal: True)
+            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', new_ml_ids)])
+            self.pool.get('account.analytic.line').write(cr, uid, ana_ids, {'is_reversal': True})
+            # Save successful new move_id post
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
 

@@ -153,9 +153,9 @@ class purchase_order(osv.osv):
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
             
         if vals.get('order_type'):
-            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list']:
+            elif vals.get('order_type') in ['direct', 'purchase_list', 'in_kind']:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
@@ -180,9 +180,9 @@ class purchase_order(osv.osv):
         if data_id:
             local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
         
-        if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+        if order_type in ['donation_exp', 'donation_st', 'loan']:
             v['invoice_method'] = 'manual'
-        elif order_type in ['direct', 'purchase_list']:
+        elif order_type in ['direct', 'purchase_list', 'in_kind']:
             v['invoice_method'] = 'order'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
@@ -634,9 +634,9 @@ stock moves which are already processed : '''
             vals['from_yml_test'] = True
             
         if vals.get('order_type'):
-            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list']:
+            elif vals.get('order_type') in ['direct', 'purchase_list', 'in_kind']:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})

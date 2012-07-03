@@ -292,7 +292,7 @@ class account_invoice(osv.osv):
                 tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id])
                 # If success change invoice to cancel and detach move_id
                 if tmp_res:
-                    self.write(cr, uid, [move_id], {'state': 'cancel', 'move_id':False})
+                    self.write(cr, uid, [i.id], {'state': 'cancel', 'move_id':False})
                 continue
             to_cancel.append(i.id)
         return super(account_invoice, self).action_cancel(cr, uid, to_cancel, args)

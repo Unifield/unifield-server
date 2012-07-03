@@ -44,6 +44,7 @@
     "test": [
         'test/accounting_data.yml',
         'test/intersection_flow.yml',
+        'test/inkind_donation.yml',
     ],
     "installable": True,
     "active": False
