@@ -36,7 +36,6 @@
         'view/delivery_mecanism_view.xml',
         'view/batch_view.xml',
         'view/kit_composition_view.xml',
-        'view/asset_view.xml',
         'view/consumption_calculation_view.xml',
         'view/delivery_order_view.xml',
         'view/physical_inventories_view.xml',
