@@ -12,12 +12,12 @@
                     <xpath expr="/tree" position="attributes">
                         <attribute name="colors">green:in_product==True</attribute>
                     </xpath>
-	                <xpath expr="/tree/field[@name='ref']" position="after">
-	                    <field name="partner_type" />
-	                    <field name="in_product" invisible="1" />
-	                    <field name="min_qty" invisible="not context.get('choose_supplier')" />
-	                    <field name="delay" invisible="not context.get('choose_supplier')" />
-	                </xpath>
+                    <xpath expr="/tree/field[@name='ref']" position="after">
+                        <field name="partner_type" />
+                        <field name="in_product" invisible="1" />
+                        <field name="min_qty" invisible="not context.get('choose_supplier')" />
+                        <field name="delay" invisible="not context.get('choose_supplier')" />
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -55,6 +55,7 @@
                         <filter string="Inter-section" name="inter-section" icon="gtk-refresh" domain="[('partner_type','=','section')]" help="Inter-section Partners"/>
                         <filter string="External" name="external" icon="gtk-quit" domain="[('partner_type','=','external')]" help="External Partners"/>
                         <filter string="ESC" name="esc" icon="gtk-ok" domain="[('partner_type','=','esc')]" help="ESC Partners"/>
+                        <filter string="Intermission" name="intermission" icon="gtk-ok" domain="[('partner_type','=','intermission')]" help="Intermission Partners"/>
                         <separator orientation="vertical" />
                         <newline />
                     </xpath>
