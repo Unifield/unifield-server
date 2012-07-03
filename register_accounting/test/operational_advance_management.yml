@@ -101,6 +101,7 @@
     account_id: account_account_advance0
     amount: -500.0
     date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-%d')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -232,6 +233,7 @@
     account_id: account_account_advance0
     amount: -500.0
     date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-%d')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0

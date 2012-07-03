@@ -181,6 +181,7 @@
     account_id: test_expense
     currency_id: base.CHF
     date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    document_date: !eval "'%s-03-12' %(datetime.now().year+1)"
     debit_currency: 4242.0
     analytic_distribution_id: distribution_test
 -
@@ -193,15 +194,14 @@
     account_id: test_expense
     currency_id: base.CHF
     date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    document_date: !eval "'%s-03-12' %(datetime.now().year+1)"
     debit_currency: 12500.0
     analytic_distribution_id: distribution_test_2
-      
 -
   Analytic lines are created from it
 -
   !python {model: account.move.line}: |
     self.create_analytic_lines(cr, uid, [ref("move_line_test"), ref("move_line_test_2")], context={})
-
 -
   Create a donor (almost empty)
 -
@@ -240,8 +240,8 @@
                "currency_table_id": None}
     contract = self.pool.get('financing.contract.contract').browse(cr, uid, ref("contract1"), context=context)
     assert len(contract.actual_line_ids) == 1, ("No reporting line!")
-    assert contract.actual_line_ids[0].allocated_real == 2121, ("Allocation is not what is expected!")
-    assert contract.actual_line_ids[0].project_real == 12121, ("Project is not what is expected!")
+    assert contract.actual_line_ids[0].allocated_real == 2121, ("Allocation is not what is expected! %s" % contract.actual_line_ids[0].allocated_real)
+    assert contract.actual_line_ids[0].project_real == 12121, ("Project is not what is expected! %s" % contract.actual_line_ids[0].project_real)
 -
   Assert that total retrieved for funded is 212100 EUR
 -
@@ -251,8 +251,8 @@
                "currency_table_id": None}
     contract = self.pool.get('financing.contract.contract').browse(cr, uid, ref("contract1"), context=context)
     assert len(contract.actual_line_ids) == 1, ("No reporting line!")
-    assert contract.actual_line_ids[0].allocated_real == 212100, ("Allocation is not what is expected!")
-    assert contract.actual_line_ids[0].project_real == 1212100, ("Project is not what is expected!")
+    assert contract.actual_line_ids[0].allocated_real == 212100, ("Allocation is not what is expected! %s" % contract.actual_line_ids[0].allocated_real)
+    assert contract.actual_line_ids[0].project_real == 1212100, ("Project is not what is expected! %s" % contract.actual_line_ids[0].project_real)
 -
   Create a currency table
 -
@@ -278,5 +278,5 @@
                "currency_table_id": ref("test_table")}
     contract = self.pool.get('financing.contract.contract').browse(cr, uid, ref("contract1"), context=context)
     assert len(contract.actual_line_ids) == 1, ("No reporting line!")
-    assert contract.actual_line_ids[0].allocated_real == 21210, ("Allocation is not what is expected!")
-    assert contract.actual_line_ids[0].project_real == 121210, ("Project is not what is expected!")
+    assert contract.actual_line_ids[0].allocated_real == 21210, ("Allocation is not what is expected! %s" % contract.actual_line_ids[0].allocated_real)
+    assert contract.actual_line_ids[0].project_real == 121210, ("Project is not what is expected! %s" % contract.actual_line_ids[0].project_real)

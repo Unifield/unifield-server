@@ -15,6 +15,7 @@
             <field name="arch" type="xml">
                 <tree string="Note" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="date_invoice"/>
+                    <field name="document_date"/>
                     <field name="number"/>
                     <field name="partner_id"/>
                     <field name="name"/>
@@ -47,10 +48,7 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
                         <newline/>
                         <field name="date_invoice"/>
-                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection"/>
-                        <group colspan="2" col="1" groups="account.group_account_user">
-                            <label align="0.0" string="(keep empty to use the current period)"/>
-                        </group>
+                        <field name="document_date"/>
                     </group>
                     <group colspan="4" col="8">
                         <button name="button_debit_note_import_invoice" string="Import invoice" states="draft" type="object" icon="gtk-save-as" colspan="2" 

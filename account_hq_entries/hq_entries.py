@@ -68,7 +68,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_credit = 0
             
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id']):
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date']):
                 account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
@@ -108,6 +108,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.get('date'),
+                    'date_maturity': line.get('date'),
+                    'document_date': line.get('document_date'),
                     'move_id': move_id,
                     'analytic_distribution_id': distrib_id,
                     'name': line.get('name', ''),
@@ -133,11 +135,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
             account_ids = self.pool.get('account.account').search(cr, uid, [('id', '=', counterpart_account_id)])
             if account_ids:
                 counterpart_vals.update({'account_id': account_ids[0],})
+            # date
+            counterpart_date = self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id)
+            # vals
             counterpart_vals.update({
                 'period_id': period_id,
                 'journal_id': journal_id,
                 'move_id': move_id,
-                'date': self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id),
+                'date': counterpart_date,
+                'date_maturity': counterpart_date,
+                'document_date': counterpart_date,
                 'name': 'HQ Entry Counterpart',
                 'currency_id': currency_id,
             })

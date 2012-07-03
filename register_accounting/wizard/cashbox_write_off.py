@@ -190,7 +190,8 @@ class cashbox_write_off(osv.osv_memory):
                             'journal_id': journal_id,
                             'period_id': period_id,
                             'currency_id': currency_id,
-                            'analytic_account_id': analytic_account_id
+                            'analytic_account_id': analytic_account_id,
+                            'document_date': date,
                         }
                         # add an amount currency if the currency is different from company currency
                         if amount and bank_credit > 0:
@@ -215,6 +216,7 @@ class cashbox_write_off(osv.osv_memory):
                             'analytic_account_id': analytic_account_id,
                             'analytic_distribution_id': distrib_id,
                             'is_write_off': True,
+                            'document_date': date,
                         }
                         # add an amount currency if the currency is different from company currency
                         if amount:

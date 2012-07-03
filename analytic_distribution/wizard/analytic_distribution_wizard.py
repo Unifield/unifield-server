@@ -635,21 +635,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id):
-                raise osv.except_osv(_('Warning'), _('No Cost Center Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
             #+ move line, commitment or commitment line
             if not wiz.fp_line_ids and (wiz.invoice_id or wiz.invoice_line_id) :
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.register_line_id:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.move_line_id:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and (wiz.commitment_id or wiz.commitment_line_id):
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.accrual_line_id:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
                 # Do nothing if there no lines for the current type
@@ -682,7 +682,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No wizard found.'))
         # If no funding pool lines, raise an error, except when we come from a purchase order or a purchase order line ('cc' state)
         if not wizard.fp_line_ids and wizard.state == 'dispatch':
-            raise osv.except_osv(_('Warning'), _('No funding pool lines done.'))
+            raise osv.except_osv(_('Warning'), _('No allocation done.'))
         # If we come from 'cc' state, no need to update cost center lines
         elif not wizard.fp_line_ids and wizard.state == 'cc':
             return True

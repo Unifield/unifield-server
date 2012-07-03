@@ -208,6 +208,7 @@ class hr_payroll_validation(osv.osv_memory):
                 'move_id': move_id,
                 'name': line.get('name', ''),
                 'date': line.get('date', ''),
+                'document_date': line.get('date', ''),
                 'reference': line.get('ref', ' '), # a backspace is mandatory for salary lines! Do not remove this backspace.
                 'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
                 'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
