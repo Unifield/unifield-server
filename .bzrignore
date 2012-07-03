@@ -9,3 +9,6 @@ sync_client/.pydevproject
 sync_client/.bzr
 sync_client/.bzrignore
 sync_client/.settings
+.project
+.pydevproject
+.settings
