@@ -122,13 +122,23 @@ class purchase_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         warehouse_obj = self.pool.get('stock.warehouse')
         value = {}
+        
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        cross_loc = False
+        if setup.allocation_setup != 'unallocated':
+            cross_loc = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+        
         service_loc = self.pool.get('stock.location').get_service_location(cr, uid)
-        cross_loc = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         if categ in ['service', 'transport']:
             value = {'location_id': service_loc, 'cross_docking_ok': False}
         elif cross_docking_ok:
             value = {'location_id': cross_loc}
-        elif location_id in (service_loc, cross_loc):
+        elif location_id == service_loc or (setup.allocation_setup != 'unallocated' and location_id == cross_loc):
             if warehouse_id:
                 value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
             else:

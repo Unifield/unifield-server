@@ -53,7 +53,8 @@ class allocation_stock_setup(osv.osv_memory):
     
     _defaults = {
         'error_msg': lambda *a: '''You have some documents which block the possibility to change the Allocated stocks configuration to Unallocated.
-These documents can be PO not done with Cross-docking checked, stock moves to/from a cross-docking or central stock location.
+These documents can be some Cross-docking purchase orders not done, stock moves to/from a cross-docking or central stock location.
+To change the Allocated stocks configuration, locations which will be inactivated should be empty.
         
 Please click on the below buttons to see the different blocking documents.''',
     }
@@ -150,12 +151,17 @@ Please click on the below buttons to see the different blocking documents.''',
         if not setup_ids:
             setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
             
-        # Get all menu ids concerned by this modification
+        # Get all locations concerned by this modification
         med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
-        un_med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_unalloc_medical')[1]
         log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_logistic')[1]
-        un_log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_unalloc_logistic')[1]
-        cross_docking_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        
+        med_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', med_loc_id), ('active', 'in', ['t', 'f'])])
+        log_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', log_loc_id), ('active', 'in', ['t', 'f'])])
+        cross_docking_loc_ids = loc_obj.search(cr, uid, [('cross_docking_location_ok', '=', True), ('active', 'in', ['t', 'f'])])
+        
+        unallocated_ids = loc_obj.search(cr, uid, [('central_location_ok', '=', True), ('active', 'in', ['t', 'f'])])
+        allocated_ids = cross_docking_loc_ids + med_loc_ids + log_loc_ids
+        all_loc_ids = unallocated_ids + allocated_ids
         
         if payload.allocation_setup == 'allocated':
             po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid, 'allocated')
@@ -180,12 +186,9 @@ Please click on the below buttons to see the different blocking documents.''',
                         'type': 'ir.actions.act_window',
                         'target': 'new',}
             # Inactive unallocated locations
-            loc_obj.write(cr, uid, [un_med_loc_id,
-                                    un_log_loc_id], {'active': False}, context=context)
+            loc_obj.write(cr, uid, unallocated_ids, {'active': False}, context=context)
             # Active allocated locations
-            loc_obj.write(cr, uid, [cross_docking_loc_id,
-                                    med_loc_id,
-                                    log_loc_id,], {'active': True}, context=context)            
+            loc_obj.write(cr, uid, allocated_ids, {'active': True}, context=context)            
         elif payload.allocation_setup == 'unallocated':
             po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid, 'unallocated')
             if po_ids or picking_cross_ids or picking_central_ids or nok_location_ids:
@@ -209,19 +212,12 @@ Please click on the below buttons to see the different blocking documents.''',
                         'type': 'ir.actions.act_window',
                         'target': 'new',}
             # Inactive allocated locations
-            loc_obj.write(cr, uid, [cross_docking_loc_id,
-                                    med_loc_id,
-                                    log_loc_id,], {'active': False}, context=context)
+            loc_obj.write(cr, uid, allocated_ids, {'active': False}, context=context)
             # Active unallocated locations
-            loc_obj.write(cr, uid, [un_med_loc_id,
-                                    un_log_loc_id], {'active': True}, context=context)
+            loc_obj.write(cr, uid, unallocated_ids, {'active': True}, context=context)
         else:
             # Active all locations
-            loc_obj.write(cr, uid, [cross_docking_loc_id,
-                                    med_loc_id,
-                                    un_med_loc_id,
-                                    log_loc_id,
-                                    un_log_loc_id], {'active': True}, context=context)
+            loc_obj.write(cr, uid, all_loc_ids, {'active': True}, context=context)
     
         setup_obj.write(cr, uid, setup_ids, {'allocation_setup': payload.allocation_setup, 
                                              'unallocated_ok': payload.allocation_setup in ['unallocated', 'mixed']}, context=context)

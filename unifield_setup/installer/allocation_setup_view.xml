@@ -33,8 +33,8 @@
 	              	<field name="error_location_ok" invisible="1" />
 	              	<field name="error_msg" attrs="{'invisible': [('error_ok', '=', False)]}" nolabel="1" colspan="4" />
 	              	<button name="go_to_po" attrs="{'invisible': [('error_po_ok', '=', False)]}" string="Display PO" type="object" />
-	              	<button name="go_to_cross" attrs="{'invisible': [('error_cross_ok', '=', False)]}" string="Display Picking" type="object" />
-	              	<button name="go_to_central" attrs="{'invisible': [('error_central_ok', '=', False)]}" string="Display Central" type="object" />
+	              	<button name="go_to_cross" attrs="{'invisible': [('error_cross_ok', '=', False)]}" string="Display Picking (Cross-docking)" type="object" />
+	              	<button name="go_to_central" attrs="{'invisible': [('error_central_ok', '=', False)]}" string="Display Picking (Central stock)" type="object" />
               		<button name="go_to_location" attrs="{'invisible': [('error_location_ok', '=', False)]}" string="Display Locations" type="object" />
               	</group>
               </group>
