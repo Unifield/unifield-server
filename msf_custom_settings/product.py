@@ -30,11 +30,12 @@ class product_product(osv.osv):
     _name = 'product.product'
     
     def copy(self, cr, uid, id, default=None, context=None):
-        product2copy = self.read(cr, uid, [id], ['default_code'])[0]
+        product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
         if default is None:
             default = {}
         copy_pattern = _("%s (copy)")
-        copydef = dict(default_code=(copy_pattern % product2copy['default_code']),
+        copydef = dict(name=(copy_pattern % product2copy['name']),
+                       default_code=False,
                        )
         copydef.update(default)
         return super(product_product, self).copy(cr, uid, id, copydef, context)
