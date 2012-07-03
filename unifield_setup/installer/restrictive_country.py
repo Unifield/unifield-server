@@ -72,6 +72,9 @@ class restrictive_country_setup(osv.osv_memory):
         if product_ids:
             raise osv.except_osv(_('Error'), _('You cannot change the restrictive countries because one or more products have a restriction on a country which is not in the new selection.'))
         
+        all_countries_ids = country_obj.search(cr, uid, [('is_restrictive', '=', True)], context=context)
+        country_obj.write(cr, uid, all_countries_ids, {'is_restrictive': False}, context=context)
+        
         country_obj.write(cr, uid, country_ids, {'is_restrictive': True}, context=context)
     
         setup_obj.write(cr, uid, setup_ids, {'restrict_country_ids': [(6,0,country_ids)]}, context=context)
