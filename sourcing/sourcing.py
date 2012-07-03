@@ -959,8 +959,15 @@ class procurement_order(osv.osv):
             customer_id = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context).order_id.partner_id.id
             values.update({'customer_id': customer_id})
             purchase_domain.append(('customer_id', '=', customer_id))
-            
-        purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+        
+        
+        # if we are updating the sale order from the corresponding on order purchase order
+        # the purchase order to merge the new line to is locked and provided in the procurement
+        if procurement.so_back_update_dest_po_id_procurement_order:
+            purchase_ids = [procurement.so_back_update_dest_po_id_procurement_order.id]
+        else:
+            # search for purchase order according to defined domain
+            purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
         
         # Set the origin of the line with the origin of the Procurement order
         if procurement.origin:
@@ -1172,7 +1179,7 @@ class product_supplierinfo(osv.osv):
         
         result = {}
         for id in ids:
-            result[id] = False
+            result[id] = []
         return result
     
     def _get_product_ids(self, cr, uid, obj, name, args, context=None):

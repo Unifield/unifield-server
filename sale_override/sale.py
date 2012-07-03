@@ -577,6 +577,27 @@ class sale_order(osv.osv):
 
         return True
     
+    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        line = kwargs['line']
+        # call to super
+        proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
+        # update proc_data for link to destination purchase order during back update of sale order
+        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id})
+        return proc_data
+    
     def action_ship_proc_create(self, cr, uid, ids, context=None):
         '''
         process logic at ship_procurement activity level
@@ -648,7 +669,7 @@ class sale_order(osv.osv):
                                  'property_ids': [(6, 0, [x.id for x in line.property_ids])],
                                  'company_id': order.company_id.id,
                                  }
-                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order,)
+                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
@@ -723,6 +744,9 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                # this field is used when the po is modified during on order process, and the so must be modified accordingly
+                # the resulting new purchase order line will be merged in specified po_id 
+                'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
                 'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                 help='* The \'Draft\' state is set when the related sales order in draft state. \
                     \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
