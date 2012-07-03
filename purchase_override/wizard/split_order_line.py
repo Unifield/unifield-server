@@ -112,7 +112,12 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # 1) the check box impact corresponding Fo is checked
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
                 #    the merge into the actual Po is forced
-                bool = split.has_corresponding_so_line_split_po_line_wizard
+                if split.has_corresponding_so_line_split_po_line_wizard and split.impact_so_split_po_line_wizard:
+                    # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
+                    
+                    # call the new procurement creation method
+                    
+                    #  
                 
                 # 2) the check box impatc corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                 #    a new line is simply created
