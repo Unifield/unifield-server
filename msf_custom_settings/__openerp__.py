@@ -46,6 +46,7 @@
         'view/uom_categories_view.xml',
         'view/units_of_measure_view.xml',
         'view/pack_types_view.xml',
+        'view/kitting_view.xml',
     ],
     'test': [
     ],
