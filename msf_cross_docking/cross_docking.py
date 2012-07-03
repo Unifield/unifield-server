@@ -142,7 +142,7 @@ class purchase_order(osv.osv):
             vals.update({'cross_docking_ok': False})
         if 'categ' in vals and vals['categ'] in ['service', 'transport']:
             vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
-        if 'cross_docking_ok' in vals and vals['cross_docking_ok']:
+        if 'cross_docking_ok' in vals and vals['cross_docking_ok']:    
             vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
@@ -165,9 +165,17 @@ class purchase_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+                
         obj_data = self.pool.get('ir.model.data')
         for purchase in self.browse(cr, uid, ids, context=context):
             if purchase.cross_docking_ok:
+                if setup.allocation_setup == 'unallocated':
+                    raise osv.except_osv(_('Error'), _('The Allocated stocks setup is set to Unallocated. In this configuration, you cannot made a Cross-docking Purchase order.'))
                 cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
                 if purchase.location_id.id != cross_docking_location:
                     raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
@@ -199,9 +207,15 @@ class procurement_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         procurement = kwargs['procurement']
         
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if len(ids):
+        if len(ids) and setup.allocation_setup != 'unallocated':
             values.update({'cross_docking_ok': True, 'location_id' : self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return values  
 

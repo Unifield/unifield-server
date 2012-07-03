@@ -83,22 +83,37 @@ Please click on the below buttons to see the different blocking documents.''',
         
         return {'value': {'unallocated_ok': 'no'}}    
         
-    def _get_allocated_mvmt(self, cr, uid):
+    def _get_allocated_mvmt(self, cr, uid, type='unallocated'):
         '''
         Search if unallocated PO and moves not done exist
         '''
+        data_obj = self.pool.get('ir.model.data')
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('cross_docking_ok', '=', True), ('state', 'not in', ['cancel', 'done'])])
         
-        cross_loc_ids = self.pool.get('stock.location').search(cr, uid, [('cross_docking_location_ok', '=', True)])
-        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']),
-                                                                '|', 
-                                                                ('location_id', 'in', cross_loc_ids),
-                                                                ('location_dest_id', 'in', cross_loc_ids)])
         picking_cross_ids = []
-        for move in self.pool.get('stock.move').browse(cr, uid, move_ids):
-            picking_cross_ids.append(move.picking_id.id)
+        if type != 'unallocated':
+            cross_loc_ids = self.pool.get('stock.location').search(cr, uid, [('cross_docking_location_ok', '=', True)])
+            move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']),
+                                                                    '|', 
+                                                                    ('location_id', 'in', cross_loc_ids),
+                                                                    ('location_dest_id', 'in', cross_loc_ids)])
             
-        central_loc_ids = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', True)])
+            move_ids.extend(self.pool.get('stock.move').search(cr, uid, [('move_cross_docking_ok', '=', True)]))
+            
+            for move in self.pool.get('stock.move').browse(cr, uid, move_ids):
+                picking_cross_ids.append(move.picking_id.id)
+                
+            picking_cross_ids.extend(self.pool.get('stock.picking').search(cr, uid, [('cross_docking_ok', '=', True)]))
+        
+        med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+        log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_logistic')[1]
+        if type != 'unallocated':    
+            med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_unalloc_medical')[1]
+            log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_unalloc_logistic')[1]
+        med_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', med_loc_id)])
+        log_loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', log_loc_id)])
+        
+        central_loc_ids = med_loc_ids + log_loc_ids
         move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']),
                                                                 '|', 
                                                                 ('location_id', 'in', central_loc_ids),
@@ -142,6 +157,27 @@ Please click on the below buttons to see the different blocking documents.''',
         cross_docking_loc_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         
         if payload.allocation_setup == 'allocated':
+            po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid, 'allocated')
+            if po_ids or picking_cross_ids or picking_central_ids or nok_location_ids:
+                self.write(cr, uid, [payload.id], {'allocation_setup': 'unallocated',
+                                                   'error_ok': True,
+                                                   'error_po_ok': po_ids and True or False,
+                                                   'error_cross_ok': picking_cross_ids and True or False,
+                                                   'error_central_ok': picking_central_ids and True or False,
+                                                   'error_location_ok': nok_location_ids and True or False,
+                                                   'error_po_ids': [(6,0,po_ids)],
+                                                   'error_sm_cross_ids': [(6,0,picking_cross_ids)],
+                                                   'error_sm_central_ids': [(6,0,picking_central_ids)],
+                                                   'error_location_ids': [(6,0,nok_location_ids)]})
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'view_allocation_stock_setup')[1]
+                return {
+                        'res_id': payload.id,
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'view_id': [view_id],
+                        'res_model': 'allocation.stock.setup',
+                        'type': 'ir.actions.act_window',
+                        'target': 'new',}
             # Inactive unallocated locations
             loc_obj.write(cr, uid, [un_med_loc_id,
                                     un_log_loc_id], {'active': False}, context=context)
@@ -150,8 +186,8 @@ Please click on the below buttons to see the different blocking documents.''',
                                     med_loc_id,
                                     log_loc_id,], {'active': True}, context=context)            
         elif payload.allocation_setup == 'unallocated':
-            po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid)
-            if po_ids or picking_cross_ids:
+            po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid, 'unallocated')
+            if po_ids or picking_cross_ids or picking_central_ids or nok_location_ids:
                 self.write(cr, uid, [payload.id], {'allocation_setup': 'unallocated',
                                                    'error_ok': True,
                                                    'error_po_ok': po_ids and True or False,
