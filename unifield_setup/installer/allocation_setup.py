@@ -203,8 +203,7 @@ Please click on the below buttons to see the different blocking documents.''',
                                                    'error_po_ids': [(6,0,po_ids)],
                                                    'error_sm_cross_ids': [(6,0,picking_cross_ids)],
                                                    'error_sm_central_ids': [(6,0,picking_central_ids)],
-                                                   'error_location_ids': [(6,0,nok_location_ids)],
-                                                   'state': 'open'})
+                                                   'error_location_ids': [(6,0,nok_location_ids)],})
                 todo_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'allocation_stock_setup_todo')[1]
                 self.pool.get('ir.actions.todo').write(cr, uid, [todo_id], {'state': 'open'})
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'view_allocation_stock_setup')[1]
