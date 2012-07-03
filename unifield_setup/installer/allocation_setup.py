@@ -91,6 +91,7 @@ Please click on the below buttons to see the different blocking documents.''',
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('cross_docking_ok', '=', True), ('state', 'not in', ['cancel', 'done'])])
         
         picking_cross_ids = []
+        cross_loc_ids = []
         if type != 'unallocated':
             cross_loc_ids = self.pool.get('stock.location').search(cr, uid, [('cross_docking_location_ok', '=', True)])
             move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']),
