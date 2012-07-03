@@ -101,6 +101,7 @@ class account_invoice(osv.osv):
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
+        'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
@@ -111,6 +112,7 @@ class account_invoice(osv.osv):
     _defaults = {
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
+        'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
     }
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
@@ -120,16 +122,12 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if self.read(cr, uid, id, ['is_debit_note']).get('is_debit_note', False) is True:
-            pattern = re.compile('^(Invoice)')
-            m = re.match(pattern, message)
-            if m and m.groups():
-                message = re.sub(pattern, 'Debit Note', message, 1)
-        if self.read(cr, uid, id, ['is_inkind_donation']).get('is_inkind_donation', False) is True:
-            pattern = re.compile('^(Invoice)')
-            m = re.match(pattern, message)
-            if m and m.groups():
-                message = re.sub(pattern, 'In-kind Donation', message, 1)
+        for el in [('is_debit_note', 'Debit Note'), ('is_inkind_donation', 'In-kind Donation'), ('is_intermission', 'Intermission Voucher')]:
+            if self.read(cr, uid, id, [el[0]]).get(el[0], False) is True:
+                pattern = re.compile('^(Invoice)')
+                m = re.match(pattern, message)
+                if m and m.groups():
+                    message = re.sub(pattern, el[1], message, 1)
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
