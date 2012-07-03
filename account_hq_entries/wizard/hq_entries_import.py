@@ -63,7 +63,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         }
         try:
             description, reference, date, document_date, account_description, third_party, booking_amount, booking_currency, \
-                cost_center, funding_pool, free1, free2 = line
+                destination, cost_center, funding_pool, free1, free2 = line
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('Unknown format.'))
         ### TO USE IF DATE HAVE some JAN or MAR or OCT instead of 01 ####
@@ -89,7 +89,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 vals.update({'document_date': dd})
             except ValueError, e:
                 raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
-        # Retrive account
+        # Retrieve account
         if account_description:
             account_data = account_description.split(' ')
             account_code = account_data and account_data[0] or False
@@ -99,6 +99,21 @@ class hq_entries_import_wizard(osv.osv_memory):
             if not account_ids:
                 raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist!') % (account_code,))
             vals.update({'account_id': account_ids[0], 'account_id_first_value': account_ids[0]})
+        else:
+            raise osv.except_osv(_('Error'), _('No account code found!'))
+        # Retrieve Destination
+        destination_id = False
+        account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
+        if account.user_type.code == 'expense':
+            # Set default destination
+            if not account.default_destination_id:
+                raise osv.except_osv(_('Warning'), _('No default Destination defined for expense account: %s') % (account.code or '',))
+            destination_id = account.default_destination_id and account.default_destination_id.id or False
+            # But use those from CSV file if given
+            if destination:
+                dest_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', destination)])
+                if dest_id:
+                    destination_id = dest_id[0]
         # Retrieve Cost Center and Funding Pool
         if cost_center:
             cc_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', cost_center)])
@@ -114,7 +129,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        vals.update({'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
+        vals.update({'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
         # Fetch description
         if description:
             vals.update({'name': description})

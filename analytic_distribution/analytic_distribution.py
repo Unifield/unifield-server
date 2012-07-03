@@ -60,7 +60,7 @@ class analytic_distribution1(osv.osv):
         """
         if context is None:
             context = {}
-        # Have an analytic distribution on another account than expense account make no sense. So their analaytic distribution is valid
+        # Have an analytic distribution on another account than expense account make no sense. So their analytic distribution is valid
         if account_id:
             account =  self.pool.get('account.account').browse(cr, uid, account_id)
             if account and account.user_type and account.user_type.code != 'expense':
@@ -77,13 +77,16 @@ class analytic_distribution1(osv.osv):
         except ValueError:
             fp_id = 0
         for fp_line in distri.funding_pool_lines:
+            account = self.pool.get('account.account').browse(cr, uid, account_id)
+            if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
+                return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue
-            if account_id not in [x.id for x in fp_line.analytic_id.account_ids]:
+            if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
                 return 'invalid'
-            if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
-                return 'invalid'
+            #if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+            #    return 'invalid'
         return 'valid'
 
 analytic_distribution1()
@@ -108,6 +111,45 @@ class distribution_line(osv.osv):
         'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
 
+    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, source_date=False, name=False, context=None):
+        '''
+        Creates an analytic lines from a distribution line and an account.move.line
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        ret = {}
+        move_line = self.pool.get('account.move.line').browse(cr, uid, move_line_id)
+        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+
+        for line in self.browse(cr, uid, ids):
+            amount_cur = (move_line.credit_currency - move_line.debit_currency) * line.percentage / 100
+            ctx = {'date': source_date or date}
+            amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+            vals = {
+                'account_id': line.analytic_id.id,
+                'amount_currency': amount_cur,
+                'amount': amount,
+                'currency_id': move_line.currency_id.id,
+                'general_account_id': move_line.account_id.id,
+                'date': date,
+                'source_date': source_date,
+                'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
+                'move_id': move_line.id,
+                'name': name or move_line.name,
+                'distrib_id': line.distribution_id.id,
+                'distrib_line_id': '%s,%s'%(self._name, line.id),
+            }
+            if self._name == 'funding.pool.distribution.line':
+                vals.update({
+                    'destination_id': line.destination_id and line.destination_id.id or False,
+                    'cost_center_id': line.cost_center_id and line.cost_center_id.id or False,
+                })
+            ret[line.id] = self.pool.get('account.analytic.line').create(cr, uid, vals)
+
+        return ret
+
+        
 distribution_line()
 
 class cost_center_distribution_line(osv.osv):
@@ -120,7 +162,8 @@ class funding_pool_distribution_line(osv.osv):
     _name = "funding.pool.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account'),
+        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account', required=True),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
     }
     
 funding_pool_distribution_line()
@@ -138,9 +181,10 @@ class free_2_distribution_line(osv.osv):
 free_2_distribution_line()
 
 class analytic_distribution(osv.osv):
+    _name = 'analytic.distribution'
     _inherit = "analytic.distribution"
 
-    def _get_lines_count(self, cr, uid, ids, name, args, context=None):
+    def _get_lines_count(self, cr, uid, ids, name=False, args=False, context=None):
         """
         Get count of each analytic distribution lines type.
         Example: with an analytic distribution with 2 cost center, 3 funding pool and 1 Free 1:
@@ -197,42 +241,32 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
         return True
 
-    def update_distribution_line_account(self, cr, uid, ids, old_account_id, account_id, context=None):
+    def update_distribution_line_account(self, cr, uid, line_ids, account_id, context=None):
         """
         Update account on distribution line
         """
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not old_account_id or not account_id:
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
+        if not account_id:
             return False
         # Prepare some values
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context=context)[0]
-        # Browse distribution
-        for distrib_id in ids:
-            for dl_name in ['cost.center.distribution.line', 'funding.pool.distribution.line', 'free.1.distribution.line', 'free.2.distribution.line']:
-                dl_obj = self.pool.get(dl_name)
-                dl_ids = dl_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('analytic_id', '=', old_account_id)], context=context)
-                for dl in dl_obj.browse(cr, uid, dl_ids, context=context):
-                    if account.category == 'OC':
-                        # Search funding pool line to update them
-                        fp_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', "=", distrib_id), 
-                            ('cost_center_id', '=', old_account_id)])
-                        if isinstance(fp_line_ids, (int, long)):
-                            fp_line_ids = [fp_line_ids]
-                        # Update funding pool line(s)
-                        self.pool.get('funding.pool.distribution.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
-                    # Update distribution line
-                    dl_obj.write(cr, uid, [dl.id], {'analytic_id': account_id,}, context=context)
-        return True
 
-    def create_funding_pool_lines(self, cr, uid, ids, context=None):
+        if account.category == 'OC':
+            vals = {'cost_center_id': account_id}
+        else:
+            vals = {'analytic_id': account_id}
+        return self.pool.get('funding.pool.distribution.line').write(cr, uid, line_ids, vals)
+
+    def create_funding_pool_lines(self, cr, uid, ids, account_id=False, context=None):
         """
         Create funding pool lines regarding cost_center_lines from analytic distribution.
         If funding_pool_lines exists, then nothing appends.
         By default, add funding_pool_lines with MSF Private Fund element (written in an OpenERP demo file).
+        For destination axis, get those from account_id default configuration (default_destination_id).
         """
         # Some verifications
         if not context:
@@ -254,7 +288,6 @@ class analytic_distribution(osv.osv):
                     'analytic_account_msf_private_funds')[1]
                 except ValueError:
                     pf_id = 0
-#                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
                 if pf_id:
                     vals = {
                         'analytic_id': pf_id,
@@ -264,6 +297,11 @@ class analytic_distribution(osv.osv):
                         'distribution_id': distrib.id or False,
                         'cost_center_id': line.analytic_id and line.analytic_id.id or False,
                     }
+                    # Search default destination
+                    if account_id:
+                        account = self.pool.get('account.account').browse(cr, uid, account_id)
+                        if account and account.user_type and account.user_type.code == 'expense':
+                            vals.update({'destination_id': account.default_destination_id and account.default_destination_id.id or False})
                     new_pf_line_id = self.pool.get('funding.pool.distribution.line').create(cr, uid, vals, context=context)
             res[distrib.id] = True
         return res
@@ -312,7 +350,7 @@ class analytic_distribution(osv.osv):
         for distrib in self.browse(cr, uid, ids, context=context):
             vals.update({'distribution_id': distrib.id,})
             # create lines
-            for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
+            for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                 for distrib_line in distrib_lines:
                     context.update({'date': source_date or date}) # for amount computing
                     anal_amount = (distrib_line.percentage * amount) / 100
@@ -321,10 +359,14 @@ class analytic_distribution(osv.osv):
                             anal_amount, round=False, context=context),
                         'amount_currency': -1 * anal_amount,
                         'account_id': distrib_line.analytic_id.id,
+                        'cost_center_id': False,
+                        'destination_id': False,
+                        'distrib_line_id': '%s,%s'%(distrib_lines._name, distrib_line.id),
                     })
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':
-                        vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                        vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False, 
+                            'destination_id': distrib_line.destination_id and distrib_line.destination_id.id or False,})
                     # create analytic line
                     al_id = self.pool.get('account.analytic.line').create(cr, uid, vals, context=context)
                     res.append(al_id)

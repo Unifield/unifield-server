@@ -132,7 +132,7 @@
                          for ll in ml.move_id.line_id:
                              if ll.account_id.user_type.code == 'expense':
                                  ana_lines = ana_obj.search(cr, uid, [('move_id', '=', ll.id)])
-                                 assert len(ana_lines) == 2, "No analytic line found for addendum line (%s)"%(len(ana_lines))
+                                 assert len(ana_lines) == 1, "No analytic line found for addendum line (%s)"%(len(ana_lines))
                                  found_ana = True
                                  for ana in ana_obj.browse(cr, uid, ana_lines):
                                      assert ana.currency_id.id == ml.functional_currency_id.id, "Addendum line: wrong ana. line currency"
@@ -168,7 +168,7 @@
                          for ll in ml.move_id.line_id:
                              if ll.account_id.user_type.code == 'expense':
                                  ana_lines = ana_obj.search(cr, uid, [('move_id', '=', ll.id)])
-                                 assert len(ana_lines) == 2, "No analytic line found for addendum line (%s)"%(len(ana_lines))
+                                 assert len(ana_lines) == 1, "No analytic line found for addendum line (%s)"%(len(ana_lines))
                                  found_ana = True
                                  for ana in ana_obj.browse(cr, uid, ana_lines):
                                      assert ana.currency_id.id == ml.functional_currency_id.id, "Addendum line: wrong ana. line currency"
@@ -204,7 +204,7 @@
                          for ll in ml.move_id.line_id:
                              if ll.account_id.user_type.code == 'expense':
                                  ana_lines = ana_obj.search(cr, uid, [('move_id', '=', ll.id)])
-                                 assert len(ana_lines) == 2, "No analytic line found for addendum line (%s)"%(len(ana_lines))
+                                 assert len(ana_lines) == 1, "No analytic line found for addendum line (%s)"%(len(ana_lines))
                                  found_ana = True
                                  for ana in ana_obj.browse(cr, uid, ana_lines):
                                      assert ana.currency_id.id == ml.functional_currency_id.id, "Addendum line: wrong ana. line currency"
