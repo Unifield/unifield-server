@@ -12,6 +12,10 @@
                     <field name="original_qty" />
                     <field name="old_line_qty" />
                     <field name="new_line_qty" on_change="line_qty_change(original_qty, new_line_qty)" />
+                    <group colspan="2" />
+                    <field name="has_corresponding_so_line_split_po_line_wizard" invisible="True" />
+                    <field name="corresponding_so_id_split_po_line_wizard" attrs="{'invisible': [('has_corresponding_so_line_split_po_line_wizard', '=', False)]}" />
+                    <field name="impact_so_split_po_line_wizard" attrs="{'invisible': [('has_corresponding_so_line_split_po_line_wizard', '=', False)]}" />
                     <separator colspan="4" string="Actions" />
                     <group>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
