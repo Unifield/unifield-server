@@ -97,7 +97,7 @@ class res_config_view(osv.osv_memory):
     _inherit = 'res.config.view'
 
     _defaults={
-        'view': lambda *a: 'extended',
+        'view': 'extended',
     }
 
 res_config_view()

@@ -2822,14 +2822,17 @@ class sale_order(osv.osv):
         
         picking_data = super(sale_order, self)._hook_ship_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']
-        # use the name according to picking ticket sequence
-        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
-        picking_data['name'] = pick_name
         picking_data['state'] = 'draft'
         if setup.delivery_process == 'simple':
             picking_data['subtype'] = 'standard'
+            # use the name according to picking ticket sequence
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
         else:
             picking_data['subtype'] = 'picking'
+            # use the name according to picking ticket sequence
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            
+        picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
         picking_data['backorder_id'] = False
         picking_data['warehouse_id'] = order.shop_id.warehouse_id.id
