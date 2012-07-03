@@ -56,7 +56,7 @@ class purchase_order(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'loan_id': False})
+        default.update({'loan_id': False, 'origin': False})
         return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
@@ -754,7 +754,8 @@ class purchase_order_merged_line(osv.osv):
     def _get_name(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
+            if line.order_line_ids:
+                res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
         return res
 
     _columns = {
