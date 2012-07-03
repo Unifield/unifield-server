@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="report_stock_lines_date_tree" model="ir.ui.view">
+            <field name="name">report.stock.lines.date.tree</field>
+            <field name="model">report.stock.lines.date</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.report_stock_lines_date_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_new_button'>1</attribute>
+                        <attribute name='hide_duplicate_button'>1</attribute>
+                        <attribute name='hide_delete_button'>1</attribute>
+                        <attribute name="noteditable">1</attribute>
+                        <attribute name="editable">top</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>
