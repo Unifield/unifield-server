@@ -45,6 +45,20 @@ class tender(osv.osv):
         default['internal_state'] = 'draft' # UF-733: Reset the internal_state
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        cannot delete tender not draft
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'draft':
+                raise osv.except_osv(_('Warning !'), _("Cannot delete Tenders not in 'draft' state."))
+        return super(tender, self).unlink(cr, uid, ids, context=context)
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         return function values
