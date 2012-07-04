@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,21 @@
 #
 ##############################################################################
 
-import account
-import invoice
-import account_voucher
-import account_move_line
-import account_analytic_line
-import account_bank_statement
-import report
+from osv import osv
 
+class account_use_model(osv.osv_memory):
+    _name = 'account.use.model'
+    _inherit = 'account.use.model'
+
+    def __hook_val_update_before_line_creation(self, cr, uid, val, context=None):
+        """
+        Add document date to val
+        """
+        if not 'document_date' in val:
+            if not 'date' in val:
+                raise osv.except_osv(_('Warning'), _('Date is missing!'))
+            val.update({'document_date': val.get('date')})
+        return val
+
+account_use_model()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

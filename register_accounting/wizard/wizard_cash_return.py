@@ -272,6 +272,7 @@ class wizard_cash_return(osv.osv_memory):
         move_line_vals = {
             'name': description,
             'date': curr_date,
+            'document_date': curr_date,
             'move_id': move_id,
             'partner_id': partner_id or False,
             'employee_id': employee_id or False,
@@ -305,6 +306,7 @@ class wizard_cash_return(osv.osv_memory):
 
         # Prepare some values
         date = move_line.date
+        document_date = move_line.date
         name = move_line.name
         amount = (move_line.credit - move_line.debit) or 0.0
         account_id = move_line.account_id.id
@@ -323,6 +325,7 @@ class wizard_cash_return(osv.osv_memory):
 
         vals = {
             'date': date,
+            'document_date': document_date,
             'name': name,
             'amount': new_amount,
             'account_id': account_id,
