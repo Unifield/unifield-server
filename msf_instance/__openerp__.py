@@ -30,7 +30,7 @@
     "init_xml" : [],
     "update_xml": [
         'msf_instance_view.xml',
-        'data/instance_data.xml',
+#        'data/instance_data.xml',
     ],
     'demo_xml': [
     ],
