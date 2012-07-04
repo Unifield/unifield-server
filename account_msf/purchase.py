@@ -68,15 +68,16 @@ class purchase_order(osv.osv):
         """
         # Retrieve some data
         res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
+        journal_inkind_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
+        
         for po in self.browse(cr, uid, ids):
             if po.order_type == 'in_kind':
-                if not journal_ids:
+                if not journal_inkind_ids:
                     raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
                 account_id = po.partner_id and po.partner_id.donation_payable_account and po.partner_id.donation_payable_account.id or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (po.partner_id.name or '',))
-                self.pool.get('account.invoice').write(cr, uid, [x.id for x in po.invoice_ids], {'journal_id': journal_ids[0], 'account_id': account_id})
+                self.pool.get('account.invoice').write(cr, uid, [x.id for x in po.invoice_ids], {'journal_id': journal_inkind_ids[0], 'account_id': account_id})
         return res
 
     def inv_line_create(self, cr, uid, account_id, order_line):

@@ -698,15 +698,15 @@ stock moves which are already processed : '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
         inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
+        intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "intermission")])
         
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
-            if order.order_type == 'in_kind':
+            elif order.order_type == 'in_kind':
                 if not inkind_journal_ids:
                     raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
-                self.pool.get('account.invoice').write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True})
-        
+                invoice_obj.write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True,})
         return invoice_id
     
     def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
