@@ -273,11 +273,12 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'tree' and context.get('is_inkind_donation', False):
+        if view_type == 'tree' and context.get('journal_type', False) == 'inkind':
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
+            name = _('Donor')
             for node in nodes:
-                node.set('string', _('Donor'))
+                node.set('string', name)
             res['arch'] = etree.tostring(doc)
         return res
 
