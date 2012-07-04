@@ -155,7 +155,7 @@ class purchase_order(osv.osv):
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list', 'in_kind']:
+            elif vals.get('order_type') in ['direct', 'purchase_list']:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
@@ -182,8 +182,11 @@ class purchase_order(osv.osv):
         
         if order_type in ['donation_exp', 'donation_st', 'loan']:
             v['invoice_method'] = 'manual'
-        elif order_type in ['direct', 'purchase_list', 'in_kind']:
+        elif order_type in ['direct', 'purchase_list']:
             v['invoice_method'] = 'order'
+            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+        elif order_type in ['in_kind']:
+            v['invoice_method'] = 'picking'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
@@ -636,7 +639,7 @@ stock moves which are already processed : '''
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list', 'in_kind']:
+            elif vals.get('order_type') in ['direct', 'purchase_list']:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
