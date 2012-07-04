@@ -271,7 +271,7 @@
                 <field name="view_type">form</field>
                 <field name="view_mode">tree,form</field>
             </record>
-            <menuitem id="donor_reporting_menu" name="Grant Management" parent="account.menu_finance"/>
+            <menuitem id="donor_reporting_menu" name="Grant Management" parent="account.menu_finance" sequence="12"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
 

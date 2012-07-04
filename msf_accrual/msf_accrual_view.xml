@@ -86,7 +86,7 @@
                 <field name="context">{'search_default_draft':1}</field>
 	        </record>
 	        
-            <menuitem action="action_msf_accrual_line_tree" id="menu_action_msf_accrual_line_tree" parent="account.menu_finance_periodical_processing"/>
+            <menuitem action="action_msf_accrual_line_tree" id="menu_action_msf_accrual_line_tree" parent="account.menu_finance_periodical_processing" sequence="1"/>
 	        
 	        
 	        

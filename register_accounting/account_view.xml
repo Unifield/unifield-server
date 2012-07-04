@@ -3,7 +3,7 @@
     <data>
 
     <!-- Change Bank & Cash menu to 'Registers' -->
-    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="4"
+    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1"
                 groups="account.group_account_user,account.group_account_manager"/>
 
     <!-- Bank Register Form => Inheritance -->
