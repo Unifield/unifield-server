@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-        
+        <record id="view_picking_ticket_form" model="ir.ui.view">
+            <field name="name">picking.ticket.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority">11</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="inside">
+                        <field name="from_so_ok" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form//button[@name='action_cancel']" position="attributes">
+                        <attribute name='attrs'>{'invisible': [('from_so_ok', '=', True)]}</attribute>
+                    </xpath>
+                
+                </data>
+            </field>
+        </record>
         
         <record id="view_picking_in_form" model="ir.ui.view">
             <field name="name">stock.picking.in.form</field>
@@ -10,7 +27,6 @@
             <field name="inherit_id" ref="delivery_mechanism.view_picking_in_form" />
             <field name="arch" type="xml">
                 <data>
-
                     <xpath expr="/form/notebook/page/group/button[@string='Cancel']" position="attributes">
                         <attribute name="confirm">Warning, you are going to Cancel!</attribute>
                     </xpath>

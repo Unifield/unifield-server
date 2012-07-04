@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class stock_picking(osv.osv):
     _inherit = 'stock.picking'
@@ -34,6 +35,30 @@ class stock_picking(osv.osv):
         '''
         context.update({'picking_screen': True, 'from_so':True})
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
+
+    def allow_cancel(self, cr, uid, ids, context=None):
+        res = super(stock_picking, self).allow_cancel(cr, uid, ids, context=context)
+        for pick in self.browse(cr, uid, ids, context=context):
+            if not pick.sale_id:
+                return res
+            else:
+                raise osv.except_osv(_('Error'), _('You cannot cancel picking because it comes from a Field Order !'))
+        return True
+
+    def _vals_get_bool(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get boolean
+        '''
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = False
+            if obj.sale_id :
+                result[obj.id] = True
+        return result
+
+    _columns={
+        'from_so_ok': fields.function(_vals_get_bool, method=True, type='boolean', string='Comes from a Field Order', store=False),
+    }
 
 stock_picking()
 
