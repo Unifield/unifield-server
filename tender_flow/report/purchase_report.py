@@ -76,14 +76,14 @@ class purchase_report(osv.osv):
         'delay':fields.float('Days to Validate', digits=(16,2), readonly=True),
         'delay_pass':fields.float('Days to Deliver', digits=(16,2), readonly=True),
         'quantity': fields.float('Quantity', readonly=True),
-        'price_total': fields.float('Total Price', readonly=True),
+        'price_total': fields.float('Subtotal', readonly=True),
         'price_average': fields.float('Average Price', readonly=True, group_operator="avg"),
         'negociation': fields.float('Purchase-Standard Price', readonly=True, group_operator="avg"),
         'price_standard': fields.float('Products Value', readonly=True, group_operator="sum"),
         'nbr': fields.integer('# of Lines', readonly=True),
         'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'), ('05','May'), ('06','June'),
                           ('07','July'), ('08','August'), ('09','September'), ('10','October'), ('11','November'), ('12','December')],'Month',readonly=True),
-        'category_id': fields.many2one('product.category', 'Category', readonly=True),
+        'category_id': fields.many2one('product.nomenclature', 'Family', readonly=True),
         'order_name': fields.char('Order Reference', size=64, required=True,
             readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
@@ -126,7 +126,7 @@ class purchase_report(osv.osv):
                     s.create_uid as user_id,
                     s.company_id as company_id,
                     l.product_id,
-                    t.categ_id as category_id,
+                    t.nomen_manda_2 as category_id,
                     s.name as order_name,
                     s.order_type as order_type,
                     s.priority as priority,
@@ -195,7 +195,7 @@ class purchase_report(osv.osv):
                     s.validator,
                     s.dest_address_id,
                     l.product_id,
-                    t.categ_id,
+                    t.nomen_manda_2,
                     s.date_order,
                     to_char(s.date_order, 'YYYY'),
                     to_char(s.date_order, 'MM'),
@@ -210,7 +210,6 @@ class purchase_report(osv.osv):
                     s.priority,
                     s.categ,
                     rcr_fr.rate
-
             )
         """)
         

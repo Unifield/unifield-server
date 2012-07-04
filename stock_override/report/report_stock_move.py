@@ -74,7 +74,7 @@ class report_stock_move(osv.osv):
         'location_dest_id': fields.many2one('stock.location', 'Dest. Location', readonly=True, select=True, help="Location where the system will stock the finished products."),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True),
         'product_qty':fields.integer('Quantity',readonly=True),
-        'categ_id': fields.many2one('product.category', 'Family', ),
+        'categ_id': fields.many2one('product.nomenclature', 'Family', ),
         'product_qty_in':fields.integer('In Qty',readonly=True),
         'product_qty_out':fields.integer('Out Qty',readonly=True),
         'value' : fields.float('Total Value', required=True),
@@ -162,7 +162,7 @@ class report_stock_move(osv.osv):
                         sm.comment as comment,
                         sm.tracking_id as tracking_id,
                         sum(sm.product_qty) as product_qty,
-                        pt.categ_id as categ_id ,
+                        pt.nomen_manda_2 as categ_id ,
                         sm.address_id as address_id,
                         sm.product_id as product_id,
                         sm.origin as origin,
@@ -185,7 +185,7 @@ class report_stock_move(osv.osv):
                         sm.id,sp.type, sm.date,sm.address_id,
                         sm.product_id,sm.state,sm.product_uom,sm.date_expected, sm.origin,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty, sm.prodlot_id, sm.comment, sm.tracking_id,
-                        sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.categ_id, sp.stock_journal_id, sm.reason_type_id)
+                        sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.nomen_manda_2, sp.stock_journal_id, sm.reason_type_id)
                     AS al
 
                     GROUP BY
