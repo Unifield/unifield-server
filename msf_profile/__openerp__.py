@@ -100,7 +100,6 @@
         "supplier_catalogue",
         "msf_cross_docking",
         "msf_processes",
-        "unifield_views",
     ],
     "update_xml": [
         "report.xml",
