@@ -75,12 +75,14 @@
             <field name="arch" type="xml">
                 <data>
 
-                    <xpath expr="/form/notebook/page/group/button[@string='Cancel']" position="attributes">
-                        <attribute name="confirm">Warning, you are going to Cancel!</attribute>
+                    <xpath expr="/form/notebook/page/group/button[@name='button_cancel']" position="replace">
+                        <button confirm="Warning, you are going to Cancel"
+                        name="enter_reason" states="assigned,confirmed,draft" string="Cancel" type="object" icon="gtk-cancel" context="{'cancel_type': 'update_out'}" />
+                        <button confirm="Warning, you are going to Cancel and Resource!"
+                        name="enter_reason" states="assigned,confirmed,draft" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" />
                     </xpath>
-                    <xpath expr="/form/notebook/page/group/button[@string='Cancel &amp; Resource']" position="attributes">
-                        <attribute name="confirm">Warning, you are going to Cancel and Resource!</attribute>
-                    </xpath>
+                    
+                    
                 </data>
             </field>
         </record>
