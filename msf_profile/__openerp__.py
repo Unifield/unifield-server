@@ -100,7 +100,7 @@
         "supplier_catalogue",
         "msf_cross_docking",
         "msf_processes",
-        "msf_custom_settings"
+        "msf_custom_settings",
     ],
     "update_xml": [
         "report.xml",
