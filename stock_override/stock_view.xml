@@ -393,8 +393,8 @@
         			<attribute name="hide_delete_button">1</attribute>
         		</xpath>
         		
-        		<xpath expr="/tree//field[@name='name']" position="attributes">
-        			<attribute name="string">Reference</attribute>
+        		<xpath expr="/tree//field[@name='picking_id']" position="attributes">
+        			<attribute name="string">Picking Ref.</attribute>
         		</xpath>
         		
         		<xpath expr="/tree//field[@name='tracking_id']" position="replace" />
@@ -420,7 +420,8 @@
                         <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
                         <filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
                         <separator orientation="vertical"/>
-                        <field name="name" string="Reference" />
+                        <field name="name" string="Name" />
+                        <field name="picking_id" string="Picking Ref." />
                         <field name="origin"/>
                         <field name="address_id" string="Partner" context="{'contact_display':'partner'}" filter_domain="[('picking_id.address_id','ilike',self)]"/>
                         <field name="product_id"/>
