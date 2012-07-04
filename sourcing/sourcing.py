@@ -639,7 +639,7 @@ class sale_order(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         
         # we confirm (validation in unifield) the sale order
-        # we set all line state to 'sourced'
+        # we set all line state to 'sourced' of the original Fo
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.order_line:
                 sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)

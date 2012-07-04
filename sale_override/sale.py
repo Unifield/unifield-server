@@ -292,9 +292,9 @@ class sale_order(osv.osv):
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
-                # copy the line to the split Fo - force the state to 'sourced'
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                 'state': 'sourced'}, context=dict(context, keepDateAndDistrib=True, keepStateFromDefaults=True))
+                # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
+                # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -693,6 +693,9 @@ class sale_order(osv.osv):
                 
             # the Fo is sourced we set the state
             self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
+            # if the line is draft (it should be the case), we set its state to 'sourced'
+            if line.state == 'draft':
+                line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
             # display message for sourced
             self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
         
