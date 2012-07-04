@@ -331,12 +331,18 @@ class real_average_consumption(osv.osv):
                 if product.id not in products:
                     batch_mandatory = product.batch_management or product.perishable
                     date_mandatory = not product.batch_management and product.perishable
-                    self.pool.get('real.average.consumption.line').create(cr, uid, {'product_id': product.id,
-                                                                                    'uom_id': product.uom_id.id,
-                                                                                    'consumed_qty': 0.00,
-                                                                                    'batch_mandatory': batch_mandatory,
-                                                                                    'date_mandatory': date_mandatory,
-                                                                                    'rac_id': report.id})
+                    values = {'product_id': product.id,
+                              'uom_id': product.uom_id.id,
+                              'consumed_qty': 0.00,
+                              'batch_mandatory': batch_mandatory,
+                              'date_mandatory': date_mandatory,
+                              'rac_id': report.id,}
+                    v = self.pool.get('real.average.consumption.line').product_onchange(cr, uid, [], product.id, report.cons_location_id.id,
+                                                                                        product.uom_id.id, False, context=context)['value']
+                    values.update(v)
+                    if batch_mandatory or date_mandatory:
+                        values.update({'remark': 'You must assign a batch number'})
+                    self.pool.get('real.average.consumption.line').create(cr, uid, values)
         
         self.write(cr, uid, ids, {'created_ok': False})    
         return {'type': 'ir.actions.act_window',
@@ -452,7 +458,7 @@ class real_average_consumption_line(osv.osv):
     }
 
     _constraints = [
-        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty'])
+        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
     ]
 
     _sql_constraints = [
@@ -460,7 +466,7 @@ class real_average_consumption_line(osv.osv):
     ]
 
 
-    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, context=None):
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, remark=False, context=None):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
@@ -471,6 +477,8 @@ class real_average_consumption_line(osv.osv):
         context.update({'location': location_id})
        
         if expiry_date and product_id:
+            if remark and remark == 'You must assign a batch number':
+                result['value']['remark'] = ''
             prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', product_id)], context=context)
@@ -484,6 +492,8 @@ class real_average_consumption_line(osv.osv):
                 # return first prodlot
                 result = self.change_prodlot(cr, uid, id, product_id, prod_ids[0], expiry_date, location_id, uom, context={})
                 result.setdefault('value',{}).update(prodlot_id=prod_ids[0])
+                if remark and remark == 'You must assign a batch number':
+                    result['value']['remark'] = ''
                 return result
                 
         else:
@@ -517,7 +527,7 @@ class real_average_consumption_line(osv.osv):
             return {'warning': warn_msg}
         return {}
 
-    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, context=None):
+    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, remark=False, context=None):
         '''
         Set the expiry date according to the prodlot
         '''
@@ -526,6 +536,8 @@ class real_average_consumption_line(osv.osv):
         res = {'value': {}}
         context.update({'location': location_id, 'uom': uom})
         if prodlot_id and not expiry_date:
+            if remark and remark == 'You must assign a batch number':
+                res['value']['remark'] = ''
             res['value'].update({'expiry_date': self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).life_date})
         elif not prodlot_id and expiry_date:
             res['value'].update({'expiry_date': False})
@@ -534,6 +546,8 @@ class real_average_consumption_line(osv.osv):
             context.update({'compute_child': False})
             product_qty = self.pool.get('product.product').browse(cr, uid, product_id, context=context).qty_available
         else:
+            if remark and remark == 'You must assign a batch number':
+                res['value']['remark'] = ''
             context.update({'location_id': location_id})
             product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_available
         res['value'].update({'product_qty': product_qty})
