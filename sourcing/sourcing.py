@@ -633,9 +633,18 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # we confirm (validation in unifield) the sale order
+            
+        # objects
         wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'sale.order', ids[0], 'order_confirm', cr)
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # we confirm (validation in unifield) the sale order
+        # we set all line state to 'sourced'
+        for obj in self.browse(cr, uid, ids, context=context):
+            for line in obj.order_line:
+                sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
+            # trigger workflow signal
+            wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
         
         return {'name':_("Field Orders"),
                 'view_mode': 'form,tree',

@@ -294,7 +294,7 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - force the state to 'sourced'
                 line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                 'state': 'sourced'}, context=dict(context, keepDateAndDistrib=True))
+                                                 'state': 'sourced'}, context=dict(context, keepDateAndDistrib=True, keepStateFromDefaults=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -306,6 +306,20 @@ class sale_order(osv.osv):
         '''
         split done function for sale order
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # get all corresponding sale order lines
+        sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        # set the lines to done
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
@@ -775,6 +789,15 @@ class sale_order_line(osv.osv):
                     'target': 'new',
                     'res_id': wiz_id,
                     'context': context}
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset link to purchase order from update of on order purchase order
+        '''
+        if not default:
+            default = {}
+        default.update({'so_back_update_dest_po_id_sale_order_line': False})
+        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
 sale_order_line()
 

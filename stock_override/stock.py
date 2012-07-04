@@ -84,6 +84,15 @@ class procurement_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
         return True
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset link to purchase order from update of on order purchase order
+        '''
+        if not default:
+            default = {}
+        default.update({'so_back_update_dest_po_id_procurement_order': False})
+        return super(procurement_order, self).copy_data(cr, uid, id, default, context=context)
+    
     _columns = {'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
