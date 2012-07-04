@@ -17,7 +17,7 @@
                         string="Cancel" 
                         type="object" 
                         colspan="2" 
-                        attrs="{'invisible': [('state', '!=', 'done')]}"
+                        attrs="{'invisible': [('state', '=', 'cancel')]}"
                         icon="gtk-cancel"/>
                     </xpath>
                 </data>

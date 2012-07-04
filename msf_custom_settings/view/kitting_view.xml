@@ -32,7 +32,7 @@
                         string="Cancel" 
                         type="object" 
                         colspan="2" 
-                        attrs="{'invisible': [('state', '!=', 'in_production')]}"
+                        attrs="{'invisible': [('state', '=', 'cancel')]}"
                         icon="gtk-cancel"/>
                     </xpath>
                 </data>
