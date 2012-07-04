@@ -11,8 +11,19 @@
                     <xpath expr="/form" position="attributes">
                         <attribute name='hide_duplicate_button'>1</attribute>
                     </xpath>
+                    <xpath expr="/form//button[@name='close_kit']" position="after" >
+                        <button 
+                        name="action_cancel"
+                        string="Cancel" 
+                        type="object" 
+                        colspan="2" 
+                        attrs="{'invisible': [('state', '!=', 'done')]}"
+                        icon="gtk-cancel"/>
+                    </xpath>
                 </data>
             </field>
         </record>
+        
+        
     </data>
 </openerp>

@@ -29,6 +29,8 @@ class kit_creation(osv.osv):
     _name = 'kit.creation'
     
     def action_cancel(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         kit = self.browse(cr, uid, ids, context=context)[0]
         move_obj = self.pool.get('stock.move')
         composition_kit = self.pool.get('composition.kit')

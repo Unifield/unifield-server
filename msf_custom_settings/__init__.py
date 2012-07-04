@@ -25,3 +25,4 @@ import stock_picking
 import consumption_calculation
 import product
 import kit_creation
+import kit
