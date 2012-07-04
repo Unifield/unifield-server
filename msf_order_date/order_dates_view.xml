@@ -37,16 +37,16 @@
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" 
-	                            	attrs="{'invisible': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <field name="transport_type"
                             	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"
-                            	attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
-                            <field name="shipment_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            	attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            <field name="ready_to_ship_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            <field name="shipment_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
                             <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
                         </group>
                     </xpath>
