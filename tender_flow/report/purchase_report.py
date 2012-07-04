@@ -26,6 +26,7 @@
 from osv import fields,osv
 import tools
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from msf_order_date import ZONE_SELECTION
 
 class purchase_report(osv.osv):
     _name = "purchase.report"
@@ -62,6 +63,7 @@ class purchase_report(osv.osv):
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', readonly=True),
         'partner_id':fields.many2one('res.partner', 'Supplier', readonly=True),
+        'partner_zone': fields.selection(ZONE_SELECTION, string='Supplier Zone', readonly=True),
         'partner_address_id':fields.many2one('res.partner.address', 'Address Contact Name', readonly=True),
         'dest_address_id':fields.many2one('res.partner.address', 'Dest. Address Contact Name',readonly=True),
         'pricelist_id':fields.many2one('product.pricelist', 'Pricelist', readonly=True),
@@ -120,6 +122,7 @@ class purchase_report(osv.osv):
                     else ccp.analytic_id
                     end) as cost_center_id,
                     s.partner_id as partner_id,
+                    part.zone as partner_zone,
                     s.create_uid as user_id,
                     s.company_id as company_id,
                     l.product_id,
@@ -166,6 +169,7 @@ class purchase_report(osv.osv):
                     left join cost_center_distribution_line cc on cc.distribution_id = d.id
                     left join product_uom u on (u.id=l.product_uom)
                     left join product_pricelist ppl on (ppl.id = s.pricelist_id)
+                    left join res_partner part on (part.id = s.partner_id)
                     left join res_currency_rate rcr_fr on rcr_fr.currency_id = ppl.currency_id 
                         AND rcr_fr.id IN (SELECT rcrd.id from res_currency_rate rcrd WHERE rcrd.currency_id = ppl.currency_id AND rcrd.name <= COALESCE(s.date_approve,NOW()) ORDER BY name desc LIMIT 1 )
                 where l.product_id is not null and s.rfq_ok = False
@@ -179,6 +183,7 @@ class purchase_report(osv.osv):
                     ccp.analytic_id,
                     ccp.percentage,
                     s.partner_id,
+                    part.zone,
                     s.location_id,
                     l.price_unit,
                     s.date_approve,

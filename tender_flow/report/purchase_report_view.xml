@@ -12,6 +12,7 @@
                     <field name="expected_date" invisible="1"/>
                     <field name="user_id" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
+                    <field name="partner_zone" invisible="1" />
                     <field name="product_id" invisible="1"/>
                     <field name="category_id" invisible="1"/>
                     <field name="product_uom" invisible="1"/>
@@ -110,6 +111,7 @@
                     <filter string="Family" icon="terp-translate" domain="[]" context="{'group_by':'category_id'}"/>
                     <separator orientation="vertical"/>
                     <filter string="Supplier" name="group_partner_id" icon="terp-personal" context="{'group_by':'partner_id'}"/>
+                    <filter string="Supplier Zone" name="group_partner_zone" icon="gtk-fullscreen" context="{'group_by':'partner_zone'}"/>
                     <filter string="Responsible" name="Responsible" icon="terp-personal" context="{'group_by':'user_id'}"/>
                     <filter string="Validated by" icon="terp-personal" context="{'group_by':'validator'}"/>
  					<separator orientation="vertical"/>
