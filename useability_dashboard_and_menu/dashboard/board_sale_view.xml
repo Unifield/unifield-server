@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    <!--This views used in board_sale module -->
-    <record id="view_sales_by_partner_graph" model="ir.ui.view">
-         <field name="name">sales.by.partner.graph</field>
-         <field name="model">sale.report</field>
-         <field name="type">graph</field>
-         <field name="arch" type="xml">
-             <graph string="Lines by Partner" type="bar">
-                 <field name="partner_id" />
-                 <field name="nbr" operator="+"/>
-             </graph>
-         </field>
-    </record>
-
-   <record id="action_lines_by_partner" model="ir.actions.act_window">
-        <field name="name">Sales per Customer in last 90 days</field>
-        <field name="res_model">sale.report</field>
-        <field name="view_type">form</field>
-        <field name="view_mode">graph,tree</field>
-        <field name="domain">[('state','=','done'),('date','&lt;=', time.strftime('%Y-%m-%d')),('date','&gt;',(datetime.date.today()-datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]</field>
-        <field name="view_id" ref="view_sales_by_partner_graph"/>
-        <field name="context">{'search_default_Customer':1}</field>
-    </record>
-    
     
         <record id="board_sales_manager_form" model="ir.ui.view">
             <field name="name">board.sales.manager.form</field>
@@ -56,9 +33,6 @@
                     </xpath>
                     <xpath expr="/form/hpaned/child1" position="inside">
                         <action name="%(procurement_request.action_procurement_request)d" string="Internal Request"/>
-                    </xpath>
-                    <xpath expr="/form/hpaned/child2" position="inside">
-                        <action name="%(action_lines_by_partner)d" string="Line per customer, in the last 90 days"/>
                     </xpath>
                 </data>
             </field>
