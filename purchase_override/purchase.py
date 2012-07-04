@@ -185,6 +185,9 @@ class purchase_order(osv.osv):
         elif order_type in ['direct', 'purchase_list', 'in_kind']:
             v['invoice_method'] = 'order'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+        elif order_type in ['in_kind']:
+            v['invoice_method'] = 'picking'
+            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
         

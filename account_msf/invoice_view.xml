@@ -131,7 +131,8 @@
             <field name="priority">19</field>
             <field name="arch" type="xml">
                 <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" hide_new_button="1">
-                    <field name="date_invoice" string="Donation certificate"/>
+                    <field name="date_invoice"/>
+                    <field name="document_date" string="Donation certificate"/>
                     <field name="number"/>
                     <field name="partner_id"/>
                     <field name="name"/>
@@ -162,11 +163,8 @@
                         <field string="Donor" name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id, is_inkind_donation)" groups="base.group_user" context="{'search_default_customer': 1}"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Address"/>
                         <newline/>
-                        <field name="date_invoice" string="Donation certificate date"/>
-                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection"/>
-                        <group colspan="2" col="1" groups="account.group_account_user">
-                            <label align="0.0" string="(keep empty to use the current period)"/>
-                        </group>
+                        <field name="date_invoice" />
+                        <field name="document_date" string="Donation certificate date"/>
                         <newline/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
@@ -299,6 +297,44 @@
             <field name="act_window_id" ref="action_debit_note"/>
         </record>
 
+        <!-- Donation search view filter -->
+        <record id="view_account_invoice_filter_donation" model="ir.ui.view">
+            <field name="name">view.account.invoice.filter.donation</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <search string="Search Donation">
+                   <group col="10" colspan="4">
+                        <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
+                        <filter name="open" icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
+                        <filter name="cancelled" icon="terp-dialog-close" string="Cancelled" domain="[('state','=','cancel'])]" help="Cancelled Invoices"/>
+                        <separator orientation="vertical"/>
+                        <field name="number"/>
+                        <field name="partner_id"/>
+                        <field name="origin"/>
+                        <field name="amount_total"/>
+                    </group>
+                    <newline/>
+                    <group col="10" colspan="4">
+                        <field name="journal_id" widget="selection" select='1'/>
+                        <field name="period_id" select='1' string="Period"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"  context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <filter string="Invoice Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_invoice'}"/>
+                        <filter string="Due Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_due'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+
         <!-- Display in-kind donation list (only invoice that have 'is_inkind_donation' to True)-->
         <record id="action_inkind_donation" model="ir.actions.act_window">
             <field name="name">Donation</field>
@@ -308,7 +344,7 @@
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)]</field>
             <field name="context">{'type':'in_invoice', 'journal_type': 'inkind'}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="search_view_id" ref="view_account_invoice_filter_donation"/>
         </record>
 
         <!-- Link between previous action and In-kind Donation tree view -->
