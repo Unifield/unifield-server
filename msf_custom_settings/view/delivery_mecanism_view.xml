@@ -1,71 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-        <record id="view_picking_ticket_form" model="ir.ui.view">
-            <field name="name">picking.ticket.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="priority">11</field>
-            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
-            <field name="arch" type="xml">
-                <data>
-                
-                    <xpath expr="/form" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                    <xpath expr="/form" position="inside">
-                        <field name="from_so_ok" invisible="1" />
-                    </xpath>
-                    <xpath expr="/form//field[@name='name']" position="before">
-                        <button name='button_remove_line' attrs="{'invisible': [('state', '=', 'draft'), ('from_so_ok', '=', True)]}"
-                         string="Delete Picking..." type="object" icon="gtk-delete0" />
-                         <newline/>
-                    </xpath>
-                
-                </data>
-            </field>
-        </record>
-        <record id="view_picking_ticket_tree" model="ir.ui.view">
-            <field name="name">picking.ticket.tree</field>
-            <field name="model">stock.picking</field>
-            <field name="type">tree</field>
-            <field name="priority">11</field>
-            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_tree" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='state']" position="after">
-                        <field name="from_so_ok" invisible="1" />
-                        <button name='button_remove_line' attrs="{'invisible': [('state', '=', 'draft'), ('from_so_ok', '=', True)]}"
-                         string="Delete Picking..." type="object" icon="gtk-delete0" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
         
-        <record id="vpicktree" model="ir.ui.view">
-            <field name="name">stock.picking.tree</field>
-            <field name="model">stock.picking</field>
-            <field name="type">tree</field>
-            <field name="priority">11</field>
-            <field name="inherit_id" ref="stock.vpicktree" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='state']" position="after">
-                        <field name="from_so_ok" invisible="1" />
-                        <button name='button_remove_line' attrs="{'invisible': [('state', '=', 'draft'), ('from_so_ok', '=', True)]}"
-                         string="Delete Picking..." type="object" icon="gtk-delete0" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
         
         <record id="view_picking_in_form" model="ir.ui.view">
             <field name="name">stock.picking.in.form</field>
