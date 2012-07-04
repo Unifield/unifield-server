@@ -260,7 +260,7 @@ class shipment(osv.osv):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[cm²]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[dm³]', multi='get_vals',),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                               ('packed', 'Packed'),
                                                                                               ('shipped', 'Shipped'),
