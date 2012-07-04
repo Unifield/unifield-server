@@ -17,11 +17,11 @@
                  web_icon_hover="images/purchases-hover.png"
                  sequence="2"/>
                  
-        <menuitem id="menu_base_partner" 
+        <menuitem id="base.menu_base_partner" 
                   name="Orders"
                   icon="terp-partner"
-                  web_icon="images/partner.jpg"
-                  web_icon_hover="images/partner_hover.jpg"
+                  web_icon="images/sales.png"
+                  web_icon_hover="images/sales-hover.png"
                   sequence="3" />
 
         <menuitem id="menu_partner" 
