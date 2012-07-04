@@ -18,6 +18,7 @@
             <field name="name">Stock by Location</field>
             <field eval="'ir.actions.server,%d'%action_server_stock_by_location" name="value"/>
             <field eval="True" name="object"/>
+            <field eval="1" name="sequence"/>
         </record>
 
 

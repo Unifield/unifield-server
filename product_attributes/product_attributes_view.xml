@@ -218,6 +218,8 @@
                                     <field name="name"/>
                                     <field name="delay"/>
                                     <field name="catalogue_id"/>
+                                    <field name="get_from_date"/>
+                                    <field name="get_till_date"/>
                                     <field name="get_first_price"/>
                                     <field name="check_manufacturer"/>
                                 </tree>

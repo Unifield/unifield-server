@@ -51,6 +51,31 @@ class product_supplierinfo(osv.osv):
                 ret[prod.id] = prod.pricelist_ids[0].price
         return ret
 
+
+    def _get_till_date(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        ret = {}
+        for prod in self.browse(cr, uid, ids):
+            temp = 100000000000
+            for price in prod.pricelist_ids:
+                if price.min_order_qty < temp and price.valid_till:
+                    ret[prod.id] = price.valid_till
+                    temp = price.min_order_qty
+        return ret
+ 
+    def _get_form_date(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        ret = {}
+        for prod in self.browse(cr, uid, ids):
+            temp = 100000000000
+            for price in prod.pricelist_ids:
+                if price.min_order_qty < temp and price.valid_from:
+                    ret[prod.id] = price.valid_from
+                    temp = price.min_order_qty
+        return ret
+
     _columns = {
         'manufacturer_id': fields.many2one('res.partner', string='Manufacturer', domain=[('manufacturer', '=', 1)]),
         'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
@@ -59,8 +84,8 @@ class product_supplierinfo(osv.osv):
         'sequence_bis': fields.function(_get_order_id, method=True, type="integer", help="Assigns the priority to the list of product supplier.", string="Ranking"),
         'check_manufacturer': fields.function(_get_bool_manu, method=True, type="boolean", string="Manufacturer"),
         'get_first_price': fields.function(_get_first_price, method=True, type="float", string="Indicative Price"),
-    
-
+        'get_till_date': fields.function(_get_till_date, method=True, type="date", string="Valid till date"),
+        'get_from_date': fields.function(_get_form_date, method=True, type="date", string="Valid form date"),
     }
     
     _defaults = {
