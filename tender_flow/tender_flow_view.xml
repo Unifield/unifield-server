@@ -426,7 +426,6 @@
             <field name="search_view_id" ref="view_rfq_filter"/>
         </record>
         <record model="ir.values" id="relate_tender_rfq_values">
-            <field name="model_id" ref="tender.model_tender" />
             <field name="object" eval="1" />
             <field name="name">Requests for Quotations</field>
             <field name="key2">client_action_relate</field>
@@ -447,7 +446,6 @@
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
         </record>
         <record model="ir.values" id="relate_tender_purchase_order_values">
-            <field name="model_id" ref="tender.model_tender" />
             <field name="object" eval="1" />
             <field name="name">Purchase Orders</field>
             <field name="key2">client_action_relate</field>
