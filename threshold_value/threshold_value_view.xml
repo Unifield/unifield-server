@@ -138,9 +138,8 @@
         			 	<field name="compute_method" />
         			 	<field name="product_ids" widget="many2one" />
 	                </group>
-	                <!-- <newline/>
+	                <newline/>
 	                <group expand="1" string="Group By...">
-	                	<filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
 	                	<separator orientation="vertical"/>
 	                	<filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
                         <separator orientation="vertical"/>
@@ -149,7 +148,7 @@
                         <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
                         <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
                         <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
-	                </group> -->
+	                </group>
         		</search>
         	</field>
         </record>
