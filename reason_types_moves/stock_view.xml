@@ -78,15 +78,7 @@
                     <xpath expr="/search//filter[@string='Done']" position="attributes">
                         <attribute name="string">Closed</attribute>
                     </xpath>
-					<xpath expr="/search//field[@name='state']" position="replace" />
-
-					<!-- <xpath expr="/search/group/field[@name='address_id']" position="after">
-        	            <field name="reason_type_id" widget="selection" />
-			    		<newline />
-	                    <field name="comment" />
-					</xpath> -->
-
-					<xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
+	            <xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
                         <separator />
                         <filter string="Reason Type" name="groupby_reason_type_id" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                     </xpath>
