@@ -660,10 +660,12 @@ class sale_order(osv.osv):
                 proc_id = False
                 date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
                 date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
-
+                
+                # these lines are valid for all types (stock and order)
                 # when the line is sourced, we already get a procurement for the line
+                # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state in ['sourced', 'done']:
+                if line.state in ['sourced', 'confirmed', 'done']:
                     continue
 
                 if line.product_id:
@@ -799,7 +801,9 @@ class sale_order_line(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'so_back_update_dest_po_id_sale_order_line': False})
+        # if the po link is not in default, we set it to False
+        if 'so_back_update_dest_po_id_sale_order_line' not in default:
+            default.update({'so_back_update_dest_po_id_sale_order_line': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
 sale_order_line()

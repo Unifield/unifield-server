@@ -23,6 +23,7 @@ from osv import osv, fields
 from product._common import rounding
 
 from tools.translate import _
+import netsvc
 
 
 class split_purchase_order_line_wizard(osv.osv_memory):
@@ -85,8 +86,10 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         Create a new order line and change the quantity of the old line
         '''
         # objects
+        wf_service = netsvc.LocalService("workflow")
         po_line_obj = self.pool.get('purchase.order.line')
         so_line_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
 
         if not context:
             context = {}
@@ -122,11 +125,18 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                                  'product_uos_qty': split.new_line_qty,
                                  'so_back_update_dest_po_id_sale_order_line': split.purchase_line_id.order_id.id,
                                  }
-                    new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, copy_data, context=context)
+                    new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, copy_data, context=dict(context, keepDateAndDistrib=True))
                     # call the new procurement creation method
-                    
-                    #  
-                
+                    so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)
+                    # run the procurement, the make_po function detects the link to original po
+                    # and force merge the line to this po (even if it is not draft anymore)
+                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)
+                    new_proc_id = new_data_so[0]['procurement_id'][0]
+                    wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
+                    # if original po line is confirmed, we action_confirm new line
+                    if split.purchase_line_id.state == 'confirmed':
+                        new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
+                        po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
                 else:
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created
