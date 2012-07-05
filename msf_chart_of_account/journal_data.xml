@@ -227,7 +227,7 @@
         <record id="account_journal.intermission_journal" model="account.journal">
             <field name="name">Intermission</field>
             <field name="code">INT</field>
-            <field name="type">inkind</field>
+            <field name="type">intermission</field>
             <field name="analytic_journal_id" ref="account_journal.analytic_intermission_journal"/>
         </record>
 
