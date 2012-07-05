@@ -413,12 +413,12 @@ class real_average_consumption_line(osv.osv):
             date_mandatory = not obj.product_id.batch_management and obj.product_id.perishable
         
             if batch_mandatory:
-                if not obj.prodlot_id:
+                if not obj.prodlot_id and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
-
-                prodlot_id = obj.prodlot_id.id
-                expiry_date = obj.prodlot_id.life_date
+                elif obj.prodlot_id:
+                    prodlot_id = obj.prodlot_id.id
+                    expiry_date = obj.prodlot_id.life_date
 
 #            if date_mandatory:
 #                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
