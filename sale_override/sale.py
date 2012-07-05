@@ -379,7 +379,7 @@ class sale_order(osv.osv):
                       'order_type': 'loan',
                       'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
                       'categ': order.categ,
-                      'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                      'location_id': order.shop_id.warehouse_id.lot_input_id.id,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
                       }
@@ -396,7 +396,7 @@ class sale_order(osv.osv):
             
             purchase = purchase_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' is created.") % (purchase.name,)
+            message = _("Loan counterpart '%s' has been created.") % (purchase.name,)
             
             purchase_obj.log(cr, uid, order_id, message)
         

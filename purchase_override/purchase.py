@@ -672,7 +672,7 @@ stock moves which are already processed : '''
             
             sale = sale_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' was created.") % (sale.name,)
+            message = _("Loan counterpart '%s' has been created.") % (sale.name,)
             
             sale_obj.log(cr, uid, order_id, message)
         
