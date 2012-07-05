@@ -24,7 +24,7 @@
 -
   !record {model: sale.order, id: pr1, context: {'procurement_request': True}}:
     name: PR1
-    requested_date: !eval time.strftime('%Y-%m-%d')
+    delivery_requested_date: !eval time.strftime('%Y-%m-%d')
 -
   We check if the new procurement request is a good procurement request
 -
