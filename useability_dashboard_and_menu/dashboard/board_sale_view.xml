@@ -1,25 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    
-        <record id="sourcing_line_action_draft" model="ir.actions.act_window">
-            <field name="name">Orders Sourcing Tool</field>
-            <field name="res_model">sourcing.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('sale_order_state','=','draft')]</field>
-            <field name="context">{'search_default_need_sourcing': True}</field>
-            <field name="search_view_id" ref="sourcing.sourcing_line_search_form_view" />
+        <record id="view_sales_tree" model="ir.ui.view">
+            <field name="name">sale.order.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="priority">2</field>
+            <field name="arch" type="xml">
+                <tree string="Sales Orders" >
+                    <field name="name"/>
+                    <field name="date_order"/>
+                    <field name="client_order_ref" groups="base.group_extended"/>
+                    <field name="partner_id"/>
+                    <field name="user_id" />
+                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar"/>
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="state"/>
+                </tree>
+            </field>
         </record>
     
-        <record id="sourcing_line_action_validated" model="ir.actions.act_window">
-            <field name="name">Orders Sourcing Tool</field>
-            <field name="res_model">sourcing.line</field>
+        <record id="order_action_draft" model="ir.actions.act_window">
+            <field name="name">Order Waiting For Validation</field>
+            <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('sale_order_state','=','validated')]</field>
-            <field name="context">{'search_default_need_sourcing': True}</field>
-            <field name="search_view_id" ref="sourcing.sourcing_line_search_form_view" />
+            <field name="domain">[('state','=','draft'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+    
+        <record id="order_action_validated" model="ir.actions.act_window">
+            <field name="name">Order Waiting For Sourcing</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','validated'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
         </record>
     
         <record id="board_sales_manager_form_msf" model="ir.ui.view">
@@ -30,8 +48,8 @@
                 <form string="Sales Manager Dashboard">
                     <hpaned position="100">
                         <child1>
-                            <action  name="%(sourcing_line_action_draft)d" string="Order Waiting For Validation"/>
-                            <action  name="%(sourcing_line_action_validated)d" string="Order Waiting For Sourcing"/>
+                            <action  name="%(order_action_draft)d" string="Order Waiting For Validation"/>
+                            <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing"/>
                         </child1>
                     </hpaned>
                 </form>
