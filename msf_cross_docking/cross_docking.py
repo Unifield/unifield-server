@@ -233,7 +233,11 @@ class stock_picking(osv.osv):
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+                        if move.product_id.type == 'consu':
+                            id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
+                            move_obj.write(cr, uid, [move_ids], {'location_id': id_nonstock[1], 'move_cross_docking_ok': False}, context=context)
+                        else:
+                            move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
@@ -368,7 +372,11 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         for sm in self.browse(cr, uid, ids):
-            self.write(cr, uid, sm.id, {'location_id': sm.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+            if sm.product_id.type == 'consu':
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
+                self.write(cr, uid, sm.id, {'location_id': id_nonstock[1], 'move_cross_docking_ok': False}, context=context)
+            else:
+                self.write(cr, uid, sm.id, {'location_id': sm.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
         return True
     
 stock_move()

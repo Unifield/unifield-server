@@ -365,8 +365,15 @@ class stock_move(osv.osv):
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
 
             if product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+                pick_bro = self.pool.get('stock.picking').browse(cr,uid,vals.get('picking_id'))            
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
-                vals.update(location_dest_id=id_nonstock[1])
+                if vals.get('sale_line_id'):
+                    id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing','stock_location_packing')
+                    vals.update(location_id=id_nonstock[1])
+                    vals.update(location_dest_id=id_pack[1])
+                else:
+                    if pick_bro.type != 'out':
+                        vals.update(location_dest_id=id_nonstock[1])
 
             if product.batch_management:
                 vals.update(hidden_batch_management_mandatory=True)
@@ -391,9 +398,16 @@ class stock_move(osv.osv):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
 
-            if product.type == 'consu' and vals.get('location_dest_id') and vals.get('location_dest_id') != id_cross:
+            if product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+                pick_bro = self.pool.get('stock.picking').browse(cr,uid,vals.get('picking_id'))            
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
-                vals.update(location_dest_id=id_nonstock[1])
+                if vals.get('sale_line_id'):
+                    id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing','stock_location_packing')
+                    vals.update(location_id=id_nonstock[1])
+                    vals.update(location_dest_id=id_pack[1])
+                else:
+                    if pick_bro.type != 'out':
+                        vals.update(location_dest_id=id_nonstock[1])
 
             if product.batch_management:
                 vals.update(hidden_batch_management_mandatory=True)
@@ -501,6 +515,7 @@ class stock_move(osv.osv):
                     result.setdefault('value', {}).update({'location_id': id_nonstock[1] })
                 else:
                     result.setdefault('value', {}).update({'location_dest_id': id_nonstock[1] })
+
             if product.type == 'product' and not cd:
                     result.setdefault('value', {}).update({'location_id': None, 'location_dest_id': None })
             if cd:
