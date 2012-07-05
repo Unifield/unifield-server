@@ -123,7 +123,9 @@ class purchase_order_followup(osv.osv_memory):
                 move_ids4 = []
                 move_ids5 = []
                 for move in line.move_ids:
-                    if move.type == 'out':
+                    if move.type == 'internal':
+                        continue
+                    elif move.type == 'out':
                         move_ids5.append(move)
                     elif move.product_id.id == line.product_id.id:
                         move_ids1.append(move)
