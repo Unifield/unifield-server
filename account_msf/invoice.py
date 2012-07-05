@@ -89,13 +89,14 @@ class account_invoice(osv.osv):
         ]
         return dom1+[('is_debit_note', '=', False)]
 
-    def _get_fake_account_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+    def _get_fake_m2o_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        Get account_id field content
+        Get many2one field content
         """
         res = {}
+        name = field_name.replace("fake_", '')
         for i in self.browse(cr, uid, ids):
-            res[i.id] = i.account_id and i.account_id.id or False
+            res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
     _columns = {
@@ -106,7 +107,9 @@ class account_invoice(osv.osv):
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
-        'fake_account_id': fields.function(_get_fake_account_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
+        'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
+        'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
+        'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
     }
 
     _defaults = {
@@ -271,10 +274,12 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'tree' and context.get('journal_type', False) == 'inkind':
+        if view_type == 'tree' and (context.get('journal_type', False) == 'inkind' or context.get('journal_type', False) == 'intermission'):
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
             name = _('Donor')
+            if context.get('journal_type') == 'intermission':
+                name = _('Partner')
             for node in nodes:
                 node.set('string', name)
             res['arch'] = etree.tostring(doc)
