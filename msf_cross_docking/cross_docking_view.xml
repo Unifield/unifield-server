@@ -123,16 +123,16 @@
                 <data>
                     <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
                         <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"  
-                        attrs="{'invisible':['|', ('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel', 'assigned'))]}" />
+                        attrs="{'invisible':['|', ('cross_docking_ok','=', True), '|', ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}" />
                         <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"  
-                        attrs="{'invisible':['|', ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel','assigned'))]}" />
+                        attrs="{'invisible':['|', ('move_cross_docking_ok','=', False),'|', ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}" />
                         <field name="move_cross_docking_ok" invisible='1'/>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state']" position="after" >
                         <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"  
-                        attrs="{'invisible':['|', ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel','assigned'))]}" />
+                        attrs="{'invisible':['|', ('cross_docking_ok','=', True), '|', ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}" />
                         <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"  
-                        attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel','assigned'))]}" />
+                        attrs="{'invisible':['|', ('cross_docking_ok','=', False), '|', ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}" />
                         <field name="cross_docking_ok" invisible='1' />
                     </xpath>
                 </data>
