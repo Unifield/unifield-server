@@ -125,7 +125,7 @@
 
         <!-- In-kind Donation list -->
         <record id="view_inkind_donation_tree" model="ir.ui.view">
-            <field name="name">inkind.donation.form</field>
+            <field name="name">inkind.donation.tree</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="priority">19</field>
@@ -221,13 +221,36 @@
         <!-- 
             Intermission Voucher views
         -->
+
+        <!-- Intermission Voucher list -->
+        <record id="view_intermission_tree" model="ir.ui.view">
+            <field name="name">intermission.tree</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="priority">19</field>
+            <field name="arch" type="xml">
+                <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" hide_new_button="1">
+                    <field name="date_invoice"/>
+                    <field name="document_date" string="I/MI voucher date"/>
+                    <field name="number"/>
+                    <field name="partner_id"/>
+                    <field name="name"/>
+                    <field name="origin"/>
+                    <field name="currency_id"/>
+                    <field name="amount_total"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Intermission Voucher Form -->
         <record id="view_intermission_form" model="ir.ui.view">
             <field name="name">inkind.donation.form</field>
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="priority">64</field>
             <field name="arch" type="xml">
-                <form string="Intermission Voucher">
+                <form string="Intermission Voucher" hide_new_button="1" hide_duplicate_button="1">
                     <group colspan="4" col="8">
                         <field name="fake_journal_id" groups="base.group_user" widget="selection"/>
                         <field name="number"/>
@@ -253,7 +276,7 @@
                             <field name="name" string="Reference"/>
                             <newline/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Intermission Voucher Lines">
+                                <tree editable="top" string="Intermission Voucher Lines" hide_new_button="1">
                                     <field name="name"/>
                                     <field name="account_id" groups="account.group_account_user"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
@@ -278,8 +301,8 @@
                                 <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="open,paid">
-                                <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel" confirm="Do you confirm Donation received cancellation?"/>
-                                <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid"/>
+                                <label string=""/>
+                                <button name="%(account.account_invoices)d" string="Print Intermission Voucher" type="action" icon="gtk-print" states="open,paid"/>
                             </group>
                         </page>
                         <page string="Other Info">
@@ -453,10 +476,26 @@
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
-            <field name="view_id" ref="view_intermission_form"/>
+            <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
             <field name="context">{'type':'out_invoice', 'journal_type': 'intermission'}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+        </record>
+
+        <!-- Link between previous action and Intermission tree view -->
+        <record model="ir.actions.act_window.view" id="act_intermission_tree_out">
+            <field name="sequence" eval="5"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_intermission_tree"/>
+            <field name="act_window_id" ref="action_intermission_out"/>
+        </record>
+
+        <!-- Link between action and Intermission form view -->
+        <record model="ir.actions.act_window.view" id="act_intermission_form_out">
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_intermission_form"/>
+            <field name="act_window_id" ref="action_intermission_out"/>
         </record>
 
         <!-- Display Intermission voucher IN -->
@@ -469,6 +508,22 @@
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
             <field name="context">{'type':'in_invoice', 'journal_type': 'intermission'}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+        </record>
+
+        <!-- Link between previous action and Intermission tree view -->
+        <record model="ir.actions.act_window.view" id="act_intermission_tree_in">
+            <field name="sequence" eval="5"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_intermission_tree"/>
+            <field name="act_window_id" ref="action_intermission_in"/>
+        </record>
+
+        <!-- Link between action and Intermission form view -->
+        <record model="ir.actions.act_window.view" id="act_intermission_form_in">
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_intermission_form"/>
+            <field name="act_window_id" ref="action_intermission_in"/>
         </record>
 
         <!-- Fix customer invoice display with a bypass on 'is_debit_note' set to True -->
