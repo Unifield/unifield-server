@@ -443,7 +443,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     new_distrib_id = ana_obj.copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
-                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id}, context=context)
+                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'period_id': period_ids[0]}, context=context)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
@@ -693,7 +693,7 @@ class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
 
-    def reverse(self, cr, uid, ids):
+    def reverse(self, cr, uid, ids, date=False):
         """
         Reverse move
         """
@@ -701,7 +701,7 @@ class account_move(osv.osv):
             ids = [ids]
         reversed_move = []
         for m in self.browse(cr, uid, ids):
-            res_reverse = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id])
+            res_reverse = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date)
             if res_reverse:
                 reversed_move.append(m.id)
         return reversed_move

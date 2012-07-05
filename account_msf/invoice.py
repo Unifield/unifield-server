@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 import re
 from lxml import etree
+from time import strftime
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -293,7 +294,7 @@ class account_invoice(osv.osv):
         for i in self.browse(cr, uid, ids):
             if i.is_inkind_donation:
                 move_id = i.move_id.id
-                tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id])
+                tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id], strftime('%Y-%m-%d'))
                 # If success change invoice to cancel and detach move_id
                 if tmp_res:
                     self.write(cr, uid, [i.id], {'state': 'cancel', 'move_id':False})
