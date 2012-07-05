@@ -58,6 +58,8 @@ class product_supplierinfo(osv.osv):
         new_res = [] 
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
+        if count:
+            return res
         
         if count:
             return res
@@ -153,12 +155,28 @@ class pricelist_partnerinfo(osv.osv):
         
         return new_res
     
+    def _check_min_quantity(self, cr, uid, ids, context=None):
+        '''
+        Check if the min_qty field is set
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.min_quantity <= 0.00:
+                raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
+                return False
+            
+        return True
+    
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                  help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
+        'valid_from': fields.date(string='Valid from'),
     }
+    
+    _constraints = [
+        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
+    ]
     
 pricelist_partnerinfo()
 
@@ -177,6 +195,7 @@ class product_product(osv.osv):
         partner_price = self.pool.get('pricelist.partnerinfo')
         suppinfo_obj = self.pool.get('product.supplierinfo')
         prod_obj = self.pool.get('product.product')
+        catalogue_obj = self.pool.get('supplier.catalogue')
         
         if not context:
             context = {}
@@ -186,22 +205,29 @@ class product_product(osv.osv):
             product_ids = [product_ids]
             
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
-            suppinfo_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                         ('product_id', '=', product.product_tmpl_id.id),
-                                                         '|', ('catalogue_id.period_from', '<=', order_date),
-                                                         ('catalogue_id', '=', False)],
-                                               order='sequence', limit=1, context=context) 
-            # Search the good line for the price
-            info_price = partner_price.search(cr, uid, [('suppinfo_id', 'in', suppinfo_ids),
-                                                        ('min_quantity', '<=', product_qty),
-                                                        ('uom_id', '=', product_uom_id),
-                                                        ('currency_id', '=', currency_id),
-                                                        '|', ('valid_till', '>=', order_date),
-                                                        ('valid_till', '=', False)],
-                                                   order='valid_till asc, min_quantity desc', limit=1, context=context)
+            info_prices = []            
+            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
+                                                         ('product_id', '=', product.product_tmpl_id.id)], 
+                                                         order='sequence asc', context=context)
+                
+            domain = [('min_quantity', '<=', product_qty),
+                      ('uom_id', '=', product_uom_id),
+                      ('currency_id', '=', currency_id),
+                      '|', ('valid_from', '<=', order_date),
+                      ('valid_from', '=', False),
+                      '|', ('valid_till', '>=', order_date),
+                      ('valid_till', '=', False)]
             
-            if info_price:
-                info = partner_price.browse(cr, uid, info_price, context=context)[0]
+            if sequence_ids:
+                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
+                domain.append(('suppinfo_id.sequence', '=', min_seq))
+                domain.append(('suppinfo_id', 'in', sequence_ids))
+            
+                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+                
+            if info_prices:
+    #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
+                info = partner_price.browse(cr, uid, info_prices[0], context=context)
                 res[product.id] = (info.price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)

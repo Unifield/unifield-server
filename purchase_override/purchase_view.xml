@@ -9,12 +9,17 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
+                	
+                	<xpath expr="/form//field[@name='warehouse_id']" position="replace">
+                		<field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
+                	</xpath>
+                	
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
                         <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
                     </xpath>
                     
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
@@ -27,7 +32,7 @@
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
                         <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
                         	on_change="on_change_dest_partner_id(dest_partner_id)" />
-                        <field name="dest_address_id" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                        <field name="dest_address_id" domain="[('partner_id', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
                     	<field name="invoice_address_id" domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
@@ -39,6 +44,11 @@
                         <field name="fake_state" invisible="1" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'in', ('confirmed', 'done', 'cancel'))]}" />
+                    </xpath>
+                    
+                    <xpath expr="/form//field[@name='state']" position="after">
+                    	<button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
                     </xpath>
 
                 </data>
@@ -197,7 +207,7 @@
             		<xpath expr="/form//field[@name='product_id']" position="replace">
 	            		<field name="product_id" colspan="4" 
 	            			context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
-	            			on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment)"/>
+	            			on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"/>
 	            	</xpath>
             		
 	                <xpath expr="/form//field[@name='price_unit']" position="replace">
@@ -207,10 +217,27 @@
 	                    <field name="change_price_ok" invisible="1" />
 	                    <field name="old_price_unit" invisible="1" />
 	                    <field name="price_unit" 
-	                        on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, context)" />
+	                        on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)" />
 	                </xpath>
                	</data>
             </field>
+        </record>
+        
+        <record id="purchase_order_confirm_wizard" model="ir.ui.view">
+        	<field name="name">purchase.order.confirm.wizard</field>
+        	<field name="model">purchase.order.confirm.wizard</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Warning on confirmation">
+        			<separator colspan="4" string="Purchase Order" />
+        			<field name="order_id" colspan="4" />
+        			<separator colspan="4" string="Warning" />
+        			<field name="errors" colspan="4" nolabel="1" />
+        			<separator colspan="4" string="Actions" />
+        			<button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
+        			<button type="object" name="validate_order" icon="terp-check" string="Approved" colspan="3" />
+        		</form>
+        	</field>
         </record>
         
 	<!-- Invoice control -->

@@ -25,6 +25,7 @@ import datetime
 class financing_contract_funding_pool_line(osv.osv):
     # 
     _name = "financing.contract.funding.pool.line"
+    _description = "Funding pool line"
     
     _columns = {
         'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),
@@ -104,6 +105,20 @@ class financing_contract_contract(osv.osv):
                                eval(general_domain['cost_center_domain'])]
             
         return analytic_domain
+
+    def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+            Method to compute the overhead amount
+        """
+        res = {}
+        for budget in self.browse(cr, uid, ids, context=context):
+            # default value
+            res[budget.id] = 0.0
+            if budget.overhead_type == 'cost_percentage':
+                res[budget.id] = round(budget.grant_amount * budget.overhead_percentage / (100.0 + budget.overhead_percentage))
+            elif budget.overhead_type == 'grant_percentage':
+                res[budget.id] = round(budget.grant_amount * budget.overhead_percentage / 100.0)
+        return res
     
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
@@ -111,7 +126,8 @@ class financing_contract_contract(osv.osv):
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
-        'grant_amount': fields.float('Grant amount', size=64, required=True),
+        'grant_amount': fields.float('Grant amount', required=True),
+        'overhead_amount': fields.function(_get_overhead_amount, method=True, store=False, string="Overhead amount", type="float", readonly=True),
         'reporting_currency': fields.many2one('res.currency', 'Reporting currency', required=True),
         'notes': fields.text('Notes'),
         'open_date': fields.date('Open date'),
@@ -168,6 +184,8 @@ class financing_contract_contract(osv.osv):
                 format_vals = {
                     'format_name': source_format.format_name,
                     'reporting_type': source_format.reporting_type,
+                    'overhead_type': source_format.overhead_type,
+                    'overhead_percentage': source_format.overhead_percentage,
                 }
                 self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, format_id, context=context)
         return {'value': format_vals}

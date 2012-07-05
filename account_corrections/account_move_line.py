@@ -493,7 +493,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context=None):
+    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, corrected_distrib=None, context=None):
         """
         Correct given account_move_line by only changing account
         """
@@ -562,13 +562,21 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'have_an_historic': True,
             }
             self.write(cr, uid, [correction_line_id], cor_vals, context=context)
-            # Do process on analytic distribution:
+            # Do process on analytic distribution: 
             # 1/ copy old distribution_id on new correction line
-            # 2/ delete old distribution on original move line
+            # 2/ copy old distribution_id on reversed line
             if ml.analytic_distribution_id:
-                self.write(cr, uid, [correction_line_id], 
-                    {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
-                self.write(cr, uid, [ml.id], {'analytic_distribution_id': False}, context=context)
+                # correction line
+                change_distrib = {}
+                if corrected_distrib:
+                    change_distrib = corrected_distrib
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, change_distrib, context=context)
+                if new_distrib_id:
+                    self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': new_distrib_id,}, context=context)
+                # reversed line
+                new_rev_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
+                if new_rev_distrib_id:
+                    self.write(cr, uid, [rev_line_id], {'analytic_distribution_id': new_rev_distrib_id,}, context=context)
             # Update register line if exists
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)

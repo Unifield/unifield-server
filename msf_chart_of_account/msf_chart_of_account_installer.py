@@ -10,6 +10,10 @@ class msf_chart_of_account_installer(osv.osv_memory):
     _columns = {
         'create': fields.boolean('Create Journals'),
         'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account"),
+        'expat_salaries_default_account': fields.many2one('account.account', string="Expat Salaries", domain="[('type', '!=', 'view')]", 
+            help="Account not allowed to be changed in HQ entries import."),
+        'counterpart_hq_entries_default_account': fields.many2one('account.account', string="Default counterpart", domain="[('type', '!=', 'view')]", 
+            help="Account that will be used as counterpart for HQ Validated Entries.")
     }
 
     def get_inter(self, cr, uid, *a, **b):
@@ -18,9 +22,23 @@ class msf_chart_of_account_installer(osv.osv_memory):
         except ValueError:
             return False
 
+    def get_expat(self, cr, uid, *a, **b):
+        try:
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_chart_of_account', '61200')[1]
+        except ValueError:
+            return False
+
+    def get_counterpart(self, cr, uid, *a, **b):
+        try:
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_chart_of_account', '4000')[1]
+        except ValueError:
+            return False
+
     _defaults = {
         'create': True,
-        'import_invoice_default_account': get_inter
+        'import_invoice_default_account': get_inter,
+        'expat_salaries_default_account': get_expat,
+        'counterpart_hq_entries_default_account': get_counterpart,
     }
 
     def execute(self, cr, uid, ids, context=None):
@@ -32,6 +50,10 @@ class msf_chart_of_account_installer(osv.osv_memory):
                 fp.close()
             if res[0]['import_invoice_default_account']:
                 self.pool.get('res.users').browse(cr, uid, uid).company_id.write({'import_invoice_default_account': res[0]['import_invoice_default_account']})
+            if res[0]['expat_salaries_default_account']:
+                self.pool.get('res.users').browse(cr, uid, uid).company_id.write({'expat_salaries_default_account': res[0]['expat_salaries_default_account']})
+            if res[0]['counterpart_hq_entries_default_account']:
+                self.pool.get('res.users').browse(cr, uid, uid).company_id.write({'counterpart_hq_entries_default_account': res[0]['counterpart_hq_entries_default_account']})
         return {}
 
 msf_chart_of_account_installer()

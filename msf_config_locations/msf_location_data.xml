@@ -299,7 +299,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
-        <field name="active" eval="False" />
+        <field name="active" eval="True" />
         <field name="optional_loc" eval="True" />
         <field name="posz">2</field>
     </record>
@@ -312,9 +312,18 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
-        <field name="active" eval="False" />
+        <field name="active" eval="True" />
         <field name="optional_loc" eval="True" />
         <field name="posz">1</field>
+    </record>
+    
+    <record id="stock_location_intermediate_stock_1" model="stock.location">
+    	<field name="name">Intermediate Stock 1</field>
+    	<field name="location_category">stock</field>
+    	<field name="usage">internal</field>
+    	<field name="location_id" ref="stock_location_intermediate_client_view" />
+    	<field name="active" eval="True" />
+    	<field name="optional_loc" eval="True" />
     </record>
     
 <!--     <record id="stock_location_eprep" model="stock.location">
@@ -338,12 +347,21 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
-        <field name="active" eval="False" />
+        <field name="active" eval="True" />
         <field name="optional_loc" eval="True" />
         <field name="posz">2</field>
     </record>
     
-    <record id="stock_location_internal_suppliers_view" model="stock.location">
+    <record id="stock_location_cu1" model="stock.location">
+    	<field name="name">Consumption Unit 1</field>
+    	<field name="location_category">consumption_unit</field>
+    	<field name="usage">internal</field>
+    	<field name="location_id" ref="stock_location_consumption_units_view" />
+    	<field name="active" eval="True" />
+    	<field name="optional_loc" eval="True" />
+    </record>
+    
+    <record id="stock.stock_location_internal_suppliers_view" model="stock.location">
         <field name="name">Supplier</field>
         <field name="location_id" ref="stock.stock_location_locations_partner" />
         <field name="location_category">other</field>
@@ -356,7 +374,7 @@
 
     <record id="stock.stock_location_suppliers" model="stock.location">
         <field name="name">Other Supplier</field>
-        <field name="location_id" ref="stock_location_internal_suppliers_view" />
+        <field name="location_id" ref="stock.stock_location_internal_suppliers_view" />
         <field name="location_category">other</field>
         <field name="usage">supplier</field>
         <field name="chained_location_type">none</field>
@@ -365,9 +383,9 @@
         <field name="posz">2</field>
     </record>
 
-    <record id="stock_location_internal_suppliers" model="stock.location">
+    <record id="stock.stock_location_internal_suppliers" model="stock.location">
         <field name="name">MSF Supplier</field>
-        <field name="location_id" ref="stock_location_internal_suppliers_view" />
+        <field name="location_id" ref="stock.stock_location_internal_suppliers_view" />
         <field name="location_category">other</field>
         <field name="usage">supplier</field>
         <field name="chained_location_type">none</field>

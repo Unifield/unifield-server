@@ -186,23 +186,44 @@
             <field name="arch" type="xml">
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                        <attribute name="context">{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}</attribute>
                         <attribute name="on_change">onchange_move()</attribute>
                     </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
                                 <field name="reason_type_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
                         </xpath>
 
                         <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
                                 <field name="reason_type_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                         </xpath>
 
-			<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
-        	                <field name="location_dest_id" domain="[('check_prod_loc','=',product_id),('check_cd','in',[purchase_line_id,move_cross_docking_ok])]" on_change="location_dest_change(location_dest_id)" />
-	           			<field name="move_cross_docking_ok" invisible="1"/>
 
-	                </xpath>
+
+
+
+						<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="attributes">
+							<attribute name="domain">[('usage', '=', 'supplier')]</attribute>
+	                	</xpath>
+	                	
+	                	<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="attributes">
+	                		<attribute name="domain">[('usage', '=', 'supplier')]</attribute>
+	                	</xpath>
+
+
+						<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
+							<field name="product_type" invisible="1" />
+        	                <field name="location_dest_id" domain="[('usage', '=', product_type=='service_recep' and 'inventory' or 'internal'), ('service_location', '=', product_type=='service_recep' and True or False)]" on_change="location_dest_change(location_dest_id)" />
+	                	</xpath>
+	                	
+	                	<xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
+                       		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
+                       </xpath>
+
+
+
+
 			
                 </data>
             </field>
@@ -232,6 +253,10 @@
                                 <field name="location_dest_id" domain="[('usage','in',('internal', 'inventory', 'procurement', 'production'))]" on_change="location_dest_change(location_dest_id)" />
                         </xpath>
                         
+                        <xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
+                       		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
+                       </xpath>
+                        
                         <!-- MOVED TO SPECIFIC_RULES
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="replace">
                                 <field name="location_id" domain="[('usage','in',('internal', 'procurement', 'production'))]" />
@@ -250,9 +275,10 @@
             <field name="arch" type="xml">
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                        <attribute name="context">{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}</attribute>
                         <attribute name="on_change">onchange_move()</attribute>
                     </xpath>
+                    
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
                             <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
@@ -261,8 +287,16 @@
                        <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
                                 <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                        </xpath>
+                       <xpath expr="/form//field[@name='move_lines']/form//field[@name='product_id']" position="attributes">
+                       		<attribute name="on_change">onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)</attribute>
+                       </xpath>
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
-                                <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
+                                <field name="location_dest_id" domain="[('standard_out_ok', '=', 'dest')]" on_change="location_dest_change(location_dest_id)" />
+                        </xpath>
+                        <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="replace">
+                        	<field name="location_virtual_id" invisible="1" />
+                        	<field name="location_output_id" invisible="1" />
+                        	<field name="location_id" domain="[('standard_out_ok', '=', 'src')]" />
                         </xpath>
 
                </data>

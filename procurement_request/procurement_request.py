@@ -190,7 +190,14 @@ class procurement_request(osv.osv):
             'procurement_request': proc,
         })
         
-        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+        # bypass name sequence
+        new_id = super(osv.osv, self).copy(cr, uid, id, default, context=context)
+        if new_id:
+            new_order = self.read(cr, uid, new_id, ['delivery_requested_date', 'order_line'])
+            if new_order['delivery_requested_date'] and new_order['order_line']:
+                self.pool.get('sale.order.line').write(cr, uid, new_order['order_line'], {'date_planned': new_order['delivery_requested_date']})
+        return new_id
+
 
     def wkf_action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -361,8 +368,9 @@ class purchase_order(osv.osv):
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-                    move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-                    move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
+                    if proc.move_id:
+	                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
+        	        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
                     proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
                     
         return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)

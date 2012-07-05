@@ -450,7 +450,7 @@ class stock_move(osv.osv):
         result = super(stock_move, self).create(cr, uid, vals, context=context)
         
         return result
-    
+
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
                             loc_dest_id=False, address_id=False,purchase_line_id=False,out=False):
         '''
