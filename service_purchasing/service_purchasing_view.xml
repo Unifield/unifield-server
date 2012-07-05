@@ -211,7 +211,7 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
+            		<xpath expr="/form/group/group/field[@name='reason_type_id']" position="after">
             			<field name="order_category" />
             		</xpath>
             	
