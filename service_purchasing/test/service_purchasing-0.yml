@@ -1,3 +1,9 @@
+-
+   I create a service location
+-
+  !record {model: stock.location, id: service_loc}:
+     service_location: True
+     name: TEST service Loc
 - 
   Creating a res.partner record
 - 
