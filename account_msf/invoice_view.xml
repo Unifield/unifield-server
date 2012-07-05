@@ -258,7 +258,7 @@
                         <field name="is_intermission" invisible="1"/>
                         <field name="fake_currency_id"/>
                         <newline/>
-                        <field string="Partner" name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" groups="base.group_user" domain="[('partner_type', '=', 'intermission')]"/>
+                        <field string="Partner" name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id, False, is_intermission)" groups="base.group_user" domain="[('partner_type', '=', 'intermission')]"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Partner address"/>
                         <newline/>
                         <field name="date_invoice"/>

@@ -135,14 +135,22 @@ class account_invoice(osv.osv):
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
-        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False):
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
         """
-        Update fake_account_id field regarding account_id result
+        Update fake_account_id field regarding account_id result.
+        Get default donation account for Donation invoices.
+        Get default intermission account for Intermission Voucher IN/OUT invoices.
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
         if is_inkind_donation and partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
+            res['value']['account_id'] = account_id
+        if is_intermission and partner_id:
+            intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+            account_id = intermission_default_account and intermission_default_account.id or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
             res['value']['account_id'] = account_id
         if res.get('value', False) and 'account_id' in res['value']:
             res['value'].update({'fake_account_id': res['value'].get('account_id')})

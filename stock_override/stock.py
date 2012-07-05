@@ -431,12 +431,16 @@ class stock_picking(osv.osv):
         """
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')])
+        intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.intermission_default_counterpart
         for pick in self.browse(cr, uid, [x for x in res]):
             if pick.partner_id.partner_type == 'intermission':
                 inv_id = res[pick.id]
                 if not intermission_journal_ids:
                     raise osv.except_osv(_('Error'), _('No Intermission journal found!'))
-                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'journal_id': intermission_journal_ids[0], 'is_intermission': True,})
+                if not intermission_default_account or not intermission_default_account.id:
+                    raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'journal_id': intermission_journal_ids[0], 
+                    'is_intermission': True, 'account_id': intermission_default_account.id,})
         return res
 
 stock_picking()
