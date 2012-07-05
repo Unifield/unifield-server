@@ -415,7 +415,7 @@
                    <group col="10" colspan="4">
                         <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
                         <filter name="open" icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
-                        <filter name="cancelled" icon="terp-dialog-close" string="Cancelled" domain="[('state','=','cancel'])]" help="Cancelled Invoices"/>
+                        <filter name="cancelled" icon="terp-dialog-close" string="Cancelled" domain="[('state','=','cancel')]" help="Cancelled Invoices"/>
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
