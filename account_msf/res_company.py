@@ -31,6 +31,8 @@ class res_company(osv.osv):
     _columns = {
         'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account", 
             help="Default account for an import invoice on a Debit note"),
+        'intermission_default_counterpart': fields.many2one('account.account', string="Intermission counterpart", 
+            help="Default account used for partner in Intermission Voucher IN/OUT"),
     }
 
 res_company()
