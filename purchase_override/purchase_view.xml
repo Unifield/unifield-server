@@ -235,7 +235,7 @@
         			<field name="errors" colspan="4" nolabel="1" />
         			<separator colspan="4" string="Actions" />
         			<button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
-        			<button type="object" name="validate_order" icon="terp-check" string="Approved" colspan="3" />
+        			<button type="object" name="validate_order" icon="terp-check" string="Confirm" colspan="3" />
         		</form>
         	</field>
         </record>
