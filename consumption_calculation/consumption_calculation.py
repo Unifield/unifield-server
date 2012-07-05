@@ -726,6 +726,7 @@ class monthly_review_consumption(osv.osv):
                     self.pool.get('monthly.review.consumption.line').unlink(cr, uid, line.id, context=context)
 
             amc_context = context.copy()
+            amc_context.update({'from_date': report.period_from, 'to_date': report.period_to})
             if amc_context.get('from_date', False):
                 from_date = (DateFrom(amc_context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
                 amc_context.update({'from_date': from_date})
