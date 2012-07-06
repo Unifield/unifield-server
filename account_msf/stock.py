@@ -41,23 +41,21 @@ class stock_picking(osv.osv):
             self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], {'account_id': account_id,})
         return res
 
-    def action_invoice_create(self, cr, uid, ids, *args):
+    def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
         """
-        Change some data on invoice resulting from a Donation PO
+        Update journal by an inkind journal if we come from an inkind donation PO.
+        Update partner account
         """
-        # Retrieve some data
-        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+        res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
-        for sp in self.browse(cr, uid, ids):
-            if sp.purchase_id and sp.purchase_id.order_type == 'in_kind':
-                if not journal_ids:
-                    raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
-                account_id = sp.partner_id and sp.partner_id.donation_payable_account and sp.partner_id.donation_payable_account.id or False
-                if not account_id:
-                    raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (sp.partner_id.name or '',))
-                self.pool.get('account.invoice').write(cr, uid, [x.id for x in sp.purchase_id.invoice_ids], 
-                    {'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
-        return res
+        if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind":
+            if not journal_ids:
+                raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
+            account_id = picking.partner_id and picking.partner_id.donation_payable_account and picking.partner_id.donation_payable_account.id or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (picking.partner_id.name or '',))
+            invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
+        return invoice_vals
 
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

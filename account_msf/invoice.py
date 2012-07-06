@@ -126,11 +126,19 @@ class account_invoice(osv.osv):
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, 'Debit Note', message, 1)
+            # Search donation view and return it
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
+            view_id = res and res[1] or False
+            context.update({'view_id': view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
         if self.read(cr, uid, id, ['is_inkind_donation']).get('is_inkind_donation', False) is True:
             pattern = re.compile('^(Invoice)')
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, 'In-kind Donation', message, 1)
+            # Search donation view and return it
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
+            view_id = res and res[1] or False
+            context.update({'view_id': view_id, 'type':'in_invoice', 'journal_type': 'inkind'})
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
