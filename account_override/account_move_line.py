@@ -148,7 +148,7 @@ class account_move_line(osv.osv):
             FROM account_move_line
             WHERE id in %s
         """
-        cr.execute(sql, [tuple(ids)])
+        cr.execute(sql, (tuple(ids),))
         res = cr.fetchall()
         if isinstance(ids, list):
             res = res[0]

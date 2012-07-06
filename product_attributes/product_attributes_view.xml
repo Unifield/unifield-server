@@ -333,7 +333,7 @@
                 <search string="Product">
                    <filter string="Stockable" icon="terp-accessories-archiver" domain="[('type','=','product')]"/>
                    <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
-                   <filter string="Service" icon="terp-accessories-archiver" domain="[('type','=','service')]"/>
+                   <filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
                    <separator orientation="vertical"/>
                    <field name="default_code"/>
                    <field name="name"/>

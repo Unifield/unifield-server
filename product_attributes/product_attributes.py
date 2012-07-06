@@ -61,7 +61,7 @@ class product_attributes_template(osv.osv):
     _inherit = "product.template"
     
     _columns = {
-        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
     }
     
     _defaults = {
