@@ -479,8 +479,6 @@ class real_average_consumption_line(osv.osv):
         context.update({'location': location_id})
        
         if expiry_date and product_id:
-            if remark and remark in ('You must assign a batch number', 'You must assign an expiry date') :
-                result['value']['remark'] = ''
             prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', product_id)], context=context)
