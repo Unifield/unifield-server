@@ -1000,6 +1000,12 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
+    def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
+        """
+        Hook to permit to change invoice values before its creation
+        """
+        return invoice_vals
+
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
             group=False, type='out_invoice', context=None):
         """ Creates invoice based on the invoice state selected for picking.
@@ -1072,6 +1078,8 @@ class stock_picking(osv.osv):
                     invoice_vals['currency_id'] = cur_id
                 if journal_id:
                     invoice_vals['journal_id'] = journal_id
+                # Add hook to changes values before creation
+                invoice_vals = self._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
                 invoice_id = invoice_obj.create(cr, uid, invoice_vals,
                         context=context)
                 invoices_group[partner.id] = invoice_id
