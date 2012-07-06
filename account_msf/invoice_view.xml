@@ -164,7 +164,7 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Address"/>
                         <newline/>
                         <field name="date_invoice" />
-                        <field name="document_date" string="Donation certificate date"/>
+                        <field name="document_date"/>
                         <newline/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
@@ -328,7 +328,7 @@
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"  context="{'group_by':'state'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
-                        <filter string="Invoice Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_invoice'}"/>
+                        <filter string="Posting Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_invoice'}"/>
                         <filter string="Due Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_due'}"/>
                     </group>
                </search>
