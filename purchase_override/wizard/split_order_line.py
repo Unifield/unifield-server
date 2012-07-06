@@ -91,9 +91,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         so_line_obj = self.pool.get('sale.order.line')
         so_obj = self.pool.get('sale.order')
 
-        if not context:
+        # Some verifications
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
             

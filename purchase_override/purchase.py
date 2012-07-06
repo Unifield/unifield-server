@@ -29,6 +29,9 @@ import time
 from workflow.wkf_expr import _eval_expr
 import logging
 
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
+
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 
@@ -484,6 +487,99 @@ stock moves which are already processed : '''
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
         
+        # !!BEWARE!! we must update the So lines before any writing to So objects
+        for po in self.browse(cr, uid, ids, context=context): 
+            # hook for corresponding Fo update
+            self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
+        
+        return True
+    
+    def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Add a hook to modify the logged message
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        po = kwargs['po']
+        pol_obj = self.pool.get('purchase.order.line')
+        so_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        
+        # update corresponding fo if exist
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        if so_ids:
+            # date values
+            ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+            prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
+            
+            for line in po.order_line:
+                # get the corresponding so line
+                sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+                if sol_ids:
+                    line_confirmed = False
+                    # compute confirmed date for line
+                    if line.confirmed_delivery_date:
+                        line_confirmed = datetime.strptime(line.confirmed_delivery_date, db_date_format)
+                        line_confirmed = line_confirmed + relativedelta(days=prep_lt or 0)
+                        line_confirmed = line_confirmed + relativedelta(days=ship_lt or 0)
+                        line_confirmed = line_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
+                        line_confirmed = line_confirmed.strftime(db_date_format)
+                    # we update the corresponding sale order line
+                    # {sol: pol}
+                    fields_dic = {'product_id': line.product_id and line.product_id.id or False,
+                                  'name': line.name,
+                                  'default_name': line.default_name,
+                                  'default_code': line.default_code,
+                                  'product_uom_qty': line.product_qty,
+                                  'product_uom': line.product_uom and line.product_uom.id or False,
+                                  'product_uos_qty': line.product_qty,
+                                  'product_uos': line.product_uom and line.product_uom.id or False,
+                                  'price_unit': line.price_unit,
+                                  'nomenclature_description': line.nomenclature_description,
+                                  'nomenclature_code': line.nomenclature_code,
+                                  'comment': line.comment,
+                                  'nomen_manda_0': line.nomen_manda_0 and line.nomen_manda_0.id or False,
+                                  'nomen_manda_1': line.nomen_manda_1 and line.nomen_manda_1.id or False,
+                                  'nomen_manda_2': line.nomen_manda_2 and line.nomen_manda_2.id or False,
+                                  'nomen_manda_3': line.nomen_manda_3 and line.nomen_manda_3.id or False,
+                                  'nomen_sub_0': line.nomen_sub_0 and line.nomen_sub_0.id or False,
+                                  'nomen_sub_1': line.nomen_sub_1 and line.nomen_sub_1.id or False,
+                                  'nomen_sub_2': line.nomen_sub_2 and line.nomen_sub_2.id or False,
+                                  'nomen_sub_3': line.nomen_sub_3 and line.nomen_sub_3.id or False,
+                                  'nomen_sub_4': line.nomen_sub_4 and line.nomen_sub_4.id or False,
+                                  'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
+                                  'confirmed_delivery_date': line_confirmed,
+                                  }
+                    # write the line
+                    sol_obj.write(cr, uid, sol_ids, fields_dic, context=context)
+            
+            # compute so dates -- only if we get a confirmed value, because rts is mandatory on So side
+            # update after lines update, as so write triggers So workflow, and we dont want the Out document
+            # to be created with old So datas
+            if po.delivery_confirmed_date:
+                # Fo rts = Po confirmed date + prep_lt
+                delivery_confirmed_date = datetime.strptime(po.delivery_confirmed_date, db_date_format)
+                so_rts = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
+                so_rts = so_rts.strftime(db_date_format)
+            
+                # Fo confirmed date = confirmed date + prep_lt + ship_lt + transport_lt
+                so_confirmed = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
+                so_confirmed = so_confirmed + relativedelta(days=ship_lt or 0)
+                so_confirmed = so_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
+                so_confirmed = so_confirmed.strftime(db_date_format)
+            
+                # write data to so
+                so_obj.write(cr, uid, so_ids, {'delivery_confirmed_date': so_confirmed,
+                                               'ready_to_ship_date': so_rts}, context=context)
+            
         return True
     
     def all_po_confirmed(self, cr, uid, ids, context=None):
@@ -1446,7 +1542,32 @@ class purchase_order_line(osv.osv):
             res['value'].update({'old_price_unit': price_unit})
 
         return res
-
+    
+    def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
+        '''
+        input: purchase order line ids
+        return: sale order line ids
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        # procurement ids list
+        proc_ids = []
+        # sale order lines list
+        sol_ids = []
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.procurement_id:
+                proc_ids.append(line.procurement_id.id)
+        # get the corresponding sale order line list
+        if proc_ids:
+            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        return sol_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
