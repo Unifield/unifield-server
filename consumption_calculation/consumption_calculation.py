@@ -726,6 +726,7 @@ class monthly_review_consumption(osv.osv):
                     self.pool.get('monthly.review.consumption.line').unlink(cr, uid, line.id, context=context)
 
             amc_context = context.copy()
+            amc_context.update({'from_date': report.period_from, 'to_date': report.period_to})
             if amc_context.get('from_date', False):
                 from_date = (DateFrom(amc_context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
                 amc_context.update({'from_date': from_date})
@@ -864,10 +865,23 @@ class monthly_review_consumption_line(osv.osv):
                          'last_reviewed2': time.strftime('%Y-%m-%d')})
 
         return super(monthly_review_consumption_line, self).write(cr, uid, ids, vals, context=context)
+
+    def _get_mrc_change(self, cr, uid, ids, context=None):
+        '''
+        Returns MRC ids when Date change
+        '''
+        result = {}
+        for mrc in self.pool.get('monthly.review.consumption').browse(cr, uid, ids, context=context):
+            for line in mrc.line_ids:
+                result[line.id] = True
+                
+        return result.keys()
     
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
-        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, store=True),
+        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, 
+                               store={'monthly.review.consumption': (_get_mrc_change, ['period_from', 'period_to'], 20),
+                                      'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
         'fmc': fields.float(digits=(16,2), string='FMC'),
         'fmc2': fields.float(digits=(16,2), string='FMC (hidden)'),
         #'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),
