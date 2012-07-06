@@ -127,21 +127,36 @@ class stock_move(osv.osv):
             service_loc = service_loc[0]
         
         if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service') and parent_type == 'in':
+            #case product is SERVICE
             if service_loc:
                 prod_type = prod_obj.browse(cr, uid, prod_id).type
                 result.setdefault('value', {}).update(location_dest_id=service_loc, product_type=prod_type)
                 result.update({'domain': {'location_dest_id': [('id', '=', service_loc),        ]}})
         else:
+            #case product is NOT SERVICE
             if loc_dest_id == service_loc:
                 result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
             if parent_type == 'out':
-                result.update({'domain': {'location_id': [ ('standard_out_ok', '=', 'src'),   ('check_prod_loc','=',[prod_id,'out'])     ]}})
+                #case OUT
+                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    #case NON STOCK
+                    result.update({'domain': {'location_id': [  ('check_prod_loc','=',[prod_id,'out'])     ]}})
+                else:
+                    #case STOCK
+                    result.update({'domain': {'location_id': [ ('standard_out_ok', '=', 'src') ]}})
 
             else:
+                #case IN
                 if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    #case NON STOCK
                     result.update({'domain': {'location_dest_id': [   ('check_prod_loc','=',[prod_id,'in'])     ]}})
                 else:
-                    result.update({'domain': {'location_dest_id': [('usage','=','internal'),]}})
+                    #case STOCK
+                    if parent_type == 'internal':
+                        #case INTERNAL
+                        result.update({'domain': {'location_dest_id': [('usage','in', ('internal', 'inventory', 'procurement', 'production') ),]}})
+                    else:
+                        result.update({'domain': {'location_dest_id': [('usage','=','internal'),]}})
 
         return result
     
