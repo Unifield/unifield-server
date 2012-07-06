@@ -811,15 +811,18 @@ class stock_location(osv.osv):
         return result
 
     def _prod_loc_search(self, cr, uid, ids, fields, arg, context=None):
-        if not arg[0][2]:       
+        if not arg[0][2][0]:       
             return []
         if context is None:
             context = {}
         id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')[1]
         id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
-        prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2])
+        prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2][0])
         if prod_obj and prod_obj.type == 'consu':
-            return [('id', 'in', [id_nonstock,id_cross])]
+            if arg[0][2][1] == 'out':
+                return [('id', 'in', [id_cross])]
+            else:
+                return [('id', 'in', [id_nonstock,id_cross])]
         elif prod_obj and  prod_obj.type != 'consu':
                 return [('id', 'not in', [id_nonstock]),('usage','=','internal'),]
         ids = [('id', 'in', [])]
@@ -834,6 +837,23 @@ class stock_location(osv.osv):
             if  ( obj_pol and obj_pol.order_id.cross_docking_ok ) or arg[0][2][1]:
                 return [('id', 'in', [id_cross])]
         return []
+
+    def _check_usage(self, cr, uid, ids, fields, arg, context=None):
+        if not arg[0][2]:       
+            return []
+        if context is None:
+            context = {}
+        prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2])
+        if prod_obj.type=='service_recep':
+            ids = self.pool.get('stock.location').search(cr,uid,[('usage','=', 'inventory' )])
+            return [('id', 'in', ids)]
+        elif prod_obj.type=='consu':
+            return []
+        else:
+            ids = self.pool.get('stock.location').search(cr,uid,[('usage','=', 'internal' )])
+            return [('id', 'in', ids)]
+        return []
+
 
     _columns = {
         'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],
@@ -853,6 +873,7 @@ class stock_location(osv.osv):
         'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'check_prod_loc': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_prod_loc_search),
         'check_cd': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_cd_search),
+        'check_usage': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_check_usage),
         'virtual_location': fields.boolean(string='Virtual location'),
 
     }

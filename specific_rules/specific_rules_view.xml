@@ -196,7 +196,7 @@
 					
 					<!-- MERGED FROM SPECIFIC_LOCATIONS (quarantine domain) -->
 					<xpath expr="//form[@string='Stock Moves']//field[@name='location_id']" position="replace">
-						<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',product_id), ('check_cd','in',[purchase_line_id,move_cross_docking_ok])]"
+						<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok])]"
 								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
 	           			<field name="move_cross_docking_ok"  invisible="1"/>
             		</xpath>

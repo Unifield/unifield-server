@@ -490,7 +490,7 @@ class stock_location(osv.osv):
                     
                     res.append(('quarantine_location', '=', False))
                     res.append(('usage', '=', 'internal'))
-                    res.append(('cross_docking_location_ok', '=', False))
+
                     res.append(('id', 'not in', output_loc_ids))
                     res.append(('id', 'not in', input_loc_ids))
                     

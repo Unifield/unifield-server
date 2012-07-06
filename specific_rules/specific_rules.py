@@ -369,7 +369,10 @@ class stock_move(osv.osv):
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
                 if vals.get('sale_line_id'):
                     id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing','stock_location_packing')
-                    vals.update(location_id=id_nonstock[1])
+                    if pick_bro.type == 'out':
+                        vals.update(location_id=id_cross)
+                    else:
+                        vals.update(location_id=id_nonstock[1])
                     vals.update(location_dest_id=id_pack[1])
                 else:
                     if pick_bro.type != 'out':
@@ -403,7 +406,10 @@ class stock_move(osv.osv):
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
                 if vals.get('sale_line_id'):
                     id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing','stock_location_packing')
-                    vals.update(location_id=id_nonstock[1])
+                    if pick_bro.type == 'out':
+                        vals.update(location_id=id_cross)
+                    else:
+                        vals.update(location_id=id_nonstock[1])
                     vals.update(location_dest_id=id_pack[1])
                 else:
                     if pick_bro.type != 'out':
@@ -492,15 +498,15 @@ class stock_move(osv.osv):
                     return False
         return True
     
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False,purchase_line_id=False,out=False):
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
         '''
         the product changes, set the hidden flag if necessary
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                                                              loc_dest_id, address_id)
 
-        po = purchase_line_id and self.pool.get('purchase.order').browse(cr,uid,purchase_line_id) or False
-        cd = po and po.cross_docking_ok or False
+        po = purchase_line_id and self.pool.get('purchase.order.line').browse(cr,uid,purchase_line_id) or False
+        cd = po and po.order_id.cross_docking_ok or False
 
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prodlot_id'] = False
@@ -516,11 +522,15 @@ class stock_move(osv.osv):
                 else:
                     result.setdefault('value', {}).update({'location_dest_id': id_nonstock[1] })
 
-            if product.type == 'product' and not cd:
-                    result.setdefault('value', {}).update({'location_id': None, 'location_dest_id': None })
-            if cd:
+            if product.type == 'product' and not cd :
+                    result.setdefault('value', {}).update({'location_id': None, })
+
+            if product.type == 'product' and not out :
+                    result.setdefault('value', {}).update({'location_dest_id': None, })
+
+            if cd or ( out and product.type == 'consu' ):
                 id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
-                if out:
+                if out :
                     result.setdefault('value', {}).update({'location_id': id_cross })
                 else:
                     result.setdefault('value', {}).update({'location_dest_id': id_cross })
@@ -529,14 +539,14 @@ class stock_move(osv.osv):
                 result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
                                      'message': _('The selected product is Batch Management.')}
-            
+
             elif product.perishable:
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
                                      'message': _('The selected product is Perishable.')}
         if not prod_id and not cd:
             result.setdefault('value', {}).update({ 'location_id': None})
-        if not out:
+        if not prod_id and not out:
             result.setdefault('value', {}).update({'location_dest_id': None,})
         # quantities are set to False
         result.setdefault('value', {}).update({'product_qty': 0.00,

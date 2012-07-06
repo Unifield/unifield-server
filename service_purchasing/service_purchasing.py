@@ -117,8 +117,12 @@ class stock_move(osv.osv):
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
 
-        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id,purchase_line_id,out)
+        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id, parent_type, purchase_line_id,out)
+
+
+
         service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+
         if service_loc:
             service_loc = service_loc[0]
         
@@ -126,16 +130,19 @@ class stock_move(osv.osv):
             if service_loc:
                 prod_type = prod_obj.browse(cr, uid, prod_id).type
                 result.setdefault('value', {}).update(location_dest_id=service_loc, product_type=prod_type)
-                result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
+                result.update({'domain': {'location_dest_id': [('id', '=', service_loc),        ]}})
         else:
-            if loc_dest_id == service_loc: 
+            if loc_dest_id == service_loc:
                 result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
             if parent_type == 'out':
-                result.update({'domain': {'location_dest_id': [('standard_out_ok', '=', 'dest')]}})
+                result.update({'domain': {'location_id': [ ('standard_out_ok', '=', 'src'),   ('check_prod_loc','=',[prod_id,'out'])     ]}})
+
             else:
-                result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
-            
-        
+                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    result.update({'domain': {'location_dest_id': [   ('check_prod_loc','=',[prod_id,'in'])     ]}})
+                else:
+                    result.update({'domain': {'location_dest_id': [('usage','=','internal'),]}})
+
         return result
     
     def _check_constaints_service(self, cr, uid, ids, context=None):
