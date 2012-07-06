@@ -24,6 +24,7 @@ from tools.translate import _
 import decimal_precision as dp
 
 from sale_override import SALE_ORDER_STATE_SELECTION
+from msf_order_date.order_dates import compute_rts
 
 class procurement_request(osv.osv):
     _name = 'sale.order'
@@ -126,6 +127,8 @@ class procurement_request(osv.osv):
             vals['partner_shipping_id'] = address_id
             pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
             vals['pricelist_id'] = pl
+            if 'delivery_requested_date' in vals:
+                vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
 
         return super(procurement_request, self).create(cr, uid, vals, context)
     
@@ -136,6 +139,8 @@ class procurement_request(osv.osv):
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
             if req.procurement_request and 'delivery_requested_date' in vals:
+                rts = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
+                vals['ready_to_ship_date'] = rts
                 for line in req.order_line:
                     self.pool.get('sale.order.line').write(cr, uid, line.id, {'date_planned': vals['delivery_requested_date']}, context=context)
         
