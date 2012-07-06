@@ -38,7 +38,7 @@
                         <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="requestor" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-						<field name="requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" />
+						<field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" string="Requested date" />
                         <field name="origin" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     </group>
                     <notebook colspan="5">
@@ -72,7 +72,7 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,progress,validated" />
+                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" />
                                 <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" />
                             </group>
@@ -103,7 +103,7 @@
                 <tree string="Internal Requests">
                     <field name="name" />
                     <field name="date_order" />
-                    <field name="requested_date" />
+                    <field name="delivery_requested_date" />
                     <field name="origin" />
                     <field name="requestor" />
                     <field name="state" />
@@ -128,15 +128,15 @@
                         <field name="name" />
                         <field name="origin" />
                         <field name="requestor" />
-			<field name="warehouse_id" />
+						<field name="warehouse_id" />
                     </group>
-		    <newline />
+		    		<newline />
                     <group string="Group By...">
                         <filter string="State" icon="terp-gtk-select-all" domain="[]" context="{'group_by': 'state'}" />
-			<separator orientation="vertical" />
-			<filter string="Requestor" icon="terp-personal" domain="[]" context="{'group_by': 'requestor'}" />
-			<separator orientation="vertical" />
-			<filter string="Warehouse" icon="terp-stock" domain="[]" context="{'group_by': 'warehouse_id'}" />
+						<separator orientation="vertical" />
+						<filter string="Requestor" icon="terp-personal" domain="[]" context="{'group_by': 'requestor'}" />
+						<separator orientation="vertical" />
+						<filter string="Warehouse" icon="terp-stock" domain="[]" context="{'group_by': 'warehouse_id'}" />
                     </group>
                 </search>
             </field>

@@ -172,7 +172,7 @@ class sale_order(osv.osv):
         '''
         user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         if company_id == user_company_id:
-            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+            raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
     
@@ -211,7 +211,7 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
-            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
+            self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
 
         return True
     
@@ -219,7 +219,7 @@ class sale_order(osv.osv):
         '''
         Hook the message displayed on sale order confirmation
         '''
-        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
+        return _('The Field order \'%s\' has been confirmed.') % (kwargs['order'].name,)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
