@@ -29,6 +29,8 @@ import time
 from workflow.wkf_expr import _eval_expr
 import logging
 
+from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+
 
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
@@ -673,7 +675,7 @@ stock moves which are already processed : '''
             
             sale = sale_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' was created.") % (sale.name,)
+            message = _("Loan counterpart '%s' has been created.") % (sale.name,)
             
             sale_obj.log(cr, uid, order_id, message)
         
@@ -956,12 +958,11 @@ class purchase_order_merged_line(osv.osv):
             res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
         return res
 
-    _columns = {
-        'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
-        'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
+    _columns = {'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
+                'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
-        'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
-    }
+                'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
+                }
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -1273,6 +1274,29 @@ class purchase_order_line(osv.osv):
                 res[line.id] = False
                         
         return res
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            # default values
+            result[obj.id] = {'order_state_purchase_order_line': False}
+            # order_state_purchase_order_line
+            if obj.order_id:
+                result[obj.id].update({'order_state_purchase_order_line': obj.order_id.state})
+            
+        return result
 
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
@@ -1285,6 +1309,7 @@ class purchase_order_line(osv.osv):
         # openerp bug: id is not given to onchanqge call if we are into one2many view
         'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
         'old_price_unit': fields.float(digits=(16,2), string='Old price'),
+        'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
     }
 
     _defaults = {

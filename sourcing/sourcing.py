@@ -633,9 +633,18 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # we confirm (validation in unifield) the sale order
+            
+        # objects
         wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'sale.order', ids[0], 'order_confirm', cr)
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # we confirm (validation in unifield) the sale order
+        # we set all line state to 'sourced' of the original Fo
+        for obj in self.browse(cr, uid, ids, context=context):
+            for line in obj.order_line:
+                sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
+            # trigger workflow signal
+            wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
         
         return {'name':_("Field Orders"),
                 'view_mode': 'form,tree',
@@ -959,8 +968,15 @@ class procurement_order(osv.osv):
             customer_id = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context).order_id.partner_id.id
             values.update({'customer_id': customer_id})
             purchase_domain.append(('customer_id', '=', customer_id))
-            
-        purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+        
+        
+        # if we are updating the sale order from the corresponding on order purchase order
+        # the purchase order to merge the new line to is locked and provided in the procurement
+        if procurement.so_back_update_dest_po_id_procurement_order:
+            purchase_ids = [procurement.so_back_update_dest_po_id_procurement_order.id]
+        else:
+            # search for purchase order according to defined domain
+            purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
         
         # Set the origin of the line with the origin of the Procurement order
         if procurement.origin:
@@ -1172,7 +1188,7 @@ class product_supplierinfo(osv.osv):
         
         result = {}
         for id in ids:
-            result[id] = False
+            result[id] = []
         return result
     
     def _get_product_ids(self, cr, uid, obj, name, args, context=None):

@@ -292,9 +292,9 @@ class sale_order(osv.osv):
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
-                # copy the line to the split Fo - force the state to 'sourced'
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                 'state': 'sourced'}, context=dict(context, keepDateAndDistrib=True))
+                # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
+                # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -306,6 +306,20 @@ class sale_order(osv.osv):
         '''
         split done function for sale order
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # get all corresponding sale order lines
+        sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        # set the lines to done
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
@@ -365,7 +379,7 @@ class sale_order(osv.osv):
                       'order_type': 'loan',
                       'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
                       'categ': order.categ,
-                      'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                      'location_id': order.shop_id.warehouse_id.lot_input_id.id,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
                       }
@@ -382,7 +396,7 @@ class sale_order(osv.osv):
             
             purchase = purchase_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' is created.") % (purchase.name,)
+            message = _("Loan counterpart '%s' has been created.") % (purchase.name,)
             
             purchase_obj.log(cr, uid, order_id, message)
         
@@ -577,6 +591,27 @@ class sale_order(osv.osv):
 
         return True
     
+    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        line = kwargs['line']
+        # call to super
+        proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
+        # update proc_data for link to destination purchase order during back update of sale order
+        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id})
+        return proc_data
+    
     def action_ship_proc_create(self, cr, uid, ids, context=None):
         '''
         process logic at ship_procurement activity level
@@ -625,10 +660,12 @@ class sale_order(osv.osv):
                 proc_id = False
                 date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
                 date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
-
+                
+                # these lines are valid for all types (stock and order)
                 # when the line is sourced, we already get a procurement for the line
+                # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state in ['sourced', 'done']:
+                if line.state in ['sourced', 'confirmed', 'done']:
                     continue
 
                 if line.product_id:
@@ -648,7 +685,7 @@ class sale_order(osv.osv):
                                  'property_ids': [(6, 0, [x.id for x in line.property_ids])],
                                  'company_id': order.company_id.id,
                                  }
-                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order,)
+                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
@@ -658,6 +695,9 @@ class sale_order(osv.osv):
                 
             # the Fo is sourced we set the state
             self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
+            # if the line is draft (it should be the case), we set its state to 'sourced'
+            if line.state == 'draft':
+                line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
             # display message for sourced
             self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
         
@@ -723,6 +763,9 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                # this field is used when the po is modified during on order process, and the so must be modified accordingly
+                # the resulting new purchase order line will be merged in specified po_id 
+                'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
                 'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                 help='* The \'Draft\' state is set when the related sales order in draft state. \
                     \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
@@ -751,6 +794,17 @@ class sale_order_line(osv.osv):
                     'target': 'new',
                     'res_id': wiz_id,
                     'context': context}
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset link to purchase order from update of on order purchase order
+        '''
+        if not default:
+            default = {}
+        # if the po link is not in default, we set it to False
+        if 'so_back_update_dest_po_id_sale_order_line' not in default:
+            default.update({'so_back_update_dest_po_id_sale_order_line': False})
+        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
 sale_order_line()
 
