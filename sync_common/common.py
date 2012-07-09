@@ -325,7 +325,7 @@ def _handle_error(e):
     except: 
         return str(e) + "\n"
 
-def c_log_error(self, e, logger):
+def c_log_error(e, logger):
     tb = StringIO.StringIO()
     traceback.print_exc(file=tb)
     error =  _handle_error(e) + tb.getvalue() 
