@@ -32,7 +32,7 @@ class msf_accrual_line(osv.osv):
             return {'value': {'date': False}}
         else:
             period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-            return {'value': {'date': period.date_stop}}
+            return {'value': {'date': period.date_stop, 'document_date': period.date_stop}}
     
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
@@ -49,6 +49,7 @@ class msf_accrual_line(osv.osv):
     
     _columns = {
         'date': fields.date("Date"),
+        'document_date': fields.date("Document Date", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', '=', 'draft')]),
         'description': fields.char('Description', size=64, required=True),
         'reference': fields.char('Reference', size=64),
@@ -150,6 +151,7 @@ class msf_accrual_line(osv.osv):
                     'accrual': True,
                     'move_id': move_id,
                     'date': move_date,
+                    'document_date': accrual_line.document_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': accrual_line.period_id.id,
                     'reference': accrual_line.reference,
@@ -164,6 +166,7 @@ class msf_accrual_line(osv.osv):
                     'accrual': True,
                     'move_id': move_id,
                     'date': move_date,
+                    'document_date': accrual_line.document_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': accrual_line.period_id.id,
                     'reference': accrual_line.reference,
@@ -181,6 +184,7 @@ class msf_accrual_line(osv.osv):
                     'accrual': True,
                     'move_id': reversal_move_id,
                     'date': reversal_move_date,
+                    'document_date': accrual_line.document_date,
                     'source_date': move_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,
@@ -196,6 +200,7 @@ class msf_accrual_line(osv.osv):
                     'accrual': True,
                     'move_id': reversal_move_id,
                     'date': reversal_move_date,
+                    'document_date': accrual_line.document_date,
                     'source_date': move_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,

@@ -166,6 +166,7 @@ class hr_payroll_import(osv.osv_memory):
         # Create the payroll entry
         vals = {
             'date': line_date,
+            'document_date': line_date,
             'period_id': period_id,
             'employee_id': employee_id,
             'name': name,

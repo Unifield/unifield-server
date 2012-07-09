@@ -62,7 +62,7 @@ class wizard_expense_report(osv.osv_memory):
         amount_currency_sum = 0.0
         currency_table = None
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            date_context = {'date': analytic_line.source_date or analytic_line.date,
+            date_context = {'date': analytic_line.document_date,
                             'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
             amount = self.pool.get('res.currency').compute(cr,
                                                            uid,
@@ -90,7 +90,7 @@ class wizard_expense_report(osv.osv_memory):
                                   contract.reporting_currency.name,
                                   formatted_amount_currency,
                                   analytic_line.currency_id.name,
-                                  analytic_line.invoice_line_id.name])
+                                  analytic_line.move_id and analytic_line.move_id.invoice_line_id and analytic_line.move_id.invoice_line_id.name or ''])
             
         # Localized to add comma separators for thousands
         formatted_amount_sum = locale.format("%.2f", amount_sum, grouping=True)

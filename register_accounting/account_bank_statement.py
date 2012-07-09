@@ -753,7 +753,7 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
-        'document_date': fields.date(string="Document Date"),
+        'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
         'direct_invoice': fields.boolean(string='Direct invoice?'),
@@ -832,6 +832,7 @@ class account_bank_statement_line(osv.osv):
         val = {
             'name': st_line.name,
             'date': st_line.date,
+            'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
             # Add employee_id, register_id and partner_type support
@@ -881,6 +882,7 @@ class account_bank_statement_line(osv.osv):
         first_move_line_id = account_move_line_obj.create(cr, uid, {
             'name': st_line.name,
             'date': st_line.date,
+            'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
             # Add employee_id and register_id support
@@ -1114,7 +1116,8 @@ class account_bank_statement_line(osv.osv):
                             Please contact an accountant administrator to resolve this problem.'))
                 val = {
                     'name': st_line.name,
-                    'date': st_line.document_date or st_line.date or curr_date,
+                    'date': st_line.date or curr_date,
+                    'document_date': st_line.document_date or curr_date,
                     'ref': st_line.ref,
                     'move_id': move_id,
                     'partner_id': st_line.partner_id.id or False,
@@ -1209,6 +1212,7 @@ class account_bank_statement_line(osv.osv):
                         'currency_id': st_line.statement_id.currency.id,
                         'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
                         'date': st_line.date,
+                        'document_date': st_line.document_date,
                     }
                     process_invoice_move_line_ids.append(invoice_move_line.id)
                     move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)
@@ -1250,7 +1254,7 @@ class account_bank_statement_line(osv.osv):
             # Verification if st_line have some imported invoice lines
             if not st_line.from_import_cheque_id:
                 continue
-            move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context    )
+            move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context)
             # Search the line that would be reconcile after hard post
             move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], 
                 context=context)

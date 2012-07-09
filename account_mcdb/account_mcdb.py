@@ -257,7 +257,7 @@ class account_mcdb(osv.osv_memory):
             for ll in [('ref', 'ref'), ('name', 'name')]:
                 if getattr(wiz, ll[0]):
                     domain.append((ll[1], 'ilike', '%%%s%%' % getattr(wiz, ll[0])))
-            # DOCUMENT DATE fields
+            # DOCUMENT CODE fields
             if wiz.document_code and wiz.document_code != '':
                 document_code_field = 'move_id.name'
                 if res_model == 'account.analytic.line':
@@ -266,10 +266,10 @@ class account_mcdb(osv.osv_memory):
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
-            for sup in [('posting_date_from', 'date')]:
+            for sup in [('posting_date_from', 'date'), ('document_date_from', 'document_date')]:
                 if getattr(wiz, sup[0]):
                     domain.append((sup[1], '>=', getattr(wiz, sup[0])))
-            for inf in [('posting_date_to', 'date')]:
+            for inf in [('posting_date_to', 'date'), ('document_date_to', 'document_date')]:
                 if getattr(wiz, inf[0]):
                     domain.append((inf[1], '<=', getattr(wiz, inf[0])))
             # RECONCILE field
