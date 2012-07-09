@@ -656,6 +656,9 @@ class sale_order(osv.osv):
             
             # created procurements
             proc_ids = []
+            # flag to prevent the display of the sale order log message
+            # if the method is called after po update, we do not display log message
+            display_log = True
             for line in order.order_line:
                 proc_id = False
                 date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
@@ -688,18 +691,22 @@ class sale_order(osv.osv):
                     proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
-                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
+                    line_obj.write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
+                    # if the line is draft (it should be the case), we set its state to 'sourced'
+                    if line.state == 'draft':
+                        line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
+                    # set the flag for log message
+                    if line.so_back_update_dest_po_id_sale_order_line:
+                        display_log = False
                     
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 
             # the Fo is sourced we set the state
             self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
-            # if the line is draft (it should be the case), we set its state to 'sourced'
-            if line.state == 'draft':
-                line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
             # display message for sourced
-            self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
+            if display_log:
+                self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
         
         if lines:
             line_obj.write(cr, uid, lines, {'invoiced': 1})

@@ -657,7 +657,10 @@ class procurement_order(osv.osv):
         result = super(procurement_order, self).action_po_assign(cr, uid, ids, context=context)
         # The quotation 'SO001' has been converted to a sales order.
         if result:
-            po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
+            # do not display a log if we come from po update backward update of so
+            data = self.read(cr, uid, ids, ['so_back_update_dest_po_id_procurement_order'], context=context)
+            if not data[0]['so_back_update_dest_po_id_procurement_order']:
+                po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
             if self.browse(cr, uid, ids[0], context=context).is_tender:
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
