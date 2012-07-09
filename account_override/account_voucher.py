@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +20,20 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Fx Tables Management",
-    "version": "1.0",
-    "depends": ["res_currency_functional", "base"],
-    "category": "General/Standard",
-    "description": """
-    This module aims to have other subsets of currencies, and have them available
-    for financing contracts and budgets.
-    
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'security/ir.model.access.csv',
-        'res_currency_view.xml',
-        'res_currency_table_workflow.xml',
-    ],
-    'test': [
-        'test/currency_pricelist.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+
+class account_voucher(osv.osv):
+    _name = 'account.voucher'
+    _inherit = 'account.voucher'
+
+    def __hook_move_line_values_before_creation(self, cr, uid, move_line):
+        """
+        Add document date if date in vals
+        """
+        if 'date' in move_line and not 'document_date' in move_line:
+            move_line.update({'document_date': move_line.get('date')})
+        return move_line
+
+account_voucher()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

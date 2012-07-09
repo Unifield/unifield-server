@@ -117,7 +117,7 @@ class account_commitment(osv.osv):
                             for distrib_line in distrib_lines:
                                 if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or (distrib_line.analytic_id.date and date > distrib_line.analytic_id.date):
                                     raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') % (distrib_line.analytic_id.name,))
-                        self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines], {'date': date, 'source_date': date}, context=context)
+                        self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines], {'date': date, 'source_date': date, 'document_date': date,}, context=context)
         # Default behaviour
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
         return res
@@ -296,8 +296,9 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
-                        cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
-                        c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+                        cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.date or False, 
+                        c.purchase_id and c.purchase_id.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
+                        cl.id, context=context)
         return True
 
     def action_commitment_open(self, cr, uid, ids, context=None):
@@ -437,8 +438,8 @@ class account_commitment_line(osv.osv):
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
                 ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or ''
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], cl.commit_id and cl.commit_id.name or 'Commitment voucher line', cl.commit_id.date, amount, 
-                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, 
-                    commitment_line_id=cl.id, context=context)
+                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, cl.commit_id and cl.commit_id.date or False, 
+                    ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, commitment_line_id=cl.id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):

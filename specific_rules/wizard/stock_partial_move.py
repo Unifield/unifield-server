@@ -146,6 +146,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'location_id': fields.related('move_id', 'location_id', type='many2one', relation='stock.location', string='Source Location', readonly=True),
+        'quantity_ordered': fields.float('Quantity ordered'),
     }
 
 stock_partial_move_memory_out()

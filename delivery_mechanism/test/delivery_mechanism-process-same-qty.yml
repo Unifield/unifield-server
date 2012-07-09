@@ -76,9 +76,18 @@
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
     # find the IN
+
+
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
+
     dic = self.action_process(cr, uid, in_ids, context=context)
+
+    self.pool.get(dic['res_model']).copy_all(cr,uid, [dic['res_id']], context=dic['context'])
+
     self.pool.get(dic['res_model']).do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
+
+
+
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
     

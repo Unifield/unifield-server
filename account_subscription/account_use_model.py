@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +20,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Fx Tables Management",
-    "version": "1.0",
-    "depends": ["res_currency_functional", "base"],
-    "category": "General/Standard",
-    "description": """
-    This module aims to have other subsets of currencies, and have them available
-    for financing contracts and budgets.
-    
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'security/ir.model.access.csv',
-        'res_currency_view.xml',
-        'res_currency_table_workflow.xml',
-    ],
-    'test': [
-        'test/currency_pricelist.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+
+class account_use_model(osv.osv_memory):
+    _name = 'account.use.model'
+    _inherit = 'account.use.model'
+
+    def __hook_val_update_before_line_creation(self, cr, uid, val, context=None):
+        """
+        Add document date to val
+        """
+        if not 'document_date' in val:
+            if not 'date' in val:
+                raise osv.except_osv(_('Warning'), _('Date is missing!'))
+            val.update({'document_date': val.get('date')})
+        return val
+
+account_use_model()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
