@@ -208,6 +208,8 @@ class product_attributes(osv.osv):
         'removal_time': fields.integer('Product Removal Time',
             help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
+        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
     }
@@ -223,6 +225,8 @@ class product_attributes(osv.osv):
         'closed_article': False,
         'dangerous_goods': False,
         'restricted_country': False,
+        'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+        'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
     
     def _check_gmdn_code(self, cr, uid, ids, context=None):

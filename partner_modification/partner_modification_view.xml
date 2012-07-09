@@ -87,10 +87,10 @@
 		            	<field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
 		          	</group>
 				</xpath>
-	            	
+					        	
 	          </data>
 	      </field>
 	    </record>
-		
+	    		
 	</data>
 </openerp>
