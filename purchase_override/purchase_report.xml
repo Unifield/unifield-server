@@ -2,6 +2,10 @@
 <openerp>
     <data>
 
+		  <!-- <delete model="ir.actions.report.xml" id="purchase.report_purchase_order" /> -->
+
+		  <!-- <report auto="False" id="purchase.report_purchase_quotation" model="purchase.order" name="purchase.quotation" rml="purchase_override/report/request_quotation.rml" string="Request for Quotation"/> -->
+          <report auto="False" id="report_msf_purchase_order" model="purchase.order" name="msf.purchase.order" rml="purchase_override/report/purchase_order.rml" string="Purchase Order"/>
           <report auto="False" id="report_purchase_order_merged" model="purchase.order" name="purchase.order.merged" rml="purchase_override/report/merged_order.rml" string="Purchase Order (Merged)"/>
 
 

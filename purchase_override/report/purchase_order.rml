@@ -517,7 +517,7 @@
 
         <section>
             <blockTable colWidths="25.0,105.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-                [[repeatIn(objects[0].merged_line_ids,'line')]]
+                [[ repeatIn(objects[0].order_line, 'line') ]]
                 <tr>
                     <td>
                         <para style="LinesBlue">[[ line.line_number ]]</para>
