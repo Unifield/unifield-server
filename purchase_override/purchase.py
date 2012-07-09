@@ -1304,11 +1304,15 @@ class purchase_order_line(osv.osv):
         '''
         Update the merged line
         '''
-        if not context:
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # if the line is linked to a sale order line through procurement process,
+        # the deletion is impossible
+        if self.get_sol_ids_from_pol_ids(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
             self._update_merged_line(cr, uid, line_id, False, context=context)
