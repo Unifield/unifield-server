@@ -72,7 +72,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         'old_line_qty': fields.float(digits=(16,2), string='Old line quantity', readonly=True),
         'new_line_qty': fields.float(digits=(16,2), string='New line quantity', required=True),
         'impact_so_split_po_line_wizard': fields.boolean('Impact Field Order', help='Impact corresponding Field Order by creating a corresponding Field Order line.'),
-        'corresponding_so_line_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Has Corresponding So', multi='get_vals_split_po_line', store=False, readonly=True),
+        'corresponding_so_line_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo line', multi='get_vals_split_po_line', store=False, readonly=True),
         'corresponding_so_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order', string='Corresponding Fo', multi='get_vals_split_po_line', store=False, readonly=True),
     }
 

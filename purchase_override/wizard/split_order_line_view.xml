@@ -15,7 +15,7 @@
                     <group colspan="2" />
                     <field name="corresponding_so_line_id_split_po_line_wizard" invisible="True" />
                     <field name="corresponding_so_id_split_po_line_wizard" attrs="{'invisible': [('corresponding_so_line_id_split_po_line_wizard', '=', False)]}" />
-                    <field name="impact_so_split_po_line_wizard" attrs="{'invisible': [('corresponding_so_line_id_split_po_line_wizard', '=', False)]}" />
+                    <field name="impact_so_split_po_line_wizard" invisible="True" /><!-- attrs="{'invisible': [('corresponding_so_line_id_split_po_line_wizard', '=', False)]}" /> -->
                     <separator colspan="4" string="Actions" />
                     <group>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />

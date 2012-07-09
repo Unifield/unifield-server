@@ -32,19 +32,60 @@ class kit_selection(osv.osv_memory):
     kit selection
     '''
     _name = "kit.selection"
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # corresponding_so_line_id_kit_selection
+            sol_ids = False
+            if obj.order_line_id_kit_selection:
+                sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [obj.order_line_id_kit_selection.id], context=context)
+                assert len(sol_ids) <= 1, 'split purchase line: the number of corresponding sale order line is greater than 1: %s'%len(sol_ids)
+            # true if we get some sale order lines
+            result[obj.id].update({'corresponding_so_line_id_kit_selection': sol_ids and sol_ids[0] or False})
+            # corresponding_so_id_kit_selection
+            so_id = False
+            if sol_ids:
+                datas = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
+                for data in datas:
+                    if data['order_id']:
+                        so_id = data['order_id'][0]
+            # write the value
+            result[obj.id].update({'corresponding_so_id_kit_selection': so_id})
+        return result
+    
     _columns = {'product_id': fields.many2one('product.product', string='Kit Product', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Theoretical Kit'),
-                'order_line_id_kit_selection': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+                'order_line_id_kit_selection': fields.many2one('purchase.order.line', string='Purchase Order Line', readonly=True, required=True),
+                'impact_so_kit_selection': fields.boolean('Impact Field Order', help='Impact corresponding Field Order by creating a corresponding Field Order line.'),
                 # one2many
                 'product_ids_kit_selection': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_line', string='Replacement Products'),
                 # related fields
                 'partner_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'partner_id', string='Partner', type='many2one', relation='res.partner', readonly=True),
                 'pricelist_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'pricelist_id', string='PriceList', type='many2one', relation='product.pricelist', readonly=True),
                 'warehouse_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'warehouse_id', string='Warehouse', type='many2one', relation='stock.warehouse', readonly=True),
+                # function fields
+                'corresponding_so_line_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo Line', multi='get_vals_kit_selection', store=False, readonly=True),
+                'corresponding_so_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order', string='Corresponding Fo', multi='get_vals_kit_selection', store=False, readonly=True),
                 }
     
     _defaults = {'product_id': lambda s, cr, uid, c: c.get('product_id', False),
                  'order_line_id_kit_selection': lambda s, cr, uid, c: c.get('active_ids') and c.get('active_ids')[0] or False,
+                 'impact_so_kit_selection': True,
                  }
     
     def import_items(self, cr, uid, ids, context=None):
