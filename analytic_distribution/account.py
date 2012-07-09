@@ -89,14 +89,23 @@ class account_destination_link(osv.osv):
                 res[t.id] = t.account_id.code
         return res
 
+    def _get_account_ids(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.pool.get('account.destination.link').search(cr, uid, [('account_id', 'in', ids)], limit=0)
+
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]", readonly=True),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
-        'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, store=True),
+        'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, 
+            store={
+                'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id'], 10),
+                'account.account': (_get_account_ids, ['code'], 20),
+            }),
     }
 
-    _order = 'account_id'
+    _order = 'name'
 
 account_destination_link()
 
@@ -121,11 +130,16 @@ class account_destination_summary(osv.osv):
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view = super(account_destination_summary, self).fields_view_get(cr, uid, view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
+            fields_to_add = []
             form = etree.fromstring(view['arch'])
             tree = form.xpath('//tree')
             for field in view.get('fields', {}):
                 if field.startswith('dest_'):
-                    new_field = etree.Element('field', attrib={'name':field})
+                    fields_to_add.append(int(field.split('_')[1]))
+
+            if fields_to_add:
+                for dest_order in self.pool.get('account.analytic.account').search(cr, uid, [('id', 'in', fields_to_add)], order='name'):
+                    new_field = etree.Element('field', attrib={'name': 'dest_%d'%dest_order})
                     tree[0].append(new_field)
             view['arch'] = etree.tostring(form)
         return view
