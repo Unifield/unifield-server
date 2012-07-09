@@ -90,7 +90,7 @@ class wizard_expense_report(osv.osv_memory):
                                   contract.reporting_currency.name,
                                   formatted_amount_currency,
                                   analytic_line.currency_id.name,
-                                  analytic_line.invoice_line_id.name])
+                                  analytic_line.move_id and analytic_line.move_id.invoice_line_id and analytic_line.move_id.invoice_line_id.name or ''])
             
         # Localized to add comma separators for thousands
         formatted_amount_sum = locale.format("%.2f", amount_sum, grouping=True)
