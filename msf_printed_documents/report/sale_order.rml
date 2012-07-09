@@ -29,11 +29,11 @@
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="8,0" stop="8,-1" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="0,-1" stop="0,-1" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="2,-1" stop="2,-1" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="4,-1" stop="4,-1" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="6,-1" stop="6,-1" thickness="0.5" />
-            <lineStyle kind="LINEABOVE" colorName="black" start="8,-1" stop="8,-1" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,-2" stop="0,-2" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="2,-2" stop="2,-2" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="4,-2" stop="4,-2" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="6,-2" stop="6,-2" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="8,-2" stop="8,-2" thickness="0.5" />
         </blockTableStyle>
         <blockTableStyle id="ItemsTitle">
             <blockAlignment value="LEFT" />
@@ -92,7 +92,7 @@
         <blockTable colWidths="150.0,5.5,150.0,5.5,150.0,5.5,150.0,5.5,150.0" style="OrderInformations">
             <tr>
                 <td>
-                    <para style="TextInformation">Project : </para>
+                    <para style="TextInformation">Project : [[ objects[0].partner_id and objects[0].partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -413,40 +413,61 @@
             <tr>
                 <td>
                     <para style="TextInformation">Confirmed delivery date : </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date sent : </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date received : </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Requested delivery date : </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Dated before :</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <para style="TextInformation">[[ to_time(objects[0].delivery_confirmed_date) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                    <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Date sent : </para>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">Date received : </para>
+                    <para style="TextInformation">[[ to_time(objects[0].validated_date) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
+                </td>
+                <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Requested delivery date : </para>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
                     <para style="TextInformation">[[ to_time(objects[0].delivery_requested_date) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                    <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">Dated before :</para>
                     <para style="TextInformation"> </para>
                 </td>
             </tr>
@@ -502,10 +523,11 @@
                         <para style="LinesBlue">[[ line.line_number ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line.product_id.default_code ]]</para>
+                        <para style="LinesBlue">[[ line.product_id and line.product_id.default_code or False ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line.product_id.name ]]</para>
+                        <para style="LinesBlue">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
+                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.name or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.comment ]]</para>
@@ -542,7 +564,7 @@
         <blockTable colWidths="772.0" style="RemarkTable">
             <tr>
                 <td>
-                    <para style="TextInformation">REMARKS : </para>
+                    <para style="TextInformation">REMARKS :  All orders are done according to our general Terms of Purchase, available on request // Please identify all parcels and documents with '[[ objects[0].name ]][[ objects[0].origin and ' − %s' % objects[0].origin or '' ]]' //</para>
                 </td>
             </tr>
             <tr>

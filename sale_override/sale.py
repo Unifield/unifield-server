@@ -143,6 +143,7 @@ class sale_order(osv.osv):
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current sales order."),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Pricelist for current sales order."),
+        'validated_date': fields.date(string='Validated date', help='Date on which the FO was validated.'),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
@@ -209,7 +210,7 @@ class sale_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated', 'validated_date': time.strftime('%Y-%m-%d')}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
             self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
 
