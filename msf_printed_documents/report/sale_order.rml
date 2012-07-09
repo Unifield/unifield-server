@@ -6,39 +6,21 @@
             <frame id="first" x1="30.0" y1="0.0" width="772" height="530" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">FIELD ORDER ([[ objects[0].order_type ]])</drawString>
-            <drawString x="35" y="540.0">[[ '%s %s %s' % (objects[0].order_type, objects[0].name, objects[0].state) ]]</drawString>
+            <drawString x="35" y="560.0">FIELD ORDER ([[ selection(objects[0], 'order_type') ]])</drawString>
+            <fill color="blue"/>
+            <drawString x="35" y="540.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-            <drawString x="700" y="520.0">Page : <pageNumber /></drawString>
-            <drawString x="750" y="520.0">/</drawString>
-            <drawString x="760" y="520.0"><pageCount /></drawString>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="730" y="520.0">Page : <pageNumber /></drawString>
+            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>
         </pageGraphics>
-
-        <blockTable colWidths="305.5,376.5,100.0" style="HeaderTable">
-            <tr>
-                <td>
-                    <para style="Header">FIELD ORDER ([[ o.order_type ]])</para>
-                    <para style="HeaderBlue">[[ o.name ]]</para>
-                    <para style="Header_9"> </para>
-                </td>
-                <td>
-                    <para style="Header"><font color="white"> </font></para>
-                </td>
-                <td>
-                    <image height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-                    <para style="Header_9">Page: <pageNumber /> / <pageCount /></para>
-                </td>
-            </tr>
-        </blockTable>
 
     </pageTemplate>
     </template>
 
     <stylesheet>
-        <blockTableStyle id="HeaderTable">
-            <blockAlignment value="LEFT" />
-            <blockVAlign value="TOP" />
-        </blockTableStyle>
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
@@ -47,6 +29,11 @@
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="8,0" stop="8,-1" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,-1" stop="0,-1" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="2,-1" stop="2,-1" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="4,-1" stop="4,-1" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="6,-1" stop="6,-1" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="8,-1" stop="8,-1" thickness="0.5" />
         </blockTableStyle>
         <blockTableStyle id="ItemsTitle">
             <blockAlignment value="LEFT" />
@@ -84,11 +71,11 @@
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
         
-	<!-- Header font style -->
+		<!-- Header font style -->
         <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
-	<!-- Information font style -->
+		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
@@ -97,8 +84,7 @@
 
     <story>
 
-        <para style="Standard">[[ repeatIn(objects, 'o') ]]</para>
-        <para style="Standard">[[ setLang(o.partner_id.lang) ]]</para>
+        <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
         <para style="Standard">
             <font color="white"> </font>
         </para>
@@ -124,7 +110,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Ship to ([[ o.incoterm ]]) :</u></para>
+                    <para style="TextInformation"><u>Ship to[[ objects[0].incoterm and ' (%s)' % objects[0].incoterm.name or '' ]] :</u></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -135,7 +121,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ o.origin ]]</para>
+                    <para style="TextInformation">Origin ref. : [[ objects[0].origin ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -164,176 +150,118 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Category : [[ o.categ ]] </para>
+                    <para style="TextInformation">Category : [[ selection(objects[0], 'categ') ]] </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.company_id.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].company_id.partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_order_id.name or o.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.name or objects[0].partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.name or o.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.name or objects[0].partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.name or o.partner_id.name ]] </para>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.name or objects[0].partner_id.name ]] </para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total items : [[ len(o.order_line) ]]</para>
+                    <para style="TextInformation">Total items : [[ len(objects[0].order_line) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(o.company_id.address_id) and o.company_id.address_id[0].street or '' ]]</para>
+                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_order_id.street ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.street ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.street ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.street ]]</para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Transport mode : [[ o.transport_type ]]</para>
+                    <para style="TextInformation">Transport mode : [[ selection(objects[0], 'transport_type') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(o.company_id.address_id) and o.company_id.address_id[0].street2 or '' ]]</para>
+                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street2 or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_order_id.street2 ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.street2 ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.street2 ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.street2 ]]</para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Priority : [[ o.priority ]]</para>
+                    <para style="TextInformation">Priority : [[ selection(objects[0], 'priority') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(o.company_id.address_id) and o.company_id.address_id[0].zip or '' ]] [[ len(o.company_id.address_id) and o.company_id.address_id[0].city or '' ]]</para>
+                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].zip or '' ]] [[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].city or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_order_id.zip ]] [[ o.partner_order_id.city ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.zip ]] [[ objects[0].partner_order_id.city ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.zip ]] [[ o.partner_shipping_id.city ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.zip ]] [[ objects[0].partner_shipping_id.city ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.zip ]] [[ o.partner_invoice_id.city ]]</para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ len(o.company_id.address_id) and o.company_id.address_id[0].country_id and o.company_id.address_id[0].country_id.name or '' ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ o.partner_order_id.country_id.name or '' ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.country_id and o.partner_shipping_id.country_id.name or '' ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.country_id and o.partner_invoice_id.country_id.name or '' ]]</para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation">Goods value : [[ o.amount_total ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ len(o.company_id.address_id) and o.company_id.address_id[0].phone or '' ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ o.partner_order_id.phone ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.phone ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.phone ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.zip ]] [[ objects[0].partner_invoice_id.city ]]</para>
                 </td>
             </tr>
             <tr>
@@ -344,30 +272,88 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(o.company_id.address_id) and o.company_id.address_id[0].email or '' ]]</para>
+                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].country_id and objects[0].company_id.partner_id.address[0].country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_order_id.email ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_shipping_id.email ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.country_id and objects[0].partner_shipping_id.country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ o.partner_invoice_id.email ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.country_id and objects[0].partner_invoice_id.country_id.name or '' ]]</para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total cost : [[ o.amount_total ]]</para>
+                    <para style="TextInformation">Goods value : [[ objects[0].amount_total ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].phone or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.phone ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.phone ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.phone ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].email or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_order_id.email ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_shipping_id.email ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_invoice_id.email ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">Total cost : [[ objects[0].amount_total ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -396,7 +382,8 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Currency : [[ o.pricelist_id.currency_id.name ]]</para>
+                    <para style="TextInformation">Currency : [[ objects[0].pricelist_id.currency_id.name ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -426,7 +413,8 @@
             <tr>
                 <td>
                     <para style="TextInformation">Confirmed delivery date : </para>
-                    <para style="TextInformation">[[ o.confirmed_delivery_date ]]</para>
+                    <para style="TextInformation">[[ to_time(objects[0].delivery_confirmed_date) ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -450,7 +438,8 @@
                 </td>
                 <td>
                     <para style="TextInformation">Requested delivery date : </para>
-                    <para style="TextInformation">[[ o.requested_delivery_date ]]</para>
+                    <para style="TextInformation">[[ to_time(objects[0].delivery_requested_date) ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -507,7 +496,7 @@
 
         <section>
             <blockTable colWidths="25.0,105.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-                [[ repeatIn(o.order_line, 'line') ]]
+                [[ repeatIn(objects[0].order_line, 'line') ]]
                 <tr>
                     <td>
                         <para style="LinesBlue">[[ line.line_number ]]</para>
