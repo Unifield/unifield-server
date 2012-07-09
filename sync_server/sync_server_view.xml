@@ -168,12 +168,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
-                    <field name="name"/>
-                    <field name="identifier"/>
-                    <field name="email"/>
-                    <field name="parent_id"/>
-                    <field name="user_id"/>
-                    <field name="state"/>
+                	<group colspan="4" col="4"> 
+                		 <field name="name"/>
+	                    <field name="identifier"/>
+	                    <field name="email"/>
+	                    <field name="parent_id"/>
+	                    <field name="user_id"/>
+	                    <field name="state"/>
+                	</group>
                     <separator string="Groups" colspan="4"/>
                     <field name="group_ids" colspan="4" nolabel="1"/>
                     <separator string="Children" colspan="4"/>

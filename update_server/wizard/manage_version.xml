@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+    	<record model="ir.ui.view" id="manage_version_form_view">
+            <field name="name">"manage_version_form_view</field>
+            <field name="model">sync_server.version.manager</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unifield Version Manager">
+                	<group colspan="4" col="8">
+                		<field name="hash" required="1" />
+                    	<field name="name" />
+                    	<field name="date" />
+                    	<label string="" colspan="1" />
+                    	<button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
+                    
+                	</group>
+                	<separator string="History Of revision" />
+                	<field name="version_ids" colspan="4" nolabel="1">
+                		<tree>
+                		 	<field name="name"/>
+                   			<field name="commit" />
+                    		<field name="date" />
+                			<button name="delete_revision" string="Delete" type="object"  icon="gtk-cancel" confirm="Are you sure you want delete this revision ?"/>
+                		</tree>
+                	</field>
+                </form>
+            </field>
+        </record>
+    
+    	<record model="ir.actions.act_window" id="manage_version_action">
+            <field name="name">Manage Version</field>
+            <field name="res_model">sync_server.version.manager</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+    		
+   		<menuitem id="manage_version_menu" name="Manage Unifield Version" parent="sync_server.conf_menu" sequence="99" action="manage_version_action" />
+    
+    	<record id="ir_cron_autovacuum" model="ir.cron">
+			<field name="function">vacuum</field>
+			<field name="user_id">1</field>
+			<field name="name">Auto Vacuum</field>
+			<field name="interval_type">hours</field>
+			<field eval="-1" name="numbercall"/>
+			<field eval="5" name="priority"/>
+			<field eval="0" name="doall"/>
+			<field eval="1" name="active"/>
+			<field eval="2" name="interval_number"/>
+			<field name="model">sync_server.version.manager</field>
+		</record>
+    </data>
+</openerp>
