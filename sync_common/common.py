@@ -314,8 +314,9 @@ class check_common(osv.osv):
            
         model = self.pool.get(model_name)
         return recur_get_model(model, [])
-            
+
 check_common()
+
 def _handle_error(e):
     try:
         msg = list(e)
@@ -331,4 +332,5 @@ def c_log_error(e, logger):
     error =  _handle_error(e) + tb.getvalue() 
     logger.error(error)
     return error
+            
 
