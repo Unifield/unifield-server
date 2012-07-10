@@ -285,11 +285,27 @@ class purchase_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': time.strftime('%Y-%m-%d')})
         return True
 
-    def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
+    def _hook_confirm_order_message(self, cr, uid, context=None, *args, **kwargs):
         '''
         Add a hook to modify the logged message
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+            
         return kwargs['message']
+    
+    def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Add a hook to modify the logged message
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        return True
 
     #TODO: implement messages system
     def wkf_confirm_order(self, cr, uid, ids, context=None):
@@ -303,6 +319,8 @@ class purchase_order(osv.osv):
             message = _("Purchase order '%s' is confirmed.") % (po.name,)
             message = self._hook_confirm_order_message(cr, uid, context=context, message=message, po=po)
             self.log(cr, uid, po.id, message)
+            # hook for corresponding Fo update
+            self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 #        current_name = self.name_get(cr, uid, ids)[0][1]
         self.pool.get('purchase.order.line').action_confirm(cr, uid, todo, context)
         for id in ids:
