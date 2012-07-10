@@ -756,6 +756,7 @@ class sale_order_line(osv.osv):
                   'priority': orderPriority,
                   'categ': orderCategory,
                   'sale_order_state': orderState,
+                  'state': self.browse(cr, uid, result, context=context).state
                   }
         
         sourcing_line_id = self.pool.get('sourcing.line').create(cr, uid, values, context=context)

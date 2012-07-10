@@ -397,5 +397,4 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
         # udpate the original wizard
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
     
-    
 stock_partial_move_memory_shipment_returnpacksfromshipment()
