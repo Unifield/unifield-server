@@ -486,6 +486,7 @@
 							<field name="invoice_state"/>
 							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
 							<field name="num_of_packs" />
+							<field name="total_volume" />
 							<field name="total_weight" />
 						</group>
 						<group colspan="2" col="2">
@@ -973,6 +974,7 @@
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
 									<field name="pack_type"/>
+									<field name="total_volume" />
 									<field name="weight"/>
 									<field name="total_weight" />
 									<field name="amount" />
@@ -989,6 +991,7 @@
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
 									<field name="pack_type"/>
+									<field name="total_volume" />
 									<field name="weight"/>
 									<field name="total_weight" />
 									<field name="amount" />
