@@ -823,6 +823,23 @@
                 </xpath>
             </field>
         </record>
+        
+        
+        <!-- Add on_change method on UoM field of Min/Max rule -->
+        <record id="add_onchange_uom_stock_warehouse_orderpoint_view" model="ir.ui.view">
+        	<field name="name">add.onchange.uom.stock.warehouse.orderpoint.view</field>
+        	<field name="model">stock.warehouse.orderpoint</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="procurement.view_warehouse_orderpoint_form" />
+        	<field name="arch" type="xml">
+        		<data>        			
+        			<xpath expr="/form//field[@name='product_uom']" position="attributes">
+        				<attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+        				<attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
+        			</xpath>
+        		</data>
+        	</field>
+        </record>
 
 	</data>
 </openerp>

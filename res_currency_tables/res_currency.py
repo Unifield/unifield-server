@@ -223,6 +223,11 @@ class res_currency(osv.osv):
             res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
             
         return res   
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        currency = self.browse(cr, uid, res_id)
+        table_name = currency.currency_table_id and currency.currency_table_id.name or ''
+        return currency.name + table_name
             
 res_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -17,7 +17,7 @@
 						<field name="po_cft" invisible="True" />
 					</field>
 					
-					<xpath expr="/form/notebook/page//button[@name='order_confirm']" position="replace">
+					<xpath expr="/form//button[@name='order_confirm']" position="replace">
 						<button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
                     	<button name="order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply"/>
                     </xpath>
@@ -73,7 +73,7 @@
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
 						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft)]"
-						context="{'product_id': product_id, 'choose_supplier': True}"
+						context="{'product_id': product_id, 'choose_supplier': True, 'uom': uom_id, 'product_qty': qty}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />
 					<field name="customer" invisible="1" />

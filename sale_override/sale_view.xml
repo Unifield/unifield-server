@@ -41,7 +41,7 @@
                         </group>
                     </button>
 
-                    <xpath expr="/form/notebook/page//button[@name='order_confirm']" position="replace">
+                    <xpath expr="/form//button[@name='order_confirm']" position="replace">
                         <group>
                             <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply"/>
                             <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />

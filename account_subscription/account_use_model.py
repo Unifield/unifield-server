@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class account_use_model(osv.osv_memory):
     _name = 'account.use.model'
