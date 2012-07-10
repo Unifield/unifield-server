@@ -154,6 +154,7 @@ class sale_order(osv.osv):
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
         'company_id2': fields.many2one('res.company','Company',select=1),
         'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current field order."),
@@ -534,7 +535,7 @@ class sale_order(osv.osv):
         
         # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
-        return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.from_yml_test)
+        return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
