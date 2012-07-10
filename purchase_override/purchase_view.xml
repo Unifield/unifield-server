@@ -153,7 +153,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
             <field name="domain">[('tender_id', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
@@ -192,10 +192,6 @@
             <field name="search_view_id" ref="base.view_res_partner_address_filter" />
             <field name="help">Suppliers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued.</field>
         </record>
-
-        <menuitem action="action_supplier_address_form"
-                  id="menu_supplier_address_form"
-                  parent="base.menu_procurement_management_supplier" />
 
         <record id="purchase_order_line_form_view_inherit" model="ir.ui.view">
             <field name="name">purchase.order.line.form.view</field>
@@ -239,6 +235,8 @@
         		</form>
         	</field>
         </record>
+
+		<menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
         
 	<!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
@@ -249,6 +247,27 @@
         <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
         <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
+        
+        <!-- Picking on Purchase menu -->
+        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
+        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
+        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" />
+        
+        <!-- Purchase configuration menu -->
+        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
+        <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" />
+        
     
     </data>
 </openerp>
