@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<openerp>
-    <data>
-        <report auto="False" id="report_purchase_msf_quotation" model="purchase.order" name="purchase.msf.quotation" rml="purchase_msf/report/request_quotation.rml" string="Request for Quotation"/>
-        <report auto="False" id="report_purchase_msf_order" model="purchase.order" name="purchase.msf.order" rml="purchase_msf/report/order.rml" string="Purchase Order"/>
-    </data>
-</openerp>
