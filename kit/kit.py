@@ -38,6 +38,7 @@ KIT_STATE = [('draft', 'Draft'),
              ('in_production', 'In Production'),
              ('completed', 'Completed'),
              ('done', 'Closed'),
+             ('cancel', 'Canceled'),
              ]
 
 class composition_kit(osv.osv):
