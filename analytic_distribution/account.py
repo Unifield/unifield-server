@@ -70,6 +70,7 @@ class destination_m2m(fields.many2many):
 class account_destination_link(osv.osv):
     _name = 'account.destination.link'
     _description = 'Destination link between G/L and Analytic accounts'
+    _order = 'name, id'
 
     def _get_tuple_name(self, cr, uid, ids, name=False, args=False, context=None):
         """
@@ -94,6 +95,23 @@ class account_destination_link(osv.osv):
             ids = [ids]
         return self.pool.get('account.destination.link').search(cr, uid, [('account_id', 'in', ids)], limit=0)
 
+    def _get_used(self, cr, uid, ids, name=False, args=False, context=None):
+        if context is None:
+            context = {}
+
+        used = []
+        if context.get('dest_in_use') and isinstance(context['dest_in_use'], list):
+            try:
+                used = context['dest_in_use'][0][2]
+            except ValueError:
+                pass
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for id in ids:
+            ret[id] = id in used
+        return ret
+
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]", readonly=True),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True),
@@ -103,9 +121,8 @@ class account_destination_link(osv.osv):
                 'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id'], 10),
                 'account.account': (_get_account_ids, ['code'], 20),
             }),
+        'used': fields.function(_get_used, string='Used', method=True, type='boolean'),
     }
-
-    _order = 'name'
 
 account_destination_link()
 
@@ -150,7 +167,6 @@ class account_destination_summary(osv.osv):
             ids = [ids]
             first = True
         ret = super(account_destination_summary, self).read(cr, uid, ids, fields_to_read, context, load)
-
         f_to_read = []
         for field in fields_to_read:
             if field.startswith('dest_'):
@@ -190,11 +206,16 @@ class account_destination_summary(osv.osv):
 
 
     def init(self, cr):
+        # test if id exists in funding_pool_associated_destinations or create it
+        cr.execute("SELECT attr.attname FROM pg_attribute attr, pg_class class WHERE attr.attrelid = class.oid AND class.relname = 'funding_pool_associated_destinations' AND attr.attname='id'")
+        if not cr.fetchall():
+            cr.execute("ALTER TABLE funding_pool_associated_destinations ADD COLUMN id SERIAL")
+
         tools.drop_view_if_exists(cr, 'account_destination_summary')
         cr.execute(""" 
             CREATE OR REPLACE view account_destination_summary AS (
                 SELECT
-                    min(l.id) AS id,
+                    min(d.id) AS id,
                     l.account_id AS account_id,
                     d.funding_pool_id AS funding_pool_id
                 FROM
@@ -208,6 +229,8 @@ class account_destination_summary(osv.osv):
         """)
     _order = 'account_id'
 account_destination_summary()
+
+
 class account_account(osv.osv):
     _name = 'account.account'
     _inherit = 'account.account'
