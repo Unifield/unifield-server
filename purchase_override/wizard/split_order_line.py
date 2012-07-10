@@ -141,12 +141,12 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created
                     # Create the new line
-                    new_line_id = line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
-                                                                                     'change_price_manually': split.purchase_line_id.change_price_manually,
-                                                                                     'price_unit': split.purchase_line_id.price_unit,
-                                                                                     'line_number': None,
-                                                                                     'product_qty': split.new_line_qty}, context=context)
-
+                    new_line_id = po_line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
+                                                                                        'change_price_manually': split.purchase_line_id.change_price_manually,
+                                                                                        'price_unit': split.purchase_line_id.price_unit,
+                                                                                        'line_number': None,
+                                                                                        'product_qty': split.new_line_qty}, context=context)
+                
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
