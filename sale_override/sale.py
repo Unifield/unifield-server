@@ -534,7 +534,7 @@ class sale_order(osv.osv):
         
         # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
-        return result and (line.order_id.procurement_request or order.state == 'shipping_except')
+        return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.from_yml_test)
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
