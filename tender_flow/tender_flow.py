@@ -368,11 +368,16 @@ class tender(osv.osv):
                     
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
+                pricelist = line.supplier_id.property_product_pricelist_purchase.id,
+                if line.currency_id:
+                    price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
+                    if price_ids:
+                        pricelist = price_ids[0]
                 po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '/' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
-                             'pricelist_id': line.supplier_id.property_product_pricelist_purchase.id,
+                             'pricelist_id': pricelist,
                              'company_id': tender.company_id.id,
                              'fiscal_position': line.supplier_id.property_account_position and line.supplier_id.property_account_position.id or False,
                              'categ': tender.categ,
@@ -479,10 +484,22 @@ class tender_line(osv.osv):
         '''
         result = {}
         for line in self.browse(cr, uid, ids, context=context):
+            result[line.id] = {}
             if line.price_unit and line.qty:
-                result[line.id] = line.price_unit * line.qty
+                result[line.id]['total_price'] = line.price_unit * line.qty
             else:
-                result[line.id] = 0.0
+                result[line.id]['total_price'] = 0.0
+            
+            result[line.id]['func_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            if line.purchase_order_line_id:
+                result[line.id]['currency_id'] = line.purchase_order_line_id.order_id.pricelist_id.currency_id.id
+            else:
+                result[line.id]['currency_id'] = result[line.id]['func_currency_id']
+            
+            result[line.id]['func_total_price'] = self.pool.get('res.currency').compute(cr, uid, result[line.id]['currency_id'],  
+                                                                                            result[line.id]['func_currency_id'], 
+                                                                                            result[line.id]['total_price'], 
+                                                                                            round=True, context=context)
                 
         return result
     
@@ -504,7 +521,10 @@ class tender_line(osv.osv):
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
                 'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price"),
+                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", multi='total'),
+                'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
+                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", multi='total'),
+                'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),

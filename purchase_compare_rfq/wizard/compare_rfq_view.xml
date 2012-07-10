@@ -89,6 +89,9 @@
 	    			<field name="price_unit" readonly="1" />
     				<field name="qty" readonly="1" />
     				<field name="price_total" readonly="1" />
+    				<field name="currency_id" readonly="1" />
+    				<field name="func_price_total" readonly="1" />
+    				<field name="func_currency_id" readonly="1" />
     				<button name="choose_supplier" string="Choose this supplier" icon="terp-camera_test" type="object" />
     			</tree>
     		</field>

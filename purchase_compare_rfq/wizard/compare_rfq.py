@@ -260,6 +260,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                                              'notes': l.notes,
                                                              'compare_line_id': line_id.id,
                                                              'compare_id': line_id.compare_id.id,
+                                                             'currency_id': l.order_id.pricelist_id.currency_id.id,
                                                              'price_total': l.product_qty*l.price_unit}))
         choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)],
                                                  'line_notes_ids': [(6,0,line_ids)]})
@@ -318,6 +319,21 @@ class wizard_choose_supplier_line(osv.osv_memory):
     
     _order = 'price_unit'
     
+    def _get_func_total(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the total of line in functional currency
+        '''
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            func_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            if field_name == 'func_currency_id':
+                res[line.id] = func_currency
+            elif field_name == 'func_price_total':
+                res[line.id] = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id, func_currency, line.price_total, round=True, context=context)
+                
+        return res
+    
     _columns = {
         'compare_id': fields.many2one('wizard.compare.rfq', string='Compare'),
         'compare_line_id': fields.many2one('wizard.compare.rfq.line', string='Compare Line'),
@@ -326,6 +342,9 @@ class wizard_choose_supplier_line(osv.osv_memory):
         'price_unit': fields.float(digits=(16,2), string='Unit Price'),
         'qty': fields.float(digits=(16,2), string='Qty'),
         'price_total': fields.float(digits=(16,2), string='Total Price'),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
+        'func_price_total': fields.function(_get_func_total, method=True, string='Func. Total Price', type='float'),
+        'func_currency_id': fields.function(_get_func_total, method=True, string='Func. Currency', type='many2one', relation='res.currency'),
         'notes': fields.text(string='Notes'),
     }
     

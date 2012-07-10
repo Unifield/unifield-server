@@ -26,6 +26,7 @@ from tools.translate import _
 
 import time
 
+
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
@@ -121,6 +122,22 @@ product_supplierinfo()
 class pricelist_partnerinfo(osv.osv):
     _name = 'pricelist.partnerinfo'
     _inherit = 'pricelist.partnerinfo'
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set automatically the currency of the line with the default
+        purchase currency of the supplier
+        '''
+        if not context:
+            context = {}
+        
+        res = super(pricelist_partnerinfo, self).default_get(cr, uid, fields, context=context)
+        
+        if context.get('partner_id', False) and isinstance(context['partner_id'], (int, long)):
+            partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)
+            res['currency_id'] = partner.property_product_pricelist_purchase.currency_id.id
+        
+        return res
     
     def unlink(self, cr, uid, info_id, context=None):
         '''

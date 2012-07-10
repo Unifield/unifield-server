@@ -89,7 +89,36 @@ class res_partner(osv.osv):
                     res[i] = {'in_product': True, 'min_qty': '%s' %seller_info[i]['min_qty'], 'delay': '%s' %seller_info[i]['delay']}
                 else:
                     res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
-                    
+
+        return res
+
+    def _get_price_unit(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the unit price of the product if product_id is in context
+        '''
+        if not context:
+            context = {}
+
+        res = {}
+
+        for id in ids:
+            res[id] = 0
+
+        if context.get('product_id'):
+            for partner in self.browse(cr, uid, ids, context=context):
+                product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
+                uom = context.get('uom', product.uom_id.id)
+                pricelist = partner.property_product_pricelist_purchase
+
+                context.update({'uom': uom})
+                price_list = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], context.get('product_id'), context.get('product_qty', 1.00), partner.id, context=context)
+                price = price_list[pricelist.id]
+                if not price:
+                    func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
+
+                res[partner.id] = price
+
         return res
 
     _columns = {
@@ -118,6 +147,7 @@ class res_partner(osv.osv):
             view_load=True,
             required=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
+        'price_unit': fields.function(_get_price_unit, method=True, type='float', string='Unit price'),
     }
 
     _defaults = {
