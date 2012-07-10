@@ -25,6 +25,7 @@ import netsvc
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from mx.DateTime import *
+import time
 from tools.translate import _ 
 import logging
 from workflow.wkf_expr import _eval_expr
