@@ -24,6 +24,7 @@ from tools.translate import _
 import decimal_precision as dp
 
 from sale_override import SALE_ORDER_STATE_SELECTION
+from msf_order_date.order_dates import compute_rts
 
 class procurement_request(osv.osv):
     _name = 'sale.order'
@@ -72,7 +73,6 @@ class procurement_request(osv.osv):
     _columns = {
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
-        'requested_date': fields.date(string='Requested date', states={'draft': [('readonly', False)]}, readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
         'origin': fields.char(size=64, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
         'notes': fields.text(string='Notes'),
@@ -125,11 +125,26 @@ class procurement_request(osv.osv):
             vals['partner_order_id'] = address_id
             vals['partner_invoice_id'] = address_id
             vals['partner_shipping_id'] = address_id
-            vals['delivery_requested_date'] = vals.get('requested_date')
             pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
             vals['pricelist_id'] = pl
+            if 'delivery_requested_date' in vals:
+                vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
 
         return super(procurement_request, self).create(cr, uid, vals, context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Update date_planned of lines
+        '''
+        for req in self.browse(cr, uid, ids, context=context):
+            # Only in case of Internal request
+            if req.procurement_request and 'delivery_requested_date' in vals:
+                rts = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
+                vals['ready_to_ship_date'] = rts
+                for line in req.order_line:
+                    self.pool.get('sale.order.line').write(cr, uid, line.id, {'date_planned': vals['delivery_requested_date']}, context=context)
+        
+        return super(procurement_request, self).write(cr, uid, ids, vals, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -253,6 +268,21 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'})
         
         return True
+    
+    def pricelist_id_change(self, cr, uid, ids, pricelist_id):
+        '''
+        Display a warning message on pricelist change
+        '''
+        res = {}
+        
+        if pricelist_id and ids:
+            order = self.browse(cr, uid, ids[0])
+            if pricelist_id != order.pricelist_id.id and order.order_line:
+                res.update({'warning': {'title': 'Currency change',
+                                        'message': 'You have changed the currency of the order. \
+                                         Please note that all order lines in the old currency will be changed to the new currency without conversion !'}})
+                
+        return res
     
 procurement_request()
 

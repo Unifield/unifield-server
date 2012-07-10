@@ -139,6 +139,7 @@ class account_invoice(osv.osv):
                     'partner_type_mandatory': True,
                     'currency_id': inv.currency_id.id,
                     'name': 'Down payment for ' + ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids]),
+                    'document_date': inv.document_date,
                 })
                 # create dp counterpart line
                 dp_account = self.pool.get('account.move.line').read(cr, uid, el[0], ['account_id']).get('account_id', False)
@@ -212,8 +213,13 @@ class account_invoice(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         for inv in self.browse(cr, uid, ids):
             values = {}
-            if not inv.date_invoice:
-                values = {'date': time.strftime('%Y-%m-%d'), 'period_id': inv.period_id and inv.period_id.id or False, 'state': 'date'}
+            curr_date = time.strftime('%Y-%m-%d')
+            if not inv.date_invoice and not inv.document_date:
+                values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
+            elif not inv.date_invoice:
+                values.update({'date': curr_date, 'document_date': inv.document_date, 'state': 'date'})
+            elif not inv.document_date:
+                values.update({'date': inv.date_invoice, 'document_date': curr_date, 'state': 'date'})
             if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 state = values and 'both' or 'amount'
                 values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})

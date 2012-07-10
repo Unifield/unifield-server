@@ -306,7 +306,7 @@ class analytic_distribution(osv.osv):
             res[distrib.id] = True
         return res
 
-    def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, ref=False, source_date=False, general_account_id=False, \
+    def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False, source_date=False, general_account_id=False, \
         move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
@@ -330,11 +330,14 @@ class analytic_distribution(osv.osv):
             ids = [ids]
         if not name or not date or not amount or not journal_id or not currency_id:
             return False
+        if not document_date:
+            document_date = date
         # Prepare some values
         res = []
         vals = {
             'name': name,
             'date': source_date or date,
+            'document_date': document_date,
             'ref': ref or '',
             'journal_id': journal_id,
             'general_account_id': general_account_id or False,

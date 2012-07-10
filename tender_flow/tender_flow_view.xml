@@ -219,6 +219,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='pricelist_id']" position="attributes">
+                    	<attribute name="string">Currency</attribute>
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
@@ -245,7 +246,7 @@
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
                             <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                            <button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward" type="object" />
+                            <button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward" type="object" />
                             <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />

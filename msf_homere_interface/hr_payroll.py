@@ -132,6 +132,7 @@ class hr_payroll(osv.osv):
 
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
+        'document_date': fields.date(string='Document Date', required=True, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
         'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
         'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True),
@@ -159,6 +160,7 @@ class hr_payroll(osv.osv):
 
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
+        'document_date': lambda *a: strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
 
