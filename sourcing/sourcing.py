@@ -727,9 +727,9 @@ class sale_order_line(osv.osv):
             vals['po_cft'] = False
         
         # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
-        if not vals['po_cft'] and vals['type'] == 'make_to_order':
+        if not vals.get('po_cft', False) and vals.get('type', False) == 'make_to_order':
             vals['po_cft'] = 'po'
-        elif vals['type'] == 'make_to_stock':
+        elif vals.get('type', False) == 'make_to_stock':
             vals['po_cft'] = False
         
         # fill the supplier
