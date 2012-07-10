@@ -35,7 +35,7 @@
             <lineStyle kind="LINEABOVE" colorName="black" start="6,-2" stop="6,-2" thickness="0.5" />
             <lineStyle kind="LINEABOVE" colorName="black" start="8,-2" stop="8,-2" thickness="0.5" />
         </blockTableStyle>
-        <blockTableStyle id="ItemsTitle">
+        <blockTableStyle id="LinesTitle">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
             <blockBackground colorName="silver" />
@@ -180,7 +180,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total items : [[ len(objects[0].order_line) ]]</para>
+                    <para style="TextInformation">Total Lines : [[ len(objects[0].order_line) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -478,19 +478,19 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="772.0" style="ItemsTitle">
+        <blockTable colWidths="772.0" style="LinesTitle">
             <tr>
                 <td>
-                    <para style="TextInformation">Items :</para>
+                    <para style="TextInformation">Lines :</para>
                     <para style="TextInformation"> </para>
                 </td>
             </tr>
         </blockTable>
 
-        <blockTable colWidths="25.0,105.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="65.0,65.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
             <tr>
                 <td>
-                    <para style="Lines"><i>Item</i></para>
+                    <para style="Lines"><i>Supplier Code</i></para>
                 </td>
                 <td>
                     <para style="Lines"><i>Code</i></para>
@@ -517,11 +517,11 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="25.0,105.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+            <blockTable colWidths="65.0,65.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
                 [[repeatIn(objects[0].merged_line_ids,'line')]]
                 <tr>
                     <td>
-                        <para style="LinesBlue">[[ line.line_number ]]</para>
+                    	<para style="LinesBlue">[[ line.supplier_code ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.product_id.default_code ]]</para>
@@ -565,7 +565,7 @@
         <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextRemarks">REMARKS : All orders are done according to our general Terms of Purchase, available on request // Please identify all parcels and documents with '[[ objects[0].name ]]' [[ objects[0].origin and "− '%s'" % objects[0].origin or '' ]] //</para>
+                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
             <tr>
