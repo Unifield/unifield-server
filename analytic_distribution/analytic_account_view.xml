@@ -41,7 +41,7 @@
                             </field>
                         </page>
                         <page string="Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
-                            <field name="tuple_destination_account_ids" nolabel="1"/>
+                            <field name="tuple_destination_account_ids" nolabel="1" context="{'dest_in_use':tuple_destination_account_ids}"/>
                         </page>
                         <page string="Destinations by accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="tuple_destination_summary" nolabel="1" readonly="1"/>
