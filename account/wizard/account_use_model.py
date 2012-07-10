@@ -45,6 +45,12 @@ class account_use_model(osv.osv_memory):
                                                                     "\nPlease define partner on it!")%line.name)
         pass
 
+    def __hook_val_update_before_line_creation(self, cr, uid, val, context=None):
+        """
+        Hook for change new lines values
+        """
+        return val
+
     def create_entries(self, cr, uid, ids, context=None):
         account_model_obj = self.pool.get('account.model')
         account_period_obj = self.pool.get('account.period')
@@ -107,6 +113,7 @@ class account_use_model(osv.osv_memory):
                 })
                 c = context.copy()
                 c.update({'journal_id': model.journal_id.id,'period_id': period_id})
+                val = self.__hook_val_update_before_line_creation(cr, uid, val, c)
                 id_line = account_move_line_obj.create(cr, uid, val, context=c)
 
         context.update({'move_ids':move_ids})

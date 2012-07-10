@@ -888,7 +888,7 @@ class procurement_order(osv.osv):
             seller_delay = hook['seller_delay']
             partner_id = partner.id
             address_id = partner_obj.address_get(cr, uid, [partner_id], ['delivery'])['delivery']
-            pricelist_id = partner.property_product_pricelist_purchase.id
+            pricelist_id = partner.property_product_pricelist_purchase
 
             uom_id = procurement.product_id.uom_po_id.id
 
@@ -896,7 +896,7 @@ class procurement_order(osv.osv):
             if seller_qty:
                 qty = max(qty,seller_qty)
 
-            price = pricelist_obj.price_get(cr, uid, [pricelist_id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id]
+            price = pricelist_obj.price_get(cr, uid, [pricelist_id.id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id.id]
             if hook.get('price_unit', False):
                 price = hook.get('price_unit', False)            
 
@@ -920,7 +920,7 @@ class procurement_order(osv.osv):
             }
             
             # line values modification from hook
-            line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement,)
+            line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement, pricelist=pricelist_id)
 
             taxes_ids = procurement.product_id.product_tmpl_id.supplier_taxes_id
             taxes = acc_pos_obj.map_tax(cr, uid, partner.property_account_position, taxes_ids)
@@ -932,7 +932,7 @@ class procurement_order(osv.osv):
                       'partner_id': partner_id,
                       'partner_address_id': address_id,
                       'location_id': procurement.location_id.id,
-                      'pricelist_id': pricelist_id,
+                      'pricelist_id': pricelist_id.id,
                       'order_line': [(0,0,line)],
                       'company_id': procurement.company_id.id,
                       'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,

@@ -19,6 +19,8 @@
     partner_id: base.res_partner_desertic_hispafuentes
     reference_type: none
     type: in_invoice
+    from_yml_test: True
+    document_date: !eval time.strftime('%Y-%m-%d')
 -
   I check that Initially supplier invoice state is "Draft"
 -
