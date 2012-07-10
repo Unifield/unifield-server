@@ -430,6 +430,19 @@ stock moves which are already processed : '''
             sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
         return sol_ids
     
+    def common_po_date_check(self, cr, uid, ids, po, context=None):
+        '''
+        delivery confirmed date at po level is mandatory
+        update corresponding date at line level if needed
+        '''
+        # msf_order_date checks
+        if not po.delivery_confirmed_date:
+            raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+        # for all lines, if the confirmed date is not filled, we copy the header value
+        for line in po.order_line:
+            if not line.confirmed_delivery_date:
+                line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+    
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
         """
         Checks:
@@ -468,13 +481,7 @@ stock moves which are already processed : '''
                             'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
                         break
             # msf_order_date checks
-            if not po.delivery_confirmed_date:
-                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
-            # for all lines, if the confirmed date is not filled, we copy the header value
-            for line in po.order_line:
-                if not line.confirmed_delivery_date:
-                    line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
-                    print 'confirmed delivery date set at po line level : %s'%po.delivery_confirmed_date
+            self.common_po_date_check(cr, uid, ids, po, context=context)
         
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
@@ -679,6 +686,11 @@ stock moves which are already processed : '''
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
+            # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
+            # which doesnt execute wkf_confirm_wait_order
+            # msf_order_date checks
+            self.common_po_date_check(cr, uid, ids, order, context=context)
+            
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
                 line_error = []
