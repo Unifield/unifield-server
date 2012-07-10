@@ -226,14 +226,16 @@ class purchase_order(osv.osv):
                     if po.from_yml_test:
                         continue
                     if not line.analytic_distribution_id:
-                        try:
-                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                                'analytic_account_project_dummy')
-                        except ValueError:
-                            dummy_cc = 0
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-                        break
+                        raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory!'))
+# This code have been commented because of jira's comment about "4/ Make analytic allocation mandatory on POs"
+#                        try:
+#                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+#                                'analytic_account_project_dummy')
+#                        except ValueError:
+#                            dummy_cc = 0
+#                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
+#                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+#                        break
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
         # Create commitments for each PO only if po is "from picking"
