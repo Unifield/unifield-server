@@ -533,7 +533,14 @@ stock moves which are already processed : '''
                         line_confirmed = line_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
                         line_confirmed = line_confirmed.strftime(db_date_format)
                     # we update the corresponding sale order line
+                    sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     # {sol: pol}
+                    # compute the price_unit value - we need to specify the date
+                    date_context = {'date': po.date_order}
+                    # convert from currency of pol to currency of sol
+                    price_unit_converted = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id,
+                                                                                 sol.currency_id.id, line.price_unit or 0.0,
+                                                                                 round=True, context=date_context)
                     fields_dic = {'product_id': line.product_id and line.product_id.id or False,
                                   'name': line.name,
                                   'default_name': line.default_name,
@@ -542,7 +549,7 @@ stock moves which are already processed : '''
                                   'product_uom': line.product_uom and line.product_uom.id or False,
                                   'product_uos_qty': line.product_qty,
                                   'product_uos': line.product_uom and line.product_uom.id or False,
-                                  'price_unit': line.price_unit,
+                                  'price_unit': price_unit_converted,
                                   'nomenclature_description': line.nomenclature_description,
                                   'nomenclature_code': line.nomenclature_code,
                                   'comment': line.comment,
