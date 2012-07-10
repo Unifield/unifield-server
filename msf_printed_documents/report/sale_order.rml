@@ -533,16 +533,16 @@
                         <para style="LinesBlue">[[ line.comment ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.product_uom_qty ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.product_uom_qty or '0.00' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.price_unit ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</para>
                     </td>
                     <td>
-                         <para style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal ]]</para>
+                         <para style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</para>
                     </td>
                 </tr>
             </blockTable>
