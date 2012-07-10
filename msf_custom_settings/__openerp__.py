@@ -30,7 +30,7 @@
                 'purchase',
                 'stock',
                 'consumption_calculation',
-                'msf_outgoing',
+                'msf_cross_docking',
                 'kit',
                 'procurement',
                 'product'],
