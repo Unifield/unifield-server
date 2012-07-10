@@ -101,13 +101,13 @@ class account_move_line(osv.osv):
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
     }
     
-    def create(self, cr, uid, vals, context=None):
+    def create(self, cr, uid, vals, context=None, check=True):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
             vals['instance_id'] = journal.instance_id.id
         return super(account_move_line, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context=None):
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
             vals['instance_id'] = journal.instance_id.id
