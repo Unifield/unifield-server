@@ -1276,7 +1276,8 @@ class sale_order_line(osv.osv):
             return so.state
         
         return False
-    
+
+
     _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
                 'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',

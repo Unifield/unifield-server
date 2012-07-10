@@ -819,12 +819,19 @@ class stock_location(osv.osv):
         id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
         prod_obj = self.pool.get('product.product').browse(cr,uid,arg[0][2][0])
         if prod_obj and prod_obj.type == 'consu':
-            if arg[0][2][1] == 'out':
-                return [('id', 'in', [id_cross])]
+            if arg[0][2][1] == 'in':
+                id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_locations_virtual')[1]
+                ids_child = self.pool.get('stock.location').search(cr,uid,[('location_id','child_of',id_virt)])
+                return [('id', 'in', [id_nonstock,id_cross]+ids_child)]
             else:
-                return [('id', 'in', [id_nonstock,id_cross])]
+                return [('id', 'in', [id_cross])]
+
         elif prod_obj and  prod_obj.type != 'consu':
-                return [('id', 'not in', [id_nonstock]),('usage','=','internal'),]
+                if arg[0][2][1] == 'in':
+                    return [('id', 'in', ids_usa+ids_child)]
+                else:
+                    return [('id', 'not in', [id_nonstock]),('usage','=','internal'),]
+
         ids = [('id', 'in', [])]
         return ids
 

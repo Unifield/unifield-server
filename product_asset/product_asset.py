@@ -377,7 +377,8 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
-            
+        if 'type' in vals and vals['type'] == 'consu':
+            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).create(cr, uid, vals, context=context)
     
@@ -388,13 +389,27 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
-            
+        if 'type' in vals and vals['type'] == 'consu':
+            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
+
+    def _constaints_product_consu(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'consu' and obj.procure_method != 'make_to_order':
+                return False
+        return True
+
     
     _columns = {
         'asset_ids': fields.one2many('product.asset', 'product_id', 'Assets')
     }
+
+    _constraints = [
+        (_constaints_product_consu, 'If you select "Non-stockable" as product type then you have to select "Make to order" as procurement method', []),
+    ]
 
 product_product()
 

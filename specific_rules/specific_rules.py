@@ -504,7 +504,7 @@ class stock_move(osv.osv):
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                                                              loc_dest_id, address_id)
-
+        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
         po = purchase_line_id and self.pool.get('purchase.order.line').browse(cr,uid,purchase_line_id) or False
         cd = po and po.order_id.cross_docking_ok or False
 
@@ -519,8 +519,8 @@ class stock_move(osv.osv):
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
                 if out:
                     result.setdefault('value', {}).update({'location_id': id_nonstock[1] })
-                else:
-                    result.setdefault('value', {}).update({'location_dest_id': id_nonstock[1] })
+                if parent_type == 'internal':
+                    result.setdefault('value', {}).update({'location_id': id_cross })
 
             if product.type == 'product' and not cd :
                     result.setdefault('value', {}).update({'location_id': None, })
@@ -529,7 +529,7 @@ class stock_move(osv.osv):
                     result.setdefault('value', {}).update({'location_dest_id': None, })
 
             if cd or ( out and product.type == 'consu' ):
-                id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')[1]
+
                 if out :
                     result.setdefault('value', {}).update({'location_id': id_cross })
                 else:

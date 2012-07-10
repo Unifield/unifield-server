@@ -116,11 +116,7 @@ class stock_move(osv.osv):
         '''
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
-
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id, parent_type, purchase_line_id,out)
-
-
-
         service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
 
         if service_loc:
@@ -136,6 +132,7 @@ class stock_move(osv.osv):
             #case product is NOT SERVICE
             if loc_dest_id == service_loc:
                 result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
+
             if parent_type == 'out':
                 #case OUT
                 if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
@@ -145,6 +142,27 @@ class stock_move(osv.osv):
                     #case STOCK
                     result.update({'domain': {'location_id': [ ('standard_out_ok', '=', 'src') ]}})
 
+            elif parent_type == 'internal':
+                #case INTERNAL
+                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    ids2,ids3 = [], []
+                    ids_qua = self.pool.get('stock.location').search(cr,uid,[('quarantine_location','=',True)])
+                    ids_cd = self.pool.get('stock.location').search(cr,uid,[('cross_docking_location_ok','=',True)])
+                    ids_dest = self.pool.get('stock.location').search(cr,uid,[('destruction_location','=',True)])
+                    ids_usa = self.pool.get('stock.location').search(cr,uid,[('usage','=','inventory')])
+                    ids2 += ids_cd
+                    ids2 += ids_qua
+                    ids3 += ids_cd
+                    ids3 += ids_qua
+                    ids3 += ids_usa
+                    ids3 += ids_dest
+                    result.update({'domain': {'location_dest_id': [  ('id','in',ids3) ], 'location_id': [  ('id','in',ids2) ]   }})
+                else:
+                    ids_usa = self.pool.get('stock.location').search(cr,uid,[('usage','=','internal')])
+                    id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_locations_virtual')[1]
+                    ids_child = self.pool.get('stock.location').search(cr,uid,[('location_id','child_of',id_virt)])
+                    result.update({'domain': {'location_dest_id': [('id', 'in', ids_usa+ids_child),   ],   'location_id': [('id', 'in', ids_usa+ids_child),   ] }})
+
             else:
                 #case IN
                 if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
@@ -152,11 +170,10 @@ class stock_move(osv.osv):
                     result.update({'domain': {'location_dest_id': [   ('check_prod_loc','=',[prod_id,'in'])     ]}})
                 else:
                     #case STOCK
-                    if parent_type == 'internal':
-                        #case INTERNAL
-                        result.update({'domain': {'location_dest_id': [('usage','in', ('internal', 'inventory', 'procurement', 'production') ),]}})
-                    else:
-                        result.update({'domain': {'location_dest_id': [('usage','=','internal'),]}})
+                    ids_usa = self.pool.get('stock.location').search(cr,uid,[('usage','=','internal')])
+                    id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_locations_virtual')[1]
+                    ids_child = self.pool.get('stock.location').search(cr,uid,[('location_id','child_of',id_virt)])
+                    result.update({'domain': {'location_dest_id': [('id', 'in', ids_usa+ids_child), ]}})
 
         return result
     

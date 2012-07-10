@@ -714,6 +714,11 @@ class sale_order_line(osv.osv):
         # type
         if not vals.get('type'):
             vals['type'] = 'make_to_stock'
+
+        if vals['product_id']:
+            bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
+            if bropro.type == 'consu':
+                vals['type'] = 'make_to_order'
         
         # fill po/cft : by default, if mto -> po, if mts -> False
         pocft = False
@@ -800,6 +805,11 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if vals['product_id']:
+            bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
+            if bropro.type == 'consu':
+                vals['type'] = 'make_to_order'
 
         # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
