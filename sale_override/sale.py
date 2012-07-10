@@ -735,12 +735,12 @@ class sale_order(osv.osv):
         move_id = kwargs['move_id']
         
         # we update the procurement and the purchase orderS if we are treating a Fo which is not shipping_exception
-        # Po is only treated if line is make_to_stock
-        # IN nor OUT are not yet (or just) created, we theoretically wont have problem with backorders and co
-        if order.state != 'shipping_except' and not order.procurement_request:
+        # Po is only treated if line is make_to_order
+        # IN nor OUT are yet (or just) created, we theoretically wont have problem with backorders and co
+        if order.state != 'shipping_except' and not order.procurement_request and line.procurement_id:
             # if the procurement already has a stock move linked to it (during action_confirm of procurement order), we cancel it
             if line.procurement_id.move_id:
-                # dont use action_cancel actually, because there is not stock picking or related stock moves
+                # use action_cancel actually, because there is not stock picking or related stock moves
                 move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
                 #move_obj.write(cr, uid, [line.procurement_id.move_id.id], {'state': 'cancel'}, context=context)
             # corresponding procurement order
