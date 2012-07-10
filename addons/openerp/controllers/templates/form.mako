@@ -72,7 +72,10 @@
                 % if buttons.toolbar:
                     <ul id="view-selector">
                     % for view in buttons.views:
-                        ${make_view_button(**view)}
+                    ## we do not display calendar, graph an diagram buttons (at the top right) by keeping only tree and form
+                        % if view['kind'] in ['tree', 'form']:
+                            ${make_view_button(**view)}
+                        % endif
                     % endfor
                     </ul>
                 % endif
