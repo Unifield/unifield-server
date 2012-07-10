@@ -93,6 +93,7 @@ class account_mcdb(osv.osv_memory):
         'model': lambda self, cr, uid, c: c.get('from', 'account.move.line'),
         'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'currency_choice': lambda *a: 'booking',
+        'analytic_axis': lambda *a: 'fp',
     }
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
