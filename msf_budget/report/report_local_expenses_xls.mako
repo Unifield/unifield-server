@@ -5,8 +5,20 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>Local Expenses</Title>
+  <Author>MSFUser</Author>
+  <LastAuthor>MSFUser</LastAuthor>
+  <Created>2012-06-18T15:46:09Z</Created>
+  <Company>Medecins Sans Frontieres</Company>
+  <Version>11.9999</Version>
 </DocumentProperties>
+<ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>13170</WindowHeight>
+  <WindowWidth>19020</WindowWidth>
+  <WindowTopX>120</WindowTopX>
+  <WindowTopY>60</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+</ExcelWorkbook>
 <Styles>
 <Style ss:ID="ssBoldLeft">
 <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -68,19 +80,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    nb_of_rows = 8
     nb_of_columns = 3
     month_list = []
     if data and data.get('form'):
         if data.get('form').get('breakdown') and data.get('form').get('breakdown') == 'month':
             nb_of_columns = 3 + data.get('form').get('month_stop')
             month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][0:data.get('form').get('month_stop')]
-        if data.get('form').get('result_lines'):
-            nb_of_rows = 8 + len(data.get('form').get('result_lines'))
 %>
-<Table ss:ExpandedColumnCount="${nb_of_rows}" ss:ExpandedRowCount="${nb_of_columns}" x:FullColumns="1"
-x:FullRows="1">
-% for x in range(0,nb_of_columns):
+<Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+% for x in range(2,nb_of_columns):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 % if data.get('form').get('header'):
@@ -96,10 +106,10 @@ x:FullRows="1">
 <Row/>
 % endif
 <Row>
-<Cell ss:StyleID="ssBorderLeft"><Data ss:Type="String">Account code</Data></Cell>
-<Cell ss:StyleID="ssBorderLeft"><Data ss:Type="String">Account name</Data></Cell>
+<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account code</Data></Cell>
+<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account name</Data></Cell>
 % for month in month_list:
-    <Cell ss:StyleID="ssBorderCenter"><Data ss:Type="String">${month}</Data></Cell>
+    <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">${month}</Data></Cell>
 % endfor
 <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Total</Data></Cell>
 </Row>
@@ -125,7 +135,7 @@ x:FullRows="1">
 % if data.get('form').get('total_line'):
 <Row>
 % for total_value in data.get('form').get('total_line')[0:2]:
-<Cell ss:StyleID="ssBoldLeft">
+<Cell ss:StyleID="ssBoldCenter">
    <Data ss:Type="String">${total_value}</Data>
 </Cell>
 % endfor
@@ -137,7 +147,5 @@ x:FullRows="1">
 </Row>
 % endif
 </Table>
-<AutoFilter x:Range="R1C1:R1C${nb_of_columns}" xmlns="urn:schemas-microsoft-com:office:excel">
-</AutoFilter>
 </Worksheet>
 </Workbook>
