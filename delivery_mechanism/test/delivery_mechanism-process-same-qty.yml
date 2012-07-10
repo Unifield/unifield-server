@@ -55,8 +55,10 @@
     sol_obj = self.pool.get('sale.order.line')
     # get the corresponding procurement order
     data = sol_obj.read(cr, uid, [ref("sol_A1")], ['procurement_id'], context=context)[0]
+    assert data['procurement_id'], 'the procurement is missing, problem in procurement generation'
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
+    assert data['purchase_id'], 'purchase data is missing, problem in purchase generation'
     po_id = data['purchase_id'][0]
     # change Invoicing control to From Picking
     self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)

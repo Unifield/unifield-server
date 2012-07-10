@@ -767,7 +767,6 @@ class sale_order(osv.osv):
                 if line.type == 'make_to_order' and line.state != 'confirmed':
                     return False
         return True
-        
 
 sale_order()
 

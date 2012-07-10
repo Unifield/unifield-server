@@ -105,6 +105,14 @@
             <field name="act_to" ref="sale.act_router"/>
             <field name="condition">test_lines()</field>
         </record>
+        
+        <!-- MODIFY Transition so ship_procurement is always reached. yml backward compatibility, so procurement orders are created -->
+        
+        <record id="sale.trans_draft_router" model="workflow.transition">
+            <field name="act_from" ref="act_draft"/>
+            <field name="act_to" ref="act_sale_order_ship_procurement"/>
+            <field name="signal">order_confirm</field>
+        </record>
 
     </data>
 </openerp>
