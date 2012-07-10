@@ -26,14 +26,6 @@ import logging
 import tools
 from os import path
 
-class purchase_order_merged_line(osv.osv):
-    _name = 'purchase.order.merged.line'
-    _inherit = 'purchase.order.merged.line, purchase.order.line'
-    _description = 'Purchase Order Merged Lines'
-    _table = 'purchase_order_merged_line'
-    
-purchase_order_merged_line()
-
 class purchase_order(osv.osv):
     '''
     Enables the option cross docking
