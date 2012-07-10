@@ -35,7 +35,7 @@ import tiny_socket
 import tools
 
 class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
-    def __init__(self, sock, threads):
+    def __init__(self, sock, threads, is_gzip):
         spn = sock and sock.getpeername()
         spn = 'netrpc-client-%s:%s' % spn[0:2]
         threading.Thread.__init__(self, name=spn)
@@ -44,6 +44,7 @@ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
         # clients connection when they're idle for 20min.
         self.sock.settimeout(1200)
         self.threads = threads
+        self.is_gzip = is_gzip
 
     def __del__(self):
         if self.sock:
@@ -58,7 +59,7 @@ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
     def run(self):
         self.running = True
         try:
-            ts = tiny_socket.mysocket(self.sock)
+            ts = tiny_socket.mysocket(self.sock, self.is_gzip)
         except Exception:
             self.threads.remove(self)
             self.running = False
@@ -101,7 +102,7 @@ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
 
 
 class TinySocketServerThread(threading.Thread,netsvc.Server):
-    def __init__(self, interface, port, secure=False):
+    def __init__(self, interface, port, secure=False, is_gzip=False):
         threading.Thread.__init__(self, name="NetRPCDaemon-%d"%port)
         netsvc.Server.__init__(self)
         self.__port = port
@@ -113,6 +114,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         self.threads = []
         netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO, 
                          "starting NET-RPC service at %s port %d" % (interface or '0.0.0.0', port,))
+        self.is_gzip = is_gzip
 
     def run(self):
         try:
@@ -122,7 +124,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
                 if not fd_sets[0]:
                     continue
                 (clientsocket, address) = self.socket.accept()
-                ct = TinySocketClientThread(clientsocket, self.threads)
+                ct = TinySocketClientThread(clientsocket, self.threads, self.is_gzip)
                 clientsocket = None
                 self.threads.append(ct)
                 ct.start()
@@ -162,7 +164,9 @@ netrpcd = None
 
 def init_servers():
     global netrpcd
-    if tools.config.get('netrpc', False):
+    if tools.config.get('netrpc', False) or tools.config.get('netrpc_gzip', False):
         netrpcd = TinySocketServerThread(
             tools.config.get('netrpc_interface', ''), 
-            int(tools.config.get('netrpc_port', 8070)))
+            int(tools.config.get('netrpc_port', 8070)),
+            is_gzip=tools.config.get('netrpc_gzip'),
+        )

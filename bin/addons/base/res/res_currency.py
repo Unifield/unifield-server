@@ -68,7 +68,10 @@ class res_currency(osv.osv):
     _order = "name"
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
-        res=super(osv.osv, self).read(cr, user, ids, fields, context, load)
+        select = ids
+        if isinstance(ids, (int, long)):
+            select = [select]
+        res = super(osv.osv, self).read(cr, user, select, fields, context, load)
         for r in res:
             if r.__contains__('rate_ids'):
                 rates=r['rate_ids']
@@ -76,6 +79,8 @@ class res_currency(osv.osv):
                     currency_rate_obj=  self.pool.get('res.currency.rate')
                     currency_date = currency_rate_obj.read(cr,user,rates[0],['name'])['name']
                     r['date'] = currency_date
+        if isinstance(ids, (int, long)):
+            return res and res[0] or False
         return res
 
     def round(self, cr, uid, currency, amount):
@@ -95,12 +100,12 @@ class res_currency(osv.osv):
         if from_currency['rate'] == 0 or to_currency['rate'] == 0:
             date = context.get('date', time.strftime('%Y-%m-%d'))
             if from_currency['rate'] == 0:
-                currency_symbol = from_currency.symbol
+                currency_name = from_currency.name
             else:
-                currency_symbol = to_currency.symbol
+                currency_name = to_currency.name
             raise osv.except_osv(_('Error'), _('No rate found \n' \
                     'for the currency: %s \n' \
-                    'at the date: %s') % (currency_symbol, date))
+                    'at the date: %s') % (currency_name, date))
         return to_currency.rate/from_currency.rate
 
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
@@ -124,7 +129,7 @@ class res_currency(osv.osv):
                 return (from_amount * rate)
 
     def name_search(self, cr, uid, name, args=[], operator='ilike', context={}, limit=100):
-        args2 = args[:]
+        args = args[:]
         if name:
             args += [('name', operator, name)]
         ids = self.search(cr, uid, args, limit=limit)

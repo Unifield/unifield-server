@@ -63,7 +63,13 @@ class _column(object):
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = None
 
-    def __init__(self, string='unknown', required=False, readonly=False, domain=None, context=None, states=None, priority=0, change_default=False, size=None, ondelete="set null", translate=False, select=False, **args):
+    def __init__(self, string='unknown', required=False, readonly=False, domain=None, context=None, states=None, priority=0, change_default=False, size=None, ondelete="set null", translate=False, select=False, manual=False, **args):
+        """
+
+        The 'manual' keyword argument specifies if the field is a custom one.
+        It corresponds to the 'state' column in ir_model_fields.
+
+        """
         if domain is None:
             domain = []
         if context is None:
@@ -84,6 +90,7 @@ class _column(object):
         self.read = False
         self.view_load = 0
         self.select = select
+        self.manual = manual
         self.selectable = True
         self.group_operator = args.get('group_operator', False)
         for a in args:
@@ -656,7 +663,8 @@ class many2many(_column):
             if act[0] == 0:
                 raise _('Not Implemented')
             elif act[0] == 1:
-                raise _('Not Implemented')
+                obj = obj.pool.get(self._obj)
+                obj.write(cr, user, [act[1]], act[2], context=context)
             elif act[0] == 2:
                 raise _('Not Implemented')
             elif act[0] == 3:

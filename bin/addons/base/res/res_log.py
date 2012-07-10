@@ -27,7 +27,8 @@ class res_log(osv.osv):
         'name': fields.char('Message', size=250, help='The logging message.', required=True, select=1),
         'user_id': fields.many2one('res.users','User'),
         'res_model': fields.char('Object', size=128, select=1),
-        'context': fields.char('Context', size=250),
+        'context': fields.text('Context'),
+        'domain': fields.text('Domain'),
         'res_id': fields.integer('Object ID'),
         'secondary': fields.boolean('Secondary Log', help='Do not display this log if it belongs to the same object the user is working on'),
         'create_date': fields.datetime('Creation Date', readonly=True, select=1),
@@ -36,6 +37,7 @@ class res_log(osv.osv):
     _defaults = {
         'user_id': lambda self,cr,uid,ctx: uid,
         'context': "{}",
+        'domain': "[]",
         'read': False,
     }
     _order='create_date desc'
@@ -61,9 +63,8 @@ class res_log(osv.osv):
     def get(self, cr, uid, context=None):
         unread_log_ids = self.search(cr, uid,
             [('user_id','=',uid), ('read', '=', False)], context=context)
-        res = self.read(cr, uid, unread_log_ids,
-            ['name','res_model','res_id','context'],
-            context=context)
+        list_of_fields = ['name','res_model','res_id','context', 'domain']
+        res = self.read(cr, uid, unread_log_ids, list_of_fields, context=context)
         res.reverse()
         result = []
         res_dict = {}

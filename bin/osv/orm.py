@@ -385,6 +385,7 @@ def get_pg_type(f):
 
 class orm_template(object):
     _name = None
+    _trace = False
     _columns = {}
     _constraints = []
     _defaults = {}
@@ -458,8 +459,10 @@ class orm_template(object):
                 'readonly': (f.readonly and 1) or 0,
                 'required': (f.required and 1) or 0,
                 'selectable': (f.selectable and 1) or 0,
+                'translate': (f.translate and 1) or 0,
                 'relation_field': (f._type=='one2many' and isinstance(f, fields.one2many)) and f._fields_id or '',
             }
+
             # When its a custom field,it does not contain f.select
             if context.get('field_state', 'base') == 'manual':
                 if context.get('field_name', '') == k:
@@ -474,13 +477,13 @@ class orm_template(object):
                 vals['id'] = id
                 cr.execute("""INSERT INTO ir_model_fields (
                     id, model_id, model, name, field_description, ttype,
-                    relation,view_load,state,select_level,relation_field
+                    relation,view_load,state,select_level,relation_field, translate
                 ) VALUES (
-                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
                 )""", (
                     id, vals['model_id'], vals['model'], vals['name'], vals['field_description'], vals['ttype'],
                      vals['relation'], bool(vals['view_load']), 'base',
-                    vals['select_level'], vals['relation_field']
+                    vals['select_level'], vals['relation_field'], bool(vals['translate'])
                 ))
                 if 'module' in context:
                     name1 = 'field_' + self._table + '_' + k
@@ -497,12 +500,12 @@ class orm_template(object):
                         cr.commit()
                         cr.execute("""UPDATE ir_model_fields SET
                             model_id=%s, field_description=%s, ttype=%s, relation=%s,
-                            view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s
+                            view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s
                         WHERE
                             model=%s AND name=%s""", (
                                 vals['model_id'], vals['field_description'], vals['ttype'],
                                 vals['relation'], bool(vals['view_load']),
-                                vals['select_level'], bool(vals['readonly']), bool(vals['required']), bool(vals['selectable']), vals['relation_field'], vals['model'], vals['name']
+                                vals['select_level'], bool(vals['readonly']), bool(vals['required']), bool(vals['selectable']), vals['relation_field'], bool(vals['translate']), vals['model'], vals['name']
                             ))
                         break
         cr.commit()
@@ -548,6 +551,8 @@ class orm_template(object):
     def __export_row(self, cr, uid, row, fields, context=None):
         if context is None:
             context = {}
+            
+        sync_context = context.get('sync_context')
 
         def check_type(field_type):
             if field_type == 'float':
@@ -555,7 +560,7 @@ class orm_template(object):
             elif field_type == 'integer':
                 return 0
             elif field_type == 'boolean':
-                return False
+                return 'False'
             return ''
 
         def selection_field(in_field):
@@ -566,6 +571,31 @@ class orm_template(object):
                 selection_field(col_obj._inherits)
             else:
                 return False
+            
+        def _get_xml_id(self, cr, uid, r):
+            model_data = self.pool.get('ir.model.data')
+            data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+            if len(data_ids):
+                d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
+                if d['module']:
+                    r = '%s.%s' % (d['module'], d['name'])
+                else:
+                    r = d['name']
+            else:
+                postfix = 0
+                while True:
+                    n = self._table+'_'+str(r['id']) + (postfix and ('_'+str(postfix)) or '' )
+                    if not model_data.search(cr, uid, [('name', '=', n)]):
+                        break
+                    postfix += 1
+                model_data.create(cr, uid, {
+                    'name': n,
+                    'model': self._name,
+                    'res_id': r['id'],
+                    'module': '__export__',
+                })
+                r = '__export__.'+n
+            return r
 
         lines = []
         data = map(lambda x: '', range(len(fields)))
@@ -617,6 +647,11 @@ class orm_template(object):
                             if [x for x in fields2 if x]:
                                 break
                         done.append(fields2)
+                        
+                        if sync_context and cols and cols._type=='many2many' and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
+                            data[fpos] = ','.join([_get_xml_id(self, cr, uid, x) for x in r])
+                            break
+                        
                         for row2 in r:
                             lines2 = self.__export_row(cr, uid, row2, fields2,
                                     context)
@@ -1956,14 +1991,39 @@ class orm_memory(orm_template):
                 result.append(r)
                 if id in self.datas:
                     self.datas[id]['internal.date_access'] = time.time()
+            
+            # all non inherited fields for which the attribute whose name is in load is False
             fields_post = filter(lambda x: x in self._columns and not getattr(self._columns[x], load), fields_to_read)
+    
+            # Compute POST fields
+            todo = {}
             for f in fields_post:
-                res2 = self._columns[f].get_memory(cr, self, ids, f, user, context=context, values=result)
-                for record in result:
-                    record[f] = res2[record['id']]
+                todo.setdefault(self._columns[f]._multi, [])
+                todo[self._columns[f]._multi].append(f)
+            for key, val in todo.items():
+                if key:
+                    res2 = self._columns[val[0]].get_memory(cr, self, ids, val, user, context=context, values=result)
+                    for pos in val:
+                        for record in result:
+                            if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
+                            multi_fields = res2.get(record['id'],{})
+                            if multi_fields:
+                                record[pos] = multi_fields.get(pos,[])
+                else:
+                    for f in val:
+                        res2 = self._columns[f].get_memory(cr, self, ids, f, user, context=context, values=result)
+                        for record in result:
+                            if res2:
+                                record[f] = res2[record['id']]
+                            else:
+                                record[f] = []
+                    
             if isinstance(ids_orig, (int, long)):
                 return result[0]
         return result
+    
+    def copy_translations(self, cr, uid, old_id, new_id, context=None):
+        pass
 
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
@@ -2061,10 +2121,14 @@ class orm_memory(orm_template):
         f = False
         if result:
             for id, data in self.datas.items():
-                counter = counter + 1
                 data['id'] = id
-                if limit and (counter > int(limit)):
+                # If no offset, give the first entries between 0 and the limit
+                if not offset and limit and (counter > int(limit)):
                     break
+                # If offset, give only entries between offset and the offset+limit
+                elif offset and limit and (counter > int(limit + offset)):
+                    break
+
                 f = True
                 for arg in result:
                     if arg[1] == '=':
@@ -2077,9 +2141,23 @@ class orm_memory(orm_template):
                     f = f and val
 
                 if f:
-                    res.append(id)
+                    # Increment the counter only if the data matches with the domain
+                    counter = counter + 1
+                    if counter > offset:
+                        res.append(id)
+
         if count:
             return len(res)
+    
+        if offset:
+            off = 0
+            while off < offset:
+                res.pop(0)
+                off += 1
+        
+        if limit and len(res) > limit:
+            return res[:limit]
+        
         return res or []
 
     def unlink(self, cr, uid, ids, context=None):
@@ -2110,8 +2188,10 @@ class orm_memory(orm_template):
         # nothing to check in memory...
         pass
 
-    def exists(self, cr, uid, id, context=None):
-        return id in self.datas
+    def exists(self, cr, uid, ids, context=None):
+        if isinstance(ids, (long,int)):
+            ids = [ids]
+        return [id for id in ids if id in self.datas]
 
 class orm(orm_template):
     _sql_constraints = []
@@ -2826,6 +2906,7 @@ class orm(orm_template):
                     'size': field['size'],
                     'ondelete': field['on_delete'],
                     'translate': (field['translate']),
+                    'manual': True,
                     #'select': int(field['select_level'])
                 }
 

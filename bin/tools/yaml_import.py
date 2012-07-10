@@ -2,6 +2,7 @@
 import types
 import time # used to eval time.strftime expressions
 from datetime import datetime, timedelta
+from mx import DateTime
 import logging
 
 import pooler
@@ -106,7 +107,7 @@ class TestReport(object):
             success += self._report[severity][True]
             failure += self._report[severity][False]
         res.append("total\t%s\t%s" % (success, failure))
-        res.append("end of report (%s assertion(s) checked)" % success + failure)
+        res.append("end of report (%s assertion(s) checked)" % (success + failure))
         return "\n".join(res)
 
 class RecordDictWrapper(dict):
@@ -138,6 +139,7 @@ class YamlInterpreter(object):
                              '_ref': self._ref(), # added '_ref' so that record['ref'] is possible
                              'time': time,
                              'datetime': datetime,
+                             'DateTime': DateTime,
                              'timedelta': timedelta}
 
     def _ref(self):
