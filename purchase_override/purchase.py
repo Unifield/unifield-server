@@ -121,6 +121,7 @@ class purchase_order(osv.osv):
                 "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
         ),
         'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
+        'date_confirm': fields.date(string='Confirmation date'),
     }
     
     _defaults = {
@@ -297,6 +298,16 @@ class purchase_order(osv.osv):
             return _("Purchase order '%s' is validated.") % (po.name,)
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
+        
+    def wkf_confirm_order(self, cr, uid, ids, context=None):
+        '''
+        Update the confirmation date of the PO at confirmation
+        '''
+        res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
+        
+        self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+        
+        return res
         
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
