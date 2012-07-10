@@ -474,6 +474,7 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+                    print 'confirmed delivery date set at po line level : %s'%po.delivery_confirmed_date
         
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
