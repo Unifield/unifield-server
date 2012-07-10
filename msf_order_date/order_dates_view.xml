@@ -16,6 +16,11 @@
                 		<field name="partner_type" />
                 	</field>
                 	
+                	<field name="pricelist_id" position="attributes">
+                		<attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
+                	</field>
+
+                	
                 	<field name="date_order" position="replace">
                 		<field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
                 	</field>
@@ -37,23 +42,23 @@
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" 
-	                            	attrs="{'invisible': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <field name="transport_type"
                             	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"
-                            	attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
-                            <field name="shipment_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            	attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            <field name="ready_to_ship_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            <field name="shipment_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
                             <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
                         </group>
                     </xpath>
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type}</attribute>
+                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'pricelist_id': pricelist_id}</attribute>
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
@@ -138,7 +143,7 @@
                     
                     <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'sale_id': active_id}</attribute>
+                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id}</attribute>
                     </xpath>
                     
                 </data>
@@ -149,6 +154,7 @@
             <field name="name">leadtime.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority" eval="30" />
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -184,6 +190,8 @@
             	<data>
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Receipt Date</attribute>
+            			<attribute name="attrs">{'readonly': [('state', 'in', ['done', 'cancel'])]}</attribute>
+            			<attribute name="readonly"></attribute>
             		</field>
 					<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
 						<attribute name="string">Actual Receipt Date</attribute>
@@ -226,6 +234,8 @@
             	
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Move Date</attribute>
+            			<attribute name="attrs">{'readonly': [('state', 'in', ['done', 'cancel'])]}</attribute>
+            			<attribute name="readonly"></attribute>
             		</field>
             		
             		<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
@@ -267,6 +277,8 @@
             	<data>
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Shipped Date</attribute>
+            			<attribute name="attrs">{'readonly': [('state', 'in', ['done', 'cancel'])]}</attribute>
+            			<attribute name="readonly"></attribute>
             		</field>
 					<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
 						<attribute name="string">Actual Shipped Date</attribute>

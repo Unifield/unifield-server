@@ -101,6 +101,7 @@
     account_id: account_account_advance0
     amount: -500.0
     date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-%d')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -232,6 +233,7 @@
     account_id: account_account_advance0
     amount: -500.0
     date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-%d')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -272,6 +274,29 @@
     self.write(cr, uid, [ref("wiz_advance1")], onchange_res.get('value'))
     assert self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance1")).total_amount == 100.0, "Error on dynamic change on the returned_amount field."
 -
+  I create a analytic distribution
+-
+  !record {model: analytic.distribution, id: analytic_distrib1}:
+    name: distri_1
+-
+  With one cc line
+-
+  !record {model: cost.center.distribution.line, id: cost_center_l1}:
+    name: CC Line 1
+    percentage: 100
+    currency_id: 1
+    analytic_id: analytic_distribution.analytic_account_project_dummy
+    distribution_id: analytic_distrib1
+-
+  And one FP line
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_l1}:
+    name: FP Line 1
+    percentage: 100
+    currency_id: 1
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
+    distribution_id: analytic_distrib1
+-
   I register an expense of 400 EUR and select a Supplier as a Third Party
 -
   !record {model: wizard.advance.line, id: wiz_adv_line0}:
@@ -281,11 +306,12 @@
     partner_id: res_partner_supplier_0
     amount: 400.0
     wizard_id: wiz_advance1
+    analytic_distribution_id: analytic_distrib1
 -
   I attach this line to the wizard
 -
   !python {model: wizard.cash.return, id: wiz_advance1}: |
-        self.write(cr, uid, [ref("wiz_advance1")], {'advance_line_ids': [(4, ref("wiz_adv_line0"))]}, context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0, 'statement_line_id': ref("account_bank_statement_line1"), 'statement_line_id': ref("account_bank_statement_line1") })
+        self.write(cr, uid, [ref("wiz_advance1")], {'advance_line_ids': [(4, ref("wiz_adv_line0"))]}, context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0, 'statement_line_id': ref("account_bank_statement_line1"), 'statement_line_id': ref("account_bank_statement_line1")})
 -
   I click on the 'Ok' button
 -

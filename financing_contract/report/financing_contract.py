@@ -29,9 +29,41 @@ class contract(report_sxw.rml_parse):
         super(contract, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'locale': locale,
+            'process': self.process,
+            'get_totals': self.get_totals,
         })
         return
         
+
+    def get_totals(self, reporting_lines):
+        result = [0, 0]
+        # Parse each budget line
+        
+        for line in reporting_lines:
+            if line.line_type != 'view':
+                result[0] += line.allocated_budget
+                result[1] += line.project_budget
+        return result
+    
+    def process(self, reporting_lines):
+        register_states = dict(self.pool.get('financing.contract.format.line')._columns['line_type'].selection)
+        result = []
+        # Parse each contract line
+        for line in reporting_lines:
+            account_list = ''
+            for account in line.account_ids:
+                account_list += str(account.code)
+                account_list += ', '
+            if len(account_list) > 2:
+                account_list = account_list[:-2]
+            values = {'code': line.code,
+                      'name': line.name,
+                      'allocated_budget': line.allocated_budget,
+                      'project_budget': line.project_budget,
+                      'line_type': register_states[line.line_type],
+                      'account_list': account_list}
+            result.append(values)
+        return result
         
 
 report_sxw.report_sxw('report.financing.contract', 'financing.contract.contract', 'addons/financing_contract/report/financing_contract.rml', parser=contract)

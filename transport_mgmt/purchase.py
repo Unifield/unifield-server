@@ -161,18 +161,32 @@ class purchase_order(osv.osv):
 
         return res
 
-    def onchange_pricelist_id(self, cr, uid, ids, partner_id, pricelist_id):
+    def onchange_pricelist_id(self, cr, uid, ids, partner_id, pricelist_id, transport_currency_id=False):
         '''
         Change the domain of the transport currency according to the currency and the functional currency
         '''
+        res = {}
+        
         # Set at least, the functional currency
         currency_ids = [self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id]
 
         # Set the currency of the pricelist of the supplier
         if partner_id and pricelist_id:
-            currency_ids.append(self.pool.get('product.pricelist').browse(cr, uid, pricelist_id).currency_id.id)
+            cur_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist_id).currency_id.id
+            currency_ids.append(cur_id)
+            if not transport_currency_id or transport_currency_id not in currency_ids:
+                res.setdefault('value', {}).update({'transport_currency_id': cur_id})
+            
+            if ids:
+                order = self.browse(cr, uid, ids[0])
+                if pricelist_id != order.pricelist_id.id and order.order_line:
+                    res.update({'warning': {'title': 'Currency change',
+                                            'message': 'You have changed the currency of the order. \
+                                            Please note that all order lines in the old currency will be changed to the new currency without conversion !'}})
+            
+        res.update({'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}})
 
-        return {'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}}
+        return res
 
 
 purchase_order()

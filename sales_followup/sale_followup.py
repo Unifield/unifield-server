@@ -366,7 +366,7 @@ class sale_order_line_followup(osv.osv_memory):
                              'done': 'Closed',
                              'cancel': 'Cancelled'}
 
-            if line.line_id.type == 'make_to_stock' or line.line_id.po_cft == 'po':
+            if line.line_id.type == 'make_to_stock' or line.line_id.po_cft in ('po', 'dpo'):
                 res[line.id]['tender_status'] = tender_status.get('n_a', 'Error on state !')
             elif line.line_id.po_cft == 'cft' and not line.tender_ids:
                 res[line.id]['tender_status'] = tender_status.get('no_tender', 'Error on state !')
@@ -391,9 +391,9 @@ class sale_order_line_followup(osv.osv_memory):
                                'no_order': 'No order',
                                'partial': 'Partial',
                                'draft': 'Draft',
-                               'confirmed': 'Confirmed',
-                               'wait': 'Confirmed',
-                               'approved': 'Approved',
+                               'confirmed': 'Validated',
+                               'wait': 'Validated',
+                               'approved': 'Confirmed',
                                'done': 'Closed',
                                'cancel': 'Cancelled',
                                'except_picking': 'Exception',
@@ -669,7 +669,7 @@ class sale_order_line_followup(osv.osv_memory):
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True, on_delete='cascade'),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
-        'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
+        'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
         'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
                                      type='many2one', relation='product.product'),

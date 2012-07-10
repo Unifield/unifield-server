@@ -123,7 +123,9 @@ class purchase_order_followup(osv.osv_memory):
                 move_ids4 = []
                 move_ids5 = []
                 for move in line.move_ids:
-                    if move.type == 'out':
+                    if move.type == 'internal':
+                        continue
+                    elif move.type == 'out':
                         move_ids5.append(move)
                     elif move.product_id.id == line.product_id.id:
                         move_ids1.append(move)
@@ -152,7 +154,7 @@ class purchase_order_followup(osv.osv_memory):
                                      'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
                                      'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
                                      'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
-                                     'move_delivery_date': line.confirmed_delivery_date != move.date_expected[:10] and move.date_expected or False,
+                                     'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date or False,
                                      'return_move': move.type == 'out',
                                      }
                         line_obj.create(cr, uid, line_data, context=context)
@@ -214,6 +216,20 @@ class purchase_order_followup_line(osv.osv_memory):
         'return_move': fields.boolean(string='Is a return move ?'),
     }
     
+    def go_to_incoming(self, cr, uid, ids, context=None):
+        '''
+        Open the associated Incoming shipment
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=line.picking_id)[1]
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking',
+                    'res_id': line.picking_id.id,
+                    'target': 'current',
+                    'view_type': 'form',
+                    'view_mode': 'form,tree',
+                    'view_id': [view_id]}
+            
 purchase_order_followup_line()
 
 class purchase_order_followup_from_menu(osv.osv_memory):

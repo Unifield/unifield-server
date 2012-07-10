@@ -46,7 +46,7 @@ class purchase_order_line_allocation_report(osv.osv):
         return res
     
     _columns = {
-        'order_id': fields.many2one('purchase.order', string='PO'),
+        'order_id': fields.many2one('purchase.order', string='PO', domain=[('rfq_ok', '=', False)]),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
@@ -148,7 +148,8 @@ class purchase_order_line_allocation_report(osv.osv):
                     sale_order so
                     ON
                     sol.order_id = so.id
-                WHERE pol.analytic_distribution_id IS NOT NULL)
+                WHERE pol.analytic_distribution_id IS NOT NULL
+		    AND po.rfq_ok = 'f')
                 UNION
                 (SELECT 
                     po.id AS order_id,
@@ -198,7 +199,8 @@ class purchase_order_line_allocation_report(osv.osv):
                     ON
                     sol.order_id = so.id
                 WHERE 
-                    pol.analytic_distribution_id IS NULL)) AS al
+                    pol.analytic_distribution_id IS NULL
+		    AND po.rfq_ok = 'f')) AS al
             );""")
     
 purchase_order_line_allocation_report()
@@ -223,6 +225,10 @@ class purchase_order(osv.osv):
             context = {}
         if not 'active_id' in context:
             raise osv.except_osv(_('Error'), _('No active purchase order found !'))
+
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.rfq_ok:
+                raise osv.except_osv(_('Error'), _('The document %s is a Request for Quotation, you cannot have an allocation report on RfQ !') % order.name)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_allocation_report', 'purchase_order_allocation_line_report_from_po')
         

@@ -265,6 +265,8 @@ class journal_items_corrections(osv.osv_memory):
         if comparison == 1:
 #            if not old_line.statement_id:
 #                raise osv.except_osv(_('Error'), _('Account correction is only possible on move line that come from a register!'))
+            if old_line and old_line.account_id and old_line.account_id.code and old_line.account_id.code == '6260':
+                raise osv.except_osv(_('Warning'), _('Correction is not possible on this account: %s') % old_line.account_id.name)
             res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))

@@ -30,7 +30,10 @@ class account_move_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
 
-    def create_analytic_lines(self, cr, uid, ids, context=None):
+    def create_analytic_lines(self, cr, uid, ids, context={}):
+        # Some verifications
+        if not context:
+            context = {}
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):
@@ -59,6 +62,7 @@ class account_move_line(osv.osv):
                                      'distribution_id': distrib_obj.id,
                                      'user_id': uid,
                                      'currency_id': obj_line.currency_id.id,
+                                     'document_date': obj_line.document_date,
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':

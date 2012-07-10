@@ -44,6 +44,8 @@ class account_move_line(osv.osv):
         company_list = []
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
             if company_list and not line.company_id.id in company_list:
                 raise osv.except_osv(_('Warning !'), _('To reconcile the entries company should be the same for all entries'))
@@ -161,6 +163,16 @@ class account_move_line(osv.osv):
         # @@@end
         return r_id
 
+    def _hook_check_period_state(self, cr, uid, result=False, context=None, *args, **kargs):
+        """
+        Check period state only if "from" is in context and equal to "reverse_addendum"
+        """
+        if not result or not context:
+            return super(account_move_line, self)._hook_check_period_state(cr, uid, result, context, *args, **kargs)
+        if context and 'from' in context and context.get('from') == 'reverse_addendum':
+            return True
+        return super(account_move_line, self)._hook_check_period_state(cr, uid, result, context, *args, **kargs)
+
     def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
         """
         Delete reconciliation object from given move lines ids (move_ids) and reverse gain/loss lines.
@@ -195,6 +207,7 @@ class account_move_line(osv.osv):
             # Delete doublons
             to_reverse = flatten(to_reverse)
             # Reverse move
+            context.update({'from': 'reverse_addendum'})
             success_ids, move_ids = self.reverse_move(cr, uid, to_reverse, context=context)
             # Search all move lines attached to given move_ids
             moves = self.pool.get('account.move').browse(cr, uid, move_ids, context=context)
@@ -209,6 +222,11 @@ class account_move_line(osv.osv):
                 WHERE id IN %s
             """
             cr.execute(sql, [0.0, 0.0, 0.0, tuple(lines)])
+            # Reconcile lines
+            all_lines = flatten([to_reverse, lines])
+            to_reconcile = self.pool.get('account.move.line').search(cr, uid, [('id', 'in', all_lines), ('account_id.reconcile', '=', True)])
+            if to_reconcile:
+                self.pool.get('account.move.line').reconcile(cr, uid, to_reconcile)
         return res
 
 account_move_line()

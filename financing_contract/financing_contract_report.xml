@@ -17,14 +17,6 @@
         auto="True"
         menu="True"/>
         
-        <report id="interactive"
-        string="Interactive Report"
-        model="financing.contract.contract"
-        name="financing.interactive"
-        report_type="txt"
-        auto="True"
-        menu="True"/>
-        
         <report id="contract"
         string="Export Contract info - pdf"
         model="financing.contract.contract"

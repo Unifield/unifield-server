@@ -10,6 +10,9 @@
             <field name="priority" eval="50"/>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/notebook/page[@string='Journal Items']/field[@name='line_id']/tree/field[@name='date_maturity']" position="after">
+                        <field name="document_date" readonly="0"/>
+                    </xpath>
                     <xpath expr="/form/notebook/page[@string='Journal Items']/field[@name='line_id']/tree/field[@name='credit']" position="replace"/>
                     <xpath expr="/form/notebook/page[@string='Journal Items']/field[@name='line_id']/tree/field[@name='amount_currency']" position="replace"/>
                     <xpath expr="/form/notebook/page[@string='Journal Items']/field[@name='line_id']/tree/field[@name='currency_id']" position="replace"/>

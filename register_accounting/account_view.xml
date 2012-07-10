@@ -51,10 +51,6 @@
                             <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
                             <label string="" colspan="1"/>
                         </group>
-                        <group col="4" colspan="4">
-                            <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill" colspan="2"/>
-                            <label string="" colspan="4"/>
-                        </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
@@ -92,6 +88,9 @@
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object" 
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -225,6 +224,9 @@
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
                                             string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object" 
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -346,8 +348,14 @@
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
                 <tree string="Register Lines">
-                    <button name="button_advance" states="hard" string="Advance return" type="object" icon="terp-stock_effects-object-colorize" context="context"/>
+                    <button name="button_advance" states="hard" string="Advance return" type="object" 
+                        icon="terp-stock_effects-object-colorize" context="context"
+                        attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
+                            ('employee_id', '=', False)]}"/>
+                    <field name="from_cash_return" invisible="1"/>
+                    <field name="amount" invisible="1"/>
                     <field name="date"/>
+                    <field name="document_date"/>
                     <field name="sequence"/>
                     <field name="name" string="Description"/>
                     <field name="ref"/>
@@ -381,10 +389,12 @@
                         <filter string="Temp" domain="[('state','=','temp')]" icon="terp-camera_test"/>
                         <separator orientation="vertical"/>
                         <field name="date" select='1'/>
-                        <field name="sequence" select='1'/>
+                        <field name="document_date" select='1'/>
                         <newline/>
+                        <field name="sequence" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
+                        <newline/>
                         <field name="account_id" select='1'/>
                         <field name="amount" select='1'/>
                         <newline/>
@@ -604,10 +614,6 @@
                         <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                         <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
                     </group>
-                    <group col="4" colspan="4">
-                        <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill" colspan="2"/>
-                        <label string="" colspan="4"/>
-                    </group>
                     <group col="4" colspan="2">
                         <field name="display_type"/>
                         <button name="button_display_type" states="open,confirm" string="Apply display type" type="object" icon="terp-stock_zoom" 
@@ -646,6 +652,9 @@
                                         string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                     <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
                                         string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                    <field name="is_down_payment" invisible="1"/>
+                                    <button name="button_down_payment" string="Down payment" type="object" 
+                                        icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                     <field name="reconciled"/>
                                     <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                         context="context"/>

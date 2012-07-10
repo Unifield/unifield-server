@@ -169,6 +169,7 @@ class supplier_catalogue(osv.osv):
             
             # Change pricelist data according to new data
             new_price_vals = {'valid_till': vals.get('period_to', None),
+                              'valid_from': vals.get('period_from', catalogue.period_from),
                               'currency_id': vals.get('currency_id', catalogue.currency_id.id),
                               'name': vals.get('name', catalogue.name),}
                 
@@ -284,7 +285,7 @@ class supplier_catalogue(osv.osv):
         
         context.update({'search_default_partner_id': cat.partner_id.id,})
         
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'supplier_catalogue_line_tree_view')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'non_edit_supplier_catalogue_line_tree_view')[1]
         
         return {'type': 'ir.actions.act_window',
                 'name': name,
@@ -377,6 +378,7 @@ class supplier_catalogue_line(osv.osv):
                                               'rounding': vals.get('rounding', 1.00),
                                               'min_order_qty': vals.get('min_order_qty', 0.00),
                                               'currency_id': catalogue.currency_id.id,
+                                              'valid_from': catalogue.period_from,
                                               'valid_till': catalogue.period_to,}, 
                                               context=context)
         
@@ -458,6 +460,17 @@ class supplier_catalogue_line(osv.osv):
         
         return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
     
+    def _check_min_quantity(self, cr, uid, ids, context=None):
+        '''
+        Check if the min_qty field is set
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.min_qty <= 0.00:
+                raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
+                return False
+            
+        return True
+    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
@@ -473,6 +486,10 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
     }
+    
+    _constraints = [
+        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
+    ]
     
     def product_change(self, cr, uid, ids, product_id, context=None):
         '''

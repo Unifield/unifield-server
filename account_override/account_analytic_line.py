@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 import decimal_precision as dp
 from time import strftime
+import logging
 
 class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
@@ -54,7 +55,7 @@ class account_analytic_line(osv.osv):
         'period_id': fields.related('move_id', 'period_id', string="Period", readonly=True, type="many2one", relation="account.period"),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True),
         'date': fields.date('Posting Date', required=True, select=True),
-        'document_date': fields.date('Document Date', readonly=True),
+        'document_date': fields.date('Document Date', readonly=True, required=True),
         'partner_txt': fields.related('move_id', 'partner_txt', string="Third Party", readonly=True, type="text"),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True),
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency"),
@@ -89,6 +90,38 @@ class account_analytic_line(osv.osv):
             }
             new_al = self.copy(cr, uid, al.id, vals, context=context)
             res.append(new_al)
+        return res
+
+    def _check_document_date(self, cr, uid, ids):
+        """
+        Check that document's date is done BEFORE posting date
+        """
+        for aal in self.browse(cr, uid, ids):
+            if aal.document_date and aal.date and aal.date < aal.document_date:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Filled in 'document_date' if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('AAL: set document_date')
+            vals['document_date'] = strftime('%Y-%m-%d')
+        if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
+            raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        return super(account_analytic_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date and date validity
+        """
+        if not context:
+            context = {}
+        res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_document_date(cr, uid, ids)
         return res
 
 account_analytic_line()

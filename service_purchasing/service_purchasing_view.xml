@@ -9,11 +9,6 @@
             <field name="inherit_id" ref="product.product_search_form_view" />
             <field name="arch" type="xml">
             	<data>
-            	
-            		<filter string="Service" position="after">
-                   		<filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
-                   	</filter>
-            	
             	</data>
             </field>
        	</record>
@@ -135,6 +130,10 @@
 					<xpath expr="/form//field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
+            		
+            		<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="attributes">
+                    	<attribute name="domain">[('usage', '=', product_id.type == 'service_recep' and 'inventory' or 'internal'), ('service_location', '=', product_id.type=='service_recep')]</attribute>
+                	</xpath>
             	
             	</data>
             </field>

@@ -92,7 +92,7 @@ msgstr ""
 "Project-Id-Version: unifield-wm\n"
 "Report-Msgid-Bugs-To: duy.vo@geneva.msf.org\n"
 "POT-Creation-Date: 2012-03-09 14:11+0000\n"
-"PO-Revision-Date: 2012-03-09 15:49+0000\n"
+"PO-Revision-Date: 2012-05-23 11:57+0100\n"
 "Last-Translator: Duy VO duy.vo@geneva.msf.org\n"
 "Language-Team: Unifield duy.vo@geneva.msf.org\n"
 "MIME-Version: 1.0\n"
@@ -106,6 +106,16 @@ msgstr ""
 #: model:ir.actions.act_window,name:sale.action_sales_by_salesman
 msgid "Sales by Salesman in last 90 days"
 msgstr "Field Orders by Responsible in last 90 days"
+
+#. module: product
+#: view:res.partner:0
+msgid "Sales & Purchases"
+msgstr "Field orders & Purchases"
+
+#. module: product
+#: view:res.partner:0
+msgid "Sales Properties"
+msgstr "Field orders properties"
 
 #. module: sale
 #: model:ir.actions.act_window,name:sale.action_config_picking_policy
@@ -154,10 +164,12 @@ msgstr "Configure Your Field Management Application"
 
 #. module: transport_mgmt
 #: model:ir.module.module,description:transport_mgmt.module_meta_information
-msgid "\n"
+msgid ""
+"\n"
 "    This module aims at implementing the transport cost in Purchase and Sale orders.\n"
 "    "
-msgstr "\n"
+msgstr ""
+"\n"
 "    This module aims at implementing the transport cost in Purchase and Field orders.\n"
 "    "
 
@@ -199,7 +211,8 @@ msgstr "Field Orders help you manage quotations and orders from your customers. 
 
 #. module: sale
 #: model:ir.module.module,description:sale.module_meta_information
-msgid "\n"
+msgid ""
+"\n"
 "    The base module to manage quotations and field orders.\n"
 "\n"
 "    * Workflow with validation steps:\n"
@@ -221,7 +234,8 @@ msgid "\n"
 "    * Graph of sales by product\n"
 "    * Graph of cases of the month\n"
 "    "
-msgstr "\n"
+msgstr ""
+"\n"
 "    The base module to manage quotations and field orders.\n"
 "\n"
 "    * Workflow with validation steps:\n"
@@ -274,7 +288,7 @@ msgstr "Field Shop"
 #. module: sale
 #: model:process.node,name:sale.process_node_saleorderprocurement0
 msgid "Sales Order Requisition"
-msgstr "Field Order Requisition"
+msgstr "Field Order"
 
 #. module: sale
 #: view:sale.report:0
@@ -315,10 +329,12 @@ msgstr "Field Order Analysis"
 #. module: sale
 #: code:addons/sale/wizard/sale_line_invoice.py:111
 #, python-format
-msgid "Invoice cannot be created for this Sales Order Line due to one of the following reasons:\n"
+msgid ""
+"Invoice cannot be created for this Sales Order Line due to one of the following reasons:\n"
 "1.The state of this field order line is either \"draft\" or \"cancel\"!\n"
 "2.The Sales Order Line is Invoiced!"
-msgstr "Invoice cannot be created for this Field Order Line due to one of the following reasons:\n"
+msgstr ""
+"Invoice cannot be created for this Field Order Line due to one of the following reasons:\n"
 "1.The state of this field order line is either \"draft\" or \"cancel\"!\n"
 "2.The Field Order Line is Invoiced!"
 
@@ -410,7 +426,6 @@ msgstr "Margins in Field Orders"
 #: model:ir.model,name:res_currency_functional.model_sale_order
 #: model:ir.model,name:sale.model_sale_order
 #: model:process.node,name:sale.process_node_order0
-#: model:process.node,name:sale.process_node_saleorder0
 #: model:res.request.link,name:sale.req_link_sale_order
 #: view:sale.order:0
 #: field:stock.picking,sale_id:0
@@ -458,7 +473,7 @@ msgstr "Procurement Orders represent the need for a certain quantity of products
 #: model:product.pricelist.type,name:product.pricelist_type_sale
 #: field:res.partner,property_product_pricelist:0
 msgid "Sale Pricelist"
-msgstr "Field Pricelist"
+msgstr "Field orders default currency"
 
 #. module: sale
 #: model:ir.model,name:sale.model_sale_advance_payment_inv
@@ -584,10 +599,12 @@ msgstr "The Responsible creates an invoice manually, if the field order shipping
 
 #. module: order_nomenclature
 #: model:ir.module.module,description:order_nomenclature.module_meta_information
-msgid "\n"
+msgid ""
+"\n"
 "    Add nomenclature abilities to orders (sale and purchase).\n"
 "    "
-msgstr "\n"
+msgstr ""
+"\n"
 "    Add nomenclature abilities to orders (field and purchase).\n"
 "    "
 
@@ -649,9 +666,11 @@ msgstr "With Stock Transfer Vouchers you can create and manage field invoices is
 #. module: sale
 #: code:addons/sale/sale.py:1099
 #, python-format
-msgid "You have to select a customer in the sales form !\n"
+msgid ""
+"You have to select a customer in the sales form !\n"
 "Please set one customer before choosing a product."
-msgstr "You have to select a customer in the field order form !\n"
+msgstr ""
+"You have to select a customer in the field order form !\n"
 "Please set one customer before choosing a product."
 
 #. module: sale
@@ -667,7 +686,7 @@ msgstr "If you have more than one shop reselling your company products, you can 
 #. module: product
 #: help:res.partner,property_product_pricelist:0
 msgid "This pricelist will be used, instead of the default one, for sales to the current partner"
-msgstr "This pricelist will be used, instead of the default one, for field orders to the current partner"
+msgstr "This currency will be used, instead of the default one, for field orders to the current partner"
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_pricelist_action2
@@ -682,7 +701,6 @@ msgstr "This view is used by accountants in order to record entries massively in
 #. modules: account_msf, account
 #: view:board.board:0
 #: model:ir.actions.act_window,name:account.action_draft_customer_invoices_dashboard
-#: view:board.board:0
 msgid "Customer Invoices to Approve"
 msgstr "Stock Transfer Vouchers to Approve"
 
@@ -705,3 +723,74 @@ msgstr "Stock Transfer Vouchers"
 #: model:process.transition,note:account.process_transition_invoiceimport0
 msgid "Import of the statement in the system from a supplier or customer invoice"
 msgstr "Import of the statement in the system from a supplier or stock transfer voucher"
+
+#. module: purchase
+#: model:product.pricelist,name:purchase.list0
+msgid "Default Purchase Pricelist"
+msgstr "Purchase default currency"
+
+#. module: purchase
+#: help:purchase.order,pricelist_id:0
+msgid "The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."
+msgstr "The currency used for this purchase order."
+
+#. module: product
+#: code:addons/product/pricelist.py:371
+#, python-format
+msgid "No active version for the selected pricelist !\n"
+"Please create or activate one."
+msgstr "The selected currency is not activated !\n"
+"Please activate it."
+
+#. module: purchase
+#: model:product.pricelist.type,name:purchase.pricelist_type_purchase
+#: field:res.partner,property_product_pricelist_purchase:0
+msgid "Purchase Pricelist"
+msgstr "Purchase default currency"
+
+#. module: purchase
+#: code:addons/purchase/purchase.py:700
+#, python-format
+msgid "No Pricelist !"
+msgstr "No Currency !"
+
+#. module: purchase
+#: help:res.partner,property_product_pricelist_purchase:0
+msgid "This pricelist will be used, instead of the default one, for purchases from the current partner"
+msgstr "This currency will be used, instead of the default one, for purchases from the current partner"
+
+#. module: product
+#: field:product.supplierinfo,pricelist_ids:0
+msgid "Supplier Pricelist"
+msgstr "Supplier Currency"
+
+#. module: purchase
+#: view:purchase.order.group:0
+msgid " Please note that: \n"
+" \n"
+" Orders will only be merged if: \n"
+" * Purchase Orders are in draft \n"
+" * Purchase Orders belong to the same supplier \n"
+" * Purchase Orders are have same stock location, same pricelist \n"
+" \n"
+" Lines will only be merged if: \n"
+" * Order lines are exactly the same except for the product,quantity and unit \n"
+" "
+msgstr " Please note that: \n"
+" \n"
+" Orders will only be merged if: \n"
+" * Purchase Orders are in draft \n"
+" * Purchase Orders belong to the same supplier \n"
+" * Purchase Orders are have same stock location, same currency \n"
+" \n"
+" Lines will only be merged if: \n"
+" * Order lines are exactly the same except for the product,quantity and unit \n"
+" "
+
+#. module: purchase
+#: code:addons/purchase/purchase.py:700
+#, python-format
+msgid "You have to select a pricelist or a supplier in the purchase form !\n"
+"Please set one before choosing a product."
+msgstr "You have to select a currency or a supplier in the purchase form !\n"
+"Please set one before choosing a product."
