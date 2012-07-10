@@ -56,7 +56,7 @@ class purchase_order(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'loan_id': False})
+        default.update({'loan_id': False, 'merged_line_ids': False})
         return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
@@ -1006,6 +1006,14 @@ class purchase_order_line(osv.osv):
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+    
+    def copy(self, cr, uid, line_id, defaults={}, context=None):
+        '''
+        Remove link to merged line
+        '''
+        defaults.update({'merged_id': False})
+        
+        return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
