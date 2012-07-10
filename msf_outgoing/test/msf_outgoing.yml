@@ -370,6 +370,7 @@
         if mem.product_id.id == context['product']['c']:
           mem.write({'prodlot_id': False}, context=c)
     # validate the creation
+    self.copy_all(cr, uid, ids)
     self.do_validate_picking(cr, uid, ids, context=c)
     # there should be one ppl created
     ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)
@@ -509,6 +510,7 @@
         if mem.product_id.id == context['product']['c']:
           mem.write({'from_pack': 0, 'to_pack': 1}, context=c)
     # validate first step
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # negative value rule
     for obj in self.browse(cr, uid, ids, context=c):
@@ -559,6 +561,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -585,6 +588,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -611,6 +615,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -637,6 +642,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -663,6 +669,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -689,6 +696,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -715,6 +723,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -740,6 +749,7 @@
           elif mem.quantity == 2:
             mem.write({'from_pack': 2, 'to_pack': 3}, context=c)
     # validate ppl1
+    self.copy_all(cr, uid, ids)
     res = self.do_ppl1(cr, uid, ids, context=c)
     model = res['res_model']
     id = res['res_id']
@@ -842,6 +852,7 @@
     self.deselect_all(cr, uid, ids, context=c)
     self.select_all(cr, uid, ids, context=c)
     # validate the creation
+    self.copy_all(cr, uid, ids)
     self.do_validate_picking(cr, uid, ids, context=c)
     # there should be one ppl created
     ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['b'])], context=context)
@@ -1555,6 +1566,9 @@
   !python {model: shipment}: |
     ids = context['shipment1']
     self.validate(cr, uid, ids, context=context)
+    for ship in self.browse(cr,uid,ids):
+        assert ship.state != 'draft', 'Shipment not validated :: Result : %s'%ship.state
+
 -
   I check the state of both OUT objects. A should be draft, B should be done (everything has been shipped).
 -
@@ -1661,6 +1675,7 @@
     self.deselect_all(cr, uid, ids, context=c)
     self.select_all(cr, uid, ids, context=c)
     # validate the creation
+    self.copy_all(cr, uid, ids)
     self.do_validate_picking(cr, uid, ids, context=c)
     # there should be one ppl created
     ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)

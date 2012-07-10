@@ -156,10 +156,10 @@ class sale_order(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'company_id2': fields.many2one('res.company','Company',select=1),
         'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines'),
-        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current sales order."),
+        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current field order."),
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
-        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current sales order."),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Pricelist for current sales order."),
+        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
@@ -192,7 +192,7 @@ class sale_order(osv.osv):
         '''
         user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         if company_id == user_company_id:
-            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+            raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
     
@@ -231,7 +231,7 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
-            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
+            self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
 
         return True
     
@@ -352,7 +352,7 @@ class sale_order(osv.osv):
         '''
         Hook the message displayed on sale order confirmation
         '''
-        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
+        return _('The Field order \'%s\' has been confirmed.') % (kwargs['order'].name,)
 
     def action_purchase_order_create(self, cr, uid, ids, context=None):
         '''
@@ -484,6 +484,7 @@ class sale_order(osv.osv):
         '''
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
+        result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
         
         return result
     
@@ -709,7 +710,7 @@ class sale_order(osv.osv):
                 self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
         
         if lines:
-            line_obj.write(cr, uid, lines, {'invoiced': 1})
+            line_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
         return True
     
     def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):

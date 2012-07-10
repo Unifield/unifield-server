@@ -219,6 +219,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='pricelist_id']" position="attributes">
+                    	<attribute name="string">Currency</attribute>
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='origin']" position="attributes">

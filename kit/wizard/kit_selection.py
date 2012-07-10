@@ -76,7 +76,7 @@ class kit_selection(osv.osv_memory):
                 'product_ids_kit_selection': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_line', string='Replacement Products'),
                 # related fields
                 'partner_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'partner_id', string='Partner', type='many2one', relation='res.partner', readonly=True),
-                'pricelist_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'pricelist_id', string='PriceList', type='many2one', relation='product.pricelist', readonly=True),
+                'pricelist_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'pricelist_id', string='Currency', type='many2one', relation='product.pricelist', readonly=True),
                 'warehouse_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'warehouse_id', string='Warehouse', type='many2one', relation='stock.warehouse', readonly=True),
                 # function fields
                 'corresponding_so_line_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo Line', multi='get_vals_kit_selection', store=False, readonly=True),

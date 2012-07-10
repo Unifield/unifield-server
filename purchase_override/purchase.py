@@ -671,6 +671,17 @@ stock moves which are already processed : '''
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
+            # Don't accept the confirmation of regular PO with 0.00 unit price lines
+            if order.order_type == 'regular':
+                line_error = []
+                for line in order.order_line:
+                    if line.price_unit == 0.00:
+                        line_error.append(line.line_number)
+                    
+                if len(line_error) > 0:
+                    errors = ' / '.join(str(x) for x in line_error)
+                    raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
+            
             todo = []
             todo2 = []
             todo3 = []
@@ -886,6 +897,7 @@ stock moves which are already processed : '''
                         'state': 'draft',
                         'purchase_line_id': order_line.id,
                         'company_id': order.company_id.id,
+                        'price_currency_id': order.pricelist_id.currency_id.id,
                         'price_unit': order_line.price_unit
                     }
                     # hook for stock move values modification
@@ -1254,9 +1266,6 @@ class purchase_order_line(osv.osv):
         else:
             if vals.get('product_qty', 0.00) == 0.00:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
-            
-            if vals.get('price_unit', 0.00) == 0.00:
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         order_id = vals.get('order_id')
         product_id = vals.get('product_id')
@@ -1287,9 +1296,6 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
-            
-            if vals.get('price_unit', line.price_unit) == 0.00 and not line.order_id.rfq_ok:
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no unit price !'))
         
         if not context.get('update_merge'):
             for line in ids:
@@ -1456,6 +1462,12 @@ class purchase_order_line(osv.osv):
         if res.get('warning', {}).get('title', '') == 'No valid pricelist line found !' or qty == 0.00:
             res.update({'warning': {}})
         
+        func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        if pricelist:
+            currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
+        else:
+            currency_id = func_curr_id
+        
         # Update the old price value        
         res['value'].update({'product_qty': qty})
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
@@ -1487,9 +1499,11 @@ class purchase_order_line(osv.osv):
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
             else:
-                res['value'].update({'old_price_unit': res['value']['price_unit']})
+                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res['value']['price_unit'])
+                res['value'].update({'old_price_unit': old_price})
         else:
-            res['value'].update({'old_price_unit': res.get('value').get('price_unit')})
+            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res.get('value').get('price_unit'))
+            res['value'].update({'old_price_unit': old_price})
                 
         # Set the unit price with cost price if the product has no staged pricelist
         if product and qty != 0.00: 
@@ -1498,6 +1512,7 @@ class purchase_order_line(osv.osv):
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
+            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price)
         
             if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
                 res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})
