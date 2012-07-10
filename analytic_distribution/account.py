@@ -81,19 +81,27 @@ class account_destination_link(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not ids:
+            return {}
         # Prepare some values
         res = {}
         # Browse given invoices
         for t in self.browse(cr, uid, ids):
             res[t.id] = ''
-            if t.account_id and t.account_id.code:
-                res[t.id] = t.account_id.code
+            # condition needed when a tuple is deleted from account.account
+            if self.read(cr, uid, t.id, ['account_id']):
+                res[t.id] = "%s %s"%(t.account_id and t.account_id.code or '', t.destination_id and t.destination_id.code or '')
         return res
 
     def _get_account_ids(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         return self.pool.get('account.destination.link').search(cr, uid, [('account_id', 'in', ids)], limit=0)
+
+    def _get_analytic_account_ids(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.pool.get('account.destination.link').search(cr, uid, [('destination_id', 'in', ids)], limit=0)
 
     def _get_used(self, cr, uid, ids, name=False, args=False, context=None):
         if context is None:
@@ -118,8 +126,9 @@ class account_destination_link(osv.osv):
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, 
             store={
-                'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id'], 10),
-                'account.account': (_get_account_ids, ['code'], 20),
+                'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id', 'destination_id'], 20),
+                'account.analytic.account': (_get_analytic_account_ids, ['code'], 10),
+                'account.account': (_get_account_ids, ['code'], 10),
             }),
         'used': fields.function(_get_used, string='Used', method=True, type='boolean'),
     }
