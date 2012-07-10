@@ -315,6 +315,7 @@
                         <field name="origin"/>
                         <field name="order_category" />
                         <field name="reason_type_id" widget="selection" />
+                        <newline />
                         <field name="date" string="Creation date" />
                         <field name="min_date" string="Expected date" />
                     </group>
