@@ -65,7 +65,7 @@
             <field name="act_from" ref="act_sale_order_validated" />
             <field name="act_to" ref="act_sale_order_split" />
             <field name="signal">order_confirm</field>
-            <field name="condition">split_type_sale_order == 'original_sale_order'</field>
+            <field name="condition">split_type_sale_order == 'original_sale_order' and not from_yml_test</field>
         </record>
         
         <!-- new DONE STEP -->
@@ -97,7 +97,7 @@
             <field name="act_from" ref="act_sale_order_validated" />
             <field name="act_to" ref="act_sale_order_ship_procurement" />
             <field name="signal">order_confirm</field>
-            <field name="condition">split_type_sale_order != 'original_sale_order'</field>
+            <field name="condition">split_type_sale_order != 'original_sale_order' or from_yml_test</field>
         </record>
         
         <record id="trans_ship_procurement_router" model="workflow.transition">

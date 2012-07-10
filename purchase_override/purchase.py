@@ -430,18 +430,39 @@ stock moves which are already processed : '''
             sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
         return sol_ids
     
-    def common_po_date_check(self, cr, uid, ids, po, context=None):
+    def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
         '''
         delivery confirmed date at po level is mandatory
         update corresponding date at line level if needed
         '''
-        # msf_order_date checks
-        if not po.delivery_confirmed_date:
-            raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
-        # for all lines, if the confirmed date is not filled, we copy the header value
-        for line in po.order_line:
-            if not line.confirmed_delivery_date:
-                line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+        # Analytic distribution verification
+        for po in self.browse(cr, uid, ids, context=context):
+            if not po.analytic_distribution_id:
+                for line in po.order_line:
+                    if po.from_yml_test:
+                        continue
+                    if not line.analytic_distribution_id:
+                        try:
+                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                                'analytic_account_project_dummy')
+                        except ValueError:
+                            dummy_cc = 0
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
+                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        break
+            # msf_order_date checks
+            if not po.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # for all lines, if the confirmed date is not filled, we copy the header value
+            for line in po.order_line:
+                if not line.confirmed_delivery_date:
+                    line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+        # Create commitments for each PO only if po is "from picking"
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        
+        return True
     
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
         """
@@ -465,29 +486,8 @@ stock moves which are already processed : '''
         ana_obj = self.pool.get('analytic.distribution')
         sol_obj = self.pool.get('sale.order.line')
         
-        # Analytic distribution verification
-        for po in self.browse(cr, uid, ids, context=context):
-            if not po.analytic_distribution_id:
-                for line in po.order_line:
-                    if po.from_yml_test:
-                        continue
-                    if not line.analytic_distribution_id:
-                        try:
-                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                                'analytic_account_project_dummy')
-                        except ValueError:
-                            dummy_cc = 0
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-                        break
-            # msf_order_date checks
-            self.common_po_date_check(cr, uid, ids, po, context=context)
-        
-        # Create commitments for each PO only if po is "from picking"
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
-                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
-                
+        # code from wkf_approve_order
+        self.common_code_from_wkf_approve_order(cr, uid, ids, po, context=context)
         # set the state of purchase order to confirmed_wait
         self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
         # sale order lines with modified state
@@ -684,13 +684,13 @@ stock moves which are already processed : '''
         
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
+        # which doesnt execute wkf_confirm_wait_order
+        # msf_order_date checks
+        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
             
         for order in self.browse(cr, uid, ids):
-            # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
-            # which doesnt execute wkf_confirm_wait_order
-            # msf_order_date checks
-            self.common_po_date_check(cr, uid, ids, order, context=context)
-            
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
                 line_error = []
