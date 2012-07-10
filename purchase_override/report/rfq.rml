@@ -3,7 +3,7 @@
 
     <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="0.0" width="772" height="530" />
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
 
         <pageGraphics>
             <drawString x="35" y="560.0">REQUEST FOR QUOTATION ([[ selection(objects[0], 'order_type') ]])</drawString>
@@ -550,7 +550,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="772.0" style="RemarkTable">
+        <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
                     <para style="TextRemarks">REMARKS : All orders are done according to our general Terms of Purchase, available on request // Please identify all parcels and documents with '[[ objects[0].name ]]' [[ objects[0].origin and "− '%s'" % objects[0].origin or '' ]] //</para>
