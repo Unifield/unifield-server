@@ -173,6 +173,7 @@ class sale_order(osv.osv):
   - The 'Invoice From The Picking' choice is used to create an invoice during the picking process."""),
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
+        'active': fields.boolean('Active', readonly=True),
     }
     
     _defaults = {
@@ -184,6 +185,7 @@ class sale_order(osv.osv):
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'order_policy': lambda *a: 'picking',
         'split_type_sale_order': 'original_sale_order',
+        'active': True,
     }
 
     def _check_own_company(self, cr, uid, company_id, context=None):
@@ -320,7 +322,8 @@ class sale_order(osv.osv):
         # set the lines to done
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
-        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        self.write(cr, uid, ids, {'state': 'done',
+                                  'active': False}, context=context)
         return True
     
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
