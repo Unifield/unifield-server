@@ -29,6 +29,11 @@ import time
 from workflow.wkf_expr import _eval_expr
 import logging
 
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
+
+from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+
 
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
@@ -41,7 +46,7 @@ class purchase_order_confirm_wizard(osv.osv):
     def validate_order(self, cr, uid, ids, context=None):
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids, context=context):
-            wf_service.trg_validate(uid, 'purchase.order', wiz.order_id.id, 'purchase_approve', cr)
+            wf_service.trg_validate(uid, 'purchase.order', wiz.order_id.id, 'purchase_confirmed_wait', cr)
         return {'type': 'ir.actions.act_window_close'}
     
 purchase_order_confirm_wizard()
@@ -365,8 +370,308 @@ stock moves which are already processed : '''
                             'target': 'new'}
             
             # If no errors, validate the DPO
-            wf_service.trg_validate(uid, 'purchase.order', order.id, 'purchase_approve', cr)
+            wf_service.trg_validate(uid, 'purchase.order', order.id, 'purchase_confirmed_wait', cr)
             
+        return True
+    
+    def get_so_ids_from_po_ids(self, cr, uid, ids, context=None):
+        '''
+        receive the list of purchase order ids
+        
+        return the list of sale order ids corresponding (through procurement process)
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        # sale order list
+        so_ids = []
+        
+        # get the sale order lines
+        sol_ids = self.get_sol_ids_from_po_ids(cr, uid, ids, context=context)
+        if sol_ids:
+            # list of dictionaries for each sale order line
+            datas = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
+            # we retrieve the list of sale order ids
+            for data in datas:
+                if data['order_id'] and data['order_id'][0] not in so_ids:
+                    so_ids.append(data['order_id'][0])
+        return so_ids
+    
+    def get_sol_ids_from_po_ids(self, cr, uid, ids, context=None):
+        '''
+        receive the list of purchase order ids
+        
+        return the list of sale order line ids corresponding (through procurement process)
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        # procurement ids list
+        proc_ids = []
+        # sale order lines list
+        sol_ids = []
+        
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id:
+                    proc_ids.append(line.procurement_id.id)
+        # get the corresponding sale order line list
+        if proc_ids:
+            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        return sol_ids
+    
+    def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
+        '''
+        delivery confirmed date at po level is mandatory
+        update corresponding date at line level if needed
+        '''
+        # objects
+        ana_obj = self.pool.get('analytic.distribution')
+        
+        # Analytic distribution verification
+        for po in self.browse(cr, uid, ids, context=context):
+            if not po.analytic_distribution_id:
+                for line in po.order_line:
+                    if po.from_yml_test:
+                        continue
+                    if not line.analytic_distribution_id:
+                        try:
+                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                                'analytic_account_project_dummy')
+                        except ValueError:
+                            dummy_cc = 0
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
+                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        break
+            # msf_order_date checks
+            if not po.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # for all lines, if the confirmed date is not filled, we copy the header value
+            for line in po.order_line:
+                if not line.confirmed_delivery_date:
+                    line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+        # Create commitments for each PO only if po is "from picking"
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        
+        return True
+    
+    def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
+        """
+        Checks:
+        1/ if all purchase line could take an analytic distribution
+        2/ if a commitment voucher should be created after PO approbation
+        
+        _> originally in purchase.py from analytic_distribution_supply
+        
+        Checks if the Delivery Confirmed Date has been filled
+        
+        _> originally in order_dates.py from msf_order_date
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # code from wkf_approve_order
+        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        # set the state of purchase order to confirmed_wait
+        self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
+        # sale order lines with modified state
+        sol_ids = self.get_sol_ids_from_po_ids(cr, uid, ids, context=context)
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
+        
+        # !!BEWARE!! we must update the So lines before any writing to So objects
+        for po in self.browse(cr, uid, ids, context=context): 
+            # hook for corresponding Fo update
+            self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
+        
+        return True
+    
+    def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Add a hook to modify the logged message
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        po = kwargs['po']
+        pol_obj = self.pool.get('purchase.order.line')
+        so_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        
+        # update corresponding fo if exist
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        if so_ids:
+            # date values
+            ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+            prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
+            
+            for line in po.order_line:
+                # get the corresponding so line
+                sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+                if sol_ids:
+                    line_confirmed = False
+                    # compute confirmed date for line
+                    if line.confirmed_delivery_date:
+                        line_confirmed = datetime.strptime(line.confirmed_delivery_date, db_date_format)
+                        line_confirmed = line_confirmed + relativedelta(days=prep_lt or 0)
+                        line_confirmed = line_confirmed + relativedelta(days=ship_lt or 0)
+                        line_confirmed = line_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
+                        line_confirmed = line_confirmed.strftime(db_date_format)
+                    # we update the corresponding sale order line
+                    sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
+                    # {sol: pol}
+                    # compute the price_unit value - we need to specify the date
+                    date_context = {'date': po.date_order}
+                    # convert from currency of pol to currency of sol
+                    price_unit_converted = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id,
+                                                                                 sol.currency_id.id, line.price_unit or 0.0,
+                                                                                 round=True, context=date_context)
+                    fields_dic = {'product_id': line.product_id and line.product_id.id or False,
+                                  'name': line.name,
+                                  'default_name': line.default_name,
+                                  'default_code': line.default_code,
+                                  'product_uom_qty': line.product_qty,
+                                  'product_uom': line.product_uom and line.product_uom.id or False,
+                                  'product_uos_qty': line.product_qty,
+                                  'product_uos': line.product_uom and line.product_uom.id or False,
+                                  'price_unit': price_unit_converted,
+                                  'nomenclature_description': line.nomenclature_description,
+                                  'nomenclature_code': line.nomenclature_code,
+                                  'comment': line.comment,
+                                  'nomen_manda_0': line.nomen_manda_0 and line.nomen_manda_0.id or False,
+                                  'nomen_manda_1': line.nomen_manda_1 and line.nomen_manda_1.id or False,
+                                  'nomen_manda_2': line.nomen_manda_2 and line.nomen_manda_2.id or False,
+                                  'nomen_manda_3': line.nomen_manda_3 and line.nomen_manda_3.id or False,
+                                  'nomen_sub_0': line.nomen_sub_0 and line.nomen_sub_0.id or False,
+                                  'nomen_sub_1': line.nomen_sub_1 and line.nomen_sub_1.id or False,
+                                  'nomen_sub_2': line.nomen_sub_2 and line.nomen_sub_2.id or False,
+                                  'nomen_sub_3': line.nomen_sub_3 and line.nomen_sub_3.id or False,
+                                  'nomen_sub_4': line.nomen_sub_4 and line.nomen_sub_4.id or False,
+                                  'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
+                                  'confirmed_delivery_date': line_confirmed,
+                                  }
+                    # write the line
+                    sol_obj.write(cr, uid, sol_ids, fields_dic, context=context)
+            
+            # compute so dates -- only if we get a confirmed value, because rts is mandatory on So side
+            # update after lines update, as so write triggers So workflow, and we dont want the Out document
+            # to be created with old So datas
+            if po.delivery_confirmed_date:
+                # Fo rts = Po confirmed date + prep_lt
+                delivery_confirmed_date = datetime.strptime(po.delivery_confirmed_date, db_date_format)
+                so_rts = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
+                so_rts = so_rts.strftime(db_date_format)
+            
+                # Fo confirmed date = confirmed date + prep_lt + ship_lt + transport_lt
+                so_confirmed = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
+                so_confirmed = so_confirmed + relativedelta(days=ship_lt or 0)
+                so_confirmed = so_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
+                so_confirmed = so_confirmed.strftime(db_date_format)
+            
+                # write data to so
+                so_obj.write(cr, uid, so_ids, {'delivery_confirmed_date': so_confirmed,
+                                               'ready_to_ship_date': so_rts}, context=context)
+            
+        return True
+    
+    def all_po_confirmed(self, cr, uid, ids, context=None):
+        '''
+        condition for the po to leave the act_confirmed_wait state
+        
+        if the po is from scratch (no procurement), or from replenishment mechanism (procurement but no sale order line)
+        the method will return True and therefore the po workflow is not blocked
+        
+        only 'make_to_order' sale order lines are checked, we dont care on state of 'make_to_stock' sale order line
+        _> anyway, thanks to Fo split, make_to_stock and make_to_order so lines are separated in different sale orders
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        
+        # corresponding sale order
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        # from so, list corresponding po
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+        # from listed po, list corresponding so
+        all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
+        # if we have sol_ids, we are treating a po which is make_to_order from sale order
+        if all_so_ids:
+            # we retrieve the list of ids of all sale order line if type 'make_to_order' with state != 'confirmed'
+            # in case of grouped po, multiple Fo depend on this po, all Po of these Fo need to be completed
+            # and all Fo will be confirmed together. Because IN of grouped Po need corresponding OUT document of all Fo
+            all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
+                                                                 ('type', '=', 'make_to_order'),
+                                                                 ('state', '!=', 'confirmed')], context=context)
+            # if any lines exist, we return False
+            if all_sol_not_confirmed_ids:
+                return False
+            
+        return True
+    
+    def wkf_confirm_trigger(self, cr, uid, ids, context=None):
+        '''
+        trigger corresponding so then po
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        proc_obj = self.pool.get('procurement.order')
+        wf_service = netsvc.LocalService("workflow")
+        
+        # corresponding sale order
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        # from so, list corresponding po first level
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+        # from listed po, list corresponding so
+        all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
+        # from all so, list all corresponding po second level
+        all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
+        
+        # we trigger all the corresponding sale order -> test_lines is called on these so
+        for so_id in all_so_ids:
+            wf_service.trg_write(uid, 'sale.order', so_id, cr)
+            
+        # we trigger pos of all sale orders -> all_po_confirm is called on these po
+        for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+        
         return True
     
     def wkf_approve_order(self, cr, uid, ids, context=None):
@@ -381,6 +686,11 @@ stock moves which are already processed : '''
         
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
+        # which doesnt execute wkf_confirm_wait_order
+        # msf_order_date checks
+        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
             
         for order in self.browse(cr, uid, ids):
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
@@ -770,12 +1080,11 @@ class purchase_order_merged_line(osv.osv):
                 res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
         return res
 
-    _columns = {
-        'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
-        'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
+    _columns = {'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
+                'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
-        'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
-    }
+                'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
+                }
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -1024,11 +1333,15 @@ class purchase_order_line(osv.osv):
         '''
         Update the merged line
         '''
-        if not context:
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # if the line is linked to a sale order line through procurement process,
+        # the deletion is impossible
+        if self.get_sol_ids_from_pol_ids(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
             self._update_merged_line(cr, uid, line_id, False, context=context)
@@ -1081,6 +1394,29 @@ class purchase_order_line(osv.osv):
                 res[line.id] = False
                         
         return res
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            # default values
+            result[obj.id] = {'order_state_purchase_order_line': False}
+            # order_state_purchase_order_line
+            if obj.order_id:
+                result[obj.id].update({'order_state_purchase_order_line': obj.order_id.state})
+            
+        return result
 
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
@@ -1093,6 +1429,7 @@ class purchase_order_line(osv.osv):
         # openerp bug: id is not given to onchanqge call if we are into one2many view
         'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
         'old_price_unit': fields.float(digits=(16,2), string='Old price'),
+        'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
     }
 
     _defaults = {
@@ -1247,7 +1584,32 @@ class purchase_order_line(osv.osv):
             res['value'].update({'old_price_unit': price_unit})
 
         return res
-
+    
+    def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
+        '''
+        input: purchase order line ids
+        return: sale order line ids
+        '''
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        # procurement ids list
+        proc_ids = []
+        # sale order lines list
+        sol_ids = []
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.procurement_id:
+                proc_ids.append(line.procurement_id.id)
+        # get the corresponding sale order line list
+        if proc_ids:
+            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+        return sol_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''

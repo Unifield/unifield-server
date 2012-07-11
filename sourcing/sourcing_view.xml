@@ -78,7 +78,7 @@
 						on_change="onChangeSupplier(supplier)" />
 					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />
-					<button name="confirmLine" string="Confirm line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
+					<button name="confirmLine" string="Source Line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
 					<!-- does not work. openerp bug ? <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('state', '!=', 'confirmed'), ('sale_order_state', '!=', 'draft')]}" />--> 
 
 				</tree>

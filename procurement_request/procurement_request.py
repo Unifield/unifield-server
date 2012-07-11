@@ -185,14 +185,18 @@ class procurement_request(osv.osv):
             args.append(('procurement_request', '=', False))
             
         return super(procurement_request, self).search(cr, uid, args, offset, limit, order, context, count)
-    
-    
-    def copy(self, cr, uid, id, default=None, context=None):
+   
+    def _hook_copy_default(self, cr, uid, *args, **kwargs):
+        id = kwargs['id']
+        default = kwargs['default']
+        context = kwargs['context']
+
         if not default:
             default = {}
             
         seq_obj = self.pool.get('ir.sequence')
         order = self.browse(cr, uid, id)
+
         name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
         proc = order.procurement_request or context.get('procurement_request', False)
             
@@ -201,12 +205,17 @@ class procurement_request(osv.osv):
             'invoice_ids': [],
             'picking_ids': [],
             'date_confirm': False,
-            'name': name,
             'procurement_request': proc,
         })
+
+        if not 'name' in default:
+            default.update({'name': name})
+
+        return default
         
+    def copy(self, cr, uid, id, default, context=None):
         # bypass name sequence
-        new_id = super(osv.osv, self).copy(cr, uid, id, default, context=context)
+        new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:
             new_order = self.read(cr, uid, new_id, ['delivery_requested_date', 'order_line'])
             if new_order['delivery_requested_date'] and new_order['order_line']:

@@ -107,6 +107,11 @@
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                     </xpath>
+                    
+                    <xpath expr="/search//filter[@string='To Invoice']" position="after">
+                    	<separator orientation="vertical" />
+                    	<filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
+                    </xpath>
             <xpath expr="/search/field[@name='name']" position="after">
             <field name="client_order_ref" />
             </xpath>
