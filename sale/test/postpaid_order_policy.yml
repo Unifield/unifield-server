@@ -24,6 +24,7 @@
     picking_policy: direct
     pricelist_id: product.list0
     shop_id: sale.shop
+    yml_module_name: sale
 -
   I confirm the Sale Order.
 -
@@ -283,7 +284,7 @@
     so = sale_order_obj.browse(cr, uid, ref("sale_order_so8"))
     invoice_id = self.search(cr, uid, [('origin','=',so.name),('state','=','open')])
     self.pay_and_reconcile(cr, uid, invoice_id,
-        100000.0, ref('account.cash'), ref('account.period_8'),
+        so.amount_total, ref('account.cash'), ref('account.period_8'),
         ref('sale.account_journal_bankjournal0'), ref('account.cash'),
         ref('account.period_8'), ref('sale.account_journal_bankjournal0'),
         name='test')

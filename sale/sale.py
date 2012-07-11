@@ -49,6 +49,10 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
 
+    def _hook_copy_default(self, cr, uid, id, *args, **kwargs):
+        default = kwargs['default']
+        return default
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -58,8 +62,8 @@ class sale_order(osv.osv):
             'invoice_ids': [],
             'picking_ids': [],
             'date_confirm': False,
-            'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order'),
         })
+        default = self._hook_copy_default(cr, uid, default=default, id=id, context=context)
         return super(sale_order, self).copy(cr, uid, id, default, context=context)
 
     def _amount_line_tax(self, cr, uid, line, context=None):
@@ -705,6 +709,15 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         pass
+    
+    def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 02
+        '''
+        pass
 
     def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -789,8 +802,11 @@ class sale_order(osv.osv):
                     # hook for stock move data modification
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
-
-                if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line,):
+                    
+                    # customer code execution position 02
+                    self._hook_ship_create_execute_specific_code_02(cr, uid, ids, context=context, order=order, line=line, move_id=move_id)
+                    
+                if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order):
                     proc_data = {'name': line.name,
                                  'origin': order.name,
                                  'date_planned': date_planned,
@@ -807,7 +823,7 @@ class sale_order(osv.osv):
                                  'property_ids': [(6, 0, [x.id for x in line.property_ids])],
                                  'company_id': order.company_id.id,
                                  }
-                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order,)
+                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data)
                     proc_ids.append(proc_id)
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id})
@@ -820,7 +836,8 @@ class sale_order(osv.osv):
                                         for mov in move_obj.browse(cr, uid, mov_ids):
                                             move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
                                             proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
-
+            
+            
             val = {}
 
             if self._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, picking_id=picking_id,):
@@ -1085,7 +1102,7 @@ class sale_order_line(osv.osv):
         except ZeroDivisionError:
             pass
         return {'value': value}
-
+    
     def copy_data(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
