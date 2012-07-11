@@ -522,14 +522,13 @@ class stock_move(osv.osv):
                 if parent_type == 'internal':
                     result.setdefault('value', {}).update({'location_id': id_cross })
 
-            if product.type == 'product' and not cd :
+            if product.type == 'product' and not cd and not out:
                     result.setdefault('value', {}).update({'location_id': None, })
 
             if product.type == 'product' and not out :
                     result.setdefault('value', {}).update({'location_dest_id': None, })
 
             if cd or ( out and product.type == 'consu' ):
-
                 if out :
                     result.setdefault('value', {}).update({'location_id': id_cross })
                 else:

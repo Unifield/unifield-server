@@ -141,6 +141,7 @@ class stock_move(osv.osv):
                 else:
                     #case STOCK
                     result.update({'domain': {'location_id': [ ('standard_out_ok', '=', 'src') ]}})
+                result.update({'domain': {'location_dest_id': [ ('standard_out_ok', '=', 'dest') ]}})      
 
             elif parent_type == 'internal':
                 #case INTERNAL
