@@ -130,17 +130,25 @@ class stock_mission_report(osv.osv):
         
         product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
         report_ids = self.search(cr, uid, [('local_report', '=', True)], context=context)
+        full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         line_ids = []
         
         if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
             c = context.copy()
             c.update({'no_update': True})
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            report_ids = [self.create(cr, uid, {'name': company.instance_id.name,
-                                               'instance_id': company.instance_id.id,
+            report_ids = [self.create(cr, uid, {'name': instance_id.name,
+                                               'instance_id': instance_id.id,
                                                'full_view': False}, context=c)]
+
+        if not full_report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
+            c = context.copy()
+            c.update({'no_update': True})
+            report_ids = [self.create(cr, uid, {'name': 'Full view',
+                                               'instance_id': instance_id.id,
+                                               'full_view': True}, context=c)]
             
+
         # Check in each report if new products are in the database and not in the report
         for report in self.browse(cr, uid, report_ids, context=context):
             # Don't update lines for full view or non local reports
@@ -160,13 +168,13 @@ class stock_mission_report(osv.osv):
         
             # Update the update date on report
             self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-                
+               
         # Update all lines
         line_obj.update(cr, uid, line_ids, context=context)
-        
+
         cr.commit()
         cr.close()
-        
+
         return True
                 
     

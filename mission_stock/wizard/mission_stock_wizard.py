@@ -45,6 +45,10 @@ class mission_stock_wizard(osv.osv_memory):
         Choose the first local report as default
         '''
         res = super(mission_stock_wizard, self).default_get(cr, uid, fields, context=context)
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if not instance_id:
+            raise osv.except_osv(_('Error'), _('Mission stock report cannot be available if no instance was set on the company !'))
         
         local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         if local_id:
