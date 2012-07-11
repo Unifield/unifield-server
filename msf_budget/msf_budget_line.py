@@ -140,7 +140,7 @@ class msf_budget_line(osv.osv):
         if context is None:
             context = {}
         # global values
-        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENG')], context=context)
+        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
         
         # list to store every account in the budget
         general_account_ids = []
@@ -172,10 +172,10 @@ class msf_budget_line(osv.osv):
             actual_domain.append(('date', '>=', budget_line.budget_id.fiscalyear_id.date_start))
             actual_domain.append(('date', '<=', budget_line.budget_id.fiscalyear_id.date_stop))
             # 3. commitments
-            # if commitments are set to False in context, the ENG analytic journal is removed
+            # if commitments are set to False in context, the engagement analytic journals are removed for all instances
             # from the domain
             if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', '!=', engagement_journal_ids[0]))
+                actual_domain.append(('journal_id', 'not in', engagement_journal_ids))
             
             # Analytic domain is now done; lines are retrieved and added
             analytic_line_obj = self.pool.get('account.analytic.line')
