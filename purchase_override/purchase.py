@@ -435,6 +435,9 @@ stock moves which are already processed : '''
         delivery confirmed date at po level is mandatory
         update corresponding date at line level if needed
         '''
+        # objects
+        ana_obj = self.pool.get('analytic.distribution')
+        
         # Analytic distribution verification
         for po in self.browse(cr, uid, ids, context=context):
             if not po.analytic_distribution_id:
@@ -483,7 +486,6 @@ stock moves which are already processed : '''
             ids = [ids]
         
         # objects
-        ana_obj = self.pool.get('analytic.distribution')
         sol_obj = self.pool.get('sale.order.line')
         
         # code from wkf_approve_order
