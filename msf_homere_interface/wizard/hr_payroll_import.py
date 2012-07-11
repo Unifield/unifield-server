@@ -57,7 +57,7 @@ class hr_payroll_import(osv.osv_memory):
 
     def update_payroll_entries(self, cr, uid, data='', field='', context=None):
         """
-        Import payroll entries regarding 
+        Import payroll entries regarding all elements given in "data"
         """
         # Some verifications
         if not context:
@@ -85,7 +85,7 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
             line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], '%d/%m/%Y'))
-        except:
+        except ValueError, e:
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s' % date[0]))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
@@ -166,6 +166,7 @@ class hr_payroll_import(osv.osv_memory):
         # Create the payroll entry
         vals = {
             'date': line_date,
+            'document_date': line_date,
             'period_id': period_id,
             'employee_id': employee_id,
             'name': name,

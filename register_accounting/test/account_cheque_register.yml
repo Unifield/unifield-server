@@ -34,6 +34,7 @@
       - account_id: account_account_receivable0
         amount: 111.0
         date: !eval time.strftime('%Y-05-02')
+        document_date: !eval time.strftime('%Y-05-02')
         name: cheque1
         partner_id: res_partner_john_doe
         sequence: 0.0

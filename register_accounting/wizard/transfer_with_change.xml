@@ -24,9 +24,9 @@
                             <br style="line-height: 1em;"/>
                         </html>
                         <newline/>
-                        <field name="amount_from" colspan="3" attrs="{'required': [('type', '=', 'from'), ('state', '=', 'draft')], 'invisible': [('type', '!=', 'from')]}"/>
+                        <field name="amount_from" colspan="3" attrs="{'invisible': [('type', '!=', 'from')]}"/>
                         <field name="currency_from" colspan="1" nolabel="1" attrs="{'invisible': [('type', '!=', 'from')]}"/>
-                        <field name="amount_to" colspan="3" attrs="{'required': [('type', '=', 'to'), ('state', '=', 'draft')], 'invisible': [('type', '!=', 'to')]}"/>
+                        <field name="amount_to" colspan="3" attrs="{'invisible': [('type', '!=', 'to')]}"/>
                         <field name="currency_to" colspan="1" nolabel="1" attrs="{'invisible': [('type', '!=', 'to')]}"/>
                     </group>
                     <html>

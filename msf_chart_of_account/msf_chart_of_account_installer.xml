@@ -23,6 +23,8 @@
                   <field name="create"/>
                   <newline/>
                   <field name="import_invoice_default_account" />
+                  <field name="expat_salaries_default_account" />
+                  <field name="counterpart_hq_entries_default_account" />
                 </group>
               </data>
             </field>

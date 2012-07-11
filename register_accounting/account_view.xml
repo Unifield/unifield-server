@@ -3,7 +3,7 @@
     <data>
 
     <!-- Change Bank & Cash menu to 'Registers' -->
-    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="4"
+    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1"
                 groups="account.group_account_user,account.group_account_manager"/>
 
     <!-- Bank Register Form => Inheritance -->
@@ -88,6 +88,9 @@
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object" 
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -221,6 +224,9 @@
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
                                             string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object" 
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -349,6 +355,7 @@
                     <field name="from_cash_return" invisible="1"/>
                     <field name="amount" invisible="1"/>
                     <field name="date"/>
+                    <field name="document_date"/>
                     <field name="sequence"/>
                     <field name="name" string="Description"/>
                     <field name="ref"/>
@@ -382,10 +389,12 @@
                         <filter string="Temp" domain="[('state','=','temp')]" icon="terp-camera_test"/>
                         <separator orientation="vertical"/>
                         <field name="date" select='1'/>
-                        <field name="sequence" select='1'/>
+                        <field name="document_date" select='1'/>
                         <newline/>
+                        <field name="sequence" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
+                        <newline/>
                         <field name="account_id" select='1'/>
                         <field name="amount" select='1'/>
                         <newline/>
@@ -643,6 +652,9 @@
                                         string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                     <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
                                         string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                    <field name="is_down_payment" invisible="1"/>
+                                    <button name="button_down_payment" string="Down payment" type="object" 
+                                        icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                     <field name="reconciled"/>
                                     <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                         context="context"/>

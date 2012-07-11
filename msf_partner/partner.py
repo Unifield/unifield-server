@@ -89,7 +89,36 @@ class res_partner(osv.osv):
                     res[i] = {'in_product': True, 'min_qty': '%s' %seller_info[i]['min_qty'], 'delay': '%s' %seller_info[i]['delay']}
                 else:
                     res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
-                    
+
+        return res
+
+    def _get_price_unit(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the unit price of the product if product_id is in context
+        '''
+        if not context:
+            context = {}
+
+        res = {}
+
+        for id in ids:
+            res[id] = 0
+
+        if context.get('product_id'):
+            for partner in self.browse(cr, uid, ids, context=context):
+                product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
+                uom = context.get('uom', product.uom_id.id)
+                pricelist = partner.property_product_pricelist_purchase
+
+                context.update({'uom': uom})
+                price_list = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], context.get('product_id'), context.get('product_qty', 1.00), partner.id, context=context)
+                price = price_list[pricelist.id]
+                if not price:
+                    func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
+
+                res[partner.id] = price
+
         return res
 
     _columns = {
@@ -98,21 +127,80 @@ class res_partner(osv.osv):
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
+        'property_product_pricelist_purchase': fields.property(
+          'product.pricelist',
+          type='many2one', 
+          relation='product.pricelist', 
+          domain=[('type','=','purchase')],
+          string="Purchase default currency", 
+          method=True,
+          view_load=True,
+          required=True,
+          help="This currency will be used, instead of the default one, for purchases from the current partner"),
+        'property_product_pricelist': fields.property(
+            'product.pricelist',
+            type='many2one', 
+            relation='product.pricelist', 
+            domain=[('type','=','sale')],
+            string="Field orders default currency", 
+            method=True,
+            view_load=True,
+            required=True,
+            help="This currency will be used, instead of the default one, for field orders to the current partner"),
+        'price_unit': fields.function(_get_price_unit, method=True, type='float', string='Unit price'),
     }
 
     _defaults = {
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc'):
+            msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
+            msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
+            if msf_customer and not 'property_stock_customer' in vals:
+                vals['property_stock_customer'] = msf_customer[1]
+            if msf_supplier and not 'property_stock_supplier' in vals:
+                vals['property_stock_supplier'] = msf_supplier[1]
+
+        return super(res_partner, self).create(cr, uid, vals, context=context)
     
-    def on_change_partner_type(self, cr, uid, ids, partner_type):
+    def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
         '''
         Change the procurement method according to the partner type
         '''
+        price_obj = self.pool.get('product.pricelist')
+        cur_obj = self.pool.get('res.currency')
+        user_obj = self.pool.get('res.users')
+        
         r = {'po_by_project': 'project'}
         
         if not partner_type or partner_type in ('external', 'internal'):
             r.update({'po_by_project': 'all'})
+        
+        sale_authorized_price = price_obj.search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner_type)])
+        if sale_authorized_price and sale_pricelist not in sale_authorized_price:
+            r.update({'property_product_pricelist': sale_authorized_price[0]})
+            
+        purchase_authorized_price = price_obj.search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner_type)])
+        if purchase_authorized_price and purchase_pricelist not in purchase_authorized_price:
+            r.update({'property_product_pricelist_purchase': purchase_authorized_price[0]})
+        
+        if partner_type and partner_type in ('internal', 'section', 'esc'):
+            msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
+            if msf_customer:
+                r.update({'property_stock_customer': msf_customer[1]})
+            msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
+            if msf_supplier:
+                r.update({'property_stock_supplier': msf_supplier[1]})
+        else:
+            other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')
+            if other_customer:
+                r.update({'property_stock_customer': other_customer[1]})
+            other_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
+            if other_supplier:
+                r.update({'property_stock_supplier': other_supplier[1]}) 
         
         return {'value': r}
     

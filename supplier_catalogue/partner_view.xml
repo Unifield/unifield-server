@@ -7,6 +7,7 @@
             <field name="name">leadtime.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority" eval="45" />
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -56,7 +57,7 @@
         </record>
         
         <!-- Supplier catalogues action on supplier form -->
-        <act_window
+        <!--<act_window
         	name="Catalogues"
         	res_model="from.supplier.choose.catalogue"
         	src_model="res.partner"
@@ -65,7 +66,7 @@
         	key2="client_action_multi"
         	target="new"
         	domain="[]"
-        	id="action_choose_catalogue" />
+        	id="action_choose_catalogue" />-->
         	
         <!-- Supplier historical catalogues action on supplier form -->
 		<act_window

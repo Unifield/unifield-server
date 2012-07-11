@@ -80,6 +80,7 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
+        "account_hq_entries",
         "msf_config_locations",
         "service_purchasing",
         "account_reconciliation",
@@ -99,10 +100,13 @@
         "supplier_catalogue",
         "msf_cross_docking",
         "return_claim",
+        "msf_processes",
+        "msf_custom_settings",
     ],
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
+        "usability.xml",
     ],
     "demo_xml": [
     ],

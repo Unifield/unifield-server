@@ -106,6 +106,7 @@ class shipment(osv.osv):
                       'currency_id': False,
                       'num_of_packs': 0,
                       'total_weight': 0.0,
+                      'total_volume': 0.0,
                       'state': 'draft',
                       'backshipment_id': False,
                       }
@@ -168,6 +169,9 @@ class shipment(osv.osv):
                     # total weight
                     total_weight = memory_family.total_weight
                     values['total_weight'] += int(total_weight)
+                    # total volume
+                    total_volume = memory_family.total_volume
+                    values['total_volume'] += float(total_volume)
                     # total amount
                     total_amount = memory_family.total_amount
                     values['total_amount'] += total_amount
@@ -256,6 +260,7 @@ class shipment(osv.osv):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[m³]', multi='get_vals',),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                               ('packed', 'Packed'),
                                                                                               ('shipped', 'Shipped'),
@@ -804,10 +809,10 @@ class shipment(osv.osv):
                 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
                 if treat_draft:
-                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
-                    for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
-                        if linked_packing.state not in ('done','cancel'):
-                            treat_draft = False
+                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id),
+                                                                   ('state', 'not in', ['done', 'cancel'])], context=context)
+                    if linked_packing_ids:
+                        treat_draft = False
                 
                 if treat_draft:
                     # trigger the workflow for draft_picking
@@ -897,6 +902,7 @@ class pack_family_memory(osv.osv_memory):
                       'currency_id': False,
                       'num_of_packs': 0,
                       'total_weight': 0.0,
+                      'total_volume': 0.0,
                       }
             result[pf_memory.id] = values
             # pack family related fields
@@ -906,6 +912,7 @@ class pack_family_memory(osv.osv_memory):
                 num_of_packs = pf_memory.to_pack - pf_memory.from_pack + 1
             values['num_of_packs'] = num_of_packs
             values['total_weight'] = pf_memory.weight * num_of_packs
+            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.00 / 1000.00
             
             # moves related fields
             for move in pf_memory.draft_packing_id.move_lines:
@@ -952,6 +959,7 @@ class pack_family_memory(osv.osv_memory):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[m³]', multi='get_vals',),
                 }
     
     _defaults = {'shipment_id': False,
@@ -1084,6 +1092,16 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink test for draft
+        '''
+        data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
+        if [x for x in data.values() if x]:
+            raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
+        
+        return super(stock_picking, self).unlink(cr, uid, ids, context=context)
    
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
@@ -1213,25 +1231,26 @@ class stock_picking(osv.osv):
         '''
         validate or not the draft picking ticket
         '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        
         for draft_picking in self.browse(cr, uid, ids, context=context):
             # the validate function should only be called on draft picking ticket
             assert draft_picking.subtype == 'picking' and draft_picking.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
             #check the qty of all stock moves
             treat_draft = True
-            for move in draft_picking.move_lines:
-                if move.product_qty != 0.0 and move.state != 'done':
-                    treat_draft = False
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_picking.id),
+                                                 ('product_qty', '!=', 0.0),
+                                                 ('state', 'not in', ['done', 'cancel'])], context=context)
+            if move_ids:
+                treat_draft = False
             
             if treat_draft:
                 # then all child picking must be fully completed, meaning:
                 # - all picking must be 'completed'
                 # completed means, we recursively check that next_step link object is cancel or done
-                # TODO should use has_picking_ticket_in_progress()
-                for picking in draft_picking.backorder_ids:
-                    # take care, is_completed returns a dictionary
-                    if not picking.is_completed()[picking.id]:
-                        treat_draft = False
-                        break
+                if self.has_picking_ticket_in_progress(cr, uid, [draft_picking.id], context=context)[draft_picking.id]:
+                    treat_draft = False
             
             if treat_draft:
                 # - all picking are completed (means ppl completed and all shipment validated)
@@ -1275,6 +1294,7 @@ class stock_picking(osv.osv):
                       'is_keep_cool': False,
                       'is_narcotic': False,
                       'num_of_packs': 0,
+                      'total_volume': 0.0,
                       'total_weight': 0.0,
                       #'is_completed': False,
                       'overall_qty': 0.0,
@@ -1288,6 +1308,8 @@ class stock_picking(osv.osv):
                 # total_weight
                 total_weight = family.total_weight
                 values['total_weight'] += total_weight
+                total_volume = family.total_volume
+                values['total_volume'] += total_volume
                 
             for move in stock_picking.move_lines:
                 # total amount (float)
@@ -1419,6 +1441,7 @@ class stock_picking(osv.osv):
                 'converted_to_standard': fields.boolean(string='Converted to Standard'),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'), # old_multi get_vals
+                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[m³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
@@ -1907,8 +1930,10 @@ class stock_picking(osv.osv):
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.backorder_ids:
-                raise osv.except_osv(_('Warning !'), _('You cannot convert a picking which has already been started.'))
+            # the convert function should only be called on draft picking ticket
+            assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
+            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
             
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
@@ -1921,7 +1946,15 @@ class stock_picking(osv.osv):
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
             # if corresponding sale order, date and date_expected are updated to rts + shipment lt
             for move in obj.move_lines:
-                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,}
+                # was previously set to confirmed/assigned, otherwise, when we confirm the stock picking,
+                # using draft_force_assign, the moves are not treated because not in draft
+                # and the corresponding chain location on location_dest_id was not computed
+                # we therefore set them back in draft state before treatment
+                vals = {'state': 'draft'}
+                # If the move comes from a DPO, don't change the destination location
+                if not move.dpo_id:
+                    vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
+
                 if obj.sale_id:
                     # compute date
                     shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -1930,6 +1963,7 @@ class stock_picking(osv.osv):
                     rts = rts.strftime(db_date_format)
                     vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
+
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])
         
@@ -2453,11 +2487,10 @@ class stock_picking(osv.osv):
         
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
-            # if draft and all qty are still there, we can cancel it without further checks
+            # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
-                for move in picking.move_lines:
-                    if move.product_qty != move.sale_line_id.product_uom_qty:
-                        raise osv.except_osv(_('Warning !'), _('The shipment process has already started! Return products to stock from ppl and shipment and try to cancel again.'))
+                if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
                 return super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
             # if not draft or qty does not match, the shipping is already in progress
             if picking.subtype == 'picking' and picking.state in ('done',):
@@ -2700,6 +2733,38 @@ class stock_move(osv.osv):
                     
         return result
     
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set default values according to type and subtype
+        '''
+        if not context:
+            context = {}
+            
+        res = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        
+        if 'warehouse_id' in context and context.get('warehouse_id'):
+            warehouse_id = context.get('warehouse_id')
+        else:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
+        res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
+        
+        loc_virtual_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Virtual Locations')])
+        loc_virtual_id = len(loc_virtual_ids) > 0 and loc_virtual_ids[0] or False
+        res.update({'location_virtual_id': loc_virtual_id})
+        
+        if 'type' in context and context.get('type', False) == 'out':
+            loc_stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': loc_stock_id})
+        
+        if 'subtype' in context and context.get('subtype', False) == 'picking':
+            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
+            res.update({'location_dest_id': loc_packing_id})
+        elif 'subtype' in context and context.get('subtype', False) == 'standard':
+            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
+            res.update({'location_dest_id': loc_packing_id})
+        
+        return res
+    
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -2724,6 +2789,9 @@ class stock_move(osv.osv):
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',), # old_multi get_vals
+                # Fields used for domain
+                'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
+                'location_output_id': fields.many2one('stock.location', string='Output location'),
                 }
 
 stock_move()
@@ -2792,3 +2860,26 @@ class sale_order(osv.osv):
         return cond
 
 sale_order()
+
+
+class procurement_order(osv.osv):
+    '''
+    procurement order workflow
+    '''
+    _inherit = 'procurement.order'
+    
+    def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
+        
+        - allow to modify the message written back to procurement order
+        '''
+        message = super(procurement_order, self)._hook_check_mts_on_message(cr, uid, context=context, *args, **kwargs)
+        procurement = kwargs['procurement']
+        if procurement.move_id.picking_id.state == 'draft' and procurement.move_id.picking_id.subtype == 'picking':
+            message = _("Shipment Process in Progress.")
+        return message
+    
+procurement_order()
+

@@ -9,12 +9,17 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
+                	
+                	<xpath expr="/form//field[@name='warehouse_id']" position="replace">
+                		<field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
+                	</xpath>
+                	
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
                         <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
                     </xpath>
                     
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
@@ -27,7 +32,7 @@
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
                         <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
                         	on_change="on_change_dest_partner_id(dest_partner_id)" />
-                        <field name="dest_address_id" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                        <field name="dest_address_id" domain="[('partner_id', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
                     	<field name="invoice_address_id" domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
@@ -39,6 +44,11 @@
                         <field name="fake_state" invisible="1" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'in', ('confirmed', 'done', 'cancel'))]}" />
+                    </xpath>
+                    
+                    <xpath expr="/form//field[@name='state']" position="after">
+                    	<button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
                     </xpath>
 
                 </data>
@@ -143,7 +153,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
             <field name="domain">[('tender_id', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
@@ -183,10 +193,6 @@
             <field name="help">Suppliers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued.</field>
         </record>
 
-        <menuitem action="action_supplier_address_form"
-                  id="menu_supplier_address_form"
-                  parent="base.menu_procurement_management_supplier" />
-
         <record id="purchase_order_line_form_view_inherit" model="ir.ui.view">
             <field name="name">purchase.order.line.form.view</field>
             <field name="model">purchase.order.line</field>
@@ -197,7 +203,7 @@
             		<xpath expr="/form//field[@name='product_id']" position="replace">
 	            		<field name="product_id" colspan="4" 
 	            			context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
-	            			on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment)"/>
+	            			on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"/>
 	            	</xpath>
             		
 	                <xpath expr="/form//field[@name='price_unit']" position="replace">
@@ -207,11 +213,30 @@
 	                    <field name="change_price_ok" invisible="1" />
 	                    <field name="old_price_unit" invisible="1" />
 	                    <field name="price_unit" 
-	                        on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, context)" />
+	                        on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)" />
 	                </xpath>
                	</data>
             </field>
         </record>
+        
+        <record id="purchase_order_confirm_wizard" model="ir.ui.view">
+        	<field name="name">purchase.order.confirm.wizard</field>
+        	<field name="model">purchase.order.confirm.wizard</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Warning on confirmation">
+        			<separator colspan="4" string="Purchase Order" />
+        			<field name="order_id" colspan="4" />
+        			<separator colspan="4" string="Warning" />
+        			<field name="errors" colspan="4" nolabel="1" />
+        			<separator colspan="4" string="Actions" />
+        			<button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
+        			<button type="object" name="validate_order" icon="terp-check" string="Confirm" colspan="3" />
+        		</form>
+        	</field>
+        </record>
+
+		<menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
         
 	<!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
@@ -222,6 +247,27 @@
         <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
         <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
+        
+        <!-- Picking on Purchase menu -->
+        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
+        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
+        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" />
+        
+        <!-- Purchase configuration menu -->
+        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
+        <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" />
+        
     
     </data>
 </openerp>

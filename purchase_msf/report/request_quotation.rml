@@ -144,10 +144,10 @@
           <para style="terp_tblheader_Details">Requested Date</para>
         </td>
         <td>
-          <para style="P1">Reference</para>
+          <para style="P1">CODE</para>
         </td>
         <td>
-          <para style="P1">Description</para>
+          <para style="P1">DESCRIPTION</para>
         </td>
         <td>
           <para style="P1">Supplier Code</para>
@@ -183,7 +183,7 @@
         <tr>
           <td>
             <para style="terp_default_8_italic">
-              <font color="white"> </font>
+              <font color="white">[[ order_line.nomenclature_description and ' ' or removeParentNode('tr') ]] </font>
             </para>
           </td>
           <td>
@@ -207,7 +207,7 @@
         <tr>
           <td>
             <para style="terp_default_8_italic">
-              <font color="white"> </font>
+              <font color="black">[[ (order_line.comment or order_line.manufacturer_id or order_line.second_manufacturer_id or order_line.third_manufacturer_id) and ' ' or removeParentNode('tr') ]] </font>
             </para>
           </td>
           <td>

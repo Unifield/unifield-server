@@ -9,11 +9,6 @@
             <field name="inherit_id" ref="product.product_search_form_view" />
             <field name="arch" type="xml">
             	<data>
-            	
-            		<filter string="Service" position="after">
-                   		<filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
-                   	</filter>
-            	
             	</data>
             </field>
        	</record>
@@ -107,7 +102,7 @@
         </record>
         
         <!-- IN -->
-        <record id="view_picking_in_tree" model="ir.ui.view">
+        <!-- <record id="view_picking_in_tree" model="ir.ui.view">
             <field name="name">stock.picking.in.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
@@ -121,7 +116,7 @@
                 	
                 </data>
             </field>
-        </record>
+        </record> -->
         
         <record id="view_picking_in_form" model="ir.ui.view">
             <field name="name">stock.picking.in.form</field>
@@ -135,12 +130,16 @@
 					<xpath expr="/form//field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
+            		
+            		<xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="attributes">
+                    	<attribute name="domain">[('usage', '=', product_id.type == 'service_recep' and 'inventory' or 'internal'), ('service_location', '=', product_id.type=='service_recep')]</attribute>
+                	</xpath>
             	
             	</data>
             </field>
        </record>
        
-       <record id="view_picking_in_search" model="ir.ui.view">
+       <!-- <record id="view_picking_in_search" model="ir.ui.view">
             <field name="name">stock.picking.in.search</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
@@ -159,7 +158,7 @@
             	
             	</data>
             </field>
-       </record>
+       </record> -->
        
        <!-- INTERNAL -->
        <record id="vpicktree" model="ir.ui.view">
@@ -190,27 +189,6 @@
             		<xpath expr="/form/group/group/field[@name='address_id']" position="after">
             			<field name="order_category" />
             		</xpath>
-            	
-            	</data>
-            </field>
-       </record>
-       
-       <record id="view_picking_internal_search" model="ir.ui.view">
-            <field name="name">stock.picking.internal.search</field>
-            <field name="model">stock.picking</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="stock.view_picking_internal_search" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<field name="origin" position="after">
-            			<field name="order_category" />
-            		</field>
-            		
-            		<filter string="State" position="after">
-            			<separator orientation="vertical" />
-                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
-            		</filter>
             	
             	</data>
             </field>

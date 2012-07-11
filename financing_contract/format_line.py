@@ -79,9 +79,9 @@ class financing_contract_format_line(osv.osv):
     
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
         # Method to get the domain (allocated or project) of a line
-        date_domain = "[('date', '>=', '"
+        date_domain = "[('document_date', '>=', '"
         date_domain += browse_format.eligibility_from_date
-        date_domain += "'), ('date', '<=', '"
+        date_domain += "'), ('document_date', '<=', '"
         date_domain += browse_format.eligibility_to_date
         date_domain += "')]"
         # list of expense accounts in the funding pools.
@@ -163,11 +163,11 @@ class financing_contract_format_line(osv.osv):
                     if line.overhead_type == 'cost_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = total_costs * line.overhead_percentage / 100.0
+                        res[line.id] = round(total_costs * line.overhead_percentage / 100.0)
                     elif line.overhead_type == 'grant_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage)
+                        res[line.id] = round(total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage))
         return res
 
     def _get_actual_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -197,11 +197,11 @@ class financing_contract_format_line(osv.osv):
                     if line.overhead_type == 'cost_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = total_costs * line.overhead_percentage / 100.0
+                        res[line.id] = round(total_costs * line.overhead_percentage / 100.0)
                     elif line.overhead_type == 'grant_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage)
+                        res[line.id] = round(total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage))
                 elif line.line_type == 'actual':
                     # sum of analytic lines, determined by the domain
                     analytic_domain = []
@@ -218,7 +218,7 @@ class financing_contract_format_line(osv.osv):
                         if 'currency_table_id' in context:
                             currency_table = context['currency_table_id']
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            date_context = {'date': analytic_line.source_date or analytic_line.date,
+                            date_context = {'date': analytic_line.document_date,
                                             'currency_table_id': currency_table}
                             real_sum += self.pool.get('res.currency').compute(cr,
                                                                               uid,
@@ -242,17 +242,17 @@ class financing_contract_format_line(osv.osv):
                                        ('actual','Actual'),
                                        ('consumption','Consumption'),
                                        ('overhead','Overhead')], 'Line type', required=True),
-        'overhead_type': fields.selection([('cost_percentage','Percentage of total costs'),
-                                           ('grant_percentage','Percentage of direct costs')], 'Overhead percentage type'),
+        'overhead_type': fields.selection([('cost_percentage','Percentage of direct costs'),
+                                           ('grant_percentage','Percentage of grant')], 'Overhead calculation mode'),
         'allocated_budget_value': fields.float('Budget allocated amount (value)'),
         'project_budget_value': fields.float('Budget project amount (value)'),
         'allocated_real_value': fields.float('Real allocated amount (value)'),
         'project_real_value': fields.float('Real project amount (value)'),
         'overhead_percentage': fields.float('Overhead percentage'),
-        'allocated_budget': fields.function(_get_budget_amount, method=True, store=False, string="Funded - Budget", type="float", readonly="True"),
-        'project_budget': fields.function(_get_budget_amount, method=True, store=False, string="Total project - Budget", type="float", readonly="True"),
-        'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly="True"),
-        'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly="True"),
+        'allocated_budget': fields.function(_get_budget_amount, method=True, store=False, string="Funded - Budget", type="float", readonly=True),
+        'project_budget': fields.function(_get_budget_amount, method=True, store=False, string="Total project - Budget", type="float", readonly=True),
+        'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly=True),
+        'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
     }
     
     _defaults = {
