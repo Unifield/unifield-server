@@ -194,9 +194,9 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form//field[@name='journal_id']" position="before">
-                        <field name="instance_id" readonly="1"/>
-                    </xpath>
+	                <xpath expr="/form//field[@name='journal_id']" position="before">
+	                    <field name="instance_id" readonly="1"/>
+	                </xpath>
                 </data>
             </field>
         </record>
@@ -209,9 +209,9 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form//field[@name='journal_id']" position="before">
-                        <field name="instance_id" readonly="1"/>
-                    </xpath>
+	                <xpath expr="/form//field[@name='journal_id']" position="before">
+	                    <field name="instance_id" readonly="1"/>
+	                </xpath>
                 </data>
             </field>
         </record>
