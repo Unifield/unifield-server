@@ -487,7 +487,7 @@ stock moves which are already processed : '''
         sol_obj = self.pool.get('sale.order.line')
         
         # code from wkf_approve_order
-        self.common_code_from_wkf_approve_order(cr, uid, ids, po, context=context)
+        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
         # set the state of purchase order to confirmed_wait
         self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
         # sale order lines with modified state
