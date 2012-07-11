@@ -165,7 +165,7 @@
             </field>
         </record>
         
-        <record id="view_picking_in_tree" model="ir.ui.view">
+        <!-- <record id="view_picking_in_tree" model="ir.ui.view">
             <field name="name">stock.picking.in.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
@@ -179,7 +179,7 @@
             	
             	</data>
             </field>
-        </record>
+        </record> -->
         
         <record id="view_picking_in_form" model="ir.ui.view">
             <field name="name">stock.picking.in.form</field>
@@ -218,6 +218,8 @@
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Move Date</attribute>
             		</field>
+            		
+            		<xpath expr="/tree/button[@name='action_process']" position="replace" />
             	
             	</data>
             </field>

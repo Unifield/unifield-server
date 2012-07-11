@@ -85,8 +85,41 @@ class stock_warehouse_order_cycle(osv.osv):
             
         return res
     
+    def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns a list of products for the rule
+        '''
+        res = {}
+        
+        for rule in self.browse(cr, uid, ids, context=context):
+            res[rule.id] = []
+            for line in rule.product_ids:
+                res[rule.id].append(line.product_id.id)
+        
+        return res
+    
+    def _src_product_ids(self, cr, uid, obj, name, args, context=None):
+        if not context:
+            context = {}
+            
+        res = []
+            
+        for arg in args:
+            if arg[0] == 'product_line_ids':
+                rule_ids = []
+                line_ids = self.pool.get('stock.warehouse.order.cycle.line').search(cr, uid, [('product_id', arg[1], arg[2])])
+                for l in self.pool.get('stock.warehouse.order.cycle.line').browse(cr, uid, line_ids):
+                    if l.order_cycle_id.id not in rule_ids:
+                        rule_ids.append(l.order_cycle_id.id)
+                res.append(('id', 'in', rule_ids))
+                
+        return res
+    
     _columns = {
-        'name': fields.char(size=64, string='Name', required=True, help='Reference of the order cycle rule'),
+        'sequence': fields.integer(string='Order', required=False, help='A higher order value means a low priority'),
+        'name': fields.char(size=64, string='Reference', required=True),
+        'category_id': fields.many2one('product.category', string='Category'),
+        'product_id': fields.many2one('product.product', string='Specific product'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True, 
                                        domain="[('is_replenishment', '=', warehouse_id)]",
@@ -119,6 +152,8 @@ Time used to compute the quantity of products to order according to the monthly 
                                     help='As this date is not in the past, no new replenishment will be run', 
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context=None: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
+        'product_line_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
+                                    type='many2many', relation='product.product', method=True, string='Products'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),

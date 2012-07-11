@@ -361,7 +361,6 @@ class sourcing_line(osv.osv):
                 warning = {'title': 'DPO for IR',
                            'message': 'You cannot choose Direct Purchase Order as method to source an Internal Request line.'}
                 value = {'po_cft': 'po'} 
-    
         return {'warning': warning, 'value': value}
     
     def onChangeType(self, cr, uid, id, type, context=None):

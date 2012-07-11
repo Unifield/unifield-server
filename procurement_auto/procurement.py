@@ -64,8 +64,39 @@ class stock_warehouse_automatic_supply(osv.osv):
             
         return res
     
+    def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns a list of products for the rule
+        '''
+        res = {}
+        
+        for rule in self.browse(cr, uid, ids, context=context):
+            res[rule.id] = []
+            for line in rule.line_ids:
+                res[rule.id].append(line.product_id.id)
+        
+        return res
+    
+    def _src_product_ids(self, cr, uid, obj, name, args, context=None):
+        if not context:
+            context = {}
+            
+        res = []
+            
+        for arg in args:
+            if arg[0] == 'product_ids':
+                rule_ids = []
+                line_ids = self.pool.get('stock.warehouse.automatic.supply.line').search(cr, uid, [('product_id', arg[1], arg[2])])
+                for l in self.pool.get('stock.warehouse.automatic.supply.line').browse(cr, uid, line_ids):
+                    if l.supply_id.id not in rule_ids:
+                        rule_ids.append(l.supply_id.id)
+                res.append(('id', 'in', rule_ids))
+                
+        return res
+    
     _columns = {
-        'name': fields.char(size=64, string='Name', required=True, help='Reference of the rule'),
+        'sequence': fields.integer(string='Order', required=False, help='A higher order value means a low priority'),
+        'name': fields.char(size=64, string='Reference', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
@@ -87,6 +118,8 @@ class stock_warehouse_automatic_supply(osv.osv):
                                      help='As this date is not in the past, no new replenishment will be run', 
                                      store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c=None: ids, ['frequence_id'],20),
                                             'stock.frequence': (_get_frequence_change, None, 20)}),
+        'product_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
+                                    type='many2many', relation='product.product', method=True, string='Products'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),

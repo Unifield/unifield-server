@@ -196,6 +196,7 @@ class stock_warehouse_orderpoint(osv.osv):
     _inherit = 'stock.warehouse.orderpoint'
 
     _columns = {
+         'name': fields.char('Reference', size=128, required=True, select=True),
          'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
                                         domain="[('is_replenishment', '=', warehouse_id)]"),
     }
