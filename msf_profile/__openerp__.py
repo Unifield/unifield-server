@@ -105,6 +105,7 @@
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
+        "usability.xml",
     ],
     "demo_xml": [
     ],
