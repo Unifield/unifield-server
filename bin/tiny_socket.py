@@ -22,7 +22,9 @@
 import socket
 import cPickle
 import cStringIO
-import marshal
+
+import zlib
+GZIP_MAGIC = '\x78\xda' # magic when max compression used
 
 class Myexception(Exception):
     """
@@ -39,7 +41,7 @@ class Myexception(Exception):
 
 class mysocket:
 
-    def __init__(self, sock=None):
+    def __init__(self, sock=None, is_gzip=False):
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         else:
@@ -48,6 +50,7 @@ class mysocket:
         # prepare this socket for long operations: it may block for infinite
         # time, but should exit as soon as the net is down
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        self.is_gzip = is_gzip
         
     def connect(self, host, port=False):
         if not port:
@@ -61,6 +64,8 @@ class mysocket:
         
     def mysend(self, msg, exception=False, traceback=None):
         msg = cPickle.dumps([msg,traceback])
+        if self.is_gzip:
+            msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
         self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
             
     def myreceive(self):
@@ -82,6 +87,8 @@ class mysocket:
             if not chunk:
                 raise socket.timeout
             msg = msg + chunk
+        if msg.startswith(GZIP_MAGIC):
+            msg = zlib.decompress(msg)
         msgio = cStringIO.StringIO(msg)
         unpickler = cPickle.Unpickler(msgio)
         unpickler.find_global = None
