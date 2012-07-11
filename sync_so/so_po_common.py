@@ -101,6 +101,12 @@ class so_po_common(osv.osv_memory):
             
             if 'date_planned' in line_dict:
                 values['date_planned'] = line.date_planned 
+
+            if 'sync_pol_db_id' in line_dict:
+                values['sync_pol_db_id'] = line.sync_pol_db_id 
+
+            if 'sync_sol_db_id' in line_dict:
+                values['sync_sol_db_id'] = line.sync_sol_db_id 
             
             if 'confirmed_delivery_date' in line_dict:
                 values['confirmed_delivery_date'] = line.confirmed_delivery_date 
@@ -142,7 +148,115 @@ class so_po_common(osv.osv_memory):
                 line_result.append((0, 0, values))
 
         return line_result 
-    
+
+    def confirm_po_line(self, cr, uid, po_id, line_values, context=None):
+        line_result = []
+        
+        if not po_id:
+            print "Error: The original PO not provided"
+            return False 
+        
+        po_line_obj = self.pool.get('purchase.order.line')
+        
+        for line in line_values.order_line:
+            line_dict = line.to_dict()
+            sync_pol_db_id = False
+            if 'sync_pol_db_id' in line_dict:
+                sync_pol_db_id = line.sync_pol_db_id
+            if not sync_pol_db_id:
+                print "This line not found in the original PO"
+                return False 
+                
+            line_ids = po_line_obj.search(cr, uid, [('sync_pol_db_id', '=', sync_pol_db_id), ('order_id', '=', po_id)], context=context)
+            if not line_ids:
+                print "This line not found in the original PO"
+                return False 
+                    
+            po_line = po_line_obj.browse(cr, uid, line_ids[0], context=context)
+            if not po_line:
+                print "This line not found in the original PO"
+                return False
+            
+            values = {'state' : 'confirmed',}
+            line_result.append((1, line_ids[0], values))
+                        
+        return line_result
+
+    def confirm_po_lines(self, cr, uid, line_values, po_ids, context=None):
+        line_result = []
+        
+        if not po_ids:
+            print "Error: The original PO not provided"
+            return False 
+        
+        po_line_obj = self.pool.get('purchase.order.line')
+        
+        for line in line_values.order_line:
+
+            line_dict = line.to_dict()
+
+            # Get the line Id             
+            sync_pol_db_id = False
+            if 'sync_pol_db_id' in line_dict:
+                sync_pol_db_id = line.sync_pol_db_id
+            
+            if not sync_pol_db_id:
+                print "This line not found in the original PO"
+                return False 
+            
+            line_ids = po_line_obj.search(cr, uid, [('sync_pol_db_id', '=', sync_pol_db_id), ('order_id', '=', po_ids[0])], context=context)
+            if not line_ids:
+                print "This line not found in the original PO"
+                return False 
+                
+            po_line = po_line_obj.browse(cr, uid, line_ids[0], context=context)
+            if not po_line:
+                print "This line not found in the original PO"
+                return False
+            
+            values = {'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), # PLEASE Use the get_record_id!!!!!
+                      'comment' : line.comment,
+                      'have_analytic_distribution_from_header' : line.have_analytic_distribution_from_header,
+                      'line_number' : line.line_number,
+                      'notes' : line.notes,
+                                       
+                      'price_unit' : line.price_unit}
+
+            line_dict = line.to_dict()
+            
+            if line.product_id:
+                values['name'] = line.product_id.name
+                
+            if 'product_uom_qty' in line_dict: # come from the SO
+                values['product_qty'] = line.product_uom_qty
+
+            if 'product_qty' in line_dict: # come from the PO
+                values['product_uom_qty'] = line.product_qty
+            
+            if 'date_planned' in line_dict:
+                values['date_planned'] = line.date_planned 
+
+            if 'confirmed_delivery_date' in line_dict:
+                values['confirmed_delivery_date'] = line.confirmed_delivery_date 
+
+            rec_id = self.get_record_id(cr, uid, context, line.product_id)
+            if rec_id:
+                if po_line.product_id and rec_id != po_line.product_id.id:
+                    print "Error: The product does not match with the original line!"
+                    return False 
+                values['product_id'] = rec_id
+
+            rec_id = self.get_record_id(cr, uid, context, line.analytic_distribution_id)
+            if rec_id:
+                values['analytic_distribution_id'] = rec_id 
+
+            # finally if everything is Ok for this line, set the state of the original line to confirmed
+            values['state'] = 'done'
+                        
+            line_result.append((1, po_line, values))
+
+        return line_result 
+
     def get_uom_id(self, cr, uid, uom_name, context=None):
         ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', uom_name)], context=context)
         if ids:

@@ -30,10 +30,25 @@ import pprint
 import so_po_common
 pp = pprint.PrettyPrinter(indent=4)
 
-"""
-    This class is just for test purpose
-    A proof of concept for message passing
-"""
+class sale_order_line(osv.osv):
+    
+    _inherit = "sale.order.line"
+    
+    _columns = {
+        'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
+        'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
+    }
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        update the name attribute if a product is selected
+        '''
+        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_sol_db_id': so_line_ids,} , context=context)
+        return so_line_ids
+
+sale_order_line()
+
 
 class sale_order_sync(osv.osv):
     _inherit = "sale.order"
@@ -71,10 +86,82 @@ class sale_order_sync(osv.osv):
         if rec_id:
             data['analytic_distribution_id'] = rec_id 
 
-        
+        default = {}
         default.update(data)
         res_id = self.create(cr, uid, default , context=context)
         return True
+
+    def split_fo_creates_split_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
+        print "Split FO updates back the lines in the original PO", source
+
+        so_po_common = self.pool.get('so.po.common')
+        print so_po_common
+        po_ids = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
+        
+        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+        
+        if not po_ids:
+            raise Exception, "The original PO does not exist! " + so_info.client_order_ref
+
+        # now process to the PO line, to update it when the FO line has been already confirmed
+        lines = so_po_common.confirm_po_lines(cr, uid, so_info, po_ids, context)
+        
+        po_obj = self.pool.get('purchase.order')
+        
+        default = {}
+        data = {                        #'partner_ref' : source + "." + so_info.name,
+                                        'partner_id' : partner_id,
+                                        'partner_address_id' :  address_id,
+                                        'note' : so_info.notes,
+                                        'details' : so_info.details,
+                                        'delivery_confirmed_date' : so_info.delivery_confirmed_date,
+                                        'est_transport_lead_time' : so_info.est_transport_lead_time,
+                                        'details' : so_info.details,
+                                        'order_line' : lines}
+        
+        default.update(data)
+        
+        res_id = po_obj.write(cr, uid, po_ids, default , context=context)
+        return res_id         
+
+    def split_fo_updates_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
+        print "Split FO updates back the lines in the original PO", source
+
+        so_po_common = self.pool.get('so.po.common')
+        print so_po_common
+        po_ids = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
+        
+        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+        
+        if not po_ids:
+            raise Exception, "The original PO does not exist!" + so_info.client_order_ref
+
+        # now process to the PO line, to update it when the FO line has been already confirmed
+        lines = so_po_common.confirm_po_lines(cr, uid, so_info, po_ids, context)
+        
+        po_obj = self.pool.get('purchase.order')
+        
+        default = {}
+        data = {                        #'partner_ref' : source + "." + so_info.name,
+                                        'partner_id' : partner_id,
+                                        'partner_address_id' :  address_id,
+                                        'note' : so_info.notes,
+                                        'details' : so_info.details,
+                                        'delivery_confirmed_date' : so_info.delivery_confirmed_date,
+                                        'est_transport_lead_time' : so_info.est_transport_lead_time,
+                                        'details' : so_info.details,
+                                        'order_line' : lines}
+        
+        default.update(data)
+        
+        res_id = po_obj.write(cr, uid, po_ids, default , context=context)
+        return res_id         
 
     def picking_received(self, cr, uid, source, picking_info, context=None):
         if not context:
