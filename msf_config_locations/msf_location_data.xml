@@ -193,7 +193,7 @@
         <field name="posz">3</field>
     </record>
 
-    <record id="stock.stock_location_quarantine_view" model="stock.location">
+    <record id="stock_location_quarantine_view" model="stock.location">
         <field name="name">Quarantine</field>
         <field name="location_category">other</field>
         <field name="usage">view</field>
@@ -205,7 +205,7 @@
         <field name="posz">3</field>
     </record>
 
-    <record id="stock.stock_location_quarantine_analyze" model="stock.location">
+    <record id="stock_location_quarantine_analyze" model="stock.location">
         <field name="name">Quarantine (analyze)</field>
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
@@ -217,7 +217,7 @@
         <field name="quarantine_location">True</field>
     </record>
 
-    <record id="stock.stock_location_quarantine_scrap" model="stock.location">
+    <record id="stock_location_quarantine_scrap" model="stock.location">
         <field name="name">Quarantine (before scrap)</field>
         <field name="location_category">transition</field>
         <field name="usage">internal</field>
