@@ -33,6 +33,23 @@ class account_analytic_journal(osv.osv):
         'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
+    def _check_engagement_count(self, cr, uid, ids, context=None):
+        """
+        Check that no more than one engagement journal exists for one instance
+        """
+        if not context:
+            context={}
+        instance_ids = self.pool.get('msf.instance').search(cr, uid, [], context=context)
+        for instance_id in instance_ids:
+            eng_ids = self.search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance_id)])
+            if len(eng_ids) and len(eng_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_engagement_count, 'You cannot have more than one engagement journal per instance!', ['type', 'instance_id']),
+    ]
+
 account_analytic_journal()
 
 class account_journal(osv.osv):
@@ -105,13 +122,13 @@ class account_move_line(osv.osv):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
             vals['instance_id'] = journal.instance_id.id
-        return super(account_move_line, self).create(cr, uid, vals, context=context)
+        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
             vals['instance_id'] = journal.instance_id.id
-        return super(account_move_line, self).write(cr, uid, ids, vals, context=context)
+        return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
 
@@ -136,4 +153,54 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
 
 account_bank_statement()
+
+class account_bank_statement_line(osv.osv):
+    _name = 'account.bank.statement.line'
+    _inherit = 'account.bank.statement.line'
+    
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+    
+    def create(self, cr, uid, vals, context=None):
+        if 'statement_id' in vals:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, vals['statement_id'], context=context)
+            vals['instance_id'] = register.instance_id.id
+        return super(account_bank_statement_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'statement_id' in vals:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, vals['statement_id'], context=context)
+            vals['instance_id'] = register.instance_id.id
+        return super(account_bank_statement_line, self).write(cr, uid, ids, vals, context=context)
+
+account_bank_statement_line()
+
+class account_cashbox_line(osv.osv):
+    _name = 'account.cashbox.line'
+    _inherit = 'account.cashbox.line'
+    
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+    
+    def create(self, cr, uid, vals, context=None):
+        if 'starting_id' in vals:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, vals['starting_id'], context=context)
+            vals['instance_id'] = register.instance_id.id
+        elif 'ending_id' in vals:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, vals['ending_id'], context=context)
+            vals['instance_id'] = register.instance_id.id
+        return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'starting_id' in vals:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, vals['starting_id'], context=context)
+            vals['instance_id'] = register.instance_id.id
+        elif 'ending_id' in vals:
+            register = self.pool.get('account.bank.statement').browse(cr, uid, vals['ending_id'], context=context)
+            vals['instance_id'] = register.instance_id.id
+        return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
+
+account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

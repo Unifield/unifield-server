@@ -31,7 +31,8 @@ class msf_instance(osv.osv):
         'code': fields.char('Code', size=64, required=True),
         'mission': fields.char('Mission', size=64),
         'instance': fields.char('Instance', size=64),
-        'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project'), ('state', '=', 'active')]),
+        #'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project'), ('state', '=', 'active')]),
+        'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project') ]),
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
@@ -43,6 +44,9 @@ class msf_instance(osv.osv):
     _defaults = {
         'state': 'draft',
     }
+
+    def create(self, cr, uid, vals, context=None):
+        return osv.osv.create(self, cr, uid, vals, context=context)
 
     def _check_name_code_unicity(self, cr, uid, ids, context=None):
         if not context:

@@ -20,7 +20,7 @@ class msf_chart_of_account_installer(osv.osv_memory):
             return False
 
     _defaults = {
-        'create': True,
+        'create': False,
         'import_invoice_default_account': get_inter
     }
 
@@ -31,9 +31,18 @@ class msf_chart_of_account_installer(osv.osv_memory):
             if res[0]['instance_id']:
                 self.pool.get('res.company').write(cr, uid, [self.pool.get('res.users').browse(cr, uid, uid).company_id.id], {'instance_id': res[0]['instance_id']})
             if res[0]['create']:
-                fp = tools.file_open(opj('msf_chart_of_account', 'journal_data.xml'))
+                fp = tools.file_open(opj('msf_chart_of_account', 'data/account.xml'))
                 tools.convert_xml_import(cr, 'msf_chart_of_account', fp, {}, 'init', True, None)
                 fp.close()
+
+                fp = tools.file_open(opj('msf_chart_of_account', 'data/account_data.xml'))
+                tools.convert_xml_import(cr, 'msf_chart_of_account', fp, {}, 'init', True, None)
+                fp.close()
+                
+                fp = tools.file_open(opj('msf_chart_of_account', 'data/journal_data.xml'))
+                tools.convert_xml_import(cr, 'msf_chart_of_account', fp, {}, 'init', True, None)
+                fp.close()
+                
             if res[0]['import_invoice_default_account']:
                 self.pool.get('res.users').browse(cr, uid, uid).company_id.write({'import_invoice_default_account': res[0]['import_invoice_default_account']})
         return {}

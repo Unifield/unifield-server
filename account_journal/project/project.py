@@ -37,20 +37,5 @@ class account_analytic_journal(osv.osv):
             help="Gives the type of the analytic journal. When it needs for a document (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
     }
 
-    def _check_engagement_count(self, cr, uid, ids, context=None):
-        """
-        Check that no more than one engagement journal exists
-        """
-        if not context:
-            context={}
-        eng_ids = self.search(cr, uid, [('type', '=', 'engagement')])
-        if len(eng_ids) and len(eng_ids) > 1:
-            return False
-        return True
-
-    _constraints = [
-        (_check_engagement_count, 'You cannot have more than one engagement journal!', ['type']),
-    ]
-
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

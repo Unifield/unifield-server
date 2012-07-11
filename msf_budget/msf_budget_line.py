@@ -76,10 +76,10 @@ class msf_budget_line(osv.osv):
             actual_domain.append(('date', '>=', budget.fiscalyear_id.date_start))
             actual_domain.append(('date', '<=', budget.fiscalyear_id.date_stop))
             # 3. commitments
-            # if commitments are set to False in context, the ENG analytic journal is removed
+            # if commitments are set to False in context, the engagement analytic journals are removed
             # from the domain
             if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', '!=', engagement_journal_ids[0]))
+                actual_domain.append(('journal_id', 'in', engagement_journal_ids))
             
             # Call budget_tools method
             res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)
