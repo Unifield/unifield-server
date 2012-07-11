@@ -221,21 +221,17 @@ class purchase_order(osv.osv):
         # Analytic distribution verification
         ana_obj = self.pool.get('analytic.distribution')
         for po in self.browse(cr, uid, ids, context=context):
-            if not po.analytic_distribution_id:
-                for line in po.order_line:
-                    if po.from_yml_test:
-                        continue
-                    if not line.analytic_distribution_id:
-                        raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory!'))
-# This code have been commented because of jira's comment about "4/ Make analytic allocation mandatory on POs"
-#                        try:
-#                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-#                                'analytic_account_project_dummy')
-#                        except ValueError:
-#                            dummy_cc = 0
-#                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
-#                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-#                        break
+            # Check all lines
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
         # Create commitments for each PO only if po is "from picking"
@@ -319,17 +315,60 @@ class purchase_order_line(osv.osv):
             else:
                 res[line['id']] = True
         return res
-    
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the purchase line, then "valid"
+         - if no distribution, take a tour of purchase distribution, if compatible, then "valid"
+         - if no distribution on purchase line and purchase, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.from_yml_test:
+                res[line.id] = 'valid'
+            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
+                res[line.id] = 'none'
+            else:
+                po_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
+                distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+                # Search product account_id
+                if line.product_id:
+                    a = line.product_id.product_tmpl_id.property_account_expense.id
+                    if not a:
+                        a = line.product_id.categ_id.property_account_expense_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'), 
+                            _('There is no expense account defined for this product: "%s" (id:%d)') % (line.product_id.name, line.product_id.id))
+                else:
+                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                fpos = line.order_id.fiscal_position or False
+                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, a)
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id', 
             string="Commitment Voucher Lines", readonly=True),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
     _defaults = {
         'have_analytic_distribution_from_header': lambda *a: True,
     }
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a purchase order line.

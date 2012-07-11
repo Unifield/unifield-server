@@ -859,7 +859,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
-            if not wiz.distribution_id:
+            distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
+            if not distrib_id:
                 # create a new analytic distribution
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 # link it to the wizard
@@ -878,6 +879,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+                # Create funding pool lines from CC lines if wizard is from PO/FO
+                # PAY ATTENTION THAT break avoid problem that delete new created funding pool
+                if line_type == 'cost.center' and wiz.state == 'cc' and wiz.purchase_id:
+                    fp_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
+                    if fp_ids:
+                        self.pool.get('funding.pool.distribution.line').unlink(cr, uid, fp_ids)
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, wiz.account_id and wiz.account_id.id or False)
+                    break
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):

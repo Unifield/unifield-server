@@ -305,6 +305,7 @@ class analytic_distribution(osv.osv):
                         'currency_id': line.currency_id and line.currency_id.id or False,
                         'distribution_id': distrib.id or False,
                         'cost_center_id': line.analytic_id and line.analytic_id.id or False,
+                        'destination_id': line.destination_id and line.destination_id.id or False,
                     }
                     # Search default destination
                     if account_id:
