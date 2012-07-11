@@ -715,7 +715,7 @@ class sale_order_line(osv.osv):
         if not vals.get('type'):
             vals['type'] = 'make_to_stock'
 
-        if vals['product_id']:
+        if vals.get('product_id',False):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
             if bropro.type == 'consu':
                 vals['type'] = 'make_to_order'
@@ -806,7 +806,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if vals['product_id']:
+        if vals.get('product_id',False):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
             if bropro.type == 'consu':
                 vals['type'] = 'make_to_order'
