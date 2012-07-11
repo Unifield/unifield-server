@@ -160,12 +160,6 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM') ),
                 }
     
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
-    
     def _check_qty_to_return(self, cr, uid, ids, context=None):
         '''
         Checks if qty_to_return is correct
@@ -215,12 +209,6 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             values['qty_per_pack'] = qty_per_pack
                     
         return result
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
     
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
@@ -298,12 +286,6 @@ class stock_partial_move_memory_families(osv.osv_memory):
     _defaults = {'integrity_status': 'empty',
                  }
     
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
-    
 stock_partial_move_memory_families()
 
 
@@ -334,12 +316,6 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             values['selected_weight'] = selected_weight
                     
         return result
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
     
     _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
@@ -376,12 +352,6 @@ class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
     '''
     _name = "stock.move.memory.shipment.returnpacks"
     _inherit = "stock.move.memory.shipment.create"
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
     
 stock_partial_move_memory_shipment_returnpacks()
 
@@ -425,12 +395,5 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
         
         # udpate the original wizard
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
-    
     
 stock_partial_move_memory_shipment_returnpacksfromshipment()
