@@ -35,19 +35,26 @@ class version(osv.osv):
         rev_id_client = self.search(cr, uid, [('name', '=', rev_tag), ('commit', '=', rev_hash), ('date', '=', rev_date)], context=context)
         last_rev_id = self._get_last_revision(cr, uid, context)
         if not last_rev_id:
-            return True
+            return { 'status' : 'ok', 
+                     'message' : "Last revision"}
         
-        if not rev_id_client:
-            return ('The revision send [%s %s - %s ] does not match with any revision on the server' % (rev_tag, rev_hash, rev_date))
+        if not rev_id_client and rev_tag and rev_hash and rev_date:
+            return {'status' : 'failed',
+                    'message' : 'The revision send [%s %s - %s ] does not match with any revision on the server' % (rev_tag, rev_hash, rev_date)}
         
         #save rev information
         self.pool.get("sync.server.entity")._set_version(cr, uid, entity.id, rev_id_client, context=context)
         
         if rev_id_client == last_rev_id:
-            return True
+            return { 'status' : 'ok', 
+                     'message' : "Last revision"}
         else:
             revision = self.browse(cr, uid, last_rev_id, context=context)
-            return ("Need to be updated", revision.name, revision.commit, revision.date)
+            return {'status' : 'update',
+                    'message' : "Need to be updated", 
+                    'rev_tag' : revision.name, 
+                    'rev_hash' : revision.commit, 
+                    'rev_date' : revision.date}
         
     def delete_revision(self, cr, uid, ids, context=None):
         self.unlink(cr, uid, ids, context=context)
@@ -79,4 +86,5 @@ class sync_manager(osv.osv):
     @sync_server.sync_server.check_validated
     def get_last_revision(self, cr, uid, entity, rev_tag, rev_hash, rev_date, context=None):
         return self.pool.get('sync_server.version')._compare_with_last_rev(cr, 1, entity, rev_tag, rev_hash, rev_date)
-        
+      
+sync_manager()  

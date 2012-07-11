@@ -29,7 +29,7 @@
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['sync_server'],
+    'depends': ['sync_client'],
     'data': [
 
     ],

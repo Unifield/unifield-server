@@ -431,6 +431,30 @@ class entity(osv.osv, Thread):
         Thread.__init__(self)
         self.start()
         return True
+    
+    def sync_core(self, cr, uid, entity_id, log_id, log, context=None):
+        self.write(cr, uid, entity_id, {'is_syncing':True})
+        # Start pulling data
+        log['data_pull'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.pull_update(cr, uid, log, context=context)
+        # Start pulling message
+        log['msg_pull'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.pull_message(cr, uid, log, context=context)
+        # Start pushing data
+        log['data_push'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.push_update(cr, uid, log, context=context)
+        # Start pushing message
+        log['msg_push'] = 'in-progress';
+        self.pool.get('sync.monitor').write(cr, uid, log_id, log)
+        cr.commit()
+        self.push_message(cr, uid, log, context=context)
+        self.write(cr, uid, entity_id, {'is_syncing':False})
         
     def sync(self, cr, uid, context=None):
         context = context or {}
@@ -454,28 +478,8 @@ class entity(osv.osv, Thread):
             log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
             log['status'] = 'failed'
         else:
-            self.write(cr, uid, entity_id, {'is_syncing':True})
-            # Start pulling data
-            log['data_pull'] = 'in-progress';
-            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-            cr.commit()
-            self.pull_update(cr, uid, log, context=context)
-            # Start pulling message
-            log['msg_pull'] = 'in-progress';
-            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-            cr.commit()
-            self.pull_message(cr, uid, log, context=context)
-            # Start pushing data
-            log['data_push'] = 'in-progress';
-            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-            cr.commit()
-            self.push_update(cr, uid, log, context=context)
-            # Start pushing message
-            log['msg_push'] = 'in-progress';
-            self.pool.get('sync.monitor').write(cr, uid, log_id, log)
-            cr.commit()
-            self.push_message(cr, uid, log, context=context)
-            self.write(cr, uid, entity_id, {'is_syncing':False})
+            self.sync_core(cr, uid, entity_id, log_id, log, context=context)
+            
         # Determine final status
         log.update({'end':datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'status': 'failed' if 'failed' in [v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]  else 'ok'})
@@ -490,6 +494,22 @@ class entity(osv.osv, Thread):
         cr = pooler.get_db(cr.dbname).cursor()
         self.sync(cr, uid, context)
         cr.close()
+        
+    def get_status(self, cr, uid, context=None):
+        monitor_ids = self.pool.get("sync.monitor").search(cr, uid, [], context=context)
+        if not monitor_ids:
+            return "None update done yet"
+        monitor = self.pool.get("sync.monitor").browse(cr, uid, monitor_ids[0], context=context)
+        if monitor.status == 'failed':
+            return "Last Sync failed at %s" % monitor.end
+        if monitor.status == "ok":
+            return "Last Sync Ok at %s" % monitor.end
+        if monitor.status == 'in-progress':
+            return "Sync In progress : started at %s" % monitor.start
+        return ""
+    
+    def get_upgrade_status(self, cr, uid, context=None):
+        return ""
 entity()
 
 
