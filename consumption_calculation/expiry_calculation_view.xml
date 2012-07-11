@@ -51,6 +51,7 @@
     						<field name="expired_qty" string="Exp. Qty" />
     					</tree>
     				</field>
+    				<button type="object" name="print_report" string="Print report" />
     			</form>
     		</field>
     	</record>

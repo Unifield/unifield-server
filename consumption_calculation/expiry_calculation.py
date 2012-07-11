@@ -53,6 +53,20 @@ class expiry_quantity_report(osv.osv_memory):
         'line_ids': fields.one2many('expiry.quantity.report.line', 'report_id', string='Products', readonly=True),
     }
     
+    def print_report(self, cr, uid, ids, context=None):
+        '''
+        Print the report of expiry report
+        '''
+        datas = {'ids': ids} 
+        
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'expiry.report',
+            'datas': datas,
+            'context': context,
+        }
+        
+    
     def process_lines(self, cr, uid, ids, context=None):
         '''
         Creates all lines of expired products
