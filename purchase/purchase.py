@@ -301,7 +301,10 @@ class purchase_order(osv.osv):
     
     def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        Add a hook to modify the logged message
+        Please copy this to your module's method also.
+        This hook belongs to the wkf_confirm_order method from purchase>purchase.py>purchase_order
+        
+        - allow to execute code in order to update corresponding sale order lines and sale orders if exist
         '''
         # Some verifications
         if context is None:
