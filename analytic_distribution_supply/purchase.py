@@ -140,7 +140,10 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Prepare some values
         commit_obj = self.pool.get('account.commitment')
-        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
+        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
+                                                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)],
+                                                                             limit=1,
+                                                                             context=context)
         for po in self.browse(cr, uid, ids, context=context):
             # fetch analytic distribution, period from delivery date, currency, etc.
             vals = {

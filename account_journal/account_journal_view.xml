@@ -23,7 +23,6 @@
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>
-                            <field name="instance_id" readonly="1"/>
                             <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                             <field name="analytic_journal_id" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                         </group>
@@ -43,9 +42,6 @@
             <field name="inherit_id" ref="account.view_account_journal_tree"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="code" position="before">
-                        <field name="instance_id"/>
-                    </field>
                     <field name="user_id" position="replace"/>
                     <field name="company_id" position="replace"/>
                 </data>

@@ -7,8 +7,8 @@
 
         <pageGraphics>
             <image x="35" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-            <setFont name="Helvetica" size="8"/>
-            <drawString x="35" y="520.0">[[ getAddress() ]]</drawString>
+            <setFont name="Helvetica-Bold" size="10"/>
+            <drawString x="40" y="520.0">[[ getAddress() ]]</drawString>
         </pageGraphics>
 
     </pageTemplate>

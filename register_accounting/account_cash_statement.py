@@ -72,6 +72,7 @@ class account_cash_statement(osv.osv):
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.balance_end_real})
+        #res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:

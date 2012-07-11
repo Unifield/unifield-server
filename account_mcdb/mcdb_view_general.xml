@@ -1,6 +1,6 @@
                     <separator string="General" colspan="4"/>
                     <group colspan="2" col="2">
-                        <field name="company_id" widget="selection"/>
+                        <field name="instance_id" widget="selection"/>
                         <field name="posting_date_from" string="Posting date"/>
                         <field name="document_date_from" string="Document date"/>
                         <field name="document_code"/>

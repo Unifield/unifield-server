@@ -101,6 +101,7 @@
         "msf_cross_docking",
         "msf_processes",
         "msf_custom_settings",
+        "msf_instance",
     ],
     "update_xml": [
         "report.xml",

@@ -203,6 +203,7 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function
         """
+        #return super(osv.osv, self).write(cr, uid, ids, values, context=context)
         return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):

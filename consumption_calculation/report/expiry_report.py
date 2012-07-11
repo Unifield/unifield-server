@@ -60,10 +60,10 @@ class expiry_report(report_sxw.rml_parse):
         return total
     
     def _get_instance_addr(self):
-        #instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id
-        #return '%s / %s / %s' % (instance.instance, instance.mission, instance.code)
+        instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id
+        return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
         
-        return '%s / %s / %s' % ('en', 'attente', 'de merge')
+        #return '%s / %s / %s' % ('en', 'attente', 'de merge')
     
     def _get_currency(self):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.currency_id.name
