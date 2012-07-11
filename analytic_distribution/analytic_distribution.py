@@ -155,6 +155,9 @@ distribution_line()
 class cost_center_distribution_line(osv.osv):
     _name = "cost.center.distribution.line"
     _inherit = "distribution.line"
+    _columns = {
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
+    }
     
 cost_center_distribution_line()
 
@@ -171,13 +174,19 @@ funding_pool_distribution_line()
 class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"
     _inherit = "distribution.line"
-
+    _columns = {
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+    }
+    
 free_1_distribution_line()
 
 class free_2_distribution_line(osv.osv):
     _name = "free.2.distribution.line"
     _inherit = "distribution.line"
-
+    _columns = {
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+    }
+    
 free_2_distribution_line()
 
 class analytic_distribution(osv.osv):

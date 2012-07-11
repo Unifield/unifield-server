@@ -347,12 +347,25 @@ class purchase_order_line(osv.osv):
         currency = purchase_line.order_id.currency_id and purchase_line.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = purchase_line.analytic_distribution_id and purchase_line.analytic_distribution_id.id
+        # Search product account_id
+        if purchase_line.product_id:
+            a = purchase_line.product_id.product_tmpl_id.property_account_expense.id
+            if not a:
+                a = purchase_line.product_id.categ_id.property_account_expense_categ.id
+            if not a:
+                raise osv.except_osv(_('Error !'), 
+                    _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
+        else:
+            a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+        fpos = purchase_line.order_id.fiscal_position or False
+        a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'purchase_line_id': purchase_line.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'account_id': a or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
