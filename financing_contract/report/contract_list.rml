@@ -206,10 +206,10 @@
                 <para style="P3">[[ line['cost_centers'] ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line['eligibility_from_date'] ]]</para>
+                <para style="P3">[[ formatLang(line['eligibility_from_date'],date=True) ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line['eligibility_to_date'] ]]</para>
+                <para style="P3">[[ formatLang(line['eligibility_to_date'],date=True) ]]</para>
               </td>
               <td>
                 <para style="P3">[[ locale.format('%.0f', line['grant_amount'], True) ]]</para>
