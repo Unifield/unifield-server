@@ -36,7 +36,7 @@
         'wizard/wizard_financing_currency_export_view.xml'
     ],
     'test': [
-        'test/financing_contract.yml'
+        #'test/financing_contract.yml'
     ],
     'demo_xml': [
     ],

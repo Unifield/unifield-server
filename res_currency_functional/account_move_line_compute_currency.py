@@ -79,6 +79,7 @@ class account_move_line_compute_currency(osv.osv):
         if not journal.default_debit_account_id:
             raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
         addendum_line_account_id = journal.default_debit_account_id.id
+        addendum_line_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
         # Create analytic distribution if this account is an expense account
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
@@ -133,7 +134,8 @@ class account_move_line_compute_currency(osv.osv):
                 fp_id = 0
             if not fp_id:
                 raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
-            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0]})
+            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0], 
+                'destination_id': addendum_line_account_default_destination_id,})
             self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             
             move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)

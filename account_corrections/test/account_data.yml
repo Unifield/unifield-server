@@ -68,8 +68,10 @@
     amount: 0.0
     percentage: 75.0
     currency_id: 1
-    analytic_id: analytic_account_gabon
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: global_distrib_1
+    cost_center_id: analytic_account_gabon
+    destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I create a funding pool distribution line for kenya
 -
@@ -78,7 +80,9 @@
     amount: 0.0
     percentage: 25.0
     currency_id: 1
-    analytic_id: analytic_account_kenya
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
+    cost_center_id: analytic_account_kenya
+    destination_id: analytic_distribution.analytic_account_destination_operation
     distribution_id: global_distrib_1
 -
   I create an Expense Account Type.
@@ -99,6 +103,21 @@
     type: other
     user_type: account_account_type_expense0
     activation_date: !eval datetime.today().strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation]
+-
+  I create a 6102 Expense Account.
+-
+  !record {model: account.account, id: account_account_expense1}:
+    code: '6102-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense Account
+    type: other
+    user_type: account_account_type_expense0
+    activation_date: !eval datetime.today().strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation]
 -
   I create an invoice
 -
@@ -120,7 +139,7 @@
 -
   !python {model: account.invoice.line}: |
     vals = {
-        'account_id': ref('account.a_expense'),
+        'account_id': ref('account_account_expense0'),
         'name': 'Product PC1',
         'price_unit': 50.0,
         'product_id': ref('product.product_product_pc1'),

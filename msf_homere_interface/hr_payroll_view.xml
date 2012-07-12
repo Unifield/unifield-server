@@ -30,6 +30,7 @@
                                 </group>
                                 <group colspan="2" col="4">
                                     <separator string="Analytic Accounting"/>
+                                    <field name="destination_id"/>
                                     <field name="cost_center_id"/>
                                     <field name="funding_pool_id"/>
                                     <field name="free1_id"/>
@@ -88,6 +89,7 @@
                     <field name="amount" sum="Total amount"/>
                     <field name="currency_id"/>
                     <field name="state"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, funding_pool_id, account_id)"/>
                     <field name="cost_center_id"/>
                     <field name="funding_pool_id"/>
                     <field name="free1_id"/>

@@ -24,6 +24,73 @@ from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 from tools.translate import _
 from lxml import etree
+from tools.misc import flatten
+
+class many2many_sorted(fields.many2many):
+    def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
+        super(many2many_sorted, self).__init__(obj, rel, id1, id2, string, limit, **args)
+
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+        if not context:
+            context = {}
+        if not values:
+            values = {}
+        res = {}
+        if not ids:
+            return res
+        for id in ids:
+            res[id] = []
+        if offset:
+            warnings.warn("Specifying offset at a many2many.get() may produce unpredictable results.",
+                      DeprecationWarning, stacklevel=2)
+        obj = obj.pool.get(self._obj)
+
+        # static domains are lists, and are evaluated both here and on client-side, while string
+        # domains supposed by dynamic and evaluated on client-side only (thus ignored here)
+        # FIXME: make this distinction explicit in API!
+        domain = isinstance(self._domain, list) and self._domain or []
+
+        wquery = obj._where_calc(cr, user, domain, context=context)
+        obj._apply_ir_rules(cr, user, wquery, 'read', context=context)
+        from_c, where_c, where_params = wquery.get_sql()
+        if where_c:
+            where_c = ' AND ' + where_c
+
+        order_by = ''
+        rel_obj = obj.pool.get('account.destination.link')
+        if rel_obj._order:
+            order_by = ' ORDER BY '
+            order_tab = []
+            for order in rel_obj._order.split(','):
+                order_tab.append('%s.%s' %(from_c, order.strip()))
+            order_by += ','.join(order_tab)
+
+        limit_str = ''
+        if self._limit is not None:
+            limit_str = ' LIMIT %d' % self._limit
+
+        query = 'SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s \
+                   FROM %(rel)s, %(from_c)s \
+                  WHERE %(rel)s.%(id1)s IN %%s \
+                    AND %(rel)s.%(id2)s = %(tbl)s.id \
+                 %(where_c)s  \
+                 %(order_by)s \
+                 %(limit)s \
+                 OFFSET %(offset)d' \
+            % {'rel': self._rel,
+               'from_c': from_c,
+               'tbl': obj._table,
+               'id1': self._id1,
+               'id2': self._id2,
+               'where_c': where_c,
+               'limit': limit_str,
+               'order_by': order_by,
+               'offset': offset,
+              }
+        cr.execute(query, [tuple(ids),] + where_params)
+        for r in cr.fetchall():
+            res[r[1]].append(r[0])
+        return res
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -38,10 +105,13 @@ class analytic_account(osv.osv):
         'category': fields.selection([('OC','Cost Center'),
             ('FUNDING','Funding Pool'),
             ('FREE1','Free 1'),
-            ('FREE2','Free 2')], 'Category', select=1),
-        'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers'),
-        'account_ids': fields.many2many('account.account', 'funding_pool_associated_accounts', 'funding_pool_id', 'account_id', string='Accounts'),
+            ('FREE2','Free 2'),
+            ('DEST', 'Destination')], 'Category', select=1),
+        'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers', domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
+        'destination_ids': fields.many2many('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
+        'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
+        'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
     }
     
     _defaults ={
@@ -128,8 +198,10 @@ class analytic_account(osv.osv):
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
     
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        No description found
+        """
         if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
             args.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
             args.append('|')
@@ -143,9 +215,17 @@ class analytic_account(osv.osv):
             for arg in args2:
                 ids.append(arg[1])
             args.append(('id', 'in', ids))
-            
-        return super(analytic_account, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+        
+        # Tuple Account/Destination search
+        for i, arg in enumerate(args):
+            if arg[0] and arg[0] == 'tuple_destination':
+                fp_ids = []
+                destination_ids = self.pool.get('account.destination.link').search(cr, uid, [('account_id', '=', arg[2][0]), ('destination_id', '=', arg[2][1])])
+                for adl in self.pool.get('account.destination.link').read(cr, uid, destination_ids, ['funding_pool_ids']):
+                    fp_ids.append(adl.get('funding_pool_ids'))
+                fp_ids = flatten(fp_ids)
+                args[i] = ('id', 'in', fp_ids)
+        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
@@ -224,6 +304,30 @@ class analytic_account(osv.osv):
             if id in analytic_accounts:
                 raise osv.except_osv(_('Error'), _('You cannot delete this Analytic Account!'))
         return super(analytic_account, self).unlink(cr, uid, ids, context=context)
+
+    def is_blocked_by_a_contract(self, cr, uid, ids):
+        """
+        Return ids (analytic accounts) that are blocked by a contract (just FP1)
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = []
+        for aa in self.browse(cr, uid, ids):
+            # Only check funding pool accounts
+            if aa.category != 'FUNDING':
+                continue
+            link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aa.id)])
+            format_ids = []
+            for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
+                if link.contract_id:
+                    format_ids.append(link.contract_id.id)
+            contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
+            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids):
+                if contract.state in ['soft_closed', 'hard_closed']:
+                    res.append(aa.id)
+        return res
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

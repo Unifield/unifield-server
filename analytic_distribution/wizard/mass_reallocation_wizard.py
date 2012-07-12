@@ -100,7 +100,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
             for distrib_id in lines:
                 for line in lines[distrib_id]:
                     # Update distribution
-                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, [distrib_id], [line.account_id.id], account_id, context=context)
+                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
                     # Then update analytic line
                     self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -112,7 +112,7 @@ class mass_reallocation_wizard(osv.osv_memory):
     _description = 'Mass Reallocation Wizard'
 
     _columns = {
-        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
+        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, domain="[('category', 'in', ['OC', 'FUNDING', 'FREE1', 'FREE2']), ('type', '!=', 'view')]"),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
@@ -163,18 +163,23 @@ class mass_reallocation_wizard(osv.osv_memory):
             to_process = [x.id for x in wiz.line_ids] or []
             account_id = wiz.account_id.id
             # Don't process lines:
-            # - that are not from choosen category. For an example it's useless to treat line that have a funding pool if we choose a cost center account.
-            # Nevertheless line that have a funding pool line could be indirectally be modified by a change of cost center.
-            # - that have same account
+            # - that have same account (or cost_center_id)
             # - that are commitment lines
             # - that have been reallocated
             # - that have been reversed
             # - that come from an engagement journal
             # - that come from a write-off (is_write_off = True)
-            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                '|', '|', '|', '|', '|', '|', ('account_id.category', '!=', wiz.account_id.category), ('account_id', '=', account_id),
-                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
-                ('from_write_off', '=', True)], context=context)
+            account_field_name = 'account_id'
+            if wiz.account_id.category == 'OC':
+                account_field_name = 'cost_center_id'
+            search_args = [
+                ('id', 'in', to_process), '|', '|', '|', '|', '|',
+                (account_field_name, '=', account_id),
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
+                ('from_write_off', '=', True)
+            ]
+            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:
                 non_supported_ids.extend(search_ns_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids

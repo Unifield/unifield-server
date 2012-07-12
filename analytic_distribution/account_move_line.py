@@ -30,21 +30,25 @@ class account_move_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
 
-    def create_analytic_lines(self, cr, uid, ids, context={}):
-        # Some verifications
-        if not context:
-            context = {}
+    def create_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Create analytic lines on expense accounts that have an analytical distribution.
+        """
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             amount = obj_line.debit_currency - obj_line.credit_currency
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, obj_line.analytic_distribution_id.id, {}, obj_line.account_id.id)
+                if ana_state == 'invalid':
+                    ana_content = self.pool.get('analytic.distribution')._get_lines_count(cr, uid, obj_line.analytic_distribution_id.id)
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution seems to be not valid. State: %s. Content: %s.') % (ana_state, ana_content,))
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
                 # create lines
-                for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
+                for distrib_lines in [distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.source_date or obj_line.date})
                         anal_amount = distrib_line.percentage*amount/100
@@ -63,10 +67,13 @@ class account_move_line(osv.osv):
                                      'user_id': uid,
                                      'currency_id': obj_line.currency_id.id,
                                      'document_date': obj_line.document_date,
+                                     'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
-                            line_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                            destination_id = distrib_line.destination_id and distrib_line.destination_id.id or False
+                            line_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,
+                                'destination_id': destination_id,})
                         # Update value if we come from a write-off
                         if obj_line.is_write_off:
                             line_vals.update({'from_write_off': True,})
