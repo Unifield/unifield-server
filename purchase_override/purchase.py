@@ -61,7 +61,7 @@ class purchase_order(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'loan_id': False, 'origin': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'origin': False})
         return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
@@ -126,6 +126,7 @@ class purchase_order(osv.osv):
                 "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
         ),
         'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
+        'date_confirm': fields.date(string='Confirmation date'),
     }
     
     _defaults = {
@@ -302,6 +303,16 @@ class purchase_order(osv.osv):
             return _("Purchase order '%s' is validated.") % (po.name,)
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
+        
+    def wkf_confirm_order(self, cr, uid, ids, context=None):
+        '''
+        Update the confirmation date of the PO at confirmation
+        '''
+        res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
+        
+        self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+        
+        return res
         
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
@@ -1305,6 +1316,14 @@ class purchase_order_line(osv.osv):
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+    
+    def copy(self, cr, uid, line_id, defaults={}, context=None):
+        '''
+        Remove link to merged line
+        '''
+        defaults.update({'merged_id': False})
+        
+        return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''

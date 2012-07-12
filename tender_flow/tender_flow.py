@@ -794,11 +794,13 @@ class purchase_order(osv.osv):
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+            
+        self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
 
         datas = {'ids': ids}
 
         return {'type': 'ir.actions.report.xml',
-                'report_name': 'purchase.quotation',
+                'report_name': 'msf.purchase.quotation',
                 'datas': datas}
 
     def check_rfq_updated(self, cr, uid, ids, context=None):

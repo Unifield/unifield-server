@@ -325,7 +325,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Transport cost : [[ objects[0].transport_cost or '0.00' ]]</para>
+                    <para style="TextInformation">Transport cost : [[ objects[0].transport_cost or '0.00' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -487,8 +487,11 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="65.0,65.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
             <tr>
+                <td>
+                    <para style="Lines"><i>Line</i></para>
+                </td>
                 <td>
                     <para style="Lines"><i>Supplier Code</i></para>
                 </td>
@@ -517,9 +520,12 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="65.0,65.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-                [[repeatIn(objects[0].merged_line_ids,'line')]]
+            <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+                [[ repeatIn(objects[0].order_line, 'line') ]]
                 <tr>
+                    <td>
+                        <para style="LinesBlue">[[ line.line_number ]]</para>
+                    </td>
                     <td>
                     	<para style="LinesBlue">[[ line.supplier_code ]]</para>
                     </td>
@@ -528,7 +534,7 @@
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
+                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0 and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.comment ]]</para>

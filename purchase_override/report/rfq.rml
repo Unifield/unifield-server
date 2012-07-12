@@ -6,7 +6,7 @@
             <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">PURCHASE ORDER ([[ selection(objects[0], 'order_type') ]])</drawString>
+            <drawString x="35" y="560.0">REQUEST FOR QUOTATION ([[ selection(objects[0], 'order_type') ]])</drawString>
             <fill color="blue"/>
             <drawString x="35" y="540.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
@@ -296,7 +296,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Goods value : [[ objects[0].amount_total or '0.00' ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -325,7 +325,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Transport cost : [[ objects[0].transport_cost or '0.00' ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -354,7 +354,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total cost : [[ objects[0].total_price_include_transport or '0.00' ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -383,7 +383,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Currency : [[ objects[0].pricelist_id.currency_id.name ]]</para>
+                    <para style="TextInformation"> </para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -487,8 +487,11 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="65.0,65.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,62.5,340.5,141.0,70.5,75.0" style="LinesTable">
             <tr>
+                <td>
+                    <para style="Lines"><i>Line</i></para>
+                </td>
                 <td>
                     <para style="Lines"><i>Supplier Code</i></para>
                 </td>
@@ -507,28 +510,25 @@
                 <td>
                     <para style="Lines"><i>Unit of Measure</i></para>
                 </td>
-                <td>
-                    <para style="Lines"><i>Unit Price</i></para>
-                </td>
-                <td>
-                    <para style="Lines"><i>Total Price</i></para>
-                </td>
             </tr>
         </blockTable>
 
         <section>
-            <blockTable colWidths="65.0,65.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-                [[repeatIn(objects[0].merged_line_ids,'line')]]
+            <blockTable colWidths="20.0,62.5,62.5,340.5,141.0,70.5,75.0" style="LinesTable">
+                [[ repeatIn(objects[0].order_line, 'line') ]]
                 <tr>
                     <td>
-                    	<para style="LinesBlue">[[ line.supplier_code ]]</para>
+                        <para style="LinesBlue">[[ line.line_number ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ line.supplier_code ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.product_id.default_code ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
+                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0 and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.comment ]]</para>
@@ -538,12 +538,6 @@
                     </td>
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
-                    </td>
-                    <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</para>
-                    </td>
-                    <td>
-                         <para style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</para>
                     </td>
                 </tr>
             </blockTable>
