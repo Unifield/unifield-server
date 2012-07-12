@@ -1243,7 +1243,20 @@ class sale_order_line(osv.osv):
             return so.state
         
         return False
-    
+
+    def  _get_type_def(self, cr, uid, context=None):
+        if context is None:
+            context= {}
+        return 'make_to_order'
+
+    def _get_uom_def(self, cr, uid, context=None):
+        if context is None:
+            context= {}
+        ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        if ids:
+            return ids[1] 
+        return False
+
     _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
                 'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
@@ -1254,6 +1267,8 @@ class sale_order_line(osv.osv):
     _defaults = {'date_planned': _get_planned_date,
                  'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
+                 'type': _get_type_def,
+                 'product_uom': _get_uom_def,      
                  }
 
     def copy_data(self, cr, uid, id, default=None, context=None):

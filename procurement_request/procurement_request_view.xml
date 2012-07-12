@@ -49,8 +49,9 @@
                                 <tree editable="top" string="Products">
                                     <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
-                                    <field name="product_uom" />
                                     <field name="product_uom_qty" />
+                                    <field name="product_uom" />
+
                                     <field name="notes" />
                                     <field name="type" on_change="requested_product_id_change(product_id, type)"/>
                                     <field name="latest" />

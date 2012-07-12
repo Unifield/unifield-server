@@ -11,17 +11,10 @@
 			<field name="inherit_id" ref="sale.view_order_form" />
 			<field name="arch" type="xml">
 				<data>
-
 					<field name="price_unit" position="after">
 						<field name="supplier" invisible="True" />
 						<field name="po_cft" invisible="True" />
 					</field>
-					
-					<xpath expr="/form//button[@name='order_confirm']" position="replace">
-						<button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
-                    	<button name="order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply"/>
-                    </xpath>
-
 				</data>
 			</field>
 		</record>
