@@ -1,21 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-    
-        <record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">300</field>
-            <field name="inherit_id" ref="tender_flow.purchase_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page/group[2]" position="replace">
-                    </xpath>
-                </data>
-            </field>
-        </record>
-    
+
     <!-- We move the buttons below the notebook -->
         <record id="msf_cross_docking.purchase_move_buttons" model="ir.ui.view">
             <field name="name">purchase.form.view</field>

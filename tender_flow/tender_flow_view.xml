@@ -237,7 +237,8 @@
                     <xpath expr="/form//field[@name='location_id']" position="attributes">
                         <attribute name="attrs">{'invisible': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-
+                    
+                    <!-- => REDEFINED IN MSF_CUSTOM_SETTINGS MODULE
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                         <group colspan="4" col="14">
                             <field name="state" readonly="1"/>
@@ -257,6 +258,7 @@
                             <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
                     </xpath>
+                     -->
                 </data>
             </field>
         </record>
