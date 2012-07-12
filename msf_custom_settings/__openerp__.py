@@ -34,7 +34,8 @@
                 'kit',
                 'procurement',
                 'product',
-                'msf_supply_doc_export'],
+                'msf_supply_doc_export',
+                'tender_flow,'],
     'description': '''
     ''',
     'init_xml': [],
