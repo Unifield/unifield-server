@@ -33,7 +33,8 @@
                 'msf_cross_docking',
                 'kit',
                 'procurement',
-                'product'],
+                'product',
+                'msf_supply_doc_export'],
     'description': '''
     ''',
     'init_xml': [],

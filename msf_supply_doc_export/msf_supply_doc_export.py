@@ -121,3 +121,63 @@ class tender_report_xls(WebKitParser):
         return (a[0], 'xls')
 
 tender_report_xls('report.tender_xls','tender','addons/msf_supply_doc_export/report/report_tender_xls.mako')
+
+class ir_values(osv.osv):
+    """
+    we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
+    """
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        print values
+# already defined in the module tender_flow
+#        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'purchase.order' in [x[0] for x in models]:
+#            new_act = []
+#            for v in values :
+#                if v[2]['name'] == 'Purchase Order Excel Export' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2]['report_name'] == 'purchase.msf.order' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2]['report_name'] == 'purchase.order.merged' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2]['report_name'] == 'po.line.allocation.report' and context['_terp_view_name'] == 'Purchase Orders' \
+#                or v[2]['report_name'] == 'purchase.msf.quotation' and context['_terp_view_name'] == 'Requests for Quotation' \
+#                or v[2]['report_name'] == 'request.for.quotation_xls' and context['_terp_view_name'] == 'Requests for Quotation' :
+#                    new_act.append(v)
+#                values = new_act
+        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[2]['report_name'] == 'internal.request_xls' and context['_terp_view_name'] == 'Internal Requests' \
+                or v[2]['report_name'] == 'msf.sale.order' and context['_terp_view_name'] == 'Field Orders' \
+                or v[2]['report_name'] == 'sale.order_xls' and context['_terp_view_name'] == 'Field Orders' :
+                    new_act.append(v)
+                values = new_act
+                
+        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] == 'Picking Tickets' and context.get('picking_screen', False)\
+                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] == 'Pre-Packing Lists' and context.get('ppl_screen', False)\
+                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Tickets', 'Pre-Packing Lists'] :
+                    new_act.append(v)
+                values = new_act
+                
+        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] == 'Packing Lists' :
+                    new_act.append(v)
+                values = new_act
+        elif context.get('picking_screen') and context.get('from_so'):
+            new_act = []
+            for v in values:
+                if v[2].get('report_name', False) :
+                    if v[2]['report_name'] == 'picking.ticket':
+                        new_act.append(v)
+                values = new_act
+        print values
+        return values
+
+ir_values()
