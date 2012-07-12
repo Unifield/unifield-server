@@ -287,6 +287,7 @@
     currency_id: 1
     analytic_id: analytic_distribution.analytic_account_project_dummy
     distribution_id: analytic_distrib1
+    destination_id: analytic_distribution.analytic_account_destination_operation
 -
   And one FP line
 -
