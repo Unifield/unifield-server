@@ -46,7 +46,7 @@ class stock_mission_report(osv.osv):
         
         for report in self.browse(cr, uid, ids, context=context):
             res[report.id] = False
-            if not report.full_view and report.instance_id.id == local_instance_id:
+            if report.instance_id.id == local_instance_id:
                 res[report.id] = True
                 
         return res
@@ -147,7 +147,7 @@ class stock_mission_report(osv.osv):
             full_report_ids = [self.create(cr, uid, {'name': 'Full view',
                                                'instance_id': instance_id.id,
                                                'full_view': True}, context=c)]
-            
+
         if context.get('update_full_report'):
             report_ids = full_report_ids
             
@@ -355,8 +355,8 @@ class stock_mission_report_line(osv.osv):
                 cu_val += l.cu_val
                 in_pipe_qty += l.in_pipe_qty
                 in_pipe_val += l.in_pipe_val
-                in_pipe_not_coor_qty += l.in_pipe_not_coor_qty
-                in_pipe_not_coor_val += l.in_pipe_not_coor_val
+                in_pipe_not_coor_qty += l.in_pipe_coor_qty
+                in_pipe_not_coor_val += l.in_pipe_coor_qty
                 
             self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
                                                 'internal_val': internal_val,
