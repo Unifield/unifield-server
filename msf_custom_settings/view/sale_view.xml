@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+    <!-- We move the buttons below the notebook -->
+        <record id="sale_move_buttons" model="ir.ui.view">
+            <field name="name">sale.form.view</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority">3002</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page/group[2]" position="replace" >
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Sales Order']/group[2]" position="replace" >
+                    </xpath>
+                    <xpath expr="/form/notebook" position="after" >
+                            <group col="14" colspan="4">
+                                <field name="state"/>
+                                <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
+                                <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>
+                                <button name="ship_recreate" states="shipping_except" string="Recreate Packing" icon="gtk-ok"/>
+                                <button name="ship_corrected" states="shipping_except" string="Ignore Exception" icon="gtk-apply"/>
+                                <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" icon="gtk-cancel"/>
+                                <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>
+                                <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
+                                <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
+                                <button name="cancel" states="draft" string="Cancel Order" icon="gtk-cancel"/>
+                                <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
+                                <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
+                                <button name="order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply"/>
+                                <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />
+                            </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>
