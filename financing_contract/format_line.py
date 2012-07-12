@@ -56,9 +56,9 @@ class financing_contract_format_line(osv.osv):
     
     def _get_total_costs(self, cr, uid, browse_overhead_line, field_name=None, context=None):
         # since this is only called from the overhead line, the domain is
-        # "all children of the parent line, except the current one"
+        # "all children, except the overhead lines"
         result = 0.0
-        total_line_ids = [line.id for line in browse_overhead_line.format_id.actual_line_ids if not line.parent_id and line.line_type != 'overhead']
+        total_line_ids = [line.id for line in browse_overhead_line.format_id.actual_line_ids if line.line_type in ['actual', 'consumption']]
         total_costs = {}
         if field_name and field_name in ('allocated_budget', 'project_budget'):
             total_costs = self._get_budget_amount(cr, uid, total_line_ids, field_name, context=context)
