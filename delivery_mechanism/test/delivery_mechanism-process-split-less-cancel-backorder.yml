@@ -106,13 +106,13 @@
         split_c = dic_split['context']
         split_obj = self.pool.get(split_model)
         # depending on the qty, we put different quantity in the new move
-        if out.quantity == 10:
+        if out.quantity_ordered == 10:
           # reduce qty
-          out.write({'quantity': 7}, context=wiz_c)
+          out.write({'quantity': 7, 'quantity_ordered': 7}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 5}, context=split_c)
-        if out.quantity == 5:
+        if out.quantity_ordered == 5:
           # reduce qty
-          out.write({'quantity': 4}, context=wiz_c)
+          out.write({'quantity': 4, 'quantity_ordered': 4}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 3}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
@@ -125,11 +125,11 @@
         change_ids = [dic_change['res_id']]
         change_c = dic_change['context']
         change_obj = self.pool.get(change_model)
-        if out.quantity == 5 or out.quantity == 3:
+        if out.quantity_ordered == 5 or out.quantity_ordered == 3:
           # product C -> D for original A of qty 5 and original B of qty 3
           change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_D"), 'change_reason': 'yml test'}, context=change_c)
           change_obj.change_product(cr, uid, change_ids, context=change_c)
-
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     # openERP swap IN -> backorder
     data = self.read(cr, uid, in_ids, ['backorder_id'], context=context)[0]

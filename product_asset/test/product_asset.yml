@@ -100,7 +100,7 @@
   !record {model: product.product, id: product_product_boitechaussures0}:
     categ_id: product_category_testproducts0
     cost_method: standard
-    default_code: CHAUSS-INT-1234
+    default_code: CHAUSS-INT-123
     mes_type: fixed
     name: Boite \xc3\xa0 chaussures
     name_template: Boite \xc3\xa0 chaussures
@@ -137,7 +137,7 @@
     invo_value: 120.1
     invo_currency: d
     name: Boite \xc3\xa0 chaussures asset
-    prod_int_code: CHAUSS-INT-1234
+    prod_int_code: CHAUSS-INT-123
     prod_int_name: Boite \xc3\xa0 chaussures
     product_id: product_product_boitechaussures0
     arrival_date: '2011-03-27'
@@ -212,7 +212,7 @@
     values = result['value']
     
     assert values['asset_type_id'] == ref("product_asset_type_0"), 'asset_type_id wrong'
-    assert values['prod_int_code'] == 'CHAUSS-INT-1234', 'prod_int_code wrong'
+    assert values['prod_int_code'] == 'CHAUSS-INT-123', '%s prod_int_code wrong'%(values['prod_int_code'],)
     assert values['prod_int_name'] == 'Boite \\xc3\\xa0 chaussures', 'prod_int_name wrong'
 -
 

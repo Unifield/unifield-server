@@ -39,7 +39,7 @@ class stock_partial_picking(osv.osv_memory):
         picking_ids = context.get('active_ids', False)
         message_in = '<label string="You receive %s products, please refer to the appropriate procedure." colspan="4" />'
         message_out = '<label string="You ship %s products, please refer to the appropriate procedure and ensure that the mean of transport is appropriate." colspan="4" />'
-
+        button = '<button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>'
         if not picking_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
@@ -77,10 +77,24 @@ class stock_partial_picking(osv.osv_memory):
         # add field in arch
         arch = result['arch']
         l = arch.split('<field name="date" invisible="1"/>')
-        arch = l[0] + '<field name="date" invisible="1"/>' + message + l[1]
+        arch = l[0]
+    
+        if context.get('step',False) not in ['create','validate','returnproducts','ppl2']:
+            arch += button
+        arch += '<field name="date" invisible="1"/>' + message + l[1]
         result['arch'] = arch
         
         return result
+
+    def copy_all(self, cr, uid, ids, context=None):
+        partial = self.browse(cr, uid, ids[0], context=context)
+
+        for move in partial.product_moves_out:
+            self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+        for move in partial.product_moves_in:
+            self.pool.get('stock.move.memory.in').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+
+        return {}
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
@@ -101,7 +115,7 @@ class stock_partial_picking(osv.osv_memory):
         move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(move, pick_type)
         assert move_memory is not None
         
-        move_memory.update({'expiry_date' : move.expired_date})
+        move_memory.update({'expiry_date' : move.expired_date, 'quantity_ordered' : move.product_qty, 'quantity': 0.0 })
         
         return move_memory
     
@@ -117,6 +131,11 @@ class stock_partial_picking(osv.osv_memory):
         move = kwargs.get('move')
         assert move, 'move is missing'
         
+	if move.batch_number_check and not move.prodlot_id:
+            raise osv.except_osv(_('Error'), _('No Batch Number set for Batch Number mandatory product(s).'))
+	if move.expiry_date_check and not move.expiry_date:
+            raise osv.except_osv(_('Error'), _('No Expiry Date set for Expiry Date mandatory product(s).'))
+
         # if only expiry date mandatory, and not batch management
         if move.expiry_date_check and not move.batch_number_check:        
             # if no production lot

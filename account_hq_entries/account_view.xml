@@ -165,7 +165,7 @@
             view_id="hq_reallocation_wizard"/>
 
     <!-- Menu -->
-        <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="5"/>
+        <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="6"/>
         <menuitem name="HQ Import" action="action_hq_entries_import_wizard" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
         <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="2"/>
         

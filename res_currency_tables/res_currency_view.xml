@@ -69,7 +69,7 @@
             <field name="view_id" ref="view_currency_table_tree"/>
         </record>
         
-        <menuitem action="action_currency_table_form" id="menu_action_currency_table_form" parent="account.menu_configuration_misc"/>
+        <menuitem action="action_currency_table_form" id="menu_action_currency_table_form" parent="account.menu_finance_currency_mgmt" sequence="2"/>
 
         <record id="import_main_currencies_view" model="ir.ui.view">
             <field name="name">Import Currencies</field>
@@ -95,9 +95,9 @@
             <field name="target">new</field>
         </record>
 
-        <menuitem parent="account.menu_configuration_misc"
+        <menuitem parent="account.menu_finance_currency_mgmt"
             action="action_import_main_currencies"
-            id="menu_action_import_main_currencies"  sequence="4"/>
+            id="menu_action_import_main_currencies"  sequence="1"/>
         
         <record id="import_table_currencies_view" model="ir.ui.view">
             <field name="name">Import Currencies</field>

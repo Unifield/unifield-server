@@ -98,15 +98,15 @@
         # depending on the product, we put different quantity in the new move
         if out.product_id.id == ref("product_A"):
           # reduce qty
-          out.write({'quantity': 7}, context=wiz_c)
+          out.write({'quantity_ordered': 7}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 5}, context=split_c)
         if out.product_id.id == ref("product_B"):
           # reduce qty
-          out.write({'quantity': 2}, context=wiz_c)
+          out.write({'quantity_ordered': 2}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 1}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
-      
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     # openERP swap IN -> backorder
     data = self.read(cr, uid, in_ids, ['backorder_id'], context=context)[0]

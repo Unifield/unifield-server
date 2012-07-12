@@ -144,6 +144,7 @@
     reference: 'test reference'
     currency_id: base.CHF
     date: !eval "'%s-03-12' %(datetime.now().year+1)"
+    document_date: !eval "'%s-03-12' %(datetime.now().year+1)"
     accrual_amount: 4242.0
     third_party_type: 'hr.employee'
     employee_id: employee_arthur_dent

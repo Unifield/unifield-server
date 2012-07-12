@@ -35,6 +35,10 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        bank = self.browse(cr, uid, res_id)
+        return bank.name + '_' +bank.journal_id.code
+
     def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
@@ -68,7 +72,7 @@ class account_cash_statement(osv.osv):
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.balance_end_real})
-        res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
@@ -257,4 +261,33 @@ class account_cash_statement(osv.osv):
 
 account_cash_statement()
 
+class account_cashbox_line(osv.osv):
+
+    _inherit = "account.cashbox.line"
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Override for the synch module: create new cashbox line only when this line for the cash register does not exist 
+        """
+        pieces = int(vals['pieces'])
+        existed_ids = False
+        temp = "-open-"
+        
+        if 'starting_id' in vals:
+            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], context=context)
+
+        if 'ending_id' in vals:
+            temp = "-close-"
+            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], context=context)
+        
+        number = False
+        if 'number' in vals:
+            number = vals['number']
+        
+        if existed_ids:
+            return osv.osv.write(self, cr, uid, existed_ids, vals, context=context)
+        
+        return osv.osv.create(self, cr, uid, vals, context=None)
+    
+account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

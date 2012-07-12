@@ -69,6 +69,7 @@
                     <field name="account_id"/>
                     <field name="partner_id" string="3rd Party"/>
                     <field name="date"/>
+                    <field name="document_date"/>
                     <field name="date_maturity"/>
                     <field name="amount_residual_import_inv" />
                     <field name="amount_currency" string="Book. Amount"/>
@@ -95,6 +96,7 @@
                                 <field name="account_id"/>
                                 <field name="partner_id" string="3rd Party"/>
                                 <field name="date"/>
+                                <field name="document_date"/>
                                 <field name="date_maturity"/>
                                 <field name="amount_residual_import_inv" />
                                 <field name="amount_currency" string="Book. Amount"/>
@@ -116,6 +118,7 @@
                                 <field name="account_id"/>
                                 <field name="partner_id"/>
                                 <field name="date"/>
+                                <field name="document_date"/>
                                 <field name="amount" sum="Total"/>
                                 <field name="amount_to_pay"/>
                                 <field name="amount_currency" string="Book. Amount"/>
@@ -151,6 +154,7 @@
                                 <field name="account_id"/>
                                 <field name="partner_id" string="3rd Party"/>
                                 <field name="date"/>
+                                <field name="document_date"/>
                                 <field name="date_maturity"/>
                                 <field name="amount_residual_import_inv" />
                                 <field name="amount_currency" string="Book. Amount"/>
@@ -172,6 +176,7 @@
                                 <field name="account_id"/>
                                 <field name="partner_id"/>
                                 <field name="date"/>
+                                <field name="document_date"/>
                                 <field name="amount" sum="Total"/>
                                 <field name="amount_to_pay"/>
                                 <field name="amount_currency" string="Book. Amount"/>

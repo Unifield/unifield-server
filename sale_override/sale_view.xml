@@ -41,7 +41,7 @@
                         </group>
                     </button>
 
-                    <xpath expr="/form/notebook/page//button[@name='order_confirm']" position="replace">
+                    <xpath expr="/form//button[@name='order_confirm']" position="replace">
                         <group>
                             <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply"/>
                             <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />
@@ -103,7 +103,8 @@
             <field name="inherit_id" ref="sale.view_sales_order_filter" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search//filter[@string='Quotations']" position="after">
+                    <xpath expr="/search//filter[@string='Quotations']" position="replace">
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                     </xpath>
             <xpath expr="/search/field[@name='name']" position="after">
@@ -175,6 +176,144 @@
                   groups="base.group_extended"
                   parent="base.menu_product"
                   sequence="5" />
+
+        <record id="view_order_line_to_correct_form" model="ir.ui.view">
+            <field name="name">sale.order.line.to.correct.form</field>
+            <field name="model">sale.order.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form>
+                  <notebook>
+                      <page string="Order Line">
+                         <field name="product_id" colspan="4" on_change="requested_product_id_change(product_id, type)" />
+                         <field name="product_uom_qty" />
+                         <field name="product_uom" />
+                         <field name="price_unit" />
+                         <field name="currency_id" />
+                         <field name="date_planned" />
+                         <field name="type" on_change="requested_product_id_change(product_id, type)"/>
+                         <newline />
+                         <field name="state"/>
+                     </page>
+
+                      <!-- EXACT COPY-PASTE FROM product_nomenclature_view.xml -->
+                      <page string="Nomenclature Selection">
+                      
+                          <group colspan="4" col="2">
+                              
+                              <field name="nomenclature_code" colspan="2" invisible="True" />
+                              <field name="nomenclature_description" colspan="2" readonly="True" />
+                              <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}" />
+                          
+                          </group>
+                          <newline />
+
+                          <group colspan="2" col="5">
+                              <separator string="Mandatory Levels" colspan="5" />
+
+                              <group colspan="4" col="2">
+                                  <field name="nomen_manda_0"
+                                      domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                                      widget="selection"
+                                      on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                      attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_manda_1"
+                                      domain="[('level', '=', '1'), ('type', '=', 'mandatory')]"
+                                      widget="selection"
+                                      get_selection="get_nomen"
+                                      on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_manda_2"
+                                      domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+                                      widget="selection"
+                                      get_selection="get_nomen"
+                                      on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_manda_3"
+                                      domain="[('level', '=', '3'), ('type', '=', 'mandatory')]"
+                                      widget="selection"
+                                      get_selection="get_nomen"
+                                      on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                              </group>
+
+                          </group>
+
+                          <group colspan="2" col="5">
+                              <separator string="Optional Levels" colspan="4" />
+
+
+                              <group colspan="4" col="2">
+                                  <field name="nomen_sub_0"
+                                      domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                      widget="selection"
+                                      get_selection="get_sub_nomen"
+                                      on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_sub_1"
+                                      domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                      widget="selection"
+                                      get_selection="get_sub_nomen"
+                                      on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_sub_2"
+                                      domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                      widget="selection"
+                                      get_selection="get_sub_nomen"
+                                      on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_sub_3"
+                                      domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                      widget="selection"
+                                      get_selection="get_sub_nomen"
+                                      on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_sub_4"
+                                      domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                      widget="selection"
+                                      get_selection="get_sub_nomen"
+                                      on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                                  <field name="nomen_sub_5"
+                                      domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
+                                      widget="selection"
+                                      get_selection="get_sub_nomen"
+                                      on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+                                      attrs="{'readonly':[('product_id', '!=', False)]}" 
+                                  />
+                              </group>
+
+                          </group>
+                      </page>
+                      <!-- END COPY -->
+                  </notebook>
+                  
+                  <newline/>
+                  <button 
+                  name="save_and_close" 
+                  string="Save and Close"
+                  type="object" 
+                  icon="gtk-close" />
+                  <!-- =====> USED IN MSF_SUPPLY_DOC_IMPORT
+                  <field name="to_correct_ok" readonly="1" invisible="1"/>
+                  <field name="text_error" 
+                  nolabel="1" 
+                  readonly="1" 
+                  colspan="3" 
+                  attrs="{'invisible': [('to_correct_ok', '=', False)]}"/>
+                   -->
+              </form>
+            </field>
+        </record>
 
     </data>
 </openerp>

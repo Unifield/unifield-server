@@ -27,6 +27,7 @@ import decimal_precision as dp
 import netsvc
 
 from sale_override import SALE_ORDER_STATE_SELECTION
+from msf_order_date.order_dates import compute_rts
 
 class procurement_request(osv.osv):
     _name = 'sale.order'
@@ -77,7 +78,6 @@ class procurement_request(osv.osv):
         domain=[('usage', '=', 'internal')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
-        'requested_date': fields.date(string='Requested date', states={'draft': [('readonly', False)]}, readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
         'origin': fields.char(size=64, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
         'notes': fields.text(string='Notes'),
@@ -130,11 +130,26 @@ class procurement_request(osv.osv):
             vals['partner_order_id'] = address_id
             vals['partner_invoice_id'] = address_id
             vals['partner_shipping_id'] = address_id
-            vals['delivery_requested_date'] = vals.get('requested_date')
             pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
             vals['pricelist_id'] = pl
+            if 'delivery_requested_date' in vals:
+                vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
 
         return super(procurement_request, self).create(cr, uid, vals, context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Update date_planned of lines
+        '''
+        for req in self.browse(cr, uid, ids, context=context):
+            # Only in case of Internal request
+            if req.procurement_request and 'delivery_requested_date' in vals:
+                rts = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
+                vals['ready_to_ship_date'] = rts
+                for line in req.order_line:
+                    self.pool.get('sale.order.line').write(cr, uid, line.id, {'date_planned': vals['delivery_requested_date']}, context=context)
+        
+        return super(procurement_request, self).write(cr, uid, ids, vals, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -263,7 +278,7 @@ class procurement_request(osv.osv):
                 move_id = False
                 location_id = request.shop_id.warehouse_id.lot_stock_id.id
                 if not picking_id:
-                    pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in')
+                    pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
                     picking_data = {'name': pick_name,
                                     'origin': request.name,
                                     'reason_type_id': obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
@@ -322,6 +337,21 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'})
         
         return True
+    
+    def pricelist_id_change(self, cr, uid, ids, pricelist_id):
+        '''
+        Display a warning message on pricelist change
+        '''
+        res = {}
+        
+        if pricelist_id and ids:
+            order = self.browse(cr, uid, ids[0])
+            if pricelist_id != order.pricelist_id.id and order.order_line:
+                res.update({'warning': {'title': 'Currency change',
+                                        'message': 'You have changed the currency of the order. \
+                                         Please note that all order lines in the old currency will be changed to the new currency without conversion !'}})
+                
+        return res
     
 procurement_request()
 
@@ -437,8 +467,9 @@ class purchase_order(osv.osv):
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-                    move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-                    move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
+                    if proc.move_id:
+	                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
+        	        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
                     proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
                     
         return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)

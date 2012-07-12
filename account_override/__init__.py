@@ -23,6 +23,7 @@
 
 import account
 import invoice
+import account_voucher
 import account_move_line
 import account_analytic_line
 import account_bank_statement

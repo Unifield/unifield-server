@@ -139,10 +139,10 @@ class sale_order(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'company_id2': fields.many2one('res.company','Company',select=1),
         'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines'),
-        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current sales order."),
+        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current field order."),
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
-        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current sales order."),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Pricelist for current sales order."),
+        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
@@ -172,7 +172,7 @@ class sale_order(osv.osv):
         '''
         user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         if company_id == user_company_id:
-            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+            raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
     
@@ -211,7 +211,7 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
-            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
+            self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
 
         return True
     
@@ -219,7 +219,7 @@ class sale_order(osv.osv):
         '''
         Hook the message displayed on sale order confirmation
         '''
-        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
+        return _('The Field order \'%s\' has been confirmed.') % (kwargs['order'].name,)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
@@ -276,7 +276,7 @@ class sale_order(osv.osv):
                       'order_type': 'loan',
                       'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
                       'categ': order.categ,
-                      'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                      'location_id': order.shop_id.warehouse_id.lot_input_id.id,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
                       }
@@ -293,7 +293,7 @@ class sale_order(osv.osv):
             
             purchase = purchase_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' is created.") % (purchase.name,)
+            message = _("Loan counterpart '%s' has been created.") % (purchase.name,)
             
             purchase_obj.log(cr, uid, order_id, message)
         
@@ -381,6 +381,7 @@ class sale_order(osv.osv):
         '''
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
+        result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
         
         return result
     
@@ -505,6 +506,44 @@ class sale_order_line(osv.osv):
                     'target': 'new',
                     'res_id': wiz_id,
                     'context': context}
+
+    def open_order_line_to_correct(self, cr, uid, ids, context=None):
+        '''
+        Open Order Line in form view
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        view_id = obj_data.get_object_reference(cr, uid, 'sale_override', 'view_order_line_to_correct_form')[1]
+        view_to_return = {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sale.order.line',
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id],
+        }
+        return view_to_return
+
+    def save_and_close(self, cr, uid, ids, vals, context=None):
+        '''
+        Save and close the configuration window 
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1],
+        
+        self.write(cr, uid, ids, vals, context=context)
+        
+        return {'type': 'ir.actions.act_window_close',
+                'res_model': 'sale.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'view_id': [view_id],
+                }
 
 sale_order_line()
 

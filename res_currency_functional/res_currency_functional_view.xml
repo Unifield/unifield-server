@@ -71,8 +71,8 @@
             <field name="domain">[('active','in',['t','f'])]</field>
             <field name="context">{'search_default_active': 1}</field>
         </record>
-        
-        <menuitem action="action_currency_functional_form" id="base.menu_action_currency_form" parent="account.menu_configuration_misc"/>
+        <menuitem id="account.menu_finance_currency_mgmt" name="Currency Management" parent="account.menu_finance_configuration" sequence="3"/>
+        <menuitem action="action_currency_functional_form" id="base.menu_action_currency_form" parent="account.menu_finance_currency_mgmt" sequence="3"/>
         
         
         <!--Account Move lines-->

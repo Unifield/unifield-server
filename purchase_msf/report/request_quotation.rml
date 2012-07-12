@@ -144,10 +144,10 @@
           <para style="terp_tblheader_Details">Requested Date</para>
         </td>
         <td>
-          <para style="P1">Reference</para>
+          <para style="P1">CODE</para>
         </td>
         <td>
-          <para style="P1">Description</para>
+          <para style="P1">DESCRIPTION</para>
         </td>
         <td>
           <para style="P1">Supplier Code</para>

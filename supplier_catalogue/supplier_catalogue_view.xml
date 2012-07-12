@@ -220,7 +220,8 @@
 		<!-- Menu in Purchases / Configuration -->
 		<menuitem id="menu_supplier_catalogue"
 				  action="action_supplier_catalogue_list"
-				  parent="purchase.menu_purchase_config_purchase" />
+				  sequence="4"
+				  parent="purchase.menu_procurement_management" />
 		
 		<!-- Menu in Purchases / Configuration -->		  
 		<!-- <menuitem id="menu_supplier_catalogue_line"

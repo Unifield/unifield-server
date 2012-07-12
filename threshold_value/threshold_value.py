@@ -20,35 +20,78 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
+from osv import fields
 
-from mx.DateTime import *
+from mx.DateTime import DateFrom
+from mx.DateTime import now
+from mx.DateTime import RelativeDate 
 
 class threshold_value(osv.osv):
     _name = 'threshold.value'
     _description = 'Threshold value'
     
+    def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns a list of products for the rule
+        '''
+        res = {}
+        
+        for rule in self.browse(cr, uid, ids, context=context):
+            res[rule.id] = []
+            for line in rule.line_ids:
+                res[rule.id].append(line.product_id.id)
+        
+        return res
+    
+    def _src_product_ids(self, cr, uid, obj, name, args, context=None):
+        if not context:
+            context = {}
+            
+        res = []
+            
+        for arg in args:
+            if arg[0] == 'product_ids':
+                rule_ids = []
+                line_ids = self.pool.get('threshold.value.line').search(cr, uid, [('product_id', arg[1], arg[2])])
+                for l in self.pool.get('threshold.value.line').browse(cr, uid, line_ids):
+                    if l.threshold_value_id.id not in rule_ids:
+                        rule_ids.append(l.threshold_value_id.id)
+                res.append(('id', 'in', rule_ids))
+                
+        return res
+    
     _columns = {
-        'name': fields.char(size=128, string='Name', required=True),
+        'name': fields.char(size=128, string='Reference', required=True),
         'active': fields.boolean(string='Active'),
-        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
-        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
+                                       domain="[('is_replenishment', '=', warehouse_id)]",
+                                       help='Location where the computation is made'),
         'compute_method': fields.selection([('fixed', 'Fixed values'), ('computed', 'Computed values')],
                                            string='Method of computation', required=True,
                                            help="""If 'Fixed values', the scheduler will compare stock of product with the threshold value of the line. \n
                                            If 'Computed values', the threshold value and the ordered quantity will be calculated according to defined parameters"""),
         'consumption_method': fields.selection([('amc', 'Average Monthly Consumption'), ('fmc', 'Forecasted Monthly Consumption')],
-                                               string='Consumption Method'),
+                                               string='Consumption Method',
+                                               help='Method used to compute the consumption of products.'),
         'consumption_period_from': fields.date(string='Period of calculation', 
                                              help='This period is a number of past months the system has to consider for AMC calculation.'\
                                              'By default this value is equal to the frequency in the Threshold.'),
         'consumption_period_to': fields.date(string='-'),
-        'frequency': fields.float(digits=(16,2), string='Order frequency'),
-        'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
-        'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
-        'supplier_lt': fields.boolean(string='Product\'s supplier LT'),
+        'frequency': fields.float(digits=(16,2), string='Order frequency', 
+                                  help='The time between two replenishments. Will be used to compute the quantity to order.'),
+        'safety_month': fields.float(digits=(16,2), string='Safety Stock in months',
+                                     help='In months. Period during the stock is not empty but need to be replenish. \
+                                     Used to compute the quantity to order.'),
+        'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months',
+                                  help='In months. Time to be delivered after processing the purchase order.'),
+        'supplier_lt': fields.boolean(string='Product\'s supplier LT',
+                                      help='If checked, use the lead time set in the supplier form.'),
         'line_ids': fields.one2many('threshold.value.line', 'threshold_value_id', string="Products"),
         'fixed_line_ids': fields.one2many('threshold.value.line', 'threshold_value_id2', string="Products"),
+        'product_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
+                                    type='many2many', relation='product.product', method=True, string='Products'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
@@ -64,6 +107,38 @@ class threshold_value(osv.osv):
         'consumption_period_from': lambda *a: (now() + RelativeDate(day=1, months=-2)).strftime('%Y-%m-%d'),
         'consumption_period_to': lambda *a: (now() + RelativeDate(day=1)).strftime('%Y-%m-%d'),
     }
+    
+    def copy(self, cr, uid, ids, defaults={}, context=None):
+        '''
+        Increment the sequence
+        '''
+        name = self.pool.get('ir.sequence').get(cr, uid, 'threshold.value') or ''
+        defaults.update({'name': name})
+        
+        return super(threshold_value, self).copy(cr, uid, ids, defaults, context=context)
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(threshold_value, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
     
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, context=None):
         """ Finds default stock location id for changed warehouse.
@@ -84,6 +159,9 @@ class threshold_value(osv.osv):
         
         if method and method == 'fmc':
             res.update({'consumption_period_from': False, 'consumption_period_to': False})
+        elif method and method == 'amc':
+            res.update({'consumption_period_from': (now() + RelativeDate(day=1, months=-2)).strftime('%Y-%m-%d'),
+                        'consumption_period_to': (now() + RelativeDate(day=1, months=1, days=-1)).strftime('%Y-%m-%d')})
         
         return {'value': res}
     
@@ -189,6 +267,17 @@ class threshold_value_line(osv.osv):
     _description = 'Threshold Value Line'
     _rec_name = 'product_id'
     
+    def copy_data(self, cr, uid, ids, defaults={}, context=None):
+        res = super(threshold_value_line, self).copy_data(cr, uid, ids, defaults, context=context)
+        
+        if isinstance(res, dict):
+            if 'threshold_value_id' in res:
+                del res['threshold_value_id']
+            if 'threshold_value_id2' in res:
+                del res['threshold_value_id2']
+        
+        return res
+    
     def create(self, cr, uid, vals, context=None):
         '''
         Add the second link to the threshold value rule
@@ -208,6 +297,9 @@ class threshold_value_line(osv.osv):
             vals.update({'threshold_value_id2': vals['threshold_value_id']})
         elif 'threshold_value_id2' in vals:
             vals.update({'threshold_value_id': vals['threshold_value_id2']})
+            
+        context.update({'fake_threshold_value': vals.get('fake_threshold_value', False)})
+        vals.update({'fake_threshold_value': 0.00})
         
         return super(threshold_value_line, self).write(cr, uid, ids, vals, context=context)
     
@@ -220,27 +312,69 @@ class threshold_value_line(osv.osv):
             context = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {'threshold_value': 0.00, 'product_qty': 0.00}
+            if context.get('fake_threshold_value', False):
+                res[line.id] = context.get('fake_threshold_value', 0.00)
+                continue 
+            res[line.id] = 0.00
             
             rule = line.threshold_value_id
             context.update({'location_id': rule.location_id.id, 'compute_child': True})
             product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
-            res[line.id] = self._get_threshold_value(cr, uid, line.id, product, rule.compute_method, rule.consumption_method, 
+            result = self._get_threshold_value(cr, uid, line.id, product, rule.compute_method, rule.consumption_method, 
                                                      rule.consumption_period_from, rule.consumption_period_to, rule.frequency, 
                                                      rule.safety_month, rule.lead_time, rule.supplier_lt, line.product_uom_id.id, context)
+            res[line.id] = result.get(field_name, 0.00) 
         
         return res
+
+    
+    def _get_threshold(self, cr, uid, ids, context={}):
+        res = {}
+        for t in self.pool.get('threshold.value').browse(cr, uid, ids, context=context):
+            for l in t.line_ids:
+                res[l.id] = True
+                
+        return res.keys()
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_qty': fields.function(_get_values, method=True, type='float', string='Quantity to order', multi='values'),
-        'threshold_value': fields.function(_get_values, method=True, type='float', string='Threshold value', multi='values'),
+        'product_qty': fields.function(_get_values, method=True, type='float', string='Quantity to order'),
+        'fake_threshold_value': fields.float(digits=(16,2), string='Threshold value'),
+        'threshold_value': fields.function(_get_values, method=True, type='float', string='Threshold value',
+                                           store={'threshold.value.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'],20),
+                                                  'threshold.value': (_get_threshold, ['compute_method',
+                                                                                       'consumption_method',
+                                                                                       'consumption_period_from',
+                                                                                       'consumption_period_to',
+                                                                                       'frequency',
+                                                                                       'safety_month',
+                                                                                       'lead_time',
+                                                                                       'supplier_lt'], 10)}),
         'fixed_product_qty': fields.float(digits=(16,2), string='Quantity to order'),
         'fixed_threshold_value': fields.float(digits=(16,2), string='Threshold value'),
         'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
         'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
     }
+    
+    def _check_uniqueness(self, cr, uid, ids, context=None):
+        '''
+        Check if the product is not already in the current rule
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            lines = self.search(cr, uid, [('id', '!=', line.id), 
+                                          ('product_id', '=', line.product_id.id),
+                                          '|',
+                                          ('threshold_value_id2', '=', line.threshold_value_id2.id),
+                                          ('threshold_value_id', '=', line.threshold_value_id.id)], context=context)
+            if lines:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_uniqueness, 'You cannot have two times the same product on the same threshold value rule', ['product_id'])
+    ]
     
     def _get_threshold_value(self, cr, uid, line_id, product, compute_method, consumption_method,
                                 consumption_period_from, consumption_period_to, frequency,
@@ -284,15 +418,29 @@ class threshold_value_line(osv.osv):
             
         return {'threshold_value': threshold_value, 'product_qty': qty_to_order}
 
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, compute_method=False, consumption_method=False,
+                                consumption_period_from=False, consumption_period_to=False, frequency=False,
+                                safety_month=False, lead_time=False, supplier_lt=False, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
         """
+        if not context:
+            context = {}
+        
+        res = {'value': {'product_uom_id': False,
+                         'fake_threshold_value': 0.00,
+                         'threshold_value': 0.00}}
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v = {'product_uom_id': prod.uom_id.id}
-            return {'value': v}
-        return {}
+            res['value'].update({'product_uom_id': prod.uom_id.id})
+            
+            if compute_method:
+                tv = self._get_threshold_value(cr, uid, ids, prod, compute_method, consumption_method,
+                                               consumption_period_from, consumption_period_to, frequency,
+                                               safety_month, lead_time, supplier_lt, prod.uom_id.id, context=context)['threshold_value']
+                res['value'].update({'fake_threshold_value': tv, 'threshold_value': tv})
+            
+        return res
     
 threshold_value_line()

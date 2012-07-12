@@ -79,9 +79,9 @@ class financing_contract_format_line(osv.osv):
     
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
         # Method to get the domain (allocated or project) of a line
-        date_domain = "[('date', '>=', '"
+        date_domain = "[('document_date', '>=', '"
         date_domain += browse_format.eligibility_from_date
-        date_domain += "'), ('date', '<=', '"
+        date_domain += "'), ('document_date', '<=', '"
         date_domain += browse_format.eligibility_to_date
         date_domain += "')]"
         # list of expense accounts in the funding pools.
@@ -218,7 +218,7 @@ class financing_contract_format_line(osv.osv):
                         if 'currency_table_id' in context:
                             currency_table = context['currency_table_id']
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            date_context = {'date': analytic_line.source_date or analytic_line.date,
+                            date_context = {'date': analytic_line.document_date,
                                             'currency_table_id': currency_table}
                             real_sum += self.pool.get('res.currency').compute(cr,
                                                                               uid,
