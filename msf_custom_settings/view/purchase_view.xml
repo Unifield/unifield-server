@@ -14,6 +14,8 @@
                     <xpath expr="/form" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
                     </xpath>
+                    <xpath expr="/form/notebook/page/group[2]" position="replace">
+                    </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
                     </xpath>
                     <xpath expr="/form/notebook" position="after" >
