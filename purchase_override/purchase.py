@@ -478,7 +478,6 @@ stock moves which are already processed : '''
         for po in self.browse(cr, uid, ids, context=context):
             if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind' and po.partner_id.partner_type != 'intermission':
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
-        
         return True
     
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
@@ -704,7 +703,8 @@ stock moves which are already processed : '''
         # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
         # which doesnt execute wkf_confirm_wait_order
         # msf_order_date checks
-        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        # This code have been commented because of double commitment generation
+        #self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
             
         for order in self.browse(cr, uid, ids):
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
