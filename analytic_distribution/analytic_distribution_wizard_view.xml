@@ -68,6 +68,7 @@
                     <field name="invoice_id" invisible="1"/>
                     <field name="commitment_id" invisible="1"/>
                     <field name="purchase_id" invisible="1"/>
+                    <field name="purchase_line_id" invisible="1"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
                         <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1" attrs="{'invisible': [('is_writable', '=', False)]}"/>

@@ -593,7 +593,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                     'wizard_id': wiz.id,
                                     'currency_id': line.currency_id and line.currency_id.id or False,
                                     'distribution_line_id': line.id or False,
-                                    'destination_id': line.destination_id or line.destination_id.id or False,
+                                    'destination_id': line.destination_id and line.destination_id.id or False,
                                 }
                                 # Add cost_center_id value if we come from a funding_pool object
                                 if line_type == 'funding.pool':
@@ -881,11 +881,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
                 # Create funding pool lines from CC lines if wizard is from PO/FO
                 # PAY ATTENTION THAT break avoid problem that delete new created funding pool
-                if line_type == 'cost.center' and wiz.state == 'cc' and wiz.purchase_id:
+                if line_type == 'cost.center' and wiz.state == 'cc' and (wiz.purchase_id or wiz.purchase_line_id):
                     fp_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
                     if fp_ids:
                         self.pool.get('funding.pool.distribution.line').unlink(cr, uid, fp_ids)
-                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, wiz.account_id and wiz.account_id.id or False)
+                    account_id = wiz.account_id and wiz.account_id.id or False
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, account_id)
                     break
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]

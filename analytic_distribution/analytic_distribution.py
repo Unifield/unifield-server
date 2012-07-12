@@ -69,14 +69,14 @@ class analytic_distribution1(osv.osv):
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
             return 'none'
-        distri = self.browse(cr, uid, id)
+        distrib = self.browse(cr, uid, id)
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        for fp_line in distri.funding_pool_lines:
+        for fp_line in distrib.funding_pool_lines:
             account = self.pool.get('account.account').browse(cr, uid, account_id)
             if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
                 return 'invalid'
@@ -307,8 +307,8 @@ class analytic_distribution(osv.osv):
                         'cost_center_id': line.analytic_id and line.analytic_id.id or False,
                         'destination_id': line.destination_id and line.destination_id.id or False,
                     }
-                    # Search default destination
-                    if account_id:
+                    # Search default destination if no one given
+                    if account_id and 'destination_id' not in vals:
                         account = self.pool.get('account.account').browse(cr, uid, account_id)
                         if account and account.user_type and account.user_type.code == 'expense':
                             vals.update({'destination_id': account.default_destination_id and account.default_destination_id.id or False})
