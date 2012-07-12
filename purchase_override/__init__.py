@@ -17,7 +17,6 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('approved', 'Confirmed'),
     ('except_picking', 'Receipt Exception'),
     ('except_invoice', 'Invoice Exception'),
-    ('split', 'Split'),
     ('done', 'Closed'),
     ('cancel', 'Cancelled'),
     ('rfq_sent', 'Sent'),
