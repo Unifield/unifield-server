@@ -935,8 +935,6 @@
 					<field name="total_weight" />
 					<field name="total_amount" />
 					<field name="currency_id" />
-					<field name="num_of_packs" />
-					<field name="total_weight" />
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>

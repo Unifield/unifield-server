@@ -330,7 +330,7 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
                 'selected_number': fields.integer(string='Selected Number'),
                 # functions
-                'volume': fields.function(_get_volume, method=True, type='float', string='Volume [dm³]',),
+                'volume': fields.function(_get_volume, method=True, type='float', string=u'Volume [dm³]',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals_X',), # old_multi get_vals
                 }
