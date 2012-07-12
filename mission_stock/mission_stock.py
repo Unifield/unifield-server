@@ -144,15 +144,18 @@ class stock_mission_report(osv.osv):
         if not full_report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
             c = context.copy()
             c.update({'no_update': True})
-            report_ids = [self.create(cr, uid, {'name': 'Full view',
+            full_report_ids = [self.create(cr, uid, {'name': 'Full view',
                                                'instance_id': instance_id.id,
                                                'full_view': True}, context=c)]
+            
+        if context.get('update_full_report'):
+            report_ids = full_report_ids
             
 
         # Check in each report if new products are in the database and not in the report
         for report in self.browse(cr, uid, report_ids, context=context):
             # Don't update lines for full view or non local reports
-            if not report.local_report or report.full_view:
+            if not report.local_report:
                 continue
             
             product_in_report = []
@@ -169,11 +172,20 @@ class stock_mission_report(osv.osv):
             # Update the update date on report
             self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                
-        # Update all lines
-        line_obj.update(cr, uid, line_ids, context=context)
+        if context.get('update_full_report'):
+            line_obj.update_full_view_line(cr, uid, line_ids, context=context)
+        else:
+            # Update all lines
+            line_obj.update(cr, uid, line_ids, context=context)
 
         cr.commit()
         cr.close()
+        
+        # After update of all normal reports, update the full view report
+        if not context.get('update_full_report'):
+            c = context.copy()
+            c.update({'update_full_report': True})
+            self.update(cr, uid, [], context=c)
 
         return True
                 
@@ -304,7 +316,66 @@ class stock_mission_report_line(osv.osv):
         for r in obj.browse(cr, uid, minus_ids):
             res -= r.product_qty
             
-        return res                
+        return res
+
+    def update_full_view_line(self, cr, uid, ids, context=None):
+        for line in self.browse(cr, uid, ids, context=context):
+            line_ids = self.search(cr, uid, [('mission_report_id', '!=', line.mission_report_id.id), ('product_id', '=', line.product_id.id)], context=context)
+            lines = self.browse(cr, uid, line_ids, context=context)
+    
+            internal_qty = 0.00
+            internal_val = 0.00
+            stock_qty = 0.00
+            stock_val = 0.00
+            central_qty = 0.00
+            central_val = 0.00
+            cross_qty = 0.00
+            cross_val = 0.00
+            secondary_qty = 0.00
+            secondary_val = 0.00
+            cu_qty = 0.00
+            cu_val = 0.00
+            in_pipe_qty = 0.00
+            in_pipe_val = 0.00
+            in_pipe_not_coor_qty = 0.00
+            in_pipe_not_coor_val = 0.00
+    
+            for l in lines:
+                internal_qty += l.internal_qty
+                internal_val += l.internal_val
+                stock_qty += l.stock_qty
+                stock_val += l.stock_val
+                central_qty += l.central_qty
+                central_val += l.central_val
+                cross_qty += l.cross_qty
+                cross_val += l.cross_val
+                secondary_qty += l.secondary_qty
+                secondary_val += l.secondary_val
+                cu_qty += l.cu_qty
+                cu_val += l.cu_val
+                in_pipe_qty += l.in_pipe_qty
+                in_pipe_val += l.in_pipe_val
+                in_pipe_not_coor_qty += l.in_pipe_not_coor_qty
+                in_pipe_not_coor_val += l.in_pipe_not_coor_val
+                
+            self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
+                                                'internal_val': internal_val,
+                                                'stock_qty': stock_qty,
+                                                'stock_val': stock_val,
+                                                'central_qty': central_qty,
+                                                'central_val': central_val,
+                                                'cross_qty': cross_qty,
+                                                'cross_val': cross_val,
+                                                'secondary_qty': secondary_qty,
+                                                'secondary_val': secondary_val,
+                                                'cu_qty': cu_qty,
+                                                'cu_val': cu_val,
+                                                'in_pipe_qty': in_pipe_qty,
+                                                'in_pipe_val': in_pipe_val,
+                                                'in_pipe_coor_qty': in_pipe_not_coor_qty,
+                                                'in_pipe_coor_val': in_pipe_not_coor_val}, context=context)
+            
+        return True
     
     def update(self, cr, uid, ids, context=None):
         '''
@@ -324,10 +395,10 @@ class stock_mission_report_line(osv.osv):
             stock_location_id = stock_location_id[1]
             
         # Check if the instance is a coordination or a project
-        coordo_id = False
-        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        if company.instance_id.level == 'project':
-            coordo_id = company.instance_id.partner_id.id
+        #coordo_id = False
+        #company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        #if company.instance_id.level == 'project':
+        #    coordo_id = company.instance_id.partner_id.id
         
         # Search considered SLocation
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
@@ -343,6 +414,10 @@ class stock_mission_report_line(osv.osv):
         secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
         
         for line in self.browse(cr, uid, ids, context=context):
+            # In case of full report
+            if line.mission_report_id.full_view:
+                continue
+            
             standard_price = line.product_id.standard_price
             # Internal locations
             internal_qty = 0.00
@@ -402,8 +477,8 @@ class stock_mission_report_line(osv.osv):
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
                 
                 in_pipe_qty += qty
-                if partner_id != coordo_id:
-                    in_pipe_not_coord_qty += qty
+#                if partner_id != coordo_id:
+#                    in_pipe_not_coord_qty += qty
             
             in_pipe_val = in_pipe_qty*standard_price
             in_pipe_not_coord_val = in_pipe_not_coord_qty*standard_price

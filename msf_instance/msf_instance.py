@@ -36,7 +36,6 @@ class msf_instance(osv.osv):
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
-        'partner_id': fields.many2one('res.partner', string='Associated Partner', required=True),
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
                                    ('inactive', 'Inactive')], 'State', required=True),

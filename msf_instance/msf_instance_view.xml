@@ -12,7 +12,6 @@
                     <field name="name"/>
                        <newline/>
                     <field name="level"/>
-                    <field name="partner_id" />
                     <newline />
                     <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
                     <field name="instance" readonly="1"/>
