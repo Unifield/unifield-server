@@ -912,7 +912,7 @@ class pack_family_memory(osv.osv_memory):
                 num_of_packs = pf_memory.to_pack - pf_memory.from_pack + 1
             values['num_of_packs'] = num_of_packs
             values['total_weight'] = pf_memory.weight * num_of_packs
-            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.00 / 1000.00
+            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.0
             
             # moves related fields
             for move in pf_memory.draft_packing_id.move_lines:
@@ -931,7 +931,7 @@ class pack_family_memory(osv.osv_memory):
                         raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
-    
+
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
@@ -959,7 +959,7 @@ class pack_family_memory(osv.osv_memory):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[m³]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[dm³]', multi='get_vals',),
                 }
     
     _defaults = {'shipment_id': False,

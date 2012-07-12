@@ -935,6 +935,8 @@
 					<field name="total_weight" />
 					<field name="total_amount" />
 					<field name="currency_id" />
+					<field name="num_of_packs" />
+					<field name="total_weight" />
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>
@@ -1098,7 +1100,7 @@
 		</record>
 		<!-- Added 'subtype' in domain -->
 		<record id="action_shipment" model="ir.actions.act_window">
-			<field name="name">Packing Lists</field>
+			<field name="name">Shipment Lists</field>
 			<field name="res_model">shipment</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -1106,7 +1108,7 @@
 			<field name="domain">[]</field>
 			<field name="context">{'packing_screen': True,'search_default_not_empty':1}</field>
 			<field name="search_view_id" ref="view_shipment_search"/>
-			<field name="help">This is the list of all packing lists that have been picked. The packing lists are regrouped by address.</field>
+			<field name="help">This is the list of all shipment lists that have been picked. The shipment lists are regrouped by address.</field>
 		</record>
 		<record id="action_shipment_tree" model="ir.actions.act_window.view">
 			<field eval="1" name="sequence"/>
