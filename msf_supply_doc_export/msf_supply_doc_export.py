@@ -133,7 +133,6 @@ class ir_values(osv.osv):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
-        print values
 # already defined in the module tender_flow
 #        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'purchase.order' in [x[0] for x in models]:
 #            new_act = []
@@ -177,7 +176,6 @@ class ir_values(osv.osv):
                     if v[2]['report_name'] == 'picking.ticket':
                         new_act.append(v)
                 values = new_act
-        print values
         return values
 
 ir_values()
