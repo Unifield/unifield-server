@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
-<document filename="field_order.pdf">
+<document filename="purchase_order.pdf">
 
-    <template pageSize="(842.0,595.0)" title="Field Order" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">FIELD ORDER ([[ selection(objects[0], 'order_type') ]])</drawString>
+            <drawString x="35" y="560.0">PURCHASE ORDER ([[ selection(objects[0], 'order_type') ]])</drawString>
             <fill color="blue"/>
             <drawString x="35" y="540.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
@@ -77,6 +77,7 @@
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
@@ -92,7 +93,7 @@
         <blockTable colWidths="150.0,5.5,150.0,5.5,150.0,5.5,150.0,5.5,150.0" style="OrderInformations">
             <tr>
                 <td>
-                    <para style="TextInformation">Project : [[ objects[0].partner_id and objects[0].partner_id.name or '' ]]</para>
+                    <para style="TextInformation">Project : [[ objects[0].company_id.partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -104,13 +105,13 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>To (Customer) :</u></para>
+                    <para style="TextInformation"><u>To (Supplier) :</u></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Ship to[[ objects[0].incoterm and ' (%s)' % objects[0].incoterm.name or '' ]] :</u></para>
+                    <para style="TextInformation"><u>Ship to[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] :</u></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -162,19 +163,19 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.name or objects[0].partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.name or objects[0].partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.name or objects[0].partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.name or objects[0].partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.name or objects[0].partner_id.name ]] </para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.partner_id.name or objects[0].company_id.partner_id.name ]] </para>
                 </td>
             </tr>
             <tr>
@@ -191,19 +192,19 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.street ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.street ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.street ]]</para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.street ]]</para>
                 </td>
             </tr>
             <tr>
@@ -220,19 +221,19 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.street2 ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.street2 ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.street2 ]]</para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.street2 ]]</para>
                 </td>
             </tr>
             <tr>
@@ -249,19 +250,19 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.zip ]] [[ objects[0].partner_order_id.city ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.zip ]] [[ objects[0].partner_address_id.city ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.zip ]] [[ objects[0].partner_shipping_id.city ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.zip ]] [[ objects[0].dest_address_id.city ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.zip ]] [[ objects[0].partner_invoice_id.city ]]</para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.zip ]] [[ objects[0].invoice_address_id.city ]]</para>
                 </td>
             </tr>
             <tr>
@@ -278,24 +279,24 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.country_id.name or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.country_id and objects[0].partner_shipping_id.country_id.name or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.country_id and objects[0].dest_address_id.country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.country_id and objects[0].partner_invoice_id.country_id.name or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.country_id and objects[0].invoice_address_id.country_id.name or '' ]]</para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Goods value : [[ objects[0].amount_total ]]</para>
+                    <para style="TextInformation">Goods value : [[ objects[0].amount_total or '0.00' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -307,24 +308,24 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.phone ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.phone ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.phone ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.phone ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.phone ]]</para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.phone ]]</para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformation">Transport cost : [[ objects[0].transport_cost or '0.00' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -336,24 +337,24 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_order_id.email ]]</para>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.email ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_shipping_id.email ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.email ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_invoice_id.email ]]</para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.email ]]</para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total cost : [[ objects[0].amount_total ]]</para>
+                    <para style="TextInformation">Total cost : [[ objects[0].total_price_include_transport or '0.00' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -448,7 +449,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ to_time(objects[0].validated_date) ]]</para>
+                	<para style="TextInformation">[[ to_time(objects[0].date_confirm) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -486,10 +487,13 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="25.0,105.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
             <tr>
                 <td>
                     <para style="Lines"><i>Line</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>Supplier Code</i></para>
                 </td>
                 <td>
                     <para style="Lines"><i>CODE</i></para>
@@ -516,24 +520,27 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="25.0,105.0,305.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+            <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
                 [[ repeatIn(objects[0].order_line, 'line') ]]
                 <tr>
                     <td>
                         <para style="LinesBlue">[[ line.line_number ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line.product_id and line.product_id.default_code or False ]]</para>
+                    	<para style="LinesBlue">[[ line.supplier_code ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ line.product_id.default_code ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.name or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
+                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0 and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line.comment ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.product_uom_qty or '0.00' ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.product_qty or '0.00' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
@@ -564,7 +571,7 @@
         <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextInformation">REMARKS :  [[ objects[0].note ]]</para>
+                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
             <tr>

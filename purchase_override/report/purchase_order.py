@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,18 +15,17 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import time
-from report import report_sxw
-from osv import osv
-import pooler
 
-class merged_order(report_sxw.rml_parse):
+from report import report_sxw
+
+class order(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        super(merged_order, self).__init__(cr, uid, name, context=context)
+        super(order, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'to_time': self.str_to_time,
@@ -55,8 +54,7 @@ class merged_order(report_sxw.rml_parse):
         else:
             return res
         return res
-
-report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order, header=False)
+        
+report_sxw.report_sxw('report.msf.purchase.order','purchase.order','addons/purchase_override/report/purchase_order.rml',parser=order, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
