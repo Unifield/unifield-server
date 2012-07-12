@@ -25,6 +25,15 @@
         auto="False"
         menu="True"
         header="False"/>
+        
+        <report id="contract_list"
+        string="Financing Contract List"
+        model="financing.contract.contract"
+        name="financing.contract.list"
+        rml="financing_contract/report/contract_list.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
 
     </data>
 </openerp>
