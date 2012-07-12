@@ -2,13 +2,47 @@
 <openerp>
     <data>
     
+    <!-- We move the buttons below the notebook -->
+        <record id="purchase_move_buttons" model="ir.ui.view">
+            <field name="name">purchase.form.view</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">3002</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
+                    </xpath>
+                    <xpath expr="/form/notebook" position="after" >
+                        <group colspan="4" col="14">
+                            <field name="state" readonly="1"/>
+                            <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                                attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
+                            <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
+                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
+                            <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/>
+                            <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
+                            <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
+                            <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
+                            <button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward" type="object" />
+                            <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" invisible="1"/>
+                            <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
+                            <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
+                            <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
+                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
         <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
         
         <record id="purchase_cross_docking_form_view2" model="ir.ui.view">
             <field name="name">purchase.cross.docking.form.view2</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
-            <field name="priority">301</field>
+            <field name="priority">16</field>
             <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
             <field name="arch" type="xml">
                 <data>
@@ -23,7 +57,7 @@
             <field name="name">purchase.cross.docking.form.view</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
-            <field name="priority">301</field>
+            <field name="priority">16</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>

@@ -154,12 +154,13 @@ class sale_order(osv.osv):
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
         'company_id2': fields.many2one('res.company','Company',select=1),
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines'),
-        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current sales order."),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current field order."),
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
-        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current sales order."),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Pricelist for current sales order."),
+        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
@@ -173,6 +174,7 @@ class sale_order(osv.osv):
   - The 'Invoice From The Picking' choice is used to create an invoice during the picking process."""),
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
+        'active': fields.boolean('Active', readonly=True),
     }
     
     _defaults = {
@@ -184,6 +186,7 @@ class sale_order(osv.osv):
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'order_policy': lambda *a: 'picking',
         'split_type_sale_order': 'original_sale_order',
+        'active': True,
     }
 
     def _check_own_company(self, cr, uid, company_id, context=None):
@@ -192,7 +195,7 @@ class sale_order(osv.osv):
         '''
         user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         if company_id == user_company_id:
-            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+            raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
     
@@ -231,7 +234,7 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
-            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
+            self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
 
         return True
     
@@ -320,7 +323,7 @@ class sale_order(osv.osv):
         # set the lines to done
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
-        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        self.write(cr, uid, ids, {'state': 'done', 'active': False}, context=context)
         return True
     
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
@@ -352,7 +355,7 @@ class sale_order(osv.osv):
         '''
         Hook the message displayed on sale order confirmation
         '''
-        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
+        return _('The Field order \'%s\' has been confirmed.') % (kwargs['order'].name,)
 
     def action_purchase_order_create(self, cr, uid, ids, context=None):
         '''
@@ -484,6 +487,7 @@ class sale_order(osv.osv):
         '''
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
+        result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
         
         return result
     
@@ -530,7 +534,7 @@ class sale_order(osv.osv):
         
         # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
-        return result and (line.order_id.procurement_request or order.state == 'shipping_except')
+        return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
@@ -656,6 +660,9 @@ class sale_order(osv.osv):
             
             # created procurements
             proc_ids = []
+            # flag to prevent the display of the sale order log message
+            # if the method is called after po update, we do not display log message
+            display_log = True
             for line in order.order_line:
                 proc_id = False
                 date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
@@ -688,21 +695,25 @@ class sale_order(osv.osv):
                     proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
-                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
+                    line_obj.write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
+                    # if the line is draft (it should be the case), we set its state to 'sourced'
+                    if line.state == 'draft':
+                        line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
+                    # set the flag for log message
+                    if line.so_back_update_dest_po_id_sale_order_line:
+                        display_log = False
                     
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 
             # the Fo is sourced we set the state
             self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
-            # if the line is draft (it should be the case), we set its state to 'sourced'
-            if line.state == 'draft':
-                line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
             # display message for sourced
-            self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
+            if display_log:
+                self.log(cr, uid, order.id, _('The split \'%s\' is sourced.')%(order.name))
         
         if lines:
-            line_obj.write(cr, uid, lines, {'invoiced': 1})
+            line_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
         return True
     
     def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -727,12 +738,12 @@ class sale_order(osv.osv):
         move_id = kwargs['move_id']
         
         # we update the procurement and the purchase orderS if we are treating a Fo which is not shipping_exception
-        # Po is only treated if line is make_to_stock
-        # IN nor OUT are not yet (or just) created, we theoretically wont have problem with backorders and co
-        if order.state != 'shipping_except' and not order.procurement_request:
+        # Po is only treated if line is make_to_order
+        # IN nor OUT are yet (or just) created, we theoretically wont have problem with backorders and co
+        if order.state != 'shipping_except' and not order.procurement_request and line.procurement_id:
             # if the procurement already has a stock move linked to it (during action_confirm of procurement order), we cancel it
             if line.procurement_id.move_id:
-                # dont use action_cancel actually, because there is not stock picking or related stock moves
+                # use action_cancel actually, because there is not stock picking or related stock moves
                 move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
                 #move_obj.write(cr, uid, [line.procurement_id.move_id.id], {'state': 'cancel'}, context=context)
             # corresponding procurement order
@@ -749,11 +760,13 @@ class sale_order(osv.osv):
         return True if all lines of type 'make_to_order' are 'confirmed'
         '''
         for order in self.browse(cr, uid, ids, context=context):
+            # backward compatibility for yml tests, if test we do not wait
+            if order.from_yml_test:
+                continue
             for line in order.order_line:
                 if line.type == 'make_to_order' and line.state != 'confirmed':
                     return False
         return True
-        
 
 sale_order()
 

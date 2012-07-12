@@ -193,7 +193,7 @@
         </record>
 
     <!-- Menu -->
-        <menuitem id="menu_finance_mcdb" name="Selector" parent="account.menu_finance" sequence="12"/>
+        <menuitem id="menu_finance_mcdb" name="Selector" parent="account.menu_finance" sequence="9"/>
         <menuitem string="Selector - G/L" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
         <menuitem string="Selector - Analytic" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="2"/>
 

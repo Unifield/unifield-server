@@ -19,10 +19,12 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from datetime import datetime
 from tools.translate import _
-from mx.DateTime import *
+from mx.DateTime import RelativeDate
+from mx.DateTime import now
+from mx.DateTime import Parser
 
 import time
 import pooler
@@ -40,12 +42,10 @@ class procurement_order(osv.osv):
         '''
         if use_new_cursor:
             cr = pooler.get_db(use_new_cursor).cursor()
-        wf_service = netsvc.LocalService("workflow")
             
         request_obj = self.pool.get('res.request')
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
         proc_obj = self.pool.get('procurement.order')
-        product_obj = self.pool.get('product.product')
         freq_obj = self.pool.get('stock.frequence')
 
         start_date = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -56,10 +56,6 @@ class procurement_order(osv.osv):
         report = []
         report_except = 0
         ran_proc = []
-        
-        # Cache for product/location
-        cache = {}
-
         
         # We start with only category Automatic Supply
         for cycle in cycle_obj.browse(cr, uid, cycle_ids):
@@ -73,7 +69,6 @@ class procurement_order(osv.osv):
             d_values = {'leadtime': cycle.leadtime,
                         'coverage': cycle.order_coverage,
                         'safety_time': cycle.safety_stock_time,
-                        'safety': cycle.safety_stock,
                         'consumption_period_from': cycle.consumption_period_from,
                         'consumption_period_to': cycle.consumption_period_to,
                         'past_consumption': cycle.past_consumption,
@@ -81,17 +76,15 @@ class procurement_order(osv.osv):
                         'manual_consumption': cycle.manual_consumption,}
 
             if cycle.product_ids:
-                product_ids = []
                 ran_proc.append(cycle.id)
-                for p in cycle.product_ids:
-                    product_ids.append(p.id)
-                for product in product_obj.browse(cr, uid, product_ids):
-                    proc_id = self.create_proc_cycle(cr, uid, cycle, product.id, location_id, d_values, cache=cache)
-                    
+                for line in cycle.product_ids:
+                    # Update the safety stock according to the safety stock defined in the line
+                    d_values.update({'safety_stock': line.safety_stock})
+                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values)
 
                     if proc_id:
                         created_proc.append(proc_id)
-        
+            
             if cycle.frequence_id:
                 freq_obj.write(cr, uid, cycle.frequence_id.id, {'last_run': datetime.now()})
 
@@ -122,7 +115,7 @@ Created documents : \n'''
             old_request = request_obj.search(cr, uid, [('batch_id', '=', batch_id), ('name', '=', 'Procurement Processing Report (Order cycle).')])
             request_obj.write(cr, uid, old_request, {'batch_id': False})
         
-        req_id = request_obj.create(cr, uid,
+        request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report (Order cycle).",
                  'act_from': uid,
                  'act_to': uid,
@@ -139,7 +132,7 @@ Created documents : \n'''
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, cache=None, context=None):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -147,20 +140,18 @@ Created documents : \n'''
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
         product_obj = self.pool.get('product.product')
         wf_service = netsvc.LocalService("workflow")
-        report = []
         proc_id = False
        
         if context is None:
             context = {}
         if d_values is None:
             d_values = {}
-        if cache is None:
-            cache = {}
 
         if isinstance(product_id, (int, long)):
             product_id = [product_id]
             
         if d_values.get('past_consumption', False):
+            # If the AMC should be used, compute the period of calculation
             if not d_values.get('consumption_period_from', False):
                 order_coverage = d_values.get('coverage', 3)
                 d_values.update({'consumption_period_from': (now() + RelativeDate(day=1, months=-round(order_coverage, 1)+1)).strftime('%Y-%m-%d')})
@@ -169,36 +160,29 @@ Created documents : \n'''
             context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
         product = product_obj.browse(cr, uid, product_id[0], context=context)
-        
-        # Enter the stock location in cache to know which products has been already replenish for this location
-        if not cache.get(location_id, False):
-            cache.update({location_id: []})
-        
             
-        if product.id not in cache.get(location_id):
-            newdate = datetime.today()
-            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
-                
-            if quantity_to_order <= 0:
-                return False
-            else:
-                proc_id = proc_obj.create(cr, uid, {
-                                        'name': _('Procurement cycle: %s') % (cycle.name,),
-                                        'origin': cycle.name,
-                                        'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
-                                        'product_id': product.id,
-                                        'product_qty': quantity_to_order,
-                                        'product_uom': product.uom_id.id,
-                                        'location_id': location_id,
-                                        'procure_method': 'make_to_order',
-                })
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                context.update({'button': 'scheduler'})
-                cycle_obj.write(cr, uid, [cycle.id], {'procurement_id': proc_id}, context=context)
+        newdate = datetime.today()
+        quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
             
-            # Fill the cache
-            cache.get(location_id).append(product.id)
+        # Create a procurement only if the quantity to order is more than 0.00
+        if quantity_to_order <= 0.00:
+            return False
+        else:
+            proc_id = proc_obj.create(cr, uid, {
+                                    'name': _('Procurement cycle: %s') % (cycle.name,),
+                                    'origin': cycle.name,
+                                    'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                                    'product_id': product.id,
+                                    'product_qty': quantity_to_order,
+                                    'product_uom': product.uom_id.id,
+                                    'location_id': location_id,
+                                    'procure_method': 'make_to_order',
+            })
+            # Confirm the procurement order
+            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+            context.update({'button': 'scheduler'})
+            cycle_obj.write(cr, uid, [cycle.id], {'procurement_id': proc_id}, context=context)
         
         return proc_id
     
@@ -212,14 +196,8 @@ Created documents : \n'''
         if d_values is None:
             d_values = {}
         product_obj = self.pool.get('product.product')
-        supplier_info_obj = self.pool.get('product.supplierinfo')
-        location_obj = self.pool.get('stock.location')
-        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
-        review_obj = self.pool.get('monthly.review.consumption')
-        review_line_obj = self.pool.get('monthly.review.consumption.line')
         
         product = product_obj.browse(cr, uid, product_id, context=context)
-        location = location_obj.browse(cr, uid, location_id, context=context)
 
         
         # Get the delivery lead time
@@ -271,18 +249,15 @@ Created documents : \n'''
             context = {}
         if d_values is None:
             d_values = {}
+            
         product_obj = self.pool.get('product.product')
-        location_obj = self.pool.get('stock.location')
-        move_obj = self.pool.get('stock.move')
         
         context.update({'location': location_id,
-                        'compute_child': True, 
-                        'from_date': time.strftime('%Y-%m-%d')})
+                        'compute_child': True, })
         
         product = product_obj.browse(cr, uid, product_id, context=context)
-        location_name = location_obj.browse(cr, uid, location_id, context=context).name
 
-        ''' Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
+        ''' Set this part of algorithm as comment because this algorithm seems to be equal to virtual stock
         
             To do validate by Magali
             
@@ -294,57 +269,29 @@ Created documents : \n'''
         picked_resa = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['assigned'],
                                                                                        'what': ('in, out'), 
                                                                                        'location': location_id,
-                                                                                       'compute_child': True, 
-                                                                                       'from_date': time.strftime('%Y-%m-%d')})
-        # Get the picked reservation
-        ## TODO: To confirm by Magali
-#        picked_reservation = 0.00
-#        move_ids = []
-#        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
-#            for move_id in move_obj.search(cr, uid, [('product_id', '=', product_id), ('location_dest_id', '=', location), 
-#                                                     ('state', '!=', 'draft'), ('move_dest_id', '!=', False)]):
-#                move_ids.append(move_id)
-#            
-#        for move in move_obj.browse(cr, uid, move_ids):
-#            picked_reservation += move.product_qty
+                                                                                       'compute_child': True,})
             
         available_stock = product.qty_available - picked_resa.get(product.id)
-        
-        #available_stock = real_stock.get(product_id) - picked_reservation
-        
-        # Get the quantity on order
-        ## TODO : To confirm by Magali
-#        quantity_on_order = 0.00
-#        move_ids = []
-#        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
-#            for move_id in move_obj.search(cr, uid, [('product_id', '=', product_id), ('location_dest_id', '=', location)]):
-#                move_ids.append(move_id)
-#            
-#        for move in move_obj.browse(cr, uid, move_ids):
-#            quantity_on_order += move.product_qty
             
         quantity_on_order = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['confirmed'],
                                                                                               'what': ('in, out'), 
                                                                                               'location': location_id,
-                                                                                              'compute_child': True, 
-                                                                                              'from_date': time.strftime('%Y-%m-%d')})
+                                                                                              'compute_child': True,})
            
         # Get the safety stock
-        safety_stock = d_values.get('safety', 0)
+        safety_stock = d_values.get('safety_stock', 0)
         
         # Get the safety time
         safety_time = d_values.get('safety_time', 0)
         
         # Get the expiry quantity
-        # Set as comment because expiry quantity will be developed in a future sprint
         expiry_quantity = product_obj.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
         expiry_quantity = expiry_quantity and available_stock - expiry_quantity or 0.00
-        #expiry_quantity = 0.00
 
+        
         # Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
-        return available_stock + quantity_on_order.get(product.id) - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
-
 #        return product.virtual_available - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
+        return available_stock + quantity_on_order.get(product.id) - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
     
     def get_diff_date(self, date):
         '''

@@ -142,7 +142,7 @@
     <pto_header><!-- Must be after setLang() -->
 	<blockTable colWidths="202.0,87.0,71.0,57.0,71.0" style="Table7">
 	<tr>
-	    <td> <para style="terp_tblheader_Details">Description</para> </td>
+	    <td> <para style="terp_tblheader_Details">DESCRIPTION</para> </td>
 	    <td> <para style="terp_tblheader_Details_Centre">Taxes</para> </td>
 	    <td> <para style="terp_tblheader_Details_Centre">Quantity</para> </td>
 	    <td> <para style="terp_tblheader_Details_Right">Unit Price </para> </td>
@@ -190,7 +190,7 @@
     <blockTable colWidths="132.50,132.50,132.50,132.50" style="Table_Invoice_General_Header">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">Description</para>
+          <para style="terp_tblheader_General_Centre">DESCRIPTION</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Date</para>
@@ -225,7 +225,7 @@
     <blockTable colWidths="185.0,70.0,80.0,60.0,85.0" style="Table7">
       <tr>
         <td>
-          <para style="terp_tblheader_General">Description</para>
+          <para style="terp_tblheader_General">DESCRIPTION</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Taxes</para>

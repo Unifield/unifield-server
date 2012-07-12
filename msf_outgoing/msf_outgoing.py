@@ -106,6 +106,7 @@ class shipment(osv.osv):
                       'currency_id': False,
                       'num_of_packs': 0,
                       'total_weight': 0.0,
+                      'total_volume': 0.0,
                       'state': 'draft',
                       'backshipment_id': False,
                       }
@@ -168,6 +169,9 @@ class shipment(osv.osv):
                     # total weight
                     total_weight = memory_family.total_weight
                     values['total_weight'] += int(total_weight)
+                    # total volume
+                    total_volume = memory_family.total_volume
+                    values['total_volume'] += float(total_volume)
                     # total amount
                     total_amount = memory_family.total_amount
                     values['total_amount'] += total_amount
@@ -256,6 +260,7 @@ class shipment(osv.osv):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                               ('packed', 'Packed'),
                                                                                               ('shipped', 'Shipped'),
@@ -897,6 +902,7 @@ class pack_family_memory(osv.osv_memory):
                       'currency_id': False,
                       'num_of_packs': 0,
                       'total_weight': 0.0,
+                      'total_volume': 0.0,
                       }
             result[pf_memory.id] = values
             # pack family related fields
@@ -906,6 +912,7 @@ class pack_family_memory(osv.osv_memory):
                 num_of_packs = pf_memory.to_pack - pf_memory.from_pack + 1
             values['num_of_packs'] = num_of_packs
             values['total_weight'] = pf_memory.weight * num_of_packs
+            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.0
             
             # moves related fields
             for move in pf_memory.draft_packing_id.move_lines:
@@ -924,7 +931,7 @@ class pack_family_memory(osv.osv_memory):
                         raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
-    
+
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
@@ -952,6 +959,7 @@ class pack_family_memory(osv.osv_memory):
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+                'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
                 }
     
     _defaults = {'shipment_id': False,
@@ -1286,6 +1294,7 @@ class stock_picking(osv.osv):
                       'is_keep_cool': False,
                       'is_narcotic': False,
                       'num_of_packs': 0,
+                      'total_volume': 0.0,
                       'total_weight': 0.0,
                       #'is_completed': False,
                       'overall_qty': 0.0,
@@ -1299,6 +1308,8 @@ class stock_picking(osv.osv):
                 # total_weight
                 total_weight = family.total_weight
                 values['total_weight'] += total_weight
+                total_volume = family.total_volume
+                values['total_volume'] += total_volume
                 
             for move in stock_picking.move_lines:
                 # total amount (float)
@@ -1430,6 +1441,7 @@ class stock_picking(osv.osv):
                 'converted_to_standard': fields.boolean(string='Converted to Standard'),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'), # old_multi get_vals
+                'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),

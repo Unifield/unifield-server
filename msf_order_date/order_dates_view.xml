@@ -16,6 +16,11 @@
                 		<field name="partner_type" />
                 	</field>
                 	
+                	<field name="pricelist_id" position="attributes">
+                		<attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
+                	</field>
+
+                	
                 	<field name="date_order" position="replace">
                 		<field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
                 	</field>
@@ -53,7 +58,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type}</attribute>
+                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'pricelist_id': pricelist_id}</attribute>
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
@@ -138,7 +143,7 @@
                     
                     <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'sale_id': active_id}</attribute>
+                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id}</attribute>
                     </xpath>
                     
                 </data>
@@ -160,7 +165,7 @@
             </field>
         </record>
         
-        <record id="view_picking_in_tree" model="ir.ui.view">
+        <!-- <record id="view_picking_in_tree" model="ir.ui.view">
             <field name="name">stock.picking.in.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
@@ -174,7 +179,7 @@
             	
             	</data>
             </field>
-        </record>
+        </record> -->
         
         <record id="view_picking_in_form" model="ir.ui.view">
             <field name="name">stock.picking.in.form</field>
@@ -213,6 +218,8 @@
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Move Date</attribute>
             		</field>
+            		
+            		<xpath expr="/tree/button[@name='action_process']" position="replace" />
             	
             	</data>
             </field>

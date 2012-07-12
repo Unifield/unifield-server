@@ -45,6 +45,20 @@ class tender(osv.osv):
         default['internal_state'] = 'draft' # UF-733: Reset the internal_state
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        cannot delete tender not draft
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'draft':
+                raise osv.except_osv(_('Warning !'), _("Cannot delete Tenders not in 'draft' state."))
+        return super(tender, self).unlink(cr, uid, ids, context=context)
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         return function values
@@ -368,11 +382,16 @@ class tender(osv.osv):
                     
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
+                pricelist = line.supplier_id.property_product_pricelist_purchase.id,
+                if line.currency_id:
+                    price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
+                    if price_ids:
+                        pricelist = price_ids[0]
                 po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '/' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
-                             'pricelist_id': line.supplier_id.property_product_pricelist_purchase.id,
+                             'pricelist_id': pricelist,
                              'company_id': tender.company_id.id,
                              'fiscal_position': line.supplier_id.property_account_position and line.supplier_id.property_account_position.id or False,
                              'categ': tender.categ,
@@ -479,10 +498,22 @@ class tender_line(osv.osv):
         '''
         result = {}
         for line in self.browse(cr, uid, ids, context=context):
+            result[line.id] = {}
             if line.price_unit and line.qty:
-                result[line.id] = line.price_unit * line.qty
+                result[line.id]['total_price'] = line.price_unit * line.qty
             else:
-                result[line.id] = 0.0
+                result[line.id]['total_price'] = 0.0
+            
+            result[line.id]['func_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            if line.purchase_order_line_id:
+                result[line.id]['currency_id'] = line.purchase_order_line_id.order_id.pricelist_id.currency_id.id
+            else:
+                result[line.id]['currency_id'] = result[line.id]['func_currency_id']
+            
+            result[line.id]['func_total_price'] = self.pool.get('res.currency').compute(cr, uid, result[line.id]['currency_id'],  
+                                                                                            result[line.id]['func_currency_id'], 
+                                                                                            result[line.id]['total_price'], 
+                                                                                            round=True, context=context)
                 
         return result
     
@@ -504,7 +535,10 @@ class tender_line(osv.osv):
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
                 'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price"),
+                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", multi='total'),
+                'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
+                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", multi='total'),
+                'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
@@ -657,7 +691,10 @@ class procurement_order(osv.osv):
         result = super(procurement_order, self).action_po_assign(cr, uid, ids, context=context)
         # The quotation 'SO001' has been converted to a sales order.
         if result:
-            po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
+            # do not display a log if we come from po update backward update of so
+            data = self.read(cr, uid, ids, ['so_back_update_dest_po_id_procurement_order'], context=context)
+            if not data[0]['so_back_update_dest_po_id_procurement_order']:
+                po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
             if self.browse(cr, uid, ids[0], context=context).is_tender:
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
@@ -856,3 +893,44 @@ class pricelist_partnerinfo(osv.osv):
                 }
 pricelist_partnerinfo()
 
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        new_values = values
+        
+        po_accepted_values = {'client_action_multi': ['ir_open_purchase_order_follow_up', 
+                                                      'action_view_purchase_order_group'],
+                              'client_print_multi': ['Purchase Order (Merged)', 
+                                                     'Purchase Order',
+                                                     'Allocation report'],
+                              'client_action_relate': ['ir_open_product_list_export_view',
+                                                       'View_log_purchase.order',
+                                                       'Allocation report'],
+                              'tree_but_action': [],
+                              'tree_but_open': []}
+        
+        rfq_accepted_values = {'client_action_multi': [],
+                               'client_print_multi': ['Request for Quotation'],
+                               'client_action_relate': [],
+                               'tree_but_action': [],
+                               'tree_but_open': []}
+        
+        if context.get('purchase_order', False) and 'purchase.order' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in po_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in rfq_accepted_values[key2]:
+                    new_values.append(v)
+ 
+        return new_values
+
+ir_values()

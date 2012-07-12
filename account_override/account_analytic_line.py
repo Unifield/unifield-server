@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 import decimal_precision as dp
 from time import strftime
+from tools.translate import _
 import logging
 
 class account_analytic_line(osv.osv):

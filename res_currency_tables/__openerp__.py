@@ -21,7 +21,7 @@
 {
     "name": "Fx Tables Management",
     "version": "1.0",
-    "depends": ["res_currency_functional"],
+    "depends": ["res_currency_functional", "base"],
     "category": "General/Standard",
     "description": """
     This module aims to have other subsets of currencies, and have them available
@@ -36,6 +36,7 @@
         'res_currency_table_workflow.xml',
     ],
     'test': [
+        'test/currency_pricelist.yml',
     ],
     'demo_xml': [],
     'installable': True,

@@ -197,9 +197,7 @@
 								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
             		</xpath>
             		
-            		<button name="%(stock.action_partial_move_server)d" position="attributes">
-            			<attribute name="invisible">1</attribute>
-            		</button>
+            		
             	
             	</data>
             </field>
@@ -292,6 +290,7 @@
 
                     <xpath expr="/tree" position="attributes">
                         <attribute name="string">Batch numbers</attribute>
+                        <attribute name="hide_delete_button">1</attribute>
                     </xpath>
             	
             		<field name="ref" position="replace">
@@ -314,7 +313,7 @@
             <field name="model">stock.production.lot</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Expiry Dates" hide_new_button="True">
+                <tree string="Expiry Dates" hide_new_button="True" hide_delete_button="True">
                     <field name="prefix" invisible="True" />
                     <field name="type" invisible="True" />
             		<field name="life_date" />
@@ -357,6 +356,11 @@
             <field name="inherit_id" ref="stock.view_production_lot_form" />
             <field name="arch" type="xml">
             	<data>
+            		
+            		 <xpath expr="/form" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                        <attribute name="hide_delete_button">1</attribute>
+                    </xpath>
 
                     <xpath expr="/form//field[@name='product_id']" position="replace">
                         <field name="product_id" colspan="4" domain="[('batch_management', '=', True)]" />
@@ -491,9 +495,6 @@
             			<attribute name="invisible">1</attribute>
             		</button>
             		
-            		<button name="%(stock.action_partial_move_server)d" position="attributes">
-            			<attribute name="invisible">1</attribute>
-            		</button>
             	
             	</data>
             </field>
@@ -598,7 +599,7 @@
 				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}</attribute>
 			</xpath>
             	
-            		<button name="%(stock.action_partial_move_server)d" position="after">
+            		<button name="action_assign" position="after">
             			<field name="lot_check" />
 	                   	<field name="exp_check" />
 	                   	<field name="kc_check" />
@@ -608,10 +609,6 @@
             		</button>
             		
             		<button name="action_assign" position="attributes">
-            			<attribute name="invisible">1</attribute>
-            		</button>
-            		
-            		<button name="%(stock.action_partial_move_server)d" position="attributes">
             			<attribute name="invisible">1</attribute>
             		</button>
             	
@@ -707,8 +704,10 @@
 	                <xpath expr="//tree[@string='Products']//field[@name='product_id']" position="replace">
 	                	<field context="location=location_id,uom=product_uom,to_date=parent.date,compute_child=False" name="product_id" on_change="on_change_product_id_specific_rules(location_id,product_id,prod_lot_id,product_uom,parent.date)"  domain="[('type','not in',('service','service_recep'))]" />
 	                </xpath>
+	                
+	                <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace" />
                 
-                    <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace">
+                    <xpath expr="//tree[@string='Products']//field[@name='product_qty']" position="before">
                         <field name="prod_lot_id"
                         	on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
                         	groups="base.group_extended"
@@ -718,7 +717,9 @@
                         <field name="expiry_date"
                         	on_change="change_expiry(expiry_date, product_id, type_check)"
                         	attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
-            			
+                      </xpath>
+                        	
+            		<xpath expr="//tree[@string='Products']//field[@name='product_uom']" position="after">
             			<field name="hidden_perishable_mandatory" invisible="True" />
             			<field name="hidden_batch_management_mandatory" invisible="True" />
             			<field name="type_check" invisible="True" />
@@ -822,6 +823,24 @@
                     <attribute name="string">Batch Number Revisions</attribute>
                 </xpath>
             </field>
+        </record>
+        
+        <delete id="stock.action_tracking_form" model="ir.actions.act_window" />
+        
+        <!-- Add on_change method on UoM field of Min/Max rule -->
+        <record id="add_onchange_uom_stock_warehouse_orderpoint_view" model="ir.ui.view">
+        	<field name="name">add.onchange.uom.stock.warehouse.orderpoint.view</field>
+        	<field name="model">stock.warehouse.orderpoint</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="procurement.view_warehouse_orderpoint_form" />
+        	<field name="arch" type="xml">
+        		<data>        			
+        			<xpath expr="/form//field[@name='product_uom']" position="attributes">
+        				<attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+        				<attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
+        			</xpath>
+        		</data>
+        	</field>
         </record>
 
 	</data>

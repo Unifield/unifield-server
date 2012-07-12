@@ -174,22 +174,20 @@
     pick_ids = self.search(cr, uid, [('purchase_id', '=', ref("purchase_order_po0"))], context=context)
     assert len(pick_ids) == 1, 'wrong number of IN stock picking'
     context.update(active_ids=pick_ids)
-    
     # process incoming shipment with a new expiry date
     # create wizard objects
     wizard_obj = self.pool.get('stock.partial.picking')
     wizard_id = self.action_process(cr, uid, pick_ids, context=context)['res_id']
-    
     # enter the new expiry date value - memory_out because product cost method is standard price
     the_date = time.strftime('%Y-%m-%d')
     the_date = '2022-01-01'
     for memory_out in wizard_obj.browse(cr, uid, wizard_id, context=context).product_moves_out:
       # test
       memory_out.write({'expiry_date': the_date}, context=context)
-      
+
     # validate the processing
+    wizard_obj.copy_all(cr,uid,[wizard_id])
     wizard_obj.do_partial(cr, uid, [wizard_id], context=context)
-    
     # check a new production lot has been created with corresponding expiry date
     prodlot_obj = self.pool.get('stock.production.lot')
     assert len(prodlot_obj.search(cr, uid, [('life_date', '=', the_date), ('type', '=', 'internal')], context=context)), 'prodlots wrong'
@@ -253,3 +251,19 @@
     # on_change_product_id_specific_rules
     self.on_change_product_id_specific_rules(cr, uid, [ref("stock_inventory_line0")], ref("stock.stock_location_stock"), ref("product_product_testproduct0"), prod_lot_id=False, uom=False, to_date=False,)
     
+-
+  Try to create a Min/Max stock rules with an UoM which
+  has a different category than the standard product UoM
+-
+  !python {model: stock.warehouse.orderpoint}: |
+    try:
+      self.create(cr, uid, {'product_id': ref("product_product_testproduct0"),
+                            'location_id': ref("stock.stock_location_stock"),
+                            'warehouse_id': ref("stock.warehouse0"),
+                            'product_min_qty': 1.00,
+                            'product_max_qty': 1.00,
+                            'qty_multiple': 1.00,
+                            'product_uom': ref("product.product_uom_kgm")})
+      assert False, "No error raised when the Min/Max rule has a non-compatible UoM"
+    except:
+      assert True

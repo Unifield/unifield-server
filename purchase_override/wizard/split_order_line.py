@@ -72,7 +72,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         'old_line_qty': fields.float(digits=(16,2), string='Old line quantity', readonly=True),
         'new_line_qty': fields.float(digits=(16,2), string='New line quantity', required=True),
         'impact_so_split_po_line_wizard': fields.boolean('Impact Field Order', help='Impact corresponding Field Order by creating a corresponding Field Order line.'),
-        'corresponding_so_line_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Has Corresponding So', multi='get_vals_split_po_line', store=False, readonly=True),
+        'corresponding_so_line_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo line', multi='get_vals_split_po_line', store=False, readonly=True),
         'corresponding_so_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order', string='Corresponding Fo', multi='get_vals_split_po_line', store=False, readonly=True),
     }
 
@@ -91,9 +91,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         so_line_obj = self.pool.get('sale.order.line')
         so_obj = self.pool.get('sale.order')
 
-        if not context:
+        # Some verifications
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
             
@@ -141,12 +141,12 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created
                     # Create the new line
-                    new_line_id = line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
-                                                                                     'change_price_manually': split.purchase_line_id.change_price_manually,
-                                                                                     'price_unit': split.purchase_line_id.price_unit,
-                                                                                     'line_number': None,
-                                                                                     'product_qty': split.new_line_qty}, context=context)
-
+                    new_line_id = po_line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
+                                                                                        'change_price_manually': split.purchase_line_id.change_price_manually,
+                                                                                        'price_unit': split.purchase_line_id.price_unit,
+                                                                                        'line_number': None,
+                                                                                        'product_qty': split.new_line_qty}, context=context)
+                
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):

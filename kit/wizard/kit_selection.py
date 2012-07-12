@@ -32,19 +32,60 @@ class kit_selection(osv.osv_memory):
     kit selection
     '''
     _name = "kit.selection"
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        sol_obj = self.pool.get('sale.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # corresponding_so_line_id_kit_selection
+            sol_ids = False
+            if obj.order_line_id_kit_selection:
+                sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [obj.order_line_id_kit_selection.id], context=context)
+                assert len(sol_ids) <= 1, 'kit selection purchase line: the number of corresponding sale order line is greater than 1: %s'%len(sol_ids)
+            # true if we get some sale order lines
+            result[obj.id].update({'corresponding_so_line_id_kit_selection': sol_ids and sol_ids[0] or False})
+            # corresponding_so_id_kit_selection
+            so_id = False
+            if sol_ids:
+                datas = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
+                for data in datas:
+                    if data['order_id']:
+                        so_id = data['order_id'][0]
+            # write the value
+            result[obj.id].update({'corresponding_so_id_kit_selection': so_id})
+        return result
+    
     _columns = {'product_id': fields.many2one('product.product', string='Kit Product', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Theoretical Kit'),
-                'order_line_id_kit_selection': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
+                'order_line_id_kit_selection': fields.many2one('purchase.order.line', string='Purchase Order Line', readonly=True, required=True),
+                'impact_so_kit_selection': fields.boolean('Impact Field Order', help='Impact corresponding Field Order by creating a corresponding Field Order line.'),
                 # one2many
                 'product_ids_kit_selection': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_line', string='Replacement Products'),
                 # related fields
                 'partner_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'partner_id', string='Partner', type='many2one', relation='res.partner', readonly=True),
-                'pricelist_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'pricelist_id', string='PriceList', type='many2one', relation='product.pricelist', readonly=True),
+                'pricelist_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'pricelist_id', string='Currency', type='many2one', relation='product.pricelist', readonly=True),
                 'warehouse_id_kit_selection': fields.related('order_line_id_kit_selection', 'order_id', 'warehouse_id', string='Warehouse', type='many2one', relation='stock.warehouse', readonly=True),
+                # function fields
+                'corresponding_so_line_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo Line', multi='get_vals_kit_selection', store=False, readonly=True),
+                'corresponding_so_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order', string='Corresponding Fo', multi='get_vals_kit_selection', store=False, readonly=True),
                 }
     
     _defaults = {'product_id': lambda s, cr, uid, c: c.get('product_id', False),
                  'order_line_id_kit_selection': lambda s, cr, uid, c: c.get('active_ids') and c.get('active_ids')[0] or False,
+                 'impact_so_kit_selection': True,
                  }
     
     def import_items(self, cr, uid, ids, context=None):
@@ -113,7 +154,10 @@ class kit_selection(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
+        wf_service = netsvc.LocalService("workflow")
         pol_obj = self.pool.get('purchase.order.line')
+        so_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
         # id of corresponding purchase order line
         pol_ids = context['active_ids']
         pol_id = context['active_ids'][0]
@@ -129,6 +173,8 @@ class kit_selection(osv.osv_memory):
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.product_ids_kit_selection):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items must be selected.'))
+            # to keep a link to previous line (for copy) and as a flag to write in the first loop
+            last_line_id = False
             # for each item from the product_ids_kit_selection
             for item_v in obj.product_ids_kit_selection:
                 # price unit is mandatory
@@ -148,30 +194,68 @@ class kit_selection(osv.osv_memory):
                 data = self.pool.get('kit.selection.line')._call_pol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit,
                                                                                type='product_id_change',
                                                                                context=dict(context, pol_ids=context['active_ids']))
-                # create a new pol
-                p_values = {'product_id': product_id,
-                            'product_qty': pol.product_qty*qty,
-                            'price_unit': item_v.price_unit_kit_selection_line,
-                            'product_uom': uom_id,
-                            'default_code': data['value']['default_code'],
-                            'name': data['value']['name'],
-                            'date_planned': pol.date_planned,
-                            'confirmed_delivery_date': pol.confirmed_delivery_date,
-                            'default_name': data['value']['default_name'],
-                            'order_id': pol.order_id.id,
-                            'notes': pol.notes,
-                            'comment': pol.comment,
-                            'procurement_id': pol.procurement_id.id,
-                            'partner_id': pol.partner_id.id,
-                            'company_id': pol.company_id.id,
-                            'state': pol.state,
-                            }
-                # copy the original purchase order line
-                new_id = pol_obj.copy(cr, uid, pol_id, p_values, context=ctx_keep_info)
-#                new_id = pol_obj.create(cr, uid, p_values, context=context)
-                
-        # delete the pol
-        pol_obj.unlink(cr, uid, [pol_id], context=context)
+                # common dictionary of data
+                values = {'product_id': product_id,
+                          'price_unit': item_v.price_unit_kit_selection_line,
+                          'product_uom': uom_id,
+                          'default_code': data['value']['default_code'],
+                          'name': data['value']['name'],
+                          'default_name': data['value']['default_name'],
+                          }
+                # if we are treating a line with link to so
+                if obj.corresponding_so_line_id_kit_selection and obj.impact_so_kit_selection:
+                    # if we have already update the existing pol, we create a new sol
+                    # an go through the whole process
+                    # if not, we simply update the pol, corresponding sol will be updated
+                    # when the pol is confirmed
+                    if last_line_id:
+                        # we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
+                        # the merge into the actual Po is forced
+                        # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
+                        values.update({'po_cft': 'po',
+                                       'product_uom_qty': pol.product_qty*qty,
+                                       'product_uom': uom_id,
+                                       'product_uos_qty': pol.product_qty*qty,
+                                       'product_uos': uom_id,
+                                       'so_back_update_dest_po_id_sale_order_line': obj.order_line_id_kit_selection.order_id.id,
+                                       })
+                        # copy existing sol
+                        last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
+                        # call the new procurement creation method
+                        so_obj.action_ship_proc_create(cr, uid, [obj.corresponding_so_id_kit_selection.id], context=context)
+                        # run the procurement, the make_po function detects the link to original po
+                        # and force merge the line to this po (even if it is not draft anymore)
+                        new_data_so = sol_obj.read(cr, uid, [last_line_id], ['procurement_id'], context=context)
+                        new_proc_id = new_data_so[0]['procurement_id'][0]
+                        wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
+                        # if original po line is confirmed, we action_confirm new line
+                        if obj.order_line_id_kit_selection.state == 'confirmed':
+                            new_po_ids = pol_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
+                            pol_obj.action_confirm(cr, uid, new_po_ids, context=context)
+                    else:
+                        # first item to be treated, we update the existing purchase order line
+                        # sale order line will be updated when the Po is confirmed
+                        last_line_id = obj.corresponding_so_line_id_kit_selection.id
+                        # update values for pol structure
+                        values.update({'product_qty': pol.product_qty*qty})
+                        pol_obj.write(cr, uid, [obj.order_line_id_kit_selection.id], values, context=context)
+                else:
+                    # no link to so, or no impact desired
+                    # create a new pol
+                    # update values for pol structure
+                    values.update({'product_qty': pol.product_qty*qty})
+                    
+                    if last_line_id:
+                        # the existing purchase order line has already been updated, we create a new one
+                        # copy the original purchase order line
+                        last_line_id = pol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
+                        # if original po line is confirmed, we action_confirm new line
+                        if obj.order_line_id_kit_selection.state == 'confirmed':
+                            pol_obj.action_confirm(cr, uid, [last_line_id], context=context)
+                    else:
+                        # first item to be treated, we update the existing line
+                        last_line_id = obj.order_line_id_kit_selection.id
+                        pol_obj.write(cr, uid, [last_line_id], values, context=context)
                 
         return {'type': 'ir.actions.act_window_close'}
     

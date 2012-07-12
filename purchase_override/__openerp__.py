@@ -33,6 +33,7 @@
         "purchase",
         "account_override",
         "stock_override",
+        "stock",
         "purchase_double_validation",
         "reason_types_moves",
     ],
