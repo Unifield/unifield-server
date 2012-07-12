@@ -465,7 +465,7 @@ stock moves which are already processed : '''
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind':
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind' and po.partner_id.partner_type != 'intermission':
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         
         return True
