@@ -16,7 +16,6 @@
                 <tree string="Note" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="document_date"/>
                     <field name="date_invoice"/>
-                    <field name="document_date"/>
                     <field name="number"/>
                     <field name="partner_id"/>
                     <field name="name"/>
