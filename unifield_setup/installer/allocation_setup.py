@@ -235,6 +235,7 @@ Please click on the below buttons to see the different blocking documents.''',
                 'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'nodestroy': True,
                 'domain': [('id', 'in', po_ids)],
                 'target': 'current'}
         
@@ -247,6 +248,7 @@ Please click on the below buttons to see the different blocking documents.''',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'nodestroy': True,
                 'domain': [('id', 'in', pick_ids)],
                 'target': 'current'}
         
@@ -258,6 +260,7 @@ Please click on the below buttons to see the different blocking documents.''',
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
+                'nodestroy': True,
                 'view_mode': 'tree,form',
                 'domain': [('id', 'in', pick_ids)],
                 'target': 'current'}
@@ -271,6 +274,7 @@ Please click on the below buttons to see the different blocking documents.''',
                 'res_model': 'stock.location',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'nodestroy': True,
                 'domain': [('id', 'in', loc_ids)],
                 'target': 'current'}
         

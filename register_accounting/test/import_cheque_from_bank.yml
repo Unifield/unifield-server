@@ -89,7 +89,8 @@
           new_date = time.strftime('%Y-%m-23')
           self.write(cr, uid, [st_line_id], {'date': new_date})
           for move_line_id in line_ids:
-              assert new_date == aml_obj.browse(cr, uid, move_line_id).date, "New date have not been correctly"
+              print move_line_id
+              assert new_date == aml_obj.browse(cr, uid, move_line_id).date, "New date have not been correctly (%s :: %s)" % (new_date, aml_obj.browse(cr, uid, move_line_id).date)
 -
   In order to verify hard posting, we hard post all register lines
 -
