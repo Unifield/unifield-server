@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import re
+from lxml import etree
+from time import strftime
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -88,21 +90,34 @@ class account_invoice(osv.osv):
         ]
         return dom1+[('is_debit_note', '=', False)]
 
+    def _get_fake_account_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Get account_id field content
+        """
+        res = {}
+        for i in self.browse(cr, uid, ids):
+            res[i.id] = i.account_id and i.account_id.id or False
+        return res
+
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
+        'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
+        'fake_account_id': fields.function(_get_fake_account_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
     }
 
     _defaults = {
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
+        'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
     }
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
         """
-        Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note
+        Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note.
+        Change it to "In-kind donation" if this invoice is an In-kind donation.
         """
         if not context:
             context = {}
@@ -111,7 +126,34 @@ class account_invoice(osv.osv):
             m = re.match(pattern, message)
             if m and m.groups():
                 message = re.sub(pattern, 'Debit Note', message, 1)
+            # Search donation view and return it
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
+            view_id = res and res[1] or False
+            context.update({'view_id': view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
+        if self.read(cr, uid, id, ['is_inkind_donation']).get('is_inkind_donation', False) is True:
+            pattern = re.compile('^(Invoice)')
+            m = re.match(pattern, message)
+            if m and m.groups():
+                message = re.sub(pattern, 'In-kind Donation', message, 1)
+            # Search donation view and return it
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
+            view_id = res and res[1] or False
+            context.update({'view_id': view_id, 'type':'in_invoice', 'journal_type': 'inkind'})
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
+
+    def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False):
+        """
+        Update fake_account_id field regarding account_id result
+        """
+        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
+        if is_inkind_donation and partner_id:
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
+            res['value']['account_id'] = account_id
+        if res.get('value', False) and 'account_id' in res['value']:
+            res['value'].update({'fake_account_id': res['value'].get('account_id')})
+        return res
 
     def _refund_cleanup_lines(self, cr, uid, lines):
         """
@@ -232,6 +274,38 @@ class account_invoice(osv.osv):
         if res and self.action_reconcile_imported_invoice(cr, uid, ids, context):
             return True
         return False
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        """
+        Rename Supplier/Customer to "Donor" if view_type == tree
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('journal_type', False) == 'inkind':
+            doc = etree.XML(res['arch'])
+            nodes = doc.xpath("//field[@name='partner_id']")
+            name = _('Donor')
+            for node in nodes:
+                node.set('string', name)
+            res['arch'] = etree.tostring(doc)
+        return res
+
+    def action_cancel(self, cr, uid, ids, *args):
+        """
+        Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
+        """
+        to_cancel = []
+        for i in self.browse(cr, uid, ids):
+            if i.is_inkind_donation:
+                move_id = i.move_id.id
+                tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id], strftime('%Y-%m-%d'))
+                # If success change invoice to cancel and detach move_id
+                if tmp_res:
+                    self.write(cr, uid, [i.id], {'state': 'cancel', 'move_id':False})
+                continue
+            to_cancel.append(i.id)
+        return super(account_invoice, self).action_cancel(cr, uid, to_cancel, args)
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

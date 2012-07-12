@@ -44,7 +44,8 @@ class account_analytic_journal(osv.osv):
             ('hq', 'HQ'), \
             ('correction', 'Correction'), \
             ('cur_adj', 'Currency Adjustement'), \
-            ('hr', 'HR')]
+            ('hr', 'HR'), \
+            ('inkind', 'In-kind Donation'),]
 
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
