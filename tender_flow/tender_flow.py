@@ -921,17 +921,17 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in po_accepted_values[key2] \
-                or v[2]['name'] == 'Purchase Order Excel Export' and context['_terp_view_name'] == 'Purchase Orders' \
-                or v[2]['name'] == 'Purchase Order' and context['_terp_view_name'] == 'Purchase Orders' \
-                or v[2]['name'] == 'Purchase Order (Merged)' and context['_terp_view_name'] == 'Purchase Orders' \
-                or v[2]['name'] == 'Allocation report' and context['_terp_view_name'] == 'Purchase Orders' :
+                or v[2]['name'] == 'Purchase Order Excel Export' \
+                or v[2]['name'] == 'Purchase Order' \
+                or v[2]['name'] == 'Purchase Order (Merged)' \
+                or v[2]['name'] == 'Allocation report' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                or v[2]['name'] == 'Request for Quotation' and context['_terp_view_name'] == 'Requests for Quotation' \
-                or v[2]['name'] == 'Request For Quotation Excel Export' and context['_terp_view_name'] == 'Requests for Quotation' :
+                or v[2]['name'] == 'Request for Quotation' \
+                or v[2]['name'] == 'Request For Quotation Excel Export' :
                     new_values.append(v)
  
         return new_values
