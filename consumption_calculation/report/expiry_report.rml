@@ -214,7 +214,7 @@
 	    			<para style="TextInfo">[[ formatLang(l.product_id and l.product_id.standard_price or 0.00) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.product_id and formatLang('%.2f' % (l.product_id.standard_price * l.expired_qty) or '0.00' ]]</para>
+	    			<para style="TextInfo">[[ formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.00) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
@@ -248,7 +248,7 @@
 	    			<para style="TextInfoBold">TOTAL</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">[[ '%.2f' % getTotal(objects[0], 'expired') ]]</para>
+	    			<para style="TextInfoBold">[[ formatLang(getTotal(objects[0], 'expired')) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
@@ -310,7 +310,7 @@
 	    			<para style="TextInfo">[[ l.location_id and l.location_id.name ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.real_stock or '0.00' ]]</para>
+	    			<para style="TextInfo">[[ formatLang(l.real_stock or 0.00) ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo">[[ l.uom_id and l.uom_id.name ]]</para>
@@ -322,13 +322,13 @@
 	    			<para style="TextInfo">[[ l.expiry_date ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.expired_qty or '0.00' ]]</para>
+	    			<para style="TextInfo">[[ formatLang(l.expired_qty or 0.00) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.product_id and l.product_id.standard_price or '0.00' ]]</para>
+	    			<para style="TextInfo">[[ formatLang(l.product_id and l.product_id.standard_price or 0.00) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.product_id and '%.2f' % (l.product_id.standard_price * l.expired_qty) or '0.00' ]]</para>
+	    			<para style="TextInfo">[[ formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.00) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
@@ -363,7 +363,7 @@
 	    			<para style="TextInfoBold">TOTAL</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">[[ '%.2f' % getTotal(objects[0], 'expiry') ]]</para>
+	    			<para style="TextInfoBold">[[ formatLang(getTotal(objects[0], 'expiry')) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
@@ -399,7 +399,7 @@
 	    			<para style="TextInfoBoldRight">ALL TOTAL</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">[[ '%.2f' % getTotal(objects[0], 'all') ]]</para>
+	    			<para style="TextInfoBold">[[ formatLang(getTotal(objects[0], 'all')) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>

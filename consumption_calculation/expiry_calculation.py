@@ -53,6 +53,13 @@ class expiry_quantity_report(osv.osv_memory):
         'line_ids': fields.one2many('expiry.quantity.report.line', 'report_id', string='Products', readonly=True),
     }
     
+    def print_report_wizard(self, cr, uid, ids, context=None):
+        '''
+        Print the report directly from the wizard
+        '''
+        self.process_lines(cr, uid, ids, context=context)
+        return self.print_report(cr, uid, ids, context=context)
+    
     def print_report(self, cr, uid, ids, context=None):
         '''
         Print the report of expiry report
@@ -63,6 +70,7 @@ class expiry_quantity_report(osv.osv_memory):
             'type': 'ir.actions.report.xml',
             'report_name': 'expiry.report',
             'datas': datas,
+            'nodestroy': True,
             'context': context,
         }
         
@@ -145,6 +153,7 @@ class expiry_quantity_report(osv.osv_memory):
                 'res_model': 'expiry.quantity.report',
                 'view_type': 'form',
                 'view_mode': 'form',
+                'nodestroy': True,
                 'view_id': [view_id],
                 'res_id': ids[0],
         }
