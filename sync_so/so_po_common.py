@@ -89,9 +89,6 @@ class so_po_common(osv.osv_memory):
                       'price_unit' : line.price_unit}
 
             line_dict = line.to_dict()
-            
-            if line.product_id:
-                values['name'] = line.product_id.name
                 
             if 'product_uom_qty' in line_dict: # come from the SO
                 values['product_qty'] = line.product_uom_qty
@@ -109,11 +106,17 @@ class so_po_common(osv.osv_memory):
                 values['sync_sol_db_id'] = line.sync_sol_db_id 
             
             if 'confirmed_delivery_date' in line_dict:
-                values['confirmed_delivery_date'] = line.confirmed_delivery_date 
+                values['confirmed_delivery_date'] = line.confirmed_delivery_date
+                 
+            if 'nomenclature_description' in line_dict:
+                values['nomenclature_description'] = line.nomenclature_description 
 
             rec_id = self.get_record_id(cr, uid, context, line.product_id)
             if rec_id:
-                values['product_id'] = rec_id 
+                values['product_id'] = rec_id
+                values['name'] = line.product_id.name
+            else:
+                values['name'] = line.comment
 
             rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_0)
             if rec_id:
@@ -224,8 +227,12 @@ class so_po_common(osv.osv_memory):
 
             line_dict = line.to_dict()
             
-            if line.product_id:
+            rec_id = self.get_record_id(cr, uid, context, line.product_id)
+            if rec_id:
+                values['product_id'] = rec_id
                 values['name'] = line.product_id.name
+            else:
+                values['name'] = line.comment
                 
             if 'product_uom_qty' in line_dict: # come from the SO
                 values['product_qty'] = line.product_uom_qty
@@ -238,13 +245,6 @@ class so_po_common(osv.osv_memory):
 
             if 'confirmed_delivery_date' in line_dict:
                 values['confirmed_delivery_date'] = line.confirmed_delivery_date 
-
-            rec_id = self.get_record_id(cr, uid, context, line.product_id)
-            if rec_id:
-                if po_line.product_id and rec_id != po_line.product_id.id:
-                    print "Error: The product does not match with the original line!"
-                    return False 
-                values['product_id'] = rec_id
 
             rec_id = self.get_record_id(cr, uid, context, line.analytic_distribution_id)
             if rec_id:
