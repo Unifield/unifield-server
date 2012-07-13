@@ -28,7 +28,8 @@ class purchase_order(osv.osv):
         tools.convert_xml_import(cr, 'product', file, {}, mode='init', noupdate=False)
 
     _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use'),
+        'file_to_import': fields.binary(string='File to import', 
+                                        help='You can use the template of the export for the format that you need to use'),
     }
 
     def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
@@ -108,8 +109,7 @@ class purchase_order(osv.osv):
             line_num += 1
             row_len = len(row)
             if row_len > 7:
-                error_list.append('You have written element outside the columns, please check your Excel file')
-                to_correct_ok = True
+                raise osv.except_osv(_('Error'), _('You have written element outside the columns, please check your Excel file'))
             
             product_code = row.cells[0].data
             if not product_code :

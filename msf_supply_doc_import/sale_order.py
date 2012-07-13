@@ -31,7 +31,8 @@ class sale_order(osv.osv):
         tools.convert_xml_import(cr, 'msf_supply_doc_import', file, {}, mode='init', noupdate=False)
 
     _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use'),
+        'file_to_import': fields.binary(string='File to import', 
+                                        help='You can use the template of the export for the format that you need to use'),
     }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -90,8 +91,7 @@ class sale_order(osv.osv):
             line_num += 1
             row_len = len(row)
             if row_len > 5:
-                error_list.append('You have written element outside the columns, please check your Excel file')
-                to_correct_ok = True
+                raise osv.except_osv(_('Error'), _('You have written element outside the columns, please check your Excel file'))
             
             # for each cell we check the value
             product_code = row.cells[0].data
@@ -254,8 +254,7 @@ class sale_order(osv.osv):
             line_num += 1
             row_len = len(row)
             if row_len > 7:
-                error_list.append('You have written element outside the columns, please check your Excel file')
-                to_correct_ok = True
+                raise osv.except_osv(_('Error'), _('You have written element outside the columns, please check your Excel file'))
             
             # for each cell we check the value
             product_code = row.cells[0].data
