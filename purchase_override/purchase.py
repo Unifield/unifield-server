@@ -474,10 +474,7 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
-        # Create commitments for each PO only if po is "from picking"
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind' and po.partner_id.partner_type != 'intermission':
-                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        # MOVE code for COMMITMENT into wkf_approve_order
         return True
     
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
@@ -704,8 +701,13 @@ stock moves which are already processed : '''
         # which doesnt execute wkf_confirm_wait_order
         # msf_order_date checks
         # This code have been commented because of double commitment generation
-        #self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
-            
+        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        
+        # Create commitments for each PO only if po is "from picking"
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind' and po.partner_id.partner_type != 'intermission':
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        
         for order in self.browse(cr, uid, ids):
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
