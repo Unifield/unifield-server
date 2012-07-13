@@ -2898,7 +2898,7 @@
             <field name="name">Medical goods</field>
             <field name="parent_id" ref="msf_chart_of_account.900" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -2922,7 +2922,7 @@
             <field name="name">Non medical goods</field>
             <field name="parent_id" ref="msf_chart_of_account.901" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -2946,7 +2946,7 @@
             <field name="name">Other Inventories</field>
             <field name="parent_id" ref="msf_chart_of_account.902" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -2970,7 +2970,7 @@
             <field name="name">Stock in transit</field>
             <field name="parent_id" ref="msf_chart_of_account.903" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -3005,7 +3005,7 @@
             <field name="name">In-kind Donations of medical items</field>
             <field name="parent_id" ref="msf_chart_of_account.910" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -3029,7 +3029,7 @@
             <field name="name">In-kind Donations of non therapeutic food</field>
             <field name="parent_id" ref="msf_chart_of_account.920" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -3042,7 +3042,7 @@
             <field name="name">In-kind Donations of relief material</field>
             <field name="parent_id" ref="msf_chart_of_account.920" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
@@ -3055,7 +3055,7 @@
             <field name="name">In-kind Donations of logistics material</field>
             <field name="parent_id" ref="msf_chart_of_account.920" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_expense" />
+            <field name="user_type" ref="account.account_type_expense_no_pl" />
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
