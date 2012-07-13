@@ -30,7 +30,7 @@ class fixed_asset_setup(osv.osv_memory):
     _inherit = 'res.config'
     
     _columns = {
-        'fixed_asset_ok': fields.boolean(string='System will manage the Fixed asset ?'),
+        'fixed_asset_ok': fields.boolean(string='System will manage Fixed assets ?'),
     }
     
     def default_get(self, cr, uid, fields, context=None):
