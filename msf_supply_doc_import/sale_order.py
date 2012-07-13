@@ -345,7 +345,8 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
             check_date = row.cells[5].data
             if check_date:
                 try:
-                    datetime.strptime(str(check_date), '%d/%b/%Y')
+                    type(check_date) == 'str'
+                    datetime.strptime(check_date, '%d/%b/%Y')
                     date_planned = check_date
                 except ValueError:
                     error_list.append('The date format should be "DD-MM-YYYY", we took the one from the parent.')

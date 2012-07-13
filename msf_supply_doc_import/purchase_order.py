@@ -120,7 +120,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 error_list.append('No Product Reference (Code).')
                 comment = 'Product Reference (Code) to be defined'
             else:
-                code_ids = product_obj.search(cr, uid, [('default_code', '=', str(product_code).strip())])
+                code_ids = product_obj.search(cr, uid, [('default_code', 'like', product_code)])
                 if not code_ids:
                     default_code = False
                     to_correct_ok = True
