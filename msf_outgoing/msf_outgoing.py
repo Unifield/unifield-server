@@ -1097,6 +1097,9 @@ class stock_picking(osv.osv):
         '''
         unlink test for draft
         '''
+        datas = self.read(cr, uid, ids, ['state'], context=context)
+        if [data for data in datas if data['state'] != 'draft']:
+            raise osv.except_osv(_('Warning !'), _('Only draft picking tickets can be deleted.'))
         data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
         if [x for x in data.values() if x]:
             raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
