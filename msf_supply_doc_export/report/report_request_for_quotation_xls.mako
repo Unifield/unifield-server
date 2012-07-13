@@ -58,6 +58,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">Price</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Delivery requested date</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Currency</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">Comment</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -73,6 +74,7 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.delivery_requested_date or '')|x}</Data></Cell>
         % endif
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
 % endfor

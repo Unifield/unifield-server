@@ -54,6 +54,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">Quantity</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">UoM</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Currency</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">Comment</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -62,6 +63,7 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.product_uom_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
 % endfor

@@ -71,7 +71,9 @@ class tender(osv.osv):
             line_num += 1
             row_len = len(row)
             if row_len > 6:
-                return error_list.append('You have written element outside the columns, please check your Excel file')
+                return error_list.append("""You have written element outside the columns, please check your Excel file.
+ Tenders should have 6 columns:
+ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*""")
             
             product_code = row.cells[0].data
             if not product_code:

@@ -108,8 +108,10 @@ class purchase_order(osv.osv):
             
             line_num += 1
             row_len = len(row)
-            if row_len > 7:
-                raise osv.except_osv(_('Error'), _('You have written element outside the columns, please check your Excel file'))
+            if row_len > 8:
+                raise osv.except_osv(_('Error'), _("""You have written element outside the columns, please check your Excel file. 
+Purchase Order should have 8 columns:
+Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             product_code = row.cells[0].data
             if not product_code :

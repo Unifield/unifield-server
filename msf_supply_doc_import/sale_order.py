@@ -90,8 +90,10 @@ class sale_order(osv.osv):
             
             line_num += 1
             row_len = len(row)
-            if row_len > 5:
-                raise osv.except_osv(_('Error'), _('You have written element outside the columns, please check your Excel file'))
+            if row_len > 6:
+                raise osv.except_osv(_('Error'), _("""You have written element outside the columns, please check your Excel file. 
+                Internal Request should have 6 columns : Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment.
+                That means Not price, Neither Delivery requested date. """))
             
             # for each cell we check the value
             product_code = row.cells[0].data
@@ -253,8 +255,10 @@ class sale_order(osv.osv):
             
             line_num += 1
             row_len = len(row)
-            if row_len > 7:
-                raise osv.except_osv(_('Error'), _('You have written element outside the columns, please check your Excel file'))
+            if row_len > 8:
+                raise osv.except_osv(_('Error'), _("""You have written element outside the columns, please check your Excel file'.
+Field Order should have 8 columns:
+Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             # for each cell we check the value
             product_code = row.cells[0].data
