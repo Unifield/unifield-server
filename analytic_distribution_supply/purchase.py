@@ -274,11 +274,15 @@ class purchase_order_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        if ids:
+        
+        if ids and isinstance(ids[0], (int, long)):
             line = self.browse(cr, uid, ids, context=context)[0]
-            if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
-                vals['price_unit'] = 1.00
+        else:
+            line = ids[0] 
+            
+        order_line_id = line.order_id.id
+        if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', order_line_id), context=context).from_yml_test:
+            vals['price_unit'] = 1.00
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 

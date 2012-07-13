@@ -763,7 +763,7 @@ class sale_order_line(osv.osv):
                   'rts': time.strftime('%Y-%m-%d'),
                   'type': vals['type'],
                   'line_number': vals['line_number'],
-                  'product_id': vals['product_id'],
+                  'product_id': vals.get('product_id', False),
                   'priority': orderPriority,
                   'categ': orderCategory,
                   'sale_order_state': orderState,
