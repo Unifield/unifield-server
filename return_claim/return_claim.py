@@ -46,7 +46,7 @@ CLAIM_TYPE_RELATION = {'in': 'supplier',
 # claim state
 CLAIM_STATE = [('draft', 'Draft'),
                ('in_progress', 'In Progress'),
-               ('done', 'Done')]
+               ('done', 'Closed')]
 # claim rules - define which new event is available after the key designated event
 # missing event as key does not accept any event after him
 CLAIM_RULES = {'supplier': {'quarantine': ['accept', 'scrap', 'return']}}
@@ -465,7 +465,8 @@ class return_claim(osv.osv):
     
     _columns = {'name': fields.char(string='Reference', size=1024, required=True), # default value
                 'creation_date_return_claim': fields.date(string='Creation Date', required=True), # default value
-                'po_so_return_claim': fields.char(string='Origin', size=1024),
+                'po_so_return_claim': fields.char(string='Order reference', size=1024),
+                'order_line_number_return_claim': fields.char(string='Order line number', size=1024),
                 'type_return_claim': fields.selection(CLAIM_TYPE, string='Type', required=True),
                 'category_return_claim': fields.selection(ORDER_CATEGORY, string='Category'),
                 'description_return_claim': fields.text(string='Description'),
@@ -476,7 +477,7 @@ class return_claim(osv.osv):
                 'partner_id_return_claim': fields.many2one('res.partner', string='Partner', required=True),
                 'po_id_return_claim': fields.many2one('purchase.order', string='Purchase Order'),
                 'so_id_return_claim': fields.many2one('sale.order', string='Sale Order'),
-                'picking_id_return_claim': fields.many2one('stock.picking', string='IN/OUT', required=True), #origin
+                'picking_id_return_claim': fields.many2one('stock.picking', string='Reception/Shipment reference', required=True), #origin
                 'default_src_location_id_return_claim': fields.many2one('stock.location', string='Default Source Location', required=True), # default value
                 # one2many
                 'event_ids_return_claim': fields.one2many('claim.event', 'return_claim_id_claim_event', string='Events'),
@@ -958,7 +959,7 @@ class claim_event(osv.osv):
                 'creation_date_claim_event': fields.date(string='Creation Date', required=True, readonly=True), # default value
                 'type_claim_event': fields.selection(CLAIM_EVENT_TYPE, string='Type', required=True, readonly=True),
                 'replacement_picking_expected_claim_event': fields.boolean(string='Replacement expected for Return Claim?', help="An Incoming Shipment will be automatically created corresponding to returned products."),
-                'description_claim_event': fields.text(string='Description'),
+                'description_claim_event': fields.char(size=1024, string='Comment'),
                 'state': fields.selection(CLAIM_EVENT_STATE, string='State', readonly=True), # default value
                 'from_picking_wizard_claim_event': fields.boolean(string='From Picking Wizard', readonly=True),
                 'event_picking_id_claim_event': fields.many2one('stock.picking', string='Event Picking'),
