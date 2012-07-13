@@ -85,12 +85,14 @@ class ir_values(osv.osv):
             method=True, type='text', string='Metadata'),
         'res_id': fields.integer('Object ID', help="Keep 0 if the action must appear on all resources.", select=True),
         'user_id': fields.many2one('res.users', 'User', ondelete='cascade', select=True),
-        'company_id': fields.many2one('res.company', 'Company', select=True)
+        'company_id': fields.many2one('res.company', 'Company', select=True),
+        'sequence': fields.integer('Sequence'),
     }
     _defaults = {
         'key': lambda *a: 'action',
         'key2': lambda *a: 'tree_but_open',
-        'company_id': lambda *a: False
+        'company_id': lambda *a: False,
+        'sequence':  lambda *a: 100,
     }
 
     def _auto_init(self, cr, context=None):
@@ -173,7 +175,7 @@ class ir_values(osv.osv):
                     where.append('res_id=%s')
                     params.append(res_id)
 
-            where.append('(user_id=%s or (user_id IS NULL)) order by id')
+            where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
             params.append(uid)
             clause = ' and '.join(where)
             cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)
