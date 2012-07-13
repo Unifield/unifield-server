@@ -271,6 +271,7 @@ class shipment(osv.osv):
                 'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
                 # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
+                'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
                 }
     _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
     
@@ -828,6 +829,56 @@ class shipment(osv.osv):
                     draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
             
             # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
+        return True
+    
+    def shipment_create_invoice(self, cr, uid, ids, context=None):
+        '''
+        Create invoices for validated shipment
+        '''
+        invoice_obj = self.pool.get('account.invoice')
+        line_obj = self.pool.get('account.invoice.line')
+        partner_obj = self.pool.get('res.partner')
+        distrib_obj = self.pool.get('analytic.distribution')
+        
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for shipment in self.browse(cr, uid, ids, context=context):
+            if shipment.partner_id2:
+                partner = partner_obj.browse(cr, uid, shipment.partner_id2.id, context=context)
+                address = partner_obj.address_get(cr, uid, shipment.partner_id2.id, ['invoice'])
+                invoice_id = invoice_obj.create(cr, uid, {'partner_id': partner.id,
+                                                          'address_id': address,
+                                                          'currency_id': shipment.pack_family_memory_ids[0].currency_id.id}, context=context)
+                
+                # For each stock moves, create an invoice line
+                for pack in shipment.pack_family_memory_ids:
+                    for move in pack.move_lines:
+                        distrib_id = False
+                        vals = line_obj.product_id_change(cr, uid, [], move.product_id.id, move.product_uom.id)
+                        if move.sale_line_id:
+                            sol_ana_dist_id = move.sale_line_id.analytic_distribution_id
+                            if sol_ana_dist_id:
+                                distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
+                            elif move.sale_line_id.order_id.analytic_distribution_id:
+                                distrib_id = distrib_obj.copy(cr, uid, move.sale_line_id.order_id.analytic_distribution_id.id, context=context)
+                                
+                        line_id = line_obj.create(cr, uid, {'invoice_id': invoice_id,
+                                                            'product_id': move.product_id.id,
+                                                            'uos_id': move.product_uom.id,
+                                                            'price_unit': move.price_unit,
+                                                            'quantity': move.product_qty,
+                                                            'name': vals['name'],
+                                                            'account_id': vals['account_id'],
+                                                            'analytic_distribution_state_recap': distrib_id}, context=context)
+                        self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+            
+            self.write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+                
+            
         return True
         
     def validate(self, cr, uid, ids, context=None):
@@ -2792,6 +2843,7 @@ class stock_move(osv.osv):
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
+                'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
                 }
 
 stock_move()

@@ -417,18 +417,19 @@ class stock_picking(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
-                sp_type = False
-                inv_type = False # by default action_invoice_create make an 'out_invoice'
-                if sp.type == 'in' or sp.type == 'internal':
-                    sp_type = 'purchase'
-                    inv_type = 'in_invoice'
-                elif sp.type == 'out':
-                    sp_type = 'sale'
-                    inv_type = 'out_invoice'
-                journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', sp_type)])
-                if not journal_ids:
-                    raise osv.except_osv(_('Warning'), _('No %s journal found!') % (sp_type,))
-                self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
+                if sp.subtype == 'standard':
+                    sp_type = False
+                    inv_type = False # by default action_invoice_create make an 'out_invoice'
+                    if sp.type == 'in' or sp.type == 'internal':
+                        sp_type = 'purchase'
+                        inv_type = 'in_invoice'
+                    elif sp.type == 'out':
+                        sp_type = 'sale'
+                        inv_type = 'out_invoice'
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', sp_type)])
+                    if not journal_ids:
+                        raise osv.except_osv(_('Warning'), _('No %s journal found!') % (sp_type,))
+                    self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
         return res
 
 stock_picking()
