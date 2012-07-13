@@ -139,7 +139,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
                 nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             else:
-                p_ids = product_obj.search(cr, uid, [('name', '=', str(p_id).strip())])
+                p_ids = product_obj.search(cr, uid, [('name', 'like', p_id)])
                 if not p_ids:
                     product_id = False
                     to_correct_ok = True
