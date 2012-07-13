@@ -94,7 +94,9 @@ class purchase_order(osv.osv):
         
         # ignore the first row
         reader.next()
+        line_num = 1
         for row in reader:
+            # default values
             error_list = []
             to_correct_ok = False
             comment = False
@@ -103,14 +105,20 @@ class purchase_order(osv.osv):
             price_unit = 1
             product_qty = 1
             
-            product_code = str(row.cells[0].data)
-            if not product_code:
+            line_num += 1
+            row_len = len(row)
+            if row_len > 7:
+                error_list.append('You have written element outside the columns, please check your Excel file')
+                to_correct_ok = True
+            
+            product_code = row.cells[0].data
+            if not product_code :
                 default_code = False
                 to_correct_ok = True
                 error_list.append('No Product Reference (Code).')
                 comment = 'Product Reference (Code) to be defined'
             else:
-                code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code.strip())])
+                code_ids = product_obj.search(cr, uid, [('default_code', '=', str(product_code).strip())])
                 if not code_ids:
                     default_code = False
                     to_correct_ok = True
@@ -146,8 +154,8 @@ class purchase_order(osv.osv):
                     nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                     nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 
-            product_qty = str(row.cells[2].data)
-            if not product_qty:
+            product_qty = row.cells[2].data
+            if not product_qty :
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
@@ -158,13 +166,13 @@ class purchase_order(osv.osv):
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
             
-            p_uom = str(row.cells[3].data)
+            p_uom = row.cells[3].data
             if not p_uom:
                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                 to_correct_ok = True
                 error_list.append('No product UoM was defined.')
             else:
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', p_uom.strip())], context=context)
+                uom_ids = uom_obj.search(cr, uid, [('name', '=', str(p_uom).strip())], context=context)
                 if not uom_ids:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                     to_correct_ok = True
@@ -172,7 +180,7 @@ class purchase_order(osv.osv):
                 else:
                     uom_id = uom_ids[0]
                 
-            price_unit = str(row.cells[4].data)
+            price_unit = row.cells[4].data
             if not price_unit:
                 to_correct_ok = True
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
@@ -184,7 +192,7 @@ class purchase_order(osv.osv):
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
             
-            check_date = str(row.cells[5]).split()[0]
+            check_date = row.cells[5].data
             if check_date:
                 try:
                     datetime.strptime(check_date, '%d/%b/%Y')
@@ -195,12 +203,12 @@ class purchase_order(osv.osv):
             else:
                 error_list.append('The date was not specified so we took the one from the parent.')
             
-            curr = str(row.cells[6].data)
+            curr = row.cells[6].data
             if not curr:
                 to_correct_ok = True
                 error_list.append('No currency was defined.')
             else:
-                currency_ids = currency_obj.search(cr, uid, [('name', '=', curr.strip())])
+                currency_ids = currency_obj.search(cr, uid, [('name', '=', str(curr).strip())])
                 if currency_ids:
                     functional_currency_id = curr
                 else:

@@ -130,6 +130,12 @@
                   readonly="1" 
                   colspan="3" 
                   attrs="{'invisible': [('to_correct_ok', '=', False)]}"/>
+                  <newline/>
+                  <button 
+                  name="save_and_close" 
+                  string="Save and Close"
+                  type="object" 
+                  icon="gtk-close" />
               </form>
             </field>
         </record>
