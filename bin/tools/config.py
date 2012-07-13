@@ -97,6 +97,7 @@ class configmanager(object):
             'publisher_warranty_url': 'http://services.openerp.com/publisher-warranty/',
             'osv_memory_count_limit': None, # number of records in each osv_memory virtual table
             'osv_memory_age_limit': 1, # hours
+            'runbot_enable': False,
         }
         
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])
@@ -157,6 +158,8 @@ class configmanager(object):
         parser.add_option("--cache-timeout", dest="cache_timeout",
                           help="set the timeout for the cache system", type="int")
         parser.add_option("-t", "--timezone", dest="timezone", help="specify reference timezone for the server (e.g. Europe/Brussels")
+        parser.add_option("--runbot-enable", dest="runbot_enable", 
+                          help="Define if the server is launch as a runbot", default=False)
 
         # stops the server from launching after initialization
         parser.add_option("--stop-after-init", action="store_true", dest="stop_after_init", default=False,
@@ -303,7 +306,8 @@ class configmanager(object):
                 'netrpc', 'netrpc_gzip', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
-                'static_http_enable', 'static_http_document_root', 'static_http_url_prefix'
+                'static_http_enable', 'static_http_document_root', 'static_http_url_prefix',
+                'runbot_enable'
                 ]
 
         for arg in keys:
@@ -316,7 +320,7 @@ class configmanager(object):
             'stop_after_init', 'logrotate', 'without_demo', 'netrpc', 'xmlrpc', 'syslog',
             'list_db', 'xmlrpcs',
             'test_file', 'test_disable', 'test_commit', 'test_report_directory',
-            'osv_memory_count_limit', 'osv_memory_age_limit',
+            'osv_memory_count_limit', 'osv_memory_age_limit', 'runbot_enable'
         ]
 
         for arg in keys:
