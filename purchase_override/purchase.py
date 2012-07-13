@@ -460,10 +460,6 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
-        # Create commitments for each PO only if po is "from picking"
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
-                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         
         return True
     
@@ -504,6 +500,22 @@ stock moves which are already processed : '''
         
         return True
     
+    def compute_confirmed_delivery_date(self, cr, uid, ids, confirmed, prep_lt, ship_lt, est_transport_lead_time, db_date_format, context=None):
+        '''
+        compute the confirmed date
+        
+        confirmed must be string
+        return string corresponding to database format
+        '''
+        assert type(confirmed) == str
+        confirmed = datetime.strptime(confirmed, db_date_format)
+        confirmed = confirmed + relativedelta(days=prep_lt or 0)
+        confirmed = confirmed + relativedelta(days=ship_lt or 0)
+        confirmed = confirmed + relativedelta(days=est_transport_lead_time or 0)
+        confirmed = confirmed.strftime(db_date_format)
+        
+        return confirmed
+    
     def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Add a hook to modify the logged message
@@ -534,14 +546,19 @@ stock moves which are already processed : '''
                 # get the corresponding so line
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
                 if sol_ids:
+                    # get so_id
+                    data = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
+                    order_id = data[0]['order_id'][0]
+                    # get est_transport_lead_time of corresponding so
+                    data = so_obj.read(cr, uid, order_id, ['est_transport_lead_time'], context=context)
+                    est_transport_lead_time = data['est_transport_lead_time']
+                    
                     line_confirmed = False
                     # compute confirmed date for line
                     if line.confirmed_delivery_date:
-                        line_confirmed = datetime.strptime(line.confirmed_delivery_date, db_date_format)
-                        line_confirmed = line_confirmed + relativedelta(days=prep_lt or 0)
-                        line_confirmed = line_confirmed + relativedelta(days=ship_lt or 0)
-                        line_confirmed = line_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
-                        line_confirmed = line_confirmed.strftime(db_date_format)
+                        line_confirmed = self.compute_confirmed_delivery_date(cr, uid, ids, line.confirmed_delivery_date,
+                                                                              prep_lt, ship_lt, est_transport_lead_time,
+                                                                              db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     # {sol: pol}
@@ -582,20 +599,19 @@ stock moves which are already processed : '''
             # update after lines update, as so write triggers So workflow, and we dont want the Out document
             # to be created with old So datas
             if po.delivery_confirmed_date:
-                # Fo rts = Po confirmed date + prep_lt
-                delivery_confirmed_date = datetime.strptime(po.delivery_confirmed_date, db_date_format)
-                so_rts = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
-                so_rts = so_rts.strftime(db_date_format)
-            
-                # Fo confirmed date = confirmed date + prep_lt + ship_lt + transport_lt
-                so_confirmed = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
-                so_confirmed = so_confirmed + relativedelta(days=ship_lt or 0)
-                so_confirmed = so_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
-                so_confirmed = so_confirmed.strftime(db_date_format)
-            
-                # write data to so
-                so_obj.write(cr, uid, so_ids, {'delivery_confirmed_date': so_confirmed,
-                                               'ready_to_ship_date': so_rts}, context=context)
+                for so in so_obj.browse(cr, uid, so_ids, context=context):
+                    # Fo rts = Po confirmed date + prep_lt
+                    delivery_confirmed_date = datetime.strptime(po.delivery_confirmed_date, db_date_format)
+                    so_rts = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
+                    so_rts = so_rts.strftime(db_date_format)
+                
+                    # Fo confirmed date = confirmed date + prep_lt + ship_lt + transport_lt
+                    so_confirmed = self.compute_confirmed_delivery_date(cr, uid, ids, po.delivery_confirmed_date,
+                                                                        prep_lt, ship_lt, so.est_transport_lead_time,
+                                                                        db_date_format, context=context)
+                    # write data to so
+                    so_obj.write(cr, uid, [so.id], {'delivery_confirmed_date': so_confirmed,
+                                                   'ready_to_ship_date': so_rts}, context=context)
             
         return True
     
@@ -688,9 +704,14 @@ stock moves which are already processed : '''
             ids = [ids]
         
         # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
-        # which doesnt execute wkf_confirm_wait_order
+        # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        
+        # Create commitments for each PO only if po is "from picking"
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
             
         for order in self.browse(cr, uid, ids):
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
