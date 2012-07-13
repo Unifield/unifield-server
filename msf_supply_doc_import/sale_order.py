@@ -170,7 +170,7 @@ class sale_order(osv.osv):
             check_date = str(row.cells[5]).split()[0]
             if check_date:
                 try:
-                    datetime.strptime(check_date, '%d-%m-%Y')
+                    datetime.strptime(check_date, '%d/%b/%Y')
                     date_planned = check_date
                 except ValueError:
                     error_list.append('The date format should be "DD-MM-YYYY", we took the one from the parent.')

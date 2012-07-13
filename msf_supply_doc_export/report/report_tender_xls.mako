@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -40,21 +40,10 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-    <Style ss:ID="date_planned">
-        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@"/>
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Borders>
-          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-        </Borders>
-    </Style>
 </Styles>
 <ss:Worksheet ss:Name="Tender">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
-<%! from datetime import datetime %>
 ## we loop over the tender so "objects" == tender
 % for o in objects:
 
@@ -77,8 +66,7 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        <% requested_date = datetime.strptime(o.requested_date, '%Y-%m-%d') %>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(requested_date.strftime('%d-%m-%Y') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.requested_date or '')|x}</Data></Cell>
     </Row>
     % endfor
 % endfor

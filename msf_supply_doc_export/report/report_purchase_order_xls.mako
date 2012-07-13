@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -40,21 +40,10 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-    <Style ss:ID="date_planned">
-        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@"/>
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Borders>
-          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-        </Borders>
-    </Style>
 </Styles>
 <ss:Worksheet ss:Name="Purchase Order">
 <Table >
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
-<%! from datetime import datetime %>
 ## ==================================== we loop over the purchase_order so "objects" == purchase_order  ====================================================
 % for o in objects:
 
@@ -69,7 +58,6 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">Price</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Delivery requested date</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Currency</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Comment</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -78,10 +66,13 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        <% date_planned = datetime.strptime(line.date_planned, '%Y-%m-%d') %>
-        <Cell ss:StyleID="date_planned" ><Data ss:Type="Date">${(date_planned.strftime('%d-%m-%Y') or '')|x}</Data></Cell>
+        % if line.date_planned :
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.date_planned or '')|x}</Data></Cell>
+        % elif o.delivery_requested_date:
+        ## if the date does not exist in the line we take the one from the header
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.delivery_requested_date or '')|x}</Data></Cell>
+        % endif
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
 % endfor
