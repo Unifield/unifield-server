@@ -870,7 +870,7 @@ class orm_template(object):
                 elif fields_def[field[len(prefix)]]['type'] == 'boolean':
                     res = line[i].lower() not in ('0', 'false', 'off')
                 elif fields_def[field[len(prefix)]]['type'] == 'float':
-                    res = line[i] and float(line[i]) or 0.0
+                    res = line[i] and float(line[i].replace(',','.')) or 0.0
                 elif fields_def[field[len(prefix)]]['type'] == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
                         if line[i] in [tools.ustr(key), tools.ustr(val)]:
