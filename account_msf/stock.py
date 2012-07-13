@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
