@@ -60,9 +60,12 @@ class tender(osv.osv):
         reader.next()
         for row in reader:
             line_num += 1
+            # default values
             error_list = []
             to_correct_ok = False
             default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+            price_unit = 1
+            product_qty = 1
             
             product_code = row.cells[0].data
             if not product_code:
@@ -78,16 +81,15 @@ class tender(osv.osv):
             
             product_qty = str(row.cells[2].data)
             if not product_qty:
-                product_qty = 1
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
                 try:
                     float(product_qty)
+                    product_qty = float(product_qty)
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     product_qty = 1
             
             p_uom = row.cells[3].data
             if not p_uom:
@@ -105,16 +107,15 @@ class tender(osv.osv):
                     
             price_unit = str(row.cells[4].data)
             if not price_unit:
-                price_unit = 1
                 to_correct_ok = True
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
             else:
                 try:
                     float(price_unit)
+                    price_unit = float(price_unit)
                 except ValueError:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     price_unit = 1
                 
             to_write = {
                 'line_number': line_num,

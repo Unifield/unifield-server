@@ -99,6 +99,9 @@ class purchase_order(osv.osv):
             to_correct_ok = False
             comment = False
             date_planned = obj.delivery_requested_date
+            functional_currency_id = False
+            price_unit = 1
+            product_qty = 1
             
             product_code = str(row.cells[0].data)
             if not product_code:
@@ -111,7 +114,7 @@ class purchase_order(osv.osv):
                 if not code_ids:
                     default_code = False
                     to_correct_ok = True
-                    comment = 'Code: '+str(product_code)+' '
+                    comment = 'Code: %s' %product_code
                 else:
                     default_code = code_ids[0]
             
@@ -145,16 +148,15 @@ class purchase_order(osv.osv):
                 
             product_qty = str(row.cells[2].data)
             if not product_qty:
-                product_qty = 1
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
                 try:
                     float(product_qty)
+                    product_qty = float(product_qty)
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     product_qty = 1
             
             p_uom = str(row.cells[3].data)
             if not p_uom:
@@ -172,16 +174,15 @@ class purchase_order(osv.osv):
                 
             price_unit = str(row.cells[4].data)
             if not price_unit:
-                price_unit = 1
                 to_correct_ok = True
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
             else:
                 try:
                     float(price_unit)
+                    price_unit = float(price_unit)
                 except ValueError:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     price_unit = 1
             
             check_date = str(row.cells[5]).split()[0]
             if check_date:
@@ -196,7 +197,6 @@ class purchase_order(osv.osv):
             
             curr = str(row.cells[6].data)
             if not curr:
-                functional_currency_id = False
                 to_correct_ok = True
                 error_list.append('No currency was defined.')
             else:
@@ -223,8 +223,8 @@ class purchase_order(osv.osv):
                 'default_code':  default_code,
                 'product_id': product_id,
                 'product_uom': uom_id,
-                'product_qty': float(product_qty),
-                'price_unit': float(price_unit),
+                'product_qty': product_qty,
+                'price_unit': price_unit,
                 'date_planned': date_planned,
                 'functional_currency_id': functional_currency_id,
                 'type': proc_type,

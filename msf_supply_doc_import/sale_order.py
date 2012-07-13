@@ -79,11 +79,16 @@ class sale_order(osv.osv):
         # ignore the first row
         reader.next()
         for row in reader:
+            # default values
             error_list = []
             to_correct_ok = False
             comment = False
             date_planned = obj.delivery_requested_date
-
+            functional_currency_id = False
+            price_unit = 1
+            product_qty = 1
+            
+            # for each cell we check the value
             product_code = str(row.cells[0].data)
             if not product_code:
                 default_code = False
@@ -95,7 +100,7 @@ class sale_order(osv.osv):
                 if not code_ids:
                     default_code = False
                     to_correct_ok = True
-                    comment = 'Code: %s'%str(product_code)
+                    comment = 'Code: %s'%product_code
                 else:
                     default_code = code_ids[0]
             
@@ -114,7 +119,7 @@ class sale_order(osv.osv):
                 if not p_ids:
                     product_id = False
                     to_correct_ok = True
-                    comment = ' '+ 'Description: '+str(p_name)
+                    comment = ' Description: %s'%p_name
                     error_list.append('The Product was not found in the list of the products.')
                     nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
                     nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
@@ -129,16 +134,15 @@ class sale_order(osv.osv):
                 
             product_qty = str(row.cells[2].data)
             if not product_qty:
-                product_qty = 1
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
                 try:
                     float(product_qty)
+                    product_qty = float(product_qty)
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     product_qty = 1
             
             p_uom = str(row.cells[3].data)
             if not p_uom:
@@ -156,16 +160,15 @@ class sale_order(osv.osv):
                 
             price_unit = str(row.cells[4].data)
             if not price_unit:
-                price_unit = 1
                 to_correct_ok = True
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
             else:
                 try:
                     float(price_unit)
+                    price_unit = float(price_unit)
                 except ValueError:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     price_unit = 1
             
             check_date = str(row.cells[5]).split()[0]
             if check_date:
@@ -180,7 +183,6 @@ class sale_order(osv.osv):
             
             curr = str(row.cells[6].data)
             if not curr:
-                functional_currency_id = False
                 to_correct_ok = True
                 error_list.append('No currency was defined.')
             else:
