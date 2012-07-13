@@ -748,6 +748,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                 load_init_update_xml(cr, m, idref, mode, kind)
                 # Hack to load data only on Unifield runbot
                 if getpass.getuser() == 'dvo' and os.uname()[1] == 'uf0003.unifield.org':
+                    logger.notifyChannel('init', netsvc.LOG_INFO, 'module %s: loading XML runbot specific data files' % package.name)
                     load_init_update_xml(cr, m, idref, mode, 'runbot')
             load_data(cr, m, idref, mode)
             if hasattr(package, 'demo') or (package.dbdemo and package.state != 'installed'):
