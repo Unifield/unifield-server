@@ -843,7 +843,6 @@ stock moves which are already processed : '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
         inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
-        intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "intermission")])
         
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':

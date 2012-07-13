@@ -86,7 +86,7 @@
         assert po.invoice_ids != False, "No invoice for this PO!"
         for inv in po.invoice_ids:
             assert inv.journal_id.type == 'inkind', "Invoice is not on a In-kind donation journal!"
-            assert inv.account_id.id == po.partner_id.donation_payable_account.id, "No donation payable account given for this invoice!"
+            assert inv.account_id.id == po.partner_id.donation_payable_account.id, "No donation payable account given for this invoice! Got %s instead of %s." % (inv.account_id and inv.account_id.code or '', po.partner_id.donation_payable_account and po.partner_id.donation_payable_account.code or '')
             for line in inv.invoice_line:
                 assert line.account_id.id == ref("account_account_expense1"), "Account on Invoice line is not a donation expense account!"
 -
