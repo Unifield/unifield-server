@@ -48,7 +48,8 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
         
-        default.update({'loan_id': False})
+        default.update({'loan_id': False,
+                        'active': True})
         # if splitting related attributes are not set with default values, we reset their values
         if 'split_type_sale_order' not in default:
             default.update({'split_type_sale_order': 'original_sale_order'})
@@ -636,6 +637,9 @@ class sale_order(osv.osv):
         
         lines = []
         
+        # customer code execution position 03
+        self._hook_ship_create_execute_specific_code_03(cr, uid, ids, context=context)
+        
         for order in self.browse(cr, uid, ids, context=context):
             # from action_wait msf_order_dates
             # deactivated
@@ -756,6 +760,47 @@ class sale_order(osv.osv):
                 pol_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
                 pol_obj.write(cr, uid, pol_update_ids, {'move_dest_id': move_id}, context=context)
                 
+        return True
+    
+    def _hook_ship_create_execute_specific_code_03(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 03
+        
+        update the delivery confirmed date of sale order in case of STOCK sale order
+        (check split_type_sale_order == 'stock_split_sale_order')
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        fields_tools = self.pool.get('fields.tools')
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            # if the order is stock So, we update the confirmed delivery date
+            if order.split_type_sale_order == 'stock_split_sale_order':
+                # date values
+                ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                # confirmed
+                confirmed = datetime.today()
+                confirmed = confirmed + relativedelta(days=ship_lt or 0)
+                confirmed = confirmed + relativedelta(days=order.est_transport_lead_time or 0)
+                confirmed = confirmed.strftime(db_date_format)
+                # rts
+                rts = datetime.today()
+                rts = rts + relativedelta(days=ship_lt or 0)
+                rts = rts.strftime(db_date_format)
+                
+                self.write(cr, uid, [order.id], {'delivery_confirmed_date': confirmed,
+                                                 'ready_to_ship_date': rts}, context=context)
+            
         return True
     
     def test_lines(self, cr, uid, ids, context=None):
