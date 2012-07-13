@@ -747,7 +747,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                     modobj.write(cr, 1, [mid], modobj.get_values_from_terp(package.data))
                 load_init_update_xml(cr, m, idref, mode, kind)
                 # Hack to load data only on Unifield runbot
-                if getpass.getuser() == 'dvo' and os.uname()[1] == 'quentin-tempo':
+                if getpass.getuser() == 'dvo' and os.uname()[1] == 'uf0003.unifield.org':
                     load_init_update_xml(cr, m, idref, mode, 'runbot')
             load_data(cr, m, idref, mode)
             if hasattr(package, 'demo') or (package.dbdemo and package.state != 'installed'):
