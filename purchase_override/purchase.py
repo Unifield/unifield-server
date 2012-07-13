@@ -690,7 +690,7 @@ stock moves which are already processed : '''
         # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
         # which doesnt execute wkf_confirm_wait_order
         # msf_order_date checks
-        self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        #self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
             
         for order in self.browse(cr, uid, ids):
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
