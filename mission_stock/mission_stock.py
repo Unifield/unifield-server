@@ -65,7 +65,7 @@ class stock_mission_report(osv.osv):
                     (arg[1] in ('!=', '<>') and arg[2] in ('False', 'false', 'f', 0)):
                     res.append(('instance_id', '=', local_instance_id))
                 elif (arg[1] == '=' and arg[2] in ('False', 'false', 'f', 0)) or \
-                    (arg[1] in ('!=', '<>') and arg[2] in ('True', 'true', 't', 1)):                     
+                    (arg[1] in ('!=', '<>') and arg[2] in ('True', 'true', 't', 1)):
                     res.append(('instance_id', '!=', local_instance_id))
                 else:
                     raise osv.except_osv(_('Error'), _('Bad operator'))
@@ -288,6 +288,7 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_val': fields.float(digits=(16,2), string='In Pipe Val.'),
         'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.'),
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.'),
+        'updated': fields.boolean(string='Updated'), 
     }
     
     def _get_request(self, cr, uid, location_ids, product_id):
@@ -482,24 +483,31 @@ class stock_mission_report_line(osv.osv):
             
             in_pipe_val = in_pipe_qty*standard_price
             in_pipe_not_coord_val = in_pipe_not_coord_qty*standard_price
-                         
             
-            self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
-                                            'internal_val': internal_val,
-                                            'stock_qty': stock_qty,
-                                            'stock_val': stock_val,
-                                            'central_qty': central_qty,
-                                            'central_val': central_val,
-                                            'cross_qty': cross_qty,
-                                            'cross_val': cross_val,
-                                            'secondary_qty': secondary_qty,
-                                            'secondary_val': secondary_val,
-                                            'cu_qty': cu_qty,
-                                            'cu_val': cu_val,
-                                            'in_pipe_qty': in_pipe_qty,
-                                            'in_pipe_val': in_pipe_val,
-                                            'in_pipe_coor_qty': in_pipe_not_coord_qty,
-                                            'in_pipe_coor_val': in_pipe_not_coord_val}, context=context)
+            values = {'internal_qty': internal_qty,
+                      'internal_val': internal_val,
+                      'stock_qty': stock_qty,
+                      'stock_val': stock_val,
+                      'central_qty': central_qty,
+                      'central_val': central_val,
+                      'cross_qty': cross_qty,
+                      'cross_val': cross_val,
+                      'secondary_qty': secondary_qty,
+                      'secondary_val': secondary_val,
+                      'cu_qty': cu_qty,
+                      'cu_val': cu_val,
+                      'in_pipe_qty': in_pipe_qty,
+                      'in_pipe_val': in_pipe_val,
+                      'in_pipe_coor_qty': in_pipe_not_coord_qty,
+                      'in_pipe_coor_val': in_pipe_not_coord_val,
+                      'updated': False}
+            
+            line_read = self.read(cr, uid, line.id, values.keys(), context=context)
+            for k in values.keys():
+                if line_read[k] != values[k]:
+                    values.update({'updated': True})
+            
+            self.write(cr, uid, [line.id], values, context=context)
         return True
     
 stock_mission_report_line()
