@@ -831,7 +831,24 @@ class sale_order_line(osv.osv):
                     \n* The \'Exception\' state is set when the related sales order is set as exception. \
                     \n* The \'Done\' state is set when the sales order line has been picked. \
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
+                
+                # these 2 columns are for the sync module
+                'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
+                'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
                 }
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Add the database ID of the SO line to the value sync_sol_db_id
+        '''
+        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        
+#        sync_sol_db_id = so_line_ids
+#        if 'sync_sol_db_id' in vals:
+#            sync_sol_db_id = vals['sync_sol_db_id']
+        
+        super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_sol_db_id': so_line_ids,} , context=context)
+        return so_line_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''

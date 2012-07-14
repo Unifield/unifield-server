@@ -1325,7 +1325,14 @@ class purchase_order_line(osv.osv):
         
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
-        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+        # add the database Id to the sync_pol_db_id
+        po_line_ids = super(purchase_order_line, self).create(cr, uid, vals, context=context)
+        sync_pol_db_id = po_line_ids
+        if 'sync_pol_db_id' in vals:
+            sync_pol_db_id = vals['sync_pol_db_id']
+        
+        super(purchase_order_line, self).write(cr, uid, po_line_ids, {'sync_pol_db_id': sync_pol_db_id,} , context=context)
+        return po_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1454,6 +1461,9 @@ class purchase_order_line(osv.osv):
         'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
         'old_price_unit': fields.float(digits=(16,2), string='Old price'),
         'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
+
+        'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
+        'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
     }
 
     _defaults = {
