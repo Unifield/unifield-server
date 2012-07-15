@@ -296,7 +296,7 @@ class stock_picking(osv.osv):
                     too_many.append(move)
 
                 # Average price computation
-                if (pick.type == 'in') and (move.product_id.cost_method == 'average'):
+                if (pick.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                     product = product_obj.browse(cr, uid, move.product_id.id, context=ctx_avg)
                     move_currency_id = move.company_id.currency_id.id
                     context['currency_id'] = move_currency_id
@@ -647,7 +647,7 @@ class stock_move(osv.osv):
                 too_many.append(move)
 
             # Average price computation
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
+            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                 product = product_obj.browse(cr, uid, move.product_id.id, context=ctx_avg)
                 move_currency_id = move.company_id.currency_id.id
                 context['currency_id'] = move_currency_id

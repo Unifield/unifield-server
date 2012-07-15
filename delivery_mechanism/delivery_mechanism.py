@@ -316,7 +316,7 @@ class stock_picking(osv.osv):
                     # Average price computation
                     # selected product from wizard must be tested
                     product = product_obj.browse(cr, uid, partial['product_id'], context=ctx_avg)
-                    if (pick.type == 'in') and (product.cost_method == 'average'):
+                    if (pick.type == 'in') and (product.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                         move_currency_id = move.company_id.currency_id.id
                         context['currency_id'] = move_currency_id
                         # datas from partial

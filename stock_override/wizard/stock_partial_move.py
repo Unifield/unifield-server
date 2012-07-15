@@ -81,7 +81,7 @@ class stock_partial_move(osv.osv_memory):
             }
             
             moves_ids_final.append(move.id)
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
+            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                 partial_datas['move%s' % (move.id)].update({
                     'product_price' : p_moves[move.id].cost,
                     'product_currency': p_moves[move.id].currency.id,

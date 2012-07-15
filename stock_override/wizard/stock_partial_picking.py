@@ -90,7 +90,7 @@ class stock_partial_picking(osv.osv_memory):
                     'product_uom': move.move_id.product_uom.id, 
                     'prodlot_id': move.prodlot_id.id, 
                 }
-                if (picking_type == 'in') and (move.product_id.cost_method == 'average'):
+                if (picking_type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                     partial_datas['move%s' % (move.move_id.id)].update({
                                                     'product_price' : move.cost, 
                                                     'product_currency': move.currency.id, 
