@@ -90,6 +90,18 @@ class unifield_setup_configuration(osv.osv):
         (_check_uniqueness, _non_uniqueness_msg, ['id'])
     ]
     
+    def get_config(self, cr, uid):
+        '''
+        Return the current config or create a new one
+        '''
+        setup_ids = self.search(cr, uid, [])
+        if not setup_ids:
+            setup_id = self.create(cr, uid, {})
+        else:
+            setup_id = setup_ids[0]
+            
+        return self.browse(cr, uid, setup_id)
+    
 unifield_setup_configuration()
 
 class res_config_view(osv.osv_memory):

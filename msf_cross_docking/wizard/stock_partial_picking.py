@@ -104,12 +104,8 @@ class stock_partial_picking(osv.osv_memory):
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('The option "Cross docking" is not convenient for a purchase order which the category is "Service" or "Transport".')}
-        
-        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
-        else:
-            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+            
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
 
         if dest_type == 'to_cross_docking' and setup.allocation_setup == 'unallocated':
             result['value'].update({'dest_type': 'default'})
@@ -170,11 +166,7 @@ class stock_partial_picking(osv.osv_memory):
         stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
 # ----------------------------------------------------------------------------------------------------------------
 
-        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
-        else:
-            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
 
         for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
             if var.source_type == 'from_cross_docking' :

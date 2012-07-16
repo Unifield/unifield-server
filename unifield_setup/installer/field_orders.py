@@ -37,16 +37,8 @@ class field_orders_setup(osv.osv_memory):
         '''
         Display the default value for delivery process
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(field_orders_setup, self).default_get(cr, uid, fields, context=context)
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
-            
-        setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
-        
         res['field_orders_ok'] = setup_id.field_orders_ok
         
         return res
@@ -62,9 +54,7 @@ class field_orders_setup(osv.osv_memory):
         setup_obj = self.pool.get('unifield.setup.configuration')
         data_obj = self.pool.get('ir.model.data')
         
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+        setup_id = setup_obj.get_config(cr, uid)
             
         # Get all menu ids concerned by this modification
         field_order_menu_id = data_obj.get_object_reference(cr, uid, 'sale', 'menu_sale_order')[1]
@@ -85,7 +75,7 @@ class field_orders_setup(osv.osv_memory):
             # In complex configuration, added the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': False}, context=context)
     
-        setup_obj.write(cr, uid, setup_ids, {'field_orders_ok': payload.field_orders_ok}, context=context)
+        setup_obj.write(cr, uid, [setup_id.id], {'field_orders_ok': payload.field_orders_ok}, context=context)
 
         
 field_orders_setup()

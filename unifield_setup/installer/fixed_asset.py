@@ -37,15 +37,8 @@ class fixed_asset_setup(osv.osv_memory):
         '''
         Display the default value for fixed asset
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context)
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
-            
-        setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
         
         res['fixed_asset_ok'] = setup_id.fixed_asset_ok
         
@@ -60,12 +53,8 @@ class fixed_asset_setup(osv.osv_memory):
         payload = self.browse(cr, uid, ids[0], context=context)
         
         setup_obj = self.pool.get('unifield.setup.configuration')
-        data_obj = self.pool.get('ir.model.data')
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+        setup_id = setup_obj.get_config(cr, uid)
     
-        setup_obj.write(cr, uid, setup_ids, {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
+        setup_obj.write(cr, uid, [setup_id.id], {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
         
 fixed_asset_setup()
