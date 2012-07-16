@@ -147,7 +147,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         comment = 'Code: %s'%product_code
                     else:
                         default_code = code_ids[0]
-                except ValueError:
+                except Exception:
                      error_list.append('The Product Code has to be a string.')
                      comment = 'Product Reference (Code) to be defined'
                      to_correct_ok = True
@@ -181,7 +181,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
-                except ValueError:
+                except Exception:
                      error_list.append('The Product Name has to be a string.')
                      comment = 'Product Name to be defined'
                      to_correct_ok = True
@@ -214,7 +214,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         error_list.append('The UOM was not found.')
                     else:
                         uom_id = uom_ids[0]
-                except ValueError:
+                except Exception:
                      error_list.append('The UOM name has to be a string.')
                      uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                      to_correct_ok = True
@@ -255,7 +255,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         functional_currency_id = curr
                     else:
                         error_list.append('The currency was not found or the format of the currency was not good.')
-                except ValueError:
+                except Exception:
                     error_list.append('The Currency name should be a string.')
                     to_correct_ok = True
                 

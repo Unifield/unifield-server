@@ -106,7 +106,7 @@ class tender(osv.osv):
                         comment = 'Code: %s'%product_code
                     else:
                         default_code = code_ids[0]
-                except ValueError:
+                except Exception:
                      error_list.append('The Product Code has to be a string.')
                      comment = 'Product Reference (Code) to be defined'
                      to_correct_ok = True
@@ -131,7 +131,7 @@ class tender(osv.osv):
                 error_list.append('No product UoM was defined.')
             else:
                 try:
-                    uom_name = str(p_uom).strip()
+                    uom_name = p_uom.strip()
                     uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                     if not uom_ids:
                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
@@ -139,7 +139,7 @@ class tender(osv.osv):
                         error_list.append('The UOM was not found.')
                     else:
                         uom_id = uom_ids[0]
-                except ValueError:
+                except Exception:
                      error_list.append('The UoM Name has to be a string.')
                      uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                      to_correct_ok = True
@@ -160,7 +160,7 @@ class tender(osv.osv):
         
         view_id = obj_data.get_object_reference(cr, uid, 'tender_flow','tender_form')[1]
         
-        nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True)], context=context)
+        nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True), ('tender_id', '=', ids[0])], context=context)
         
         if nb_lines_error:
             if nb_lines_error > 1:
