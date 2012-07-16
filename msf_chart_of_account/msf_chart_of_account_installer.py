@@ -16,7 +16,7 @@ class msf_chart_of_account_installer(osv.osv_memory):
         'counterpart_hq_entries_default_account': fields.many2one('account.account', string="Default counterpart", domain="[('type', '!=', 'view')]", 
             help="Account that will be used as counterpart for HQ Validated Entries.")
     }
-
+    
     def get_inter(self, cr, uid, *a, **b):
         try:
             return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_chart_of_account', '1404')[1]
@@ -36,8 +36,10 @@ class msf_chart_of_account_installer(osv.osv_memory):
             return False
 
     def get_instance(self, cr, uid, *a, **b):
-        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('state', '=', 'draft')])
-        return instance_ids and instance_ids[0] or False
+        #instance_ids = self.pool.get('msf.instance').search(cr, uid, [('state', '=', 'draft')])
+        #return instance_ids and instance_ids[0] or False
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        return user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
 
     _defaults = {
         'create': True,

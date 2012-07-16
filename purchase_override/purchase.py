@@ -34,7 +34,6 @@ from datetime import datetime
 
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
-
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
     
@@ -94,6 +93,23 @@ class purchase_order(osv.osv):
         return res
     # @@@end
     
+    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the Unifield configuration value
+        '''
+        res = {}
+        
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        
+        for order in ids:
+            res[order] = setup.allocation_setup
+        
+        return res
+    
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -127,6 +143,11 @@ class purchase_order(osv.osv):
         ),
         'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
         'date_confirm': fields.date(string='Confirmation date'),
+        'allocation_setup': fields.function(_get_allocation_setup, type='selection',
+                                            selection=[('allocated', 'Allocated'),
+                                                       ('unallocated', 'Unallocated'),
+                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
+        'unallocation_ok': fields.boolean(string='Unallocated PO'),
     }
     
     _defaults = {
@@ -139,7 +160,24 @@ class purchase_order(osv.osv):
         'invoice_method': lambda *a: 'picking',
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery']
     }
-   
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+
+        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
+        if not setup_ids:
+            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
+        else:
+            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+
+        res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
+        if setup.allocation_setup == 'unallocated':
+            res.update({'unallocation_ok': True})
+
+        return res
 
     def _check_user_company(self, cr, uid, company_id, context=None):
         '''
@@ -185,6 +223,17 @@ class purchase_order(osv.osv):
         data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
         if data_id:
             local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
+            
+        if order_type == 'loan':
+            setup_obj = self.pool.get('unifield.setup.configuration')
+            setup_ids = setup_obj.search(cr, uid, [])
+            if not setup_ids:
+                setup_ids = [setup_obj.create(cr, uid, {})]
+                
+            if not setup_obj.browse(cr, uid, setup_ids[0]).field_orders_ok:
+                return {'value': {'order_type': 'regular'},
+                        'warning': {'title': 'Error',
+                                    'message': 'The Field orders feature is not activated on your system, so, you cannot create a Loan Purchase Order !'}}
         
         if order_type in ['donation_exp', 'donation_st', 'loan']:
             v['invoice_method'] = 'manual'
@@ -306,17 +355,15 @@ class purchase_order(osv.osv):
             return _("Purchase order '%s' is validated.") % (po.name,)
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
-        
+
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         '''
         Update the confirmation date of the PO at confirmation
         '''
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
-        
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
-        
         return res
-        
+
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
         Change the shipped boolean and the state of the PO
@@ -1121,11 +1168,12 @@ class purchase_order_merged_line(osv.osv):
                 res[line.id] = line.product_id and line.product_id.name or line.order_line_ids[0].comment
         return res
 
-    _columns = {'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
-                'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
+    _columns = {
+        'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines'),
+        'date_planned': fields.date(string='Delivery Requested Date', required=False, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
-                'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
-                }
+        'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
+    }
 
     def create(self, cr, uid, vals, context=None):
         '''

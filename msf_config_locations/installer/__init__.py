@@ -19,7 +19,6 @@
 # 
 ##############################################################################
 
-import stock_configuration
-import installer
+import configurable_location
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,10 +16,16 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
-import stock_configuration
-import installer
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+import project_addresses
+import project_leadtime
+import delivery_process
+import allocation_setup
+import sales_price
+import restrictive_country
+import field_orders
+import lang_setup
+import currency_setup
+import fixed_asset
