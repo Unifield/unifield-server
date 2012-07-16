@@ -103,12 +103,19 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 to_correct_ok = True
                 error_list.append('No Product Name')
             else:
-                code_ids = product_obj.search(cr, uid, [('default_code', '=', str(product_code).strip())])
-                if not code_ids or code_ids[0] == default_code:
-                    to_correct_ok = True
-                    error_list.append('The Product was not found in the list of the products.')
-                else:
-                    default_code = code_ids[0]
+                try:
+                    product_code = product_code.strip()
+                    code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                    if not code_ids:
+                        default_code = False
+                        to_correct_ok = True
+                        comment = 'Code: %s'%product_code
+                    else:
+                        default_code = code_ids[0]
+                except ValueError:
+                     error_list.append('The Product Code has to be a string.')
+                     comment = 'Product Reference (Code) to be defined'
+                     to_correct_ok = True
             
             product_qty = row.cells[2].data
             if not product_qty:
@@ -129,13 +136,19 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 to_correct_ok = True
                 error_list.append('No product UoM was defined.')
             else:
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', str(p_uom).strip())], context=context)
-                if not uom_ids:
-                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                    to_correct_ok = True
-                    error_list.append('The UOM was not found.')
-                else:
-                    uom_id = uom_ids[0]
+                try:
+                    uom_name = str(p_uom).strip()
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                    if not uom_ids:
+                        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                        to_correct_ok = True
+                        error_list.append('The UOM was not found.')
+                    else:
+                        uom_id = uom_ids[0]
+                except ValueError:
+                     error_list.append('The UoM Name has to be a string.')
+                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                     to_correct_ok = True
                     
             price_unit = row.cells[4].data
             if not price_unit:

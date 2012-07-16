@@ -143,13 +143,19 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 error_list.append('No Product Reference (Code).')
                 comment = 'Product Reference (Code) to be defined'
             else:
-                code_ids = product_obj.search(cr, uid, [('default_code', '=', str(product_code).strip())])
-                if not code_ids:
-                    default_code = False
-                    to_correct_ok = True
-                    comment = 'Code: %s' %product_code
-                else:
-                    default_code = code_ids[0]
+                try:
+                    product_code = product_code.strip()
+                    code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                    if not code_ids:
+                        default_code = False
+                        to_correct_ok = True
+                        comment = 'Code: %s'%product_code
+                    else:
+                        default_code = code_ids[0]
+                except ValueError:
+                     error_list.append('The Product Code has to be a string.')
+                     comment = 'Product Reference (Code) to be defined'
+                     to_correct_ok = True
             
             p_id = row.cells[1].data
             if not p_id:
@@ -162,22 +168,28 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
                 nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             else:
-                p_ids = product_obj.search(cr, uid, [('name', '=', str(p_id).strip())])
-                if not p_ids:
-                    product_id = False
-                    to_correct_ok = True
-                    comment = 'Description: %s' %str(p_id)
-                    error_list.append('The Product was not found in the list of the products.')
-                    nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                    nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                    nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                    nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
-                else:
-                    product_id = p_ids[0]
-                    nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
-                    nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
-                    nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
-                    nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
+                try:
+                    p_name = p_id.strip()
+                    p_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
+                    if not p_ids:
+                        product_id = False
+                        to_correct_ok = True
+                        comment = 'Description: %s' %p_name
+                        error_list.append('The Product was not found in the list of the products.')
+                        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+                        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+                        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+                        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+                    else:
+                        product_id = p_ids[0]
+                        nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
+                        nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
+                        nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
+                        nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
+                except ValueError:
+                     error_list.append('The Product Name has to be a string.')
+                     comment = 'Product Name to be defined'
+                     to_correct_ok = True
                 
             product_qty = row.cells[2].data
             if not product_qty :
@@ -198,13 +210,19 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 to_correct_ok = True
                 error_list.append('No product UoM was defined.')
             else:
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', str(p_uom).strip())], context=context)
-                if not uom_ids:
-                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                    to_correct_ok = True
-                    error_list.append('The UOM was not found.')
-                else:
-                    uom_id = uom_ids[0]
+                try:
+                    uom_name = p_uom.strip()
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                    if not uom_ids:
+                        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                        to_correct_ok = True
+                        error_list.append('The UOM was not found.')
+                    else:
+                        uom_id = uom_ids[0]
+                except ValueError:
+                     error_list.append('The UOM name has to be a string.')
+                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                     to_correct_ok = True
                 
             price_unit = row.cells[4].data
             if not price_unit:
@@ -235,11 +253,16 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 to_correct_ok = True
                 error_list.append('No currency was defined.')
             else:
-                currency_ids = currency_obj.search(cr, uid, [('name', '=', str(curr).strip())])
-                if currency_ids:
-                    functional_currency_id = curr
-                else:
-                    error_list.append('The currency was not found or the format of the currency was not good.')
+                try:
+                    curr_name = curr.strip()
+                    currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
+                    if currency_ids:
+                        functional_currency_id = curr
+                    else:
+                        error_list.append('The currency was not found or the format of the currency was not good.')
+                except ValueError:
+                    error_list.append('The Currency name should be a string.')
+                    to_correct_ok = True
                 
             proc_type = 'make_to_stock'
             for product in product_obj.read(cr, uid, ids, ['type'], context=context):
