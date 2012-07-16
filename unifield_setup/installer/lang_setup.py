@@ -37,15 +37,8 @@ class lang_setup(osv.osv_memory):
         '''
         Display the default value for system language
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(lang_setup, self).default_get(cr, uid, fields, context=context)
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_id = setup_obj.create(cr, uid, {}, context=context)
-        else:
-            setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
 
         lang_ids = self.pool.get('res.lang').search(cr, uid, [('code', '=', setup_id.lang_id)], context=context)
         if lang_ids:
@@ -66,14 +59,12 @@ class lang_setup(osv.osv_memory):
         setup_obj = self.pool.get('unifield.setup.configuration')
         user_obj = self.pool.get('res.users')
         
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+        setup_id = setup_obj.get_config(cr, uid)
             
         if payload.lang_id:
             user_obj.write(cr, uid, uid, {'context_lang': payload.lang_id.code}, context=context)
     
-        setup_obj.write(cr, uid, setup_ids, {'lang_id': payload.lang_id.code}, context=context)
+        setup_obj.write(cr, uid, [setup_id.id], {'lang_id': payload.lang_id.code}, context=context)
         
 lang_setup()
 
@@ -86,15 +77,9 @@ class config_users(osv.osv):
         '''
         If no lang defined, get this of the configuration setup
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
         res = super(config_users, self).default_get(cr, uid, fields, context=context)
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_id = setup_obj.create(cr, uid, {}, context=context)
-        else:
-            setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
             
         if not setup_id:
             res['context_lang'] = 'en_MF'

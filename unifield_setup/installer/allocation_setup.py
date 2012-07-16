@@ -63,16 +63,8 @@ Please click on the below buttons to see the different blocking documents.''',
         '''
         Display the default value for delivery process
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(allocation_stock_setup, self).default_get(cr, uid, fields, context=context)
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_id = setup_obj.create(cr, uid, {}, context=context)
-        else:
-            setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
-        
         res['allocation_setup'] = setup_id.allocation_setup
         res['unallocated_ok'] = setup_id.unallocated_ok and 'yes' or 'no'
         
@@ -147,9 +139,7 @@ Please click on the below buttons to see the different blocking documents.''',
         data_obj = self.pool.get('ir.model.data')
         loc_obj = self.pool.get('stock.location')
         
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+        setup_id = setup_obj.get_config(cr, uid)
             
         # Get all locations concerned by this modification
         med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
@@ -223,7 +213,7 @@ Please click on the below buttons to see the different blocking documents.''',
             # Active all locations
             loc_obj.write(cr, uid, all_loc_ids, {'active': True}, context=context)
     
-        setup_obj.write(cr, uid, setup_ids, {'allocation_setup': payload.allocation_setup, 
+        setup_obj.write(cr, uid, [setup_id.id], {'allocation_setup': payload.allocation_setup, 
                                              'unallocated_ok': payload.allocation_setup in ['unallocated', 'mixed']}, context=context)
         
     def go_to_po(self, cr, uid, ids, context=None):
@@ -235,6 +225,7 @@ Please click on the below buttons to see the different blocking documents.''',
                 'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'nodestroy': True,
                 'domain': [('id', 'in', po_ids)],
                 'target': 'current'}
         
@@ -247,6 +238,7 @@ Please click on the below buttons to see the different blocking documents.''',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'nodestroy': True,
                 'domain': [('id', 'in', pick_ids)],
                 'target': 'current'}
         
@@ -258,6 +250,7 @@ Please click on the below buttons to see the different blocking documents.''',
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
+                'nodestroy': True,
                 'view_mode': 'tree,form',
                 'domain': [('id', 'in', pick_ids)],
                 'target': 'current'}
@@ -271,6 +264,7 @@ Please click on the below buttons to see the different blocking documents.''',
                 'res_model': 'stock.location',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'nodestroy': True,
                 'domain': [('id', 'in', loc_ids)],
                 'target': 'current'}
         

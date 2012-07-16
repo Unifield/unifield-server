@@ -98,12 +98,7 @@ class purchase_order(osv.osv):
         Returns the Unifield configuration value
         '''
         res = {}
-        
-        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
-        else:
-            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
         for order in ids:
             res[order] = setup.allocation_setup
@@ -166,13 +161,8 @@ class purchase_order(osv.osv):
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
-
-        setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup = self.pool.get('unifield.setup.configuration').create(cr, uid, {}, context=context) 
-        else:
-            setup = self.pool.get('unifield.setup.configuration').browse(cr, uid, setup_ids[0], context=context)
-
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
         if setup.allocation_setup == 'unallocated':
             res.update({'unallocation_ok': True})
@@ -225,12 +215,9 @@ class purchase_order(osv.osv):
             local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
             
         if order_type == 'loan':
-            setup_obj = self.pool.get('unifield.setup.configuration')
-            setup_ids = setup_obj.search(cr, uid, [])
-            if not setup_ids:
-                setup_ids = [setup_obj.create(cr, uid, {})]
+            setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
                 
-            if not setup_obj.browse(cr, uid, setup_ids[0]).field_orders_ok:
+            if not setup.field_orders_ok:
                 return {'value': {'order_type': 'regular'},
                         'warning': {'title': 'Error',
                                     'message': 'The Field orders feature is not activated on your system, so, you cannot create a Loan Purchase Order !'}}

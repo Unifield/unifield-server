@@ -65,15 +65,9 @@ class sale_price_setup(osv.osv_memory):
         '''
         Display the default value for sale price
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
         res = super(sale_price_setup, self).default_get(cr, uid, fields, context=context)
-        
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
-            
-        setup_id = setup_obj.browse(cr, uid, setup_ids[0], context=context)
         
         res['sale_price'] = setup_id.sale_price
         
@@ -91,9 +85,7 @@ class sale_price_setup(osv.osv_memory):
         version_obj = self.pool.get('product.pricelist.version')
         item_obj = self.pool.get('product.pricelist.item')
         
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+        setup_id = setup_obj.get_config(cr, uid)
             
         # Update all sale pricelists
         pricelist_ids = pricelist_obj.search(cr, uid, [('type', '=', 'sale')], context=context)
@@ -101,7 +93,7 @@ class sale_price_setup(osv.osv_memory):
         item_ids = item_obj.search(cr, uid, [('price_version_id', 'in', version_ids)], context=context)
         item_obj.write(cr, uid, item_ids, {'price_discount': payload.sale_price/100}, context=context)
     
-        setup_obj.write(cr, uid, setup_ids, {'sale_price': payload.sale_price}, context=context)
+        setup_obj.write(cr, uid, [setup_id.id], {'sale_price': payload.sale_price}, context=context)
         
 sale_price_setup()
 
@@ -115,16 +107,15 @@ class product_pricelist_item(osv.osv):
         if the item is related to a sale price list, get the Unifield
         configuration value for price_discount
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         version_obj = self.pool.get('product.pricelist.version')
         
         if 'price_version_id' in vals:
             price_type = version_obj.browse(cr, uid, vals['price_version_id'], context=context).pricelist_id.type
             if price_type == 'sale':
                 # Get the price from Unifield configuration
-                setup_ids = setup_obj.search(cr, uid, [], context=context)
-                if setup_ids:
-                    price_discount = setup_obj.browse(cr, uid, setup_ids[0], context=context).sale_price
+                if setup_id:
+                    price_discount = setup_id.sale_price
                     vals.update({'price_discount': price_discount/100})
         
         return super(product_pricelist_item, self).create(cr, uid, vals, context=context)

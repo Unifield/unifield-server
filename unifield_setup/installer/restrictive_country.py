@@ -39,8 +39,6 @@ class restrictive_country_setup(osv.osv_memory):
         '''
         Display the default value for sale price
         '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        
         res = super(restrictive_country_setup, self).default_get(cr, uid, fields, context=context)
         
         country_ids = self.pool.get('res.country').search(cr, uid, [('is_restrictive', '=', True)], context=context)
@@ -59,9 +57,7 @@ class restrictive_country_setup(osv.osv_memory):
         setup_obj = self.pool.get('unifield.setup.configuration')
         country_obj = self.pool.get('res.country')
         
-        setup_ids = setup_obj.search(cr, uid, [], context=context)
-        if not setup_ids:
-            setup_ids = [setup_obj.create(cr, uid, {}, context=context)]
+        setup_id = setup_obj.get_config(cr, uid)
             
         # Update all restrictive countries
         country_ids = []
@@ -77,6 +73,6 @@ class restrictive_country_setup(osv.osv_memory):
         
         country_obj.write(cr, uid, country_ids, {'is_restrictive': True}, context=context)
     
-        setup_obj.write(cr, uid, setup_ids, {'restrict_country_ids': [(6,0,country_ids)]}, context=context)
+        setup_obj.write(cr, uid, [setup_id.id], {'restrict_country_ids': [(6,0,country_ids)]}, context=context)
         
 restrictive_country_setup()
