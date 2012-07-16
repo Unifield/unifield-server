@@ -98,6 +98,7 @@ class tender(osv.osv):
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
+                     product_qty = 1.0
             
             p_uom = row.cells[3].data
             if not p_uom:
@@ -124,6 +125,7 @@ class tender(osv.osv):
                 except ValueError:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
+                     price_unit = 1.0
                 
             to_write = {
                 'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red

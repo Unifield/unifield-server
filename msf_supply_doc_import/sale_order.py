@@ -315,6 +315,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
+                     product_qty = 1.0
             
             p_uom = row.cells[3].data
             if not p_uom:
@@ -341,6 +342,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 except ValueError:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
+                     price_unit = 1.0
             
             check_date = row.cells[5].data
             if check_date:

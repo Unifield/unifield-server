@@ -103,8 +103,8 @@ class purchase_order(osv.osv):
             comment = False
             date_planned = obj.delivery_requested_date
             functional_currency_id = False
-            price_unit = 1
-            product_qty = 1
+            price_unit = 1.0
+            product_qty = 1.0
             
             line_num += 1
             row_len = len(row)
@@ -166,6 +166,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                     product_qty = float(product_qty)
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
+                     product_qty = 1.0
                      to_correct_ok = True
             
             p_uom = row.cells[3].data
@@ -192,6 +193,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                     price_unit = float(price_unit)
                 except ValueError:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
+                     price_unit = 1.0
                      to_correct_ok = True
             
             check_date = row.cells[5].data
