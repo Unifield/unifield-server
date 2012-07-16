@@ -35,11 +35,16 @@ class msf_chart_of_account_installer(osv.osv_memory):
         except ValueError:
             return False
 
+    def get_instance(self, cr, uid, *a, **b):
+        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('state', '=', 'draft')])
+        return instance_ids and instance_ids[0] or False
+
     _defaults = {
         'create': True,
         'import_invoice_default_account': get_inter,
         'expat_salaries_default_account': get_expat,
         'counterpart_hq_entries_default_account': get_counterpart,
+        'instance_id': get_instance,
     }
 
     def execute(self, cr, uid, ids, context=None):
