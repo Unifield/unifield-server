@@ -438,6 +438,7 @@
 			<field name="arch" type="xml">
 				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
 					<field name="name"/>
+					<field name="description"/>
 					<field name="partner_id2"/>
 					<field name="backorder_id" groups="base.group_extended"/>
 					<field name="origin"/>
@@ -499,6 +500,9 @@
 							<field name="subtype" invisible="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
 							<field name='ppl_customize_label' required="True" />
+						</group>
+						<group colspan="6" col="2">
+							<field name="description" required="1" />
 						</group>
 					</group>
 					<notebook colspan="4">
@@ -990,6 +994,7 @@
 								<form>
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
+									<field name="description" /><newline />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />

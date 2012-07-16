@@ -140,6 +140,7 @@ class stock_picking(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
+        'description': fields.char('Description', size=256 ),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,

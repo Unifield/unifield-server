@@ -960,6 +960,7 @@ class pack_family_memory(osv.osv_memory):
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
+                'description': fields.char('Description', size=256 ),
                 }
     
     _defaults = {'shipment_id': False,
@@ -1638,7 +1639,6 @@ class stock_picking(osv.osv):
             states = ('done')
         else:
             assert False, 'Should not reach this line'
-        
         for pick in self.browse(cr, uid, pick_ids, context=context):
             result[pick.id] = {}
             for move in pick.move_lines:
@@ -1660,6 +1660,7 @@ class stock_picking(osv.osv):
                                                                               'height': move.height,
                                                                               'weight': move.weight,
                                                                               'draft_packing_id': pick.id,
+                                                                              'description': pick.description,  
                                                                               }
                             # subtype == packing - caled from shipment
                             elif pick.subtype == 'packing':
@@ -1675,6 +1676,7 @@ class stock_picking(osv.osv):
                                                                               'height': move.height,
                                                                               'weight': move.weight,
                                                                               'draft_packing_id': pick.id,
+                                                                              'description': pick.description,  
                                                                               }
         
         return result
@@ -2306,9 +2308,8 @@ class stock_picking(osv.osv):
                             assert partial['prodlot_id'] == moves[move].prodlot_id.id
                             # dictionary of new values, used for creation or update
                             # - qty_per_pack is a function at stock move level
-                            fields = ['product_qty', 'from_pack', 'to_pack', 'pack_type', 'length', 'width', 'height', 'weight']
+                            fields = ['product_qty', 'from_pack', 'to_pack', 'pack_type', 'length', 'width', 'height', 'weight',]
                             values = dict(zip(fields, [partial["%s"%x] for x in fields]))
-                            
                             if move in updated:
                                 # if already updated, we create a new stock.move
                                 updated[move]['partial_qty'] += partial['product_qty']
@@ -2320,7 +2321,7 @@ class stock_picking(osv.osv):
                                 # update the existing stock move
                                 updated[move] = {'initial': moves[move].product_qty, 'partial_qty': partial['product_qty']}
                                 move_obj.write(cr, uid, [move], values, context=context)
-        
+
             # integrity check - all moves are treated and no more
             assert set(from_pick) == set(from_partial), 'move_ids are not equal pick:%s - partial:%s'%(set(from_pick), set(from_partial))
             # quantities are right
