@@ -199,4 +199,27 @@ class tender_line(osv.osv):
         'text_error': fields.text('Errors'),
     }
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uom_obj = self.pool.get('product.uom')
+        obj_data = self.pool.get('ir.model.data')
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+        tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+        message = ''
+        
+        if vals.get('product_uom'):
+            if vals.get('product_uom') == tbd_uom:
+                message += 'You have to define a valid UOM, i.e. not "To be define".'
+        if vals.get('product_id'):
+            if vals.get('product_id') == tbd_product:
+                message += 'You have to define a valid product, i.e. not "To be define".'
+        if message:
+            raise osv.except_osv(_('Warning !'), _(message))
+        else:
+            vals['to_correct_ok'] = False
+            vals['text_error'] = False
+        
+        return super(tender_line, self).write(cr, uid, ids, vals, context=context)
+
 tender_line()

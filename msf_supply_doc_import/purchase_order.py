@@ -353,9 +353,6 @@ class purchase_order_line(osv.osv):
             if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
                 message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
         # the 3rd level is not mandatory
-#        if vals.get('nomen_manda_3'):
-#            if vals.get('nomen_manda_3') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]:
-#                message += 'You have to define a valid Root (in tab "Nomenclature Selection"), i.e. not "To be define".'
         if message:
             raise osv.except_osv(_('Warning !'), _(message))
         else:
