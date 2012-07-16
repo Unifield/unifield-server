@@ -148,10 +148,15 @@
             <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
             <field name="arch" type="xml">
                 <data>
+                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']/field[@name='product_uom']" position="before">
+                    <field name="comment" />
+                    <field name="nomenclature_description" />
+                </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
                 </xpath>
-                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']/button[@name='open_order_line_to_correct']" position="replace">
+                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']/button[@name='open_order_line_to_correct']" 
+                position="replace">
                     <button name="open_order_line_to_correct" 
                     string="Configurator" 
                     type="object" />
