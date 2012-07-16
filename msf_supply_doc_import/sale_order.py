@@ -106,6 +106,10 @@ class sale_order(osv.osv):
             comment = False
             functional_currency_id = False
             product_qty = 1
+            nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+            nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+            nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+            nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             
             line_num += 1
             row_len = len(row)
@@ -134,6 +138,8 @@ That means Not price, Neither Delivery requested date. """))
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
                      comment = 'Product Reference (Code) to be defined'
+                     default_code = False
+                     product_code = False
                      to_correct_ok = True
             
             p_name = row.cells[1].data
@@ -142,10 +148,6 @@ That means Not price, Neither Delivery requested date. """))
                 to_correct_ok = True
                 error_list.append('No Product Name')
                 comment = 'Product Name to be defined'
-                nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             else:
                 try:
                     product_name = p_name.strip()
@@ -155,10 +157,6 @@ That means Not price, Neither Delivery requested date. """))
                         to_correct_ok = True
                         comment = ' Description: %s'%p_name
                         error_list.append('The Product was not found in the list of the products.')
-                        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
                     else:
                         product_id = p_ids[0]
                         nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
@@ -167,6 +165,7 @@ That means Not price, Neither Delivery requested date. """))
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 except Exception:
                      error_list.append('The Product Name has to be a string.')
+                     product_id = False
                      comment = 'Product Name to be defined'
                      to_correct_ok = True
                 
@@ -296,6 +295,10 @@ That means Not price, Neither Delivery requested date. """))
             functional_currency_id = False
             price_unit = 1
             product_qty = 1
+            nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+            nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+            nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+            nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             
             line_num += 1
             row_len = len(row)
@@ -323,6 +326,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
                      comment = 'Product Reference (Code) to be defined'
+                     default_code = False
                      to_correct_ok = True
             
             p_name = row.cells[1].data
@@ -331,10 +335,6 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                 to_correct_ok = True
                 error_list.append('No Product Name')
                 comment = 'Product Name to be defined'
-                nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             else:
                 try:
                     product_name = p_name.strip()
@@ -344,10 +344,6 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         to_correct_ok = True
                         comment = ' Description: %s'%p_name
                         error_list.append('The Product was not found in the list of the products.')
-                        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
                     else:
                         product_id = p_ids[0]
                         nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
@@ -357,6 +353,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                 except Exception:
                      error_list.append('The Product Name has to be a string.')
                      comment = 'Product Name to be defined'
+                     product_id = False
                      to_correct_ok = True
                 
             product_qty = row.cells[2].data

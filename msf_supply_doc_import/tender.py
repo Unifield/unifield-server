@@ -103,12 +103,10 @@ class tender(osv.osv):
                     if not code_ids:
                         default_code = False
                         to_correct_ok = True
-                        comment = 'Code: %s'%product_code
                     else:
                         default_code = code_ids[0]
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
-                     comment = 'Product Reference (Code) to be defined'
                      to_correct_ok = True
             
             product_qty = row.cells[2].data
