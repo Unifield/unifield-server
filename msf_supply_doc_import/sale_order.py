@@ -513,39 +513,11 @@ class sale_order_line(osv.osv):
 
     def save_and_close(self, cr, uid, ids, context=None):
         '''
-        Save and close the configuration window 
+        Save and close the configuration window for internal request
         '''
-        uom_obj = self.pool.get('product.uom')
-        obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
         vals = {}
-        message = ''
-        
-        for line in self.read(cr, uid, ids, ['product_uom', 'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2'], context=context):
-            if line['product_uom']:
-                if line['product_uom'][0] == tbd_uom:
-                    message += 'You have to define a valid UOM, i.e. not "To be define".'
-            if line['nomen_manda_0']:
-                if line['nomen_manda_0'][0] == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
-                    message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
-            if line['nomen_manda_1']:
-                if line['nomen_manda_1'][0] == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
-                    message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
-            if line['nomen_manda_2']:
-                if line['nomen_manda_2'][0] == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
-                    message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1],
-        
-        if message:
-            raise osv.except_osv(_('Warning !'), _(message))
-            vals['to_correct_ok'] = True
-        else:
-            vals['to_correct_ok'] = False
-            vals['text_error'] = False
-        
         self.write(cr, uid, ids, vals, context=context)
-        
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
         return {'type': 'ir.actions.act_window_close',
                 'res_model': 'sale.order',
                 'view_type': 'form',
@@ -556,7 +528,7 @@ class sale_order_line(osv.osv):
 
     def open_order_line_to_correct(self, cr, uid, ids, context=None):
         '''
-        Open Order Line in form view
+        Open Order Line in form view for internal request
         '''
         if context is None:
             context = {}
@@ -575,6 +547,35 @@ class sale_order_line(osv.osv):
             'view_id': [view_id],
         }
         return view_to_return
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uom_obj = self.pool.get('product.uom')
+        obj_data = self.pool.get('ir.model.data')
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+        message = ''
+        
+        if vals.get('product_uom'):
+            if vals.get('product_uom') == tbd_uom:
+                message += 'You have to define a valid UOM, i.e. not "To be define".'
+        if vals.get('nomen_manda_0'):
+            if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+        if vals.get('nomen_manda_1'):
+            if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+        if vals.get('nomen_manda_2'):
+            if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+        # the 3rd level is not mandatory
+        if message:
+            raise osv.except_osv(_('Warning !'), _(message))
+        else:
+            vals['to_correct_ok'] = False
+            vals['text_error'] = False
+        
+        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()
 
