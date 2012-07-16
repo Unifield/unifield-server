@@ -109,14 +109,10 @@ class sale_order(osv.osv):
             
             line_num += 1
             row_len = len(row)
-            if row_len > 6:
-                raise osv.except_osv(_('Error'), _("""You have written element outside the columns, please check your Excel file. 
-Internal Request should have exactly 6 columns : Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment.
+            if row_len != 6:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
+Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment.
 That means Not price, Neither Delivery requested date. """))
-            elif row_len < 6:
-                raise osv.except_osv(_('Error'), _("""Some columns are missing, please check your Excel file. 
-You should have exactly 6 columns:
-Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment"""))
             
             # for each cell we check the value
             product_code = row.cells[0].data
@@ -303,14 +299,9 @@ Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment"""))
             
             line_num += 1
             row_len = len(row)
-            if row_len > 8:
-                raise osv.except_osv(_('Error'), _("""You have written element outside the columns, please check your Excel file'.
-You should have 8 columns:
-Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
-            elif row_len < 8:
-                raise osv.except_osv(_('Error'), _("""Some columns are missing, please check your Excel file. 
-You should have 8 columns:
-Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
+            if row_len != 8:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
+Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             # for each cell we check the value
             product_code = row.cells[0].data

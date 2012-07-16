@@ -88,14 +88,9 @@ class tender(osv.osv):
             
             line_num += 1
             row_len = len(row)
-            if row_len > 6:
-                return error_list.append("""You have written element outside the columns, please check your Excel file.
- Tenders should have 6 columns:
- Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*""")
-            elif row_len < 6:
-                raise osv.except_osv(_('Error'), _("""Some columns are missing, please check your Excel file. 
-You should have 6 columns:
-Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
+            if row_len != 6:
+                raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
+ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
             
             product_code = row.cells[0].data
             if not product_code:
@@ -175,7 +170,6 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
             msg_to_return = _("Please correct the red lines below, %s line%s errors ")%(nb_lines_error, plural)
         else:
             msg_to_return = _("All lines successfully imported")
-
         
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
         
