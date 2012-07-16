@@ -63,6 +63,11 @@ class account_journal(osv.osv):
     _defaults = {
         'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
+    
+    _sql_constraints = [
+        ('code_company_uniq', 'unique (code, company_id, instance_id)', 'The code of the journal must be unique per company and instance !'),
+        ('name_company_uniq', 'unique (name, company_id, instance_id)', 'The name of the journal must be unique per company and instance !'),
+    ]
 
 account_journal()
 
