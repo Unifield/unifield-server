@@ -126,7 +126,7 @@ Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment"""))
                 error_list.append('No Product Reference (Code).')
                 comment = 'Product Reference (Code) to be defined'
             else:
-                code_ids = product_obj.search(cr, uid, [('default_code', '=', str(product_code).strip())])
+                code_ids = product_obj.search(cr, uid, [('default_code', '=', repr(product_code).strip())])
                 if not code_ids:
                     default_code = False
                     to_correct_ok = True
@@ -145,7 +145,7 @@ Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment"""))
                 nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
                 nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             else:
-                p_ids = product_obj.search(cr, uid, [('name', '=', str(p_name).strip())])
+                p_ids = product_obj.search(cr, uid, [('name', '=', repr(p_name).strip())])
                 if not p_ids:
                     product_id = False
                     to_correct_ok = True
@@ -180,7 +180,7 @@ Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment"""))
                 to_correct_ok = True
                 error_list.append('No product UoM was defined.')
             else:
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', str(p_uom).strip())], context=context)
+                uom_ids = uom_obj.search(cr, uid, [('name', '=', repr(p_uom).strip())], context=context)
                 if not uom_ids:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                     to_correct_ok = True
@@ -193,7 +193,7 @@ Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment"""))
                 to_correct_ok = True
                 error_list.append('No currency was defined.')
             else:
-                currency_ids = currency_obj.search(cr, uid, [('name', '=', str(curr).strip())])
+                currency_ids = currency_obj.search(cr, uid, [('name', '=', repr(curr).strip())])
                 if currency_ids:
                     functional_currency_id = curr
                 else:
@@ -296,7 +296,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 error_list.append('No Product Reference (Code).')
                 comment = 'Product Reference (Code) to be defined'
             else:
-                code_ids = product_obj.search(cr, uid, [('default_code', '=', str(product_code).strip())])
+                code_ids = product_obj.search(cr, uid, [('default_code', '=', repr(product_code).strip())])
                 if not code_ids:
                     default_code = False
                     to_correct_ok = True
@@ -315,7 +315,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
                 nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
             else:
-                p_ids = product_obj.search(cr, uid, [('name', '=', str(p_name).strip())])
+                p_ids = product_obj.search(cr, uid, [('name', '=', repr(p_name).strip())])
                 if not p_ids:
                     product_id = False
                     to_correct_ok = True
@@ -351,7 +351,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 to_correct_ok = True
                 error_list.append('No product UoM was defined.')
             else:
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', str(p_uom).strip())], context=context)
+                uom_ids = uom_obj.search(cr, uid, [('name', '=', repr(p_uom).strip())], context=context)
                 if not uom_ids:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                     to_correct_ok = True
@@ -389,7 +389,7 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 to_correct_ok = True
                 error_list.append('No currency was defined.')
             else:
-                currency_ids = currency_obj.search(cr, uid, [('name', '=', str(curr).strip())])
+                currency_ids = currency_obj.search(cr, uid, [('name', '=', repr(curr).strip())])
                 if currency_ids:
                     functional_currency_id = curr
                 else:
