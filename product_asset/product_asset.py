@@ -435,7 +435,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.subtype == 'asset':
                     if not move.asset_id:
                         return False
