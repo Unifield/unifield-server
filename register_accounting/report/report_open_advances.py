@@ -40,7 +40,7 @@ class report_open_advances(report_sxw.report_sxw):
         
         # retrieve a big sql query with all information
         sql_open_advances = """
-            SELECT DISTINCT journal.name, move.name, line.instance,
+            SELECT DISTINCT journal.name, move.name, line.instance_id.code,
                    line.ref, line.date, period.name,
                    account.code || ' ' || account.name as account_name,
                    line.partner_txt, line.name,

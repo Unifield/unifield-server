@@ -101,8 +101,8 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
-                                        <field name="account_ids" colspan="4" string="Expense accounts"
-                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination"
+                                               context="context" 
                                                attrs="{'invisible': [('line_type', '=', 'view')]}">
                                         </field>
                                     </form>
@@ -139,6 +139,21 @@
                         <field name="inactivation_date" />
                         <field name="used" invisible='1'/>
                     </tree>
+                </field>
+            </record>
+
+            <record id="view_account_destination_link_for_contract_tree" model="ir.ui.view">
+                <field name="name">account_destination_link_for_contract.tree</field>
+                <field name="model">account.destination.link</field>
+                <field name="priority" eval="250" />
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Account/Destination" colors="grey:used" notselectable="used">
+                        <field name="name" invisible="1"/>
+                        <field name="account_id"/>
+                        <field name="destination_id"/>
+                            <field name="used" invisible='1'/>
+                        </tree>
                 </field>
             </record>
 
@@ -227,8 +242,8 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
-                                        <field name="account_ids" colspan="4" string="Expense accounts"
-                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination"
+                                               context="context" 
                                                attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                     </form>
                                 </field>

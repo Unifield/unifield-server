@@ -69,8 +69,8 @@ class account_line_csv_export(osv.osv_memory):
         # Then write lines
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             csv_line = []
-            #instance (Proprietary Instance)
-            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
+            #instance_id (Proprietary Instance)
+            csv_line.append(ml.instance_id and ml.instance_id.code and ml.instance_id.code.encode('utf-8') or '')
             # journal_id
             csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
             #move_id (Entry Sequence)
@@ -177,8 +177,8 @@ class account_line_csv_export(osv.osv_memory):
         # Then write lines
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             csv_line = []
-            #instance
-            csv_line.append(al.company_id and al.company_id.name and al.company_id.name.encode('utf-8') or '')
+            #instance_id
+            csv_line.append(al.instance_id and al.instance_id.code and al.instance_id.code.encode('utf-8') or '')
             # journal_id
             csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
             #sequence

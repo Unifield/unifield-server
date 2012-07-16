@@ -37,10 +37,19 @@ class monthly_budget(report_sxw.rml_parse):
         budget_amounts = self.pool.get('msf.budget.line')._get_budget_amounts(self.cr, self.uid, budget_line_ids)
         
         for line in selected_lines:
-            budget_amount = budget_amounts[line.account_id.id]
+            budget_line_destination_id = line.destination_id and line.destination_id.id or False
+            budget_amount = budget_amounts[line.account_id.id, budget_line_destination_id]
             total = locale.format("%d", sum(budget_amount), grouping=True)
             formatted_budget_values = [locale.format("%d", x, grouping=True) for x in budget_amount]
-            budget_line = [line.account_id.code + " " + line.account_id.name]
+            # Format name
+            line_name = line.account_id.code
+            if line.destination_id:
+                line_name += " "
+                line_name += line.destination_id.code
+            line_name += " "
+            line_name += line.account_id.name
+            
+            budget_line = [line_name]
             budget_line += formatted_budget_values
             budget_line.append(total)
             # append to result
