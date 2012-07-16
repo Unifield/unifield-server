@@ -83,7 +83,6 @@ class tender(osv.osv):
             error_list = []
             to_correct_ok = False
             default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
-            price_unit = 1
             product_qty = 1
             nb_lines_error = 0
             
@@ -149,19 +148,6 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                      error_list.append('The UoM Name has to be a string.')
                      uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                      to_correct_ok = True
-                    
-            price_unit = row.cells[4].data
-            if not price_unit:
-                to_correct_ok = True
-                error_list.append('The Price Unit was not set, we set it to 1 by default.')
-            else:
-                try:
-                    float(price_unit)
-                    price_unit = float(price_unit)
-                except ValueError:
-                     error_list.append('The Price Unit was not a number, we set it to 1 by default.')
-                     to_correct_ok = True
-                     price_unit = 1.0
                 
             to_write = {
                 'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
@@ -170,7 +156,6 @@ Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requeste
                 'product_id': default_code,
                 'product_uom': uom_id,
                 'qty': product_qty,
-                'price_unit': price_unit,
             }
             
             vals['tender_line_ids'].append((0, 0, to_write))
