@@ -151,7 +151,7 @@
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
                 </xpath>
-                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']/field[@name='product_uom']" position="after">
+                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']/button[@name='open_order_line_to_correct']" position="replace">
                     <button name="open_order_line_to_correct" 
                     string="Configurator" 
                     type="object" />
