@@ -23,6 +23,7 @@ import locale
 import pooler
 import datetime
 from tools.translate import _
+from osv import osv
 
 class report_pdf_engagement(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
