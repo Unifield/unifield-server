@@ -374,7 +374,7 @@ class analytic_distribution(osv.osv):
                         'account_id': distrib_line.analytic_id.id,
                         'cost_center_id': False,
                         'destination_id': False,
-                        'distrib_line_id': '%s,%s'%(distrib_lines._name, distrib_line.id),
+                        'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                     })
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':
