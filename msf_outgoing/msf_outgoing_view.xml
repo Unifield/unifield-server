@@ -491,6 +491,7 @@
 							<field name="num_of_packs" />
 							<field name="total_volume" />
 							<field name="total_weight" />
+							<field name="description" />
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1" />
@@ -500,9 +501,6 @@
 							<field name="subtype" invisible="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
 							<field name='ppl_customize_label' required="True" />
-						</group>
-						<group colspan="6" col="2">
-							<field name="description" required="1" />
 						</group>
 					</group>
 					<notebook colspan="4">
