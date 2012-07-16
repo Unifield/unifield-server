@@ -20,7 +20,7 @@
 #
 ##############################################################################
 
-import os, sys, imp
+import os, sys, imp, getpass
 from os.path import join as opj
 import itertools
 import zipimport
@@ -746,6 +746,9 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                     # upgrading the module information
                     modobj.write(cr, 1, [mid], modobj.get_values_from_terp(package.data))
                 load_init_update_xml(cr, m, idref, mode, kind)
+                # Hack to load data only on Unifield runbot
+                if tools.config['additional_xml']:
+                    load_init_update_xml(cr, m, idref, mode, 'additional')
             load_data(cr, m, idref, mode)
             if hasattr(package, 'demo') or (package.dbdemo and package.state != 'installed'):
                 status['progress'] = (float(statusi)+0.75) / len(graph)
