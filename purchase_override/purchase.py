@@ -1396,7 +1396,7 @@ class purchase_order_line(osv.osv):
         # add the database Id to the sync_pol_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         if 'sync_pol_db_id' not in vals:
-            super(purchase_order_line, self).write(cr, uid, po_line_ids, {'sync_pol_db_id': po_line_id,} , context=context)
+            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_pol_db_id': po_line_id}, context=context)
 
         return po_line_id
 
