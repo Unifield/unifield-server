@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from osv import fields, osv
+import warnings
 
 
 class many2many_sorted(fields.many2many):
