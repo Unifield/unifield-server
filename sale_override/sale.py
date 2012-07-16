@@ -812,7 +812,8 @@ class sale_order(osv.osv):
             if order.from_yml_test:
                 continue
             for line in order.order_line:
-                if line.type == 'make_to_order' and line.state != 'confirmed':
+                # the product needs to have a product selected, otherwise not procurement, and no po to trigger back the so
+                if line.type == 'make_to_order' and line.state != 'confirmed' and line.product_id:
                     return False
         return True
 
