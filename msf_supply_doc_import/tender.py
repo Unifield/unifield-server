@@ -1,4 +1,23 @@
 # -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile. All Rights Reserved
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
 
 from osv import osv
 from osv import fields
@@ -74,6 +93,10 @@ class tender(osv.osv):
                 return error_list.append("""You have written element outside the columns, please check your Excel file.
  Tenders should have 6 columns:
  Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*""")
+            elif row_len < 6:
+                raise osv.except_osv(_('Error'), _("""Some columns are missing, please check your Excel file. 
+You should have 6 columns:
+Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
             
             product_code = row.cells[0].data
             if not product_code:
