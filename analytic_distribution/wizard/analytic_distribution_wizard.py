@@ -882,7 +882,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
                 # Create funding pool lines from CC lines if wizard is from PO/FO
                 # PAY ATTENTION THAT break avoid problem that delete new created funding pool
-                if line_type == 'cost.center' and wiz.state == 'cc' and (wiz.purchase_id or wiz.purchase_line_id):
+                if line_type == 'cost.center' and wiz.state == 'cc' and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
                     fp_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
                     if fp_ids:
                         self.pool.get('funding.pool.distribution.line').unlink(cr, uid, fp_ids)
