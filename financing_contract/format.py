@@ -61,7 +61,7 @@ class account_destination_link(osv.osv):
     _name = 'account.destination.link'
     _inherit = 'account.destination.link'
 
-    def _get_used(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         if context is None:
             context = {}
@@ -87,7 +87,7 @@ class account_destination_link(osv.osv):
             res[id] = id in exclude
         return res
 
-    def _search_used(self, cr, uid, obj, name, args, context=None):
+    def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         if context is None:
@@ -111,7 +111,7 @@ class account_destination_link(osv.osv):
         return [('id', 'not in', exclude.keys())]
 
     _columns = {
-        'used': fields.function(_get_used, method=True, type='boolean', string='Used', fnct_search=_search_used),
+        'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

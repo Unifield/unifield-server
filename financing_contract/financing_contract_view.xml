@@ -126,33 +126,17 @@
                 </field>
             </record>
 
-            <record id="view_account_for_contract_tree" model="ir.ui.view">
-                <field name="name">account_for_contract.tree</field>
-                <field name="model">account.account</field>
-                <field name="priority" eval="250" />
-                <field name="type">tree</field>
-                <field name="arch" type="xml">
-                    <tree string="Account" colors="grey:used" notselectable="used">
-                        <field name="code" />
-                        <field name="name" />
-                        <field name="activation_date" />
-                        <field name="inactivation_date" />
-                        <field name="used" invisible='1'/>
-                    </tree>
-                </field>
-            </record>
-
             <record id="view_account_destination_link_for_contract_tree" model="ir.ui.view">
                 <field name="name">account_destination_link_for_contract.tree</field>
                 <field name="model">account.destination.link</field>
                 <field name="priority" eval="250" />
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Account/Destination" colors="grey:used" notselectable="used">
+                    <tree string="Account/Destination" colors="grey:used_in_contract" notselectable="used_in_contract">
                         <field name="name" invisible="1"/>
                         <field name="account_id"/>
                         <field name="destination_id"/>
-                            <field name="used" invisible='1'/>
+                        <field name="used_in_contract" invisible='1'/>
                         </tree>
                 </field>
             </record>
