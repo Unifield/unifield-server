@@ -658,10 +658,12 @@ stock moves which are already processed : '''
         # if we have sol_ids, we are treating a po which is make_to_order from sale order
         if all_so_ids:
             # we retrieve the list of ids of all sale order line if type 'make_to_order' with state != 'confirmed'
+            # with product_id (if no product id, no procurement, no po, so should not be taken into account)
             # in case of grouped po, multiple Fo depend on this po, all Po of these Fo need to be completed
             # and all Fo will be confirmed together. Because IN of grouped Po need corresponding OUT document of all Fo
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
+                                                                 ('product_id', '!=', False),
                                                                  ('state', '!=', 'confirmed')], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:

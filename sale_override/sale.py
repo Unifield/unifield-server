@@ -703,12 +703,13 @@ class sale_order(osv.osv):
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
                     line_obj.write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
-                    # if the line is draft (it should be the case), we set its state to 'sourced'
-                    if line.state == 'draft':
-                        line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line:
                         display_log = False
+                
+                # if the line is draft (it should be the case), we set its state to 'sourced'
+                    if line.state == 'draft':
+                        line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
                     
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
