@@ -310,13 +310,31 @@ class stock_picking(osv.osv):
                 update_out = (len(partial_datas[pick.id][move.id]) > 1)
                 # average price computation, new values - should be the same for every partial
                 average_values = {}
+                
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
                     # original openERP logic - average price computation - To be validated by Matthias
                     # Average price computation
                     # selected product from wizard must be tested
                     product = product_obj.browse(cr, uid, partial['product_id'], context=ctx_avg)
-                    if (pick.type == 'in') and (product.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
+                    values = {'name': partial['name'],
+                              'product_id': partial['product_id'],
+                              'product_qty': partial['product_qty'],
+                              'product_uos_qty': partial['product_qty'],
+                              'prodlot_id': partial['prodlot_id'],
+                              'product_uom': partial['product_uom'],
+                              'asset_id': partial['asset_id'],
+                              'change_reason': partial['change_reason'],
+                              }
+                    if first:
+                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
+                    
+                    compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
+                    if values.get('location_dest_id'):
+                        val_loc = self.pool.get('stock.location').browse(cr, uid, values.get('location_dest_id'), context=context)
+                        compute_average = pick.type == 'in' and product.cost_method == 'average' and not val_loc.cross_docking_location_ok
+                    
+                    if compute_average:
                         move_currency_id = move.company_id.currency_id.id
                         context['currency_id'] = move_currency_id
                         # datas from partial
@@ -359,19 +377,8 @@ class stock_picking(osv.osv):
                     count = count + partial['product_qty']
                     if first:
                         first = False
-                        # update existing move
-                        values = {'name': partial['name'],
-                                  'product_id': partial['product_id'],
-                                  'product_qty': partial['product_qty'],
-                                  'product_uos_qty': partial['product_qty'],
-                                  'prodlot_id': partial['prodlot_id'],
-                                  'product_uom': partial['product_uom'],
-                                  'asset_id': partial['asset_id'],
-                                  'change_reason': partial['change_reason'],
-                                  }
                         # average computation - empty if not average
                         values.update(average_values)
-                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                         move_obj.write(cr, uid, [move.id], values, context=context)
                         done_moves.append(move.id)
                         # if split happened, we update the corresponding OUT move
@@ -386,16 +393,7 @@ class stock_picking(osv.osv):
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
-                        values = {'name': partial['name'],
-                                  'product_id': partial['product_id'],
-                                  'product_qty': partial['product_qty'],
-                                  'product_uos_qty': partial['product_qty'],
-                                  'prodlot_id': partial['prodlot_id'],
-                                  'product_uom': partial['product_uom'],
-                                  'asset_id': partial['asset_id'],
-                                  'change_reason': partial['change_reason'],
-                                  'state': 'assigned',
-                                  }
+                        values.update({'state': 'assigned'})
                         # average computation - empty if not average
                         values.update(average_values)
                         new_move = move_obj.copy(cr, uid, move.id, values, context=context)
