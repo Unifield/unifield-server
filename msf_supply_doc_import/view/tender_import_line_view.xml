@@ -20,7 +20,7 @@
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4">
                     <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
-                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Name*, Qty*, Product UoM*, Unit Price*, Delivery Requested Date*" align="0.0"/>
+                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*" align="0.0"/>
                     <field name="file_to_import" colspan="2" />
                     <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" invisible="1"/>
