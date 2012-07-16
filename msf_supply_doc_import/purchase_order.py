@@ -186,6 +186,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                 
             product_qty = row.cells[2].data
             if not product_qty :
+                product_qty = 1.0
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
@@ -220,6 +221,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             price_unit = row.cells[4].data
             if not price_unit:
                 to_correct_ok = True
+                price_unit = 1.0
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
             else:
                 try:

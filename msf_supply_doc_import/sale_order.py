@@ -172,6 +172,7 @@ That means Not price, Neither Delivery requested date. """))
             product_qty = row.cells[2].data
             if not product_qty:
                 to_correct_ok = True
+                product_qty = 1.0
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
                 try:
@@ -179,6 +180,7 @@ That means Not price, Neither Delivery requested date. """))
                     product_qty = float(product_qty)
                 except ValueError:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
+                     product_qty = 1.0
                      to_correct_ok = True
             
             p_uom = row.cells[3].data
@@ -359,6 +361,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             if not product_qty:
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
+                product_qty = 1.0
             else:
                 try:
                     float(product_qty)
@@ -392,6 +395,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             if not price_unit:
                 to_correct_ok = True
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
+                price_unit = 1.0
             else:
                 try:
                     float(price_unit)
