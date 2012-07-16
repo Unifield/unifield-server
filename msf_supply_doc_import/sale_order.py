@@ -235,7 +235,6 @@ That means Not price, Neither Delivery requested date. """))
                 'default_code':  default_code,
                 'product_id': product_id,
                 'product_uom': uom_id,
-                'product_qty': product_qty,
                 'product_uom_qty': product_qty,
                 'functional_currency_id': functional_currency_id,
                 'type': proc_type,
