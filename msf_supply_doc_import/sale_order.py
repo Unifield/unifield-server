@@ -252,7 +252,7 @@ That means Not price, Neither Delivery requested date. """))
         
         for line in obj.order_line:
             if line.to_correct_ok:
-                msg_to_return = _("The import of sale order lines had errors, please correct the red lines below")
+                msg_to_return = _("The import had errors, please correct the red lines below")
         
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
     
