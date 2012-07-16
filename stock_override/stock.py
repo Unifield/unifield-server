@@ -266,7 +266,7 @@ class stock_picking(osv.osv):
         sequence_obj = self.pool.get('ir.sequence')
         wf_service = netsvc.LocalService("workflow")
 
-        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
@@ -625,7 +625,7 @@ class stock_move(osv.osv):
         complete, too_many, too_few = [], [], []
         move_product_qty = {}
         prodlot_ids = {}
-        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
         for move in self.browse(cr, uid, ids, context=context):

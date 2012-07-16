@@ -278,8 +278,7 @@ class stock_picking(osv.osv):
         create_picking_obj = self.pool.get('create.picking')
         # workflow
         wf_service = netsvc.LocalService("workflow")
-       
-        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
