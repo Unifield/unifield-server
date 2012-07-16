@@ -271,9 +271,10 @@ class sourcing_line(osv.osv):
         '''
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             delay = -1
-            for suppinfo in sourcing_line.product_id.seller_ids:
-                if suppinfo.name.id == partner_id:
-                    delay = suppinfo.delay
+            if sourcing_line.product_id:
+                for suppinfo in sourcing_line.product_id.seller_ids:
+                    if suppinfo.name.id == partner_id:
+                        delay = suppinfo.delay
                     
             return delay
     
