@@ -105,14 +105,11 @@ class sale_order(osv.osv):
         # Analytic distribution verification if partner_type is 'internal'
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
-            if so.partner_id.partner_type == 'section' and not so.analytic_distribution_id:
+            if so.partner_id.partner_type == 'section':
                 for line in so.order_line:
-                    if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                            'analytic_account_project_dummy')
-                        ana_id = ana_obj.create(cr, uid, {'sale_order_ids': [(4,so.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
-                        break
+                    distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
+                    if not distrib_id:
+                        raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
         # Default behaviour
         res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
@@ -199,12 +196,29 @@ class sale_order_line(osv.osv):
         currency = sol.order_id.currency_id and sol.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id
+        # Search account_id
+        a = False
+        if sol.product_id:
+            a = sol.product_id.product_tmpl_id.property_account_income.id
+            if not a:
+                a = sol.product_id.categ_id.property_account_income_categ.id
+            if not a:
+                raise osv.except_osv(_('Error !'),
+                        _('There is no income account defined ' \
+                                'for this product: "%s" (id:%d)') % \
+                                (sol.product_id.name, sol.product_id.id,))
+        else:
+            prop = self.pool.get('ir.property').get(cr, uid,
+                    'property_account_income_categ', 'product.category',
+                    context=context)
+            a = prop and prop.id or False
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'sale_order_line_id': sol.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'account_id': a,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

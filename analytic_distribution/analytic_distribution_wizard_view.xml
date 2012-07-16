@@ -69,6 +69,8 @@
                     <field name="commitment_id" invisible="1"/>
                     <field name="purchase_id" invisible="1"/>
                     <field name="purchase_line_id" invisible="1"/>
+                    <field name="sale_order_id" invisible="1"/>
+                    <field name="sale_order_line_id" invisible="1"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
                         <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1" attrs="{'invisible': [('is_writable', '=', False)]}"/>
@@ -82,7 +84,7 @@
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>
-                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_purchase': purchase_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_purchase': purchase_id, 'from_sale_order': sale_order_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
