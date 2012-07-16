@@ -236,8 +236,12 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                     datetime.strptime(str(check_date), '%d/%b/%Y')
                     date_planned = check_date
                 except ValueError:
-                    error_list.append('The date format should be "DD-MM-YYYY", we took the one from the parent.')
-                    to_correct_ok = True
+                    try:
+                        datetime.strptime(str(check_date), '%d/%m/%Y')
+                        date_planned = check_date
+                    except ValueError:
+                        error_list.append('The date format should be "DD-MM-YYYY", we took the one from the parent.')
+                        to_correct_ok = True
             else:
                 error_list.append('The date was not specified so we took the one from the parent.')
             
