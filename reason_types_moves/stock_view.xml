@@ -104,15 +104,6 @@
                         <attribute name="noteditable">True</attribute>
                     </xpath>
 
-                    <xpath expr="/tree//button[@string='Scrap Products']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree//button[@string='Split in production lots']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree//button[@string='Put in a new pack']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree//button[@string='Put in current pack']" position="replace">
-                    </xpath>
-
                 </data>
             </field>
         </record>
