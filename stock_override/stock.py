@@ -30,6 +30,7 @@ import netsvc
 import tools
 import decimal_precision as dp
 import logging
+from os import path
 
 
 #----------------------------------------------------------
@@ -237,14 +238,36 @@ class stock_picking(osv.osv):
 
         return True
     
-    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+    def _do_partial_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        hook to update defaults data
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to modify the defaults data for move creation and copy
         '''
         defaults = kwargs.get('defaults')
         assert defaults is not None, 'missing defaults'
         
         return defaults
+    
+    def _picking_done_cond(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to conditionally execute the picking processing to done
+        '''
+        return True
+    
+    def _custom_code(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to execute specific custom code before processing picking to done
+        - no supposed to modify partial_datas
+        '''
+        return True
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
@@ -387,19 +410,25 @@ class stock_picking(osv.osv):
                 defaults = self._do_partial_hook(cr, uid, ids, context, move=move, partial_datas=partial_datas, defaults=defaults)
                 move_obj.write(cr, uid, [move.id], defaults)
 
-
             # At first we confirm the new picking (if necessary)
             if new_picking:
+                self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
+                # custom code execution
+                self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=self.browse(cr, uid, new_picking, context=context))
+                # we confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
                 wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
-                self.action_move(cr, uid, [new_picking])
-                wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
+                if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
+                    self.action_move(cr, uid, [new_picking])
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
                 delivered_pack_id = new_picking
             else:
-                self.action_move(cr, uid, [pick.id])
-                wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                # custom code execution
+                self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=pick)
+                if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
+                    self.action_move(cr, uid, [pick.id])
+                    wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
                 delivered_pack_id = pick.id
 
             delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
@@ -780,6 +809,19 @@ stock_move()
 class stock_location(osv.osv):
     _name = 'stock.location'
     _inherit = 'stock.location'
+    
+    def init(self, cr):
+        """
+        Load data.xml asap
+        """
+        if hasattr(super(stock_location, self), 'init'):
+            super(stock_location, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        logging.getLogger('init').info('HOOK: module stock_override: loading stock_data.xml')
+        pathname = path.join('stock_override', 'stock_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'stock_override', file, {}, mode='init', noupdate=False)
     
     def _product_value(self, cr, uid, ids, field_names, arg, context=None):
         """Computes stock value (real and virtual) for a product, as well as stock qty (real and virtual).
