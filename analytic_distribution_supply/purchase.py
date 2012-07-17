@@ -140,7 +140,10 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Prepare some values
         commit_obj = self.pool.get('account.commitment')
-        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
+        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
+                                                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)],
+                                                                             limit=1,
+                                                                             context=context)
         for po in self.browse(cr, uid, ids, context=context):
             # fetch analytic distribution, period from delivery date, currency, etc.
             vals = {
@@ -165,17 +168,7 @@ class purchase_order(osv.osv):
             })
             # Create commitment
             commit_id = commit_obj.create(cr, uid, vals, context=context)
-            # Add analytic distribution from purchase
-            if po.analytic_distribution_id:
-                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
-                # Update this distribution not to have a link with purchase but with new commitment
-                if new_distrib_id:
-                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], 
-                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
-                    # Create funding pool lines if needed
-                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
-                    # Update commitment with new analytic distribution
-                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
+            # Code to retrieve analytic distribution from PO to commitment header have been delete because of impossibility to know which analytic destination could be used.
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id
@@ -216,41 +209,6 @@ class purchase_order(osv.osv):
             view_id = view_ids and view_ids[1] or False
             self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_id})
         return True
-
-    def wkf_approve_order(self, cr, uid, ids, context=None):
-        """
-        Checks:
-        1/ if all purchase line could take an analytic distribution
-        2/ if a commitment voucher should be created after PO approbation
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Analytic distribution verification
-        ana_obj = self.pool.get('analytic.distribution')
-        for po in self.browse(cr, uid, ids, context=context):
-            if not po.analytic_distribution_id:
-                for line in po.order_line:
-                    if po.from_yml_test:
-                        continue
-                    if not line.analytic_distribution_id:
-                        try:
-                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                                'analytic_account_project_dummy')
-                        except ValueError:
-                            dummy_cc = 0
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-                        break
-        # Default behaviour
-        res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
-        # Create commitments for each PO only if po is "from picking"
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test:
-                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
-        return res
 
     def _finish_commitment(self, cr, uid, ids, context=None):
         """

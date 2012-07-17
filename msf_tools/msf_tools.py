@@ -159,6 +159,15 @@ class fields_tools(osv.osv):
         res = company_obj.read(cr, uid, [company_id], [field], context=context)[0][field]
         return res
     
+    def get_selection_name(self, cr, uid, object, field, key, context=None):
+        '''
+        return the name of the key for a selection field
+        '''
+        for t in object._columns[field].selection:
+            if t[0] == key:
+                return t[1]
+        return False
+    
 fields_tools()
     
 

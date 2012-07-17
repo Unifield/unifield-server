@@ -31,11 +31,13 @@
                         </group>
                     </xpath>
 
-                    <xpath expr="/form/notebook/page/group[1]/field[@name='amount_total']" position="after">
+                    <xpath expr="/form/notebook/page/group[1]/field[@name='functional_amount_total']" position="after">
+                        <newline />
                         <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}" />
                     </xpath>
 
-                    <xpath expr="/form/notebook/page/group[1]/field[@name='functional_amount_total']" position="after">
+                    <xpath expr="/form/notebook/page/group[1]/field[@name='total_price_include_transport']" position="after">
+                        <newline />
                         <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                     </xpath>
 

@@ -32,7 +32,7 @@ class cashbox_write_off(osv.osv_memory):
     _columns = {
         'choice' : fields.selection( [('writeoff', 'Accept write-off and close register'), ('reopen', 'Re-open Register')], \
             string="Decision about CashBox", required=True),
-        'account_id': fields.many2one('account.account', string="Write-off Account"),
+        'account_id': fields.many2one('account.account', string="Write-off Account", domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"),
         'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
     }
 
@@ -100,7 +100,8 @@ class cashbox_write_off(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('This option is only useful for CashBox with cash discrepancy!'))
                     return False
                 else:
-                    account_id = self.browse(cr, uid, ids)[0].account_id.id
+                    account = self.browse(cr, uid, ids)[0].account_id
+                    account_id = account.id
                     if account_id:
                         # Prepare some values
                         acc_mov_obj = self.pool.get('account.move')
@@ -141,7 +142,8 @@ class cashbox_write_off(osv.osv_memory):
                             fp_id = 0
                         if not fp_id:
                             raise osv.except_osv(_('Error'), _('No analytic account named "MSF Private Fund" found!'))
-                        distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0]})
+                        distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0], 
+                            'destination_id': account.default_destination_id and account.default_destination_id.id or False,})
                         self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
                         # create an account move (a journal entry)
                         move_vals = {

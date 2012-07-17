@@ -206,7 +206,8 @@ class product_asset(osv.osv):
                 'invo_num': fields.char('Invoice Number', size=128, required=True),
                 'invo_date': fields.date('Invoice Date', required=True),
                 'invo_value': fields.float('Value', required=True),
-                'invo_currency': fields.char('Currency', size=128, required=True),
+                #'invo_currency': fields.char('Currency', size=128, required=True),
+                'invo_currency': fields.many2one('res.currency', 'Currency', required=True),
                 'invo_supplier': fields.char('Supplier', size=128),
                 'invo_donator_code': fields.char('Donator Code', size=128),
                 'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
@@ -434,9 +435,9 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.subtype == 'asset':
-                    if not move.asset_id:
+                    if not move.asset_id and move.product_qty:
                         return False
         return True
     

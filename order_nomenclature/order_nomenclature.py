@@ -228,6 +228,39 @@ class purchase_order_line(osv.osv):
         return self.pool.get('sale.order.line').onChangeSubNom(cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context)
 purchase_order_line()
 
+
+class purchase_order_merged_line(osv.osv):
+    _name = 'purchase.order.merged.line'
+    _inherit = 'purchase.order.merged.line'
+    
+    _columns = {
+        'nomenclature_code': fields.char('Nomenclature code', size=1024),
+        'comment': fields.char('Comment', size=1024),
+        'default_code': fields.char('Product Reference', size=1024),
+        'default_name': fields.char('Product Name', size=1024),
+        'name': fields.char('Comment', size=1024, required=True),
+        
+        ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
+        # mandatory nomenclature levels -> not mandatory on screen here
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+
+        # optional nomenclature levels
+        'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1'),
+        'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2'),
+        'nomen_sub_2': fields.many2one('product.nomenclature', 'Sub Class 3'),
+        'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4'),
+        'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5'),
+        'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6'),
+
+        # concatenation of nomenclature in a visible way
+        'nomenclature_description': fields.char('Nomenclature', size=1024),
+    }
+    
+purchase_order_merged_line()
+
 #
 # SO
 #

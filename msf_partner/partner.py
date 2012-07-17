@@ -22,7 +22,7 @@
 
 from osv import osv
 from osv import fields
-from msf_partner import PARTNER_TYPE
+from msf_partner import PARTNER_TYPE 
 
 
 class res_partner(osv.osv):

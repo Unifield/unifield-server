@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -15,23 +15,29 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-import time
-from report import report_sxw
-from osv import osv
-import pooler
-
-class request_quotation(report_sxw.rml_parse):
-    def __init__(self, cr, uid, name, context):
-        super(request_quotation, self).__init__(cr, uid, name, context=context)
-        self.localcontext.update({
-            'time': time,
-            'user': self.pool.get('res.users').browse(cr, uid, uid, context)
-        })
-report_sxw.report_sxw('report.purchase.msf.quotation','purchase.order','addons/purchase_msf/report/request_quotation.rml',parser=request_quotation)
-
+{
+    "name" : "MSF Proprietary Instance",
+    "version": "1.1",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["account_msf", "res_currency_functional"],
+    "description": """Module for defining proprietary instances, their informations
+    """,
+    "init_xml" : [],
+    "update_xml": [
+        'msf_instance_view.xml',
+    ],
+    "additional_xml": [
+        'data/instance_data.xml',
+    ],
+    'demo_xml': [
+    ],
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
+}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

@@ -7,3 +7,5 @@
 "access_funding_pool_distribution_line","funding.pool.distribution.line","model_funding_pool_distribution_line",,1,1,1,1
 "account_commitment","account.commitment","model_account_commitment",,1,1,1,1
 "account_commitment_line","account.commitment.line","model_account_commitment_line",,1,1,1,1
+"access_account_destination_link","account.destination.link","model_account_destination_link",,1,1,1,1
+"access_account_destination_summary","account.destination.summary","model_account_destination_summary",,1,1,1,1

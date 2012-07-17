@@ -30,7 +30,7 @@
 								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 						</group>
 						<newline />
-						<group expand="1" string="Optional Nomenclature Filters...">
+						<group expand="0" string="Optional Nomenclature Filters...">
 							<field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 							<field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 							<field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
@@ -82,7 +82,8 @@
                                         get_selection="get_nomen"
 										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
 								</group>
-
+								<separator string="Library" colspan="10" />
+                                <field name="library" colspan="4"/>
 							</group>
 							
 							<group colspan="2" col="5">
@@ -123,6 +124,7 @@
                                         get_selection="get_sub_nomen"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                     />
+
 								</group>
 
 							</group>
@@ -181,18 +183,19 @@
 				</tree>
 			</field>
 		</record>
-		<record id="product_nomenclature_action" model="ir.actions.act_window">
+
+		<!--<record id="product_nomenclature_action" model="ir.actions.act_window">
 			<field name="name">Products by Nomenclature</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="res_model">product.nomenclature</field>
-			<field name="domain">[('parent_id','=',False)]</field> <!-- initial shape of tree -->
+			<field name="domain">[('parent_id','=',False)]</field>
 			<field name="view_type">tree</field>
 			<field name="view_id" ref="product_nomenclature_tree_view" />
 			<field name="help">Here is a list of all your products classified by
 				nomenclature.</field>
 		</record>
 		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_sales"
-			groups="base.group_extended" parent="base.menu_product" sequence="4" />
+			groups="base.group_extended" parent="base.menu_product" sequence="4" />-->
 		
 		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
 			<field name="name">Products Nomenclature</field>

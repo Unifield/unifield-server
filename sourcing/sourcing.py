@@ -271,9 +271,10 @@ class sourcing_line(osv.osv):
         '''
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             delay = -1
-            for suppinfo in sourcing_line.product_id.seller_ids:
-                if suppinfo.name.id == partner_id:
-                    delay = suppinfo.delay
+            if sourcing_line.product_id:
+                for suppinfo in sourcing_line.product_id.seller_ids:
+                    if suppinfo.name.id == partner_id:
+                        delay = suppinfo.delay
                     
             return delay
     
@@ -437,17 +438,19 @@ class sourcing_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
+            # corresponding state for the lines: IR: confirmed, FO: sourced
+            state_to_use = sl.sale_order_id.procurement_request and 'confirmed' or 'sourced'
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
             
             if sl.type == 'make_to_order' and sl.po_cft in ('po', 'dpo') and not sl.supplier:
-                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before confirming the line"))
+                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
             
             # set the corresponding sale order line to 'confirmed'
-            result.append((sl.id, sl.sale_order_line_id.write({'state':'confirmed'}, context)))
+            result.append((sl.id, sl.sale_order_line_id.write({'state': state_to_use}, context)))
             # check if all order lines have been confirmed
             linesConfirmed = True
             for ol in sl.sale_order_id.order_line:
-                if ol.state != 'confirmed':
+                if ol.state != state_to_use:
                     linesConfirmed = False
                     break
                 
@@ -593,12 +596,11 @@ class sale_order(osv.osv):
         - allow to customize the execution condition
         '''
         line = kwargs['line']
+        result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         
-        if line.type == 'make_to_stock' and line.order_id.procurement_request:
-            return False
-
-        return True
-    
+        # if make_to_stock and procurement_request, no procurement is created
+        return result and not(line.type == 'make_to_stock' and line.order_id.procurement_request)
+        
     def order_confirm_method(self, cr, uid, ids, context=None):
         '''
         wrapper for confirmation wizard
@@ -631,9 +633,18 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # we confirm (validation in unifield) the sale order
+            
+        # objects
         wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'sale.order', ids[0], 'order_confirm', cr)
+        sol_obj = self.pool.get('sale.order.line')
+        
+        # we confirm (validation in unifield) the sale order
+        # we set all line state to 'sourced' of the original Fo
+        for obj in self.browse(cr, uid, ids, context=context):
+            for line in obj.order_line:
+                sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
+            # trigger workflow signal
+            wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
         
         return {'name':_("Field Orders"),
                 'view_mode': 'form,tree',
@@ -710,17 +721,18 @@ class sale_order_line(osv.osv):
             else:
                 deliveryDate = product.delay_for_supplier 
 
-        # type
+        # if type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type'):
             vals['type'] = 'make_to_stock'
+            vals['po_cft'] = False
         
-        # fill po/cft : by default, if mto -> po, if mts -> False
-        pocft = False
-        if vals['type'] == 'make_to_order':
-            pocft = 'po'
+        # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
+        if not vals.get('po_cft', False) and vals.get('type', False) == 'make_to_order':
+            vals['po_cft'] = 'po'
+        elif vals.get('type', False) == 'make_to_stock':
+            vals['po_cft'] = False
         
-        # fill the default pocft and supplier
-        vals.update({'po_cft': pocft})
+        # fill the supplier
         vals.update({'supplier': sellerId})
         
         # create the new sale order line
@@ -746,12 +758,12 @@ class sale_order_line(osv.osv):
                   'sale_order_line_id': result,
                   'customer_id': customer_id,
                   'supplier': sellerId,
-                  'po_cft': pocft,
+                  'po_cft': vals['po_cft'],
                   'estimated_delivery_date': estDeliveryDate,
                   'rts': time.strftime('%Y-%m-%d'),
                   'type': vals['type'],
                   'line_number': vals['line_number'],
-                  'product_id': vals['product_id'],
+                  'product_id': vals.get('product_id', False),
                   'priority': orderPriority,
                   'categ': orderCategory,
                   'sale_order_state': orderState,
@@ -965,8 +977,14 @@ class procurement_order(osv.osv):
                     customer_id = line.order_id.partner_id.id 
                 values.update({'customer_id': customer_id})
                 purchase_domain.append(('customer_id', '=', customer_id))
-            
-        purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+        
+        # if we are updating the sale order from the corresponding on order purchase order
+        # the purchase order to merge the new line to is locked and provided in the procurement
+        if procurement.so_back_update_dest_po_id_procurement_order:
+            purchase_ids = [procurement.so_back_update_dest_po_id_procurement_order.id]
+        else:
+            # search for purchase order according to defined domain
+            purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
         
         # Set the origin of the line with the origin of the Procurement order
         if procurement.origin:

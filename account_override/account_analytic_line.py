@@ -71,7 +71,9 @@ class account_analytic_line(osv.osv):
 
     def reverse(self, cr, uid, ids, context=None):
         """
-        Reverse an analytic line
+        Reverse an analytic line:
+         - keep date as source_date
+         - mark this line as reversal
         """
         if not context:
             context = {}

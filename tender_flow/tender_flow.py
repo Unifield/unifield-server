@@ -691,7 +691,10 @@ class procurement_order(osv.osv):
         result = super(procurement_order, self).action_po_assign(cr, uid, ids, context=context)
         # The quotation 'SO001' has been converted to a sales order.
         if result:
-            po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
+            # do not display a log if we come from po update backward update of so
+            data = self.read(cr, uid, ids, ['so_back_update_dest_po_id_procurement_order'], context=context)
+            if not data[0]['so_back_update_dest_po_id_procurement_order']:
+                po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
             if self.browse(cr, uid, ids[0], context=context).is_tender:
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
@@ -791,11 +794,13 @@ class purchase_order(osv.osv):
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+            
+        self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
 
         datas = {'ids': ids}
 
         return {'type': 'ir.actions.report.xml',
-                'report_name': 'purchase.quotation',
+                'report_name': 'msf.purchase.quotation',
                 'datas': datas}
 
     def check_rfq_updated(self, cr, uid, ids, context=None):

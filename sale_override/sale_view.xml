@@ -9,6 +9,22 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/group//field[@name='shop_id']" position="replace">
+                        <field name="warehouse_id" required="1" />
+                    </xpath>
+
+                    <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
+                         <attribute name="string">Invoiced</attribute>
+                         <attribute name="attrs">{'invisible': [('intl_customer_ok', '=', False)]}</attribute>
+                    </xpath>
+
+                    <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='Extra Info']" position="replace">
+                    </xpath>
+                    <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='History']" position="replace">
+                    </xpath>
+
+
+
                     <xpath expr="/form//field[@name='name']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
                     </xpath>
@@ -41,12 +57,17 @@
                         </group>
                     </button>
 
-                    <xpath expr="/form//button[@name='order_confirm']" position="replace">
-                        <group>
-                            <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply"/>
-                            <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />
-                        </group>
+                    <xpath expr="/form/notebook//page[@string='Other Information']/group//field[@name='picking_policy']" position="attributes">
+                         <attribute name="invisible">1</attribute>
                     </xpath>
+
+                    <xpath expr="/form/notebook//page[@string='History']" position="replace">
+                        <page string="History" groups="base.group_extended" attrs="{'invisible': [( 'intl_customer_ok', '=', False )]}">
+                            <separator colspan="4" string="Invoices"/>
+                            <field colspan="4" name="invoice_ids" nolabel="1" context="{'form_view_ref':'account.invoice_form'}"/>
+                        </page>
+                    </xpath>
+
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
@@ -58,7 +79,8 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')], 'invisible': [('intl_customer_ok', '=', False)]  }</attribute>
+
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='user_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
@@ -106,6 +128,11 @@
                     <xpath expr="/search//filter[@string='Quotations']" position="replace">
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
+                    </xpath>
+                    
+                    <xpath expr="/search//filter[@string='To Invoice']" position="after">
+                    	<separator orientation="vertical" />
+                    	<filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                     </xpath>
             <xpath expr="/search/field[@name='name']" position="after">
             <field name="client_order_ref" />
@@ -171,11 +198,11 @@
                   parent="menu_sales_deliver_products" sequence="10"/>
 
         <!-- Products -->
-        <menuitem action="product.product_category_action"
+        <!--<menuitem action="product.product_category_action"
                   id="product.menu_products_category"
                   groups="base.group_extended"
                   parent="base.menu_product"
-                  sequence="5" />
+                  sequence="5" />-->
 
         <record id="view_order_line_to_correct_form" model="ir.ui.view">
             <field name="name">sale.order.line.to.correct.form</field>

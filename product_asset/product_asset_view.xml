@@ -2,57 +2,6 @@
 <openerp>
 	<data>
 
-		<!-- internal moves -->
-		<record id="view_picking_form" model="ir.ui.view">
-			<field name="name">stock.picking.form</field>
-			<field name="model">stock.picking</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="stock.view_picking_form" />
-			<field name="arch" type="xml">
-				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
-						position="after">
-						<field name="asset_id" />
-					</xpath>
-				</data>
-			</field>
-		</record>
-
-
-		<!-- incoming shipments -->
-		<record id="view_picking_in_form" model="ir.ui.view">
-			<field name="name">stock.picking.in.form</field>
-			<field name="model">stock.picking</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="stock.view_picking_in_form" />
-			<field name="arch" type="xml">
-				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
-						position="after">
-						<field name="asset_id" />
-					</xpath>
-				</data>
-			</field>
-		</record>
-
-
-		<!-- delivery orders -->
-		<record id="view_picking_out_form" model="ir.ui.view">
-			<field name="name">stock.picking.out.form</field>
-			<field name="model">stock.picking</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="stock.view_picking_out_form" />
-			<field name="arch" type="xml">
-				<data>
-					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
-						position="after">
-						<field name="asset_id" />
-					</xpath>
-				</data>
-			</field>
-		</record>
-
-
 		<!-- product -->
 		<record id="product_normal_form_view" model="ir.ui.view">
 			<field name="name">product.normal.form</field>
@@ -140,7 +89,7 @@
 								<field name="invo_num" colspan="4" />
 								<field name="invo_date" colspan="4" />
 								<field name="invo_value" />
-								<field name="invo_currency" />
+								<field name="invo_currency"  widget="many2one" />
 								<field name="invo_supplier" colspan="4" />
 								<field name="invo_donator_code" colspan="4" />
 								<field name="invo_certif_depreciation" colspan="4" />
@@ -189,7 +138,7 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Asset Form">
-					<field name="name" />
+					<field name="name"  />
 					<field name="asset_type_id" widget="selection" />
 					<field name="product_id" domain="[('subtype', '=', 'asset')]" />
 					<field name="serial_nb" />
@@ -360,7 +309,7 @@
 
 		<!-- Asset Types in SALES>Products>Asssets -->
 		<menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
-			parent="menu_asset_sales" sequence="1" />
+			parent="product_attributes.menu_product_config" sequence="1000" />
 
 	</data>
 </openerp>

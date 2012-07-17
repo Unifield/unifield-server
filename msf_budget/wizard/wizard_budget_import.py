@@ -103,10 +103,9 @@ class wizard_budget_import(osv.osv_memory):
     def fill_budget_line_data(self, cr, uid, import_data, context=None):
         # Create a "tracker" for lines to create
         created_lines = {}
-        expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
-                                                                                ('type', '!=', 'view')], context=context)
-        for expense_account_id in expense_account_ids:
-            created_lines[expense_account_id] = False
+        destination_link_ids = self.pool.get('account.destination.link').search(cr, uid, [], context=context)
+        for destination_link_id in destination_link_ids:
+            created_lines[destination_link_id] = False
         result = []
         # Check that the account exists
         for import_line in import_data[6:]:
@@ -114,45 +113,71 @@ class wizard_budget_import(osv.osv_memory):
             if import_line[0] == "":
                 raise osv.except_osv(_('Warning !'), _("A budget line has no account!"))
             else:
+                # Split for account, destination 
+                account_codes = import_line[0].split()
+                if len(account_codes) == 1:
+                    raise osv.except_osv(_('Warning !'), _("No destination was set! Please add it for line %s") % (account_codes[0],))
+                # Test the account and destination
                 account_ids = self.pool.get('account.account').search(cr,
                                                                       uid,
-                                                                      [('code', '=', import_line[0])],
+                                                                      [('code', '=', account_codes[0])],
                                                                       context=context)
+                destination_ids = self.pool.get('account.analytic.account').search(cr,
+                                                                                   uid,
+                                                                                   [('code', '=', account_codes[1]),
+                                                                                    ('category', '=', 'DEST')],
+                                                                                   context=context)
                 if len(account_ids) == 0:
-                    raise osv.except_osv(_('Warning !'), _("Account %s does not exist in database!") % (import_line[0],))
-                else:
-                    account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
-                    if account.user_type_code != 'expense':
-                        raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!") % (import_line[0],))
-                    elif account_ids[0] in created_lines and created_lines[account_ids[0]]:
-                        # Line already created in the file, return a warning
-                        raise osv.except_osv(_('Warning !'), _("Account %s is twice in the file!")%(import_line[0],))
-                    elif account.type != 'view':
-                        # Only create "normal" budget lines (view accounts are just discarded)
-                        budget_line_vals.update({'account_id': account_ids[0]})
-                        budget_values = []
-                        for budget_value in import_line[1:13]:
-                            if budget_value == "":
-                                budget_values.append(0)
-                            else:
-                                # try to parse as int
-                                try:
-                                    int_value = int(budget_value)
-                                except:
-                                    raise osv.except_osv(_('Warning !'), _("The value '%s' is not an integer!") % budget_value)
-                                budget_values.append(int_value)
-                        # Sometimes, the CSV has not all the needed columns. It's padded.
-                        if len(budget_values) != 12:
-                            budget_values += [0]*(12-len(budget_values))
-                        budget_line_vals.update({'budget_values': str(budget_values)})
-                        # Update created lines dictionary
-                        created_lines[account_ids[0]] = True
-                        result.append(budget_line_vals)
+                    raise osv.except_osv(_('Warning !'), _("Account %s does not exist in database!") % (account_codes[0],))
+                if len(destination_ids) == 0:
+                    raise osv.except_osv(_('Warning !'), _("Destination %s does not exist in database!") % (account_codes[1],))
+                # Test the link
+                destination_link_ids = self.pool.get('account.destination.link').search(cr,
+                                                                                        uid,
+                                                                                        [('account_id', '=', account_codes[0]),
+                                                                                         ('destination_id', '=', account_codes[1])],
+                                                                                        context=context)
+                if len(destination_link_ids) == 0:
+                    raise osv.except_osv(_('Warning !'), _("Destination %s is not linked to account %s!") % (account_codes[1], account_codes[0]))
+                if destination_link_ids[0] in created_lines and created_lines[destination_link_ids[0]]:
+                    raise osv.except_osv(_('Warning !'), _("Account/destination %s/%s is twice in the file!")%(account_codes[0], account_codes[1]))
+                # Test account data
+                account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
+                if account.user_type_code != 'expense':
+                    raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!") % (account_codes[0],))
+                # Only create "destination" budget lines
+                budget_line_vals.update({'account_id': account_ids[0],
+                                         'destination_id': destination_ids[0],
+                                         'line_type': 'destination'})
+                budget_values = []
+                for budget_value in import_line[1:13]:
+                    if budget_value == "":
+                        budget_values.append(0)
+                    else:
+                        # try to parse as int
+                        try:
+                            int_value = int(budget_value)
+                        except:
+                            raise osv.except_osv(_('Warning !'), _("The value '%s' is not an integer!") % budget_value)
+                        budget_values.append(int_value)
+                # Sometimes, the CSV has not all the needed columns. It's padded.
+                if len(budget_values) != 12:
+                    budget_values += [0]*(12-len(budget_values))
+                budget_line_vals.update({'budget_values': str(budget_values)})
+                # Update created lines dictionary
+                created_lines[destination_link_ids[0]] = True
+                result.append(budget_line_vals)
         # If expense accounts are not in the file, create those
         missing_lines = [x for x in created_lines if created_lines[x] == False]
         budget_values = str([0]*12)
-        for expense_account_id in missing_lines:
-            result.append({'account_id': expense_account_id,
+        for destination_link_id in missing_lines:
+            destination_link = self.pool.get('account.destination.link').browse(cr,
+                                                                                uid,
+                                                                                destination_link_id,
+                                                                                context=context)
+            result.append({'account_id': destination_link.account_id.id,
+                           'destination_id': destination_link.destination_id.id,
+                           'line_type': 'destination',
                            'budget_values': budget_values})
         # sort them by name
         result = sorted(result)

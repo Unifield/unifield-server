@@ -187,6 +187,7 @@ class sale_order_followup(osv.osv_memory):
                 'res_model': 'sale.order.followup',
                 'res_id': followup_id,
                 'view_id': [view_id],
+                'nodestroy': True,
                 'view_type': 'form',
                 'view_mode': 'form',}
         
@@ -717,8 +718,8 @@ class sale_order_followup_from_menu(osv.osv_memory):
     _description = 'Sale order followup menu entry'
     
     _columns = {
-        'order_id': fields.many2one('sale.order', string='Internal reference', required=True),
-        'cust_order_id': fields.many2one('sale.order', string='Customer reference', required=True),
+        'order_id': fields.many2one('sale.order', string='Internal reference', required=True, domain=[('procurement_request', '=', False)]),
+        'cust_order_id': fields.many2one('sale.order', string='Customer reference', required=True, domain=[('procurement_request', '=', False)]),
     }
     
     def go_to_followup(self, cr, uid, ids, context=None):

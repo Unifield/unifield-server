@@ -5,6 +5,7 @@
             <field name="code">PUR</field>
             <field name="type">purchase</field>
         </record>
+
         <record id="purchase_journal" model="account.journal">
             <field name="name">Purchase</field>
             <field name="code">PUR</field>
@@ -17,6 +18,7 @@
             <field name="code">PURR</field>
             <field name="type">purchase</field>
         </record>
+
         <record id="purchase_refund_journal" model="account.journal">
             <field name="name">Purchase Refund</field>
             <field name="code">PURR</field>
@@ -29,6 +31,7 @@
             <field name="code">SAL</field>
             <field name="type">sale</field>
         </record>
+
         <record id="sale_journal" model="account.journal">
             <field name="name">Sale</field>
             <field name="code">SAL</field>
@@ -41,6 +44,7 @@
             <field name="code">SALR</field>
             <field name="type">sale</field>
         </record>
+
         <record id="sale_refund_journal" model="account.journal">
             <field name="name">Sale Refund</field>
             <field name="code">SALR</field>
@@ -53,6 +57,7 @@
             <field name="code">OD</field>
             <field name="type">general</field>
         </record>
+
         <record id="correction_journal" model="account.journal">
             <field name="name">Correction</field>
             <field name="code">OD</field>
@@ -60,28 +65,10 @@
             <field name="analytic_journal_id" ref="od_analytic_journal"/>
         </record>
 
-        <record id="hq_analytic_journal" model="account.analytic.journal">
-            <field name="name">Analytic HQ</field>
-            <field name="code">AHQ</field>
-            <field name="type">hq</field>
-        </record>
         <record id="hq_journal" model="account.journal">
             <field name="name">HQ</field>
             <field name="code">HQ</field>
             <field name="type">hq</field>
-            <field name="analytic_journal_id" ref="hq_analytic_journal"/>
-        </record>
-
-        <record id="hq_analytic_journal_fields" model="account.analytic.journal">
-            <field name="name">HQ - Field expenses</field>
-            <field name="code">AHQ-Exp</field>
-            <field name="type">hq</field>
-        </record>
-        <record id="hq_journal_fields" model="account.journal">
-            <field name="name">HQ - Field expenses</field>
-            <field name="code">HQ-Exp</field>
-            <field name="type">hq</field>
-            <field name="analytic_journal_id" ref="hq_analytic_journal_fields"/>
         </record>
 
         <record id="hr_analytic_journal" model="account.analytic.journal">
@@ -89,6 +76,7 @@
             <field name="code">HR</field>
             <field name="type">hr</field>
         </record>
+
         <record id="hr_journal" model="account.journal">
             <field name="name">HR</field>
             <field name="code">HR</field>
@@ -100,7 +88,6 @@
             <field name="name">Stock</field>
             <field name="code">STO</field>
             <field name="type">stock</field>
-            <field name="instance_id" search="[]" use="name" model="res.company" />
         </record>
 
         <record id="bank_analytic_journal" model="account.analytic.journal">
@@ -108,6 +95,7 @@
             <field name="code">BNK</field>
             <field name="type">general</field>
         </record>
+
         <record id="bank_chf_journal" model="account.journal">
             <field name="name">Bank CHF</field>
             <field name="code">BNK-CHF-1</field>
@@ -117,6 +105,7 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.1020" />
             <field name="analytic_journal_id" ref="bank_analytic_journal"/>
         </record>
+
         <record id="bank_euro_journal" model="account.journal">
             <field name="name">Bank EUR</field>
             <field name="code">BNK-EUR-1</field>
@@ -132,6 +121,7 @@
             <field name="code">CAS</field>
             <field name="type">cash</field>
         </record>
+
         <record id="cash_chf_journal" model="account.journal">
             <field name="name">Cash CHF</field>
             <field name="code">CAS-CHF-1</field>
@@ -156,6 +146,7 @@
             <field name="code">CHK</field>
             <field name="type">general</field>
         </record>
+
         <record id="cheque_chf_journal" model="account.journal">
             <field name="name">Cheque CHF</field>
             <field name="code">CHE-CHF-1</field>
@@ -165,6 +156,7 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.3001" />
             <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
+
         <record id="cheque_euro_journal" model="account.journal">
             <field name="name">Cheque EUR</field>
             <field name="code">CHE-EUR-1</field>
@@ -186,6 +178,7 @@
             <field name="code">AMT</field>
             <field name="type">general</field>
         </record>
+
         <record id="miscellaneous_transactions" model="account.journal">
             <field name="name">Miscellaneous Transactions</field>
             <field name="code">MT</field>
@@ -199,12 +192,26 @@
             <field name="code">AC</field>
             <field name="type">general</field>
         </record>
+
         <record id="msf_accrual.accrual_journal" model="account.journal">
             <field name="name">Accruals</field>
             <field name="code">AC</field>
             <field name="type">accrual</field>
-            <field name="instance_id" search="[]" use="name" model="res.company" />
             <field name="analytic_journal_id" ref="msf_accrual.analytic_accrual_journal"/>
         </record>
+
+        <record id="account_journal.analytic_inkind_journal" model="account.analytic.journal">
+            <field name="name">Analytic In-kind Donation</field>
+            <field name="code">AIKD</field>
+            <field name="type">inkind</field>
+        </record>
+
+        <record id="account_journal.inkind_journal" model="account.journal">
+            <field name="name">In-kind Donation</field>
+            <field name="code">IKD</field>
+            <field name="type">inkind</field>
+            <field name="analytic_journal_id" ref="account_journal.analytic_inkind_journal"/>
+        </record>
+
     </data>
 </openerp>

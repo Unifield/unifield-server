@@ -78,6 +78,7 @@ class hr_payroll_import(osv.osv_memory):
         line_date = False
         name = ''
         ref = ''
+        destination_id = False
         accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
         financing_contract, date, currency, project, analytic_line = zip(data)
         # Check period
@@ -130,6 +131,10 @@ class hr_payroll_import(osv.osv_memory):
             is_counterpart = True
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
+            # Add default destination from account
+            if not account.default_destination_id:
+                raise osv.except_osv(_('Warning'), _('No default Destination defined for expense account: %s') % (account.code or '',))
+            destination_id = account.default_destination_id and account.default_destination_id.id or False
             if second_description and second_description[0] and not is_payroll_rounding:
                 if not is_counterpart:
                     # fetch employee ID
@@ -176,6 +181,7 @@ class hr_payroll_import(osv.osv_memory):
             'currency_id': currency_id,
             'state': 'draft',
             'field': field,
+            'destination_id': destination_id,
         }
         # Retrieve analytic distribution from employee
         if employee_id:
