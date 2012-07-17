@@ -500,7 +500,7 @@
 							<field name="subtype" invisible="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
 							<field name='ppl_customize_label' required="True" />
-							<field name="description_ppl" required="1" />
+							<field name="description_ppl"  />
 						</group>
 
 					</group>
