@@ -324,7 +324,7 @@ class sale_order(osv.osv):
         # get all corresponding sale order lines
         sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
         # delete the lines
-        sol_obj.unlink(cr, uid, sol_ids, context=context)
+        sol_obj.unlink(cr, uid, sol_ids, context=dict(context, call_unlink=True))
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
         return True
