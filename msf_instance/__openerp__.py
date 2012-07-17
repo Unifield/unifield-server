@@ -28,9 +28,11 @@
     "description": """Module for defining proprietary instances, their informations
     """,
     "init_xml" : [],
+    "additional_xml" : [
+        'data/instance_data.xml',
+    ],
     "update_xml": [
         'msf_instance_view.xml',
-#        'data/instance_data.xml',
     ],
     'demo_xml': [
     ],

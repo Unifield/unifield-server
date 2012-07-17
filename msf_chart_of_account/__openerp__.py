@@ -28,9 +28,11 @@
     "author" : "TeMPO Consulting, MSF",
     "category" : "Localisation/Account Charts",
     "depends" : ["base", "account_activable", "register_accounting", "account_journal", "msf_instance"],
+    "additional_xml" : [
+        "data/account.xml",
+        "data/account_data.xml",
+    ],
     "init_xml" : [
-#        "data/account.xml",
-#        "data/account_data.xml",
     ],
     "update_xml" : [
         "msf_chart_of_account_installer.xml",
