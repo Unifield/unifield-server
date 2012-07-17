@@ -151,7 +151,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTable" repeatRows="1">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfoBold">CODE</para>
@@ -218,7 +218,7 @@
 	    		</td>
 	    	</tr>
 	    </blockTable>
-	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTableTotal">
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTableTotal">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfo"> </para>
@@ -265,7 +265,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTable" repeatRows="1">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfoBold">CODE</para>
@@ -333,7 +333,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTableTotal">
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTableTotal">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfo"> </para>
@@ -372,7 +372,7 @@
 	    	<font color="white"> </font>
 	    </para>
 	    
-	    <blockTable colWidths="80.0,340.0,60.0,40.0,33.0,50.0,55.0,74.0,40.0" style="LinesTableTotal">
+	    <blockTable colWidths="78.0,340.0,60.0,40.0,33.0,50.0,55.0,74.0,42.0" style="LinesTableTotal">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfo"> </para>
