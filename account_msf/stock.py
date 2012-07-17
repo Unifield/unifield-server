@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
@@ -29,6 +30,7 @@ class stock_picking(osv.osv):
 
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
         """
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
@@ -45,6 +47,7 @@ class stock_picking(osv.osv):
         """
         Update journal by an inkind journal if we come from an inkind donation PO.
         Update partner account
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])

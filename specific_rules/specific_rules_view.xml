@@ -2,7 +2,8 @@
 <openerp>
 	<data>
 
-	<delete model="ir.actions.act_window" id="stock.act_stock_product_location_open" /> 
+	    <delete model="ir.actions.act_window" id="stock.act_stock_product_location_open" /> 
+        <delete model="ir.model.data" id="stock.act_stock_product_location_open" />
 	
         <record id="action_server_stock_by_location" model="ir.actions.server">
             <field name="name">Stock by Location</field>
@@ -17,9 +18,10 @@
             <field name="name">Stock by Location</field>
             <field eval="'ir.actions.server,%d'%action_server_stock_by_location" name="value"/>
             <field eval="True" name="object"/>
+            <field eval="1" name="sequence"/>
         </record>
 
-        <delete model="ir.model.data" id="stock.act_stock_product_location_open" />
+
 
 		<record id="view_location_tree2" model="ir.ui.view">
             <field name="name">stock.location.tree</field>

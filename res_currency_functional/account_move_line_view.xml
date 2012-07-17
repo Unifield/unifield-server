@@ -10,7 +10,6 @@
             <field name="priority" eval="200"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" noteditable="1" colors="red:state in ('draft');black:state in ('valid')">
-                    <field name="instance"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
@@ -56,7 +55,6 @@
                         <newline/>
                         <field name="journal_id"/>
                         <field name="period_id"/>
-                        <field name="instance" invisible="1"/>
                         <newline />
                         <field name="date"/>
                         <field name="document_date"/>
@@ -102,7 +100,6 @@
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom" noteditable="1">
-                    <field name="instance"/>
                     <field name="journal_id"/>
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="name"/>

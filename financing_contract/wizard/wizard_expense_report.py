@@ -20,6 +20,7 @@
 ##############################################################################
 from osv import fields, osv
 import locale
+from tools.translate import _
 
 class wizard_expense_report(osv.osv_memory):
     
@@ -34,6 +35,10 @@ class wizard_expense_report(osv.osv_memory):
         
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
         
+        # check for the contract type; if it's not supposed to be displayed, return an error
+        if contract.reporting_type != 'all' and contract.reporting_type != reporting_type:
+            raise osv.except_osv(_('Warning !'), _("This report does not apply to the reporting type selected."))
+        
         header_data = self._get_contract_header(cr, uid, contract, context=context)
         footer_data = self._get_contract_footer(cr, uid, contract, context=context)
         
@@ -43,6 +48,7 @@ class wizard_expense_report(osv.osv_memory):
                           'Reference',
                           'Description',
                           'General Account',
+                          'Destination',
                           'Cost Center',
                           'Funding Pool',
                           'Booking Amount',
@@ -84,6 +90,7 @@ class wizard_expense_report(osv.osv_memory):
                                   analytic_line.ref or '',
                                   analytic_line.name,
                                   analytic_line.general_account_id.code + ' ' + analytic_line.general_account_id.name,
+                                  analytic_line.destination_id and analytic_line.destination_id.name,
                                   analytic_line.cost_center_id.name,
                                   analytic_line.account_id.name,
                                   formatted_amount,

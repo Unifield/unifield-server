@@ -73,7 +73,7 @@ class financing_contract_contract(osv.osv):
         # we update the context with the contract reporting type and currency
         format_line_obj = self.pool.get('financing.contract.format.line')
         # Values to be set
-        account_ids = []
+        account_destination_ids = []
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
         # general domain
@@ -86,23 +86,22 @@ class financing_contract_contract(osv.osv):
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
-                account_ids += format_line_obj._get_account_ids(line, general_domain['funding_pool_account_ids'])
+                account_destination_ids += format_line_obj._get_account_destination_ids(line, general_domain['funding_pool_account_destination_ids'])
                 
         # create the domain
         analytic_domain = []
-        account_domain = format_line_obj._create_domain('general_account_id', account_ids)
+        account_domain = format_line_obj._create_account_destination_domain(account_destination_ids)
         date_domain = eval(general_domain['date_domain'])
         if reporting_type == 'allocated':
             analytic_domain = [date_domain[0],
                                date_domain[1],
-                               eval(account_domain),
                                eval(general_domain['funding_pool_domain'])]
         else: 
             analytic_domain = [date_domain[0],
                                date_domain[1],
-                               eval(account_domain),
                                eval(general_domain['funding_pool_domain']),
                                eval(general_domain['cost_center_domain'])]
+        analytic_domain += account_domain
             
         return analytic_domain
 

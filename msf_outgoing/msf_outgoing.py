@@ -839,6 +839,7 @@ class shipment(osv.osv):
         line_obj = self.pool.get('account.invoice.line')
         partner_obj = self.pool.get('res.partner')
         distrib_obj = self.pool.get('analytic.distribution')
+        sale_line_obj = self.pool.get('sale.order.line')
         
         if not context:
             context = {}
@@ -847,37 +848,124 @@ class shipment(osv.osv):
             ids = [ids]
             
         for shipment in self.browse(cr, uid, ids, context=context):
-            if shipment.partner_id2:
-                partner = partner_obj.browse(cr, uid, shipment.partner_id2.id, context=context)
-                address = partner_obj.address_get(cr, uid, shipment.partner_id2.id, ['invoice'])
-                invoice_id = invoice_obj.create(cr, uid, {'partner_id': partner.id,
-                                                          'address_id': address,
-                                                          'currency_id': shipment.pack_family_memory_ids[0].currency_id.id}, context=context)
-                
-                # For each stock moves, create an invoice line
-                for pack in shipment.pack_family_memory_ids:
-                    for move in pack.move_lines:
-                        distrib_id = False
-                        vals = line_obj.product_id_change(cr, uid, [], move.product_id.id, move.product_uom.id)
-                        if move.sale_line_id:
-                            sol_ana_dist_id = move.sale_line_id.analytic_distribution_id
-                            if sol_ana_dist_id:
-                                distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
-                            elif move.sale_line_id.order_id.analytic_distribution_id:
-                                distrib_id = distrib_obj.copy(cr, uid, move.sale_line_id.order_id.analytic_distribution_id.id, context=context)
-                                
-                        line_id = line_obj.create(cr, uid, {'invoice_id': invoice_id,
-                                                            'product_id': move.product_id.id,
-                                                            'uos_id': move.product_uom.id,
-                                                            'price_unit': move.price_unit,
-                                                            'quantity': move.product_qty,
-                                                            'name': vals['name'],
-                                                            'account_id': vals['account_id'],
-                                                            'analytic_distribution_state_recap': distrib_id}, context=context)
-                        self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+            payment_term_id = False
+            partner =  shipment.partner_id2
+            if not partner:
+                raise osv.except_osv(_('Error, no partner !'),
+                    _('Please put a partner on the shipment if you want to generate invoice.'))
             
-            self.write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+            inv_type = 'out_invoice'
+            
+            if inv_type in ('out_invoice', 'out_refund'):
+                account_id = partner.property_account_receivable.id
+                payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
+            else:
+                account_id = partner.property_account_payable.id
+            
+            address_contact_id, address_invoice_id = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            
+            invoice_vals = {
+                    'name': shipment.name,
+                    'origin': shipment.name or '',
+                    'type': inv_type,
+                    'account_id': account_id,
+                    'partner_id': partner,
+                    'address_invoice_id': address_invoice_id,
+                    'address_contact_id': address_contact_id,
+                    'payment_term': payment_term_id,
+                    'fiscal_position': partner.property_account_position.id,
+                    'date_invoice': context.get('date_inv',False),
+                    'user_id':uid
+                }
+            cur_id = shipment.pack_family_memory_ids[0].currency_id.id
+            if cur_id:
+                invoice_vals['currency_id'] = cur_id
                 
+            invoice_id = invoice_obj.create(cr, uid, invoice_vals,
+                        context=context)
+            
+            # Link the invoice to the shipment
+            self.write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+            
+            # For each stock moves, create an invoice line
+            for pack in shipment.pack_family_memory_ids:
+                for move in pack.move_lines:
+                    if move.state == 'cancel':
+                        continue
+                    
+                    origin = move.picking_id.name or ''
+                    if move.picking_id.origin:
+                        origin += ':' + move.picking_id.origin
+                        
+                    if inv_type in ('out_invoice', 'out_refund'):
+                        account_id = move.product_id.product_tmpl_id.\
+                                property_account_income.id
+                        if not account_id:
+                            account_id = move.product_id.categ_id.\
+                                    property_account_income_categ.id
+                    else:
+                        account_id = move.product_id.product_tmpl_id.\
+                                property_account_expense.id
+                        if not account_id:
+                            account_id = move.product_id.categ_id.\
+                                    property_account_expense_categ.id
+                                    
+                    # Compute unit price from FO line if the move is linked to
+                    price_unit = move.product_id.list_price
+                    if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
+                        uom_id = move.product_id.uom_id.id
+                        uos_id = move.product_id.uos_id and move.product_id.uos_id.id or False
+                        price = move.sale_line_id.price_unit
+                        coeff = move.product_id.uos_coeff
+                        if uom_id != uos_id and coeff != 0:
+                            price_unit = price / coeff
+                        else:
+                            price_unit = move.sale_line_id.price_unit
+                            
+                    # Get discount from FO line
+                    discount = 0.00
+                    if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
+                        discount = move.sale_line_id.discount
+                        
+                    # Get taxes from FO line
+                    taxes = move.product_id.taxes_ids
+                    if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
+                        taxes = [x.id for x in move.sale_line_id.tax_id]
+                        
+                    if shipment.partner_id2:
+                        tax_ids = self.pool.get('account.fiscal.position').map_tax(cr, uid, shipment.partner_id2.property_account_position, taxes)
+                    else:
+                        tax_ids = map(lambda x: x.id, taxes)
+                        
+                    distrib_id = False
+                    if move.sale_line_id:
+                        sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
+                        if sol_ana_dist_id:
+                            distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
+                        
+                    #set UoS if it's a sale and the picking doesn't have one
+                    uos_id = move.product_uos and move.product_uos.id or False
+                    if not uos_id and inv_type in ('out_invoice', 'out_refund'):
+                        uos_id = move.product_uom.id
+                    account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
+                        
+                    line_id = line_obj.create(cr, uid, {'name': move.name,
+                                                        'origin': origin,
+                                                        'invoice_id': invoice_id,
+                                                        'uos_id': uos_id,
+                                                        'product_id': move.product_id.id,
+                                                        'account_id': account_id,
+                                                        'price_unit': price_unit,
+                                                        'discount': discount,
+                                                        'quantity': move.product_uos_qty or move.product_qty,
+                                                        'invoice_line_tax_id': [(6, 0, tax_ids)],
+                                                        'analytic_distribution_state_recap': distrib_id,
+                                                       }, context=context)
+
+                    self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+                    if move.sale_line_id:
+                        sale_line_obj.write(cr, uid, [move.sale_line_id.id], {'invoiced': True,
+                                                                              'invoice_lines': [(4, line_id)],})
             
         return True
         
@@ -906,6 +994,9 @@ class shipment(osv.osv):
                 # trigger standard workflow
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
+            
+            # Create automatically the invoice
+            self.shipment_create_invoice(cr, uid, shipment.id, context=context)
                 
             # log validate action
             self.log(cr, uid, shipment.id, _('The Shipment %s has been validated.')%(shipment.name,))
@@ -1148,6 +1239,9 @@ class stock_picking(osv.osv):
         '''
         unlink test for draft
         '''
+        datas = self.read(cr, uid, ids, ['state'], context=context)
+        if [data for data in datas if data['state'] != 'draft']:
+            raise osv.except_osv(_('Warning !'), _('Only draft picking tickets can be deleted.'))
         data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
         if [x for x in data.values() if x]:
             raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))

@@ -40,23 +40,24 @@ class sale_order(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
-        
+
         - reset split flag to original value (field order flow) if not in default
         '''
         if context is None:
             context = {}
         if default is None:
             default = {}
-        
-        default.update({'loan_id': False})
+
+        default.update({'loan_id': False,
+                        'active': True})
         # if splitting related attributes are not set with default values, we reset their values
         if 'split_type_sale_order' not in default:
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
-        
+
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
-    
+
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -65,7 +66,7 @@ class sale_order(osv.osv):
         partner_obj = self.pool.get('res.partner')
         partner = False
         res = {}
-        
+
         for sale in self.browse(cr, uid, ids):
             if sale.partner_id:
                 partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
@@ -81,7 +82,7 @@ class sale_order(osv.osv):
                     res[sale.id] = False
         return res
     #@@@end
-    
+
     #@@@override sale.sale_order._invoiced_search
     def _invoiced_search(self, cursor, user, obj, name, args, context=None):
         if not len(args):
@@ -636,6 +637,9 @@ class sale_order(osv.osv):
         
         lines = []
         
+        # customer code execution position 03
+        self._hook_ship_create_execute_specific_code_03(cr, uid, ids, context=context)
+        
         for order in self.browse(cr, uid, ids, context=context):
             # from action_wait msf_order_dates
             # deactivated
@@ -699,12 +703,13 @@ class sale_order(osv.osv):
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
                     line_obj.write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
-                    # if the line is draft (it should be the case), we set its state to 'sourced'
-                    if line.state == 'draft':
-                        line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line:
                         display_log = False
+                
+                # if the line is draft (it should be the case), we set its state to 'sourced'
+                    if line.state == 'draft':
+                        line_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
                     
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
@@ -758,6 +763,47 @@ class sale_order(osv.osv):
                 
         return True
     
+    def _hook_ship_create_execute_specific_code_03(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 03
+        
+        update the delivery confirmed date of sale order in case of STOCK sale order
+        (check split_type_sale_order == 'stock_split_sale_order')
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        fields_tools = self.pool.get('fields.tools')
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            # if the order is stock So, we update the confirmed delivery date
+            if order.split_type_sale_order == 'stock_split_sale_order':
+                # date values
+                ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                # confirmed
+                confirmed = datetime.today()
+                confirmed = confirmed + relativedelta(days=ship_lt or 0)
+                confirmed = confirmed + relativedelta(days=order.est_transport_lead_time or 0)
+                confirmed = confirmed.strftime(db_date_format)
+                # rts
+                rts = datetime.today()
+                rts = rts + relativedelta(days=ship_lt or 0)
+                rts = rts.strftime(db_date_format)
+                
+                self.write(cr, uid, [order.id], {'delivery_confirmed_date': confirmed,
+                                                 'ready_to_ship_date': rts}, context=context)
+            
+        return True
+    
     def test_lines(self, cr, uid, ids, context=None):
         '''
         return True if all lines of type 'make_to_order' are 'confirmed'
@@ -767,7 +813,8 @@ class sale_order(osv.osv):
             if order.from_yml_test:
                 continue
             for line in order.order_line:
-                if line.type == 'make_to_order' and line.state != 'confirmed':
+                # the product needs to have a product selected, otherwise not procurement, and no po to trigger back the so
+                if line.type == 'make_to_order' and line.state != 'confirmed' and line.product_id:
                     return False
         return True
 
@@ -788,7 +835,20 @@ class sale_order_line(osv.osv):
                     \n* The \'Exception\' state is set when the related sales order is set as exception. \
                     \n* The \'Done\' state is set when the sales order line has been picked. \
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
+
+                # these 2 columns are for the sync module
+                'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
+                'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
                 }
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Add the database ID of the SO line to the value sync_sol_db_id
+        '''
+        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+
+        super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_sol_db_id': so_line_ids,} , context=context)
+        return so_line_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
