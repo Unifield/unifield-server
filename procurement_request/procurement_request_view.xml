@@ -201,14 +201,6 @@
 			                        <!-- END COPY -->
 
                                 </notebook>
-                                   <field name="product_id" colspan="4" />
-                                   <field name="product_uom_qty" />
-                                   <field name="product_uom" />
-                                   <field name="type" />
-                                   <newline />
-                                   <field name="notes" colspan="4"/>
-                                   <field name="supplier" />
-                                   <field name="latest" />
                                 </form>
                             </field>
                             <group colspan="4" col="6">

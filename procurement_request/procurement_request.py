@@ -271,70 +271,71 @@ class procurement_request(osv.osv):
 
         for request in self.browse(cr, uid, ids, context=context):
             picking_id = False
-            if len(request.order_line) <= 0:
+            if not request.order_line:
                 raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
-            message = _("The internal request '%s' has been confirmed.") %(request.name,)
-            proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
-            context.update({'view_id': proc_view and proc_view[1] or False})
-            self.log(cr, uid, request.id, message, context=context)
-            
-            # partly copy paste from action_ship_create
-            for line in request.order_line:
-                #if line.type == 'make_to_order':
-                date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
-                date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
-
-                move_id = False
-                location_id = request.shop_id.warehouse_id.lot_stock_id.id
-                if not picking_id:
-                    pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-                    picking_data = {'name': pick_name,
-                                    'origin': request.name,
-                                    'reason_type_id': obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
-                                    'type': 'internal',
-                                    'state': 'draft',
-                                    'move_type': request.picking_policy,
-                                    'sale_id': request.id,
-                                    'address_id': request.partner_shipping_id.id,
-                                    'note': request.note,
-                                    'invoice_state': (request.order_policy=='picking' and '2binvoiced') or 'none',
-                                    'company_id': request.company_id.id,
-                                    }
-                    picking_id = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
-                if line.product_id:
-                    product_id = line.product_id.id
-                    move_data = {'name': line.name[:64],
-                                 'reason_type_id': obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
-                                 'picking_id': picking_id,
-                                 'product_id': line.product_id.id,
-                                 'date': date_planned,
-                                 'date_expected': date_planned,
-                                 'product_qty': line.product_uom_qty,
-                                 'product_uom': line.product_uom.id,
-                                 'product_uos_qty': line.product_uos_qty,
-                                 'product_uos': (line.product_uos and line.product_uos.id)\
-                                 or line.product_uom.id,
-                                 'product_packaging': line.product_packaging.id,
-                                 'address_id': line.address_allotment_id.id or request.partner_shipping_id.id,
-                                 'location_id': obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
-                                 'location_dest_id': request.location_requestor_id.id,
-                                 'sale_line_id': line.id,
-                                 'tracking_id': False,
-                                 'state': 'draft', 
-                                 'note': line.notes,
-                                 'company_id': request.company_id.id,
-                                 }
-                    move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
-                    # Confirm all moves
-                    #move_obj.action_done(cr, uid, move_id, context=context)
-            # Confirm the picking
-            wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
-
-            message = _("""The Internal moves '%s' is created according to the lines that have a product and the goods are moved.""") %(pick_name,)
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'view_picking_form')[1]
-            self.pool.get('stock.picking').log(cr, uid, picking_id, message, context={'view_id': view_id})
+            else:
+                message = _("The internal request '%s' has been confirmed.") %(request.name,)
+                proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
+                context.update({'view_id': proc_view and proc_view[1] or False})
+                self.log(cr, uid, request.id, message, context=context)
+                
+                # partly copy paste from action_ship_create
+                for line in request.order_line:
+                    #if line.type == 'make_to_order':
+                    date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
+                    date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
+    
+                    move_id = False
+                    location_id = request.shop_id.warehouse_id.lot_stock_id.id
+                    if not picking_id:
+                        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+                        picking_data = {'name': pick_name,
+                                        'origin': request.name,
+                                        'reason_type_id': obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
+                                        'type': 'internal',
+                                        'state': 'draft',
+                                        'move_type': request.picking_policy,
+                                        'sale_id': request.id,
+                                        'address_id': request.partner_shipping_id.id,
+                                        'note': request.note,
+                                        'invoice_state': (request.order_policy=='picking' and '2binvoiced') or 'none',
+                                        'company_id': request.company_id.id,
+                                        }
+                        picking_id = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+                    if line.product_id:
+                        product_id = line.product_id.id
+                        move_data = {'name': line.name[:64],
+                                     'reason_type_id': obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
+                                     'picking_id': picking_id,
+                                     'product_id': line.product_id.id,
+                                     'date': date_planned,
+                                     'date_expected': date_planned,
+                                     'product_qty': line.product_uom_qty,
+                                     'product_uom': line.product_uom.id,
+                                     'product_uos_qty': line.product_uos_qty,
+                                     'product_uos': (line.product_uos and line.product_uos.id)\
+                                     or line.product_uom.id,
+                                     'product_packaging': line.product_packaging.id,
+                                     'address_id': line.address_allotment_id.id or request.partner_shipping_id.id,
+                                     'location_id': obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1],
+                                     'location_dest_id': request.location_requestor_id.id,
+                                     'sale_line_id': line.id,
+                                     'tracking_id': False,
+                                     'state': 'draft', 
+                                     'note': line.notes,
+                                     'company_id': request.company_id.id,
+                                     }
+                        move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
+                        # Confirm all moves
+                        #move_obj.action_done(cr, uid, move_id, context=context)
+                # Confirm the picking
+                wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+    
+                message = _("""The Internal moves '%s' is created according to the lines that have a product and the goods are moved.""") %(pick_name,)
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'view_picking_form')[1]
+                self.pool.get('stock.picking').log(cr, uid, picking_id, message, context={'view_id': view_id})
         
-        self.action_ship_create(cr, uid, ids, context=context, *args, **kwargs)
+                self.action_ship_create(cr, uid, ids, context=context, *args, **kwargs)
         
         return True
     
