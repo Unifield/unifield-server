@@ -904,14 +904,31 @@ class sale_order_line(osv.osv):
         }
         return view_to_return
 
-    def save_and_close(self, cr, uid, ids, vals, context=None):
+    def save_and_close(self, cr, uid, ids, context=None):
         '''
         Save and close the configuration window 
         '''
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1],
+        uom_obj = self.pool.get('product.uom')
+        obj_data = self.pool.get('ir.model.data')
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'procurement_request','uom_tbd')[1]
+        obj_browse = self.browse(cr, uid, ids, context=context)
+        vals={}
+        message = ''
+        for var in obj_browse:
+            if var.product_uom.id == tbd_uom:
+                message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if var.nomen_manda_0.id == obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd0')[1]:
+                message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if var.nomen_manda_1.id == obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd1')[1]:
+                message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if var.nomen_manda_2.id == obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd2')[1]:
+                message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+        # the 3rd level is not mandatory
+        if message:
+            raise osv.except_osv(_('Warning !'), _(message))
         
         self.write(cr, uid, ids, vals, context=context)
-        
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
         return {'type': 'ir.actions.act_window_close',
                 'res_model': 'sale.order',
                 'view_type': 'form',

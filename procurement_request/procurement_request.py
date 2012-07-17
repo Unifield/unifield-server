@@ -254,7 +254,7 @@ class procurement_request(osv.osv):
 
         return True
     
-    def confirm_procurement(self, cr, uid, ids, context=None):
+    def confirm_procurement(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Confirmed the request
         '''
@@ -320,22 +320,21 @@ class procurement_request(osv.osv):
                                  'location_dest_id': request.location_requestor_id.id,
                                  'sale_line_id': line.id,
                                  'tracking_id': False,
-                                 'state': 'draft',
-                                 #'state': 'waiting',
+                                 'state': 'draft', 
                                  'note': line.notes,
                                  'company_id': request.company_id.id,
                                  }
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                     # Confirm all moves
-                    move_obj.action_done(cr, uid, move_id, context=context)
-#            # Confirm the picking
-#            wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+                    #move_obj.action_done(cr, uid, move_id, context=context)
+            # Confirm the picking
+            wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
 
             message = _("""The Internal moves '%s' is created according to the lines that have a product and the goods are moved.""") %(pick_name,)
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'view_picking_form')[1]
             self.pool.get('stock.picking').log(cr, uid, picking_id, message, context={'view_id': view_id})
         
-        self.action_ship_create(cr, uid, ids, context=context)
+        self.action_ship_create(cr, uid, ids, context=context, *args, **kwargs)
         
         return True
     
@@ -451,6 +450,29 @@ class procurement_request_line(osv.osv):
                 v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
 
         return {'value': v}
+    
+    def comment_change(self, cr, uid, ids, comment, product_id, type, context=None):
+        '''
+        Fill the level of nomenclatures with tag "to be defined" if you have only comment
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        obj_data = self.pool.get('ir.model.data')
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd3')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'procurement_request', 'uom_tbd')[1]
+        
+        if comment and not product_id:
+            res.update({'nomen_manda_0': nomen_manda_0,
+                        'nomen_manda_1': nomen_manda_1,
+                        'nomen_manda_2': nomen_manda_2,
+                        'nomen_manda_3': nomen_manda_3,
+                        'product_uom': uom_tbd,
+                        'name': 'To be defined',})
+        return {'value': res}
     
 procurement_request_line()
 
