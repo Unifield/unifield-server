@@ -132,7 +132,7 @@
                     
                     <xpath expr="/search//filter[@string='To Invoice']" position="after">
                     	<separator orientation="vertical" />
-                    	<filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
+                    	<filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[]" context="{'active_test': False}" separator="1" />
                     </xpath>
             <xpath expr="/search/field[@name='name']" position="after">
             <field name="client_order_ref" />
