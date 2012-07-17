@@ -30,6 +30,7 @@ from tools.translate import _
 import logging
 from workflow.wkf_expr import _eval_expr
 
+from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
@@ -140,6 +141,23 @@ class sale_order(osv.osv):
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
         return res
     
+    def _vals_get_sale_override(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get function values
+        '''
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
+                
+            # state_hidden_sale_order
+            result[obj.id]['state_hidden_sale_order'] = obj.state
+            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order':
+                result[obj.id]['state_hidden_sale_order'] = 'split_so'
+            
+        return result
+    
     _columns = {
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
@@ -178,6 +196,8 @@ class sale_order(osv.osv):
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
+        'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
+                                                   store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
     }
     
     _defaults = {

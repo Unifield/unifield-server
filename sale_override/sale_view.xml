@@ -114,6 +114,10 @@
                         <field name="priority" />
                         <field name="categ" />
                     </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="replace">
+                    	<field name="state" invisible="True" />
+                    	<field name="state_hidden_sale_order" />
+                    </xpath>
                 </data>
             </field>
         </record>

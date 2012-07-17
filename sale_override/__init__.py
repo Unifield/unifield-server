@@ -6,6 +6,7 @@ SALE_ORDER_STATE_SELECTION = [('draft', 'Draft'),
                               ('progress', 'Confirmed'),
                               ('shipping_except', 'Shipping Exception'),
                               ('invoice_except', 'Invoice Exception'),
+                              ('split_so', 'Split'),
                               ('done', 'Closed'),
                               ('cancel', 'Cancelled'),
                               ]
