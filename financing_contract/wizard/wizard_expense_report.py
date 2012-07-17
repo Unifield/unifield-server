@@ -20,6 +20,7 @@
 ##############################################################################
 from osv import fields, osv
 import locale
+from tools.translate import _
 
 class wizard_expense_report(osv.osv_memory):
     
@@ -33,6 +34,10 @@ class wizard_expense_report(osv.osv_memory):
         context.update({'reporting_type': reporting_type})
         
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
+        
+        # check for the contract type; if it's not supposed to be displayed, return an error
+        if contract.reporting_type != 'all' and contract.reporting_type != reporting_type:
+            raise osv.except_osv(_('Warning !'), _("This report does not apply to the reporting type selected."))
         
         header_data = self._get_contract_header(cr, uid, contract, context=context)
         footer_data = self._get_contract_footer(cr, uid, contract, context=context)
