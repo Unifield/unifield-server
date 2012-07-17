@@ -151,13 +151,13 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="80.0,340.0,60.0,40.0,33.0,50.0,55.0,37.0,37.0,40.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTable" repeatRows="1">
 	    	<tr>
 	    		<td>
-	    			<para style="TextInfoBold">Ref.</para>
+	    			<para style="TextInfoBold">CODE</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">Name</para>
+	    			<para style="TextInfoBold">DESCRIPTION</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfoBold">Location</para>
@@ -202,7 +202,7 @@
 	    			<para style="TextInfo">[[ l.uom_id and l.uom_id.name ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.batch_number and l.batch_number.name ]]</para>
+	    			<para style="TextInfo">[[ l.batch_number ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo">[[ l.expiry_date ]]</para>
@@ -218,7 +218,7 @@
 	    		</td>
 	    	</tr>
 	    </blockTable>
-	    <blockTable colWidths="80.0,340.0,60.0,40.0,33.0,50.0,55.0,37.0,37.0,40.0" style="LinesTableTotal">
+	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTableTotal">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfo"> </para>
@@ -265,13 +265,13 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="80.0,340.0,60.0,44.0,33.0,50.0,55.0,35.0,35.0,40.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTable" repeatRows="1">
 	    	<tr>
 	    		<td>
-	    			<para style="TextInfoBold">Ref.</para>
+	    			<para style="TextInfoBold">CODE</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">Name</para>
+	    			<para style="TextInfoBold">DESCRIPTION</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfoBold">Location</para>
@@ -316,7 +316,7 @@
 	    			<para style="TextInfo">[[ l.uom_id and l.uom_id.name ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ l.batch_number and l.batch_number.name ]]</para>
+	    			<para style="TextInfo">[[ l.batch_number ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo">[[ l.expiry_date ]]</para>
@@ -333,7 +333,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="80.0,340.0,60.0,40.0,33.0,50.0,55.0,37.0,37.0,40.0" style="LinesTableTotal">
+	    <blockTable colWidths="80.0,300.0,70.0,45.0,33.0,70.0,55.0,42.0,37.0,40.0" style="LinesTableTotal">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfo"> </para>
