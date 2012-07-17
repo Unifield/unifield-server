@@ -247,9 +247,26 @@ class procurement_request(osv.osv):
         '''
         Validate the request
         '''
+        obj_data = self.pool.get('ir.model.data')
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd3')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'procurement_request', 'uom_tbd')[1]
+        vals = {}
+        nb_lines = 0
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
+            for line in req.order_line:
+                if line.nomen_manda_0.id == nomen_manda_0 \
+                or line.nomen_manda_1.id == nomen_manda_1 \
+                or line.nomen_manda_2.id == nomen_manda_2 \
+                or line.nomen_manda_3.id == nomen_manda_3 \
+                or line.product_uom.id == uom_tbd:
+                    nb_lines += 1
+            if nb_lines:
+                raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for UOM or Nomenclature Level". You have %s lines to correct !')%nb_lines)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
