@@ -249,7 +249,7 @@ class account_account(osv.osv):
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
-        'destination_ids': destination_m2m('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations'),
+        'destination_ids': destination_m2m('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
     }
 
     def write(self, cr, uid, ids, vals, context=None):

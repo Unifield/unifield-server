@@ -124,6 +124,7 @@ class account_move_line_compute_currency(osv.osv):
                 'percentage': 100.0,
                 'date': oldiest_date or current_date,
                 'source_date': oldiest_date or current_date,
+                'destination_id': addendum_line_account_default_destination_id,
             }
             cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             # add a funding pool line for analytic distribution

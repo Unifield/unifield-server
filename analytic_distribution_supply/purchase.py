@@ -285,17 +285,60 @@ class purchase_order_line(osv.osv):
             else:
                 res[line['id']] = True
         return res
-    
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the purchase line, then "valid"
+         - if no distribution, take a tour of purchase distribution, if compatible, then "valid"
+         - if no distribution on purchase line and purchase, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.from_yml_test:
+                res[line.id] = 'valid'
+            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
+                res[line.id] = 'none'
+            else:
+                po_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
+                distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+                # Search product account_id
+                if line.product_id:
+                    a = line.product_id.product_tmpl_id.property_account_expense.id
+                    if not a:
+                        a = line.product_id.categ_id.property_account_expense_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'), 
+                            _('There is no expense account defined for this product: "%s" (id:%d)') % (line.product_id.name, line.product_id.id))
+                else:
+                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                fpos = line.order_id.fiscal_position or False
+                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, a)
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id', 
             string="Commitment Voucher Lines", readonly=True),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
     _defaults = {
         'have_analytic_distribution_from_header': lambda *a: True,
     }
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a purchase order line.
@@ -313,12 +356,25 @@ class purchase_order_line(osv.osv):
         currency = purchase_line.order_id.currency_id and purchase_line.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = purchase_line.analytic_distribution_id and purchase_line.analytic_distribution_id.id
+        # Search product account_id
+        if purchase_line.product_id:
+            a = purchase_line.product_id.product_tmpl_id.property_account_expense.id
+            if not a:
+                a = purchase_line.product_id.categ_id.property_account_expense_categ.id
+            if not a:
+                raise osv.except_osv(_('Error !'), 
+                    _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
+        else:
+            a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+        fpos = purchase_line.order_id.fiscal_position or False
+        a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'purchase_line_id': purchase_line.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'account_id': a or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
