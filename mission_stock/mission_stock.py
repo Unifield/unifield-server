@@ -288,7 +288,8 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_val': fields.float(digits=(16,2), string='In Pipe Val.'),
         'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.'),
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.'),
-        'updated': fields.boolean(string='Updated'), 
+        'updated': fields.boolean(string='Updated'),
+        'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean'),
     }
     
     def _get_request(self, cr, uid, location_ids, product_id):
