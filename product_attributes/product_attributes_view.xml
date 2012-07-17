@@ -133,7 +133,7 @@
                                 <field name="closed_article" colspan="2"/>
                                 <separator string="Import restrictions" colspan="4"/>
                                 <field name="restricted_country" colspan="2"/>
-                                <field name="country_restriction" colspan="2" attrs="{'readonly':[('restricted_country','=',False)]}"/>
+                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
                         </page>
                         <page string="Miscellaneous">
@@ -152,7 +152,6 @@
                                 <field name="criticism" colspan="2"/>
                                 <field name="abc_class" colspan="2"/>
                             </group>
-
                             <separator string="Code remarks section" colspan="4"/>
                             <group colspan="2" col="2">
                                 <field name="section_code_ids" colspan="2" nolabel="1">
