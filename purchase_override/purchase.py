@@ -127,6 +127,7 @@ class purchase_order(osv.osv):
         ),
         'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
         'date_confirm': fields.date(string='Confirmation date'),
+        'partner_ref': fields.char('Supplier Reference', size=64),
     }
     
     _defaults = {
