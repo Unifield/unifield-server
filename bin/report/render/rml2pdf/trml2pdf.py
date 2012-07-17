@@ -37,6 +37,7 @@ from tools.safe_eval import safe_eval as eval
 from reportlab.lib.units import inch,cm,mm
 from tools.misc import file_open
 from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.textsplit import wordSplit
 
 try:
     from cStringIO import StringIO
@@ -45,6 +46,30 @@ except ImportError:
     from StringIO import StringIO
 
 encoding = 'utf-8'
+
+class ParaWrap(platypus.Paragraph):
+    def wrap(self, availWidth, availHeight):
+        # work out widths array for breaking
+        self.width = availWidth
+        leftIndent = self.style.leftIndent
+        first_line_width = availWidth - (leftIndent+self.style.firstLineIndent) - self.style.rightIndent
+        later_widths = availWidth - leftIndent - self.style.rightIndent
+
+        if self.style.wordWrap == 'CJK':
+            #use Asian text wrap algorithm to break characters
+            self.blPara = self.breakLinesCJK([first_line_width, later_widths])
+        else:
+            self.blPara = self.breakLines([first_line_width, later_widths])
+            new = []
+            for line in self.blPara.lines:
+                if line[0] < 0:
+                    for w in  wordSplit(line[1][0], first_line_width, self.blPara.fontName, self.blPara.fontSize):
+                        new.append((w[0], [w[1]]))	
+                else:
+                    new.append(line)
+            self.blPara.lines = new
+        self.height = len(self.blPara.lines) * self.style.leading
+        return (self.width, self.height)
 
 def _open_image(filename, path=None):
     """Attempt to open a binary file and return the descriptor
@@ -723,13 +748,16 @@ class _rml_flowable(object):
     def _flowable(self, node, extra_style=None):
         if node.tag=='pto':
             return self._pto(node)
-        if node.tag=='para':
+        if node.tag in ('para', 'parawrap'):
             style = self.styles.para_style_get(node)
             if extra_style:
                 style.__dict__.update(extra_style)
             result = []
             for i in self._textual(node).split('\n'):
-                result.append(platypus.Paragraph(i, style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
+                if node.tag == 'para':
+                    result.append(platypus.Paragraph(i, style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
+                else:
+                    result.append(ParaWrap(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
             return result
         elif node.tag=='barCode':
             try:
