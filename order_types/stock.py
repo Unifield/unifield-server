@@ -187,6 +187,9 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         certif = False
         for pick in self.browse(cr, uid, ids, context=context):
