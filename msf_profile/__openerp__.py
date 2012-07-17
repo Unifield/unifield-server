@@ -103,6 +103,9 @@
         "return_claim",
         "msf_processes",
         "msf_custom_settings",
+        "spreadsheet_xml",
+        "msf_supply_doc_export",
+        "msf_supply_doc_import",
     ],
     "update_xml": [
         "report.xml",

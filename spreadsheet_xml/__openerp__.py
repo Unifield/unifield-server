@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,10 +18,25 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-import publisher_warranty
-import stock_picking
-import consumption_calculation
-import product
-import kit_creation
-import kit
+{
+    "name": "Load Spreadsheet XML file",
+    "version": "1.0",
+    "depends": [],
+    "author" : "TeMPO Consulting, MSF",
+    "category": "General/Standard",
+    "description": """
+    This module changes loads Spreadsheet XML file
+    
+    """,
+    "init_xml": [
+    ],
+    'update_xml': [
+    ],
+    'test': [
+    ],
+    'demo_xml': [],
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
+}
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

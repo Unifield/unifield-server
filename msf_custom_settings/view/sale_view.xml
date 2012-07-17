@@ -11,10 +11,12 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/notebook/page/group[2]" position="replace" >
+                    </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/group[2]" position="replace" >
                     </xpath>
                     <xpath expr="/form/notebook" position="after" >
-                            <group col="14" colspan="1">
+                            <group col="14" colspan="4">
                                 <field name="state"/>
                                 <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
                                 <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>

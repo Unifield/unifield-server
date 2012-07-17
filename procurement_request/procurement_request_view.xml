@@ -49,6 +49,9 @@
                                 <tree editable="top" string="Products">
                                     <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
+                                    <button name="open_order_line_to_correct"
+                                        string="Configurator"
+                                        type="object" />
                                     <field name="product_uom_qty" />
                                     <field name="product_uom" />
                                     <field name="notes" />
