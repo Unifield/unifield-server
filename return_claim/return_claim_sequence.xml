@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+        <!-- Sequence for automated created lots -->
+        <record id="seq_type_return_claim" model="ir.sequence.type">
+            <field name="name">Return Claim</field>
+            <field name="code">return.claim</field>
+        </record>
+
+        <record id="seq_return_claim" model="ir.sequence">
+            <field name="name">Return Claim</field>
+            <field name="code">return.claim</field>
+            <field name="prefix">CLA/</field>
+            <field name="padding">5</field>
+        </record>
+        
+        <!-- Sequence for Kitting Order -->
+        <record id="seq_type_kit_creation" model="ir.sequence.type">
+            <field name="name">Kit Creation</field>
+            <field name="code">kit.creation</field>
+        </record>
+
+        <record id="seq_kit_creation" model="ir.sequence">
+            <field name="name">Kit Creation</field>
+            <field name="code">kit.creation</field>
+            <field name="prefix">KO/</field>
+            <field name="padding">5</field>
+        </record>
+
+	</data>
+</openerp>
+

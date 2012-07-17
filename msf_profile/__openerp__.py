@@ -100,6 +100,7 @@
         "supplier_catalogue",
         "msf_cross_docking",
         "msf_instance",
+        "return_claim",
         "msf_processes",
         "msf_custom_settings",
     ],

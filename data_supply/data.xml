@@ -504,7 +504,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 7-->
@@ -517,7 +517,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 8-->
@@ -530,7 +530,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 9-->
@@ -543,7 +543,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 10-->
@@ -556,7 +556,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_config_locations.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.picking, id: 2-->
