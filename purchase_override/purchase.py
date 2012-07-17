@@ -454,19 +454,17 @@ stock moves which are already processed : '''
         
         # Analytic distribution verification
         for po in self.browse(cr, uid, ids, context=context):
-            if not po.analytic_distribution_id:
-                for line in po.order_line:
-                    if po.from_yml_test:
-                        continue
-                    if not line.analytic_distribution_id:
-                        try:
-                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                                'analytic_account_project_dummy')
-                        except ValueError:
-                            dummy_cc = 0
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-                        break
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
+
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
@@ -514,6 +512,22 @@ stock moves which are already processed : '''
         
         return True
     
+    def compute_confirmed_delivery_date(self, cr, uid, ids, confirmed, prep_lt, ship_lt, est_transport_lead_time, db_date_format, context=None):
+        '''
+        compute the confirmed date
+        
+        confirmed must be string
+        return string corresponding to database format
+        '''
+        assert type(confirmed) == str
+        confirmed = datetime.strptime(confirmed, db_date_format)
+        confirmed = confirmed + relativedelta(days=prep_lt or 0)
+        confirmed = confirmed + relativedelta(days=ship_lt or 0)
+        confirmed = confirmed + relativedelta(days=est_transport_lead_time or 0)
+        confirmed = confirmed.strftime(db_date_format)
+        
+        return confirmed
+    
     def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Add a hook to modify the logged message
@@ -544,14 +558,19 @@ stock moves which are already processed : '''
                 # get the corresponding so line
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
                 if sol_ids:
+                    # get so_id
+                    data = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
+                    order_id = data[0]['order_id'][0]
+                    # get est_transport_lead_time of corresponding so
+                    data = so_obj.read(cr, uid, order_id, ['est_transport_lead_time'], context=context)
+                    est_transport_lead_time = data['est_transport_lead_time']
+                    
                     line_confirmed = False
                     # compute confirmed date for line
                     if line.confirmed_delivery_date:
-                        line_confirmed = datetime.strptime(line.confirmed_delivery_date, db_date_format)
-                        line_confirmed = line_confirmed + relativedelta(days=prep_lt or 0)
-                        line_confirmed = line_confirmed + relativedelta(days=ship_lt or 0)
-                        line_confirmed = line_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
-                        line_confirmed = line_confirmed.strftime(db_date_format)
+                        line_confirmed = self.compute_confirmed_delivery_date(cr, uid, ids, line.confirmed_delivery_date,
+                                                                              prep_lt, ship_lt, est_transport_lead_time,
+                                                                              db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     # {sol: pol}
@@ -592,20 +611,19 @@ stock moves which are already processed : '''
             # update after lines update, as so write triggers So workflow, and we dont want the Out document
             # to be created with old So datas
             if po.delivery_confirmed_date:
-                # Fo rts = Po confirmed date + prep_lt
-                delivery_confirmed_date = datetime.strptime(po.delivery_confirmed_date, db_date_format)
-                so_rts = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
-                so_rts = so_rts.strftime(db_date_format)
-            
-                # Fo confirmed date = confirmed date + prep_lt + ship_lt + transport_lt
-                so_confirmed = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
-                so_confirmed = so_confirmed + relativedelta(days=ship_lt or 0)
-                so_confirmed = so_confirmed + relativedelta(days=po.est_transport_lead_time or 0)
-                so_confirmed = so_confirmed.strftime(db_date_format)
-            
-                # write data to so
-                so_obj.write(cr, uid, so_ids, {'delivery_confirmed_date': so_confirmed,
-                                               'ready_to_ship_date': so_rts}, context=context)
+                for so in so_obj.browse(cr, uid, so_ids, context=context):
+                    # Fo rts = Po confirmed date + prep_lt
+                    delivery_confirmed_date = datetime.strptime(po.delivery_confirmed_date, db_date_format)
+                    so_rts = delivery_confirmed_date + relativedelta(days=prep_lt or 0)
+                    so_rts = so_rts.strftime(db_date_format)
+                
+                    # Fo confirmed date = confirmed date + prep_lt + ship_lt + transport_lt
+                    so_confirmed = self.compute_confirmed_delivery_date(cr, uid, ids, po.delivery_confirmed_date,
+                                                                        prep_lt, ship_lt, so.est_transport_lead_time,
+                                                                        db_date_format, context=context)
+                    # write data to so
+                    so_obj.write(cr, uid, [so.id], {'delivery_confirmed_date': so_confirmed,
+                                                   'ready_to_ship_date': so_rts}, context=context)
             
         return True
     
@@ -638,10 +656,12 @@ stock moves which are already processed : '''
         # if we have sol_ids, we are treating a po which is make_to_order from sale order
         if all_so_ids:
             # we retrieve the list of ids of all sale order line if type 'make_to_order' with state != 'confirmed'
+            # with product_id (if no product id, no procurement, no po, so should not be taken into account)
             # in case of grouped po, multiple Fo depend on this po, all Po of these Fo need to be completed
             # and all Fo will be confirmed together. Because IN of grouped Po need corresponding OUT document of all Fo
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
+                                                                 ('product_id', '!=', False),
                                                                  ('state', '!=', 'confirmed')], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:
@@ -697,17 +717,16 @@ stock moves which are already processed : '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests,
-        # which doesnt execute wkf_confirm_wait_order
+        # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests for dates,
+        # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
-        # This code have been commented because of double commitment generation
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
         
         # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
             if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind' and po.partner_id.partner_type != 'intermission':
                 self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
-        
+
         for order in self.browse(cr, uid, ids):
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
@@ -715,11 +734,11 @@ stock moves which are already processed : '''
                 for line in order.order_line:
                     if line.price_unit == 0.00:
                         line_error.append(line.line_number)
-                    
+
                 if len(line_error) > 0:
                     errors = ' / '.join(str(x) for x in line_error)
                     raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
-            
+
             todo = []
             todo2 = []
             todo3 = []
@@ -845,14 +864,15 @@ stock moves which are already processed : '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
         inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
-        
+
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
             elif order.order_type == 'in_kind':
                 if not inkind_journal_ids:
                     raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
-                invoice_obj.write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True,})
+                invoice_obj.write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True})
+
         return invoice_id
     
     def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -1317,22 +1337,27 @@ class purchase_order_line(osv.osv):
         order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
-        
+
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
-            
+
         vals = self._update_merged_line(cr, uid, False, vals, context=context)
-        
+
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
-        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
-    
+        # add the database Id to the sync_pol_db_id
+        po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
+        if 'sync_pol_db_id' not in vals:
+            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_pol_db_id': po_line_id}, context=context)
+
+        return po_line_id
+
     def copy(self, cr, uid, line_id, defaults={}, context=None):
         '''
         Remove link to merged line
         '''
         defaults.update({'merged_id': False})
-        
+
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1345,6 +1370,9 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
+#        if ids and not isinstance(ids[0], (int, long)):
+#            ids = [x.id for x in ids]
+            
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
@@ -1459,6 +1487,9 @@ class purchase_order_line(osv.osv):
         'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
         'old_price_unit': fields.float(digits=(16,2), string='Old price'),
         'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
+
+        'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
+        'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
     }
 
     _defaults = {

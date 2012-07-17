@@ -25,6 +25,7 @@ from osv import fields, osv
 from tools.translate import _
 from lxml import etree
 from tools.misc import flatten
+from destination_tools import many2many_sorted
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -44,7 +45,7 @@ class analytic_account(osv.osv):
         'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers', domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
         'destination_ids': fields.many2many('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
-        'tuple_destination_account_ids': fields.many2many('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
+        'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
     }
     

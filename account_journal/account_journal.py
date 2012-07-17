@@ -78,7 +78,6 @@ class account_journal(osv.osv):
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
-        'instance_id': fields.char('Proprietary instance', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
     }
 
@@ -88,7 +87,6 @@ class account_journal(osv.osv):
         'entry_posted': False,
         'update_posted': True,
         'group_invoice_lines': False,
-        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.name,
     }
     
     def get_current_period(self, cr, uid, context=None):

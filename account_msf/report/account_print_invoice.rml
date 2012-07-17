@@ -228,7 +228,7 @@
           <para style="terp_tblheader_General">DESCRIPTION</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Taxes</para>
+          <para style="terp_tblheader_General_Centre">Taxes[[o.is_inkind_donation == True and removeParentNode('para')]]</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Right">Quantity</para>
@@ -249,7 +249,8 @@
             <para style="terp_default_9">[[ l.name ]]</para>
           </td>
           <td>
-            <para style="terp_default_Centre_9">[[ ', '.join([ lt.name or '' for lt in l.invoice_line_tax_id ]) ]]</para>
+            <para style="terp_default_Centre_9">[[ ', '.join([ lt.name or '' for lt in l.invoice_line_tax_id ]) ]]
+            [[o.is_inkind_donation == True and removeParentNode('para')]]</para>
           </td>
           <td>
             <para style="terp_default_Right_9">[[ formatLang(l.quantity)]] [[ (l.uos_id and l.uos_id.name) or '' ]]</para>
@@ -314,10 +315,11 @@
           </para>
         </td>
         <td>
-          <para style="terp_default_9">Taxes:</para>
+          <para style="terp_default_9">Taxes:[[o.is_inkind_donation == True and removeParentNode('td')]]</para>
         </td>
         <td>
-          <para style="terp_default_Right_9">[[ formatLang(o.amount_tax, dp='Account') ]] [[ o.currency_id.symbol ]]</para>
+          <para style="terp_default_Right_9">[[ formatLang(o.amount_tax, dp='Account') ]] [[ o.currency_id.symbol ]]
+          [[o.is_inkind_donation == True and removeParentNode('td')]]</para>
         </td>
       </tr>
       <tr>

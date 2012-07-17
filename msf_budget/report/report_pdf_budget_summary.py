@@ -36,7 +36,13 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         # Retrieve all names and ids
         for line in selected_lines:
-            line_names[line.id] = line.account_id.code + " " + line.account_id.name
+            line_name = line.account_id.code
+            if line.destination_id:
+                line_name += " "
+                line_name += line.destination_id.code
+            line_name += " "
+            line_name += line.account_id.name
+            line_names[line.id] = line_name
         # Process all lines for amounts (avoids multiple calls)
         total_amounts = pool.get('msf.budget.line')._get_total_amounts(self.cr, self.uid, line_names.keys())
         

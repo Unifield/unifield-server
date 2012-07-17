@@ -1,0 +1,4 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_return_claim","return.claim","model_return_claim","",1,1,1,1
+"access_claim_event","claim.event","model_claim_event","",1,1,1,1
+"access_product_line","claim.product.line","model_claim_product_line","",1,1,1,1

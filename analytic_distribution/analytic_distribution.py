@@ -69,14 +69,14 @@ class analytic_distribution1(osv.osv):
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
             return 'none'
-        distri = self.browse(cr, uid, id)
+        distrib = self.browse(cr, uid, id)
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        for fp_line in distri.funding_pool_lines:
+        for fp_line in distrib.funding_pool_lines:
             account = self.pool.get('account.account').browse(cr, uid, account_id)
             if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
                 return 'invalid'
@@ -155,6 +155,9 @@ distribution_line()
 class cost_center_distribution_line(osv.osv):
     _name = "cost.center.distribution.line"
     _inherit = "distribution.line"
+    _columns = {
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
+    }
     
 cost_center_distribution_line()
 
@@ -171,13 +174,19 @@ funding_pool_distribution_line()
 class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"
     _inherit = "distribution.line"
-
+    _columns = {
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+    }
+    
 free_1_distribution_line()
 
 class free_2_distribution_line(osv.osv):
     _name = "free.2.distribution.line"
     _inherit = "distribution.line"
-
+    _columns = {
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+    }
+    
 free_2_distribution_line()
 
 class analytic_distribution(osv.osv):
@@ -296,9 +305,10 @@ class analytic_distribution(osv.osv):
                         'currency_id': line.currency_id and line.currency_id.id or False,
                         'distribution_id': distrib.id or False,
                         'cost_center_id': line.analytic_id and line.analytic_id.id or False,
+                        'destination_id': line.destination_id and line.destination_id.id or False,
                     }
-                    # Search default destination
-                    if account_id:
+                    # Search default destination if no one given
+                    if account_id and not vals.get('destination_id'):
                         account = self.pool.get('account.account').browse(cr, uid, account_id)
                         if account and account.user_type and account.user_type.code == 'expense':
                             vals.update({'destination_id': account.default_destination_id and account.default_destination_id.id or False})
@@ -364,7 +374,7 @@ class analytic_distribution(osv.osv):
                         'account_id': distrib_line.analytic_id.id,
                         'cost_center_id': False,
                         'destination_id': False,
-                        'distrib_line_id': '%s,%s'%(distrib_lines._name, distrib_line.id),
+                        'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                     })
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':

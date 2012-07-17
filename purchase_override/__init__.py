@@ -10,6 +10,7 @@ ORDER_CATEGORY = [('medical', 'Medical'),
 
 PURCHASE_ORDER_STATE_SELECTION = [
     ('draft', 'Draft'),
+    ('sourced', 'Sourced'),
     ('wait', 'Waiting'),
     ('confirmed', 'Validated'),
     ('confirmed_wait', 'Confirmed (waiting)'),
@@ -20,6 +21,7 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('cancel', 'Cancelled'),
     ('rfq_sent', 'Sent'),
     ('rfq_updated', 'Updated'),
+    ('split', 'Split'),
 ]
 
 

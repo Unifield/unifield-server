@@ -94,6 +94,4 @@
     # We should 2 lines for each analytic account with an amount of -187.5 and one of -62.5
     for el in [(187.50, ref('analytic_account_gabon')), (62.50, ref('analytic_account_kenya'))]:
         search_ids = self.search(cr, uid, [('amount', '=', -1 * el[0])])
-        for line in self.browse(cr, uid, search_ids):
-            print line.name, line.amount, line.account_id.code, line.account_id.category
         assert len(search_ids) == 1, "Some lines are missing."

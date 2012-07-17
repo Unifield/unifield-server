@@ -174,12 +174,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 wiz_line.unlink()
             else:
                 to_delete.append(wiz_line)
-        print period_closed
-        print 'to_create', to_create
-        print 'to_over', to_override
-        print 'to_delete', to_delete
-        print 'to_reverse', to_reverse
-        print 'old_line_ok', old_line_ok
 
         for line in to_create:
             # create the new distrib line

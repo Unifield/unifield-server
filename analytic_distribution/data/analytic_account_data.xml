@@ -73,7 +73,7 @@
         
         <record id="analytic_account_destination_operation" model="account.analytic.account">
             <field name="name">Operations</field>
-            <field name="code">OP</field>
+            <field name="code">OPS</field>
             <field name="type">normal</field>
             <field name="active">True</field>
             <field name="category">DEST</field>
@@ -91,7 +91,7 @@
         
         <record id="analytic_account_destination_national_staff" model="account.analytic.account">
             <field name="name">National Staff</field>
-            <field name="code">NATSTAFF</field>
+            <field name="code">NAT</field>
             <field name="type">normal</field>
             <field name="active">True</field>
             <field name="category">DEST</field>
@@ -100,7 +100,7 @@
         
         <record id="analytic_account_destination_expatriates" model="account.analytic.account">
             <field name="name">Expatriates</field>
-            <field name="code">EXPAT</field>
+            <field name="code">EXP</field>
             <field name="type">normal</field>
             <field name="active">True</field>
             <field name="category">DEST</field>

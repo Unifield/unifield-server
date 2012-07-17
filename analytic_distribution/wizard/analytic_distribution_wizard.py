@@ -61,6 +61,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'type': fields.selection([('cost.center', 'Cost Center Lines'), ('funding.pool', 'Funding Pool Lines'), ('free.1', 'Free 1 Lines'), 
             ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values 
             #+ to construct object research !
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -174,6 +176,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+                # Change Destination field
+                dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
+                for field in dest_fields:
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)):
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                    else:
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
             ## FUNDING POOL
             if line_type == 'analytic.distribution.wizard.fp.lines':
                 # Change OC field
@@ -200,7 +210,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
-                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)):
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)):
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
@@ -366,6 +377,11 @@ class analytic_distribution_wizard_f1_lines(osv.osv_memory):
     _description = 'analytic.distribution.wizard.lines'
     _inherit = 'analytic.distribution.wizard.lines'
 
+    _columns = {
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+    }
+
     _defaults = {
         'type': lambda *a: 'free.1',
     }
@@ -376,6 +392,11 @@ class analytic_distribution_wizard_f2_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.f2.lines'
     _description = 'analytic.distribution.wizard.lines'
     _inherit = 'analytic.distribution.wizard.lines'
+
+    _columns = {
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+    }
 
     _defaults = {
         'type': lambda *a: 'free.2',
@@ -546,6 +567,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'wizard_id': wiz.id,
                     'currency_id': line.currency_id and line.currency_id.id or False,
                     'distribution_line_id': line.id or False,
+                    'destination_id': line.destination_id and line.destination_id.id or False,
                 }
                 new_line_id = cc_obj.create(cr, uid, vals, context=context)
                 # update amount regarding percentage
@@ -574,11 +596,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                                     'wizard_id': wiz.id,
                                     'currency_id': line.currency_id and line.currency_id.id or False,
                                     'distribution_line_id': line.id or False,
+                                    'destination_id': line.destination_id and line.destination_id.id or False,
                                 }
                                 # Add cost_center_id value if we come from a funding_pool object
                                 if line_type == 'funding.pool':
-                                    vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False, 
-                                        'destination_id': line.destination_id and line.destination_id.id or False,})
+                                    vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False, })
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
@@ -735,11 +757,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'currency_id': x.currency_id and x.currency_id.id,
                 'analytic_id': x.analytic_id and x.analytic_id.id,
                 'percentage': x.percentage,
+                'destination_id': x.destination_id and x.destination_id.id or False,
             }
             # Add cost_center_id field if we come from a funding.pool object
             if line_type == 'funding.pool':
-                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, 
-                    'destination_id': x.destination_id and x.destination_id.id or False,})
+                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, })
             res.append(db_lines_vals)
         return res
 
@@ -765,11 +787,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'currency_id': x.currency_id and x.currency_id.id,
                 'analytic_id': x.analytic_id and x.analytic_id.id,
                 'percentage': x.percentage,
+                'destination_id': x.destination_id and x.destination_id.id or False,
             }
             # Add cost_center_id field if we come from a funding_pool object
             if line_type == 'funding.pool':
-                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,
-                    'destination_id': x.destination_id and x.destination_id.id or False,})
+                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,})
             res.append(wiz_lines_vals)
         return res
 
@@ -840,7 +862,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
-            if not wiz.distribution_id:
+            distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
+            if not distrib_id:
                 # create a new analytic distribution
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 # link it to the wizard
@@ -859,6 +882,15 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+                # Create funding pool lines from CC lines if wizard is from PO/FO
+                # PAY ATTENTION THAT break avoid problem that delete new created funding pool
+                if line_type == 'cost.center' and wiz.state == 'cc' and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
+                    fp_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
+                    if fp_ids:
+                        self.pool.get('funding.pool.distribution.line').unlink(cr, uid, fp_ids)
+                    account_id = wiz.account_id and wiz.account_id.id or False
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, account_id)
+                    break
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):

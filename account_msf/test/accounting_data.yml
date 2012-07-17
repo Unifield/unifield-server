@@ -136,22 +136,13 @@
   !record {model: analytic.distribution, id: analytic_distrib1}:
     name: distri_1
 -
-  With one cc line
--
-  !record {model: cost.center.distribution.line, id: cost_center_l1}:
-    name: CC Line 1
-    percentage: 100
-    currency_id: 1
-    analytic_id: analytic_distribution.analytic_account_project_dummy
-    distribution_id: analytic_distrib1
--
   And one FP line
 -
   !record {model: funding.pool.distribution.line, id: funding_pool_l1}:
     name: FP Line 1
     percentage: 100
     currency_id: 1
-    analytic_id: analytic_distribution.analytic_account_msf_private_funds
     cost_center_id: analytic_distribution.analytic_account_project_dummy
+    destination_id: analytic_distribution.analytic_account_destination_expatriates
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: analytic_distrib1
-    destination_id: analytic_distribution.analytic_account_destination_operation
