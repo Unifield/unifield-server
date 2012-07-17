@@ -104,6 +104,7 @@
       for mem_move in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         if mem_move.product_id.id == ref('claim_product_A'):
           mem_move.write({'prodlot_id': ref('claim_lot_As')}, context=context)
+    wiz_obj.copy_all(cr, uid, [dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']

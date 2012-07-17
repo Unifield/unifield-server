@@ -115,6 +115,7 @@
       for mem_move in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         if mem_move.product_id.id == ref('claim_product_A'):
           mem_move.write({'prodlot_id': ref('claim_lot_As')}, context=context)
+    wiz_obj.copy_all(cr, uid, [dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
@@ -197,6 +198,7 @@
     assert wizard.in_has_partner_id_partial_picking, 'the partner check is False in the chained processing wizard'
     assert wizard.partner_id_partial_picking, 'the partner is missing in the chained processing wizard'
     # process the picking
+    self.copy_all(cr, uid, context['wizard']['ids'], context=dict(context['wizard']['c']))
     self.do_partial(cr, uid, context['wizard']['ids'], context=dict(context['wizard']['c'],active_ids=[context['chained_id_claim']]))
 -
   I find the claim 002 from wizard

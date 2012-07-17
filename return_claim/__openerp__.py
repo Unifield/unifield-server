@@ -46,10 +46,12 @@
     ],
     'demo_xml': [
     ],
-    'test': ['test/return_claim_data.yml',
-#             'test/return_claim_so_po_in.yml',
-             'test/return_claim_from_scratch.yml',
-             'test/return_claim_wizard_process.yml'],
+    'test': [
+        'test/return_claim_data.yml',
+#       'test/return_claim_so_po_in.yml',
+        'test/return_claim_from_scratch.yml',
+        'test/return_claim_wizard_process.yml'
+    ],
     'installable': True,
     'active': False,
 }
