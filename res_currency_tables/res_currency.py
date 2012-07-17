@@ -78,11 +78,6 @@ class res_currency(osv.osv):
                 return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
         # Fallback case if no currency table or one currency not defined in the table
         return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
-    
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        currency = self.browse(cr, uid, res_id)
-        table_name = currency.currency_table_id and currency.currency_table_id.name or ''
-        return currency.name + table_name
             
 res_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

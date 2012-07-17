@@ -35,10 +35,6 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        bank = self.browse(cr, uid, res_id)
-        return bank.name + '_' +bank.journal_id.code
-
     def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
