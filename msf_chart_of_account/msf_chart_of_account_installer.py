@@ -36,10 +36,10 @@ class msf_chart_of_account_installer(osv.osv_memory):
             return False
 
     def get_instance(self, cr, uid, context=None):
-        #instance_ids = self.pool.get('msf.instance').search(cr, uid, [('state', '=', 'draft')])
-        #return instance_ids and instance_ids[0] or False
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        return user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
+        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('state', '=', 'draft')])
+        return instance_ids and instance_ids[0] or False
+        #user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        #return user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
 
     _defaults = {
         'create': True,
