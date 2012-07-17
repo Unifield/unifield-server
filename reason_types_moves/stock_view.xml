@@ -85,7 +85,7 @@
 				</data>
             </field>
         </record>
-        
+       
         <record id="inherit_view_move_tree_reception_picking" model="ir.ui.view">
             <field name="name">inherit.view.move.tree.reception.picking</field>
             <field name="model">stock.move</field>
@@ -96,6 +96,23 @@
                 	<xpath expr="/tree/field[@name='picking_id']" position="after">
                         <field name="reason_type_id" />
                     </xpath>
+
+                	<xpath expr="/tree" position="attributes">
+                        <attribute name="hide_new_button">True</attribute>
+                        <attribute name="hide_delete_button">True</attribute>
+                        <attribute name="editable">top</attribute>
+                        <attribute name="noteditable">True</attribute>
+                    </xpath>
+
+                    <xpath expr="/tree//button[@string='Scrap Products']" position="replace">
+                    </xpath>
+                    <xpath expr="/tree//button[@string='Split in production lots']" position="replace">
+                    </xpath>
+                    <xpath expr="/tree//button[@string='Put in a new pack']" position="replace">
+                    </xpath>
+                    <xpath expr="/tree//button[@string='Put in current pack']" position="replace">
+                    </xpath>
+
                 </data>
             </field>
         </record>
