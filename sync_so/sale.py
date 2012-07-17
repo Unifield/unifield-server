@@ -55,13 +55,3 @@ class sale_order_sync(osv.osv):
 
 sale_order_sync()
 
-class account_period_sync(osv.osv):
-    
-    _inherit = "account.period"
-    
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        print "generate xml name for period"
-        period = self.browse(cr, uid, res_id)
-        return period.fiscalyear_id.code + "/" + period.name + "_" + period.date_start
-    
-account_period_sync()
