@@ -19,9 +19,9 @@ SALE_ORDER_LINE_STATE_SELECTION = [('draft', 'Draft'),
                                    ]
 
 SALE_ORDER_SPLIT_SELECTION = [('original_sale_order', 'Original'),
-                              ('esc_split_sale_order', 'ESC'),
-                              ('stock_split_sale_order', 'from Stock'),
-                              ('local_purchase_split_sale_order', 'Local Purchase')]
+                              ('esc_split_sale_order', '1'), # ESC
+                              ('stock_split_sale_order', '2'), # from Stock
+                              ('local_purchase_split_sale_order', '3')] # Local Purchase
 
 import sale
 import report
