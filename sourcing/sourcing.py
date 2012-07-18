@@ -463,15 +463,14 @@ class sourcing_line(osv.osv):
                 if ol.state != state_to_use:
                     linesConfirmed = False
                     break
-                
+            # the line reads estimated_dd, after trg_validate, the lines are deleted, so all read/write must be performed before
+            self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
                 if sl.sale_order_id.procurement_request:
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
                 else:
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
-            
-            self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
                 
         return result
     
