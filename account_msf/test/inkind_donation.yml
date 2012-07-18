@@ -54,6 +54,7 @@
     location_id: stock.stock_location_stock
     partner_address_id: address1
     pricelist_id: purchase.list0
+    analytic_distribution_id: analytic_distrib1
 -
   We create a line for this purchase order
 -
@@ -110,12 +111,12 @@
         import netsvc
         wf_service = netsvc.LocalService("workflow")
         # Add a distribution on invoice
-        self.write(cr, uid, [inv.id], {'from_yml_test': False, 'analytic_distribution_id': ref("analytic_distrib1")})
+        self.write(cr, uid, [inv.id], {'from_yml_test': True, 'analytic_distribution_id': ref("analytic_distrib1")})
         # Validate invoice
         wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         # Search analytic lines
-        search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('ref', '=', "Inkind0")])
-        assert len(search_ids) == 2, "Bad generation of analytic lines!"
+        search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('amount', '=', -15.0), ('general_account_id', '=', ref("account_account_expense1"))])
+        assert len(search_ids) == 1, "Bad generation of analytic lines!"
 -
   Then I cancel invoice and check that analytic lines have been reversed
 -
@@ -130,4 +131,4 @@
         wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_cancel', cr)
         # Check that 4 analytic lines exists for this invoice
         reversed_ids = self.pool.get('account.analytic.line').search(cr, uid, [('is_reversal', '=', True), ('amount', '=', 15.0)])
-        assert len(reversed_ids) == 2, "Invoice have not been reversed"
+        assert len(reversed_ids) == 1, "Invoice have not been reversed"

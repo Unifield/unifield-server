@@ -80,6 +80,8 @@
     type: other
     user_type: account_account_type_expense0
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_expatriates
+    destination_ids: [analytic_distribution.analytic_account_destination_expatriates]
 -
   I create a 8101 Expense Account.
 -
@@ -91,6 +93,8 @@
     type: other
     user_type: account_account_type_expense0
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_expatriates
+    destination_ids: [analytic_distribution.analytic_account_destination_expatriates]
 -
   I set 4500 account than default debit note account
 -
@@ -134,7 +138,7 @@
   I create a analytic distribution
 -
   !record {model: analytic.distribution, id: analytic_distrib1}:
-    name: distri_1
+    name: distrib1
 -
   And one FP line
 -
@@ -142,7 +146,7 @@
     name: FP Line 1
     percentage: 100
     currency_id: 1
-    cost_center_id: analytic_distribution.analytic_account_project_dummy
-    destination_id: analytic_distribution.analytic_account_destination_expatriates
     analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: analytic_distrib1
+    cost_center_id: analytic_distribution.analytic_account_project_dummy
+    destination_id: analytic_distribution.analytic_account_destination_expatriates
