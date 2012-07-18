@@ -211,6 +211,7 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_move_filter" />
             <field name="arch" type="xml">
+                <xpath expr="//filter[@string='To Review']" position="replace"/>
                 <xpath expr="//field[@name='partner_id']" position="replace">
                     <field name="partner_id" invisible="1"/>
                     <field name="partner_type"/>
