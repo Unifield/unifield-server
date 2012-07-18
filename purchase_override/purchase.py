@@ -453,10 +453,11 @@ stock moves which are already processed : '''
         ana_obj = self.pool.get('analytic.distribution')
         
         # Analytic distribution verification
+        # NOT MANDATORY for In-kind donation PO
         for po in self.browse(cr, uid, ids, context=context):
             for pol in po.order_line:
                 # Forget check if we come from YAML tests
-                if po.from_yml_test:
+                if po.from_yml_test or po.order_type == 'in_kind':
                     continue
                 distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
                 # Raise an error if no analytic distribution found
@@ -721,13 +722,11 @@ stock moves which are already processed : '''
         # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
-        
-        # Create commitments for each PO only if po is "from picking"
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind' and po.partner_id.partner_type != 'intermission':
-                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
 
         for order in self.browse(cr, uid, ids):
+            # Create commitments for each PO only if po is "from picking"
+            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type != 'in_kind' and order.partner_id.partner_type != 'intermission':
+                self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
                 line_error = []

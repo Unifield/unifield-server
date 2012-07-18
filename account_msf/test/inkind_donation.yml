@@ -54,7 +54,6 @@
     location_id: stock.stock_location_stock
     partner_address_id: address1
     pricelist_id: purchase.list0
-    analytic_distribution_id: analytic_distrib1
 -
   We create a line for this purchase order
 -
