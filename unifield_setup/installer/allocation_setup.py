@@ -100,7 +100,7 @@ Please click on the below buttons to see the different blocking documents.''',
             picking_cross_ids.extend(self.pool.get('stock.picking').search(cr, uid, [('cross_docking_ok', '=', True)]))
         
         med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
-        log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_logistic')[1]
+        log_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         if type != 'unallocated':    
             med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_unalloc_medical')[1]
             log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_unalloc_logistic')[1]
@@ -143,7 +143,7 @@ Please click on the below buttons to see the different blocking documents.''',
             
         # Get all locations concerned by this modification
         med_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
-        log_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_logistic')[1]
+        log_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
         
         med_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', med_loc_id), ('active', 'in', ['t', 'f'])])
         log_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', log_loc_id), ('active', 'in', ['t', 'f'])])
