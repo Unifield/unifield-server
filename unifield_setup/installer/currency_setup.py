@@ -30,29 +30,31 @@ class currency_setup(osv.osv_memory):
     _inherit = 'res.config'
     
     _columns = {
-        'functional_id': fields.many2one('res.currency', string='Functional currency', 
-                                         required=True),
-        'esc_ids': fields.many2many('res.currency', 'esc_currency_rel', 'wiz_id', 'currency_id',
-                                    string='ESC Currencies', help="Currencies used by the ESC"),
-        'section_ids': fields.many2many('res.currency', 'section_currency_rel', 'wiz_id', 'currency_id',
-                                    string='Section Currencies', help="Currencies used by the Sections"),
+        'functional_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Functional currency',
+                                          required=True),
+        'esc_id': fields.many2one('res.currency', string="ESC Currency", readonly=True),
+        'section_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Section currency',
+                                       readonly=True),
     }
+    
+    def functional_on_change(self, cr, uid, ids, currency_id, context=None):
+        return {'value': {'section_id': currency_id}}
     
     def default_get(self, cr, uid, fields, context=None):
         '''
         Display the default value for delivery process
         '''
-        currency_obj = self.pool.get('res.currency')
-        
         res = super(currency_setup, self).default_get(cr, uid, fields, context=context)
         
         company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        esc_ids = currency_obj.search(cr, uid, [('is_esc_currency', '=', True)], context=context)
-        section_ids = currency_obj.search(cr, uid, [('is_section_currency', '=', True)], context=context)
+        esc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
         
-        res['functional_id'] = company_id.currency_id.id
-        res['esc_ids'] = esc_ids
-        res['section_ids'] = section_ids
+        if company_id.currency_id.id == esc_id:
+            res['functional_id'] = 'eur'
+        else:
+            res['functional_id'] = 'chf' 
+        res['esc_id'] = esc_id
+        res['section_id'] = res['functional_id']
         
         return res
     
@@ -62,29 +64,15 @@ class currency_setup(osv.osv_memory):
         '''
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
-        currency_obj = self.pool.get('res.currency')
-        
-        if payload.functional_id:
-            company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
-            self.pool.get('res.company').write(cr, uid, [company_id], {'currency_id': payload.functional_id.id}, context=context)
+        if payload.functional_id == 'eur':
+            cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
+        else:
+            cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'CHF')[1]
             
-        esc_ids = currency_obj.search(cr, uid, [('is_esc_currency', '=', True)], context=context)
-        section_ids = currency_obj.search(cr, uid, [('is_section_currency', '=', True)], context=context)
+        if not self.pool.get('res.currency').read(cr, uid, cur_id, ['active'], context=context)['active']:
+            self.pool.get('res.currency').write(cr, uid, cur_id, {'active': True}, context=context)
         
-        # Remove the flag on all currencies
-        currency_obj.write(cr, uid, esc_ids, {'is_esc_currency': False}, context=context)
-        currency_obj.write(cr, uid, section_ids, {'is_section_currency': False}, context=context)
-        
-        new_esc_ids = []
-        new_section_ids = []
-        
-        for esc in payload.esc_ids:
-            new_esc_ids.append(esc.id)
-            
-        for section in payload.section_ids:
-            new_section_ids.append(section.id)
-        
-        currency_obj.write(cr, uid, new_esc_ids, {'is_esc_currency': True}, context=context)
-        currency_obj.write(cr, uid, new_section_ids, {'is_section_currency': True}, context=context)
+        company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        self.pool.get('res.company').write(cr, uid, [company_id], {'currency_id': cur_id}, context=context)
         
 currency_setup()
