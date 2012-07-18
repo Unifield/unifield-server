@@ -22,8 +22,8 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
-      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="18,-1"/>
-      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="18,-1" thickness="0.5"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="19,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="19,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <initialize>
@@ -68,10 +68,10 @@
           <para style="P3">Entry Sequence</para>
         </td>
         <td>
-          <para style="P3">Description</para>
+          <para style="P3">DESCRIPTION</para>
         </td>
         <td>
-          <para style="P3">Reference</para>
+          <para style="P3">CODE</para>
         </td>
         <td>
           <para style="P3">Posting Date</para>
@@ -84,6 +84,9 @@
         </td>
         <td>
           <para style="P3">General Account</para>
+        </td>
+        <td>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Destination" or removeParentNode('td') ]]</para>
         </td>
         <td>
           <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Cost Center" or removeParentNode('td') ]]</para>
@@ -119,7 +122,7 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <para style="P3">[[ o.company_id and o.company_id.name or '' ]]</para>
+          <para style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
@@ -144,6 +147,9 @@
         </td>
         <td>
           <para style="P3">[[ o.general_account_id and o.general_account_id.code or '' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ data.get('context') and data['context'].get('display_fp', False) and (o.destination_id and o.destination_id.name or '') or removeParentNode('td') ]]</para>
         </td>
         <td>
           <para style="P4">[[ data.get('context') and data['context'].get('display_fp', False) and (o.cost_center_id and o.cost_center_id.name or '') or removeParentNode('td') ]]</para>

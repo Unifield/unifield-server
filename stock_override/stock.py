@@ -30,6 +30,7 @@ import netsvc
 import tools
 import decimal_precision as dp
 import logging
+from os import path
 
 
 #----------------------------------------------------------
@@ -84,7 +85,19 @@ class procurement_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
         return True
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset link to purchase order from update of on order purchase order
+        '''
+        if not default:
+            default = {}
+        default.update({'so_back_update_dest_po_id_procurement_order': False})
+        return super(procurement_order, self).copy_data(cr, uid, id, default, context=context)
+    
     _columns = {'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+                # this field is used when the po is modified during on order process, and the so must be modified accordingly
+                # the resulting new purchase order line will be merged in specified po_id 
+                'so_back_update_dest_po_id_procurement_order': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
                 }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -225,14 +238,36 @@ class stock_picking(osv.osv):
 
         return True
     
-    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+    def _do_partial_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        hook to update defaults data
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to modify the defaults data for move creation and copy
         '''
         defaults = kwargs.get('defaults')
         assert defaults is not None, 'missing defaults'
         
         return defaults
+    
+    def _picking_done_cond(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to conditionally execute the picking processing to done
+        '''
+        return True
+    
+    def _custom_code(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>stock.py>stock_picking
+        
+        - allow to execute specific custom code before processing picking to done
+        - no supposed to modify partial_datas
+        '''
+        return True
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
@@ -375,19 +410,25 @@ class stock_picking(osv.osv):
                 defaults = self._do_partial_hook(cr, uid, ids, context, move=move, partial_datas=partial_datas, defaults=defaults)
                 move_obj.write(cr, uid, [move.id], defaults)
 
-
             # At first we confirm the new picking (if necessary)
             if new_picking:
+                self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
+                # custom code execution
+                self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=self.browse(cr, uid, new_picking, context=context))
+                # we confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
                 wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
-                self.action_move(cr, uid, [new_picking])
-                wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
+                if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
+                    self.action_move(cr, uid, [new_picking])
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
                 delivered_pack_id = new_picking
             else:
-                self.action_move(cr, uid, [pick.id])
-                wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                # custom code execution
+                self._custom_code(cr, uid, ids, context=context, partial_datas=partial_datas, concerned_picking=pick)
+                if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
+                    self.action_move(cr, uid, [pick.id])
+                    wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
                 delivered_pack_id = pick.id
 
             delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
@@ -769,6 +810,19 @@ class stock_location(osv.osv):
     _name = 'stock.location'
     _inherit = 'stock.location'
     
+    def init(self, cr):
+        """
+        Load data.xml asap
+        """
+        if hasattr(super(stock_location, self), 'init'):
+            super(stock_location, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        logging.getLogger('init').info('HOOK: module stock_override: loading stock_data.xml')
+        pathname = path.join('stock_override', 'stock_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'stock_override', file, {}, mode='init', noupdate=False)
+    
     def _product_value(self, cr, uid, ids, field_names, arg, context=None):
         """Computes stock value (real and virtual) for a product, as well as stock qty (real and virtual).
         @param field_names: Name of field
@@ -868,3 +922,73 @@ class stock_location_chained_options(osv.osv):
     }
 
 stock_location_chained_options()
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        new_values = values
+        
+        move_accepted_values = {'client_action_multi': [],
+                                    'client_print_multi': [],
+                                    'client_action_relate': ['act_relate_picking'],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        incoming_accepted_values = {'client_action_multi': ['act_stock_return_picking', 'action_stock_invoice_onshipping'],
+                                    'client_print_multi': [],
+                                    'client_action_relate': ['View_log_stock.picking'],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        internal_accepted_values = {'client_action_multi': [],
+                                    'client_print_multi': ['Labels'],
+                                    'client_action_relate': [],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        delivery_accepted_values = {'client_action_multi': [],
+                                    'client_print_multi': ['Labels'],
+                                    'client_action_relate': [''],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        picking_accepted_values = {'client_action_multi': [],
+                                    'client_print_multi': ['Picking Ticket', 'Pre-Packing List', 'Labels'],
+                                    'client_action_relate': [''],
+                                    'tree_but_action': [],
+                                    'tree_but_open': []}
+        
+        if 'stock.move' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in move_accepted_values[key2]:
+                    new_values.append(v)          
+        elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in incoming_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('picking_type', False) == 'internal_move' and 'stock.picking' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in internal_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('picking_type', False) == 'delivery_order' and 'stock.picking' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in delivery_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('picking_type', False) == 'picking_ticket' and 'stock.picking' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if key == 'action' and v[1] in picking_accepted_values[key2]:
+                    new_values.append(v)
+ 
+        return new_values
+
+ir_values()

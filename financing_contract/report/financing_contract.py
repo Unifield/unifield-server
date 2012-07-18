@@ -51,8 +51,8 @@ class contract(report_sxw.rml_parse):
         # Parse each contract line
         for line in reporting_lines:
             account_list = ''
-            for account in line.account_ids:
-                account_list += str(account.code)
+            for account_destination in line.account_destination_ids:
+                account_list += str(account_destination.account_id.code) + " " + str(account_destination.destination_id.code)
                 account_list += ', '
             if len(account_list) > 2:
                 account_list = account_list[:-2]

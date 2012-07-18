@@ -31,6 +31,7 @@ class hq_analytic_reallocation(osv.osv_memory):
     _description = 'Analytic HQ reallocation wizard'
 
     _columns = {
+        'destination_id': fields.many2one('account.analytic.account', string="Destination",required=True,  domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_id': fields.many2one('account.analytic.account', string="Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -62,7 +63,11 @@ class hq_analytic_reallocation(osv.osv_memory):
                 fp_id = 0
             fp_fields = form.xpath('/form/field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), '&', ('tuple_destination_account_ids.account_id', '=', account_id), ('tuple_destination_account_ids.destination_id', '=', destination_id), ('id', '=', %s)]" % fp_id)
+            # Change Destination field
+            dest_fields = form.xpath('/form/field[@name="destination_id"]')
+            for field in dest_fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
             view['arch'] = etree.tostring(form)
         return view
 
@@ -82,12 +87,13 @@ class hq_analytic_reallocation(osv.osv_memory):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0])
         vals = {
+            'destination_id': False,
             'cost_center_id': False,
             'analytic_id': False,
             'free_1_id': False,
             'free_2_id': False,
         }
-        for el in ['cost_center_id', 'analytic_id', 'free_1_id', 'free_2_id']:
+        for el in ['destination_id', 'cost_center_id', 'analytic_id', 'free_1_id', 'free_2_id']:
             obj = getattr(wiz, el, None)
             if obj:
                 vals.update({el: getattr(obj, 'id', None)})

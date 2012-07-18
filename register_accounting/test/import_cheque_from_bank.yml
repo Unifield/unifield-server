@@ -6,6 +6,7 @@
       - account_id: account_account_expense0
         amount: 246.0
         date: !eval time.strftime('%Y-%m-02')
+        document_date: !eval time.strftime('%Y-%m-02')
         name: cheque1
         cheque_number: '00001'
         partner_id: res_partner_john_doe
@@ -15,6 +16,7 @@
       - account_id: account_account_expense0
         amount: 23.0
         date: !eval time.strftime('%Y-%m-02')
+        document_date: !eval time.strftime('%Y-%m-02')
         name: cheque2
         cheque_number: '00002'
         partner_id: res_partner_supplier_0
@@ -60,7 +62,8 @@
       st_line_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('statement_id', '=', ref("cheque_register_0"))])
       st_lines = self.pool.get('account.bank.statement.line').browse(cr, uid, st_line_ids)
       line_ids = [x.first_move_line_id.id for x in st_lines]
-      self.write(cr, uid, [ref("wiz_import_cheque_0")], {'line_ids': [(6, 0, line_ids)]})
+      import time
+      self.write(cr, uid, [ref("wiz_import_cheque_0")], {'line_ids': [(6, 0, line_ids)], 'document_date': time.strftime('%Y-%m-02'),})
       self.action_import(cr, uid, [ref("wiz_import_cheque_0")])
       
       wizard = self.browse(cr, uid, [ref("wiz_import_cheque_0")])[0]
@@ -95,6 +98,8 @@
 -
   !python {model: account.bank.statement.line}: |
       st_line_ids = self.search(cr, uid, [('statement_id', '=', ref("bank_register_0"))])
+      # IF THIS HARD POST TEST FAILED with an error on analytic distribution, 
+      # have a look to res_currency_functional module in account_move_line_compute_currency.py file. Perhaps something is missing :-)
       self.posting(cr, uid, st_line_ids, 'hard')
       for st_line in self.browse(cr, uid, st_line_ids):
           assert st_line.state == 'hard', "Line '%s' is not hard posted !" % (st_line_id)

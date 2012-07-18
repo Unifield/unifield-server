@@ -220,6 +220,7 @@
     name: Warehouse Cycle
     lot_stock_id: cycle_sloc2
     lot_input_id: cycle_sloc2
+    lot_dispatch_id: cycle_sloc2
     lot_output_id: stock.stock_location_customers
     company_id: base.main_company
 -

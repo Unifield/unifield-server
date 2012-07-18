@@ -250,6 +250,7 @@
 
   !python {model: tender}: |
     ids = self.search(cr, uid, [('sale_order_id', '=', ref("sale_order_tender_so0")),], context=context)
+    assert ids, 'ids is empty'
     tender = self.browse(cr, uid, ids[0])
     assert tender.tender_line_ids[0].price_unit == 10024, 'price_unit has not been updated. %s-10024'%tender.tender_line_ids[0].price_unit
     po_id = self.create_po(cr, uid, tender.id, context=context)

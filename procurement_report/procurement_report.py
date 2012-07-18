@@ -115,7 +115,7 @@ class procurement_rules_report(osv.osv):
                     ocpr.product_id AS product_id,
                     swoc.location_id AS location_id
                 FROM
-                    order_cycle_product_rel ocpr
+                    stock_warehouse_order_cycle_line ocpr
                     LEFT JOIN
                     stock_warehouse_order_cycle swoc
                     ON ocpr.order_cycle_id = swoc.id))
@@ -154,7 +154,7 @@ class procurement_rules_report(osv.osv):
                     WHERE product.id NOT IN 
                         (SELECT product_id FROM stock_warehouse_automatic_supply_line
                         UNION
-                        SELECT product_id FROM order_cycle_product_rel
+                        SELECT product_id FROM stock_warehouse_order_cycle_line
                         UNION
                         SELECT product_id FROM stock_warehouse_orderpoint
                         UNION

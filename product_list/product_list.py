@@ -230,8 +230,18 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        'default_code' : fields.char('CODE', size=14),
     }
 
 product_product()
+
+class product_template(osv.osv):
+    _name = 'product.template'
+    _inherit = 'product.template'
+
+    _columns = {
+        'name': fields.char(size=60, string='DESCRIPTION', required=True),
+    }
+product_template()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

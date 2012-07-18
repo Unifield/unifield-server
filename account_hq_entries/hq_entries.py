@@ -68,7 +68,11 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_credit = 0
             
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id']):
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date']):
+                account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
+                if not account_id:
+                    raise osv.except_osv(_('Error'), _('An account is missing!'))
+                account = self.pool.get('account.account').browse(cr, uid, account_id)
                 # create new distribution (only for expense accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
@@ -77,6 +81,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     fp_id = private_fund_id
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
                 f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
+                destination_id = (line.get('destination_id') and line.get('destination_id')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                 if distrib_id:
                     common_vals = {
@@ -88,9 +93,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id,})
+                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id, 'destination_id': destination_id})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
+                    del common_vals['destination_id']
                     if f1_id:
                         common_vals.update({'analytic_id': f1_id,})
                         self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
@@ -98,10 +104,12 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
                 vals = {
-                    'account_id': line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False,
+                    'account_id': account_id,
                     'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.get('date'),
+                    'date_maturity': line.get('date'),
+                    'document_date': line.get('document_date'),
                     'move_id': move_id,
                     'analytic_distribution_id': distrib_id,
                     'name': line.get('name', ''),
@@ -127,11 +135,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
             account_ids = self.pool.get('account.account').search(cr, uid, [('id', '=', counterpart_account_id)])
             if account_ids:
                 counterpart_vals.update({'account_id': account_ids[0],})
+            # date
+            counterpart_date = self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id)
+            # vals
             counterpart_vals.update({
                 'period_id': period_id,
                 'journal_id': journal_id,
                 'move_id': move_id,
-                'date': self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id),
+                'date': counterpart_date,
+                'date_maturity': counterpart_date,
+                'document_date': counterpart_date,
                 'name': 'HQ Entry Counterpart',
                 'currency_id': currency_id,
             })
@@ -215,22 +228,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ('cost_center_id', '=', line.cost_center_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            cc_old_lines = ana_line_obj.search(cr, uid, [
-                ('account_id', '=', line.cost_center_id_first_value.id),
-                ('move_id', '=', all_lines[line.id])
-                ])
-            ana_line_obj.reverse(cr, uid, cc_old_lines+fp_old_lines)
+            ana_line_obj.reverse(cr, uid, fp_old_lines)
             # create new lines
-            ana_line_obj.copy(cr, uid, cc_old_lines[0], {'date': current_date, 'source_date': line.date, 'account_id': line.cost_center_id.id})
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id})
             # update old ana lines
-            ana_line_obj.write(cr, uid, fp_old_lines+cc_old_lines, {'is_reallocated': True})
+            ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
         for line in cc_account_change:
             # call correct_account with a new arg: new_distrib
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
                 corrected_distrib={
-                    # TODO: ?? source date ??
                     'cost_center_lines': [(0, 0, {
                             'percentage': 100, 
                             'analytic_id': line.cost_center_id.id,
@@ -263,7 +270,6 @@ class hq_entries(osv.osv):
         """
         Get state of distribution:
          - if compatible with the line, then "valid"
-         - if no distribution on the line, then "none"
          - all other case are "invalid"
         """
         if isinstance(ids, (int, long)):
@@ -276,29 +282,67 @@ class hq_entries(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        # Browse all given lines
+        # Browse all given lines to check analytic distribution validity
+        ## TO CHECK:
+        # A/ if CC = dummy CC
+        # B/ if FP = MSF Private FUND
+        # C/ (account/DEST) in FP except B
+        # D/ CC in FP except when B
+        # E/ DEST in list of available DEST in ACCOUNT
+        ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
+        ## CC is mandatory, so always available:
+        # 1/ no FP, no DEST => Distro = valid
+        # 2/ FP, no DEST => Check D except B
+        # 3/ no FP, DEST => Check E
+        # 4/ FP, DEST => Check C, D except B, E
+        ## 
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = 'invalid'
-            if line.cost_center_id and line.analytic_id:
-                if line.analytic_id.id == fp_id:
-                    res[line.id] = 'valid'
-                    continue
-                if line.account_id.id in [x.id for x in line.analytic_id.account_ids] and line.cost_center_id.id in [x.id for x in line.analytic_id.cost_center_ids]:
-                    res[line.id] = 'valid'
-                    continue
-            elif line.cost_center_id and not line.analytic_id:
-                res[line.id] = 'valid'
+            res[line.id] = 'valid' # by default
+            #### SOME CASE WHERE DISTRO IS OK
+            # if account is not expense, so it's valid
+            if line.account_id and line.account_id.user_type_code and line.account_id.user_type_code != 'expense':
                 continue
-            else:
-                res[line.id] = 'none'
+            # if just a cost center, it's also valid! (CASE 1/)
+            if not line.analytic_id and not line.destination_id:
+                continue
+            # if FP is MSF Private Fund and no destination_id, then all is OK.
+            if line.analytic_id and line.analytic_id.id == fp_id and not line.destination_id:
+                continue
+            #### END OF CASES
+            if line.analytic_id and not line.destination_id: # CASE 2/
+                # D Check, except B check
+                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+            elif not line.analytic_id and line.destination_id: # CASE 3/
+                # E Check
+                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                    res[line.id] = 'invalid'
+                    continue
+            else: # CASE 4/
+                # C Check, except B
+                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids] and line.analytic_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+                # D Check, except B check
+                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+                # E Check
+                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                    res[line.id] = 'invalid'
+                    continue
         return res
 
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True),
-        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True),
-        'free_1_id': fields.many2one('account.analytic.account', "Free 1"),
-        'free_2_id': fields.many2one('account.analytic.account', "Free 2"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
         'date': fields.date("Posting Date", readonly=True),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
@@ -335,10 +379,41 @@ class hq_entries(osv.osv):
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
-            fields[0].set('domain', "[('type', '!=', 'view'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('account_ids', '=', account_id), ('id', '=', %s)]"%(fp_id, ))
+            fields[0].set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+        # Change Destination field
+        dest_fields = arch.xpath('field[@name="destination_id"]')
+        for field in dest_fields:
+            field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
             view['arch'] = etree.tostring(arch)
         return view
 
+    def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
+        """
+        Check given funding pool with destination
+        """
+        # Prepare some values
+        res = {}
+        # If all elements given, then search FP compatibility
+        if destination_id and funding_pool_id and account_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
+            # but do an exception for MSF Private FUND analytic account
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and funding_pool_id != fp_id:
+                res = {'value': {'analytic_id': False}}
+        # If no destination, do nothing
+        elif not destination_id:
+            res = {}
+        # Otherway: delete FP
+        else:
+            res = {'value': {'analytic_id': False}}
+        # If destination given, search if given 
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         """

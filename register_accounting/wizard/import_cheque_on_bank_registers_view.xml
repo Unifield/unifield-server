@@ -94,8 +94,8 @@
                         <newline/>
                     </group>
                     <group colspan="4" col="6">
-                        <label string="" colspan="1"/>
                         <field name="date"/>
+                        <field name="document_date"/>
                         <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
                     </group>
                     <separator string="" colspan="6"/>
@@ -107,6 +107,7 @@
                             <field name="account_id"/>
                             <field name="partner_id"/>
                             <field name="date"/>
+                            <field name="document_date"/>
                             <field name="date_maturity"/>
                             <field name="amount_to_pay"/>
                             <field name="amount_currency"/>

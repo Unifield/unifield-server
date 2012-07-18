@@ -11,7 +11,7 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/tree/field[@name='company_id']" position='before'>
+                    <xpath expr="/tree/field[@name='journal_id']" position='before'>
                         <field name="is_reallocated" invisible="1"/>
                         <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" 
                             icon="terp-mail-" colspan="2"/>
@@ -48,6 +48,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree/field[@name='account_id']" position='before'>
+                        <field name="destination_id" string="Destination" invisible="not context.get('display_fp', False)"/>
                         <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     </xpath>
                 </data>
@@ -56,7 +57,7 @@
 
     <!-- Action for Analytic Journal Items (FUNDING POOL) -->
         <record id="account.action_account_analytic_journal_open_form" model="ir.actions.act_window">
-            <field name="name">Analytic Journal Items (FP)</field>
+            <field name="name">Analytic Journal Items</field>
             <field name="res_model">account.analytic.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -65,45 +66,8 @@
             <field name="context">{'display_fp': True}</field>
         </record>
 
-    <!-- Action for Analytic Journal Items (COST CENTER) -->
-        <record id="action_account_analytic_cost_center_line" model="ir.actions.act_window">
-            <field name="name">Analytic Journal Items (CC)</field>
-            <field name="res_model">account.analytic.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('account_id.category', '=', 'OC')]</field>
-        </record>
-
-    <!-- Action for Analytic Journal Items (FREE 1) -->
-        <record id="action_account_analytic_free_1_line" model="ir.actions.act_window">
-            <field name="name">Analytic Journal Items (F1)</field>
-            <field name="res_model">account.analytic.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('account_id.category', '=', 'FREE1')]</field>
-        </record>
-
-    <!-- Action for Analytic Journal Items (FREE 2) -->
-        <record id="action_account_analytic_free_2_line" model="ir.actions.act_window">
-            <field name="name">Analytic Journal Items (F2)</field>
-            <field name="res_model">account.analytic.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="inherit2_view_account_analytic_line_tree"/>
-            <field name="domain">[('account_id.category', '=', 'FREE2')]</field>
-        </record>
-
     <!-- Menu for Analytic Journal Items -->
         <menuitem groups="analytic.group_analytic_accounting" action="account.action_account_analytic_journal_open_form" 
             id="account.account_analytic_journal_entries" parent="account.menu_finance_entries"/>
-        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_cost_center_line" 
-            id="account_analytic_journal_cost_center_entries" parent="account.menu_finance_entries"/>
-        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_1_line" 
-            id="account.account_analytic_journal_free_1_entries" parent="account.menu_finance_entries"/>
-        <menuitem groups="analytic.group_analytic_accounting" action="action_account_analytic_free_2_line" 
-            id="account_analytic_journal_free_2_entries" parent="account.menu_finance_entries"/>
-
     </data>
 </openerp>

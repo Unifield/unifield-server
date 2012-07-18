@@ -196,8 +196,50 @@ class stock_warehouse_orderpoint(osv.osv):
     _inherit = 'stock.warehouse.orderpoint'
 
     _columns = {
-         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", domain="[('usage', '=', 'internal')]"),
+         'name': fields.char('Reference', size=128, required=True, select=True),
+         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
+                                        domain="[('is_replenishment', '=', warehouse_id)]"),
     }
+    
+    def _check_product_uom(self, cr, uid, ids, context=None):
+        '''
+        Check if the UoM has the same category as the product standard UoM
+        '''
+        if not context:
+            context = {}
+            
+        for rule in self.browse(cr, uid, ids, context=context):
+            if rule.product_id.uom_id.category_id.id != rule.product_uom.category_id.id:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_product_uom, 'You have to select a product UOM in the same category than the purchase UOM of the product', ['product_id', 'product_uom']),
+    ]
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(stock_warehouse_orderpoint, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -230,8 +272,84 @@ class stock_warehouse_orderpoint(osv.osv):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
+    
+    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+        '''
+        Add domain on UoM to have only UoM on the same category of the
+        product standard UoM
+        '''
+        product_obj = self.pool.get('product.product')
+        
+        res = super(stock_warehouse_orderpoint, self).onchange_product_id(cr, uid, ids, product_id, context=context)
+        domain = {}
+
+        # Get the product UoM category
+        if product_id:        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
+        else:
+            domain = {'product_uom': []}
+            if 'value' in res:
+                res['value'].update({'product_uom': False})
+            else:
+                res.update({'value': {'product_uom': False}})
+                
+        # Apply the domain in res
+        if 'domain' in res:
+            res['domain'].update(domain)
+        else:
+            res.update({'domain': domain})
+            
+        return res
+    
+    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
+        
+        return {}
+        
         
 stock_warehouse_orderpoint()
+
+
+class product_uom(osv.osv):
+    _name = 'product.uom'
+    _inherit = 'product.uom'
+    
+    def _get_uom_by_product(self, cr, uid, ids, field_name, args, context=None):
+        return {}
+    
+    def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'uom_by_product' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_product':
+                product_id = arg[2]
+                if isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                
+        return dom
+    
+    _columns = {
+        'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
+                                          help='Field used to filter the UoM for a specific product'),
+    }
+    
+product_uom()
 
 
 class stock_warehouse_automatic_supply(osv.osv):

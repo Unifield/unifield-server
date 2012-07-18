@@ -54,6 +54,7 @@ class wizard_account_invoice(osv.osv):
         'currency_id': lambda cr, uid, ids, c: c.get('currency'),
         'register_posting_date': lambda *a: time.strftime('%Y-%m-%d'),
         'date_invoice': lambda *a: time.strftime('%Y-%m-%d'),
+        'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
 
@@ -73,7 +74,8 @@ class wizard_account_invoice(osv.osv):
         Reset the invoice by reseting some fields
         """
         self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 
-            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False})
+            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False, 
+            'document_date': time.strftime('%Y-%m-%d'),})
         return True
 
     def invoice_cancel_wizard(self, cr, uid, ids, context=None):
@@ -125,7 +127,7 @@ class wizard_account_invoice(osv.osv):
         # Retrieve period
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id'][0]], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
-        vals.update({'date_invoice': _get_date_in_period(cr, uid, time.strftime('%Y-%m-%d'), context=context)})
+        vals.update({'date_invoice': vals['date_invoice'] or time.strftime('%Y-%m-%d')})
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
@@ -140,7 +142,8 @@ class wizard_account_invoice(osv.osv):
         reg_line_id = absl_obj.create(cr, uid, {
             'account_id': vals['account_id'],
             'currency_id': vals['currency_id'],
-            'date': _get_date_in_period(self, cr, uid, time.strftime('%Y-%m-%d'), period, context=context),
+            'date': _get_date_in_period(self, cr, uid, vals['register_posting_date'] or time.strftime('%Y-%m-%d'), period, context=context),
+            'document_date': vals['document_date'],
             'direct_invoice': True,
             'amount_out': amount,
             'invoice_id': inv_id,
@@ -250,7 +253,7 @@ class wizard_account_invoice_line(osv.osv):
         invoice_line = self.browse(cr, uid, ids[0], context=context)
         
         fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date', 
-            'account_id', 'partner_bank_id', 'payment_term', 'name',
+            'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
             'origin', 'address_contact_id', 'user_id', 'comment']
         to_write = {}
         for f in fields_to_write:

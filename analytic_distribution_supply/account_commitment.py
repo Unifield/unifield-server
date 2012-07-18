@@ -60,25 +60,32 @@ class account_commitment_line(osv.osv):
             for pol in line.purchase_order_line_ids:
                 # browse cost_center line if an analytic distribution exists for this purchase order line
                 if pol.analytic_distribution_id:
-                    for aline in pol.analytic_distribution_id.cost_center_lines:
-                        if aline.analytic_id:
-                            # Compute amount regarding pol subtotal and cost_center_line percentage
-                            amount = (pol.price_subtotal * aline.percentage) / 100
-                            cc_lines[aline.analytic_id.id].append(amount)
+                    origin_cc_lines = pol.analytic_distribution_id.cost_center_lines
+                # else retrieve CC lines from PO
+                else:
+                    origin_cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
+                # Compute CC lines amounts
+                for aline in origin_cc_lines:
+                    if aline.analytic_id:
+                        # Compute amount regarding pol subtotal and cost_center_line percentage
+                        amount = (pol.price_subtotal * aline.percentage) / 100
+                        cc_lines[(aline.analytic_id.id, aline.destination_id and aline.destination_id.id or False)].append(amount)
             # Browse result and create corresponding analytic lines
             if cc_lines:
                 # create distribution an link it to commitment line
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 self.write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id}, context=context)
-                for analytic_id in cc_lines:
+                for el in cc_lines:
+                    analytic_id = el[0] or False
                     vals = {
                             'distribution_id': distrib_id,
                             'analytic_id': analytic_id,
                             'currency_id': line.commit_id.currency_id.id,
+                            'destination_id': el[1] or False,
                     }
                     total_amount = 0.0
                     # fetch total amount
-                    for amount in cc_lines[analytic_id]:
+                    for amount in cc_lines[el]:
                         total_amount += amount
                     if not total_amount:
                         continue
@@ -88,7 +95,7 @@ class account_commitment_line(osv.osv):
                     # create cost_center_line
                     distrib_line_id = self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
                 # Create funding pool lines if needed
-                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], context=context)
+                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], line.account_id.id, context=context)
         return True
 
 account_commitment_line()

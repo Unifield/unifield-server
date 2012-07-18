@@ -7,7 +7,7 @@
             <field name="model">stock.move.memory.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
 					<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" domain="[('product_id', '=', product_id)]"
@@ -16,7 +16,7 @@
 					<field name="composition_list_id" domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
 							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
 					<field name="kit_mem_check" invisible="True" />
-                    <field name="initial_qty" />
+                    <field name="quantity_ordered"  readonly="True" />
                     <field name="quantity" />
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" string="Batch Number"
@@ -48,12 +48,12 @@
             <field name="model">stock.move.memory.returnproducts</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" readonly="True" />
                     <field name="composition_list_id" readonly="True" />
-                    <field name="quantity" readonly="True" />
+                    <field name="quantity_ordered" readonly="True" />
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
                     <field name="qty_to_return" />
@@ -73,12 +73,13 @@
             <field name="model">stock.move.memory.ppl</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" hide_delete_button="1" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" readonly="True" />
                     <field name="composition_list_id" readonly="True" />
-                    <field name="quantity" readonly="True" />
+                    <field name="quantity_ordered" readonly="True" />
+                    <field name="quantity"  />
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
                     <field name="qty_per_pack" />
@@ -101,7 +102,7 @@
             <field name="model">stock.move.memory.families</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" hide_delete_button="1" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                     <field name="from_pack" readonly="True" />
                     <field name="to_pack" readonly="True" />
                     <field name="pack_type" />
@@ -119,13 +120,14 @@
             <field name="model">stock.move.memory.shipment.create</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />
                     <field name="to_pack" readonly="True" />
                     <field name="num_of_packs" readonly="True" />
                     <field name="pack_type" readonly="True" />
+                    <field name="volume" readonly="True" />
 					<field name="weight" readonly="True" />
 					<field name="selected_number" string="Number to Ship" />
 					<field name="selected_weight" string="Weight to Ship [kg]" readonly="True" />
@@ -139,7 +141,7 @@
             <field name="model">stock.move.memory.shipment.returnpacks</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />
@@ -159,7 +161,7 @@
             <field name="model">stock.move.memory.shipment.returnpacksfromshipment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+                <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />

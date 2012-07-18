@@ -64,22 +64,7 @@ class account_invoice(osv.osv):
         ana_obj = self.pool.get('analytic.distribution')
         # Browse all invoices
         for inv in self.browse(cr, uid, ids, context=context):
-            # Set analytic distribution from purchase order to invoice
-            for po in inv.purchase_ids:
-                # First set invoice global distribution
-                if not inv.analytic_distribution_id and po.analytic_distribution_id:
-                    # Fetch PO analytic distribution
-                    distrib_id = po.analytic_distribution_id and po.analytic_distribution_id.id or False
-                    # If commitment for this PO, fetch analytic distribution. Else take default distrib_id
-                    if po.commitment_ids:
-                        distrib_id = po.commitment_ids[0].analytic_distribution_id and po.commitment_ids[0].analytic_distribution_id.id or distrib_id
-                    if distrib_id:
-                        new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
-                        if not new_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                        # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
-                        self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
+            # Code to retrieve DISTRO from PO have been removed because of impossibility to retrieve some DESTINATION AXIS from PO
             # Then set distribution on invoice line regarding purchase order line distribution
             for invl in inv.invoice_line:
                 if invl.order_line_id:
@@ -94,7 +79,7 @@ class account_invoice(osv.osv):
                         if not new_invl_distrib_id:
                             raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
                         # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id])
+                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
                         invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
                 # Fetch SO line analytic distribution
                 if invl.sale_order_line_id:
@@ -104,7 +89,7 @@ class account_invoice(osv.osv):
                         if not new_invl_distrib_id:
                             raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
                         # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id])
+                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
                         invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
         return True
 

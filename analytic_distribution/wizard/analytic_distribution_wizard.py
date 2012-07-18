@@ -57,10 +57,12 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'percentage': fields.float(string="Percentage", required=True, digits=(16,4)),
         'wizard_id': fields.many2one('analytic.distribution.wizard', string="Analytic Distribution Wizard", required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
-        'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line"),
+        'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line", readonly=True),
         'type': fields.selection([('cost.center', 'Cost Center Lines'), ('funding.pool', 'Funding Pool Lines'), ('free.1', 'Free 1 Lines'), 
             ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values 
             #+ to construct object research !
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -79,6 +81,9 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         amount = abs(res.get('amount', 0.0))
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
+            if 'destination_id' in fields and wiz[0].account_id:
+                res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
+
             total_amount = wiz[0].total_amount
             if mode == 'percentage':
                 res['amount'] = abs((total_amount * percentage) / 100.0)
@@ -171,6 +176,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+                # Change Destination field
+                dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
+                for field in dest_fields:
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)):
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                    else:
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
             ## FUNDING POOL
             if line_type == 'analytic.distribution.wizard.fp.lines':
                 # Change OC field
@@ -190,11 +203,18 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('account_ids', '=', parent.account_id), ('id', '=', %s)]" % fp_id)
-                    
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                # Change Destination field
+                dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
+                for field in dest_fields:
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)):
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                    else:
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
                 # Change Analytic Account field
@@ -314,11 +334,41 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
 
     _columns = {
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     _defaults = {
         'type': lambda *a: 'funding.pool',
     }
+
+    def onchange_destination(self, cr, uid, ids, destination_id=False, analytic_id=False, account_id=False):
+        """
+        Check given funding pool with destination
+        """
+        # Prepare some values
+        res = {}
+        # If all elements given, then search FP compatibility
+        if destination_id and analytic_id and account_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            # Delete analytic_id if not valid with tuple "account_id/destination_id".
+            # but do an exception for MSF Private FUND analytic account
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and analytic_id != fp_id:
+                res = {'value': {'analytic_id': False}}
+        # If no destination, do nothing
+        elif not destination_id:
+            res = {}
+        # Otherway: delete FP
+        else:
+            res = {'value': {'analytic_id': False}}
+        # If destination given, search if given 
+        return res
 
 analytic_distribution_wizard_fp_lines()
 
@@ -326,6 +376,11 @@ class analytic_distribution_wizard_f1_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.f1.lines'
     _description = 'analytic.distribution.wizard.lines'
     _inherit = 'analytic.distribution.wizard.lines'
+
+    _columns = {
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+    }
 
     _defaults = {
         'type': lambda *a: 'free.1',
@@ -337,6 +392,11 @@ class analytic_distribution_wizard_f2_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.f2.lines'
     _description = 'analytic.distribution.wizard.lines'
     _inherit = 'analytic.distribution.wizard.lines'
+
+    _columns = {
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False, 
+            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+    }
 
     _defaults = {
         'type': lambda *a: 'free.2',
@@ -507,6 +567,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'wizard_id': wiz.id,
                     'currency_id': line.currency_id and line.currency_id.id or False,
                     'distribution_line_id': line.id or False,
+                    'destination_id': line.destination_id and line.destination_id.id or False,
                 }
                 new_line_id = cc_obj.create(cr, uid, vals, context=context)
                 # update amount regarding percentage
@@ -535,10 +596,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                                     'wizard_id': wiz.id,
                                     'currency_id': line.currency_id and line.currency_id.id or False,
                                     'distribution_line_id': line.id or False,
+                                    'destination_id': line.destination_id and line.destination_id.id or False,
                                 }
                                 # Add cost_center_id value if we come from a funding_pool object
                                 if line_type == 'funding.pool':
-                                    vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False})
+                                    vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False, })
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
@@ -595,21 +657,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id):
-                raise osv.except_osv(_('Warning'), _('No Cost Center Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
             #+ move line, commitment or commitment line
             if not wiz.fp_line_ids and (wiz.invoice_id or wiz.invoice_line_id) :
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.register_line_id:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.move_line_id:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and (wiz.commitment_id or wiz.commitment_line_id):
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.accrual_line_id:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
                 # Do nothing if there no lines for the current type
@@ -642,7 +704,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No wizard found.'))
         # If no funding pool lines, raise an error, except when we come from a purchase order or a purchase order line ('cc' state)
         if not wizard.fp_line_ids and wizard.state == 'dispatch':
-            raise osv.except_osv(_('Warning'), _('No funding pool lines done.'))
+            raise osv.except_osv(_('Warning'), _('No allocation done.'))
         # If we come from 'cc' state, no need to update cost center lines
         elif not wizard.fp_line_ids and wizard.state == 'cc':
             return True
@@ -673,6 +735,66 @@ class analytic_distribution_wizard(osv.osv_memory):
                 cc_obj.unlink(cr, uid, [line_id], context=context)
         return True
 
+    def distrib_lines_to_list(self, cr, uid, distrib_ids, line_type=False):
+        """
+        Return a list containing distribution lines from first given distribution
+        """
+        # Some verifications
+        if not distrib_ids:
+            return False
+        if isinstance(distrib_ids, (int, long)):
+            distrib_ids = [distrib_ids]
+        if not line_type:
+            return False
+        # Prepare some values
+        db_line_type = '_'.join([line_type.replace('.', '_'), 'lines'])
+        distrib = self.pool.get('analytic.distribution').browse(cr, uid, distrib_ids)[0]
+        res = []
+        for x in getattr(distrib, db_line_type, False):
+            db_lines_vals = {
+                'id': x.id,
+                'distribution_id': x.distribution_id and x.distribution_id.id,
+                'currency_id': x.currency_id and x.currency_id.id,
+                'analytic_id': x.analytic_id and x.analytic_id.id,
+                'percentage': x.percentage,
+                'destination_id': x.destination_id and x.destination_id.id or False,
+            }
+            # Add cost_center_id field if we come from a funding.pool object
+            if line_type == 'funding.pool':
+                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False, })
+            res.append(db_lines_vals)
+        return res
+
+    def wizard_lines_to_list(self, cr, uid, ids, line_type=False):
+        """
+        Return a list containing distribution linked to given wizard
+        """
+        # Some verifications
+        if not ids:
+            return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not line_type:
+            return False
+        # Prepare some values
+        res = []
+        wizard = self.browse(cr, uid, ids)[0]
+        wiz_line_types = {'cost.center': 'line_ids', 'funding.pool': 'fp_line_ids', 'free.1': 'f1_line_ids', 'free.2': 'f2_line_ids',}
+        for x in getattr(wizard, wiz_line_types.get(line_type), False):
+            wiz_lines_vals = {
+                'id': x.distribution_line_id and x.distribution_line_id.id or False,
+                'distribution_id': x.wizard_id.distribution_id and x.wizard_id.distribution_id.id,
+                'currency_id': x.currency_id and x.currency_id.id,
+                'analytic_id': x.analytic_id and x.analytic_id.id,
+                'percentage': x.percentage,
+                'destination_id': x.destination_id and x.destination_id.id or False,
+            }
+            # Add cost_center_id field if we come from a funding_pool object
+            if line_type == 'funding.pool':
+                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,})
+            res.append(wiz_lines_vals)
+        return res
+
     def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context=None):
         """
         Compare wizard lines to database lines and write modifications done
@@ -689,38 +811,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         distrib = wizard.distribution_id
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
-        db_line_type = '_'.join([line_type.replace('.', '_'), 'lines'])
-        wiz_line_types = {'cost.center': 'line_ids', 'funding.pool': 'fp_line_ids', 'free.1': 'f1_line_ids', 'free.2': 'f2_line_ids',}
         # Search database lines
-        db_lines = []
-        for x in getattr(distrib, db_line_type, False):
-            db_lines_vals = {
-                'id': x.id,
-                'distribution_id': x.distribution_id and x.distribution_id.id,
-                'currency_id': x.currency_id and x.currency_id.id,
-                'analytic_id': x.analytic_id and x.analytic_id.id,
-                'percentage': x.percentage,
-            }
-            # Add cost_center_id field if we come from a funding.pool object
-            if line_type == 'funding.pool':
-                db_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False})
-            db_lines.append(db_lines_vals)
-        
+        db_lines = self.distrib_lines_to_list(cr, uid, distrib.id, line_type)
         # Search wizard lines
-        wiz_lines = []
-        for x in getattr(wizard, wiz_line_types.get(line_type), False):
-            wiz_lines_vals = {
-                'id': x.distribution_line_id and x.distribution_line_id.id or False,
-                'distribution_id': x.wizard_id.distribution_id and x.wizard_id.distribution_id.id,
-                'currency_id': x.currency_id and x.currency_id.id,
-                'analytic_id': x.analytic_id and x.analytic_id.id,
-                'percentage': x.percentage,
-            }
-            # Add cost_center_id field if we come from a funding_pool object
-            if line_type == 'funding.pool':
-                wiz_lines_vals.update({'cost_center_id': x.cost_center_id and x.cost_center_id.id or False,})
-            wiz_lines.append(wiz_lines_vals)
-        
+        wiz_lines = self.wizard_lines_to_list(cr, uid, wizard_id, line_type)
+        # Begin comparison process
         processed_line_ids = []
         # Delete wizard lines that have not changed
         for line in db_lines:
@@ -740,6 +835,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_id': distrib.id,
                     'currency_id': wizard.currency_id and wizard.currency_id.id,
                     'cost_center_id': line.get('cost_center_id') or False,
+                    'destination_id': line.get('destination_id') or False,
                 }
                 new_line = line_obj.create(cr, uid, vals, context=context)
                 processed_line_ids.append(new_line)
@@ -766,7 +862,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
-            if not wiz.distribution_id:
+            distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
+            if not distrib_id:
                 # create a new analytic distribution
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 # link it to the wizard
@@ -785,6 +882,15 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+                # Create funding pool lines from CC lines if wizard is from PO/FO
+                # PAY ATTENTION THAT break avoid problem that delete new created funding pool
+                if line_type == 'cost.center' and wiz.state == 'cc' and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
+                    fp_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
+                    if fp_ids:
+                        self.pool.get('funding.pool.distribution.line').unlink(cr, uid, fp_ids)
+                    account_id = wiz.account_id and wiz.account_id.id or False
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, account_id)
+                    break
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):

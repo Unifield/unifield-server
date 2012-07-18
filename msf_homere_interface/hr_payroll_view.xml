@@ -17,6 +17,7 @@
                                 <field name="name"/>
                                 <field name="ref"/>
                                 <field name="date"/>
+                                <field name="document_date"/>
                                 <field name="period_id"/>
                                 <field name="employee_id_number"/>
                             </group>
@@ -29,6 +30,7 @@
                                 </group>
                                 <group colspan="2" col="4">
                                     <separator string="Analytic Accounting"/>
+                                    <field name="destination_id"/>
                                     <field name="cost_center_id"/>
                                     <field name="funding_pool_id"/>
                                     <field name="free1_id"/>
@@ -74,6 +76,7 @@
             <field name="arch" type="xml">
                 <tree string="Payroll List" editable="bottom" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" hide_delete_button="1" hide_new_button="1">
                     <field name="date"/>
+                    <field name="document_date"/>
                     <field name="period_id"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
@@ -86,6 +89,7 @@
                     <field name="amount" sum="Total amount"/>
                     <field name="currency_id"/>
                     <field name="state"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, funding_pool_id, account_id)"/>
                     <field name="cost_center_id"/>
                     <field name="funding_pool_id"/>
                     <field name="free1_id"/>
@@ -138,7 +142,7 @@
     <!--
         Menu
     -->
-        <menuitem id="menu_finance_payroll" name="Payroll" parent="account.menu_finance" sequence="13"/>
+        <menuitem id="menu_finance_payroll" name="Payroll" parent="account.menu_finance" sequence="5"/>
         <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="1"/>
         <menuitem string="Import Payroll" action="action_payroll_import_wizard" id="menu_finance_payroll_import" parent="menu_finance_payroll" sequence="2"/>
         <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>

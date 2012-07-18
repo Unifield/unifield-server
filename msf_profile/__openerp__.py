@@ -99,12 +99,16 @@
         "purchase_allocation_report",
         "supplier_catalogue",
         "msf_cross_docking",
+        "msf_instance",
+        "return_claim",
         "msf_processes",
         "useability_dashboard_and_menu",
+        "msf_custom_settings",
     ],
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
+        "usability.xml",
     ],
     "demo_xml": [
     ],

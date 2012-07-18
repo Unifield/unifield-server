@@ -72,6 +72,13 @@
             <field name="close_method">none</field>
         </record>
         
+        <record id="account.account_type_expense_no_pl" model="account.account.type">
+            <field name="name">Expense (no P&amp;L)</field>
+            <field name="code">expense</field>
+            <field name="report_type">none</field>
+            <field name="close_method">none</field>
+        </record>
+        
         <record id="account.account_type_income" model="account.account.type">
             <field name="name">Income</field>
             <field name="code">income</field>

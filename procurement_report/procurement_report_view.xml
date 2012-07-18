@@ -57,8 +57,6 @@
     		<field name="type">search</field>
     		<field name="arch" type="xml">
     			<search string="Replenishment Rules Analysis" >
-    				<field name="product_reference" />
-    				<field name="product_name" />
     				<field name="product_id" />
     				<field name="location_id" />
     				<field name="auto_supply_ok" />
@@ -95,7 +93,7 @@
     	</record>
     	
     	<record id="action_procurement_rules_report" model="ir.actions.act_window">
-    		<field name="name">Procurement Rules Analysis</field>
+    		<field name="name">Replenishment Rules Analysis</field>
     		<field name="res_model">procurement.rules.report</field>
     		<field name="view_type">form</field>
     		<field name="view_mode">tree,form</field>
