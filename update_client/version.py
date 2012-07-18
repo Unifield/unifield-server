@@ -8,10 +8,10 @@ Created on 9 juil. 2012
 from osv import osv
 from osv import fields
 import tools
-import pprint
-import sync_server
-pp = pprint.PrettyPrinter(indent=4)
-import logging
+#import sync_server
+#import pprint
+#pp = pprint.PrettyPrinter(indent=4)
+#import logging
 
 
 class version(osv.osv):
@@ -19,25 +19,70 @@ class version(osv.osv):
     _name = "sync_client.version"
     
     _columns = {
-        'name' : fields.char(string='Tag', size=256),
-        'commit' : fields.char(string="Commit Hash", size=256),
+        'name' : fields.char(string='Tag', size=256, required=True),
+        'patch' : fields.binary('Patch'),
+        'sum' : fields.char(string="Commit Hash", size=256, required=True),
         'date' : fields.datetime(string="Revision Date"),
-        'active' : fields.boolean("Active"),
+        'state' : fields.selection([('not-installed','Not Installed'),('need-restart','Need Restart'),('installed','Installed')], string="State"),
+        'applied' : fields.datetime("Applied"),
+        'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag"),
     }
     
     _defaults = {
-        'active' : False
+        'state' : 'not-installed',
     }
     
+    _sql_constraints = [('unique_sum', 'unique(sum)', 'Patches must be unique!')]
+
+    def _need_restart(self, cr, uid, context=None):
+        return bool(self.search(cr, uid, [('state','=','need-restart')], context=context))
+
+    def _update(self, cr, uid, revisions, context=None):
+        res = []
+        for rev in revisions:
+            ids = self.search(cr, uid, [('sum','=',rev['sum'])], context=context)
+            if not ids:
+                res.append( self.create(cr, uid, rev, context=context) )
+            elif self.browse(cr, uid, ids, context=context)[0].state == 'not-installed':
+                self.write(cr, uid, ids, rev, context=context)
+                res.extend( ids )
+        return res
+
     def _get_last_revision(self, cr, uid, context=None):
-        rev_ids = self.search(cr, uid, [('active', '=', True)], limit=1, context=context)
-        if rev_ids:
-            return rev_ids[0]
-        return False
-    
-    
-    
-    
+        rev_ids = self.search(cr, uid, [('state','=','installed')], limit=1, context=context)
+        return rev_ids[0] if rev_ids else False
+
+    def _get_next_revisions(self, cr, uid, context=None):
+        current = self._get_last_revision(cr, uid, context=context)
+        if current:
+            active = self.browse(cr, uid, current)
+            revisions = self.search(cr, uid, [('date','>',active.date),('state','=','not-installed')], order='date asc')
+        else:
+            revisions = self.search(cr, uid, [('state','=','not-installed')], order='date asc')
+        return revisions
+
+    def _is_update_available(self, cr, uid, ids, context=None):
+        for id in ids if isinstance(ids, list) else [ids]:
+            if not self.browse(cr, uid, id, context=context).patch:
+                return False
+        return True
+
     _order = 'date desc'
     
 version()
+
+class entity(osv.osv):
+    _inherit = "sync.client.entity"
+
+    def upgrade(self, cr, uid, context=None):
+        revisions = self.pool.get('sync_client.version')
+        if revisions._need_restart(cr, uid, context=context):
+            return (False, "Need restart")
+        current_revision = revisions._get_last_revision(cr, uid, context=context)
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision)
+        revisions._update(cr, uid, res.get('revisions', []), context=context)
+        return ((res['status'] == 'ok'), res['message'])
+
+entity()
+

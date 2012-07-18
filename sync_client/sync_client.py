@@ -121,11 +121,14 @@ class entity(osv.osv, Thread):
         ids = self.search(cr, uid, [], context=context)
         return self.browse(cr, uid, ids, context=context)[0]
     
+    def set_syncing(self, cr, uid, status, context=None):
+        self.write(cr, uid, self.search(cr, uid, []), {'is_syncing':status}, context=context)
+
     def generate_uuid(self):
         return uuid.uuid1().hex
         
     def get_uuid(self, cr, uid, context=None):
-        return self._get_entity(cr, uid, context=context).identifier
+        return self.get_entity(cr, uid, context=context).identifier
 
     def _handle_error(self, e):
         try:
@@ -432,8 +435,8 @@ class entity(osv.osv, Thread):
         self.start()
         return True
     
-    def sync_core(self, cr, uid, entity_id, log_id, log, context=None):
-        self.write(cr, uid, entity_id, {'is_syncing':True})
+    def sync_core(self, cr, uid, log_id, log, context=None):
+        self.set_syncing(cr, uid, True)
         # Start pulling data
         log['data_pull'] = 'in-progress';
         self.pool.get('sync.monitor').write(cr, uid, log_id, log)
@@ -454,7 +457,7 @@ class entity(osv.osv, Thread):
         self.pool.get('sync.monitor').write(cr, uid, log_id, log)
         cr.commit()
         self.push_message(cr, uid, log, context=context)
-        self.write(cr, uid, entity_id, {'is_syncing':False})
+        self.set_syncing(cr, uid, False)
         
     def sync(self, cr, uid, context=None):
         context = context or {}
@@ -467,9 +470,16 @@ class entity(osv.osv, Thread):
             'data_push' : 'null',
             'msg_push' : 'null',
         }
-        entity_id = self.get_entity(cr, uid, context).id
-        if self.browse(cr, uid, entity_id).is_syncing:
+
+        me = self.get_entity(cr, uid, context)
+        if me.is_syncing:
             return False
+
+        if hasattr(self, 'upgrade'):
+            up_to_date = self.upgrade(cr, uid, context=context)
+            if not up_to_date[0]:
+                print up_to_date[1]
+                return False
         
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()
@@ -478,11 +488,11 @@ class entity(osv.osv, Thread):
             log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
             log['status'] = 'failed'
         else:
-            self.sync_core(cr, uid, entity_id, log_id, log, context=context)
+            self.sync_core(cr, uid, log_id, log, context=context)
             
         # Determine final status
         log.update({'end':datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'status': 'failed' if 'failed' in [v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]  else 'ok'})
+                    'status': 'ok' if 'failed' not in [v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]  else 'failed'})
         self.pool.get('sync.monitor').write(cr, uid, log_id, log)
         cr.commit()
         return log['status'] == 'ok'
@@ -508,8 +518,6 @@ class entity(osv.osv, Thread):
             return "Sync In progress : started at %s" % monitor.start
         return ""
     
-    def get_upgrade_status(self, cr, uid, context=None):
-        return ""
 entity()
 
 
