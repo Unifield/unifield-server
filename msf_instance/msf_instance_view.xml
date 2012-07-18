@@ -12,14 +12,14 @@
                     <field name="name"/>
                        <newline/>
                     <field name="level"/>
+                    <newline />
                     <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
-                       <newline/>
                     <field name="instance" readonly="1"/>
+                    <newline/>
                     <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
-                    <newline/>
                     <field name="note"/>
-                    <field name="cost_center_id"/>
                     <newline/>
+                    <field name="cost_center_id"/>
                     <field name="state" readonly="1"/>
                     <button name="button_deactivate" string="Deactivate" type="object"
                             attrs="{'invisible': [('state', '!=', 'active')]}" icon="terp-check"/>

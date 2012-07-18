@@ -99,6 +99,7 @@
         "purchase_allocation_report",
         "supplier_catalogue",
         "msf_cross_docking",
+        "mission_stock",
         "msf_instance",
         "return_claim",
         "msf_processes",
