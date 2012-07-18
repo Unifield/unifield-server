@@ -103,6 +103,10 @@ class project_addresses(osv.osv_memory):
         if not getattr(payload, 'company_id', None):
             raise ValueError('Case where no default main company is setup ' 
                              'not handled yet')
+
+        # TODO: quick fix
+        self.pool.get('res.users').write(cr, uid, [uid], {'view': 'extended'}, context=context)
+
         company = payload.company_id
         address_obj = self.pool.get('res.partner.address')
         
