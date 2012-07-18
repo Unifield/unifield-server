@@ -13,9 +13,9 @@
                                     ('mission_report_id.local_report', '=', True)])
     assert line_id, "No line found !"
     line_id = self.browse(cr, uid, line_id[0])
-    assert line_id.internal_qty == 482.00, "Bad quantity for internal qty (%s :: expected 482.00)" % line_id.internal_qty
-    assert line_id.stock_qty == 67.00, "Bad quantity for stock qty (%s :: expected 482.00)" % line_id.stock_qty
-    assert line_id.cental_qty == 72.00, "Bad quantity for central qty (%s :: expected 482.00)" % line_id.cental_qty
-    assert line_id.cross_qty == 12.00, "Bad quantity for cross-docking qty (%s :: expected 482.00)" % line_id.cross_qty
-    assert line_id.secondary_qty == 77.00, "Bad quantity for secondary qty (%s :: expected 482.00)" % line_id.secondary_qty
-    assert line_id.cu_qty == 116.00, "Bad quantity for consumption unit qty (%s :: expected 482.00)" % line_id.cu_qty
+    assert line_id.internal_qty == 498.00, "Bad quantity for internal qty (%s :: expected 498.00)" % line_id.internal_qty
+    assert line_id.stock_qty == 95.00, "Bad quantity for stock qty (%s :: expected 95.00)" % line_id.stock_qty
+    assert line_id.central_qty == 72.00, "Bad quantity for central qty (%s :: expected 72.00)" % line_id.central_qty
+    assert line_id.cross_qty == 12.00, "Bad quantity for cross-docking qty (%s :: expected 12.00)" % line_id.cross_qty
+    assert line_id.secondary_qty == 77.00, "Bad quantity for secondary qty (%s :: expected 77.00)" % line_id.secondary_qty
+    assert line_id.cu_qty == 116.00, "Bad quantity for consumption unit qty (%s :: expected 116.00)" % line_id.cu_qty
