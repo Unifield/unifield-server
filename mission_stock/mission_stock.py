@@ -109,10 +109,19 @@ class stock_mission_report(osv.osv):
         if not ids:
             ids = []
         
-        threaded_calculation = threading.Thread(target=self.update, args=(cr, uid, ids, context))
+        threaded_calculation = threading.Thread(target=self.update_newthread, args=(cr, uid, ids, context))
         threaded_calculation.start()
         return {'type': 'ir.actions.act_window_close'}
     
+    def update_newthread(self, cr, uid, ids=[], context=None):
+        # Open a new cursor : Don't forget to close it at the end of method   
+        cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            self.update(cr, uid, ids=[], context=None)
+            cr.commit()
+        finally:
+            cr.close()
+
     def update(self, cr, uid, ids=[], context=None):
         '''
         Create lines if new products exist or update the existing lines
@@ -122,9 +131,6 @@ class stock_mission_report(osv.osv):
             
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
-        # Open a new cursor : Don't forget to close it at the end of method   
-        cr = pooler.get_db(cr.dbname).cursor()
         
         line_obj = self.pool.get('stock.mission.report.line')
         
@@ -178,9 +184,7 @@ class stock_mission_report(osv.osv):
             # Update all lines
             line_obj.update(cr, uid, line_ids, context=context)
 
-        cr.commit()
-        cr.close()
-        
+
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
             c = context.copy()
@@ -484,8 +488,8 @@ class stock_mission_report_line(osv.osv):
                           FROM stock_move m 
                               LEFT JOIN stock_picking s ON m.picking_id = s.id
                               LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE type = 'in' AND state in ('confirmed', 'waiting', 'assigned')
-                              AND product_id = %s''' % line.product_id.id)
+                          WHERE m.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
+                              AND m.product_id = %s''' % line.product_id.id)
             moves = cr.fetchall()
             for qty, uom, partner in moves:
                 if uom != line.product_id.uom_id.id:
