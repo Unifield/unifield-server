@@ -46,6 +46,7 @@
 -
   !record {model: purchase.order, id: inkind0}:
     order_type: in_kind
+    invoice_method: picking
     name: Inkind0
     partner_id: supplier1
     company_id: base.main_company
@@ -78,6 +79,18 @@
   !python {model: account.commitment}: |
     search_ids = self.search(cr, uid, [('purchase_id', '=', ref("inkind0"))])
     assert len(search_ids) == False, "A commitment should not be attached to this PO!"
+-
+  I validate shipment with 1 product.
+-
+  !python {model: stock.picking}: |
+    # Prepare values
+    import time
+    today = time.strftime('%Y-%m-%d')
+    pick_ids = self.search(cr, uid, [('purchase_id', '=', ref("inkind0"))])
+    dic = self.action_process(cr, uid, pick_ids, context=context)
+    res = self.pool.get(dic['res_model']).attach_certificate(cr,uid, [dic['res_id']], context=dic['context'])
+    self.pool.get(res['res_model']).copy_all(cr,uid, [res['res_id']], context=res['context'])
+    self.pool.get(res['res_model']).do_incoming_shipment(cr, uid, [res['res_id']], context=res['context'])
 -
   I check that an invoice have been created with a inkind donation journal and right accounts (payable for partner and expense for product)
 -
