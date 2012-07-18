@@ -133,6 +133,7 @@ class cashbox_write_off(osv.osv_memory):
                             'percentage': 100.0,
                             'date': date,
                             'source_date': date,
+                            'destination_id': account.default_destination_id and account.default_destination_id.id or False,
                         }
                         cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
                         # add a funding pool line for analytic distribution

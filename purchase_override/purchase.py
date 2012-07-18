@@ -454,19 +454,17 @@ stock moves which are already processed : '''
         
         # Analytic distribution verification
         for po in self.browse(cr, uid, ids, context=context):
-            if not po.analytic_distribution_id:
-                for line in po.order_line:
-                    if po.from_yml_test:
-                        continue
-                    if not line.analytic_distribution_id:
-                        try:
-                            dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                                'analytic_account_project_dummy')
-                        except ValueError:
-                            dummy_cc = 0
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-                        break
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
+
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))

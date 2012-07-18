@@ -94,6 +94,7 @@
     currency_id: 1
     analytic_id: analytic_account_gabon
     distribution_id: global_distrib_1
+    destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I create a cost center distribution line for kenya
 -
@@ -104,6 +105,7 @@
     currency_id: 1
     analytic_id: analytic_account_kenya
     distribution_id: global_distrib_1
+    destination_id: analytic_distribution.analytic_account_destination_support
 -
   I create a funding pool distribution line for gabon
 -
