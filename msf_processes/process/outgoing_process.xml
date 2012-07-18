@@ -13,7 +13,7 @@
         <!-- Process Node outgoing -->
         
         <record id="msf_outgoing.process_node_out_draft" model="process.node">
-            <field name="menu_id" ref="stock.action_picking_tree"/>
+            <field name="menu_id" ref="stock.menu_action_picking_tree"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Out - draft&quot;&quot;&quot;" name="name"/>
@@ -24,7 +24,7 @@
         </record>
         
         <record id="msf_outgoing.process_node_out_confirmed" model="process.node">
-            <field name="menu_id" ref="stock.action_picking_tree"/>
+            <field name="menu_id" ref="stock.menu_action_picking_tree"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Out - not available&quot;&quot;&quot;" name="name"/>
@@ -35,7 +35,7 @@
         </record>
         
         <record id="msf_outgoing.process_node_out_assigned" model="process.node">
-            <field name="menu_id" ref="stock.action_picking_tree"/>
+            <field name="menu_id" ref="stock.menu_action_picking_tree"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Out - available&quot;&quot;&quot;" name="name"/>
@@ -46,7 +46,7 @@
         </record>
         
         <record id="msf_outgoing.process_node_out_done" model="process.node">
-            <field name="menu_id" ref="stock.action_picking_tree"/>
+            <field name="menu_id" ref="stock.menu_action_picking_tree"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Out - closed&quot;&quot;&quot;" name="name"/>
@@ -57,7 +57,7 @@
         </record>
         
 		<record id="msf_outgoing.process_node_out_delivered" model="process.node">
-            <field name="menu_id" ref="stock.action_picking_tree"/>
+            <field name="menu_id" ref="stock.menu_action_picking_tree"/>
             <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
             <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Out - delivered&quot;&quot;&quot;" name="name"/>
@@ -68,7 +68,7 @@
         </record>
         
         <record id="msf_outgoing.process_node_out_backorder" model="process.node">
-        	<field name="menu_id" ref="stock.action_picking_tree"/>
+        	<field name="menu_id" ref="stock.menu_action_picking_tree"/>
             <!-- <field name="model_id" ref="msf_outgoing.model_stock_picking"/> -->
             <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
             <field eval="&quot;&quot;&quot;Backorder&quot;&quot;&quot;" name="name"/>
