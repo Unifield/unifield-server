@@ -95,7 +95,7 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context=None):
         """
-        Check analytic distribution for each sale order line if partner type is 'internal'
+        Check analytic distribution for each sale order line (except if we come from YAML tests)
         """
         # Some verifications
         if not context:
@@ -105,7 +105,7 @@ class sale_order(osv.osv):
         # Analytic distribution verification if partner_type is 'internal'
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
-            if so.partner_id.partner_type == 'section':
+            if not so.from_yml_test:
                 for line in so.order_line:
                     # check distribution presence
                     distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
