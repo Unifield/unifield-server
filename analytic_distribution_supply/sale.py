@@ -102,7 +102,7 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Analytic distribution verification if partner_type is 'internal'
+        # Analytic distribution verification
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
             if not so.from_yml_test:
