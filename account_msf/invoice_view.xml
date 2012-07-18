@@ -261,8 +261,8 @@
                         <field string="Partner" name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id, False, is_intermission)" groups="base.group_user" domain="[('partner_type', '=', 'intermission')]"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Partner address"/>
                         <newline/>
-                        <field name="date_invoice"/>
                         <field name="document_date" string="I/MI voucher date"/>
+                        <field name="date_invoice"/>
                         <newline/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
