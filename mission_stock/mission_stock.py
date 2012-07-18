@@ -266,8 +266,8 @@ class stock_mission_report_line(osv.osv):
         'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-        'product_amc': fields.related('product_id', 'product_amc', string='AMC'),
-        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', string='FMC'),
+        'product_amc': fields.float(digits=(16,2), string='AMC'),
+        'reviewed_consumption': fields.float(digits=(16,2), string='FMC'),
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                 store={'product.template': (_get_template, ['type'], 10)}),
@@ -341,6 +341,10 @@ class stock_mission_report_line(osv.osv):
             in_pipe_val = 0.00
             in_pipe_not_coor_qty = 0.00
             in_pipe_not_coor_val = 0.00
+
+            is_project = False
+            if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
+                is_project = True
     
             for l in lines:
                 internal_qty += l.internal_qty
@@ -359,23 +363,29 @@ class stock_mission_report_line(osv.osv):
                 in_pipe_val += l.in_pipe_val
                 in_pipe_not_coor_qty += l.in_pipe_coor_qty
                 in_pipe_not_coor_val += l.in_pipe_coor_qty
-                
-            self.write(cr, uid, [line.id], {'internal_qty': internal_qty,
-                                                'internal_val': internal_val,
-                                                'stock_qty': stock_qty,
-                                                'stock_val': stock_val,
-                                                'central_qty': central_qty,
-                                                'central_val': central_val,
-                                                'cross_qty': cross_qty,
-                                                'cross_val': cross_val,
-                                                'secondary_qty': secondary_qty,
-                                                'secondary_val': secondary_val,
-                                                'cu_qty': cu_qty,
-                                                'cu_val': cu_val,
-                                                'in_pipe_qty': in_pipe_qty,
-                                                'in_pipe_val': in_pipe_val,
-                                                'in_pipe_coor_qty': in_pipe_not_coor_qty,
-                                                'in_pipe_coor_val': in_pipe_not_coor_val}, context=context)
+
+            if not is_project:
+                in_pipe_qty = in_pipe_qty - in_pipe_not_coor_qty
+                in_pipe_val = in_pipe_val - in_pipe_not_coor_val
+
+            self.write(cr, uid, [line.id], {'product_amc': line.product_id.product_amc,
+                                            'reviewed_consumption': line.product_id.reviewed_consumption,
+                                            'internal_qty': internal_qty,
+                                            'internal_val': internal_val,
+                                            'stock_qty': stock_qty,
+                                            'stock_val': stock_val,
+                                            'central_qty': central_qty,
+                                            'central_val': central_val,
+                                            'cross_qty': cross_qty,
+                                            'cross_val': cross_val,
+                                            'secondary_qty': secondary_qty,
+                                            'secondary_val': secondary_val,
+                                            'cu_qty': cu_qty,
+                                            'cu_val': cu_val,
+                                            'in_pipe_qty': in_pipe_qty,
+                                            'in_pipe_val': in_pipe_val,
+                                            'in_pipe_coor_qty': in_pipe_not_coor_qty,
+                                            'in_pipe_coor_val': in_pipe_not_coor_val}, context=context)
             
         return True
     
@@ -397,10 +407,11 @@ class stock_mission_report_line(osv.osv):
             stock_location_id = stock_location_id[1]
             
         # Check if the instance is a coordination or a project
-        #coordo_id = False
-        #company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        #if company.instance_id.level == 'project':
-        #    coordo_id = company.instance_id.partner_id.id
+        coordo_id = False
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        coordo = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
+        if company.instance_id.level == 'project' and coordo:
+            coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
         
         # Search considered SLocation
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
@@ -469,23 +480,27 @@ class stock_mission_report_line(osv.osv):
             # In Pipe
             in_pipe_qty = 0.00
             in_pipe_not_coord_qty = 0.00
-            cr.execute('''SELECT product_qty, product_uom, partner_id
-                          FROM stock_move
+            cr.execute('''SELECT m.product_qty, m.product_uom, p.name
+                          FROM stock_move m 
+                              LEFT JOIN stock_picking s ON m.picking_id = s.id
+                              LEFT JOIN res_partner p ON s.partner_id2 = p.id
                           WHERE type = 'in' AND state in ('confirmed', 'waiting', 'assigned')
                               AND product_id = %s''' % line.product_id.id)
             moves = cr.fetchall()
-            for qty, uom, partner_id in moves:
+            for qty, uom, partner in moves:
                 if uom != line.product_id.uom_id.id:
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
                 
                 in_pipe_qty += qty
-#                if partner_id != coordo_id:
-#                    in_pipe_not_coord_qty += qty
+                if partner == coordo_id:
+                    in_pipe_not_coord_qty += qty
             
             in_pipe_val = in_pipe_qty*standard_price
             in_pipe_not_coord_val = in_pipe_not_coord_qty*standard_price
             
-            values = {'internal_qty': internal_qty,
+            values = {'product_amc': line.product_id.product_amc,
+                      'reviewed_consumption': line.product_id.reviewed_consumption,
+                      'internal_qty': internal_qty,
                       'internal_val': internal_val,
                       'stock_qty': stock_qty,
                       'stock_val': stock_val,
