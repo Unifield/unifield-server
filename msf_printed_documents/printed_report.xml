@@ -2,5 +2,6 @@
 <openerp>
     <data>
         <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Quotation / Order"/>
+        <report auto="False" id="sale.product_list_report" model="product.list" name="msf.product_list" rml="msf_printed_documents/report/product_list.rml" string="Product List / Sub-List" />
     </data>
 </openerp>
