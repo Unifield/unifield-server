@@ -55,7 +55,6 @@
     instance: Proj. instance
     parent_id: msf_instance.instance_section
     name: Project 1
-    partner_id: coord1
     cost_center_id: analytic_account_kenya
     state: active
 -
@@ -103,7 +102,8 @@
     cu3_id = self.create(cr, uid, {'location_name': 'CU3',
                                    'location_usage': 'consumption_unit',
                                    'location_type': 'customer'})
-    self.confirm_creation(cr, uid, [eprep_id, is1_id, is2_id, cu1_id, cu2_id, cu3_id])
+    for to_create in [eprep_id, is1_id, is2_id, cu1_id, cu2_id, cu3_id]:
+        self.confirm_creation(cr, uid, to_create)
 -
   Create an inventory for the local instance
 -
@@ -147,7 +147,7 @@
         product_uom: product.product_uom_unit
         product_id: product1
         product_qty: 64
-      - location_id: msf_config_locations.stock_location_logistic
+      - location_id: stock_override.stock_location_logistic
         product_uom: product.product_uom_unit
         product_id: product1
         product_qty: 11
@@ -155,11 +155,11 @@
         product_uom: product.product_uom_unit
         product_id: product1
         product_qty: 8
-      - location_id: msf_config_locations.stock_location_quarantine_scrap
+      - location_id: stock_override.stock_location_quarantine_scrap
         product_uom: product.product_uom_unit
         product_id: product1
         product_qty: 2
-      - location_id: msf_config_locations.stock_location_quarantine_analyze
+      - location_id: stock_override.stock_location_quarantine_analyze
         product_uom: product.product_uom_unit
         product_id: product1
         product_qty: 5
@@ -171,7 +171,7 @@
     assert eprep_id, 'No EPREP location found'
     is1_id = self.search(cr, uid, [('name', '=', 'IS1')])
     assert is1_id, 'No IS1 location found'
-    is2_id = self.search(cr, uid, [('name', '=', 'US2')])
+    is2_id = self.search(cr, uid, [('name', '=', 'IS2')])
     assert is2_id, 'No IS2 location found'
     cu1_id = self.search(cr, uid, [('name', '=', 'CU1')])
     assert cu1_id, 'No CU1 location found'
@@ -185,26 +185,31 @@
                               'inventory_id': ref('local_inv'),
                               'product_uom': ref('product.product_uom_unit'),
                               'product_id': ref('product1'),
+                              'reason_type_id': ref('reason_types_moves.reason_type_loss'),
                               'product_qty': 30})
     line_obj.create(cr, uid, {'location_id': is1_id[0],
                               'inventory_id': ref('local_inv'),
                               'product_uom': ref('product.product_uom_unit'),
                               'product_id': ref('product1'),
+                              'reason_type_id': ref('reason_types_moves.reason_type_loss'),
                               'product_qty': 24})
     line_obj.create(cr, uid, {'location_id': is2_id[0],
                               'inventory_id': ref('local_inv'),
                               'product_uom': ref('product.product_uom_unit'),
                               'product_id': ref('product1'),
+                              'reason_type_id': ref('reason_types_moves.reason_type_loss'),
                               'product_qty': 23})
     line_obj.create(cr, uid, {'location_id': cu1_id[0],
                               'inventory_id': ref('local_inv'),
                               'product_uom': ref('product.product_uom_unit'),
                               'product_id': ref('product1'),
+                              'reason_type_id': ref('reason_types_moves.reason_type_loss'),
                               'product_qty': 52})
     line_obj.create(cr, uid, {'location_id': cu2_id[0],
                               'inventory_id': ref('local_inv'),
                               'product_uom': ref('product.product_uom_unit'),
                               'product_id': ref('product1'),
+                              'reason_type_id': ref('reason_types_moves.reason_type_loss'),
                               'product_qty': 64})
 -
   We confirm the inventory
