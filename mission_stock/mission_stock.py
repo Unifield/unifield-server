@@ -484,8 +484,8 @@ class stock_mission_report_line(osv.osv):
                           FROM stock_move m 
                               LEFT JOIN stock_picking s ON m.picking_id = s.id
                               LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE type = 'in' AND state in ('confirmed', 'waiting', 'assigned')
-                              AND product_id = %s''' % line.product_id.id)
+                          WHERE m.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
+                              AND m.product_id = %s''' % line.product_id.id)
             moves = cr.fetchall()
             for qty, uom, partner in moves:
                 if uom != line.product_id.uom_id.id:
