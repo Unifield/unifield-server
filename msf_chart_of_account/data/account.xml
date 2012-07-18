@@ -1064,7 +1064,7 @@
             <field name="parent_id" ref="msf_chart_of_account.300" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3001">
@@ -1097,7 +1097,7 @@
             <field name="parent_id" ref="msf_chart_of_account.301" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3011">
@@ -1108,7 +1108,7 @@
             <field name="parent_id" ref="msf_chart_of_account.301" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.302">
@@ -1130,7 +1130,7 @@
             <field name="parent_id" ref="msf_chart_of_account.302" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.303">
@@ -1163,7 +1163,7 @@
             <field name="parent_id" ref="msf_chart_of_account.303" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3032">
@@ -1174,7 +1174,7 @@
             <field name="parent_id" ref="msf_chart_of_account.303" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.31">
@@ -1207,7 +1207,7 @@
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3101">
@@ -1218,7 +1218,7 @@
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3102">
@@ -1229,7 +1229,7 @@
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3103">
@@ -1240,7 +1240,7 @@
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.3104">
@@ -1251,7 +1251,7 @@
             <field name="parent_id" ref="msf_chart_of_account.310" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.311">
@@ -1273,7 +1273,7 @@
             <field name="parent_id" ref="msf_chart_of_account.311" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.312">
@@ -1295,7 +1295,7 @@
             <field name="parent_id" ref="msf_chart_of_account.312" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.313">
@@ -1317,7 +1317,7 @@
             <field name="parent_id" ref="msf_chart_of_account.313" />
             <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_payable" />
-            <field name="accrual_account" eval="False" />
+            <field name="accrual_account" eval="True" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.32">
@@ -1985,8 +1985,8 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_operation"/>
-            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_operation')])]"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.6340">
@@ -2510,7 +2510,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_operation"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
@@ -2575,7 +2575,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_expatriates"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
@@ -2588,7 +2588,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_operation"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
@@ -2651,7 +2651,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_operation"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
@@ -2664,7 +2664,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_operation"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
@@ -2677,7 +2677,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_expatriates"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
@@ -2690,7 +2690,7 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_expense" />
             <field name="accrual_account" eval="False" />
-            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_support"/>
+            <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_operation"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
