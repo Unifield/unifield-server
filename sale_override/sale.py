@@ -122,9 +122,11 @@ class sale_order(osv.osv):
                 res[sale.id] = 100.0
                 continue
             tot = 0.0
-            for invoice in sale.invoice_ids:
-                if invoice.state not in ('draft', 'cancel'):
-                    tot += invoice.amount_untaxed
+            for line in sale.order_line:
+                if line.invoiced:
+                    for invoice_line in line.invoice_lines:
+                        if invoice_line.invoice_id.state not in ('draft', 'cancel'):
+                            tot += invoice_line.price_subtotal
             if tot:
                 res[sale.id] = min(100.0, tot * 100.0 / (sale.amount_untaxed or 1.00))
             else:

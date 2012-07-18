@@ -840,6 +840,7 @@ class shipment(osv.osv):
         partner_obj = self.pool.get('res.partner')
         distrib_obj = self.pool.get('analytic.distribution')
         sale_line_obj = self.pool.get('sale.order.line')
+        sale_obj = self.pool.get('sale.order')
         company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
         
         if not context:
@@ -849,6 +850,15 @@ class shipment(osv.osv):
             ids = [ids]
             
         for shipment in self.browse(cr, uid, ids, context=context):
+            make_invoice = False
+            for pack in shipment.pack_family_memory_ids:
+                for move in pack.move_lines:
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                        make_invoice = True
+                    
+            if not make_invoice:
+                continue
+                    
             payment_term_id = False
             partner =  shipment.partner_id2
             if not partner:
@@ -863,16 +873,16 @@ class shipment(osv.osv):
             else:
                 account_id = partner.property_account_payable.id
             
-            address_contact_id, address_invoice_id = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            addresses = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
             
             invoice_vals = {
                     'name': shipment.name,
                     'origin': shipment.name or '',
                     'type': inv_type,
                     'account_id': account_id,
-                    'partner_id': partner,
-                    'address_invoice_id': address_invoice_id,
-                    'address_contact_id': address_contact_id,
+                    'partner_id': partner.id,
+                    'address_invoice_id': addresses['invoice'],
+                    'address_contact_id': addresses['contact'],
                     'payment_term': payment_term_id,
                     'fiscal_position': partner.property_account_position.id,
                     'date_invoice': context.get('date_inv',False),
@@ -915,6 +925,9 @@ class shipment(osv.osv):
                     if move.state == 'cancel':
                         continue
                     
+                    if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                        continue
+                    
                     origin = move.picking_id.name or ''
                     if move.picking_id.origin:
                         origin += ':' + move.picking_id.origin
@@ -950,7 +963,7 @@ class shipment(osv.osv):
                         discount = move.sale_line_id.discount
                         
                     # Get taxes from FO line
-                    taxes = move.product_id.taxes_ids
+                    taxes = move.product_id.taxes_id
                     if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
                         taxes = [x.id for x in move.sale_line_id.tax_id]
                         
@@ -981,11 +994,12 @@ class shipment(osv.osv):
                                                         'discount': discount,
                                                         'quantity': move.product_uos_qty or move.product_qty,
                                                         'invoice_line_tax_id': [(6, 0, tax_ids)],
-                                                        'analytic_distribution_state_recap': distrib_id,
+                                                        'analytic_distribution_id': distrib_id,
                                                        }, context=context)
 
                     self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
                     if move.sale_line_id:
+                        sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)],})
                         sale_line_obj.write(cr, uid, [move.sale_line_id.id], {'invoiced': True,
                                                                               'invoice_lines': [(4, line_id)],})
             
@@ -1626,7 +1640,6 @@ class stock_picking(osv.osv):
                  'first_shipment_packing_id': False,
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'converted_to_standard': False,
-                 'invoice_state': '2binvoiced',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
@@ -1879,6 +1892,9 @@ class stock_picking(osv.osv):
         special behavior :
          - creation of corresponding shipment
         '''
+        # For picking ticket from scratch, invoice it !
+        if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
+            vals['invoice_state'] = '2binvoiced'
         # objects
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
