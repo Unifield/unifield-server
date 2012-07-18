@@ -3634,7 +3634,7 @@ msgstr ""
 #. module: sale
 #: model:ir.actions.report.xml,name:sale.report_sale_order
 msgid "Quotation / Order"
-msgstr ""
+msgstr "Order"
 
 #. module: base
 #: model:res.country,name:base.ls
@@ -26057,7 +26057,7 @@ msgstr ""
 #: model:ir.ui.menu,name:procurement_report.menu_report_procurement_policies
 #: view:report.procurement.policies:0
 msgid "Procurement Rules Analysis"
-msgstr ""
+msgstr "Replenishment Rules Analysis"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.action_product_price_list

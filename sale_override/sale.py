@@ -845,6 +845,7 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
