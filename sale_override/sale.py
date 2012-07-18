@@ -40,7 +40,6 @@ class sale_order(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
-
         - reset split flag to original value (field order flow) if not in default
         '''
         if context is None:
@@ -55,7 +54,6 @@ class sale_order(osv.osv):
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
-
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     #@@@override sale.sale_order._invoiced
@@ -326,8 +324,7 @@ class sale_order(osv.osv):
         # set the lines to done
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
-        self.write(cr, uid, ids, {'state': 'done',
-                                  'active': False}, context=context)
+        self.write(cr, uid, ids, {'state': 'done', 'active': False}, context=context)
         return True
     
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):

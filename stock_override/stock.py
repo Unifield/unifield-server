@@ -455,10 +455,42 @@ class stock_picking(osv.osv):
                     elif sp.type == 'out':
                         sp_type = 'sale'
                         inv_type = 'out_invoice'
-                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', sp_type)])
+                    # Journal type
+                    journal_type = sp_type
+                    # Disturb journal for invoice only on intermission partner type
+                    if sp.partner_id.partner_type == 'intermission':
+                        journal_type = 'intermission'
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
                     if not journal_ids:
-                        raise osv.except_osv(_('Warning'), _('No %s journal found!') % (sp_type,))
+                        raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
+                    # Create invoice
                     self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
+        return res
+
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
+        """
+        Attach an intermission journal to the Intermission Voucher IN/OUT if partner type is intermission from the picking.
+        Prepare intermission voucher IN/OUT
+        """
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')])
+        company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
+        intermission_default_account = company.intermission_default_counterpart
+        for pick in self.browse(cr, uid, [x for x in res]):
+            if pick.partner_id.partner_type == 'intermission':
+                inv_id = res[pick.id]
+                if not intermission_journal_ids:
+                    raise osv.except_osv(_('Error'), _('No Intermission journal found!'))
+                if not intermission_default_account or not intermission_default_account.id:
+                    raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'journal_id': intermission_journal_ids[0], 
+                    'is_intermission': True, 'account_id': intermission_default_account.id,})
+                # Change currency for this invoice
+                company_currency = company.currency_id and company.currency_id.id or False
+                if not company_currency:
+                    raise osv.except_osv(_('Warning'), _('No company currency found!'))
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': inv_id})
         return res
 
 stock_picking()

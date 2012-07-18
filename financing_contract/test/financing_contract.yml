@@ -146,11 +146,6 @@
   ... and a distribution.
 -
   !record {model: analytic.distribution, id: distribution_test}:
-    cost_center_lines: 
-    - analytic_id: analytic_account_OC1
-      percentage: 100
-      currency_id: base.CHF
-      date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
     - analytic_id: analytic_distribution.analytic_account_msf_private_funds
       cost_center_id: analytic_account_OC1
@@ -168,15 +163,6 @@
   ... and another distribution.
 -
   !record {model: analytic.distribution, id: distribution_test_2}:
-    cost_center_lines: 
-    - analytic_id: analytic_account_OC2
-      percentage: 80
-      currency_id: base.CHF
-      date: !eval "'%s-03-12' %(datetime.now().year+1)"
-    - analytic_id: analytic_account_OC1
-      percentage: 20
-      currency_id: base.CHF
-      date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
     - analytic_id: analytic_account_FP1
       cost_center_id: analytic_account_OC2

@@ -173,16 +173,16 @@
         </td>
       </tr>
     </blockTable>
-    <para style="terp_header">[[ o.is_debit_note == True and 'Debit Note' or o.type == 'out_invoice' and 'Stock Transfer Voucher' or 'Invoice' ]] [[ o.number ]]
+    <para style="terp_header">[[ o.is_debit_note == True and 'Debit Note' or o.is_intermission and 'Intermission Voucher OUT' or o.type == 'out_invoice' and 'Stock Transfer Voucher' or 'Invoice' ]] [[ o.number ]]
     [[ ((o.type == 'out_invoice' and (o.state == 'open' or o.state == 'paid')) or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">PRO-FORMA [[ ((o.type == 'out_invoice' and o.state == 'proforma2') or removeParentNode('para')) and '' ]]</para>
-    <para style="terp_header">[[ o.is_debit_note == True and 'Draft Debit Note' or o.type == 'out_invoice' and 'Draf Stock Transfer Voucher' or 'Draft Invoice' ]] 
+    <para style="terp_header">[[ o.is_debit_note == True and 'Draft Debit Note' or o.is_intermission and 'Draft Intermission Voucher OUT' or o.type == 'out_invoice' and 'Draft Stock Transfer Voucher' or 'Draft Invoice' ]] 
     [[ ((o.type == 'out_invoice' and o.state == 'draft') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">[[ o.is_debit_note == True and 'Cancelled Debit Note' or o.type == 'out_invoice' and 'Cancelled Stock Transfer Voucher' or 'Cancelled Invoice' ]] [[ o.number ]]
     [[ ((o.type == 'out_invoice' and o.state == 'cancel') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">Refund [[ (o.type=='out_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
     <para style="terp_header">Supplier Refund [[ (o.type=='in_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
-    <para style="terp_header">[[ o.is_inkind_donation == True and 'In-kind Donation' or 'Supplier Invoice' ]] [[ o.number ]]
+    <para style="terp_header">[[ o.is_inkind_donation == True and 'In-kind Donation' or o.is_intermission and 'Intermission Voucher IN' or 'Supplier Invoice' ]] [[ o.number ]]
     [[ (o.type=='in_invoice' or removeParentNode('para')) and '' ]]</para>
     <para style="terp_default_8">
       <font color="white"> </font>

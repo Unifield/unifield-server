@@ -105,14 +105,15 @@ class sale_order(osv.osv):
         # Analytic distribution verification if partner_type is 'internal'
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
-            if so.partner_id.partner_type == 'section' and not so.analytic_distribution_id:
+            if so.partner_id.partner_type == 'section':
                 for line in so.order_line:
-                    if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                            'analytic_account_project_dummy')
-                        ana_id = ana_obj.create(cr, uid, {'sale_order_ids': [(4,so.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
-                        break
+                    # check distribution presence
+                    distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
+                    if not distrib_id:
+                        raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
+                    # check distribution state
+                    if line.analytic_distribution_state != 'valid':
+                        raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
         # Default behaviour
         res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
@@ -171,11 +172,57 @@ class sale_order_line(osv.osv):
                 res[sol.id] = True
         return res
 
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the sale order line, then "valid"
+         - if no distribution, take a tour of sale order distribution, if compatible, then "valid"
+         - if no distribution on sale order line and sale order, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.from_yml_test:
+                res[line.id] = 'valid'
+            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
+                res[line.id] = 'none'
+            else:
+                so_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
+                distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+                # Search product account_id
+                a = False
+                if line.product_id:
+                    a = line.product_id.product_tmpl_id.property_account_income.id
+                    if not a:
+                        a = line.product_id.categ_id.property_account_income_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'),
+                                _('There is no income account defined ' \
+                                        'for this product: "%s" (id:%d)') % \
+                                        (line.product_id.name, line.product_id.id,))
+                else:
+                    prop = self.pool.get('ir.property').get(cr, uid,
+                            'property_account_income_categ', 'product.category',
+                            context=context)
+                    a = prop and prop.id or False
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, so_distrib_id, a)
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
         'analytic_distribution_available': fields.function(_get_analytic_distribution_available, string='Is analytic distribution available?', method=True, type='boolean'),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
     _defaults = {
@@ -199,12 +246,29 @@ class sale_order_line(osv.osv):
         currency = sol.order_id.currency_id and sol.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id
+        # Search account_id
+        a = False
+        if sol.product_id:
+            a = sol.product_id.product_tmpl_id.property_account_income.id
+            if not a:
+                a = sol.product_id.categ_id.property_account_income_categ.id
+            if not a:
+                raise osv.except_osv(_('Error !'),
+                        _('There is no income account defined ' \
+                                'for this product: "%s" (id:%d)') % \
+                                (sol.product_id.name, sol.product_id.id,))
+        else:
+            prop = self.pool.get('ir.property').get(cr, uid,
+                    'property_account_income_categ', 'product.category',
+                    context=context)
+            a = prop and prop.id or False
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'sale_order_line_id': sol.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'account_id': a,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

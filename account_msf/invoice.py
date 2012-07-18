@@ -90,28 +90,33 @@ class account_invoice(osv.osv):
         ]
         return dom1+[('is_debit_note', '=', False)]
 
-    def _get_fake_account_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+    def _get_fake_m2o_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        Get account_id field content
+        Get many2one field content
         """
         res = {}
+        name = field_name.replace("fake_", '')
         for i in self.browse(cr, uid, ids):
-            res[i.id] = i.account_id and i.account_id.id or False
+            res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
+        'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
-        'fake_account_id': fields.function(_get_fake_account_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
+        'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
+        'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
+        'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
     }
 
     _defaults = {
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
+        'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
     }
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
@@ -121,35 +126,31 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if self.read(cr, uid, id, ['is_debit_note']).get('is_debit_note', False) is True:
-            pattern = re.compile('^(Invoice)')
-            m = re.match(pattern, message)
-            if m and m.groups():
-                message = re.sub(pattern, 'Debit Note', message, 1)
-            # Search donation view and return it
-            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
-            view_id = res and res[1] or False
-            context.update({'view_id': view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
-        if self.read(cr, uid, id, ['is_inkind_donation']).get('is_inkind_donation', False) is True:
-            pattern = re.compile('^(Invoice)')
-            m = re.match(pattern, message)
-            if m and m.groups():
-                message = re.sub(pattern, 'In-kind Donation', message, 1)
-            # Search donation view and return it
-            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
-            view_id = res and res[1] or False
-            context.update({'view_id': view_id, 'type':'in_invoice', 'journal_type': 'inkind'})
+        for el in [('is_debit_note', 'Debit Note'), ('is_inkind_donation', 'In-kind Donation'), ('is_intermission', 'Intermission Voucher')]:
+            if self.read(cr, uid, id, [el[0]]).get(el[0], False) is True:
+                pattern = re.compile('^(Invoice)')
+                m = re.match(pattern, message)
+                if m and m.groups():
+                    message = re.sub(pattern, el[1], message, 1)
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
-        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False):
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
         """
-        Update fake_account_id field regarding account_id result
+        Update fake_account_id field regarding account_id result.
+        Get default donation account for Donation invoices.
+        Get default intermission account for Intermission Voucher IN/OUT invoices.
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
         if is_inkind_donation and partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
+            res['value']['account_id'] = account_id
+        if is_intermission and partner_id:
+            intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+            account_id = intermission_default_account and intermission_default_account.id or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
             res['value']['account_id'] = account_id
         if res.get('value', False) and 'account_id' in res['value']:
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
@@ -282,10 +283,12 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'tree' and context.get('journal_type', False) == 'inkind':
+        if view_type == 'tree' and (context.get('journal_type', False) == 'inkind' or context.get('journal_type', False) == 'intermission'):
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
             name = _('Donor')
+            if context.get('journal_type') == 'intermission':
+                name = _('Partner')
             for node in nodes:
                 node.set('string', name)
             res['arch'] = etree.tostring(doc)
