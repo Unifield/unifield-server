@@ -840,6 +840,7 @@ class shipment(osv.osv):
         partner_obj = self.pool.get('res.partner')
         distrib_obj = self.pool.get('analytic.distribution')
         sale_line_obj = self.pool.get('sale.order.line')
+        company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
         
         if not context:
             context = {}
@@ -880,9 +881,30 @@ class shipment(osv.osv):
             cur_id = shipment.pack_family_memory_ids[0].currency_id.id
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
+            # Journal type
+            journal_type = 'sale'
+            # Disturb journal for invoice only on intermission partner type
+            if shipment.partner_id2.partner_type == 'intermission':
+                if not company.intermission_default_counterpart or not company.intermission_default_counterpart.id:
+                    raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+                invoice_vals['is_intermission'] = True
+                invoice_vals['account_id'] = company.intermission_default_counterpart.id
+                journal_type = 'intermission'
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
+            if not journal_ids:
+                raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
+            invoice_vals['journal_id'] = journal_ids[0]
                 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,
                         context=context)
+            
+            # Change currency for the intermission invoice
+            if shipment.partner_id2.partner_type == 'intermission':
+                company_currency = company.currency_id and company.currency_id.id or False
+                if not company_currency:
+                    raise osv.except_osv(_('Warning'), _('No company currency found!'))
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
             
             # Link the invoice to the shipment
             self.write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
@@ -1604,6 +1626,7 @@ class stock_picking(osv.osv):
                  'first_shipment_packing_id': False,
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'converted_to_standard': False,
+                 'invoice_state': '2binvoiced',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
