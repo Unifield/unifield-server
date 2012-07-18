@@ -1263,7 +1263,7 @@ class sale_order_line(osv.osv):
             context = {}
         """Allows to delete sales order lines in draft,cancel states"""
         for rec in self.browse(cr, uid, ids, context=context):
-            if rec.state not in ['draft', 'cancel']:
+            if rec.state not in ['draft', 'cancel'] and not context.get('call_unlink', False):
                 raise osv.except_osv(_('Invalid action !'), _('Cannot delete a sales order line which is %s !') %(rec.state,))
         return super(sale_order_line, self).unlink(cr, uid, ids, context=context)
 
