@@ -423,10 +423,12 @@ class res_currency(osv.osv):
             partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'section')], context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purcahse'),
-                                                             ('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference)], context=context)
+            property_ids = []
+            if value_reference and res_reference:
+                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
+                                                             ('value_reference', 'in', value_reference),
+                                                             '|', ('name', '=', 'property_product_pricelist'),
+                                                                  ('name', '=', 'property_product_pricelist_purchase'),], context=context)
             if property_ids:
                 properties = property_obj.browse(cr, uid, property_ids, context=context)
                 partner_list = ' / '.join(x.res_id.name for x in properties)
@@ -440,10 +442,12 @@ class res_currency(osv.osv):
             partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc')], context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purcahse'),
-                                                             ('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference)], context=context)
+            property_ids = []
+            if value_reference and res_reference:
+                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
+                                                             ('value_reference', 'in', value_reference),
+                                                             '|', ('name', '=', 'property_product_pricelist'),
+                                                                  ('name', '=', 'property_product_pricelist_purchase'),], context=context)
             if property_ids:
                 properties = property_obj.browse(cr, uid, property_ids, context=context)
                 partner_list = ' / '.join(x.res_id.name for x in properties)
