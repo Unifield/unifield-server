@@ -126,12 +126,26 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        for el in [('is_debit_note', 'Debit Note'), ('is_inkind_donation', 'In-kind Donation'), ('is_intermission', 'Intermission Voucher')]:
+        # Prepare some values
+        # Search donation view and return it
+        debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
+        debit_view_id = debit_res and debit_res[1] or False
+        debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
+        # Search donation view and return it
+        inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
+        inkind_view_id = inkind_res and inkind_res[1] or False
+        inkind_ctx = {'view_id': inkind_view_id, 'type':'in_invoice', 'journal_type': 'inkind'}
+        # Search intermission view
+        intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+        intermission_view_id = intermission_res and intermission_res[1] or False
+        intermission_ctx = {'view_id': intermission_view_id, 'journal_type': 'intermission'}
+        for el in [('is_debit_note', 'Debit Note', debit_note_ctx), ('is_inkind_donation', 'In-kind Donation', inkind_ctx), ('is_intermission', 'Intermission Voucher', intermission_ctx)]:
             if self.read(cr, uid, id, [el[0]]).get(el[0], False) is True:
                 pattern = re.compile('^(Invoice)')
                 m = re.match(pattern, message)
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
+            context.update(el[2])
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
