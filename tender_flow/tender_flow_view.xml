@@ -197,9 +197,6 @@
                     <xpath expr="/form//field[@name='warehouse_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form//field[@name='partner_ref']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
                     <xpath expr="/form//field[@name='order_type']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
