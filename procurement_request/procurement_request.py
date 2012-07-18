@@ -348,7 +348,7 @@ class procurement_request(osv.osv):
                 # Confirm the picking
                 wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
     
-                message = _("""The Internal moves '%s' is created according to the lines that have a product and the goods are moved.""") %(pick_name,)
+                message = _("""The Internal moves '%s' is created according to the lines that have a product and move is ready to be process.""") %(pick_name,)
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'view_picking_form')[1]
                 self.pool.get('stock.picking').log(cr, uid, picking_id, message, context={'view_id': view_id})
         
@@ -425,6 +425,17 @@ class procurement_request_line(osv.osv):
             ret[pol['id']] = pol['state']
         return ret
     
+    def _get_product_id_ok(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for pol in self.read(cr, uid, ids, ['product_id']):
+            if pol['product_id']:
+                res[pol['id']] = True
+            else:
+                res[pol['id']] = False
+        return res
+    
     _columns = {
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
@@ -433,6 +444,7 @@ class procurement_request_line(osv.osv):
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
+        'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
@@ -481,14 +493,12 @@ class procurement_request_line(osv.osv):
         nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd1')[1]
         nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd2')[1]
         nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd3')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'procurement_request', 'uom_tbd')[1]
         
         if comment and not product_id:
             res.update({'nomen_manda_0': nomen_manda_0,
                         'nomen_manda_1': nomen_manda_1,
                         'nomen_manda_2': nomen_manda_2,
                         'nomen_manda_3': nomen_manda_3,
-                        'product_uom': uom_tbd,
                         'name': 'To be defined',})
         return {'value': res}
     
