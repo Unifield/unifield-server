@@ -418,7 +418,7 @@
   We check if invoice has been created by the confirmation
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('name', '=', 'Inkind6')])
+    invoice_ids = self.search(cr, uid, [('is_inkind_donation', '=', True)])
     assert invoice_ids, ('Invoice not created from In-kind donation')
 -
   We check if stock moves has been generated with good data
