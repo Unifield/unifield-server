@@ -837,9 +837,6 @@
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
-                                <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color" attrs="{'invisible':['|', ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"/>
-                                <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play" attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"/>
-                                <field name="cross_docking_ok" invisible="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
                                 <button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-ok"/>
                                 <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-yes"/>
