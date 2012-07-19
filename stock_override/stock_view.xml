@@ -758,8 +758,6 @@
                                     <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/>
                                     <field name="tracking_id" />
                                     <field name="location_id"/>
-                                    <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color" attrs="{'invisible':['|', ('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"/>
-                                    <button name="button_stock" string="Stock" type="object" icon="gtk-media-play" attrs="{'invisible':['|', ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"/>
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     <field name="date" string="Actual Shipped Date"/>
                                     <field name="state"/>
@@ -837,8 +835,6 @@
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
-                                <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color" attrs="{'invisible':['|', ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"/>
-                                <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play" attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
                                 <button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-ok"/>
