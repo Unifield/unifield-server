@@ -441,10 +441,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
+            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except', 'sourced']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except', 'sourced']:
                 res[el.id] = False
         return res
 

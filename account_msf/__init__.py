@@ -30,6 +30,5 @@ import report
 import purchase
 import product
 import stock
-import sale
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

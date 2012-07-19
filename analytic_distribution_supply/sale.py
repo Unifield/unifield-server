@@ -93,9 +93,11 @@ class sale_order(osv.osv):
             default['analytic_distribution_id'] = False
         return super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
 
-    def wkf_validated(self, cr, uid, ids, context=None):
+    def action_ship_proc_create(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
+        Get a default analytic distribution if intermission.
+        Change analytic distribution if intermission.
         """
         # Some verifications
         if not context:
@@ -105,17 +107,46 @@ class sale_order(osv.osv):
         # Analytic distribution verification
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
-            if not so.from_yml_test:
-                for line in so.order_line:
-                    # check distribution presence
-                    distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
-                    if not distrib_id:
-                        raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
-                    # check distribution state
-                    if line.analytic_distribution_state != 'valid':
-                        raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
+            for line in so.order_line:
+                # Search intermission
+                intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                    'analytic_account_project_intermission')
+                # check distribution presence
+                distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
+                if not distrib_id and so.partner_id.partner_type == 'intermission':
+                    # Search product account_id
+                    a = False
+                    if line.product_id:
+                        a = line.product_id.product_tmpl_id.property_account_income.id
+                        if not a:
+                            a = line.product_id.categ_id.property_account_income_categ.id
+                        if not a:
+                            raise osv.except_osv(_('Error !'),
+                                    _('There is no income account defined ' \
+                                            'for this product: "%s" (id:%d)') % \
+                                            (line.product_id.name, line.product_id.id,))
+                    else:
+                        prop = self.pool.get('ir.property').get(cr, uid,
+                                'property_account_income_categ', 'product.category',
+                                context=context)
+                        a = prop and prop.id or False
+                    # Search default destination_id
+                    destination_id = self.pool.get('account.account').read(cr, uid, a, ['default_destination_id']).get('default_destination_id', False)
+                    distrib_id = ana_obj.create(cr, uid, {'sale_order_line_ids': [(4,line.id)], 
+                        'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id})
+                    line = self.pool.get('sale.order.line').browse(cr, uid, line.id)
+                elif distrib_id and so.partner_id.partner_type == 'intermission':
+                    # Change CC lines
+                    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
+                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                if not distrib_id and not so.from_yml_test:
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
+                # check distribution state
+                if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
         # Default behaviour
-        res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
+        res = super(sale_order, self).action_ship_proc_create(cr, uid, ids, context=context)
         return res
 
     def action_invoice_create(self, cr, uid, ids, *args):
