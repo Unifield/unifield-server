@@ -521,6 +521,9 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
+        if line.order_id.procurement_request:
+            if line.type == 'make_to_order':
+                result = False
         # result = result and not line.order_id.procurement_request => the proc request can have pick and move
         return result
     
