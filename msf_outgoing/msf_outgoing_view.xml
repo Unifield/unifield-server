@@ -212,7 +212,7 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id, 'warehouse_id': warehouse_id}" on_change="onchange_move()" >
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id, 'warehouse_id': warehouse_id}" on_change="onchange_move()"  attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="composition_list_id" />
@@ -314,6 +314,7 @@
 						</page>
 						<page string="Notes">
 							<field colspan="4" name="note" nolabel="1"/>
+							<field  name="from_wkf" invisible="1"/>
 						</page>
 					</notebook>
 				</form>
@@ -504,7 +505,7 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}">
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}"  attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="composition_list_id" />
@@ -604,6 +605,7 @@
 						</page>
 						<page string="Notes">
 							<field colspan="4" name="note" nolabel="1"/>
+							<field  name="from_wkf" invisible="1"/>
 						</page>
 					</notebook>
 				</form>

@@ -51,7 +51,7 @@
                 </xpath>
             </field>
         </record>
-        
+
         <record id="inherit_view_move_form" model="ir.ui.view">
             <field name="name">inherit.view.move.form</field>
             <field name="model">stock.move</field>
@@ -308,7 +308,15 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines}" context="{'reason_type_id': reason_type_id}" on_change="onchange_move()">
+                            <field name="move_lines"
+                                colspan="4"
+                                nolabel="1"
+                                widget="one2many_list"
+                                default_get="{'move_line':move_lines}"
+                                context="{'reason_type_id': reason_type_id}" 
+                                on_change="onchange_move()"
+                                attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned'])]}"
+                                >
                                 <tree colors="grey:scrapped == True" string="Stock Moves">
                                     <field name="line_number"/>
                                     <field name="product_id"/>
@@ -407,8 +415,10 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
+                                        <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                                        <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                        <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="check_assign" states="draft" string="Check Availability" type="object" icon="gtk-apply"/>
-                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
                                 </form>
@@ -435,6 +445,7 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="from_wkf" invisible="1"/>
                         </page>
                     </notebook>
                 </form>
@@ -489,8 +500,12 @@
                     </group>
                     <notebook colspan="4">
                         <page string="General Information">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
-                            	default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id} " context="{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}" on_change="onchange_move()">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
+                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                context="{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                on_change="onchange_move()"
+                                attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned'])]}"
+                                >
                             	<tree colors="grey:scrapped==True" string="Stock Moves">
                                     <field name="line_number"/>
 									<field name="product_id"/>
@@ -586,10 +601,8 @@
                                     icon="gtk-cancel"
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
-								<button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-ok"/>
-                                <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-media-play"/>
-                                <button name="action_assign" states="confirmed" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+								<button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-ok"/>
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
                                 	<button name="321" string="Return Products" states="done" type="action" icon="gtk-execute"/>
@@ -604,6 +617,7 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="from_wkf" invisible="1"/>
                         </page>
                     </notebook>
                 </form>
@@ -726,6 +740,7 @@
                                 default_get="{'move_line':move_lines, 'address_out_id': address_id}"
                                 context="{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}" 
                                 on_change="onchange_move()"
+                                attrs="{'readonly': [('from_wkf', '=', True), ('state', 'in', ['draft', 'confirmed', 'assigned'])]}"
                                 >
                                 <tree colors="grey:scrapped==True" string="Stock Moves">
                                     <field name="line_number"/>
@@ -803,8 +818,10 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
+                                        <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                        <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                         <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                        <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
                                 </form>
@@ -840,6 +857,7 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="from_wkf" readonly="1"/>
                         </page>
                     </notebook>
                 </form>

@@ -19,8 +19,31 @@
 #
 ##############################################################################
 
-import stock_certificate_picking
-import stock_print_certificate
-import stock_picking_not_available
+from osv import osv, fields
+from tools.translate import _
+
+class stock_picking_not_available(osv.osv_memory):
+    _name = 'stock.picking.not.available'
+    
+    _columns = {
+        'move_id': fields.many2one('stock.move', 'Move id'),
+        'picking_id': fields.many2one('stock.picking', 'Picking id'),
+    }
+    
+    def yes(self, cr, uid, ids, context=None):
+        context.update({'yesorno': True,})
+        picking_ids = []
+        for avail in self.browse(cr, uid, ids, context=context):
+            picking_ids.append(avail.picking_id.id)
+        return self.pool.get('stock.picking').action_process(cr, uid, picking_ids, context=context)
+
+    def no(self, cr, uid, ids, context=None):
+        picking_ids = []
+        context.update({'yesorno': True,'out':True})
+        for avail in self.browse(cr, uid, ids, context=context):
+            picking_ids.append(avail.picking_id.id)
+        return self.pool.get('stock.picking').action_process(cr, uid, picking_ids, context=context)
+
+stock_picking_not_available()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

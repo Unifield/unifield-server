@@ -258,7 +258,6 @@
         						   'picking_type': 'incoming_shipment',
         						   "search_default_available":1}</field>
         </record>
-
 	</data>
 </openerp>
 
