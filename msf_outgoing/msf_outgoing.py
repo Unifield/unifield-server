@@ -2816,10 +2816,20 @@ class sale_order(osv.osv):
         '''
         move_data = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']
-        # first go to packing location
-        packing_id = order.shop_id.warehouse_id.lot_packing_id.id
-        move_data['location_dest_id'] = packing_id
-        move_data['state'] = 'confirmed'
+        # For IR
+        if self.read(cr, uid, ids, ['procurement_request', 'location_requestor_id'], context=context):
+            procurement_request = self.read(cr, uid, ids, ['procurement_request'], context=context)[0]['procurement_request']
+            location_requestor_id = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
+            if procurement_request:
+                move_data['type'] = 'internal'
+                move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                move_data['location_dest_id'] = location_requestor_id
+                move_data['state'] = 'draft'
+            else:
+                # first go to packing location
+                packing_id = order.shop_id.warehouse_id.lot_packing_id.id
+                move_data['location_dest_id'] = packing_id
+                move_data['state'] = 'confirmed'
         return move_data
     
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -2831,8 +2841,19 @@ class sale_order(osv.osv):
         '''
         picking_data = super(sale_order, self)._hook_ship_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']
-        # use the name according to picking ticket sequence
-        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+        
+        # For IR
+        if self.read(cr, uid, ids, ['procurement_request'], context=context):
+            procurement_request = self.read(cr, uid, ids, ['procurement_request'], context=context)[0]['procurement_request']
+            if procurement_request:
+                picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                picking_data['type'] = 'internal'
+                picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+            else:
+                # use the name according to picking ticket sequence
+                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+                
         picking_data['name'] = pick_name
         picking_data['state'] = 'draft'
         picking_data['subtype'] = 'picking'
