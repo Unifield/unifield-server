@@ -363,7 +363,7 @@ class stock_location(osv.osv):
     def _product_virtual_get(self, cr, uid, id, product_ids=False, context=None, states=['done']):
         return self._product_all_get(cr, uid, id, product_ids, context, ['confirmed', 'waiting', 'assigned', 'done'])
 
-    def _product_reserve(self, cr, uid, ids, product_id, product_qty, context=None, lock=False):
+    def _product_reserve(self, cr, uid, ids, product_id, product_qty, location_dest_id, context=None, lock=False):
         """
         Attempt to find a quantity ``product_qty`` (in the product's default uom or the uom passed in ``context``) of product ``product_id``
         in locations with id ``ids`` and their child locations. If ``lock`` is True, the stock.move lines
@@ -390,7 +390,9 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         pool_uom = self.pool.get('product.uom')
-        for id in self.search(cr, uid, [('location_id', 'child_of', ids)]):
+        for id in self.search(cr, uid, [('location_id', 'child_of', ids)], order="parent_left"):
+            if id == location_dest_id:
+                continue
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
@@ -456,13 +458,9 @@ class stock_location(osv.osv):
             if amount > 0:
                 if amount > min(total, product_qty):
                     amount = min(product_qty, total)
-                result.append((amount, id))
-                product_qty -= amount
-                total -= amount
-                if product_qty <= 0.0:
-                    return result
-                if total <= 0.0:
-                    continue
+
+                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id, ids)
+
         return False
 
 stock_location()
@@ -2029,6 +2027,7 @@ class stock_move(osv.osv):
         @return: No. of moves done
         """
         done = []
+        notdone = []
         count = 0
         pickings = {}
         if context is None:
@@ -2041,7 +2040,7 @@ class stock_move(osv.osv):
                 continue
             if move.state in ('confirmed', 'waiting'):
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, {'uom': move.product_uom.id}, lock=True)
+                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, move.location_dest_id.id ,{'uom': move.product_uom.id}, lock=True)
                 if res:
                     #_product_available_test depends on the next status for correct functioning
                     #the test does not work correctly if the same product occurs multiple times
@@ -2053,13 +2052,8 @@ class stock_move(osv.osv):
                     r = res.pop(0)
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
-                    while res:
-                        r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
-                        done.append(move_id)
-        if done:
-            count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
+                    done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
+        count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
             for pick_id in pickings:
