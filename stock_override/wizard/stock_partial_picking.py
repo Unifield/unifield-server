@@ -26,11 +26,6 @@ import time
 class stock_partial_picking(osv.osv_memory):
     _inherit = "stock.partial.picking"
     _description = "Partial Picking with hook"
-
-    def _hook_move_state(self):
-        res = super(stock_partial_picking, self)._hook_move_state()
-        res.append('confirmed')
-        return res
     
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
@@ -48,7 +43,7 @@ class stock_partial_picking(osv.osv_memory):
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
             pick_type = self.get_picking_type(cr, uid, pick, context=context)
             for m in pick.move_lines:
-                if m.state in self._hook_move_state():
+                if m.state in ('done', 'cancel', 'confirmed'):
                     continue
                 result.append(self.__create_partial_picking_memory(m, pick_type))
         return result
