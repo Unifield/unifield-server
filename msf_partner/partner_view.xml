@@ -40,7 +40,7 @@
                 <data>
                     <xpath expr="/form/group/group/field[@name='title']" position="replace">
                         <field name="partner_type" 
-                        	on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
+                            on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
@@ -70,6 +70,7 @@
                             <filter string="Inter-section" name="inter-section" icon="gtk-refresh" domain="[('partner_type','=','section')]" help="Inter-section Partners"/>
                             <filter string="External" name="external" icon="gtk-quit" domain="[('partner_type','=','external')]" help="External Partners"/>
                             <filter string="ESC" name="esc" icon="gtk-ok" domain="[('partner_type','=','esc')]" help="ESC Partners"/>
+                            <filter string="Intermission" name="intermission" icon="gtk-ok" domain="[('partner_type','=','intermission')]" help="Intermission Partners"/>
                             <newline />
                             <field name="name" select="1"/>
                             <field name="address" select="1"/>

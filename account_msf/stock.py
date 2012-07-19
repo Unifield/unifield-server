@@ -58,7 +58,31 @@ class stock_picking(osv.osv):
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (picking.partner_id.name or '',))
             invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
+        if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
+            invoice_vals.update({'is_intermission': True})
         return invoice_vals
+
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
+        """
+        Fetch old analytic distribution on each purchase line (if exists)
+        """
+        distrib_obj = self.pool.get('analytic.distribution')
+        res = {}
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        for sp in self.browse(cr, uid, ids):
+            if res.get(sp.id):
+                inv = res[sp.id] or False
+                if inv:
+                    if sp.purchase_id and sp.purchase_id.analytic_distribution_id:
+                        new_distrib_id = distrib_obj.copy(cr, uid, sp.purchase_id.analytic_distribution_id.id)
+                        distrib_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
+                        self.pool.get('account.invoice').write(cr, uid, [inv], {'analytic_distribution_id': new_distrib_id or False,})
+                    for invl in self.pool.get('account.invoice').browse(cr, uid, inv).invoice_line:
+                        if invl.order_line_id and invl.order_line_id.analytic_distribution_id:
+                            new_distrib_id = distrib_obj.copy(cr, uid, invl.order_line_id.analytic_distribution_id.id)
+                            distrib_obj.create_funding_pool_lines(cr, uid, [new_distrib_id], account_id=invl.account_id.id)
+                            self.pool.get('account.invoice.line').write(cr, uid, invl.id, {'analytic_distribution_id': new_distrib_id or False})
+        return res
 
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
