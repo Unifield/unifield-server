@@ -225,7 +225,7 @@
                         <xpath expr="/form/notebook/page[@string='General Information']/group/button[@name='draft_validate']" position="replace">
                         </xpath>
                         <xpath expr="/form/notebook/page[@string='General Information']/group/button[@name='force_assign']" position="replace">
-                            <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                            <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
                         </xpath>
 			
                 </data>

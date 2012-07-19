@@ -229,6 +229,11 @@
 									<field name="location_dest_id" string="Dest. Loc" />
 									<field name="virtual_available" />
 									<field name="date" string="Actual Pick Date" />
+
+								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+
 									<field name="state"/>
 									<field name="lot_check" />
 									<field name="exp_check" />
@@ -297,7 +302,7 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
-								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
 								<button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" />
 								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" />
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
@@ -517,6 +522,17 @@
 									<field name="to_pack" />
 									<field name="date" string="Actual Pack Date" />
 									<field name="state"/>
+
+
+
+
+								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+
+
+
+
 									<field name="lot_check" />
 									<field name="exp_check" />
 									<field name="kc_check" />
@@ -582,7 +598,7 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="return_products" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo"/>
-								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 								<button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
