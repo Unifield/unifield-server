@@ -264,10 +264,9 @@
 
 
 <!--        <delete id="base.menu_partner_title_contact" model="ir.ui.menu" />
+            <delete id="base.menu_action_res_bank_form" model="ir.ui.menu" />
             used in useability_dashboard_and_menu/menu/supply_config_menu.xml
 -->
-
-        <delete id="base.menu_action_res_bank_form" model="ir.ui.menu" />
 
 
 

@@ -490,8 +490,8 @@
         <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
         <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
 
-        <delete id="product.menu_products_category" model="ir.ui.menu" />
-        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" />
+<!--        <delete id="product.menu_products_category" model="ir.ui.menu" /> -->
+<!--        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" /> -->
 
         <record id="view_act_product_stock_move_open" model="ir.ui.view">
             <field name="name">Stock Moves</field>

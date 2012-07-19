@@ -308,12 +308,12 @@
         <!-- Picking on Purchase menu -->
         <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
         <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
-        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" />
+<!--        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" /> -->
 
         <!-- Purchase configuration menu -->
+<!--
         <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+-->
         <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
