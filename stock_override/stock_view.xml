@@ -328,7 +328,7 @@
                                     <field name="asset_id"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
-                                    <button name="310" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>
+                                    <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>
                                     <field name="tracking_id"/>
                                     <field name="location_id"/>
                                     <field name="location_dest_id"/>
@@ -753,7 +753,7 @@
                                     <field name="scrapped" invisible="1"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
-                                    <button name="310" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/>
+                                    <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/>
                                     <field name="tracking_id" />
                                     <field name="location_id"/>
                                     <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color" attrs="{'invisible':['|', ('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"/>
