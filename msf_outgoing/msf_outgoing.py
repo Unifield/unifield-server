@@ -405,7 +405,8 @@ class shipment(osv.osv):
         partial_datas = context['partial_datas']
         # shipment ids from ids must be equal to shipment ids from partial datas
         assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
-        
+       
+        draft_picking_id = False
         for draft_shipment_id in partial_datas:
             # log flag - log for draft shipment is displayed only one time for each draft shipment
             log_flag = False
@@ -2439,7 +2440,8 @@ class stock_picking(osv.osv):
         
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
-        
+       
+        draft_picking_id = False
         for picking in self.browse(cr, uid, ids, context=context):
             # for each picking
             # corresponding draft picking ticket
