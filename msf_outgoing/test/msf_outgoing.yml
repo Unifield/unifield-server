@@ -206,6 +206,7 @@
 -
   !python {model: stock.picking}: |
     idsA = context['out']['a']
+    self.force_assign(cr, uid, idsA)
     res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
@@ -795,6 +796,7 @@
 -
   !python {model: stock.picking}: |
     idsA = context['out']['b']
+    self.force_assign(cr, uid, idsA)
     res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
@@ -824,7 +826,7 @@
     picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['b'])], context=context)
     # add the picking ticket id to the context structure
     context.update({'pick': {'b': picking_ids}})
-    assert len(picking_ids) == 1, 'picking ticket should have been created - 1 - %s'%(len(picking_ids))
+    assert len(picking_ids) == 1, 'picking ticket should have been created - 1bis - %s'%(len(picking_ids))
 -
   I set quick mode
 -
@@ -1618,6 +1620,7 @@
 -
   !python {model: stock.picking}: |
     idsA = context['out']['a']
+    self.force_assign(cr, uid, idsA)
     res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
