@@ -134,18 +134,18 @@ class account_invoice(osv.osv):
         # Search donation view and return it
         inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
         inkind_view_id = inkind_res and inkind_res[1] or False
-        inkind_ctx = {'view_id': inkind_view_id, 'type':'in_invoice', 'journal_type': 'inkind'}
+        inkind_ctx = {'view_id': inkind_view_id, 'type':'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': True}
         # Search intermission view
         intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
         intermission_view_id = intermission_res and intermission_res[1] or False
-        intermission_ctx = {'view_id': intermission_view_id, 'journal_type': 'intermission'}
+        intermission_ctx = {'view_id': intermission_view_id, 'journal_type': 'intermission', 'is_intermission': True}
         for el in [('is_debit_note', 'Debit Note', debit_note_ctx), ('is_inkind_donation', 'In-kind Donation', inkind_ctx), ('is_intermission', 'Intermission Voucher', intermission_ctx)]:
             if self.read(cr, uid, id, [el[0]]).get(el[0], False) is True:
                 pattern = re.compile('^(Invoice)')
                 m = re.match(pattern, message)
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
-            context.update(el[2])
+                context.update(el[2])
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
@@ -286,9 +286,9 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
-        if res and self.action_reconcile_imported_invoice(cr, uid, ids, context):
-            return True
-        return False
+        if res and not self.action_reconcile_imported_invoice(cr, uid, ids, context):
+            res = False
+        return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         """
