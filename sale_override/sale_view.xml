@@ -247,7 +247,9 @@
         <delete id="resource.menu_view_resource_calendar_leaves_search" model="ir.ui.menu" />
 
         <delete id="base.menu_country_state_partner" model="ir.ui.menu" />
-        <delete id="base.menu_country_partner" model="ir.ui.menu" />
+<!--        <delete id="base.menu_country_partner" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
         <delete id="base.menu_localisation" model="ir.ui.menu" />
 
         <menuitem id="menu_localisation" name="Localisation" parent="base.menu_administration" sequence="1"/>
