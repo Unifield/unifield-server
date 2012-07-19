@@ -29,7 +29,9 @@ class stock_partial_move(osv.osv_memory):
 
 
     def _hook_move_state(self):
-        return ('done', 'cancel', 'confirmed')
+        res = super(stock_partial_move, self)._hook_move_state()
+        res.append('confirmed')
+        return res
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
