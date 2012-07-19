@@ -83,6 +83,9 @@ class stock_partial_move(osv.osv_memory):
             return "product_moves_in"
         else:
             return "product_moves_out"
+
+    def _hook_move_state(self):
+        return ('done', 'cancel')
     
     def view_init(self, cr, uid, fields_list, context=None):
         res = super(stock_partial_move, self).view_init(cr, uid, fields_list, context=context)
@@ -91,7 +94,7 @@ class stock_partial_move(osv.osv_memory):
         if context is None:
             context = {}
         for move in move_obj.browse(cr, uid, context.get('active_ids', []), context=context):
-            if move.state in ('done', 'cancel'):
+            if move.state in self._hook_move_state():
                 raise osv.except_osv(_('Invalid action !'), _('Cannot deliver products which are already delivered !'))
             
         return res
