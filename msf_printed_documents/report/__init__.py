@@ -20,5 +20,6 @@
 ##############################################################################
 
 import sale_order
+import freight_manifest
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

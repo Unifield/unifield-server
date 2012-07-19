@@ -2,5 +2,8 @@
 <openerp>
     <data>
         <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Quotation / Order"/>
+
+        <report auto="False" id="sale.report_freight_manifest" model="shipment" name="msf.freight_manifest" rml="msf_printed_documents/report/freight_manifest.rml" string="Freight Manifest" />
+
     </data>
 </openerp>
