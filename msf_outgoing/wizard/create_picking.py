@@ -49,7 +49,7 @@ class create_picking(osv.osv_memory):
         if create.product_moves_returnproducts:
             for move in create.product_moves_returnproducts:
                 self.pool.get('stock.move.memory.returnproducts').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
-        return {}
+        return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
 
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
