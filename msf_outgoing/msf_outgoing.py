@@ -2172,6 +2172,7 @@ class stock_picking(osv.osv):
         # create picking object
         create_picking_obj = self.pool.get('create.picking')
         
+        new_ppl = False
         for pick in self.browse(cr, uid, ids, context=context):
             # create stock moves corresponding to partial datas
             move_ids = partial_datas[pick.id].keys()
@@ -2267,7 +2268,7 @@ class stock_picking(osv.osv):
                 'view_id': [view_id],
                 'view_type': 'form',
                 'res_model': 'stock.picking',
-                'res_id': new_ppl.id,
+                'res_id': new_ppl and new_ppl.id or False,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
