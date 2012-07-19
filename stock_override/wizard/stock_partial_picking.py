@@ -26,6 +26,9 @@ import time
 class stock_partial_picking(osv.osv_memory):
     _inherit = "stock.partial.picking"
     _description = "Partial Picking with hook"
+
+    def _hook_move_state(self):
+        return ('done', 'cancel', 'confirmed')
     
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
