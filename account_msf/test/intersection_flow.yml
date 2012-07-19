@@ -59,6 +59,7 @@
     shop_id: sale.shop
     priority: normal
     categ: medical
+    from_yml_test: False
 -
   Creating a sale.order.line record
 -

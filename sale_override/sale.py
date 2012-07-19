@@ -41,7 +41,6 @@ class sale_order(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
-
         - reset split flag to original value (field order flow) if not in default
         '''
         if context is None:
@@ -56,7 +55,6 @@ class sale_order(osv.osv):
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
-
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     #@@@override sale.sale_order._invoiced

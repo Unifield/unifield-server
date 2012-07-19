@@ -57,7 +57,7 @@ class purchase_order(osv.osv):
         Take all new invoice lines and give them analytic distribution that was linked on each purchase order line (if exists)
         """
         # Retrieve some data
-        res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+        res = super(purchase_order, self).action_invoice_create(cr, uid, ids, args) # invoice_id
         # Set analytic distribution from purchase order to invoice
         for po in self.browse(cr, uid, ids):
             # Copy analytic_distribution

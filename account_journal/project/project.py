@@ -47,6 +47,7 @@ class account_analytic_journal(osv.osv):
             ('cur_adj', 'Currency Adjustement'),
             ('hr', 'HR'),
             ('inkind', 'In-kind Donation'),
+            ('intermission', 'Intermission'),
         ]
 
     _columns = {

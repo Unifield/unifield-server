@@ -213,5 +213,17 @@
             <field name="analytic_journal_id" ref="account_journal.analytic_inkind_journal"/>
         </record>
 
+        <record id="account_journal.analytic_intermission_journal" model="account.analytic.journal">
+            <field name="name">Analytic Intermission</field>
+            <field name="code">AINT</field>
+            <field name="type">intermission</field>
+        </record>
+        <record id="account_journal.intermission_journal" model="account.journal">
+            <field name="name">Intermission</field>
+            <field name="code">INT</field>
+            <field name="type">intermission</field>
+            <field name="analytic_journal_id" ref="account_journal.analytic_intermission_journal"/>
+        </record>
+
     </data>
 </openerp>

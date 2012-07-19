@@ -488,10 +488,11 @@ stock moves which are already processed : '''
         ana_obj = self.pool.get('analytic.distribution')
         
         # Analytic distribution verification
+        # NOT MANDATORY for In-kind donation PO
         for po in self.browse(cr, uid, ids, context=context):
             for pol in po.order_line:
                 # Forget check if we come from YAML tests
-                if po.from_yml_test:
+                if po.from_yml_test or po.order_type == 'in_kind':
                     continue
                 distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
                 # Raise an error if no analytic distribution found
@@ -507,7 +508,7 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
-        
+        # MOVE code for COMMITMENT into wkf_approve_order
         return True
     
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
@@ -756,24 +757,22 @@ stock moves which are already processed : '''
         # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
-        
-        # Create commitments for each PO only if po is "from picking"
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.invoice_method in ['picking', 'order'] and not po.from_yml_test and po.order_type != 'in_kind':
-                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
-            
+
         for order in self.browse(cr, uid, ids):
+            # Create commitments for each PO only if po is "from picking"
+            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type != 'in_kind' and order.partner_id.partner_type != 'intermission':
+                self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
                 line_error = []
                 for line in order.order_line:
                     if line.price_unit == 0.00:
                         line_error.append(line.line_number)
-                    
+
                 if len(line_error) > 0:
                     errors = ' / '.join(str(x) for x in line_error)
                     raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
-            
+
             todo = []
             todo2 = []
             todo3 = []
@@ -899,15 +898,15 @@ stock moves which are already processed : '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
         inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
-        
+
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
-            if order.order_type == 'in_kind':
+            elif order.order_type == 'in_kind':
                 if not inkind_journal_ids:
                     raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
-                self.pool.get('account.invoice').write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True})
-        
+                invoice_obj.write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True})
+
         return invoice_id
     
     def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
