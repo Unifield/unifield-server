@@ -115,7 +115,7 @@ class create_picking(osv.osv_memory):
         # list for the current pick object
         result = []
         for move in pick.move_lines:
-            if move.state in ('done', 'cancel'):
+            if move.state in ('done', 'cancel', 'confirmed') or move.product_qty == 0.00:
                 continue
             move_memory = {
                 'line_number': move.line_number,

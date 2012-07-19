@@ -334,6 +334,9 @@
                                     <field name="location_dest_id"/>
                                     <field name="date" string="Actual Move Date"/>
                                     <field name="state"/>
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check"/>
@@ -602,7 +605,6 @@
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
 								<button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-ok"/>
-                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
                                 	<button name="321" string="Return Products" states="done" type="action" icon="gtk-execute"/>
@@ -761,13 +763,16 @@
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     <field name="date" string="Actual Shipped Date"/>
                                     <field name="state"/>
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check"/>
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
-                                    <button name="313" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
+                                    <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
