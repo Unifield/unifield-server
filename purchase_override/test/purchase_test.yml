@@ -415,11 +415,11 @@
 -
   !workflow {model: purchase.order, action: purchase_approve, ref: inkind6}
 -
-  We check if invoice has been created by the confirmation
+  We check if invoice has not been created by the confirmation
 -
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('is_inkind_donation', '=', True)])
-    assert invoice_ids, ('Invoice not created from In-kind donation')
+    assert not invoice_ids, ('Invoice created too early from In-kind donation')
 -
   We check if stock moves has been generated with good data
 -
