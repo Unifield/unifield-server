@@ -186,7 +186,9 @@
       memory_out.write({'expiry_date': the_date}, context=context)
 
     # validate the processing
-    wizard_obj.copy_all(cr,uid,[wizard_id], context=context)
+    c = context.copy()
+    c.update({'wizard_ids': [wizard_id], 'wizard_id': wizard_id, 'wizard_name': 'name','model': 'stock.partial.picking','step': 'step'})
+    wizard_obj.copy_all(cr,uid,[wizard_id], context=c)
     wizard_obj.do_partial(cr, uid, [wizard_id], context=context)
     # check a new production lot has been created with corresponding expiry date
     prodlot_obj = self.pool.get('stock.production.lot')
