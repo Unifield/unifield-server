@@ -6,7 +6,7 @@
   Run the import method
 -
   !python {model: product.to.list}: |
-    import1 = self.create(cr, uid, {'type': 'new', 'new_list_name': 'test import', 'new_list_type': 'list'}, context={'active_ids': [ref('product1'), ref('product4'), ref('product5')]})
+    import1 = self.create(cr, uid, {'type_list': 'new', 'new_list_name': 'test import', 'new_list_type': 'list'}, context={'active_ids': [ref('product1'), ref('product4'), ref('product5')]})
     wiz_id = self.browse(cr, uid, import1)
     assert len(wiz_id.product_ids), "No products on import wizard, see the default get method of the product.to.list object"
     self.import_products(cr, uid, import1)
@@ -20,7 +20,7 @@
   Run the import method
 -
   !python {model: product.to.list}: |
-    import2 = self.create(cr, uid, {'type': 'exist', 'list_id': ref('list1')}, context={'active_ids': [ref('product1'), ref('product4'), ref('product5')]})
+    import2 = self.create(cr, uid, {'type_list': 'exist', 'list_id': ref('list1')}, context={'active_ids': [ref('product1'), ref('product4'), ref('product5')]})
     wiz_id = self.browse(cr, uid, import2)
     list1 = self.pool.get('product.list').browse(cr, uid, ref('list1'))
     nb_lines = list1.nb_products
