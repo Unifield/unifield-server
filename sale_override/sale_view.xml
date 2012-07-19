@@ -243,7 +243,9 @@
         <delete id="base.menu_crm_config_lead" model="ir.ui.menu" />
         <delete id="base.menu_res_partner_canal-act" model="ir.ui.menu" />
         <delete id="resource.menu_resource_config" model="ir.ui.menu" />
-        <delete id="sale.menu_action_shop_form" model="ir.ui.menu" />
+<!--        <delete id="sale.menu_action_shop_form" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
         <delete id="resource.menu_view_resource_calendar_leaves_search" model="ir.ui.menu" />
 
         <delete id="base.menu_country_state_partner" model="ir.ui.menu" />
@@ -256,8 +258,15 @@
         <menuitem action="base.action_country" id="menu_country_partner" parent="menu_localisation" sequence="0"/>
         <menuitem action="base.action_country_state" id="menu_country_state_partner" parent="menu_localisation" sequence="1"/>
 
-        <delete id="base.menu_partner_title_partner" model="ir.ui.menu" />
-        <delete id="base.menu_partner_title_contact" model="ir.ui.menu" />
+<!--        <delete id="base.menu_partner_title_partner" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+
+
+<!--        <delete id="base.menu_partner_title_contact" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+
         <delete id="base.menu_action_res_bank_form" model="ir.ui.menu" />
 
 
