@@ -322,7 +322,9 @@
         <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
         <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
+<!--        <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
+    used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
         <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" />
 
     </data>
