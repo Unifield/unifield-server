@@ -228,11 +228,12 @@
 									<field name="virtual_available" invisible="1" />
 									<field name="date" string="Actual Pick Date" />
 
+									<field name="state"/>
+
 								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
 
-									<field name="state"/>
 									<field name="lot_check" />
 									<field name="exp_check" />
 									<field name="kc_check" />
@@ -529,15 +530,9 @@
 									<field name="date" string="Actual Pack Date" />
 									<field name="state"/>
 
-
-
-
 								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-
-
-
 
 									<field name="lot_check" />
 									<field name="exp_check" />
