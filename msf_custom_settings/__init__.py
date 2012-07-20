@@ -20,7 +20,6 @@
 ##############################################################################
 
 import publisher_warranty
-import ir_values
 import stock_picking
 import consumption_calculation
 import product

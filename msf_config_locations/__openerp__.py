@@ -41,6 +41,7 @@
     "update_xml" : [
         'stock_configuration_view.xml',
         'msf_location_data.xml',
+        'installer/configurable_location_view.xml',
     ],
     "demo_xml" : [
     ],

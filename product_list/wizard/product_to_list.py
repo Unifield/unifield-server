@@ -29,7 +29,7 @@ class product_to_list(osv.osv_memory):
     _description = 'Import product to list'
     
     _columns = {
-        'type': fields.selection([('exist', 'Existing list'), ('new', 'New list'), ('replace', 'Replace list')], string='Existed/New list', required=True),
+        'list_type': fields.selection([('exist', 'Existing list'), ('new', 'New list'), ('replace', 'Replace list')], string='Existed/New list', required=True),
         'list_id': fields.many2one('product.list', string='Existing list'),
         'new_list_name': fields.char(size=128, string='Name of the new list'),
         'new_list_type': fields.selection([('list', 'List'), ('sublist', 'Sublist')], string='Type of the new list'),
@@ -45,7 +45,7 @@ class product_to_list(osv.osv_memory):
         res = super(product_to_list, self).default_get(cr, uid, fields, context=context)
     
         res['product_ids'] = context.get('active_ids', [])
-        res['type'] = 'exist'
+        res['list_type'] = 'exist'
         
         return res
     
@@ -64,7 +64,7 @@ class product_to_list(osv.osv_memory):
         product_ids = []
         
         for imp in self.browse(cr, uid, ids, context=context):
-            if imp.type == 'new':
+            if imp.list_type == 'new':
                 list_id = list_obj.create(cr, uid, {'name': imp.new_list_name,
                                                     'type': imp.new_list_type},
                                                     context=context)
@@ -72,7 +72,7 @@ class product_to_list(osv.osv_memory):
                 list_id = imp.list_id.id
 
                 # Remove all old lines
-                if imp.type == 'replace':
+                if imp.list_type == 'replace':
                     for list_line in list_obj.browse(cr, uid, list_id, context=context).product_ids:
                         line_obj.unlink(cr, uid, list_line.id, context=context)
 

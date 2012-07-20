@@ -128,15 +128,19 @@ class account_invoice(osv.osv):
             context = {}
         # Prepare some values
         # Search donation view and return it
-        debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
+        try:
+            # try / except for runbot
+            debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
+            inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
+            intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+        except ValueError:
+            return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
         debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
         # Search donation view and return it
-        inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
         inkind_view_id = inkind_res and inkind_res[1] or False
         inkind_ctx = {'view_id': inkind_view_id, 'type':'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': True}
         # Search intermission view
-        intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
         intermission_view_id = intermission_res and intermission_res[1] or False
         intermission_ctx = {'view_id': intermission_view_id, 'journal_type': 'intermission', 'is_intermission': True}
         for el in [('is_debit_note', 'Debit Note', debit_note_ctx), ('is_inkind_donation', 'In-kind Donation', inkind_ctx), ('is_intermission', 'Intermission Voucher', intermission_ctx)]:

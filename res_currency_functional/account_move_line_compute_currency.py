@@ -329,6 +329,9 @@ class account_move_line_compute_currency(osv.osv):
         if vals.get('source_date', source_date):
             ctxcurr['date'] = vals.get('source_date', source_date)
         
+#        if ctxcurr.get('date', False):
+#            newvals['date'] = ctxcurr['date']
+        
         if vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)

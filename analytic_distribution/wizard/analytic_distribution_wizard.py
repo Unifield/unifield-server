@@ -857,8 +857,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Then update cost center lines
-            if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-                raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+            #if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+            #    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary

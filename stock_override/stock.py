@@ -141,9 +141,11 @@ class stock_picking(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
+        'from_wkf': fields.boolean('From wkf'),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
+                'from_wkf': lambda *a: False,
                  }
     
     def create(self, cr, uid, vals, context=None):
@@ -152,6 +154,10 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
+
+        if not context.get('active_id',False):
+            vals['from_wkf'] = True
+    
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
             vals['from_yml_test'] = True
@@ -294,12 +300,15 @@ class stock_picking(osv.osv):
         ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
             new_picking = None
-            complete, too_many, too_few = [], [], []
+            complete, too_many, too_few , not_aval = [], [], [], []
             move_product_qty = {}
             prodlot_ids = {}
             product_avail = {}
             for move in pick.move_lines:
                 if move.state in ('done', 'cancel'):
+                    continue
+                elif move.state in ('confirmed'):
+                    not_aval.append(move)
                     continue
                 partial_data = partial_datas.get('move%s'%(move.id), {})
                 #Commented in order to process the less number of stock moves from partial picking wizard
@@ -350,11 +359,17 @@ class stock_picking(osv.osv):
                         move_obj.write(cr, uid, [move.id],
                                 {'price_unit': product_price,
                                  'price_currency_id': product_currency})
-
+            for move in not_aval:
+                if not new_picking:
+                    new_picking = self.copy(cr, uid, pick.id,
+                            {
+                                'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),
+                                'move_lines' : [],
+                                'state':'draft',
+                            })
 
             for move in too_few:
                 product_qty = move_product_qty[move.id]
-
                 if not new_picking:
                     new_picking = self.copy(cr, uid, pick.id,
                             {
@@ -395,6 +410,7 @@ class stock_picking(osv.osv):
                 defaults = self._do_partial_hook(cr, uid, ids, context, move=move, partial_datas=partial_datas, defaults=defaults)
                 move_obj.write(cr, uid, [move.id], defaults)
                 # override : end
+
             for move in too_many:
                 product_qty = move_product_qty[move.id]
                 defaults = {
@@ -655,7 +671,24 @@ class stock_move(osv.osv):
         if kwargs.get('context'):
             kwargs['context'].update({'call_unlink': True})
         return {'state': 'cancel'}, kwargs.get('context', {})
-    
+
+    def _hook_write_state_stock_move(self, cr, uid, done, notdone, count):
+        if done:
+            count += len(done)
+            self.write(cr, uid, done, {'state': 'assigned'})
+        if notdone:
+            self.write(cr, uid, notdone, {'state': 'confirmed'})
+        return count
+
+    def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
+        while res:
+            r = res.pop(0)
+            move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
+            if r[2]:
+                done.append(move_id)
+            else:
+                notdone.append(move_id)
+        return done, notdone 
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
@@ -929,6 +962,20 @@ class stock_location(osv.osv):
 
         return result
 
+    def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id, ids ):
+        result.append((amount, id, True))
+        product_qty -= amount
+        if product_qty <= 0.0:
+            return result
+        else:
+            result = []
+            result.append((amount, id, True))
+            if len(ids) >= 1:
+                result.append((product_qty, ids[0], False))
+            else:
+                result.append((product_qty, id, False))
+            return result
+        return []
 
     def on_change_location_type(self, cr, uid, ids, chained_location_type, context=None):
         '''

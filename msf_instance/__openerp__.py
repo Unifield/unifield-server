@@ -29,6 +29,7 @@
     """,
     "init_xml" : [],
     "update_xml": [
+        'security/ir.model.access.csv',
         'msf_instance_view.xml',
     ],
     "additional_xml": [

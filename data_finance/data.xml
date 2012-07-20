@@ -1,5 +1,5 @@
 <openerp>
-    <data>
+    <data noupdate="1">
         <!--model: account.analytic.account, id: 65-->
         <record model="account.analytic.account" id="account_analytic_account_oc___malawi_mission_65">
             <field name="category">OC</field>

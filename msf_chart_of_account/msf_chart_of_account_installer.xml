@@ -45,7 +45,8 @@
         <!-- register configuration wizard -->
         <record id="config_wizard_config_msf_coa_amount" model="ir.actions.todo">
             <field name="action_id" ref="action_config_msf_coa_amount"/>
-            <field name="restart">onskip</field>
+            <field name="sequence" eval="13" />
+            <field name="restart">never</field>
         </record>
         
     </data>

@@ -79,7 +79,7 @@ class stock_partial_picking(osv.osv_memory):
         l = arch.split('<field name="date" invisible="1"/>')
         arch = l[0]
     
-        if context.get('step',False) not in ['create','validate','returnproducts','ppl2']:
+        if context.get('step',False) not in ['create','validate','returnproducts','ppl2','ppl1']:
             arch += button
         arch += '<field name="date" invisible="1"/>' + message + l[1]
         result['arch'] = arch
@@ -93,8 +93,7 @@ class stock_partial_picking(osv.osv_memory):
             self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
         for move in partial.product_moves_in:
             self.pool.get('stock.move.memory.in').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
-
-        return {}
+        return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''

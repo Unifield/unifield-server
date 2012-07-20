@@ -1,5 +1,5 @@
 <openerp>
-    <data>
+    <data noupdate="1">
         
         <!-- Parent Instance -->
         <record model="msf.instance" id="instance_section">
@@ -7,6 +7,10 @@
             <field name="name">Geneva</field>
             <field name="level">section</field>
             <field name="cost_center_id" ref="analytic_distribution.analytic_account_project"/>
+        </record>
+
+        <record model="res.company" id="base.main_company">
+            <field name="instance_id" ref="instance_section" />
         </record>
         
     </data>

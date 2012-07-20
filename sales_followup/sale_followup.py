@@ -59,7 +59,7 @@ class sale_order_followup(osv.osv_memory):
             res[follow.id] = None
             
             if follow.order_id:
-                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state')
+                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state_hidden_sale_order')
             
         return res
     

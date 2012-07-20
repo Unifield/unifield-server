@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-    
+
     <!-- We move the buttons below the notebook -->
         <record id="msf_cross_docking.purchase_move_buttons" model="ir.ui.view">
             <field name="name">purchase.form.view</field>
@@ -13,6 +13,8 @@
                 <data>
                     <xpath expr="/form" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page/group[2]" position="replace">
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
                     </xpath>

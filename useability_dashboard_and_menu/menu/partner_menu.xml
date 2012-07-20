@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <!-- we move the menu 'Suppliers' from the purchase menu to the partner menu' -->
+        <menuitem 
+            id="base.menu_procurement_management_supplier_name" 
+            name="Suppliers"
+            action="base.action_partner_supplier_form" 
+            parent="menu_partner" 
+            sequence="10" />
+
+        <!-- we move the menu 'Supplier Catalogue' from the purchase menu config to the partner menu' -->
+        <menuitem 
+        id="supplier_catalogue.menu_supplier_catalogue" 
+        name="Supplier catalogues"
+        parent="menu_partner" 
+        sequence="11"
+        />
+
+        <!-- we move the menu 'Customers' from the sale menu to the partner menu' -->
+        <menuitem 
+        id="base.menu_partner_form" 
+        name="Customers"
+        parent="menu_partner" 
+        sequence="12"
+        />
+        
+        <!-- In stand by => may be used later -->
+        <menuitem 
+        id="menu_other_manufacturers" 
+        name="Other/Manufacturers"
+        parent="menu_partner" 
+        sequence="13"
+        />
+    
+    </data>
+</openerp>

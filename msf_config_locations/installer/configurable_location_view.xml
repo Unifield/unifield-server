@@ -1,0 +1,79 @@
+<openerp>
+  <data>
+    <record id="view_configurable_location_setup" model="ir.ui.view">
+      <field name="name">Configurable Locations Configuration</field>
+      <field name="model">stock.location.configuration.wizard</field>
+      <field name="type">form</field>
+      <field name="inherit_id" ref="base.res_config_view_base"/>
+      <field name="arch" type="xml">
+        <data>
+          <form position="attributes">
+            <attribute name="string">Configurable Locations Configuration</attribute>
+          </form>
+          <xpath expr="//label[@string='description']" position="attributes">
+                <attribute name="string">Allows you to create optionnal locations.</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="title"]' position='attributes'>
+                    <attribute name='string'>Configure Your Configurable Locations</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    <attribute name='rowspan'>25</attribute>
+                    <attribute name='string'></attribute>
+          </xpath>
+          <group string="res_config_contents" position="replace">
+              <group colspan="5">
+              	<field name="reactivate" invisible="1" />
+				<separator colspan="4" string="Location configuration" />
+				<field name="location_usage" colspan="4" required="1" />
+				<newline />
+				<field name="location_type" attrs="{'invisible': [('location_usage', '!=', 'consumption_unit')],
+													'required': [('location_usage', '=', 'consumption_unit')]}" colspan="4" />
+				<field name="location_name" colspan="4" attrs="{'invisible': [('location_usage', '=', False)]]}" 
+				       required="0" on_change="name_on_change(location_name, location_type, location_usage)"/>
+				<newline />
+				<field name="location_id" colspan="4" invisible="1" attrs="{'invisible': ['|', ('location_usage', '=', False), ('reactivate', '=', False)]}" 
+				       domain="[('active', '=', False), ('optional_loc', '=', True), ('usage', '=', location_type), ('location_category', '=', location_usage)]" />
+				<newline />
+              </group>
+           </group>
+           
+           <xpath expr="/form/group[2]/separator" position="replace">
+           		<separator colspan="8" />
+           </xpath> 
+           
+           <xpath expr='//button[@name="action_next"]' position="after">
+           	<button name="action_stop"
+           			type="object"
+           			string="Add Location and go to next wizard"
+           			icon="gtk-go-forward" />
+           </xpath>
+           
+           <xpath expr='//button[@name="action_next"]'
+                       position='attributes'>
+                  <attribute name="name">action_add</attribute>
+                  <attribute name='string'>Add Location and create new one</attribute>
+                  <attribute name='icon'>gtk-add</attribute>
+           </xpath>
+           
+         
+        </data>
+      </field>
+    </record>
+
+    <record id="action_configurable_location_setup" model="ir.actions.act_window">
+      <field name="name">Configurable Locations Configuration</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">stock.location.configuration.wizard</field>
+      <field name="view_id" ref="view_configurable_location_setup"/>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+    <record id="configurable_location_setup_todo" model="ir.actions.todo">
+        <field name="action_id" ref="action_configurable_location_setup"/>
+        <field name="sequence">18</field>
+        <field name="restart">onskip</field>
+    </record>
+  </data>
+</openerp>
