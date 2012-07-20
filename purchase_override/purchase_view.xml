@@ -107,6 +107,9 @@
                             attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" 
                             />
                     </xpath>
+                    <xpath expr="/form//button[@string='Print']" position="replace">
+                        <button name="%(purchase_override.report_purchase_order_merged)d" string="Print" states="approved" type="action" icon="gtk-print" />
+                    </xpath>
                 </data>
             </field>
         </record>

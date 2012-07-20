@@ -99,25 +99,25 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>From :</u></para>
+                    <para style="TextInformation"><u>From</u> :</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>To (Supplier) :</u></para>
+                    <para style="TextInformation"><u>To (Supplier)</u> :</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Ship to[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] :</u></para>
+                    <para style="TextInformation"><u>Ship to </u>[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] :</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Invoice to :</u></para>
+                    <para style="TextInformation"><u>Invoice to</u> :</para>
                 </td>
             </tr>
             <tr>
