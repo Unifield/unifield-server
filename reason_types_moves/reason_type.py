@@ -166,6 +166,72 @@ stock_inventory_line()
 class stock_inventory(osv.osv):
     _name = 'stock.inventory'
     _inherit = 'stock.inventory'
+    
+    _columns = {
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+    }
+    
+    def onChangeSearchNomenclature(self, cr, uid, ids, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        line_obj = self.pool.get('stock.inventory.line')
+        product_obj = self.pool.get('product.product')
+        
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+        loc_stock_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
+        
+        if context is None:
+            context = {}
+            
+        for inv in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+
+            nom = False
+            field = False
+            # Get all products for the defined nomenclature
+            if inv.nomen_manda_3:
+                nom = inv.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif inv.nomen_manda_2:
+                nom = inv.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif inv.nomen_manda_1:
+                nom = inv.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif inv.nomen_manda_0:
+                nom = inv.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if inv.sublist_id:
+                for line in inv.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+                    
+            for product in product_obj.browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already in the list
+                if not line_obj.search(cr, uid, [('inventory_id', '=', inv.id), 
+                                                 ('product_id', '=', product.id),
+                                                 ('uom_id', '=', product.uom_id.id)], context=context):
+                    line_obj.create(cr, uid, {'inventory_id': inv.id,
+                                              'location_id': loc_stock_id,
+                                              'product_id': product.id, 
+                                              'safety_stock': 0.00,
+                                              'uom_id': product.uom_id.id}, context=context)
+        
+        return True
+
+    def get_nomen(self, cr, uid, ids, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, ids, field, context={'withnum': 1})
 
     # @@@override@ stock.stock_inventory._inventory_line_hook()
     def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):

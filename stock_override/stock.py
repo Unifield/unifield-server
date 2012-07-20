@@ -1002,6 +1002,31 @@ class stock_location_chained_options(osv.osv):
 
 stock_location_chained_options()
 
+
+class initial_stock_inventory(osv.osv):
+    _name = 'initial.stock.inventory'
+    _inherit = 'stock.inventory'
+    
+initial_stock_inventory()
+
+
+class initial_stock_inventory_line(osv.osv):
+    _name = 'initial.stock.inventory.line'
+    _inherit = 'stock.inventory.line'
+    
+    _columns = {
+        'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory'),
+        'average_cost': fields.float(digits=(16,2), string='Initial average cost', required=True),
+        'currency_id': fields.many2one('res.currency', string='Functional currency'),
+    }
+    
+    _defaults = {
+        'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+    }
+    
+initial_stock_inventory_line()
+
+
 class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
