@@ -89,9 +89,12 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
         # Default method
-        if 'analytic_distribution_id' not in default:
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
-        return super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        new_data = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
     def action_ship_proc_create(self, cr, uid, ids, context=None):
         """
