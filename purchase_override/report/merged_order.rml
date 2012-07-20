@@ -111,7 +111,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Ship to[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] :</u></para>
+                    <para style="TextInformation"><u>Ship to </u>[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] <u>:</u></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
