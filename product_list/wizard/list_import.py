@@ -45,8 +45,8 @@ class product_list_import(osv.osv_memory):
         'message': lambda *a : """
         The file should be in CSV format (with ';' character as delimiter).
         The columns should be in this order :
-          * Product code
-          * Product name
+          * Product Code
+          * Product Description
           * Comment
         """,
         'type': lambda *a:  'exist',

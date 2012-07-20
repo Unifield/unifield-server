@@ -184,7 +184,7 @@ class product_asset(osv.osv):
                 'product_id': fields.many2one('product.product', 'Product', domain="[('subtype','=','asset')]", required=True, ondelete='cascade'),
                 # msf codification
                 'prod_int_code': fields.char('Product Code', size=128, readonly=True), # from product
-                'prod_int_name': fields.char('Product Name', size=128, readonly=True), # from product
+                'prod_int_name': fields.char('Product Description', size=128, readonly=True), # from product
                 'nomenclature_description': fields.char('Product Nomenclature', size=128, readonly=True), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
                 'hq_ref': fields.char('HQ Reference', size=128),
                 'local_ref': fields.char('Local Reference', size=128),

@@ -115,7 +115,7 @@ class sale_order(osv.osv):
             row_len = len(row)
             if row_len != 6:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
-Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment.
+Product Code, Product Description, Quantity, UoM, Currency, Comment.
 That means Not price, Neither Delivery requested date. """))
             
             # for each cell we check the value
@@ -123,8 +123,8 @@ That means Not price, Neither Delivery requested date. """))
             if not product_code:
                 default_code = False
                 to_correct_ok = True
-                error_list.append('No Product Reference (Code).')
-                comment = 'Product Reference (Code) to be defined'
+                error_list.append('No Product Code.')
+                comment = 'Product Code to be defined'
             else:
                 try:
                     product_code = product_code.strip()
@@ -137,7 +137,7 @@ That means Not price, Neither Delivery requested date. """))
                         default_code = code_ids[0]
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
-                     comment = 'Product Reference (Code) to be defined'
+                     comment = 'Product Code to be defined'
                      default_code = False
                      product_code = False
                      to_correct_ok = True
@@ -146,8 +146,8 @@ That means Not price, Neither Delivery requested date. """))
             if not p_name:
                 product_id = False
                 to_correct_ok = True
-                error_list.append('No Product Name')
-                comment = 'Product Name to be defined'
+                error_list.append('No Product Description')
+                comment = 'Product Description to be defined'
             else:
                 try:
                     product_name = p_name.strip()
@@ -164,9 +164,9 @@ That means Not price, Neither Delivery requested date. """))
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 except Exception:
-                     error_list.append('The Product Name has to be a string.')
+                     error_list.append('The Product Description has to be a string.')
                      product_id = False
-                     comment = 'Product Name to be defined'
+                     comment = 'Product Description to be defined'
                      to_correct_ok = True
                 
             product_qty = row.cells[2].data
@@ -305,15 +305,15 @@ That means Not price, Neither Delivery requested date. """))
             row_len = len(row)
             if row_len != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
+Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             # for each cell we check the value
             product_code = row.cells[0].data
             if not product_code:
                 default_code = False
                 to_correct_ok = True
-                error_list.append('No Product Reference (Code).')
-                comment = 'Product Reference (Code) to be defined'
+                error_list.append('No Product Code.')
+                comment = 'Product Code to be defined'
             else:
                 try:
                     product_code = product_code.strip()
@@ -326,7 +326,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         default_code = code_ids[0]
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
-                     comment = 'Product Reference (Code) to be defined'
+                     comment = 'Product Code to be defined'
                      default_code = False
                      to_correct_ok = True
             
@@ -334,8 +334,8 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             if not p_name:
                 product_id = False
                 to_correct_ok = True
-                error_list.append('No Product Name')
-                comment = 'Product Name to be defined'
+                error_list.append('No Product Description')
+                comment = 'Product Description to be defined'
             else:
                 try:
                     product_name = p_name.strip()
@@ -352,8 +352,8 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 except Exception:
-                     error_list.append('The Product Name has to be a string.')
-                     comment = 'Product Name to be defined'
+                     error_list.append('The Product Description has to be a string.')
+                     comment = 'Product Description to be defined'
                      product_id = False
                      to_correct_ok = True
                 
