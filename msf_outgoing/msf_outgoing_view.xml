@@ -695,7 +695,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="PT and PPL">
+				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Shipment preparation">
 					<group col="6" colspan="4">
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
@@ -772,7 +772,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="PT and PPL">
+				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Shipment preparation">
 					<field name="name"/>
 					<field name="partner_id2" />
 					<field name="sale_id" invisible="True" />
@@ -790,7 +790,7 @@
 			</field>
 		</record>
 		<record id="action_pt_ppl" model="ir.actions.act_window">
-			<field name="name">PT and PPL</field>
+			<field name="name">Shipment preparation</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field> 
