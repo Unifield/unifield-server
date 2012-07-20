@@ -249,6 +249,14 @@ class sale_order_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, so_distrib_id, a)
         return res
 
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
+            res[sol['id']] = "%s%s"%(sol['analytic_distribution_state'].capitalize(), sol['have_analytic_distribution_from_header'] and " (from header)" or "")
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
@@ -257,6 +265,7 @@ class sale_order_line(osv.osv):
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
     }
 
     _defaults = {
