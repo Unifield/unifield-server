@@ -48,11 +48,12 @@ class version(osv.osv):
     def _compare_with_last_rev(self, cr, uid, entity, rev_sum, context=None):
         # Search the client's revision when exists
         if rev_sum:
-            rev_client = self.search(cr, uid, [('sum', '=', rev_sum), ('state', '=', 'confirmed')], context=context)
-            
+            rev_client = self.search(cr, uid, [('sum', '=', rev_sum), ('state', '=', 'confirmed')], limit=1, context=context)
             if not rev_client:
                 return {'status' : 'failed',
                         'message' : 'Cannot find revision %s on the server' % (rev_sum)}
+            rev_client = rev_client[0]
+
         # Otherwise, get the whole
         else:
             rev_client = None

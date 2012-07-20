@@ -50,13 +50,12 @@ class version(osv.osv):
 
     def _get_last_revision(self, cr, uid, context=None):
         rev_ids = self.search(cr, uid, [('state','=','installed')], limit=1, context=context)
-        return rev_ids[0] if rev_ids else False
+        return self.browse(cr, uid, rev_ids[0]) if rev_ids else False
 
     def _get_next_revisions(self, cr, uid, context=None):
         current = self._get_last_revision(cr, uid, context=context)
         if current:
-            active = self.browse(cr, uid, current)
-            revisions = self.search(cr, uid, [('date','>',active.date),('state','=','not-installed')], order='date asc')
+            revisions = self.search(cr, uid, [('date','>',current.date),('state','=','not-installed')], order='date asc')
         else:
             revisions = self.search(cr, uid, [('state','=','not-installed')], order='date asc')
         return revisions
@@ -80,7 +79,7 @@ class entity(osv.osv):
             return (False, "Need restart")
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision)
+        res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision.sum if current_revision else False)
         revisions._update(cr, uid, res.get('revisions', []), context=context)
         return ((res['status'] == 'ok'), res['message'])
 

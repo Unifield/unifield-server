@@ -461,6 +461,12 @@ class entity(osv.osv, Thread):
         
     def sync(self, cr, uid, context=None):
         context = context or {}
+
+        # Prevent synchronization to be started multiple times
+        me = self.get_entity(cr, uid, context)
+        if me.is_syncing:
+            return False
+
         # Init log dict for sync.monitor
         log = {
             'error' : '',
@@ -471,14 +477,15 @@ class entity(osv.osv, Thread):
             'msg_push' : 'null',
         }
 
-        me = self.get_entity(cr, uid, context)
-        if me.is_syncing:
-            return False
-
         if hasattr(self, 'upgrade'):
             up_to_date = self.upgrade(cr, uid, context=context)
             if not up_to_date[0]:
-                print up_to_date[1]
+                log.update({
+                    'end' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'error' : "Revision Update failed: " + up_to_date[1],
+                    'status' : 'failed',
+                })
+                self.pool.get('sync.monitor').create(cr, uid, log)
                 return False
         
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
