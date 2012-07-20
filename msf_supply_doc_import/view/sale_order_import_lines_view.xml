@@ -17,7 +17,7 @@
                     <attribute name="colors">red:to_correct_ok == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="before" >
-                <group name="import" string=" Import Lines " colspan="4">
+                <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                     <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
                     <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment" align="0.0"/>
                     <field name="file_to_import" colspan="2" />

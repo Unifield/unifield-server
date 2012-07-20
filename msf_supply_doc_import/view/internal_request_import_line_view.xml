@@ -168,7 +168,7 @@
                     <field name="line_number" readonly="1"/>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']" position="before" >
-                <group name="import" string=" Import Lines " colspan="4">
+                <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                     <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
                     <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Currency*, Comment" align="0.0"/>
                     <field name="file_to_import" colspan="2" />

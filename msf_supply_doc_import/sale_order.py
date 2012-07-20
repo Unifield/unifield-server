@@ -556,24 +556,25 @@ class sale_order_line(osv.osv):
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
         message = ''
         
-        if vals.get('product_uom'):
-            if vals.get('product_uom') == tbd_uom:
-                message += 'You have to define a valid UOM, i.e. not "To be define".'
-        if vals.get('nomen_manda_0'):
-            if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
-                message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        if vals.get('nomen_manda_1'):
-            if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
-                message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        if vals.get('nomen_manda_2'):
-            if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
-                message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        # the 3rd level is not mandatory
-        if message:
-            raise osv.except_osv(_('Warning !'), _(message))
-        else:
-            vals['to_correct_ok'] = False
-            vals['text_error'] = False
+        if not context.get('button'):
+            if vals.get('product_uom'):
+                if vals.get('product_uom') == tbd_uom:
+                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if vals.get('nomen_manda_0'):
+                if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                    message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if vals.get('nomen_manda_1'):
+                if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                    message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if vals.get('nomen_manda_2'):
+                if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                    message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            # the 3rd level is not mandatory
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+            else:
+                vals['to_correct_ok'] = False
+                vals['text_error'] = False
         
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
