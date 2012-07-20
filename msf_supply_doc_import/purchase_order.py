@@ -234,12 +234,15 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
             
             check_date = row.cells[5].data
             if check_date:
+                check_date = str(check_date)
+                if len(check_date.split()) > 1:
+                    check_date = check_date.split()[0]
                 try:
-                    datetime.strptime(str(check_date), '%d/%b/%Y')
+                    datetime.strptime(check_date, '%d/%b/%Y')
                     date_planned = check_date
                 except ValueError:
                     try:
-                        datetime.strptime(str(check_date), '%d/%m/%Y')
+                        datetime.strptime(check_date, '%d/%m/%Y')
                         date_planned = check_date
                     except ValueError:
                         error_list.append('The date format should be "DD/MM/YYYY" (for instance 21/12/2012 or 20/Jul/2012) we took the one from the parent.')
