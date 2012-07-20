@@ -109,7 +109,7 @@
                     </xpath>
                     <xpath expr="/form//button[@string='Print']" position="replace">
                         <button name="%(purchase_override.report_purchase_order_merged)d" string="Print" states="approved" type="action" icon="gtk-print" />
-                    </xpah>
+                    </xpath>
                 </data>
             </field>
         </record>
