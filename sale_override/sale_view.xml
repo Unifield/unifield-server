@@ -23,7 +23,9 @@
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='History']" position="replace">
                     </xpath>
 
-
+					<xpath expr="/form/group/field[@name='client_order_ref']" position="attributes">
+                        <attribute name="attrs">{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}</attribute>
+                    </xpath>
 
                     <xpath expr="/form//field[@name='name']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
@@ -114,6 +116,14 @@
                         <field name="priority" />
                         <field name="categ" />
                     </xpath>
+                    <xpath expr="/tree/field[@name='amount_untaxed']" position="replace" />
+                    <xpath expr="/tree/field[@name='amount_total']" position="after">
+                        <field name="currency_id" />
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="replace">
+                        <field name="state" invisible="True" />
+                        <field name="state_hidden_sale_order" />
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -129,14 +139,15 @@
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                     </xpath>
-                    
+
                     <xpath expr="/search//filter[@string='To Invoice']" position="after">
-                    	<separator orientation="vertical" />
-                    	<filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
+                        <separator orientation="vertical" />
+                        <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[]" context="{'active_test': False}" separator="1" />
                     </xpath>
-            <xpath expr="/search/field[@name='name']" position="after">
-            <field name="client_order_ref" />
-            </xpath>
+
+                    <xpath expr="/search/field[@name='name']" position="after">
+                        <field name="client_order_ref" />
+                    </xpath>
                     <xpath expr="/search/field[@name='user_id']" position="after">
                         <newline />
                         <group string="Type" expand="0">
@@ -191,8 +202,8 @@
         <!-- Deliver Products -->
         <menuitem id="menu_sales_deliver_products"
                   name="Deliver Products"
-                  sequence="5"
-                  parent="base.menu_base_partner" />
+                  sequence="3"
+                  parent="stock.menu_stock_root" />
 
         <menuitem action="stock.action_out_picking_move" id="menu_sale_action_picking_tree_out_move"
                   parent="menu_sales_deliver_products" sequence="10"/>
@@ -203,6 +214,62 @@
                   groups="base.group_extended"
                   parent="base.menu_product"
                   sequence="5" />-->
+
+
+        <record id="view_compute_schedulers_wizard_replace" model="ir.ui.view">
+            <field name="name">Compute Schedulers</field>
+            <field name="model">procurement.order.compute.all</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="procurement.view_compute_schedulers_wizard" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="replace">
+                    <form>
+                    <label string="This wizard allows you to run all procurement, production and/or purchase orders that should be processed based on their configuration. By default, the scheduler is launched automatically every night by OpenERP. You can use this menu to force it to be launched now. Note that it runs in the background, you may have to wait for a few minutes until it has finished computing." colspan="4"/>
+				    <separator colspan="4"/>
+				    <group col="2" colspan="4">
+                		<button icon='gtk-cancel' special="cancel"
+                			string="Cancel" />
+                		<button name="procure_calculation" string="Compute POs Creation"
+                    			colspan="1" type="object" icon="gtk-ok" />
+                    	</group>
+                    </form>
+                    </xpath>
+
+                </data>
+            </field>
+        </record>
+
+        <delete id="base.menu_crm_config_lead" model="ir.ui.menu" />
+        <delete id="base.menu_res_partner_canal-act" model="ir.ui.menu" />
+        <delete id="resource.menu_resource_config" model="ir.ui.menu" />
+<!--        <delete id="sale.menu_action_shop_form" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+        <delete id="resource.menu_view_resource_calendar_leaves_search" model="ir.ui.menu" />
+
+        <delete id="base.menu_country_state_partner" model="ir.ui.menu" />
+<!--        <delete id="base.menu_country_partner" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+        <delete id="base.menu_localisation" model="ir.ui.menu" />
+
+        <menuitem id="menu_localisation" name="Localisation" parent="base.menu_administration" sequence="1"/>
+        <menuitem action="base.action_country" id="menu_country_partner" parent="menu_localisation" sequence="0"/>
+        <menuitem action="base.action_country_state" id="menu_country_state_partner" parent="menu_localisation" sequence="1"/>
+
+<!--        <delete id="base.menu_partner_title_partner" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+
+
+<!--        <delete id="base.menu_partner_title_contact" model="ir.ui.menu" />
+            <delete id="base.menu_action_res_bank_form" model="ir.ui.menu" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+
+
+
 
     </data>
 </openerp>

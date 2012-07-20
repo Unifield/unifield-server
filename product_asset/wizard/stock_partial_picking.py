@@ -45,7 +45,7 @@ class stock_partial_picking(osv.osv_memory):
         '''
         # call to super
         partial_datas = super(stock_partial_picking, self).do_partial_hook(cr, uid, context, *args, **kwargs)
-        assert partial_datas, 'partial_datas missing'
+        assert partial_datas, 'partial_datas missing product_asset > wizard > stock_partial_picking'
         
         move = kwargs.get('move')
         assert move, 'move is missing'

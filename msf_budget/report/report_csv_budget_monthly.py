@@ -50,10 +50,19 @@ class report_csv_budget_monthly(report_sxw.report_sxw):
         budget_amounts = pool.get('msf.budget.line')._get_budget_amounts(cr, uid, budget_line_ids, context=context)
         
         for budget_line in budget.budget_line_ids:
-            budget_amount = budget_amounts[budget_line.account_id.id]
+            budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
+            budget_amount = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
             total = locale.format("%d", sum(budget_amount), grouping=True)
             formatted_budget_values = [locale.format("%d", x, grouping=True) for x in budget_amount]
-            csv_budget_line = [budget_line.account_id.code + " " + budget_line.account_id.name]
+            # Format name
+            line_name = budget_line.account_id.code
+            if budget_line.destination_id:
+                line_name += " "
+                line_name += budget_line.destination_id.code
+            line_name += " "
+            line_name += budget_line.account_id.name
+            
+            csv_budget_line = [line_name]
             csv_budget_line += formatted_budget_values
             csv_budget_line.append(total)
             # append to result

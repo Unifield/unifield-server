@@ -23,6 +23,7 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 
+
 class stock_move(osv.osv):
     _name= 'stock.move'
     _inherit = 'stock.move'
@@ -180,6 +181,7 @@ class stock_picking(osv.osv):
         else:
             raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a donation certificate'))
 
+
     def action_process(self, cr, uid, ids, context=None):
         '''
         Override the method to display a message to attach
@@ -191,10 +193,27 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context.get('out',False):
+            return {'type': 'ir.actions.act_window_close'}
+
         certif = False
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type == 'in':
-                for move in pick.move_lines:
+            if pick.type in ['in','internal','out']:
+                if not context.get('yesorno',False) :
+                    for move in pick.move_lines:
+                        if move.state == 'confirmed':
+                            not_avail_id = self.pool.get("stock.picking.not.available").create(cr, uid, {'move_id': move.id, 'picking_id': pick.id, }, )
+                            return {'name':_("Warning"),
+                                    'view_mode': 'form',
+                                    'view_id': False,
+                                    'view_type': 'form',
+                                    'res_model': 'stock.picking.not.available',
+                                    'res_id': not_avail_id,
+                                    'type': 'ir.actions.act_window',
+                                    'nodestroy': True,
+                                    'target': 'new',
+                                    'domain': '[]',
+                                    'context': dict(context, active_ids=ids)}
                     if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                         certif = True
                         break

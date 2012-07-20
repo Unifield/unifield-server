@@ -69,21 +69,23 @@ class account_commitment_line(osv.osv):
                     if aline.analytic_id:
                         # Compute amount regarding pol subtotal and cost_center_line percentage
                         amount = (pol.price_subtotal * aline.percentage) / 100
-                        cc_lines[aline.analytic_id.id].append(amount)
+                        cc_lines[(aline.analytic_id.id, aline.destination_id and aline.destination_id.id or False)].append(amount)
             # Browse result and create corresponding analytic lines
             if cc_lines:
                 # create distribution an link it to commitment line
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 self.write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id}, context=context)
-                for analytic_id in cc_lines:
+                for el in cc_lines:
+                    analytic_id = el[0] or False
                     vals = {
                             'distribution_id': distrib_id,
                             'analytic_id': analytic_id,
                             'currency_id': line.commit_id.currency_id.id,
+                            'destination_id': el[1] or False,
                     }
                     total_amount = 0.0
                     # fetch total amount
-                    for amount in cc_lines[analytic_id]:
+                    for amount in cc_lines[el]:
                         total_amount += amount
                     if not total_amount:
                         continue

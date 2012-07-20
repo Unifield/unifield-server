@@ -74,7 +74,8 @@ class account_commitment(osv.osv):
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
         'from_yml_test': lambda *a: False,
-        'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], limit=1, context=c)[0]
+        'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
+                                                                                                    ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
 
     def create(self, cr, uid, vals, context=None):

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    <!-- PURCHASE ORDER and REQUEST FOR QUOTATION are the same object-->
+        <report
+            id="report_purchase_order_xls"
+            string="Purchase Order Excel Export"
+            model="purchase.order"
+            name="purchase.order_xls"
+            file="msf_supply_doc_export/report/report_purchase_order_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+         
+        <report
+            id="report_request_for_quotation_xls"
+            string="Request For Quotation Excel Export"
+            model="purchase.order"
+            name="request.for.quotation_xls"
+            file="msf_supply_doc_export/report/report_request_for_quotation_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+    <!-- FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object-->
+        <report
+            id="report_sale_order_xls"
+            string="Sale Order Excel Export"
+            model="sale.order"
+            name="sale.order_xls"
+            file="msf_supply_doc_export/report/report_sale_order_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+         
+        <report
+            id="report_internal_request_xls"
+            string="Internal Request Excel Export"
+            model="sale.order"
+            name="internal.request_xls"
+            file="msf_supply_doc_export/report/report_internal_request_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+    <!-- TENDER -->
+        <report
+            id="report_tender_xls"
+            string="Tender Excel Export"
+            model="tender"
+            name="tender_xls"
+            file="msf_supply_doc_export/report/report_tender_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+    </data>
+</openerp>

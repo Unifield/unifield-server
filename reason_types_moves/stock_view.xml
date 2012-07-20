@@ -85,7 +85,7 @@
 				</data>
             </field>
         </record>
-        
+       
         <record id="inherit_view_move_tree_reception_picking" model="ir.ui.view">
             <field name="name">inherit.view.move.tree.reception.picking</field>
             <field name="model">stock.move</field>
@@ -96,6 +96,14 @@
                 	<xpath expr="/tree/field[@name='picking_id']" position="after">
                         <field name="reason_type_id" />
                     </xpath>
+
+                	<xpath expr="/tree" position="attributes">
+                        <attribute name="hide_new_button">True</attribute>
+                        <attribute name="hide_delete_button">True</attribute>
+                        <attribute name="editable">top</attribute>
+                        <attribute name="noteditable">True</attribute>
+                    </xpath>
+
                 </data>
             </field>
         </record>
@@ -250,7 +258,6 @@
         						   'picking_type': 'incoming_shipment',
         						   "search_default_available":1}</field>
         </record>
-
 	</data>
 </openerp>
 

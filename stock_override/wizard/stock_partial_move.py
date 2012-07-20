@@ -26,7 +26,12 @@ import time
 class stock_partial_move(osv.osv_memory):
     _inherit = "stock.partial.move"
     _description = "Partial Move with hook"
-    
+
+
+    def _hook_move_state(self):
+        res = super(stock_partial_move, self)._hook_move_state()
+        res.append('confirmed')
+        return res
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''

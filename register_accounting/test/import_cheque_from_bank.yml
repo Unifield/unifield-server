@@ -92,12 +92,14 @@
           new_date = time.strftime('%Y-%m-23')
           self.write(cr, uid, [st_line_id], {'date': new_date})
           for move_line_id in line_ids:
-              assert new_date == aml_obj.browse(cr, uid, move_line_id).date, "New date have not been correctly"
+              assert new_date == aml_obj.browse(cr, uid, move_line_id).date, "New date have not been correctly (%s :: %s)" % (new_date, aml_obj.browse(cr, uid, move_line_id).date)
 -
   In order to verify hard posting, we hard post all register lines
 -
   !python {model: account.bank.statement.line}: |
       st_line_ids = self.search(cr, uid, [('statement_id', '=', ref("bank_register_0"))])
+      # IF THIS HARD POST TEST FAILED with an error on analytic distribution, 
+      # have a look to res_currency_functional module in account_move_line_compute_currency.py file. Perhaps something is missing :-)
       self.posting(cr, uid, st_line_ids, 'hard')
       for st_line in self.browse(cr, uid, st_line_ids):
           assert st_line.state == 'hard', "Line '%s' is not hard posted !" % (st_line_id)

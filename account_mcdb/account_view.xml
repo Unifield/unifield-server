@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100">
-                    <field name="instance"/>
+                    <field name="instance_id"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
@@ -51,7 +51,7 @@
                 <tree string="Analytic Line" min_rows="100">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
-                    <field name="company_id" string="Proprietary Instance"/>
+                    <field name="instance_id"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
@@ -130,7 +130,7 @@
                         <separator orientation="vertical"/>
                         <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance'}"/>
+                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                     </group>
                     <newline/>
                 </search>
@@ -159,7 +159,7 @@
                 </xpath>
                 <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='after'>
                     <separator orientation="vertical"/>
-                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'company_id'}"/>
+                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                 </xpath>
             </field>
         </record>

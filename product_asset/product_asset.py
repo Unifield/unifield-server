@@ -355,8 +355,10 @@ class product_template(osv.osv):
     _inherit = "product.template"
     _description = "Product Template"
     
+    PRODUCT_SUBTYPE = [('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')]
+    
     _columns = {
-        'subtype': fields.selection([('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')], 'Product SubType', required=True, help="Will change the way procurements are processed."),
+        'subtype': fields.selection(PRODUCT_SUBTYPE, 'Product SubType', required=True, help="Will change the way procurements are processed."),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type'),
     }
 
@@ -435,9 +437,9 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.subtype == 'asset':
-                    if not move.asset_id:
+                    if not move.asset_id and move.product_qty:
                         return False
         return True
     

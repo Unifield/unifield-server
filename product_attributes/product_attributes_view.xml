@@ -133,7 +133,7 @@
                                 <field name="closed_article" colspan="2"/>
                                 <separator string="Import restrictions" colspan="4"/>
                                 <field name="restricted_country" colspan="2"/>
-                                <field name="country_restriction" colspan="2" attrs="{'readonly':[('restricted_country','=',False)]}"/>
+                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
                         </page>
                         <page string="Miscellaneous">
@@ -152,7 +152,6 @@
                                 <field name="criticism" colspan="2"/>
                                 <field name="abc_class" colspan="2"/>
                             </group>
-
                             <separator string="Code remarks section" colspan="4"/>
                             <group colspan="2" col="2">
                                 <field name="section_code_ids" colspan="2" nolabel="1">
@@ -491,8 +490,8 @@
         <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
         <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
 
-        <delete id="product.menu_products_category" model="ir.ui.menu" />
-        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" />
+<!--        <delete id="product.menu_products_category" model="ir.ui.menu" /> -->
+<!--        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" /> -->
 
         <record id="view_act_product_stock_move_open" model="ir.ui.view">
             <field name="name">Stock Moves</field>

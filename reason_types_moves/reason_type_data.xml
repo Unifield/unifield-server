@@ -98,6 +98,16 @@
             <field name="name">Kit</field>
             <field name="code">14</field>
         </record>
+        
+        <record id="reason_type_goods_return" model="stock.reason.type">
+            <field name="name">Goods Return</field>
+            <field name="code">15</field>
+        </record>
+        
+        <record id="reason_type_goods_replacement" model="stock.reason.type">
+            <field name="name">Goods Replacement</field>
+            <field name="code">16</field>
+        </record>
     
     </data>
 </openerp>

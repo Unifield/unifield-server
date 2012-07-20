@@ -372,19 +372,16 @@ class product_pricelist(osv.osv):
     
 product_pricelist()
 
-
 class res_currency(osv.osv):
     _name = 'res.currency'
     _inherit = 'res.currency'
-    
+
     def _get_in_search(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        
         for id in ids:
             res[id] = True
-        
         return res
-    
+
     def _search_in_search(self, cr, uid, obj, name, args, context=None):
         '''
         Returns currency according to partner type
@@ -392,7 +389,7 @@ class res_currency(osv.osv):
         user_obj = self.pool.get('res.users')
         price_obj = self.pool.get('product.pricelist')
         dom = []
-        
+
         for arg in args:
             if arg[0] == 'is_po_functional':
                 if arg[1] != '=':
@@ -401,11 +398,9 @@ class res_currency(osv.osv):
                     func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
                     po_currency_id = price_obj.browse(cr, uid, arg[2]).currency_id.id
                     dom.append(('id', 'in', [func_currency_id, po_currency_id]))
-                        
-        return dom  
-    
+        return dom
+
     _columns = {
-        # @JF : Also defined on UF-1071 (Configuration wizard)
         'is_section_currency': fields.boolean(string='Functional currency', 
                                         help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
         'is_esc_currency': fields.boolean(string='ESC currency', 
@@ -413,7 +408,7 @@ class res_currency(osv.osv):
         'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
                                             type='boolean', string='transport PO currencies'),
     }
-    
+
     def write(self, cr, uid, ids, values, context=None):
         '''
         Disallow the uncheck of section/esc checkbox if a section/esc partner use this currency
@@ -421,43 +416,47 @@ class res_currency(osv.osv):
         property_obj = self.pool.get('ir.property')
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
-        
+
         # Check if Inter-section partners used one of these currencies
         if 'is_section_currency' in values and not values['is_section_currency']:
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
             partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'section')], context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purcahse'),
-                                                             ('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference)], context=context)
+            property_ids = []
+            if value_reference and res_reference:
+                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
+                                                             ('value_reference', 'in', value_reference),
+                                                             '|', ('name', '=', 'property_product_pricelist'),
+                                                                  ('name', '=', 'property_product_pricelist_purchase'),], context=context)
             if property_ids:
                 properties = property_obj.browse(cr, uid, property_ids, context=context)
                 partner_list = ' / '.join(x.res_id.name for x in properties)
                 raise osv.except_osv(_('Error !'), 
                                      _('You cannot uncheck the Section checkbox because this currency is used on these \'Inter-section\' partners : \
                                       %s' % partner_list))
-        
+
         # Check if ESC partners used one of these currencies
         if 'is_esc_currency' in values and not values['is_esc_currency']:
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)
             partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc')], context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purcahse'),
-                                                             ('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference)], context=context)
+            property_ids = []
+            if value_reference and res_reference:
+                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
+                                                             ('value_reference', 'in', value_reference),
+                                                             '|', ('name', '=', 'property_product_pricelist'),
+                                                                  ('name', '=', 'property_product_pricelist_purchase'),], context=context)
             if property_ids:
                 properties = property_obj.browse(cr, uid, property_ids, context=context)
                 partner_list = ' / '.join(x.res_id.name for x in properties)
                 raise osv.except_osv(_('Error !'), 
                                      _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
                                       %s' % partner_list))
-            
+
         return super(res_currency, self).write(cr, uid, ids, values, context=context)
-    
+
 res_currency()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
