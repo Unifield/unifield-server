@@ -295,7 +295,6 @@
         
         <delete model="ir.actions.report.xml" id="stock.report_move_labels" />
         <delete model="ir.values" id="stock.ir_open_partial_move_wizard" />
-        <delete model="ir.actions.server" id="stock.action_partial_move_server" />
 
     </data>
 </openerp>
