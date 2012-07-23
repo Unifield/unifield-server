@@ -695,10 +695,13 @@ stock moves which are already processed : '''
             # with product_id (if no product id, no procurement, no po, so should not be taken into account)
             # in case of grouped po, multiple Fo depend on this po, all Po of these Fo need to be completed
             # and all Fo will be confirmed together. Because IN of grouped Po need corresponding OUT document of all Fo
+            # internal request are automatically 'confirmed'
+            # not take done into account, because IR could be done as they are confirmed before the Po are all done
+            # see video in uf-1050 for detail
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
-                                                                 ('state', '!=', 'confirmed')], context=context)
+                                                                 ('state', 'not in', ['confirmed', 'done'])], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:
                 return False
