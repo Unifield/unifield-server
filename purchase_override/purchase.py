@@ -144,6 +144,7 @@ class purchase_order(osv.osv):
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=64),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
     }
     
     _defaults = {

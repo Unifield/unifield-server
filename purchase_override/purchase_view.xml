@@ -328,5 +328,15 @@
 -->
         <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" />
 
+        <!-- FIX bug on Purchase orders action on product -->
+        <act_window
+            context="{}"
+            domain="[('product_id', 'in', active_ids)]"
+            id="purchase.action_purchase_line_product_tree"
+            name="Purchases"
+            res_model="purchase.order"
+            src_model="product.product"
+            groups=""/>
+
     </data>
 </openerp>
