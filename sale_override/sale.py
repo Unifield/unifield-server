@@ -194,6 +194,7 @@ class sale_order(osv.osv):
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
     }
