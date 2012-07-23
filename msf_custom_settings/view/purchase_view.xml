@@ -18,7 +18,34 @@
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
                     </xpath>
-                    <xpath expr="/form/notebook" position="after" >
+                    <xpath expr="/form/notebook" position="after">
+                        <group col="11" colspan="4">
+                            <group colspan="12" col="19" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
+                                <field name="display_intl_transport_ok" invisible="1"/>
+                                <field name="intl_supplier_ok" invisible="1"/>
+                                <field name="transport_mode"
+                                    attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'readonly': [('shipped_rate', '!=', 0.00)]}"
+                                    />
+                                <label colspan="15"/>
+                                <field name="transport_cost" 
+                                    attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '!=', 0.00)]}" 
+                                    nolabel="1"
+                                    />
+                                <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
+                                <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
+                            </group>
+                                <field name="currency_id" readonly="1"/>
+                                <field name="amount_untaxed" sum="Untaxed amount"/>
+                                <field name="amount_tax"/>
+                                <field name="amount_total" sum="Total amount"/>
+                                <newline/>
+                                <field name="functional_currency_id" readonly="1"/>
+                                <field name="functional_amount_untaxed"/>
+                                <field name="functional_amount_tax"/>
+                                <field name="functional_amount_total"/><newline/><field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/><newline/><field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
+                        </group>
+                        <newline/>
+
                         <group colspan="4" col="14">
                             <field name="state" readonly="1"/>
                             <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
