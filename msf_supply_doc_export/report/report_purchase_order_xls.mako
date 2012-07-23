@@ -40,6 +40,15 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+  <Style ss:ID="date">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
 </Styles>
 <ss:Worksheet ss:Name="Purchase Order">
 <Table >
@@ -68,10 +77,10 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
         % if line.date_planned :
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(line.date_planned or '')|x}</Data></Cell>
+        <Cell ss:StyleID="date" ><Data ss:Type="DateTime">${(line.date_planned or '')|x}</Data></Cell>
         % elif o.delivery_requested_date:
         ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(o.delivery_requested_date or '')|x}</Data></Cell>
+        <Cell ss:StyleID="date" ><Data ss:Type="DateTime">${(o.delivery_requested_date or '')|x}</Data></Cell>
         % endif
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
