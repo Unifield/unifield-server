@@ -15,7 +15,7 @@
 		    		</xpath>
 
                     <xpath expr="/tree/field[@name='product_uom']" position="after">
-	    	        	<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+	    	        	<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
                         <field name="comment" />
                     </xpath>
 				</data>
@@ -34,7 +34,7 @@
 		    		</xpath>
 
 	                <xpath expr="/tree/field[@name='create_date']" position="after">
-			    		<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+			    		<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
        	                <field name="comment" />
 	                </xpath>
 	        	</data>
