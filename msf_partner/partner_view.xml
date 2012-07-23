@@ -19,6 +19,7 @@
                         <field name="delay" invisible="not context.get('choose_supplier')" />
                         <field name="price_unit" invisible="not context.get('choose_supplier')" />
                         <field name="property_product_pricelist_purchase" invisible="not context.get('choose_supplier')" string="Currency"/>
+                        <field name="valide_until_date" string="Valide untill date"/>
                     </xpath>
 
                     <xpath expr="/tree/field[@name='user_id']" position="after">

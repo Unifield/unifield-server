@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE 
+import time
 
 
 class res_partner(osv.osv):
@@ -109,16 +110,31 @@ class res_partner(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
                 uom = context.get('uom', product.uom_id.id)
                 pricelist = partner.property_product_pricelist_purchase
-
                 context.update({'uom': uom})
                 price_list = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], context.get('product_id'), context.get('product_qty', 1.00), partner.id, context=context)
                 price = price_list[pricelist.id]
                 if not price:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                     price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
-
                 res[partner.id] = price
+        return res
 
+    def _get_valide_until_date(self, cr, uid, ids, field_name, args, context=None):
+        if not context:
+            context = {}
+        res = {}
+        if context.get('product_id'):
+            for partner in self.browse(cr, uid, ids, context=context):
+                res[partner.id] = False
+                supplier_ids = self.pool.get('product.supplierinfo').search(cr, uid,[('name','=',partner.id)])
+                for sup in self.pool.get('product.supplierinfo').browse(cr, uid, supplier_ids):
+                    for price in sup.pricelist_ids:
+                        if price.valid_till:
+                            untill=  time.strftime('%d-%m-%Y', time.strptime(price.valid_till,'%Y-%m-%d'))
+                            if not res[partner.id]:
+                                res[partner.id] = untill
+                            elif res[partner.id] and res[partner.id] > price.valid_till :
+                                res[partner.id] = untill
         return res
 
     _columns = {
@@ -148,6 +164,7 @@ class res_partner(osv.osv):
             required=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
         'price_unit': fields.function(_get_price_unit, method=True, type='float', string='Unit price'),
+        'valide_until_date' : fields.function(_get_valide_until_date, method=True, type='char', string='Valide untill date'),
     }
 
     _defaults = {
