@@ -56,7 +56,7 @@
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                        <field name="date" string="Posting Date"/>
+                                        <field name="date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="sequence_for_reference" />
                                         <field name="name" string="Description"/>
@@ -100,7 +100,7 @@
                                         <field name="from_import_cheque_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
-                                        <field name="date" string="Posting Date"/>
+                                        <field name="date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="sequence" invisible="1"/>
                                         <field name="sequence_for_reference"/>
@@ -193,7 +193,7 @@
                                             icon="terp-stock_effects-object-colorize" context="context" 
                                             attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
                                             ('employee_id', '=', False)]}"/>
-                                        <field name="date" />
+                                        <field name="date"/>
                                         <field name="document_date"/>
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
@@ -624,7 +624,7 @@
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                    <field name="date" string="Posting Date"/>
+                                    <field name="date"/>
                                     <field name="document_date"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence_for_reference"/>
@@ -663,7 +663,7 @@
                                     <field name="state" readonly="True"/>
                                 </tree>
                                 <form string="Statement lines">
-                                    <field name="date" string="Posting Date"/>
+                                    <field name="date"/>
                                     <field name="document_date"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence" invisible="1"/>
