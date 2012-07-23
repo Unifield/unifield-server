@@ -37,12 +37,12 @@ class report_open_invoices(report_sxw.report_sxw):
     def create(self, cr, uid, ids, data, context=None):
         result = []
         # Create the header
-        customer_header = ['Invoice Date', 'Number', 'Customer', 'Description', 'Responsible', 'Due Date', 'Source Document', 'Currency', 'Residual', 'Total', 'State']
-        supplier_header = ['Invoice Date', 'Number', 'Supplier', 'Description', 'Responsible', 'Due Date', 'Source Document', 'Currency', 'Residual', 'Total', 'State']
+        customer_header = ['Document Date', 'Posting Date', 'Number', 'Customer', 'Description', 'Responsible', 'Due Date', 'Source Document', 'Currency', 'Residual', 'Total', 'State']
+        supplier_header = ['Document Date', 'Posting Date', 'Number', 'Supplier', 'Description', 'Responsible', 'Due Date', 'Source Document', 'Currency', 'Residual', 'Total', 'State']
         
         # retrieve a big sql query with all information
         sql_request = """
-            SELECT DISTINCT invoice.date_invoice, move.name,
+            SELECT DISTINCT invoice.document_date, invoice.date_invoice, move.name,
                             partner.name, invoice.name, responsible.name,
                             invoice.date_due, invoice.origin,
                             currency.name, invoice.residual,
