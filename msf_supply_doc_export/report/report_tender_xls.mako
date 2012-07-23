@@ -40,6 +40,15 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+  <Style ss:ID="short_date">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
 </Styles>
 <ss:Worksheet ss:Name="Tender">
 <Table>
@@ -66,7 +75,9 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Date">${(o.requested_date or '')|x}</Data></Cell>
+        % if o.requested_date :
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
+        %endif
     </Row>
     % endfor
 % endfor

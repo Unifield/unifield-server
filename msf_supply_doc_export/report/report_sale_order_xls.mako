@@ -75,9 +75,9 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
         % if line.date_planned :
-        <Cell ss:StyleID="short_date" ><Data ss:Type="Date">${line.date_planned|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
         % elif o.delivery_requested_date:
-        <Cell ss:StyleID="short_date" ><Data ss:Type="Date">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
