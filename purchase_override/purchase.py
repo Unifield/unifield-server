@@ -492,7 +492,7 @@ stock moves which are already processed : '''
         for po in self.browse(cr, uid, ids, context=context):
             for pol in po.order_line:
                 # Forget check if we come from YAML tests
-                if po.from_yml_test or po.order_type == 'in_kind':
+                if po.from_yml_test:
                     continue
                 distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
                 # Raise an error if no analytic distribution found
