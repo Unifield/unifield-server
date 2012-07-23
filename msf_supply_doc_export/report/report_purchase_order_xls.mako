@@ -71,7 +71,7 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.date_planned or '')|x}</Data></Cell>
         % elif o.delivery_requested_date:
         ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.delivery_requested_date or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(o.delivery_requested_date or '')|x}</Data></Cell>
         % endif
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>

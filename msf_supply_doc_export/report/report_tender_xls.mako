@@ -66,7 +66,7 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.requested_date or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(o.requested_date or '')|x}</Data></Cell>
     </Row>
     % endfor
 % endfor

@@ -66,9 +66,9 @@
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
         % if line.date_planned :
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.date_planned or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(line.date_planned or '')|x}</Data></Cell>
         % elif o.delivery_requested_date:
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.delivery_requested_date or '')|x}</Data></Cell>
+        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Date">${(o.delivery_requested_date or '')|x}</Data></Cell>
         % endif
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
