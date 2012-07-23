@@ -90,12 +90,12 @@ class tender(osv.osv):
             row_len = len(row)
             if row_len != 6:
                 raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
- Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
+ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
             
             product_code = row.cells[0].data
             if not product_code:
                 to_correct_ok = True
-                error_list.append('No Product Name')
+                error_list.append('No Product Description')
             else:
                 try:
                     product_code = product_code.strip()
