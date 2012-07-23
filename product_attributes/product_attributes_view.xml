@@ -66,6 +66,7 @@
                             <separator string="Description" colspan="2"/>
                             <field name="name" string="Description"/>
                             <field groups="product.group_product_variant" name="variants" />
+                            <field name="new_code"/>
                         </group>
                     </group>
 
@@ -352,6 +353,7 @@
             <field name="arch" type="xml">
                <field name="default_code" position="after">
                    <field name="old_code"/>
+                   <field name="new_code"/>
 
                </field>
             </field>
