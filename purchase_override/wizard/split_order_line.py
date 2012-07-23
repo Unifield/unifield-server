@@ -118,7 +118,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # 1) the check box impact corresponding Fo is checked
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
                 #    the merge into the actual Po is forced
-                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard:
+                #if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard:
+                # if Internal Request, we do not update corresponding Internal Request
+                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and not split.corresponding_so_id_split_po_line_wizard.procurement_request:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
                     copy_data = {'po_cft': 'po',
                                  'product_uom_qty': split.new_line_qty,
@@ -128,6 +130,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, copy_data, context=dict(context, keepDateAndDistrib=True))
                     # call the new procurement creation method
                     so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)
+                    # run the procurement, the make_po function detects the link to original po
+                    # and force merge the line to this po (even if it is not draft anymore)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
                     new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)

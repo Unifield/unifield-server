@@ -402,15 +402,22 @@ class purchase_order(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         sale_line_obj = self.pool.get('sale.order.line')
-        if order_line.move_dest_id:
+        po_line_obj = self.pool.get('purchase.order.line')
+        # If the line comes from an ISR and it's not splitted line,
+        # change the move_dest_id of this line (and their children)
+        # to match with the procurement ordre move destination
+        if order_line.move_dest_id and not order_line.parent_line_id:
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+            po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
             if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
                     if proc.move_id:
-	                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-        	        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
+                        move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
+                        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
                     proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
+                    # Update the move_dest_id of all children to avoid the system to deal with a deleted stock move
+                    po_line_obj.write(cr, uid, po_line_ids, {'move_dest_id': move_id}, context=context)
                     
         return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)
     

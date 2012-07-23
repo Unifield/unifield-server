@@ -610,6 +610,10 @@ stock moves which are already processed : '''
                                                                               db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
+                    # do not update Internal Requests
+                    if sol.order_id.procurement_request:
+                        continue
+ 
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
                     date_context = {'date': po.date_order}
@@ -969,6 +973,9 @@ stock moves which are already processed : '''
             picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
             for order_line in order.order_line:
+                # Reload the data of the line because if the line comes from an ISR and it's a duplicate line,
+                # the move_dest_id field has been changed by the _hook_action_picking_create_modify_out_source_loc_check method
+                order_line = self.pool.get('purchase.order.line').browse(cr, uid, order_line.id, context=context)
                 if not order_line.product_id:
                     continue
                 if order_line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep',):
@@ -1512,7 +1519,7 @@ class purchase_order_line(osv.osv):
         return result
 
     _columns = {
-        'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
+        'parent_line_id': fields.many2one('purchase.order.line', string='Parent line', ondelete='set null'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
         'change_price_ok': fields.function(_get_price_change_ok, type='boolean', method=True, string='Price changing'),
