@@ -825,6 +825,9 @@ class sale_order(osv.osv):
     def test_lines(self, cr, uid, ids, context=None):
         '''
         return True if all lines of type 'make_to_order' are 'confirmed'
+        
+        only if a product is selected
+        internal requests are not taken into account (should not be the case anyway because of separate workflow)
         '''
         for order in self.browse(cr, uid, ids, context=context):
             # backward compatibility for yml tests, if test we do not wait
