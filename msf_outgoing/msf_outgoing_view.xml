@@ -1159,6 +1159,7 @@
 								<tree string="Pack Families">
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
+                                    <field name="description_ppl" />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
@@ -1170,7 +1171,6 @@
 									<field name="total_amount" />
 									<field name="currency_id" />
 									<field name="location_id" />
-									<field name="location_dest_id" />
 									<field name="state" />
 								</tree>
 								<form>
