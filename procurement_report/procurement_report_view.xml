@@ -71,8 +71,9 @@
 					</group>
     				<newline />
     				<group expand="0" string="Group By...">
+                                        <!-- Remove Group by product because is too long to display when we have a big list of products
     					<filter string="Product" context="{'group_by': 'product_id'}" />
-    					<separator orientation="vertical" />
+    					<separator orientation="vertical" />-->
     					<filter string="Location" context="{'group_by': 'location_id'}" />
     				</group>
     			</search>
