@@ -109,16 +109,14 @@ class tender(osv.osv):
                      error_list.append('The Product Code has to be a string.')
                      to_correct_ok = True
             
-            product_qty = row.cells[2].data
-            if not product_qty:
-                to_correct_ok = True
+            if not row.cells[2].data :
                 product_qty = 1.0
+                to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
-                try:
-                    float(product_qty)
-                    product_qty = float(product_qty)
-                except ValueError:
+                if row.cells[4].type == 'float':
+                    product_qty = row.cells[2].data
+                else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
                      product_qty = 1.0
