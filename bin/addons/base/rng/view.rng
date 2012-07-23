@@ -126,6 +126,7 @@
     <rng:define name="tree">
         <rng:element name="tree">
             <rng:ref name="overload"/>
+            <rng:optional><rng:attribute name="sort_by"/></rng:optional>
             <rng:optional><rng:attribute name="string"/></rng:optional>
             <rng:optional><rng:attribute name="colors"/></rng:optional>
             <rng:optional><rng:attribute name="color"/></rng:optional>
