@@ -418,10 +418,9 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-                                        <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
-                                        <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                        <button name="check_assign" states="draft" string="Check Availability" type="object" icon="gtk-apply"/>
+                                        <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
+                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
                                 </form>
@@ -429,10 +428,9 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-apply"/>
-                                <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-media-play"/>
-                                <button name="action_assign" states="confirmed" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
@@ -604,10 +602,13 @@
                                     icon="gtk-cancel"
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
-								<button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-ok"/>
+
+                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
-                                	<button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
+                                    <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
                                 <button states="done" name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
@@ -615,7 +616,7 @@
                         <page string="Additional Info">
                             <field name="type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
                             <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                			<field name="company_id" widget="selection" invisible="1"/>
+                            <field name="company_id" widget="selection" invisible="1"/>
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
@@ -761,7 +762,7 @@
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     <field name="date" string="Actual Shipped Date"/>
                                     <field name="state"/>
-                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned"/>
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
@@ -821,10 +822,8 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
-                                        <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                         <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-                                        <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
                                 </form>
@@ -837,10 +836,9 @@
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-ok"/>
-                                <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-yes"/>
+                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>

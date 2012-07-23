@@ -1077,8 +1077,8 @@
 					<field name="partner_id2"/>
 					<field name="address_id"/>
 					<field name="num_of_packs" />
-					<field name="total_volume" />
 					<field name="total_weight" />
+					<field name="total_volume" />
 					<field name="total_amount" />
 					<field name="currency_id" />
 					<field name="date" />

@@ -48,12 +48,23 @@
     parent_id: analytic_distribution.analytic_account_project
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
 -
+  We create also a new comp. Cost Center
+-
+  !record {model: account.analytic.account, id: analytic_account_mal}:
+    name: "MAL"
+    currency_id: 1
+    code: MAL
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date: !eval "'%s-01-01' %(datetime.now().year + 2)"
+-
   !record {model: msf.instance, id: proj1}:
     level: project
     code: PROJ1
     mission: Mission Test
     instance: Proj. instance
-    parent_id: msf_instance.instance_section
+    #parent_id: msf_instance.instance_section
     name: Project 1
     cost_center_id: analytic_account_kenya
     state: active
@@ -61,7 +72,14 @@
   Activate the local instance
 -
   !python {model: msf.instance}: |
-    self.write(cr, uid, ref('msf_instance.instance_section'), {'state': 'active'})
+    user = self.pool.get('res.users').browse(cr, uid, uid)
+    if user.company_id.instance_id:
+        comp_instance = user.company_id.instance_id.id
+    else:
+        comp_instance = self.create(cr, uid, {'code': 'Comp Instance', 'name': 'Comp', 'level': 'section', 'cost_center_id': ref('analytic_account_mal')})
+        self.pool.get('res.company').write(cr, uid, [user.company_id.id], {'instance_id': comp_instance})
+    self.write(cr, uid, ref('proj1'), {'parent_id': comp_instance})
+    self.write(cr, uid, comp_instance, {'state': 'active'})
 -
   Create a mission report for the project instance
 -

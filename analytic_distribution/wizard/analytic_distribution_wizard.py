@@ -1015,6 +1015,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
 
             if distrib:
+                # Check if distribution if valid with wizard account
+                if wiz.account_id:
+                    if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib.id, False, wiz.account_id.id) != 'valid':
+                        raise osv.except_osv(_('Warning'), _('Header distribution is not valid with this line. Please create a new one here.'))
                 # First delete all current lines
                 self.pool.get('analytic.distribution.wizard.lines').unlink(cr, uid, [x.id for x in wiz.line_ids], context=context)
                 self.pool.get('analytic.distribution.wizard.fp.lines').unlink(cr, uid, [x.id for x in wiz.fp_line_ids], context=context)

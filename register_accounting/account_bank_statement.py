@@ -1275,7 +1275,7 @@ class account_bank_statement_line(osv.osv):
         absl = self.browse(cr, uid, id, context=context)
         if absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id:
             return True
-        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.cost_center_lines:
+        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.funding_pool_lines:
             return True
         return False
 

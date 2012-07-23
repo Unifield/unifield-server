@@ -156,7 +156,7 @@ class res_partner(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc'):
+        if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
             if msf_customer and not 'property_stock_customer' in vals:
@@ -187,7 +187,7 @@ class res_partner(osv.osv):
         if purchase_authorized_price and purchase_pricelist not in purchase_authorized_price:
             r.update({'property_product_pricelist_purchase': purchase_authorized_price[0]})
         
-        if partner_type and partner_type in ('internal', 'section', 'esc'):
+        if partner_type and partner_type in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             if msf_customer:
                 r.update({'property_stock_customer': msf_customer[1]})
