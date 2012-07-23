@@ -184,19 +184,17 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                      product_id = False
                      to_correct_ok = True
                 
-            product_qty = row.cells[2].data
-            if not product_qty :
+            if not row.cells[2].data :
                 product_qty = 1.0
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
-                try:
-                    float(product_qty)
-                    product_qty = float(product_qty)
-                except ValueError:
+                if row.cells[4].data == 'float':
+                    product_qty = row.cells[2].data
+                else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
-                     product_qty = 1.0
                      to_correct_ok = True
+                     product_qty = 1.0
             
             p_uom = row.cells[3].data
             if not p_uom:
@@ -221,34 +219,21 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
             price_unit = row.cells[4].data
             if not price_unit:
                 to_correct_ok = True
-                price_unit = 1.0
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
+                price_unit = 1.0
             else:
-                try:
-                    float(price_unit)
-                    price_unit = float(price_unit)
-                except ValueError:
+                if row.cells[4].data == 'float':
+                    price_unit = row.cells[4].data
+                else:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
-                     price_unit = 1.0
                      to_correct_ok = True
+                     price_unit = 1.0
             
-            check_date = row.cells[5].data
-            if check_date:
-                check_date = str(check_date)
-                if len(check_date.split()) > 1:
-                    check_date = check_date.split()[0]
-                try:
-                    datetime.strptime(check_date, '%d/%b/%Y')
-                    date_planned = check_date
-                except ValueError:
-                    try:
-                        datetime.strptime(check_date, '%d/%m/%Y')
-                        date_planned = check_date
-                    except ValueError:
-                        error_list.append('The date format should be "DD/MM/YYYY" (for instance 21/12/2012 or 20/Jul/2012) we took the one from the parent.')
-                        to_correct_ok = True
+            if row.cells[5].data:
+                if row.cells[5].type == 'datetime':
+                    check_date = row.cells[5].data
             else:
-                error_list.append('The date was not specified so we took the one from the parent.')
+                error_list.append('The date was not specified or the format was not a date so we took the one from the parent.')
             
             curr = row.cells[6].data
             if not curr:
