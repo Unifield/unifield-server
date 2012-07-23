@@ -189,7 +189,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
-                if row.cells[4].type == 'float':
+                if row.cells[4].type in ['int', 'float']:
                     product_qty = row.cells[2].data
                 else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
@@ -222,7 +222,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
                 price_unit = 1.0
             else:
-                if row.cells[4].type == 'float':
+                if row.cells[4].type in ['int', 'float']:
                     price_unit = row.cells[4].data
                 else:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
@@ -231,7 +231,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
             
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
-                    check_date = row.cells[5].data
+                    date_planned = row.cells[5].data
             else:
                 error_list.append('The date was not specified or the format was not a date so we took the one from the parent.')
             

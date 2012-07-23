@@ -114,7 +114,7 @@ class tender(osv.osv):
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
-                if row.cells[4].type == 'float':
+                if row.cells[4].type in ['int','float']:
                     product_qty = row.cells[2].data
                 else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
