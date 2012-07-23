@@ -566,7 +566,7 @@ stock moves which are already processed : '''
     
     def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        Add a hook to modify the logged message
+        Add a hook to update correspondingn so
         '''
         # Some verifications
         if context is None:
@@ -609,6 +609,9 @@ stock moves which are already processed : '''
                                                                               db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
+                    # do not update Internal Requests
+                    if sol.order_id.procurement_request:
+                        continue
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
                     date_context = {'date': po.date_order}
