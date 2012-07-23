@@ -53,6 +53,7 @@
                    "menu/partner_menu.xml",
                    "menu/sale_menu.xml",
                    "menu/hidden_menu.xml",
+                   "menu/accounting_menu.xml",
                    
                    "view/purchase_view.xml",
                    
