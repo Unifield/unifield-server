@@ -159,8 +159,8 @@
 	                                <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" hide_new_button="1" hide_delete_button="1" noteditable="1" string="Journal Items">
                                         <field name="name"/>
 	                                    <field name="ref"/>
-                                        <field name="date"/>
                                         <field name="document_date"/>
+                                        <field name="date"/>
 	                                    <field name="account_id"/>
 				                        <field name="partner_id" invisible="1"/>
 				                        <field name="partner_type"/>
