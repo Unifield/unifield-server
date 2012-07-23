@@ -58,10 +58,10 @@ class freight_manifest(report_sxw.rml_parse):
         return ligne.currency_id and ligne.currency_id.name or False
 
     def getTotM3(self):
-        return self.voltot
+        return self.voltot and self.voltot or '0.0'
 
     def getTotValue(self):
-        return self.valtot
+        return self.valtot and self.valtot or '0.0'
 
     def getTotParce(self):
         return self.parcetot
@@ -79,7 +79,18 @@ class freight_manifest(report_sxw.rml_parse):
         return time.strftime('%d/%m/%y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
 
     def getTransport(self, o):
-        return o.transport_type
+        sta = self.get_selection(o, 'transport_type')
+        return sta
+
+    def get_selection(self, o, field):
+        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        name = '%s,%s' % (o._name, field)
+        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        if tr_ids:
+            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+        else:
+            return res
 
     def getDataRef(self, ligne):
         return ligne and ligne.sale_order_id and ligne.sale_order_id.name or False

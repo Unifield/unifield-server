@@ -160,9 +160,13 @@
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
+        <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="11.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
+
+
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
-        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="9.0" />
     </stylesheet>
 
     <story>
@@ -489,34 +493,34 @@
 
                 <tr >
                     <td>
-                        <para style="TextInformation" alignment="CENTER">Your ref</para>
+                        <para style="TextInformation3" alignment="CENTER">Your ref</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">Packing list</para>
+                        <para style="TextInformation3" alignment="CENTER">Packing list</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">Description</para>
+                        <para style="TextInformation3" alignment="CENTER">Description</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">Parcels</para>
+                        <para style="TextInformation3" alignment="CENTER">Parcels</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">Kgs</para>
+                        <para style="TextInformation3" alignment="CENTER">Kgs</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">m³</para>
+                        <para style="TextInformation3" alignment="CENTER">m³</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">Value</para>
+                        <para style="TextInformation3" alignment="CENTER">Value</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">KC</para>
+                        <para style="TextInformation3" alignment="CENTER">KC</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">DG</para>
+                        <para style="TextInformation3" alignment="CENTER">DG</para>
                     </td>
                     <td>
-                        <para style="TextInformation" alignment="CENTER">NP</para>
+                        <para style="TextInformation3" alignment="CENTER">NP</para>
                     </td>
                 </tr>
 
@@ -564,22 +568,22 @@
         <blockTable colWidths="440.0,65.0,41.0,50.0,56.0,120.0" style="ItemsTitle2">
             <tr>
                 <td>
-                    <para style="TextInformation" alignment="CENTER">T O T A L</para>
+                    <para style="TextInformation3" alignment="CENTER">T O T A L</para>
                 </td>
                 <td>
-                    <para style="TextInformation2" alignment="RIGHT">[[ getTotParce() ]]</para>
+                    <para style="TextInformation4" alignment="RIGHT">[[ getTotParce() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation2" alignment="RIGHT">[[ getTotKg() ]]</para>
+                    <para style="TextInformation4" alignment="RIGHT">[[ getTotKg() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation2" alignment="RIGHT">[[ getTotM3() ]]</para>
+                    <para style="TextInformation4" alignment="RIGHT">[[ getTotM3() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation2" alignment="RIGHT">[[ getTotValue() ]] </para>
+                    <para style="TextInformation4" alignment="RIGHT">[[ getTotValue() ]] </para>
                 </td>
                 <td>
-                    <para style="TextInformation2" alignment="LEFT">[[ getFonCur(line) ]]</para>
+                    <para style="TextInformation4" alignment="LEFT">[[ getFonCur(line) ]]</para>
                 </td>
             </tr>
         </blockTable>
@@ -602,7 +606,7 @@
         <blockTable colWidths="772.0" style="ItemsTitle4" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextInformation" alignment="CENTER">Reception remarks :</para>
+                    <para style="TextInformation3" alignment="CENTER">Reception remarks :</para>
                 </td>
             </tr>
         </blockTable>
