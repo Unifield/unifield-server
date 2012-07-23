@@ -234,11 +234,13 @@
     name: Test Instance
     level: section
     cost_center_id: analytic_account_OC1
-#-
-#  I add the instance to the default company
-#-
-#  !python {model: res.company}: |
-#    self.write(cr, uid, [uid], {'instance_id': ref("test_instance")})
+-
+  I add the instance to the default company
+-
+  !python {model: res.company}: |
+    user = self.pool.get('res.users').browse(cr, uid, uid)
+    if not user.company_id.instance_id:
+        self.write(cr, uid, [uid], {'instance_id': ref("test_instance")})
 -
   Now that lines are here, time for the budget
 -
