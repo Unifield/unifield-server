@@ -243,7 +243,7 @@
                     <field name="backorder_id" groups="base.group_extended"/>
                     <field name="origin"/>
                     <field name="order_category" />
-                    <field name="reason_type_id" widget="selection" />
+                    <field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date" string="Expected Receipt Date" />
                     <field name="state"/>
