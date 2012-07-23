@@ -81,7 +81,7 @@
                                 <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                                 <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                                <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
                                 <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                             </group>
                         </page>
@@ -206,7 +206,7 @@
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="draft">
                                 <label string=""/>
-                                <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="open,paid">
                                 <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel" confirm="Do you confirm Donation received cancellation?"/>
@@ -298,7 +298,7 @@
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="draft">
                                 <label string=""/>
-                                <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="open,paid">
                                 <label string=""/>
@@ -362,7 +362,7 @@
                             <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                            <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
+                            <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward" type="object"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                         </group>
                     </xpath>

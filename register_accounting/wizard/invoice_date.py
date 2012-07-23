@@ -31,7 +31,7 @@ class wizard_invoice_date(osv.osv_memory):
     _name = "wizard.invoice.date"
     _columns = {
         'invoice_id': fields.many2one('account.invoice','Invoice', required=True),
-        'date': fields.date('Invoice Date'),
+        'date': fields.date('Posting Date'),
         'document_date': fields.date('Document Date'),
         'amount_total': fields.float('Computed Total', digits_compute=dp.get_precision('Account'), readonly=1),
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account')),
