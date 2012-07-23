@@ -909,7 +909,8 @@ class ir_values(osv.osv):
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)', 
                                                      'Purchase Order',
-                                                     'Allocation report'],
+                                                     'Allocation report',
+                                                     'Order impact vs. Budget'],
                               'client_action_relate': ['ir_open_product_list_export_view',
                                                        'View_log_purchase.order',
                                                        'Allocation report'],
@@ -929,7 +930,8 @@ class ir_values(osv.osv):
                 or v[2]['name'] == 'Purchase Order Excel Export' \
                 or v[2]['name'] == 'Purchase Order' \
                 or v[2]['name'] == 'Purchase Order (Merged)' \
-                or v[2]['name'] == 'Allocation report' :
+                or v[2]['name'] == 'Allocation report' \
+                or v[2]['name'] == 'Order impact vs. Budget' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
