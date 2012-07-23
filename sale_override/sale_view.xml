@@ -200,13 +200,13 @@
         <menuitem id="base.menu_base_partner" sequence="3" />
 
         <!-- Deliver Products -->
-        <menuitem id="menu_sales_deliver_products"
+        <!--<menuitem id="menu_sales_deliver_products"
                   name="Deliver Products"
                   sequence="3"
                   parent="stock.menu_stock_root" />
 
         <menuitem action="stock.action_out_picking_move" id="menu_sale_action_picking_tree_out_move"
-                  parent="menu_sales_deliver_products" sequence="10"/>
+                  parent="menu_sales_deliver_products" sequence="10"/>-->
 
         <!-- Products -->
         <!--<menuitem action="product.product_category_action"
