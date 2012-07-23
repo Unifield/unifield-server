@@ -82,10 +82,6 @@
                     <field name="origin" position="after">
                         <field name="order_category" />
                     </field>
-                    <filter string="State" position="after">
-                        <separator orientation="vertical" />
-                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
-                    </filter>
                 </data>
             </field>
        </record>
