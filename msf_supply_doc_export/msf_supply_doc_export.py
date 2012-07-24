@@ -166,7 +166,10 @@ class ir_values(osv.osv):
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
             new_act = []
             for v in values:
+
                 if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] == 'Packing Lists' :
+                    new_act.append(v)
+                elif context['_terp_view_name'] == 'Shipment Lists':
                     new_act.append(v)
                 values = new_act
         elif context.get('picking_screen') and context.get('from_so'):

@@ -69,19 +69,6 @@
         <!-- id view_picking_in_search was here -->
 
        <!-- INTERNAL -->
-       <record id="vpicktree" model="ir.ui.view">
-            <field name="name">stock.picking.tree</field>
-            <field name="model">stock.picking</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="stock.vpicktree" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='origin']" position="after">
-                        <field name="order_category" />
-                    </xpath>
-                </data>
-            </field>
-       </record>
 
        <!-- id: view_picking_form, name: stock.picking.form, inherit_id:stock.view_picking_form was here -->
 
@@ -95,10 +82,6 @@
                     <field name="origin" position="after">
                         <field name="order_category" />
                     </field>
-                    <filter string="State" position="after">
-                        <separator orientation="vertical" />
-                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
-                    </filter>
                 </data>
             </field>
        </record>

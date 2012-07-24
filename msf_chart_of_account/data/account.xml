@@ -179,7 +179,7 @@
         <record model="account.account" id="msf_chart_of_account.1202">
             <field name="code">1202</field>
             <field name="type_for_register">none</field>
-            <field name="type">receivable</field>
+            <field name="type">other</field>
             <field name="name">VAT recoverable</field>
             <field name="parent_id" ref="msf_chart_of_account.120" />
             <field name="reconcile" eval="True" />
@@ -552,7 +552,7 @@
 
         <record model="account.account" id="msf_chart_of_account.1414">
             <field name="code">1414</field>
-            <field name="type_for_register">transfer_same</field>
+            <field name="type_for_register">none</field>
             <field name="type">other</field>
             <field name="name">Transfer to another financial mission: Same section</field>
             <field name="parent_id" ref="msf_chart_of_account.141" />
@@ -563,7 +563,7 @@
 
         <record model="account.account" id="msf_chart_of_account.1415">
             <field name="code">1415</field>
-            <field name="type_for_register">transfer_same</field>
+            <field name="type_for_register">none</field>
             <field name="type">other</field>
             <field name="name">Transfer to another financial mission: Other section</field>
             <field name="parent_id" ref="msf_chart_of_account.141" />

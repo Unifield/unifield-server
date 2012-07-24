@@ -13,8 +13,9 @@
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
             <drawString x="730" y="520.0">Page : <pageNumber /></drawString>
-            <drawString x="765" y="520.0">/</drawString>
-            <drawString x="770" y="520.0"><pageCount /> </drawString>
+            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
+            <!--            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
         </pageGraphics>
 
     </pageTemplate>
@@ -99,25 +100,25 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>From :</u></para>
+                    <para style="TextInformation"><u>From</u> :</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>To (Supplier) :</u></para>
+                    <para style="TextInformation"><u>To (Supplier)</u> :</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Ship to[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] :</u></para>
+                    <para style="TextInformation"><u>Ship to</u>[[ objects[0].incoterm_id and ' (%s)' % objects[0].incoterm_id.name or '' ]] :</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Invoice to :</u></para>
+                    <para style="TextInformation"><u>Invoice to</u> :</para>
                 </td>
             </tr>
             <tr>

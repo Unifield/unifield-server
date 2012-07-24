@@ -142,6 +142,8 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not ids:
+            return 0.0
         # Create an sql query
         sql =  """
             SELECT SUM(debit - credit)

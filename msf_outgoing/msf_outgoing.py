@@ -284,6 +284,7 @@ class shipment(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+        context['group_by'] = False
             
         wiz_obj = self.pool.get('wizard')
         

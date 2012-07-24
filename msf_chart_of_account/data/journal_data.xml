@@ -25,6 +25,9 @@
             <field name="type">purchase_refund</field>
             <field name="analytic_journal_id" ref="purchase_refund_analytic_journal"/>
         </record>
+       
+        <!-- delete old analytic journal -->
+        <delete model="account.analytic.journal" id="account.analytic_journal_sale"/>
 
         <record id="sale_analytic_journal" model="account.analytic.journal">
             <field name="name">Sale</field>
@@ -65,10 +68,17 @@
             <field name="analytic_journal_id" ref="od_analytic_journal"/>
         </record>
 
+        <record id="hq_analytic_journal" model="account.analytic.journal">
+            <field name="name">HQ</field>
+            <field name="code">HQ</field>
+            <field name="type">hq</field>
+        </record>
+
         <record id="hq_journal" model="account.journal">
             <field name="name">HQ</field>
             <field name="code">HQ</field>
             <field name="type">hq</field>
+            <field name="analytic_journal_id" ref="hq_analytic_journal"/>
         </record>
 
         <record id="hr_analytic_journal" model="account.analytic.journal">
@@ -83,8 +93,10 @@
             <field name="type">hr</field>
             <field name="analytic_journal_id" ref="hr_analytic_journal"/>
         </record>
+       
+        <delete model="account.journal" id="stock.stock_journal"/>
 
-        <record id="stock.stock_journal" model="account.journal">
+        <record id="stock_journal" model="account.journal">
             <field name="name">Stock</field>
             <field name="code">STO</field>
             <field name="type">stock</field>

@@ -118,7 +118,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # 1) the check box impact corresponding Fo is checked
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
                 #    the merge into the actual Po is forced
-                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard:
+                # if Internal Request, we do not update corresponding Internal Request
+                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and not split.corresponding_so_id_split_po_line_wizard.procurement_request:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
                     copy_data = {'po_cft': 'po',
                                  'product_uom_qty': split.new_line_qty,
