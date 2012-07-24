@@ -309,7 +309,7 @@
 
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref : aaaaaa</para>
+                    <para style="TextInformation">Origin ref : [[ getOriginRef(objects[0]) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
@@ -405,7 +405,7 @@
                     <blockTable colWidths="800.0" style="OrderInformations3">
                         <tr>
                             <td>
-                                <para style="TextInformationGROS" alignment="CENTER"><b>You are about to receive heat sensitive and dangerous goods products, please refere to the appropriate procedures</b></para>
+                                <para style="TextInformationGROS" alignment="CENTER"><b>[[ getWarning() ]]</b></para>
                             </td>
                         </tr>
                     </blockTable>
@@ -580,13 +580,13 @@
                                 </td>
 
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyPO(objects[0]) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyPO(line) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ line.product_uom and line.product_uom.name or False ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(objects[0]) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER"></para>
