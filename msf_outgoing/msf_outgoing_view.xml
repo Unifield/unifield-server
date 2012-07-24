@@ -648,7 +648,7 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="return_products" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo"/>
-								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 								<button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
