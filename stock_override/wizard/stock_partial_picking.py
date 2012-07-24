@@ -124,7 +124,6 @@ class stock_partial_picking(osv.osv_memory):
                 }
 
                 if (picking_type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
-                if (picking_type == 'in') and (move.product_id.cost_method == 'average'):
                     partial_datas['move%s' % (move.move_id.id)].update({
                                                     'product_price' : move.cost, 
                                                     'product_currency': move.currency.id, 
