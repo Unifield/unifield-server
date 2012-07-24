@@ -486,8 +486,6 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                             plural = 's'
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
-        else:
-            self.log(cr, uid, var.id, _("There isn't error in import"), context=context)
         return True
             
 sale_order()

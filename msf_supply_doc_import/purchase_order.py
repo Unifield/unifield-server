@@ -51,6 +51,18 @@ class purchase_order(osv.osv):
                                         help='You can use the template of the export for the format that you need to use'),
     }
 
+    def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
+        - check lines after import
+        '''
+        res = super(purchase_order, self).hook_rfq_sent_check_lines(cr, uid, ids, context)
+        
+        if self.check_lines_to_fix(cr, uid, ids, context):
+            res = False
+        return res
+
     def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
         if context is None:
             context = {}
@@ -311,8 +323,6 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                             plural = 's'
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
-        else:
-            self.log(cr, uid, var.id, _("There isn't error in import"), context=context)
         return True
         
 purchase_order()
