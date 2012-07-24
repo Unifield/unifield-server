@@ -223,13 +223,13 @@
             <form>
                   <notebook>
                       <page string="Order Line">
-                         <field name="product_id" colspan="4" on_change="requested_product_id_change(product_id, type)" />
+                         <field name="product_id" colspan="4" on_change="requested_product_id_change(product_id, type, comment)" />
                          <field name="product_uom_qty" />
                          <field name="product_uom" />
                          <field name="price_unit" />
                          <field name="currency_id" />
                          <field name="date_planned" />
-                         <field name="type" on_change="requested_product_id_change(product_id, type)"/>
+                         <field name="type" on_change="requested_product_id_change(product_id, type, comment)"/>
                          <newline />
                          <field name="state"/>
                      </page>
