@@ -790,7 +790,18 @@ class purchase_order(osv.osv):
                 result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
+    def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
+        - check lines after import
+        '''
+        res = True
+        return res
+        
+        
     def rfq_sent(self, cr, uid, ids, context=None):
+        self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
