@@ -570,11 +570,10 @@ class sale_order(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         result = super(sale_order, self)._hook_ship_create_product_id(cr, uid, ids, context=context, *args, **kwargs)
         line = kwargs['line']
-        order = kwargs['order']
-        if line.product_id.id:
-            result['product_id'] = line.product_id.id
-        elif line.order_id.procurement_request and not line.product_id:
-            result['product_id'] = obj_data.get_object_reference(cr, uid, 'procurement_request', 'product_tbd')[1]
+        if line.product_id:
+            result = line.product_id.id
+        elif line.order_id.procurement_request and not line.product_id and line.comment:
+            result = obj_data.get_object_reference(cr, uid, 'procurement_request', 'product_tbd')[1]
         return result
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
