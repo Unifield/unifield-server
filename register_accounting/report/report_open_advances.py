@@ -36,12 +36,12 @@ class report_open_advances(report_sxw.report_sxw):
     
     def create(self, cr, uid, ids, data, context=None):
         # Create the header
-        header = [['Journal Code', 'Entry Sequence', 'Proprietary Instance', 'Reference', 'Posting Date', 'Period', 'Account', 'Third Parties', 'Name', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency']]
+        header = [['Journal Code', 'Entry Sequence', 'Proprietary Instance', 'Reference', 'Document Date', 'Posting Date', 'Period', 'Account', 'Third Parties', 'Name', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency']]
         
         # retrieve a big sql query with all information
         sql_open_advances = """
             SELECT DISTINCT journal.name, move.name, line.instance_id.code,
-                   line.ref, line.date, period.name,
+                   line.ref, line.document_date, line.date, period.name,
                    account.code || ' ' || account.name as account_name,
                    line.partner_txt, line.name,
                    line.debit_currency, line.credit_currency, booking_currency.name,

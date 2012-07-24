@@ -344,7 +344,6 @@
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
 						<separator orientation="vertical"/>
-
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
@@ -365,7 +364,8 @@
 						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
 						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
 						<separator orientation="vertical" />
-						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>
+                                                <!-- Field stock_journal_id is not in the tree view
+						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>-->
 					</group>
 				</search>
 			</field>
@@ -413,7 +413,6 @@
 						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
 						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
 						<separator orientation="vertical" />
-						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>
 					</group>
 				</search>
 			</field>
@@ -1120,8 +1119,8 @@
 					<field name="partner_id2"/>
 					<field name="address_id"/>
 					<field name="num_of_packs" />
-					<field name="total_volume" />
 					<field name="total_weight" />
+					<field name="total_volume" />
 					<field name="total_amount" />
 					<field name="currency_id" />
 					<field name="date" />

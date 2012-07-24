@@ -142,7 +142,7 @@
 
                     <xpath expr="/search//filter[@string='To Invoice']" position="after">
                         <separator orientation="vertical" />
-                        <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[]" context="{'active_test': False}" separator="1" />
+                        <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','done'), ('split_type_sale_order', '=', 'original_sale_order')]" context="{'active_test': False}" separator="1" />
                     </xpath>
 
                     <xpath expr="/search/field[@name='name']" position="after">
@@ -200,13 +200,13 @@
         <menuitem id="base.menu_base_partner" sequence="3" />
 
         <!-- Deliver Products -->
-        <menuitem id="menu_sales_deliver_products"
+        <!--<menuitem id="menu_sales_deliver_products"
                   name="Deliver Products"
                   sequence="3"
                   parent="stock.menu_stock_root" />
 
         <menuitem action="stock.action_out_picking_move" id="menu_sale_action_picking_tree_out_move"
-                  parent="menu_sales_deliver_products" sequence="10"/>
+                  parent="menu_sales_deliver_products" sequence="10"/>-->
 
         <!-- Products -->
         <!--<menuitem action="product.product_category_action"

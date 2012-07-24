@@ -34,6 +34,10 @@
         'view/purchase_order_import_line_view.xml',
         
         'data/msf_supply_doc_import_data.xml',
+        'workflow/purchase_workflow.xml',
+        'workflow/sale_workflow.xml',
+        'workflow/tender_flow_workflow.xml',
+        'workflow/procurement_request_workflow.xml',
     ],
     "demo_xml" : [],
     "test": [],

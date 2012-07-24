@@ -274,8 +274,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.write(cr, uid, ids, {'state': 'dispatch'}, context=context)
             if 'from' in context and 'wiz_id' in context:
                 # Update cost center lines
-                if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-                    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+#                if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+#                    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
                 # Do some verifications before writing elements
                 self.wizard_verifications(cr, uid, wiz.id, context=context)
                 # Verify old account and new account
@@ -289,7 +289,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if account_changed:
                     # Create new distribution
                     new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    # Write current distribution to the new one
                     self.write(cr, uid, [wiz.id], {'distribution_id': new_distrib_id})
+                    super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
+                    # Return to the default corrections wizard
                     self.pool.get('wizard.journal.items.corrections').write(cr, uid, [context.get('wiz_id')], {'date': wiz.date})
                     return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), distrib_id=new_distrib_id)
                 # JUST Distribution have changed

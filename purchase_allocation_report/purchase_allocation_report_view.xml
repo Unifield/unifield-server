@@ -21,6 +21,7 @@
 					<field name="percentage" />
 					<field name="subtotal" />
 					<field name="currency_id" />
+                                        <field name="destination_id" />
 					<field name="cost_center_id" />
 					<field name="account_id" />
 					<field name="source_doc" />
@@ -104,6 +105,7 @@
 							<field name="percentage" />
 							<field name="subtotal" />
 							<field name="currency_id" />
+                                                        <field name="destination_id" />
 							<field name="cost_center_id" />
 							<field name="account_id" />
 							<field name="source_doc" />

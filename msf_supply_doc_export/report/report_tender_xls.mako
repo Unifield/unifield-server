@@ -52,8 +52,8 @@
 
     
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Product Reference</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Product Name</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">Product Code</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">Product Description</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Quantity</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">UoM</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Price</Data></Cell>
