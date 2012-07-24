@@ -739,6 +739,15 @@ class sale_order(osv.osv):
         result = line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu')
         return result
 
+    def _hook_ship_create_product_id(self, cr, uid, ids, context=None,  *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 02
+        '''
+        pass
+
     def action_ship_create(self, cr, uid, ids, context=None, *args):
         if context is None:
             context = {}
@@ -802,15 +811,15 @@ class sale_order(osv.osv):
                     # hook for stock move data modification
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
-                    
                     # customer code execution position 02
                     self._hook_ship_create_execute_specific_code_02(cr, uid, ids, context=context, order=order, line=line, move_id=move_id)
-                    
-                if line.product_id and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order):
+                product_id = self._hook_ship_create_product_id(cr, uid, ids, context=context, line=line)
+                if product_id \
+                and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order) :
                     proc_data = {'name': line.name,
                                  'origin': order.name,
                                  'date_planned': date_planned,
-                                 'product_id': line.product_id.id,
+                                 'product_id': product_id,
                                  'product_qty': line.product_uom_qty,
                                  'product_uom': line.product_uom.id,
                                  'product_uos_qty': (line.product_uos and line.product_uos_qty)\
@@ -857,6 +866,7 @@ class sale_order(osv.osv):
                             val['state'] = 'manual'
                             break
             self.write(cr, uid, [order.id], val)
+            print order.state
         return True
 
     def action_ship_end(self, cr, uid, ids, context=None):
