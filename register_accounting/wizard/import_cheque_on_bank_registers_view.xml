@@ -21,8 +21,8 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
-                        <field name="date" select='1'/>
                         <field name="document_date"/>
+                        <field name="date" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
@@ -94,8 +94,8 @@
                         <newline/>
                     </group>
                     <group colspan="4" col="6">
-                        <field name="date"/>
                         <field name="document_date"/>
+                        <field name="date"/>
                         <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
                     </group>
                     <separator string="" colspan="6"/>
@@ -106,8 +106,8 @@
                             <field name="supplier_ref"/>
                             <field name="account_id"/>
                             <field name="partner_id"/>
-                            <field name="date"/>
                             <field name="document_date"/>
+                            <field name="date"/>
                             <field name="date_maturity"/>
                             <field name="amount_to_pay"/>
                             <field name="amount_currency"/>

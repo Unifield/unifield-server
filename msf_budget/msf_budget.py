@@ -90,12 +90,20 @@ class msf_budget(osv.osv):
                                                 'cost_center_id': budget.cost_center_id.parent_id.id,
                                                 'decision_moment_id': budget.decision_moment_id.id,
                                                 'type': 'view'}, context=context)
-                # Create all lines for all accounts (no budget values, those are retrieved)
+                # Create all lines for all accounts/destinations (no budget values, those are retrieved)
                 expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
+                                                                                        ('user_type_report_type', '=', 'expense'),
                                                                                         ('type', '!=', 'view')], context=context)
-                for expense_account_id in expense_account_ids:
+                destination_obj = self.pool.get('account.destination.link')
+                destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  expense_account_ids)], context=context)
+                account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
+                                           for dest
+                                           in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
+                for account_id, destination_id in account_destination_ids:
                     budget_line_vals = {'budget_id': parent_budget_id,
-                                        'account_id': expense_account_id}
+                                        'account_id': account_id,
+                                        'destination_id': destination_id,
+                                        'line_type': 'destination'}
                     self.pool.get('msf.budget.line').create(cr, uid, budget_line_vals, context=context)
                 # validate this parent
                 self.write(cr, uid, [parent_budget_id], {'state': 'valid'}, context=context)

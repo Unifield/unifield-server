@@ -172,7 +172,7 @@
 					<field name="backorder_id" />
 				</xpath>
 				<xpath expr="/tree/field[@name='origin']" position="after">
-					<field name="reason_type_id" widget="selection" />
+					<field name="reason_type_id" />
 				</xpath>
 				<xpath expr="/tree//field[@name='invoice_state']" position="replace" />
 				<xpath expr="/tree//field[@name='stock_journal_id']" position="replace" />
@@ -251,7 +251,7 @@
                     </xpath>
 
                     <xpath expr="/search/group/field[@name='name']" position="before">
-                        <field name="reason_type_id" widget="selection" />
+                        <field name="reason_type_id" />
                     </xpath>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
                         <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />

@@ -148,6 +148,7 @@ class product_attributes(osv.osv):
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
+        'new_code' : fields.char('New code', size=64),
         'international_status': fields.selection([('',''),('itc','Approved (ITC)'),('esc', 'Approved (ESC)'),('temp','Temporary'),('local','Not approved (Local)')], 'International Status'),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
