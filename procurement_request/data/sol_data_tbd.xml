@@ -47,5 +47,15 @@
         <field name="rounding" eval="1.0"/>
     </record>
     
+    <!-- Uom to be defined -->
+    <record id="product_tbd" model="product.product">
+        <field name="default_code">TBD</field>
+        <field name="name">Product to be defined</field>
+        <field name="nomen_manda_0" ref="nomen_tbd0"/>
+        <field name="nomen_manda_1" ref="nomen_tbd1"/>
+        <field name="nomen_manda_2" ref="nomen_tbd2"/>
+        <field name="nomen_manda_3" ref="nomen_tbd3"/>
+    </record>
+    
     </data>
 </openerp>

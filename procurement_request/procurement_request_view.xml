@@ -63,7 +63,7 @@
                                     attrs="{'invisible': [('product_id_ok', '=', True)]}"/>
                                     <field name="product_uom_qty" />
                                     <field name="notes" />
-                                    <field name="type" on_change="requested_product_id_change(product_id, type)"/>
+                                    <field name="type" on_change="requested_product_id_change(product_id, type, comment)"/>
                                     <field name="latest" />
                                     <field name="my_company_id" invisible="1" />
                                     <field name="supplier"

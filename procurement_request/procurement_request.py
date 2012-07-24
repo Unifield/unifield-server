@@ -397,7 +397,7 @@ class procurement_request_line(osv.osv):
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
-    def requested_product_id_change(self, cr, uid, ids, product_id, type, context=None):
+    def requested_product_id_change(self, cr, uid, ids, product_id, type, comment, context=None):
         '''
         Fills automatically the product_uom_id field on the line when the 
         product was changed.
@@ -407,8 +407,10 @@ class procurement_request_line(osv.osv):
         product_obj = self.pool.get('product.product')
 
         v = {}
-        if not product_id:
+        if not product_id and not comment:
             v.update({'product_uom': False, 'supplier': False, 'name': ''})
+        elif comment and not product_id:
+            pass
         else:
             product = product_obj.browse(cr, uid, product_id, context=context)
             v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})

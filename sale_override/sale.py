@@ -542,6 +542,23 @@ class sale_order(osv.osv):
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
         return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
 
+    def _hook_ship_create_product_id(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to customize the execution condition
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        result = super(sale_order, self)._hook_ship_create_product_id(cr, uid, ids, context=context, *args, **kwargs)
+        line = kwargs['line']
+        order = kwargs['order']
+        if line.product_id.id:
+            result['product_id'] = line.product_id.id
+        elif line.order_id.procurement_request and not line.product_id:
+            result['product_id'] = obj_data.get_object_reference(cr, uid, 'procurement_request', 'product_tbd')[1]
+        return result
+
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the sale order and all related documents to done state

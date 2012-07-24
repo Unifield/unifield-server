@@ -1,0 +1,4 @@
+procurement_request/data/sol_data_tbd.xml
+procurement_request/procurement_request.py
+procurement_request/procurement_request_view.xml
+sale_override/sale.py
