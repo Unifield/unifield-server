@@ -202,7 +202,6 @@ class procurement_request(osv.osv):
         seq_obj = self.pool.get('ir.sequence')
         order = self.browse(cr, uid, id)
 
-        name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
         proc = order.procurement_request or context.get('procurement_request', False)
             
         default.update({
@@ -214,6 +213,7 @@ class procurement_request(osv.osv):
         })
 
         if not 'name' in default:
+            name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
             default.update({'name': name})
 
         return default

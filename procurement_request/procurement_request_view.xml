@@ -61,6 +61,9 @@
                                     string="Configurator" 
                                     type="object" 
                                     attrs="{'invisible': [('product_id_ok', '=', True)]}"/>
+                                    <button name="open_order_line_to_correct"
+                                        string="Configurator"
+                                        type="object" />
                                     <field name="product_uom_qty" />
                                     <field name="notes" />
                                     <field name="type" on_change="requested_product_id_change(product_id, type, comment)"/>

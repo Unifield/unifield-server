@@ -75,8 +75,10 @@
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />
-                    <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('created_ok', '=', True)]}" />
-                    <button name="save_and_process" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    <group colspan="4" col="6">
+                        <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <button name="save_and_process" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    </group>
                 </form>
             </field>
         </record>

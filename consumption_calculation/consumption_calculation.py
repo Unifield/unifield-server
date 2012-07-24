@@ -265,7 +265,7 @@ class real_average_consumption(osv.osv):
         
         outfile = TemporaryFile('w+')
         writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
+        writer.writerow(['Product Code', 'Product Description', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
         
         for line in rac.line_ids:
             writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
@@ -678,7 +678,7 @@ class monthly_review_consumption(osv.osv):
         
         outfile = TemporaryFile('w+')
         writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product reference', 'Product name', 'AMC', 'FMC', 'Valid until'])
+        writer.writerow(['Product Code', 'Product Description', 'AMC', 'FMC', 'Valid until'])
         
         for line in fmc.line_ids:
             writer.writerow([line.name.default_code and line.name.default_code.encode('utf-8'), line.name.name and line.name.name.encode('utf-8'), line.amc, line.fmc, line.valid_until or ''])

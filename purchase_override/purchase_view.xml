@@ -25,7 +25,9 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-
+                    <xpath expr="/form/group/field[@name='partner_ref']" position="attributes">
+                        <attribute name="attrs">{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'confirmed'])]}</attribute>
+                    </xpath>
                     <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']/group[2]" position="replace" >
                     </xpath>
 
@@ -51,21 +53,21 @@
                                 <field name="invoice_method"/>
                                 <field name="fiscal_position" widget="selection"/>
                             </group>
-                        	<separator string="Invoices" colspan="4"/>
-                        	<newline/>
-                        	<field name="invoice_ids" groups="base.group_extended" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
+                            <separator string="Invoices" colspan="4"/>
+                            <newline/>
+                            <field name="invoice_ids" groups="base.group_extended" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
                         </page>
                    </xpath>
 
-                	
-                	<xpath expr="/form//field[@name='warehouse_id']" position="replace">
-                		<field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
-                	</xpath>
-                	
+                    <xpath expr="/form//field[@name='warehouse_id']" position="replace">
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
+                    </xpath>
+
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
                         <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                        <field name="allocation_setup" invisible="1" />
                     </xpath>
-                    
+
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id)" />
                         <field name="priority" />
@@ -76,15 +78,18 @@
                     </xpath>
                     <xpath expr="/form/notebook/page//field[@name='invoice_method']" position="replace">
                         <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                        <field name="unallocation_ok" attrs="{'readonly': ['|', ('cross_docking_ok', '=', True), ('allocation_setup', '!=', 'mixed')]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
                         <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
-                        	on_change="on_change_dest_partner_id(dest_partner_id)" />
+                            on_change="on_change_dest_partner_id(dest_partner_id)" />
                         <field name="dest_address_id" domain="[('partner_id', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
-                    	<field name="invoice_address_id" domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
-                    		attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                        <field name="invoice_address_id"
+                            domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
+                            attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
+                            />
                     </xpath>
 
                     <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
@@ -94,10 +99,13 @@
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
                     </xpath>
-                    
+
                     <xpath expr="/form//field[@name='state']" position="after">
-                    	<button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
-                    		    attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
+                        <button name="dpo_received"
+                            string="Validate the reception"
+                            icon="terp-camera_test"
+                            attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" 
+                            />
                     </xpath>
                 </data>
             </field>
@@ -135,6 +143,7 @@
                     <group col="8" colspan="4">
                       <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
                       <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
+                      <filter icon="terp-check" name="confirmed_wait" string="Confirmed (waiting)" domain="[('state', 'in', ['confirmed_wait'])]" separator="1" help="Purchase orders which are in approved state." />
                       <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
                       <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
                       <separator orientation="vertical" />
@@ -247,46 +256,47 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
-            	<data>            		
-            		<xpath expr="/form//field[@name='product_id']" position="replace">
-	            		<field name="product_id" colspan="4" 
-	            			context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
-	            			on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"/>
-	            	</xpath>
-            		
-	                <xpath expr="/form//field[@name='price_unit']" position="replace">
-	                    <field name="rfq_ok" invisible="1" />
-	                    <field name="state" invisible="1" />
-	                    <field name="fake_id" invisible="1" />
-	                    <field name="change_price_ok" invisible="1" />
-	                    <field name="old_price_unit" invisible="1" />
-	                    <field name="price_unit" 
-	                        on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)" />
-	                </xpath>
-               	</data>
+                <data>
+                    <xpath expr="/form//field[@name='product_id']" position="replace">
+                        <field name="product_id" colspan="4" 
+                            context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
+                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"/>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='price_unit']" position="replace">
+                        <field name="rfq_ok" invisible="1" />
+                        <field name="state" invisible="1" />
+                        <field name="fake_id" invisible="1" />
+                        <field name="change_price_ok" invisible="1" />
+                        <field name="old_price_unit" invisible="1" />
+                        <field name="price_unit" 
+                            on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)" />
+                    </xpath>
+
+                </data>
             </field>
         </record>
-        
+
         <record id="purchase_order_confirm_wizard" model="ir.ui.view">
-        	<field name="name">purchase.order.confirm.wizard</field>
-        	<field name="model">purchase.order.confirm.wizard</field>
-        	<field name="type">form</field>
-        	<field name="arch" type="xml">
-        		<form string="Warning on confirmation">
-        			<separator colspan="4" string="Purchase Order" />
-        			<field name="order_id" colspan="4" />
-        			<separator colspan="4" string="Warning" />
-        			<field name="errors" colspan="4" nolabel="1" />
-        			<separator colspan="4" string="Actions" />
-        			<button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
-        			<button type="object" name="validate_order" icon="terp-check" string="Confirm" colspan="3" />
-        		</form>
-        	</field>
+            <field name="name">purchase.order.confirm.wizard</field>
+            <field name="model">purchase.order.confirm.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Warning on confirmation">
+                    <separator colspan="4" string="Purchase Order" />
+                    <field name="order_id" colspan="4" />
+                    <separator colspan="4" string="Warning" />
+                    <field name="errors" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
+                    <button type="object" name="validate_order" icon="terp-check" string="Confirm" colspan="3" />
+                </form>
+            </field>
         </record>
 
-		<menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
-        
-	<!-- Invoice control -->
+        <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
+
+        <!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_pending_invoice" model="ir.ui.menu" />
         <delete id="purchase.menu_purchase_line_order_draft" model="ir.ui.menu" />
@@ -295,16 +305,16 @@
         <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
         <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
         <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
-        
+
         <!-- Picking on Purchase menu -->
         <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
         <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
-        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" />
-        
+<!--        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" /> -->
+
         <!-- Purchase configuration menu -->
+<!--
         <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+-->
         <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
@@ -312,10 +322,15 @@
         <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
         <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
+<!--
         <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
         <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
+    used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
         <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" />
+
+        <!-- Here was an act_window to display all PO from products views.
+             This action is defined on product_attributes module -->
         
-    
     </data>
 </openerp>

@@ -75,7 +75,7 @@
                 <para style="InformationHeader">Currency</para>
             </td>
             <td>
-                <para style="InformationHeader">Cost Center</para>
+                <para style="InformationHeader">Distribution / Cost Center</para>
             </td>
             <td>
                 <para style="InformationHeader">Account</para>
@@ -131,7 +131,7 @@
                 <para style="Information">[[ o.currency_id.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.cost_center_id.name ]]</para>
+                <para style="Information">[[ o.destination_id.name ]] / [[ o.cost_center_id.name ]]</para>
             </td>
             <td>
                 <para style="Information">[[ o.account_id.name ]]</para>

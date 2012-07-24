@@ -90,10 +90,11 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
+                        'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id, 'destination_id': destination_id})
+                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     del common_vals['destination_id']
@@ -209,6 +210,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                             'cost_center_id': line.cost_center_id.id,
                             'currency_id': line.currency_id.id,
                             'source_date': line.date,
+                            'destination_id': line.destination_id.id,
                         })]
                     }
                 )
@@ -230,7 +232,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ])
             ana_line_obj.reverse(cr, uid, fp_old_lines)
             # create new lines
-            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id})
+            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
@@ -243,6 +245,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                             'analytic_id': line.cost_center_id.id,
                             'currency_id': line.currency_id.id,
                             'source_date': line.date,
+                            'destination_id': line.destination_id.id,
                         })],
                     'funding_pool_lines': [(0, 0, {
                             'percentage': 100,
@@ -250,6 +253,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                             'cost_center_id': line.cost_center_id.id,
                             'currency_id': line.currency_id.id,
                             'source_date': line.date,
+                            'destination_id': line.destination_id.id,
                         })]
                 })
 

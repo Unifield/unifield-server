@@ -46,6 +46,7 @@
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
                             <field name="currency_id"/>
                     </xpath>
+
                     <group col="7" colspan="4" position="replace">
                         <group col="11" colspan="4">
                             <field name="currency_id" readonly="1"/>
