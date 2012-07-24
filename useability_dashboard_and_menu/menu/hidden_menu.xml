@@ -39,5 +39,11 @@
         <menuitem id="stock.menu_product_in_config_stock" 
         parent="menu_hidden"  />
         
+        <menuitem id="object_query.menu_preferences_conf" 
+        parent="menu_hidden"  />
+            
+        <menuitem id="purchase.menu_purchase_config_pricelist" 
+        parent="menu_hidden" />
+            
     </data>
 </openerp>

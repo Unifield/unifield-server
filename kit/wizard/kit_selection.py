@@ -203,7 +203,8 @@ class kit_selection(osv.osv_memory):
                           'default_name': data['value']['default_name'],
                           }
                 # if we are treating a line with link to so
-                if obj.corresponding_so_line_id_kit_selection and obj.impact_so_kit_selection:
+                # if Internal Request, we do not update corresponding Internal Request
+                if obj.corresponding_so_line_id_kit_selection and obj.impact_so_kit_selection and not obj.corresponding_so_id_kit_selection.procurement_request:
                     # if we have already update the existing pol, we create a new sol
                     # an go through the whole process
                     # if not, we simply update the pol, corresponding sol will be updated

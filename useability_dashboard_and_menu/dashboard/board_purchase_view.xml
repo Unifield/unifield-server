@@ -12,11 +12,9 @@
                             <action colspan="4" height="220" name="%(tender_flow.purchase_draft)d" string="Purchase Order Waiting For Validation"  width="510"/>
                             <action colspan="4" height="220" name="%(tender_flow.purchase_waiting)d" string="Purchase Order Waiting Confirmation"  width="510"/>
                             <action name="%(tender_flow.tender_action)d" string="Tender"/>
-                        </child1>
-                        <child2>
                             <action colspan="4" height="220" name="%(tender_flow.rfq_draft)d" string="Requests for Quotation Waiting For Validation"  width="510"/>
                             <action colspan="4" height="220" name="%(tender_flow.rfq_waiting)d" string="Requests for Quotation Waiting For Confirmation"  width="510"/>
-                        </child2>
+                        </child1>
                     </hpaned>
                 </form>
             </field>

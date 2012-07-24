@@ -2,10 +2,10 @@
 <openerp>
     <data>
 
-        <menuitem
-            id="menu_purchase_deshboard"
+        <!--<menuitem
+            id="purchase.menu_purchase_deshboard"
             name="Dashboard"
-            parent="base.next_id_73" sequence="0"/>
+            parent="base.next_id_73" sequence="0"/>-->
 
         <record id="purchase_draft" model="ir.actions.act_window">
             <field name="name">Draft Purchase Orders</field>
@@ -189,8 +189,8 @@
         <menuitem
             action="open_board_purchase"
             icon="terp-graph"
-            id="menu_board_purchase"
-            parent="menu_purchase_deshboard"
+            id="purchase.menu_board_purchase"
+            parent="purchase.menu_purchase_deshboard"
             sequence="4"/>
 
         <menuitem icon="terp-purchase" id="base.menu_purchase_root" action="open_board_purchase" name="Purchases"/>

@@ -753,6 +753,7 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
+        'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
@@ -1275,7 +1276,7 @@ class account_bank_statement_line(osv.osv):
         absl = self.browse(cr, uid, id, context=context)
         if absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id:
             return True
-        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.cost_center_lines:
+        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.funding_pool_lines:
             return True
         return False
 

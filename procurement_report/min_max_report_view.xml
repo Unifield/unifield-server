@@ -79,7 +79,7 @@
 			<field name="inherit_id" ref="procurement.warehouse_orderpoint_search" />
 			<field name="arch" type="xml">
 				<xpath expr="/search//field[@name='name']" position="attributes">
-					<attribute name="string">Rule reference</attribute>	
+					<attribute name="string">Reference</attribute>	
 				</xpath>
 				<xpath expr="/search//field[@name='company_id']" position="replace" />
 				
