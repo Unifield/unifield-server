@@ -555,7 +555,7 @@ class tender2(osv.osv):
     tender class
     '''
     _inherit = 'tender'
-    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)], 'comparison': [('readonly',False)]}, readonly=True),
+    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)]}, readonly=True),
                 }
     
     def copy(self, cr, uid, id, default=None, context=None):
