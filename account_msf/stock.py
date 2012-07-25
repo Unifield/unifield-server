@@ -56,6 +56,8 @@ class stock_picking(osv.osv):
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (picking.partner_id.name or '',))
             invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
+        if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
+            invoice_vals.update({'is_intermission': True})
         return invoice_vals
 
 stock_picking()

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-        <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Quotation / Order"/>
-
+        <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Order"/>
         <report auto="False" id="sale.consumption_report" model="real.average.consumption" name="msf.consumption_report" rml="msf_printed_documents/report/consumption_report.rml" string="Consumption Report" />
-
     </data>
 </openerp>

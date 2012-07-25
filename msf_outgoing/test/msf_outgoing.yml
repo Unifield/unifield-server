@@ -206,6 +206,7 @@
 -
   !python {model: stock.picking}: |
     idsA = context['out']['a']
+    self.force_assign(cr, uid, idsA)
     res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
@@ -370,7 +371,7 @@
         if mem.product_id.id == context['product']['c']:
           mem.write({'prodlot_id': False}, context=c)
     # validate the creation
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_validate_picking(cr, uid, ids, context=c)
     # there should be one ppl created
     ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)
@@ -510,7 +511,7 @@
         if mem.product_id.id == context['product']['c']:
           mem.write({'from_pack': 0, 'to_pack': 1}, context=c)
     # validate first step
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # negative value rule
     for obj in self.browse(cr, uid, ids, context=c):
@@ -561,7 +562,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -588,7 +589,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -615,7 +616,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -642,7 +643,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -669,7 +670,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -696,7 +697,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -723,7 +724,7 @@
           seq = seqs.pop()
           mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_ppl1(cr, uid, ids, context=c)
     # check the validation results
     for obj in self.browse(cr, uid, ids, context=c):
@@ -749,7 +750,7 @@
           elif mem.quantity == 2:
             mem.write({'from_pack': 2, 'to_pack': 3}, context=c)
     # validate ppl1
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     res = self.do_ppl1(cr, uid, ids, context=c)
     model = res['res_model']
     id = res['res_id']
@@ -795,6 +796,7 @@
 -
   !python {model: stock.picking}: |
     idsA = context['out']['b']
+    self.force_assign(cr, uid, idsA)
     res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
@@ -824,7 +826,7 @@
     picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['b'])], context=context)
     # add the picking ticket id to the context structure
     context.update({'pick': {'b': picking_ids}})
-    assert len(picking_ids) == 1, 'picking ticket should have been created - 1 - %s'%(len(picking_ids))
+    assert len(picking_ids) == 1, 'picking ticket should have been created - 1bis - %s'%(len(picking_ids))
 -
   I set quick mode
 -
@@ -852,7 +854,7 @@
     self.deselect_all(cr, uid, ids, context=c)
     self.select_all(cr, uid, ids, context=c)
     # validate the creation
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_validate_picking(cr, uid, ids, context=c)
     # there should be one ppl created
     ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['b'])], context=context)
@@ -1618,6 +1620,7 @@
 -
   !python {model: stock.picking}: |
     idsA = context['out']['a']
+    self.force_assign(cr, uid, idsA)
     res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
@@ -1675,7 +1678,7 @@
     self.deselect_all(cr, uid, ids, context=c)
     self.select_all(cr, uid, ids, context=c)
     # validate the creation
-    self.copy_all(cr, uid, ids)
+    self.copy_all(cr, uid, ids, context=c)
     self.do_validate_picking(cr, uid, ids, context=c)
     # there should be one ppl created
     ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)

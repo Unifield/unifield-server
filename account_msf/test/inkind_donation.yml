@@ -46,6 +46,7 @@
 -
   !record {model: purchase.order, id: inkind0}:
     order_type: in_kind
+    invoice_method: picking
     name: Inkind0
     partner_id: supplier1
     company_id: base.main_company
@@ -79,6 +80,18 @@
     search_ids = self.search(cr, uid, [('purchase_id', '=', ref("inkind0"))])
     assert len(search_ids) == False, "A commitment should not be attached to this PO!"
 -
+  I validate shipment with 1 product.
+-
+  !python {model: stock.picking}: |
+    # Prepare values
+    import time
+    today = time.strftime('%Y-%m-%d')
+    pick_ids = self.search(cr, uid, [('purchase_id', '=', ref("inkind0"))])
+    dic = self.action_process(cr, uid, pick_ids, context=context)
+    res = self.pool.get(dic['res_model']).attach_certificate(cr,uid, [dic['res_id']], context=dic['context'])
+    self.pool.get(res['res_model']).copy_all(cr,uid, [res['res_id']], context=res['context'])
+    self.pool.get(res['res_model']).do_incoming_shipment(cr, uid, [res['res_id']], context=res['context'])
+-
   I check that an invoice have been created with a inkind donation journal and right accounts (payable for partner and expense for product)
 -
   !python {model: purchase.order}: |
@@ -86,7 +99,7 @@
         assert po.invoice_ids != False, "No invoice for this PO!"
         for inv in po.invoice_ids:
             assert inv.journal_id.type == 'inkind', "Invoice is not on a In-kind donation journal!"
-            assert inv.account_id.id == po.partner_id.donation_payable_account.id, "No donation payable account given for this invoice!"
+            assert inv.account_id.id == po.partner_id.donation_payable_account.id, "No donation payable account given for this invoice! Got %s instead of %s." % (inv.account_id and inv.account_id.code or '', po.partner_id.donation_payable_account and po.partner_id.donation_payable_account.code or '')
             for line in inv.invoice_line:
                 assert line.account_id.id == ref("account_account_expense1"), "Account on Invoice line is not a donation expense account!"
 -
@@ -97,12 +110,12 @@
         import netsvc
         wf_service = netsvc.LocalService("workflow")
         # Add a distribution on invoice
-        self.write(cr, uid, [inv.id], {'from_yml_test': False, 'analytic_distribution_id': ref("analytic_distrib1")})
+        self.write(cr, uid, [inv.id], {'from_yml_test': True, 'analytic_distribution_id': ref("analytic_distrib1")})
         # Validate invoice
         wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         # Search analytic lines
-        search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('ref', '=', "Inkind0")])
-        assert len(search_ids) == 2, "Bad generation of analytic lines!"
+        search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('amount', '=', -15.0), ('general_account_id', '=', ref("account_account_expense1"))])
+        assert len(search_ids) == 1, "Bad generation of analytic lines!"
 -
   Then I cancel invoice and check that analytic lines have been reversed
 -
@@ -117,4 +130,4 @@
         wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_cancel', cr)
         # Check that 4 analytic lines exists for this invoice
         reversed_ids = self.pool.get('account.analytic.line').search(cr, uid, [('is_reversal', '=', True), ('amount', '=', 15.0)])
-        assert len(reversed_ids) == 2, "Invoice have not been reversed"
+        assert len(reversed_ids) == 1, "Invoice have not been reversed"

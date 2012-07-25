@@ -19,8 +19,8 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
                         <newline/>
                         <field name="date_invoice" required="1"/>
-                        <field name="register_posting_date" />
                         <field name="document_date" required="1"/>
+                        <field name="register_posting_date" />
                         <field name="state" invisible="1"/>
                         <field name="amount_total"/>
                         <newline/>

@@ -21,7 +21,7 @@
 ##############################################################################
 
 PARTNER_TYPE = [('internal', 'Internal'), ('section', 'Inter-section'),
-                ('external', 'External'), ('esc', 'ESC'),]
+                ('external', 'External'), ('esc', 'ESC'), ('intermission', 'Intermission'),]
 
 import partner
 import product

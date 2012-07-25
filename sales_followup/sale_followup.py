@@ -59,7 +59,7 @@ class sale_order_followup(osv.osv_memory):
             res[follow.id] = None
             
             if follow.order_id:
-                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state')
+                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state_hidden_sale_order')
             
         return res
     
@@ -672,7 +672,7 @@ class sale_order_line_followup(osv.osv_memory):
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
-        'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
+        'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True, 
                                      type='many2one', relation='product.product'),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
