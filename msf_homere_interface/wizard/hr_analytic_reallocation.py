@@ -65,6 +65,7 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
             # Do not use line with account_id, because of NO ACCOUNT_ID PRESENCE!
             for field in fp_fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+            # NO NEED TO CHANGE DESTINATION_ID FIELD because NO ACCOUNT_ID PRESENCE!
             # Apply changes
             view['arch'] = etree.tostring(form)
         return view

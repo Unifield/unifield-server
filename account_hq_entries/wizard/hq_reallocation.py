@@ -62,13 +62,10 @@ class hq_analytic_reallocation(osv.osv_memory):
             except ValueError:
                 fp_id = 0
             fp_fields = form.xpath('/form/field[@name="funding_pool_id"]')
+            # Do not use line with account_id, because of NO ACCOUNT_ID PRESENCE!
             for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), '&', ('tuple_destination_account_ids.account_id', '=', account_id), ('tuple_destination_account_ids.destination_id', '=', destination_id), ('id', '=', %s)]" % fp_id)
-            # Change Destination field
-            dest_fields = form.xpath('/form/field[@name="destination_id"]')
-            for field in dest_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
-            view['arch'] = etree.tostring(form)
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+            # NO NEED TO CHANGE DESTINATION_ID FIELD because NO ACCOUNT_ID PRESENCE!
         return view
 
     def button_validate(self, cr, uid ,ids, context=None):
