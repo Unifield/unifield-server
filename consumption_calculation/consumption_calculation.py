@@ -265,7 +265,7 @@ class real_average_consumption(osv.osv):
         
         outfile = TemporaryFile('w+')
         writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
+        writer.writerow(['Product Code', 'Product Description', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
         
         for line in rac.line_ids:
             writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
@@ -331,12 +331,20 @@ class real_average_consumption(osv.osv):
                 if product.id not in products:
                     batch_mandatory = product.batch_management or product.perishable
                     date_mandatory = not product.batch_management and product.perishable
-                    self.pool.get('real.average.consumption.line').create(cr, uid, {'product_id': product.id,
-                                                                                    'uom_id': product.uom_id.id,
-                                                                                    'consumed_qty': 0.00,
-                                                                                    'batch_mandatory': batch_mandatory,
-                                                                                    'date_mandatory': date_mandatory,
-                                                                                    'rac_id': report.id})
+                    values = {'product_id': product.id,
+                              'uom_id': product.uom_id.id,
+                              'consumed_qty': 0.00,
+                              'batch_mandatory': batch_mandatory,
+                              'date_mandatory': date_mandatory,
+                              'rac_id': report.id,}
+                    v = self.pool.get('real.average.consumption.line').product_onchange(cr, uid, [], product.id, report.cons_location_id.id,
+                                                                                        product.uom_id.id, False, context=context)['value']
+                    values.update(v)
+                    if batch_mandatory:
+                        values.update({'remark': 'You must assign a batch number'})
+                    if date_mandatory:
+                        values.update({'remark': 'You must assign an expiry date'})
+                    self.pool.get('real.average.consumption.line').create(cr, uid, values)
         
         self.write(cr, uid, ids, {'created_ok': False})    
         return {'type': 'ir.actions.act_window',
@@ -407,12 +415,12 @@ class real_average_consumption_line(osv.osv):
             date_mandatory = not obj.product_id.batch_management and obj.product_id.perishable
         
             if batch_mandatory:
-                if not obj.prodlot_id:
+                if not obj.prodlot_id and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
-
-                prodlot_id = obj.prodlot_id.id
-                expiry_date = obj.prodlot_id.life_date
+                elif obj.prodlot_id:
+                    prodlot_id = obj.prodlot_id.id
+                    expiry_date = obj.prodlot_id.life_date
 
 #            if date_mandatory:
 #                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
@@ -452,7 +460,7 @@ class real_average_consumption_line(osv.osv):
     }
 
     _constraints = [
-        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty'])
+        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
     ]
 
     _sql_constraints = [
@@ -460,7 +468,7 @@ class real_average_consumption_line(osv.osv):
     ]
 
 
-    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, context=None):
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, remark=False, context=None):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
@@ -484,6 +492,8 @@ class real_average_consumption_line(osv.osv):
                 # return first prodlot
                 result = self.change_prodlot(cr, uid, id, product_id, prod_ids[0], expiry_date, location_id, uom, context={})
                 result.setdefault('value',{}).update(prodlot_id=prod_ids[0])
+                if remark and remark in ('You must assign a batch number', 'You must assign an expiry date') :
+                    result['value']['remark'] = ''
                 return result
                 
         else:
@@ -517,7 +527,7 @@ class real_average_consumption_line(osv.osv):
             return {'warning': warn_msg}
         return {}
 
-    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, context=None):
+    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, remark=False, context=None):
         '''
         Set the expiry date according to the prodlot
         '''
@@ -526,6 +536,8 @@ class real_average_consumption_line(osv.osv):
         res = {'value': {}}
         context.update({'location': location_id, 'uom': uom})
         if prodlot_id and not expiry_date:
+            if remark and remark in ('You must assign a batch number', 'You must assign an expiry date') :
+                res['value']['remark'] = ''
             res['value'].update({'expiry_date': self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).life_date})
         elif not prodlot_id and expiry_date:
             res['value'].update({'expiry_date': False})
@@ -534,6 +546,8 @@ class real_average_consumption_line(osv.osv):
             context.update({'compute_child': False})
             product_qty = self.pool.get('product.product').browse(cr, uid, product_id, context=context).qty_available
         else:
+            if remark and remark in ('You must assign a batch number', 'You must assign an expiry date') :
+                res['value']['remark'] = ''
             context.update({'location_id': location_id})
             product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_available
         res['value'].update({'product_qty': product_qty})
@@ -664,7 +678,7 @@ class monthly_review_consumption(osv.osv):
         
         outfile = TemporaryFile('w+')
         writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product reference', 'Product name', 'AMC', 'FMC', 'Valid until'])
+        writer.writerow(['Product Code', 'Product Description', 'AMC', 'FMC', 'Valid until'])
         
         for line in fmc.line_ids:
             writer.writerow([line.name.default_code and line.name.default_code.encode('utf-8'), line.name.name and line.name.name.encode('utf-8'), line.amc, line.fmc, line.valid_until or ''])
@@ -726,6 +740,7 @@ class monthly_review_consumption(osv.osv):
                     self.pool.get('monthly.review.consumption.line').unlink(cr, uid, line.id, context=context)
 
             amc_context = context.copy()
+            amc_context.update({'from_date': report.period_from, 'to_date': report.period_to})
             if amc_context.get('from_date', False):
                 from_date = (DateFrom(amc_context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
                 amc_context.update({'from_date': from_date})
@@ -864,10 +879,23 @@ class monthly_review_consumption_line(osv.osv):
                          'last_reviewed2': time.strftime('%Y-%m-%d')})
 
         return super(monthly_review_consumption_line, self).write(cr, uid, ids, vals, context=context)
+
+    def _get_mrc_change(self, cr, uid, ids, context=None):
+        '''
+        Returns MRC ids when Date change
+        '''
+        result = {}
+        for mrc in self.pool.get('monthly.review.consumption').browse(cr, uid, ids, context=context):
+            for line in mrc.line_ids:
+                result[line.id] = True
+                
+        return result.keys()
     
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
-        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, store=True),
+        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, 
+                               store={'monthly.review.consumption': (_get_mrc_change, ['period_from', 'period_to'], 20),
+                                      'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
         'fmc': fields.float(digits=(16,2), string='FMC'),
         'fmc2': fields.float(digits=(16,2), string='FMC (hidden)'),
         #'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),

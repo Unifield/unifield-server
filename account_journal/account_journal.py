@@ -72,11 +72,12 @@ class account_journal(osv.osv):
                 ('general', 'General'), 
                 ('situation', 'Opening/Closing Situation'),
                 ('cur_adj', 'Currency Adjustement'),
+                ('inkind', 'In-kind Donation'),
+                ('intermission', 'Intermission'),
         ]
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
-        'instance_id': fields.char('Proprietary instance', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
     }
 
@@ -86,7 +87,6 @@ class account_journal(osv.osv):
         'entry_posted': False,
         'update_posted': True,
         'group_invoice_lines': False,
-        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.name,
     }
     
     def get_current_period(self, cr, uid, context=None):
@@ -126,6 +126,9 @@ class account_journal(osv.osv):
         elif type == 'cheque': 
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
+        elif type == 'cur_adj':
+            default_dom += [('user_type.code', '=', 'expense')]
+            value['domain']['default_debit_account_id'] = default_dom
         return value
 
     def create(self, cr, uid, vals, context=None):
@@ -182,7 +185,61 @@ class account_journal(osv.osv):
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
                                   context=context)
+        
+        # Prevent user that default account for cur_adj type should be an expense account
+        if vals['type'] in ['cur_adj']:
+            account_id = vals['default_debit_account_id']
+            user_type_code = self.pool.get('account.account').read(cr, uid, account_id, ['user_type_code']).get('user_type_code', False)
+            if user_type_code != 'expense':
+                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
         return journal_obj
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Verify default debit account for adjustement journals
+        """
+        res = super(account_journal, self).write(cr, uid, ids, vals, context=context)
+        for j in self.browse(cr, uid, ids):
+            if j.type == 'cur_adj' and j.default_debit_account_id.user_type_code != 'expense':
+                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
+        return res
+
+    def button_delete_journal(self, cr, uid, ids, context=None):
+        """
+        Delete all linked register and this journal except:
+        - if another register is linked to one of attached register
+        - if one of register's balance is not null
+        - if one of register is not draft
+        """
+        if not context:
+            context = {}
+        for id in ids:
+            all_register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('journal_id', '=', id)])
+            criteria_register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('journal_id', '=', id), ('state', '=', 'draft'), ('balance_end', '=', 0)])
+            if not all_register_ids:
+                raise osv.except_osv(_('Error'), _('No register found. You can manually delete this journal.'))
+            if all_register_ids != criteria_register_ids:
+                raise osv.except_osv(_('Warning'), _('Deletion is not possible. All registers are not in draft state!'))
+            # Delete all registers
+            context.update({'from': 'journal_deletion'})
+            self.pool.get('account.bank.statement').unlink(cr, uid, all_register_ids, context) # Needs context to permit register deletion
+            # Delete this journal
+            self.unlink(cr, uid, id)
+        # Return to the journal view list
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_journal_tree')
+        view_id = view_id and view_id[1] or False
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_journal_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Journal list'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.journal',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
+            'target': 'crush',
+        }
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

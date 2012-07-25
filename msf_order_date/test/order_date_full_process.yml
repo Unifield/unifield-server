@@ -203,11 +203,13 @@
     
     # get the corresponding procurement order
     data = sol_obj.read(cr, uid, [ref("sol_order_date_200")], ['procurement_id'], context=context)[0]
+    assert data['procurement_id'], 'procurement data is missing, problem at procurement generation'
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note', 'date_planned'], context=context)[0]
     # date planned of procurement order rts of so - preparation lead time
     assert data['date_planned'] == date_planned_time, 'procurement date planned is wrong - %s - %s'%(date_planned_time,data['date_planned'])
     
+    assert data['purchase_id'], 'purchase_id is missing'
     po_id = data['purchase_id'][0]
     # assert existing values    
     obj = self.browse(cr, uid, po_id, context=context)

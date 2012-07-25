@@ -158,6 +158,7 @@
     type = context['type']
     for mem in getattr(self.browse(cr, uid, wiz_id, context=c), 'product_moves_%s'%type):
       mem.write({'prodlot_id': ref("kit_lot_As")}, context=c)
+    self.copy_all(cr,uid,[wiz_id], context=c)
     self.do_incoming_shipment(cr, uid, [wiz_id], context=c)
 -
   Check that the incoming shipment is done

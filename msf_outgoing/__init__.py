@@ -45,12 +45,15 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('seq_out_of_range', 'Selected Sequence is out of range'),
                               # substitute kit
                               ('not_available', 'Not Available'),
-                              ('must_be_greater_than_0', 'Quantity must be greater than 0.0.'),
+                              ('must_be_greater_than_0', 'Quantity must be greater than 0.0'),
                               # assign kit
-                              ('greater_than_available', 'Assigned qty must be smaller or equal to available qty.'),
-                              ('greater_than_required', 'Assigned qty must be smaller or equal to required qty.'),
+                              ('greater_than_available', 'Assigned qty must be smaller or equal to available qty'),
+                              ('greater_than_required', 'Assigned qty must be smaller or equal to required qty'),
                               # pol dekitting
-                              ('price_must_be_greater_than_0', 'Unit Price must be greater than 0.0.'),
+                              ('price_must_be_greater_than_0', 'Unit Price must be greater than 0.0'),
+                              # claims
+                              ('missing_src_location', 'Src Location is missing'),
+                              ('not_exist_in_picking', 'Does not exist in selected IN/OUT'),
                               ]
 
 import msf_outgoing

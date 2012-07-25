@@ -21,7 +21,7 @@
 
 import threading
 
-from osv import osv, fields
+from osv import osv
 
 class procurement_compute_all(osv.osv_memory):
     _name = 'procurement.cycle.compute.all'
@@ -42,8 +42,7 @@ class procurement_compute_all(osv.osv_memory):
         @param context: A standard dictionary
         """
         proc_obj = self.pool.get('procurement.order')
-        for proc in self.browse(cr, uid, ids, context=context):
-            proc_obj.run_automatic_cycle(cr, uid, use_new_cursor=cr.dbname, context=context)
+        proc_obj.run_automatic_cycle(cr, uid, use_new_cursor=cr.dbname, context=context)
         return {}
 
     def procure_calculation_cycle(self, cr, uid, ids, context=None):

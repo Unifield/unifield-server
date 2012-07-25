@@ -69,8 +69,8 @@ class account_line_csv_export(osv.osv_memory):
         # Then write lines
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             csv_line = []
-            #instance (Proprietary Instance)
-            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
+            #instance_id (Proprietary Instance)
+            csv_line.append(ml.instance_id and ml.instance_id.code and ml.instance_id.code.encode('utf-8') or '')
             # journal_id
             csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
             #move_id (Entry Sequence)
@@ -164,7 +164,7 @@ class account_line_csv_export(osv.osv_memory):
         head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 
             'Period', 'General Account']
         if display_fp:
-            head += ['Funding Pool', 'Cost Center']
+            head += ['Destination', 'Cost Center', 'Funding Pool']
         else:
             head += ['Analytic Account']
         head += ['Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency']
@@ -177,8 +177,8 @@ class account_line_csv_export(osv.osv_memory):
         # Then write lines
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             csv_line = []
-            #instance
-            csv_line.append(al.company_id and al.company_id.name and al.company_id.name.encode('utf-8') or '')
+            #instance_id
+            csv_line.append(al.instance_id and al.instance_id.code and al.instance_id.code.encode('utf-8') or '')
             # journal_id
             csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
             #sequence
@@ -195,11 +195,13 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
             #general_account_id (general account)
             csv_line.append(al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or '')
-            #account_id name (analytic_account)
-            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
             if display_fp:
+                # destination_id
+                csv_line.append(al.destination_id and al.destination_id.name and al.destination_id.name.encode('utf-8') or '')
                 #cost_center_id
                 csv_line.append(al.cost_center_id and al.cost_center_id.name and al.cost_center_id.name.encode('utf-8') or '')
+            #account_id name (analytic_account)
+            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
             #third party
             csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
             #amount_currency

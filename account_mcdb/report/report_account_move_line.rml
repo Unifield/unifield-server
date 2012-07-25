@@ -67,16 +67,16 @@
           <para style="P3">Entry Sequence</para>
         </td>
         <td>
-          <para style="P3">Description</para>
+          <para style="P3">DESCRIPTION</para>
         </td>
         <td>
-          <para style="P3">Reference</para>
-        </td>
-        <td>
-          <para style="P3">Posting Date</para>
+          <para style="P3">CODE</para>
         </td>
         <td>
           <para style="P3">Document Date</para>
+        </td>
+        <td>
+          <para style="P3">Posting Date</para>
         </td>
         <td>
           <para style="P3">Period</para>
@@ -112,7 +112,7 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <para style="P3">[[ o.instance or '' ]]</para>
+          <para style="P3">[[ o.instance and o.instance_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
@@ -127,10 +127,10 @@
           <para style="P3">[[ o.ref or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
+          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>

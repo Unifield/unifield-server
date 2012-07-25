@@ -104,7 +104,15 @@ class stock_partial_picking(osv.osv_memory):
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('The option "Cross docking" is not convenient for a purchase order which the category is "Service" or "Transport".')}
-            return result
+            
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+
+        if dest_type == 'to_cross_docking' and setup.allocation_setup == 'unallocated':
+            result['value'].update({'dest_type': 'default'})
+            result['warning'] = {'title': _('Error'),
+                                 'message': _('The Allocated stocks setup is set to Unallocated. In this configuration, you cannot made moves from/to Cross-docking locations.')}
+                
+        return result
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
@@ -158,8 +166,12 @@ class stock_partial_picking(osv.osv_memory):
         stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
 # ----------------------------------------------------------------------------------------------------------------
 
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+
         for var in partial_picking_obj.browse(cr, uid, wiz_ids, context=context):
             if var.source_type == 'from_cross_docking' :
+                if setup.allocation_setup == 'unallocated':
+                    raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
                 # below, "dest_type" is only used for the incoming shipment. We set it to "None" because by default it is "default"and we do not want that info on outgoing shipment
                 var.dest_type = None
                 for pick in pick_obj.browse(cr, uid, picking_ids, context=context):

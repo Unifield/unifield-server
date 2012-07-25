@@ -34,8 +34,8 @@ class wizard_transfer_with_change(osv.osv_memory):
         'converted_amount': fields.float(string="Transfer amount valuation at system rate (automatic)", readonly=True, 
             help="Register line converted amount at standard rate (based on third party journal currency)"),
         'absl_currency': fields.many2one('res.currency', string="Register line currency", readonly=True, help="Register line currency"),
-        'amount_from': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
-        'amount_to': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
+        'amount_from': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False)]}),
+        'amount_to': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False)]}),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, help="This currency is those from given third party journal."),
         'currency_from': fields.many2one('res.currency', string="Currency", readonly=True),
         'currency_to': fields.many2one('res.currency', string="Currency", readonly=True),
@@ -106,9 +106,6 @@ class wizard_transfer_with_change(osv.osv_memory):
                 elif wiz.type == 'from':
                     amount = wiz.amount_from
                 vals.update({'transfer_amount': amount})
-            # Take currency from account_bank_statement_line transfer_journal_id field
-            if wiz.absl_id and wiz.absl_id.transfer_journal_id:
-                vals.update({'transfer_currency': wiz.absl_id.transfer_journal_id.currency.id})
             if vals and wiz.absl_id:
                 self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.absl_id.id], vals, context=context)
         # Close wizard

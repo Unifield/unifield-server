@@ -41,7 +41,7 @@ class report_budget_criteria(report_sxw.report_sxw):
                    ['Budget code:', budget.code],
                    ['Fiscal year:', budget.fiscalyear_id.name],
                    ['Cost center:', budget.cost_center_id.name],
-                   ['Decision moment:', budget.decision_moment],
+                   ['Decision moment:', budget.decision_moment_id.name],
                    ['Version:', budget.version],
                    ['Commitments:', parameters['commitment'] and 'Included' or 'Excluded'],
                    ['Breakdown:', breakdown_selection[parameters['breakdown']]],

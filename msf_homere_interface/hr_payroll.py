@@ -36,7 +36,6 @@ class hr_payroll(osv.osv):
         """
         Get state of distribution:
          - if compatible with the line, then "valid"
-         - if no distribution on the line, then "none"
          - all other case are "invalid"
         """
         if isinstance(ids, (int, long)):
@@ -49,21 +48,58 @@ class hr_payroll(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        # Browse all given lines
+        # Browse all given lines to check analytic distribution validity
+        ## TO CHECK:
+        # A/ if CC = dummy CC
+        # B/ if FP = MSF Private FUND
+        # C/ (account/DEST) in FP except B
+        # D/ CC in FP except when B
+        # E/ DEST in list of available DEST in ACCOUNT
+        ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
+        ## CC is mandatory, so always available:
+        # 1/ no FP, no DEST => Distro = valid
+        # 2/ FP, no DEST => Check D except B
+        # 3/ no FP, DEST => Check E
+        # 4/ FP, DEST => Check C, D except B, E
+        ## 
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = 'invalid'
-            if line.cost_center_id and line.funding_pool_id:
-                if line.funding_pool_id.id == fp_id:
-                    res[line.id] = 'valid'
-                    continue
-                if line.account_id.id in [x.id for x in line.funding_pool_id.account_ids] and line.cost_center_id.id in [x.id for x in line.funding_pool_id.cost_center_ids]:
-                    res[line.id] = 'valid'
-                    continue
-            elif line.cost_center_id and not line.funding_pool_id:
-                res[line.id] = 'valid'
+            res[line.id] = 'valid' # by default
+            #### SOME CASE WHERE DISTRO IS OK
+            # if account is not expense, so it's valid
+            if line.account_id and line.account_id.user_type_code and line.account_id.user_type_code != 'expense':
                 continue
-            else:
-                res[line.id] = 'none'
+            # if just a cost center, it's also valid! (CASE 1/)
+            if not line.funding_pool_id and not line.destination_id:
+                continue
+            # if FP is MSF Private Fund and no destination_id, then all is OK.
+            if line.funding_pool_id and line.funding_pool_id.id == fp_id and not line.destination_id:
+                continue
+            #### END OF CASES
+            if line.funding_pool_id and not line.destination_id: # CASE 2/
+                # D Check, except B check
+                if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+            elif not line.funding_pool_id and line.destination_id: # CASE 3/
+                # E Check
+                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                    res[line.id] = 'invalid'
+                    continue
+            else: # CASE 4/
+                # C Check, except B
+                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids] and line.funding_pool_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+                # D Check, except B check
+                if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
+                    res[line.id] = 'invalid'
+                    continue
+                # E Check
+                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                    res[line.id] = 'invalid'
+                    continue
         return res
 
     def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -96,6 +132,7 @@ class hr_payroll(osv.osv):
 
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
+        'document_date': fields.date(string='Document Date', required=True, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
         'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
         'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True),
@@ -111,6 +148,7 @@ class hr_payroll(osv.osv):
         'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
@@ -122,6 +160,7 @@ class hr_payroll(osv.osv):
 
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
+        'document_date': lambda *a: strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
 
@@ -132,7 +171,7 @@ class hr_payroll(osv.osv):
         if not context:
             context = {}
         view = super(hr_payroll, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type == 'tree':
+        if view_type in ['tree', 'form']:
             form = etree.fromstring(view['arch'])
             data_obj = self.pool.get('ir.model.data')
             try:
@@ -140,7 +179,7 @@ class hr_payroll(osv.osv):
             except ValueError:
                 oc_id = 0
             # Change OC field
-            fields = form.xpath('/tree//field[@name="cost_center_id"]')
+            fields = form.xpath('//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
             # Change FP field
@@ -148,11 +187,44 @@ class hr_payroll(osv.osv):
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
-            fp_fields = form.xpath('/tree//field[@name="funding_pool_id"]')
+            fp_fields = form.xpath('//field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('account_ids', '=', account_id), ('id', '=', %s)]" % fp_id)
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+            # Change Destination field
+            dest_fields = form.xpath('//field[@name="destination_id"]')
+            for field in dest_fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
+            # Apply changes
             view['arch'] = etree.tostring(form)
         return view
+
+    def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
+        """
+        Check given funding pool with destination
+        """
+        # Prepare some values
+        res = {}
+        # If all elements given, then search FP compatibility
+        if destination_id and funding_pool_id and account_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
+            # but do an exception for MSF Private FUND analytic account
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and funding_pool_id != fp_id:
+                res = {'value': {'funding_pool_id': False}}
+        # If no destination, do nothing
+        elif not destination_id:
+            res = {}
+        # Otherway: delete FP
+        else:
+            res = {'value': {'funding_pool_id': False}}
+        # If destination given, search if given 
+        return res
 
     def create(self, cr, uid, vals, context=None):
         """

@@ -67,10 +67,9 @@ class journal_items_corrections_lines(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Prepare some values
-        aml_obj = self.pool.get('account.move.line')
         # Add context in order to know we come from a correction wizard
-        wiz = self.browse(cr, uid, ids[0], context=context).wizard_id
+        this_line = self.browse(cr, uid, ids[0], context=context)
+        wiz = this_line.wizard_id
         context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': wiz.id or False})
         # Get distribution
         distrib_id = False
@@ -87,10 +86,11 @@ class journal_items_corrections_lines(osv.osv_memory):
             'total_amount': amount,
             'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
             'currency_id': currency or False,
-            'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+            'old_account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
             'distribution_id': distrib_id,
             'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
             'date': wiz.date or strftime('%Y-%m-%d'),
+            'account_id': this_line.account_id and this_line.account_id.id or False,
         }
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
@@ -235,7 +235,7 @@ class journal_items_corrections(osv.osv_memory):
         res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
-    def action_confirm(self, cr, uid, ids, context=None):
+    def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
         Do a correction from the given line
         """
@@ -265,7 +265,7 @@ class journal_items_corrections(osv.osv_memory):
         if comparison == 1:
 #            if not old_line.statement_id:
 #                raise osv.except_osv(_('Error'), _('Account correction is only possible on move line that come from a register!'))
-            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
+            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
         # Correct third parties

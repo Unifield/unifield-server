@@ -34,14 +34,33 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     _columns = {
-        'cross_docking_ok': fields.boolean('Cross docking', readonly=True, states={'draft': [('readonly', False)]}),
+        'cross_docking_ok': fields.boolean('Cross docking'),
+        'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage','<>','view')], 
+        help="""This location is set according to the Warehouse selected, or according to the option 'Cross docking' 
+        or freely if you do not select 'Warehouse'.But if the 'Order category' is set to 'Transport' or 'Service', 
+        you cannot have an other location than 'Service'"""),
     }
 
     _defaults = {
         'cross_docking_ok': False,
     }
+    
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False):
+        '''
+        Changes destination location
+        '''
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id)
+        if order_type == 'direct':
+            location_id = self.onchange_cross_docking_ok(cr, uid, ids, False, warehouse_id)['value']['location_id']
+        
+            if 'value' in res:
+                res['value'].update({'location_id': location_id})
+            else:
+                res.update({'value': {'location_id': location_id}})
+        
+        return res
 
-    def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, context=None):
+    def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, warehouse_id, context=None):
         """ Finds location id for changed cross_docking_ok.
         @param cross_docking_ok: Changed value of cross_docking_ok.
         @return: Dictionary of values.
@@ -50,12 +69,50 @@ class purchase_order(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         if cross_docking_ok:
-            l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        elif cross_docking_ok == False:
-            l = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+            l = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+        else:
+            warehouse_obj = self.pool.get('stock.warehouse')
+            if not warehouse_id:
+                warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
+                if not warehouse_ids:
+                    return {'warning': {'title': _('Error !'), 'message': _('No Warehouse defined !')}, 'value': {'location_id': False}}
+                warehouse_id = warehouse_ids[0]
+            l = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
         return {'value': {'location_id': l}}
     
-    def onchange_categ(self, cr, uid, ids, categ, context=None):
+    def onchange_location_id(self, cr, uid, ids, location_id, categ, context=None):
+        """ If location_id == cross docking we tick the box "cross docking".
+        @param location_id: Changed value of location_id.
+        @return: Dictionary of values.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        res['value'] = {}
+        obj_data = self.pool.get('ir.model.data')
+        if location_id == self.pool.get('stock.location').get_cross_docking_location(cr, uid) and categ not in ['service', 'transport']:
+            cross_docking_ok = True
+        elif location_id != self.pool.get('stock.location').get_cross_docking_location(cr, uid):
+            cross_docking_ok = False
+        elif location_id != self.pool.get('stock.location').get_service_location(cr, uid) and categ in ['service', 'transport']:
+            return {'warning': {'title': _('Error !'), 'message': _("""
+            If the 'Order Category' is 'Service' or 'Transport', you cannot have an other location than 'Service'
+            """)}, 'value': {'location_id': self.pool.get('stock.location').get_service_location(cr, uid)}}
+        res['value']['cross_docking_ok'] = cross_docking_ok
+        return res
+    
+    def onchange_warehouse_id(self, cr, uid, ids,  warehouse_id, order_type, dest_address_id):
+        """ Set cross_docking_ok to False when we change warehouse.
+        @param warehouse_id: Changed id of warehouse.
+        @return: Dictionary of values.
+        """
+        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids,  warehouse_id, order_type, dest_address_id)
+        if warehouse_id:
+            res['value'].update({'cross_docking_ok': False})
+        return res
+    
+    
+    def onchange_categ(self, cr, uid, ids, categ, warehouse_id, cross_docking_ok, location_id, context=None):
         """ Sets cross_docking to False if the categ is service or transport.
         @param categ: Changed value of categ.
         @return: Dictionary of values.
@@ -63,39 +120,47 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        bool_value = None
-        defined_location = None
+        warehouse_obj = self.pool.get('stock.warehouse')
+        value = {}
+            
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        cross_loc = False
+        if setup.allocation_setup != 'unallocated':
+            cross_loc = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+        
+        service_loc = self.pool.get('stock.location').get_service_location(cr, uid)
         if categ in ['service', 'transport']:
-            bool_value = False
-            defined_location = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
-        elif categ in ['medical', 'log', 'other']:
-            defined_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-        return {'value': {'cross_docking_ok': bool_value, 'location_id':defined_location}}
+            value = {'location_id': service_loc, 'cross_docking_ok': False}
+        elif cross_docking_ok:
+            value = {'location_id': cross_loc}
+        elif location_id == service_loc or (setup.allocation_setup != 'unallocated' and location_id == cross_loc):
+            if warehouse_id:
+                value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
+            else:
+                value = {'location_id': False}
+        return {'value': value}
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
-        bool_value = None
-        defined_location = None
-        cross_docking_value = self.browse(cr, uid, ids, context=context)[0].cross_docking_ok
-        cross_docking_ok = vals.get('cross_docking_ok')
-        if cross_docking_ok or cross_docking_value:
-            if not vals.get('categ') in ['service', 'transport']:
-                vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]})
-        elif not cross_docking_ok:
-            if not vals.get('categ') in ['service', 'transport']:
-                vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]})
-            elif vals.get('categ') in ['service', 'transport']:
-                vals.update({'cross_docking_ok': False, 'location_id': obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]})
+        if 'order_type' in vals and vals['order_type'] == 'direct':
+            vals.update({'cross_docking_ok': False})
+        if 'categ' in vals and vals['categ'] in ['service', 'transport']:
+            vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
+        if 'cross_docking_ok' in vals and vals['cross_docking_ok']:    
+            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
         obj_data = self.pool.get('ir.model.data')
+        if vals.get('order_type') == 'direct':
+            vals.update({'cross_docking_ok': False})
+        if 'categ' in vals and vals['categ'] in ['service', 'transport']:
+            vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
         if vals.get('cross_docking_ok'):
-            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
-        elif vals.get('cross_docking_ok') == False:
-            vals.update({'location_id': obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1], })
+            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def _check_cross_docking(self, cr, uid, ids, context=None):
@@ -106,11 +171,19 @@ class purchase_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+            
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+                
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         for purchase in self.browse(cr, uid, ids, context=context):
-            if purchase.cross_docking_ok and purchase.location_id.id != cross_docking_location:
-                raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
+            if purchase.cross_docking_ok:
+                if setup.allocation_setup == 'unallocated':
+                    raise osv.except_osv(_('Error'), _('The Allocated stocks setup is set to Unallocated. In this configuration, you cannot made a Cross-docking Purchase order.'))
+                cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                if purchase.location_id.id != cross_docking_location:
+                    raise osv.except_osv(_('Warning !'), _('If you tick the box \"cross docking\", you cannot have an other location than \"Cross docking\"'))
+                else:
+                    return True
             else:
                 return True
 
@@ -136,11 +209,13 @@ class procurement_order(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         obj_data = self.pool.get('ir.model.data')
         procurement = kwargs['procurement']
+            
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if len(ids):
-            values.update({'cross_docking_ok': True, 'location_id' : obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
+        if len(ids) and setup.allocation_setup != 'unallocated':
+            values.update({'cross_docking_ok': True, 'location_id' : self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return values  
 
 procurement_order()
@@ -164,16 +239,43 @@ class stock_picking(osv.osv):
         pathname = path.join('msf_cross_docking', 'data/msf_cross_docking_data.xml')
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'msf_cross_docking', file, {}, mode='init', noupdate=False)
+        
+    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the Unifield configuration value
+        '''
+        res = {}
+            
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        for order in ids:
+            res[order] = setup.allocation_setup
+        
+        return res
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),
+        'allocation_setup': fields.function(_get_allocation_setup, type='selection', 
+                                            selection=[('allocated', 'Allocated'),
+                                                       ('unallocated', 'Unallocated'),
+                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        res.update({'allocation_setup': setup.allocation_setup})
+        
+        return res
     
     '''
     do_partial(=function which is originally called from delivery_mechanism) modification 
     for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
     '''
-    _inherit = 'stock.picking'
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -186,7 +288,6 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
@@ -211,17 +312,29 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        
+        # Check the allocation setup
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        if setup.allocation_setup == 'unallocated':
+            raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
+        
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+                        # Don't change done stock moves
+                        if move.state != 'done':
+                            move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
+        # we check availability : cancel then check
+        self.cancel_assign(cr, uid, ids)
+        self.action_assign(cr, uid, ids)
         return False
 
     def button_stock_all (self, cr, uid, ids, context=None):
@@ -235,17 +348,21 @@ class stock_picking(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         for pick in pick_obj.browse(cr,uid,ids,context=context):
             move_lines = pick.move_lines
             if len(move_lines) >= 1 :
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        move_obj.write(cr, uid, [move_ids], {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
+                        # Don't change done stock moves
+                        if move.state != 'done':
+                            move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
+        # we check availability : cancel then check
+        self.cancel_assign(cr, uid, ids)
+        self.action_assign(cr, uid, ids)
         return False
 
     def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -269,10 +386,15 @@ class stock_picking(osv.osv):
         res = {}
         if not wiz_ids:
             return res
+        
+# ------ check the allocation setup ------------------------------------------------------------------------------
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+# ----------------------------------------------------------------------------------------------------------------
 
 # ------ referring to locations 'cross docking' and 'stock' ------------------------------------------------------
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        if setup.allocation_setup != 'unallocated':        
+            cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
 # ----------------------------------------------------------------------------------------------------------------
         partial_picking_obj = self.pool.get('stock.partial.picking')
@@ -282,22 +404,23 @@ class stock_picking(osv.osv):
             """For incoming shipment """
             # we check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
             if var.dest_type == 'to_cross_docking':
+                if setup.allocation_setup == 'unallocated':
+                    raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is "default"and we do not want that info on INCOMING shipment
                 var.source_type = None
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 if product_type not in ('service_recep', 'service'):
                     # treat moves towards CROSS DOCKING if NOT SERVICE
-                    values.update({'location_dest_id':cross_docking_location,})
+                    values.update({'location_dest_id': cross_docking_location})
             elif var.dest_type == 'to_stock' :
                 var.source_type = None
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is "default"and we do not want that info on INCOMING shipment
-                var.source_type = None
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 if product_type not in ('service_recep', 'service'):
                     # treat moves towards STOCK if NOT SERVICE
-                    values.update({'location_dest_id':stock_location_input,})
+                    values.update({'location_dest_id': stock_location_input})
         return values
     
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -333,8 +456,25 @@ class stock_move(osv.osv):
     'MOVE_cross_docking_ok' for not being in conflict with the other 'cross_docking_ok' in the stock.picking object 
     which also uses attrs according to the value of cross_docking_ok'.
     """
+    
+    def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the Unifield configuration value
+        '''
+        res = {}
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        for order in ids:
+            res[order] = setup.allocation_setup
+        
+        return res
+    
     _columns = {
         'move_cross_docking_ok': fields.boolean('Cross docking'),
+        'allocation_setup': fields.function(_get_allocation_setup, type='selection', 
+                                            selection=[('allocated', 'Allocated'),
+                                                       ('unallocated', 'Unallocated'),
+                                                       ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -343,6 +483,10 @@ class stock_move(osv.osv):
         else we keep the default values i.e. "Input"
         """
         default_data = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        default_data.update({'allocation_setup': setup.allocation_setup})
+        
         if context is None:
             context = {}
         purchase_id = context.get('purchase_id', [])
@@ -353,7 +497,7 @@ class stock_move(osv.osv):
         purchase_browse = self.pool.get('purchase.order').browse(cr, uid, purchase_id, context=context)
         # If the purchase order linked has the option cross docking then the new created stock move should have the destination location to cross docking
         if purchase_browse.cross_docking_ok:
-            default_data.update({'location_dest_id' : obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],})
+            default_data.update({'location_dest_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return default_data
     
     def button_cross_docking (self, cr, uid, ids, context=None):
@@ -364,9 +508,31 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # Check the allocation setup
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        
+        if setup.allocation_setup == 'unallocated':
+            raise osv.except_osv(_('Error'), _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'))
+            
         obj_data = self.pool.get('ir.model.data')
-        cross_docking_location = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        return self.write(cr, uid, ids, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+        cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+
+        todo = []
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state != 'done': 
+                todo.append(move.id)
+        ret = True
+        if todo:
+            ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+
+            # below we cancel availability to recheck it
+            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
+            # we cancel availability
+            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
+            # we recheck availability
+            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
+        return ret
 
     def button_stock (self, cr, uid, ids, context=None):
         """
@@ -377,7 +543,20 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        stock_location_output = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-        return self.write(cr, uid, ids, {'location_id': stock_location_output, 'move_cross_docking_ok': False}, context=context)
-    
+        
+        todo = []
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state != 'done':
+                self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+                todo.append(move.id)
+
+        if todo:
+            # below we cancel availability to recheck it
+            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
+            # we cancel availability
+            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
+            # we recheck availability
+            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
+        return True
+
 stock_move()

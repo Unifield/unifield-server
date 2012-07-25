@@ -54,7 +54,7 @@ class product_list_export(osv.osv_memory):
         
         list = self.pool.get('product.list').browse(cr, uid, active_id, context=context)
         
-        export = 'Product reference;Product name;Comment'
+        export = 'Product Code;Product Description;Comment'
         export += '\n'
         
         for line in list.product_ids:
