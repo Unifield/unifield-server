@@ -92,7 +92,7 @@
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
-        <paraStyle name="GrosTitre" fontName="Helvetica" fontSize="12.0" alignment="LEFT" leading="16.0" spaceBefore="1.0" spaceAfter="1.0" />
+
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
 
@@ -102,21 +102,18 @@
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+
+        <paraStyle name="GrosTitre" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
     </stylesheet>
 
     <story>
 
-        <para style="Standard">[[ getInstanceAdress() ]]</para>
+        <para style="Standard">[[ getInstanceAdress(company) ]]</para>
 
         <para style="Standard">
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="800.0" style="ItemsTitle0">
-            <tr><td><para style="TextInformation" alignment="CENTER"></para></td></tr>
-            <tr><td><para style="TextInformation" alignment="CENTER"></para></td></tr>
-            <tr><td><para style="TextInformation" alignment="CENTER"></para></td></tr>
-        </blockTable>
 
 
         <blockTable colWidths="800.0" style="ItemsTitle">
@@ -131,7 +128,9 @@
             <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
         </blockTable>
 
-        <blockTable colWidths="130.0,130.0,540.0" style="ItemsTitle0">
+
+
+        <blockTable colWidths="100.0,180.0,130.0,390.0" style="ItemsTitle0">
             <tr>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
@@ -142,6 +141,11 @@
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
+
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+
             </tr>
 
             <tr>
@@ -152,8 +156,12 @@
                     <para style="TextInformation" alignment="LEFT">[[  getType(objects[0]) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Created on :</b></para>
                 </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ getDateCrea(objects[0]) ]]</para>
+                </td>
+
             </tr>
             <tr>
                 <td>
@@ -163,7 +171,10 @@
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].name or False ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Last modified on :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ getDateModif(objects[0]) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -174,7 +185,10 @@
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].ref or False ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Warehouse :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ objects[0].warehouse_id and objects[0].warehouse_id.name or False ]]</para>
                 </td>
             </tr>
             <tr>
@@ -185,54 +199,30 @@
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].parent_id and objects[0].parent_id.name or False]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Created on :</b></para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT">[[ getDateCrea(objects[0]) ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Last modified on :</b></para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT">[[ getDateModif(objects[0]) ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Warehouse :</b></para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT">[[ objects[0].warehouse_id and objects[0].warehouse_id.name or False ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-            </tr>
-            <tr>
-                <td>
                     <para style="TextInformation" alignment="LEFT"><b>Location :</b></para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].location_id and objects[0].location_id.name or False ]]</para>
                 </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
             </tr>
             <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
@@ -299,61 +289,7 @@
 
 
 
-        <blockTable colWidths="800.0" style="ItemsTitle0">
-            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
-        </blockTable>
-        <blockTable colWidths="800.0" style="ItemsTitle0">
-            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
-        </blockTable>
-        <blockTable colWidths="800.0" style="ItemsTitle0">
-            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
-        </blockTable>
 
 
-
-
-
-       <blockTable colWidths="800.0" style="ItemsTitle3">
-            <tr>
-                <td>
-                    <para style="TextInformation3gras" alignment="LEFT">Old Products</para>
-                </td>
-            </tr>
-        </blockTable>
-
-        <section>
-        <blockTable colWidths="100.0,350.0,100.0,250.0" style="ItemsTitle0" repeatRows="1">
-            <tr>
-                <td>
-                    <para style="TextInformation3gras" alignment="LEFT">Ref.</para>
-                </td>
-                <td>
-                    <para style="TextInformation3gras" alignment="LEFT">Name</para>
-                </td>
-                <td>
-                    <para style="TextInformation3gras" alignment="LEFT">Date Removed</para>
-                </td>
-                <td>
-                    <para style="TextInformation3gras" alignment="LEFT">Comment</para>
-                </td>
-            </tr>
-
-            <tr>
-           [[ repeatIn(get_lines_old(objects[0]), 'line') ]]
-                <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.default_code or False ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.name or False ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ getDateRemoved(line) ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.comment or False ]]</para>
-                </td>
-            </tr>
-        </blockTable>
-        </section>
     </story>
 </document>

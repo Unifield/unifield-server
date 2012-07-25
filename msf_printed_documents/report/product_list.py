@@ -37,13 +37,9 @@ class product_list(report_sxw.rml_parse):
             'getInstanceAdress': self.getInstanceAdress,
         })
 
-    def getInstanceAdress(self,):
-        id_c = self.pool.get('res.company').search(self.cr,self.uid,[('name','ilike','MSF')])
-        bro = self.pool.get('res.company').browse(self.cr,self.uid,id_c[0])
-        projet = bro.instance_id and bro.instance_id.instance or ' '
-        mission = bro.instance_id and bro.instance_id.mission or ' '
-        code = bro.instance_id and bro.instance_id.code or ' '
-        return projet + ' / ' + mission + ' / ' + code
+    def getInstanceAdress(self,c):
+        instance = c.instance_id
+        return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
 
     def getType(self, o):
         if o.type == 'list':
