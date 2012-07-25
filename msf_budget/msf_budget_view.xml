@@ -124,6 +124,22 @@
             </field>
         </record>
 
+        <record id="wizard_budget_actual_export_view" model="ir.ui.view">
+            <field name="name">Actuals by CC Export</field>
+            <field name="model">wizard.actual.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Actuals by CC Export">
+                    <field name="currency_table_id"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_report" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
         <record id="wizard_budget_import_view" model="ir.ui.view">
             <field name="name">Budget Import</field>
             <field name="model">wizard.budget.import</field>

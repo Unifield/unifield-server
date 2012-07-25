@@ -93,7 +93,7 @@ class report_local_expenses(WebKitParser):
                                                                         domain,
                                                                         context=context)
             # we only save the main accounts, not the destinations (new key: account id only)
-            expenses = dict([(item[0], expenses[item]) for item in expenses if item[1] is False])
+            expenses = dict([(item[0], expenses[item]) for item in expenses.keys() if item[1] is False])
             
             
             # make the total row
