@@ -98,7 +98,7 @@
 
                             <group colspan="2" col="2" name="status" groups="base.group_extended">
                                 <separator string="Status" colspan="2"/>
-                                <field name="categ_id"/>
+                                <field name="categ_id" readonly="1"/>
                                 <field name="international_status"/>
                                 <field name="state"/>
                                 <field name="active"/>

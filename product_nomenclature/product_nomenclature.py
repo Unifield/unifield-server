@@ -250,6 +250,7 @@ class product_nomenclature(osv.osv):
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
         'sub_level': fields.selection([('0', '1'), ('1', '2'), ('2', '3'), ('3', '4'), ('4', '5'), ('5', '6')], 'Sub-Level', size=256),
         'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
+        'category_id': fields.many2one('product.category', string='Product category'),
     }
 
     _defaults = {
@@ -269,9 +270,19 @@ class product_nomenclature(osv.osv):
                 return False
             level -= 1
         return True
+    
+    def _check_link(self, cr, uid, ids, context=None):
+        for level in self.browse(cr, uid, ids, context=context):
+            if level.category_id:
+                res = self.search(cr, uid, [('category_id', '=', level.category_id.id)], context=context)
+                if len(res) > 1:
+                    return False
+                
+        return True
 
     _constraints = [
-        (_check_recursion, 'Error ! You can not create recursive nomenclature.', ['parent_id'])
+        (_check_recursion, 'Error ! You can not create recursive nomenclature.', ['parent_id']),
+        (_check_link, 'Error ! You can not have a category linked to two different family', ['category_id'])
     ]
     def child_get(self, cr, uid, ids):
         return [ids]
@@ -405,7 +416,19 @@ class product_template(osv.osv):
             if not has_required:
                 logging.getLogger('init').info('Loading default values for product.template')
                 vals.update(self._get_default_nom(cr, uid, context))
+                
+        # Set the category according to the Family
+        if vals.get('nomen_manda_2'):
+            vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
         return super(product_template, self).create(cr, uid, vals, context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Set the category according to the Family
+        '''
+        if vals.get('nomen_manda_2'):
+            vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
+        return super(product_template, self).write(cr, uid, ids, vals, context)
 
     _defaults = {
     }
@@ -479,6 +502,10 @@ class product_product(osv.osv):
         nomenObj = self.pool.get('product.nomenclature')
         # product object
         prodObj = self.pool.get('product.product')
+        
+        if position == 2 and nomen_manda_2:
+            for n in nomenObj.read(cr, uid, [nomen_manda_2], ['category_id'], context=context):
+                values['categ_id'] = n['category_id'] or False
         
         # loop through children nomenclature of mandatory type
         shownum = num or context.get('withnum') == 1

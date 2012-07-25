@@ -150,8 +150,10 @@
 						attrs="{'invisible': [('type', '!=', 'optional')], 'required': [('type', '=', 'optional')]}" />
 					<field name="parent_id" domain="[('type', '=', 'mandatory')]"
 						on_change="onChangeParentId(type, parent_id)" />
-					<field name="sequence" invisible="1" />
 					<field name="level" invisible="1" />
+					<field name="category_id" 
+					    attrs="{'required': [('level', '=', '2'), ('type', '=', 'mandatory')], 'invisible': ['|', ('level', '!=', '2'), ('type', '!=', 'mandatory')]}"/>
+					<field name="sequence" invisible="1" />
 					<newline />
 				</form>
 			</field>
@@ -229,6 +231,48 @@
 				name="value" />
 			<field eval="True" name="object" />
 		</record>
+		
+		<record id="product_nomenclature_link_category_search" model="ir.ui.view">
+		    <field name="name">product.nomenclature.link.category.search</field>
+		    <field name="model">product.nomenclature</field>
+		    <field name="type">search</field>
+		    <field name="priority" eval="99" />
+		    <field name="arch" type="xml">
+		        <search string="Link nomenclature/category">
+		            <field name="name" />
+		            <field name="category_id" />
+		        </search>
+		    </field>
+		</record>
+		<record id="product_nomenclature_link_category" model="ir.ui.view">
+		    <field name="name">product.nomenclature.link.category</field>
+		    <field name="model">product.nomenclature</field>
+		    <field name="type">tree</field>
+		    <field name="priority" eval="99" />
+		    <field name="arch" type="xml">
+		        <tree string="Link nomenclature/category" editable="top" hide_delete_button="True">
+		            <field name="name" readonly="1" string="Nomenclature" />
+		            <field name="category_id" required="1" />
+		        </tree>
+		    </field>
+		</record>
+		<record id="product_nomenclature_link_category_action" model="ir.actions.act_window">
+            <field name="name">Link nomenclature/category</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.nomenclature</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'mandatory'), ('level', '=', '2')]</field>
+            <field name="search_view_id" ref="product_nomenclature_link_category_search" />
+        </record>
+        <record id="product_nomenclature_link_category_view_tree" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="product_nomenclature_link_category_action" />
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="product_nomenclature_link_category" />
+        </record>
+        <menuitem id="menu_link_nomenclature_category"
+                  action="product_nomenclature_link_category_action"
+                  parent="purchase.menu_product_in_config_purchase" />
 
 
 	</data>
