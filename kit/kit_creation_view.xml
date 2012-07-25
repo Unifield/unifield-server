@@ -45,7 +45,7 @@
                     				<field name="line_number" invisible="True" />
                     				<field name="product_id" readonly="True" />
                     				<field name="product_qty" readonly="True" />
-                    				<field name="assigned_qty_stock_move" />
+                    				<field name="assigned_qty_stock_move" invisible="True" />
                     				<field name="product_uom" readonly="True" />
                     				<field name="prodlot_id"
                     					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,

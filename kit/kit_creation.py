@@ -965,11 +965,17 @@ class stock_move(osv.osv):
             result[obj.id] = {}
             # assigned qty
             assigned_qty = 0.0
-            item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', obj.id)], context=context)
-            if item_ids:
-                data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
-                for value in data:
-                    assigned_qty += value['item_qty']
+            # if the product is perishable (or batch management), we gather assigned qty from kit items
+            if obj.product_id.perishable:
+                item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', obj.id)], context=context)
+                if item_ids:
+                    data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
+                    for value in data:
+                        assigned_qty += value['item_qty']
+            
+            # when the state is assigned or done, the assigned qty is set to product_qty
+            elif obj.state in ['assigned', 'done']:
+                assigned_qty = obj.product_qty
             result[obj.id].update({'assigned_qty_stock_move': assigned_qty})
             # hidden_state
             result[obj.id].update({'hidden_state': obj.state})
