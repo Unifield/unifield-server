@@ -441,10 +441,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
+            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except', 'sourced']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except', 'sourced']:
                 res[el.id] = False
         return res
 
@@ -857,8 +857,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Then update cost center lines
-            if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-                raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+            #if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+            #    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
@@ -1015,6 +1015,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
 
             if distrib:
+                # Check if distribution if valid with wizard account
+                if wiz.account_id:
+                    if self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib.id, False, wiz.account_id.id) != 'valid':
+                        raise osv.except_osv(_('Warning'), _('Header distribution is not valid with this line. Please create a new one here.'))
                 # First delete all current lines
                 self.pool.get('analytic.distribution.wizard.lines').unlink(cr, uid, [x.id for x in wiz.line_ids], context=context)
                 self.pool.get('analytic.distribution.wizard.fp.lines').unlink(cr, uid, [x.id for x in wiz.fp_line_ids], context=context)

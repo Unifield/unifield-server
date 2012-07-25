@@ -460,6 +460,7 @@ class return_claim(osv.osv):
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {'contains_event_return_claim': len(obj.event_ids_return_claim) > 0}
+            result[obj.id] = {'fake_state_return_claim': obj.state}
             
         return result
     
@@ -484,12 +485,14 @@ class return_claim(osv.osv):
                 'product_line_ids_return_claim': fields.one2many('claim.product.line', 'claim_id_claim_product_line', string='Products'),
                 # functions
                 'contains_event_return_claim': fields.function(_vals_get_claim, method=True, string='Contains Events', type='boolean', readonly=True, multi='get_vals_claim'),
+                'fake_state_return_claim': fields.function(_vals_get_claim, method=True, string='Fake State', type='selection', selection=CLAIM_STATE, readonly=True, multi='get_vals_claim'),
                 }
     
     _defaults = {'creation_date_return_claim': lambda *a: time.strftime('%Y-%m-%d'),
                  'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'return.claim'),
                  'default_src_location_id_return_claim': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'state': 'draft',
+                 'fake_state_return_claim': 'draft',
                  'po_id_return_claim': False,
                  'so_id_return_claim': False,
                  }

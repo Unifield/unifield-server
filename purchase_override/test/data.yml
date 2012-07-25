@@ -162,3 +162,20 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier3
+-
+  I create an analytic In-kind donation Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_inkind_donation0}:
+    code: AIKD
+    name: Analytic In-kind donation Journal
+    type: inkind
+-
+  I create a In-kind donation Journal
+-
+  !record {model: account.journal, id: account_journal_inkind_donation0}:
+    code: IKD
+    company_id: base.main_company
+    name: In-kind donation Journal (test)
+    type: inkind
+    analytic_journal_id: account_analytic_inkind_donation0
+    allow_date: 0

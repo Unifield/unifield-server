@@ -57,7 +57,7 @@ class purchase_order(osv.osv):
         Take all new invoice lines and give them analytic distribution that was linked on each purchase order line (if exists)
         """
         # Retrieve some data
-        res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+        res = super(purchase_order, self).action_invoice_create(cr, uid, ids, args) # invoice_id
         # Set analytic distribution from purchase order to invoice
         for po in self.browse(cr, uid, ids):
             # Copy analytic_distribution
@@ -325,6 +325,14 @@ class purchase_order_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, a)
         return res
 
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
+            res[pol['id']] = "%s%s"%(pol['analytic_distribution_state'].capitalize(), pol['have_analytic_distribution_from_header'] and " (from header)" or "")
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
@@ -333,6 +341,7 @@ class purchase_order_line(osv.osv):
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
     }
 
     _defaults = {

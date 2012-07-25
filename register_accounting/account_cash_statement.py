@@ -35,9 +35,10 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        bank = self.browse(cr, uid, res_id)
-        return bank.name + '_' +bank.journal_id.code
+#    Remove this block because it has been modified and moved to the sync module
+#    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+#        bank = self.browse(cr, uid, res_id)
+#        return bank.name + '_' +bank.journal_id.code
 
     def create(self, cr, uid, vals, context=None):
         """

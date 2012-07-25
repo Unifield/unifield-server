@@ -239,13 +239,13 @@ class account_destination_summary(osv.osv):
     _order = 'account_id'
 account_destination_summary()
 
-
 class account_account(osv.osv):
     _name = 'account.account'
     _inherit = 'account.account'
 
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
+        'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
@@ -279,9 +279,9 @@ class account_account(osv.osv):
         res = {}
         if not user_type_id:
             return res
-        data = self.pool.get('account.account.type').read(cr, uid, user_type_id, ['code']).get('code', False)
+        data = self.pool.get('account.account.type').read(cr, uid, user_type_id, ['code', 'report_type'])
         if data:
-            res.setdefault('value', {}).update({'user_type_code': data})
+            res.setdefault('value', {}).update({'user_type_code': data.get('code', False), 'user_type_report_type': data.get('report_type', False)})
         return res
 
 account_account()

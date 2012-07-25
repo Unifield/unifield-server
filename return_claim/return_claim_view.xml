@@ -47,12 +47,12 @@
                         </group>
                         <notebook colspan="4">
                             <page string="Description">
-                                <field name="partner_id_return_claim"
-                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
-                                <field name="po_so_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 <field name="picking_id_return_claim"
                                     domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
                                     on_change="on_change_origin(picking_id_return_claim,context)"
+                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                <field name="po_so_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                <field name="partner_id_return_claim"
                                     attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
                                 <field name="order_line_number_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 <field name="description_return_claim" colspan="4" />
@@ -96,7 +96,7 @@
                                 </field>
                                 <group colspan="3" col="3" />
                                 <button name="add_event" type="object" string="Add an Event" icon="gtk-add"
-                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('type_return_claim', '=', 'transport')]}" />
+                                    attrs="{'readonly': ['|', ('fake_state_return_claim', '=', 'done'), ('type_return_claim', '=', 'transport')]}" />
                             </page>
                             <page string="Products">
                                 <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" />
@@ -150,6 +150,7 @@
                         </notebook>
                         <group col="5" colspan="2">
                             <field name="state" colspan="3" />
+                            <field name="fake_state_return_claim" invisible="True" />
                         </group>
                         <group col="7" colspan="2">
                             <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->

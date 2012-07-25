@@ -49,7 +49,7 @@ class create_picking(osv.osv_memory):
         if create.product_moves_returnproducts:
             for move in create.product_moves_returnproducts:
                 self.pool.get('stock.move.memory.returnproducts').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
-        return {}
+        return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
 
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
@@ -78,7 +78,7 @@ class create_picking(osv.osv_memory):
             # memory moves wizards
             # data generated from stock.moves
             for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-                result.extend(self.__create_partial_picking_memory(pick, context=context))
+                result.extend(self.__create_partial_picking_memory(pick, step, context=context))
         elif step in ('ppl2'):
             # pack families wizard
             # data generated from previous wizard data
@@ -102,7 +102,7 @@ class create_picking(osv.osv_memory):
             
         return res
     
-    def __create_partial_picking_memory(self, pick, context=None):
+    def __create_partial_picking_memory(self, pick, step, context=None):
         '''
         generates the memory objects data depending on wizard step
         
@@ -115,7 +115,7 @@ class create_picking(osv.osv_memory):
         # list for the current pick object
         result = []
         for move in pick.move_lines:
-            if move.state in ('done', 'cancel'):
+            if move.state in ('done', 'cancel', 'confirmed') or move.product_qty == 0.00:
                 continue
             move_memory = {
                 'line_number': move.line_number,
@@ -129,6 +129,8 @@ class create_picking(osv.osv_memory):
                 # specific management rules
                 'expiry_date': move.expired_date,
                 }
+            if step == 'ppl1':
+                move_memory['quantity'] = move.product_qty
             
             # the first wizard of ppl, we set default values as everything is packed in one pack
 #            if step == 'ppl1':
