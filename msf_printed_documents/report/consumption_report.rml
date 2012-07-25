@@ -31,6 +31,14 @@
             <blockBackground colorName="white" />
         </blockTableStyle>
 
+        <blockTableStyle id="ItemsTitle0spe">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" start="3,1" stop="3,1"/>
+        </blockTableStyle>
+
+
         <blockTableStyle id="ItemsTitle">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
@@ -89,10 +97,10 @@
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
-        <paraStyle name="GrosTitre" fontName="Helvetica" fontSize="12.0" alignment="LEFT" leading="16.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="GrosTitre" fontName="Helvetica-Bold" fontSize="12.0" alignment="LEFT" leading="16.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
-
+        <paraStyle name="TextInformation10" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="10.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation3gras" fontName="Helvetica-Bold" fontSize="8.0" alignment="LEFT" leading="10.0" spaceBefore="1.0" spaceAfter="1.0" />
 
@@ -104,17 +112,12 @@
 
     <story>
 
-        <para style="Standard">[[ getInstanceAdress() ]]</para>
+        <para style="Standard">[[ getInstanceAdress(company) ]]</para>
         
         <para style="Standard">
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="800.0" style="ItemsTitle0">
-            <tr><td><para style="TextInformation" alignment="CENTER"></para></td></tr>
-            <tr><td><para style="TextInformation" alignment="CENTER"></para></td></tr>
-            <tr><td><para style="TextInformation" alignment="CENTER"></para></td></tr>
-        </blockTable>
 
         <blockTable colWidths="800.0" style="ItemsTitle">
             <tr>
@@ -124,11 +127,13 @@
             </tr>
         </blockTable>
 
+
+
         <blockTable colWidths="800.0" style="ItemsTitle2">
             <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
         </blockTable>
 
-        <blockTable colWidths="130.0,130.0,540.0" style="ItemsTitle0">
+        <blockTable colWidths="130.0,130.0,300.0,240.0" style="ItemsTitle0spe">
             <tr>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
@@ -139,6 +144,10 @@
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+
             </tr>
 
             <tr>
@@ -151,6 +160,9 @@
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
+                <td>
+                    <para style="TextInformation10" alignment="LEFT"><b>Period : </b> From [[ getDateFrom(objects[0]) ]] to [[ getDateTo(objects[0]) ]]</para>
+                </td>
             </tr>
             <tr>
                 <td>
@@ -158,6 +170,9 @@
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].name or False ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
@@ -173,6 +188,9 @@
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
             </tr>
             <tr>
                 <td>
@@ -184,29 +202,12 @@
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Date from :</b></para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT">[[ getDateFrom(objects[0]) ]]</para>
-                </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Date to :</b></para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT">[[ getDateTo(objects[0]) ]]</para>
-                </td>
-                <td>
-                    <para style="TextInformation" alignment="LEFT"></para>
-                </td>
-            </tr>
+
+
         </blockTable>
         <blockTable colWidths="800.0" style="ItemsTitle0">
             <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
@@ -228,7 +229,7 @@
 
 
         <section>
-        <blockTable colWidths="100.0,323.0,50.0,37.0,75.0,77.0,138.0" style="ItemsTitle0" repeatRows="1">
+        <blockTable colWidths="100.0,303.0,30.0,37.0,75.0,70.0,77.0,108.0" style="ItemsTitle0" repeatRows="1">
             <tr>
                 <td>
                     <para style="TextInformation3gras" alignment="LEFT">Ref.</para>
@@ -244,6 +245,9 @@
                 </td>
                 <td>
                     <para style="TextInformation3gras" alignment="LEFT">Batch #</para>
+                </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">Exp date</para>
                 </td>
                 <td>
                     <para style="TextInformation3gras" alignment="LEFT">Qty consumed</para>
@@ -271,7 +275,10 @@
                     <para style="TextInformation3" alignment="LEFT">[[ line.prodlot_id and line.prodlot_id.name or False ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation3" alignment="RIGHT">[[ line.consumed_qty and line.consumed_qty or False ]]</para>
+                    <para style="TextInformation3" alignment="LEFT">[[ getExpDate(line) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation3" alignment="RIGHT">[[ line.consumed_qty and line.consumed_qty or '0.0' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT">[[ line.remark and line.remark or False ]]</para>

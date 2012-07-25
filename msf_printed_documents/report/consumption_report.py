@@ -33,24 +33,24 @@ class consumption_report(report_sxw.rml_parse):
             'getDateFrom': self.getDateFrom,
             'getDateTo': self.getDateTo,
             'getInstanceAdress': self.getInstanceAdress,
+            'getExpDate': self.getExpDate,
         })
 
-    def getInstanceAdress(self,):
-        id_c = self.pool.get('res.company').search(self.cr,self.uid,[('name','ilike','MSF')])
-        bro = self.pool.get('res.company').browse(self.cr,self.uid,id_c[0])
-        projet = bro.instance_id and bro.instance_id.instance or ' '
-        mission = bro.instance_id and bro.instance_id.mission or ' '
-        code = bro.instance_id and bro.instance_id.code or ' '
-        return projet + ' / ' + mission + ' / ' + code
+    def getExpDate(self,line):
+        return time.strftime('%d/%b/%Y',time.strptime(line.expiry_date,'%Y-%m-%d'))
+
+    def getInstanceAdress(self,c):
+        instance = c.instance_id
+        return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
 
     def getDateCreation(self, o):
-        return time.strftime('%d-%b-%y',time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
+        return time.strftime('%d/%b/%Y',time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
 
     def getDateFrom(self, o):
-        return time.strftime('%d-%b-%y',time.strptime(o.period_from,'%Y-%m-%d'))
+        return time.strftime('%d/%b/%Y',time.strptime(o.period_from,'%Y-%m-%d'))
 
     def getDateTo(self, o):
-        return time.strftime('%d-%b-%y',time.strptime(o.period_to,'%Y-%m-%d'))
+        return time.strftime('%d/%b/%Y',time.strptime(o.period_to,'%Y-%m-%d'))
 
     def get_lines(self, o):
         return o.line_ids
