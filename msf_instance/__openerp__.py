@@ -29,6 +29,8 @@
     """,
     "init_xml" : [],
     "update_xml": [
+        'msf_instance_installer_view.xml',
+        'security/ir.model.access.csv',
         'msf_instance_view.xml',
     ],
     "additional_xml": [

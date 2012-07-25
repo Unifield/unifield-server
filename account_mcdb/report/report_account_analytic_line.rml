@@ -74,10 +74,10 @@
           <para style="P3">CODE</para>
         </td>
         <td>
-          <para style="P3">Posting Date</para>
+          <para style="P3">Document Date</para>
         </td>
         <td>
-          <para style="P3">Document Date</para>
+          <para style="P3">Posting Date</para>
         </td>
         <td>
           <para style="P3">Period</para>
@@ -137,10 +137,10 @@
           <para style="P3">[[ o.ref or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</para>
+          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
         </td>
         <td>
           <para style="P4">[[ o.period_id and o.period_id.name or '' ]]</para>

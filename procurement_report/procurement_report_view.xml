@@ -19,19 +19,6 @@
 				  sequence="20" 
 				  groups="stock.group_stock_manager"/>
 				  
-		<record id="view_compute_schedulers_wizard" model="ir.ui.view">
-            <field name="name">view.compute.schedules.wizard</field>
-            <field name="model">procurement.order.compute.all</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="procurement.view_compute_schedulers_wizard" />
-            <field name="arch" type="xml">
-            	<xpath expr="/form//button[@name='procure_calculation']" position="replace">
-            		<button name="procure_calculation" string="Compute POs Creation"
-                			colspan="1" type="object" icon="gtk-ok" />
-            	</xpath>
-            </field>
-        </record>
-		    
 		
     	<record id="procurement_rules_report_tree_view" model="ir.ui.view">
     		<field name="name">procurement.rules.report.tree.view</field>
@@ -84,8 +71,9 @@
 					</group>
     				<newline />
     				<group expand="0" string="Group By...">
+                                        <!-- Remove Group by product because is too long to display when we have a big list of products
     					<filter string="Product" context="{'group_by': 'product_id'}" />
-    					<separator orientation="vertical" />
+    					<separator orientation="vertical" />-->
     					<filter string="Location" context="{'group_by': 'location_id'}" />
     				</group>
     			</search>
@@ -101,6 +89,7 @@
     	
     	<menuitem action="action_procurement_rules_report"
     			  id="menu_procurement_rules_report"
+                          sequence="99"
     			  parent="stock_schedule.stock_automatic_procurements_menu" />
     
     </data>

@@ -30,6 +30,7 @@ from tools.translate import _
 import logging
 from workflow.wkf_expr import _eval_expr
 
+from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
@@ -40,7 +41,6 @@ class sale_order(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
-
         - reset split flag to original value (field order flow) if not in default
         '''
         if context is None:
@@ -55,7 +55,6 @@ class sale_order(osv.osv):
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
-
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     #@@@override sale.sale_order._invoiced
@@ -140,6 +139,23 @@ class sale_order(osv.osv):
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
         return res
     
+    def _vals_get_sale_override(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get function values
+        '''
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
+                
+            # state_hidden_sale_order
+            result[obj.id]['state_hidden_sale_order'] = obj.state
+            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order':
+                result[obj.id]['state_hidden_sale_order'] = 'split_so'
+            
+        return result
+    
     _columns = {
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
@@ -178,6 +194,9 @@ class sale_order(osv.osv):
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
+                                                   store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
     }
     
     _defaults = {
@@ -323,9 +342,8 @@ class sale_order(osv.osv):
         
         # get all corresponding sale order lines
         sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
-        # set the lines to done
-        if sol_ids:
-            sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
+        # delete the lines
+        sol_obj.unlink(cr, uid, sol_ids, context=dict(context, call_unlink=True))
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
         return True
@@ -807,6 +825,9 @@ class sale_order(osv.osv):
     def test_lines(self, cr, uid, ids, context=None):
         '''
         return True if all lines of type 'make_to_order' are 'confirmed'
+        
+        only if a product is selected
+        internal requests are not taken into account (should not be the case anyway because of separate workflow)
         '''
         for order in self.browse(cr, uid, ids, context=context):
             # backward compatibility for yml tests, if test we do not wait
@@ -826,6 +847,7 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),

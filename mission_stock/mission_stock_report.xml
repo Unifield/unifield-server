@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<report id="report_stock_mission"
+        		string="Stock mission report"
+        		model="stock.mission.report.line"
+        		name="stock.mission.report.report"
+        		rml="addons/mission_stock/report/report_stock_mission.rml"
+        		header="False"
+        		auto="True"
+        		menu="True"/>
+		
+	</data>
+</openerp>

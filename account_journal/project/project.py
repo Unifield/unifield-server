@@ -35,17 +35,20 @@ class account_analytic_journal(osv.osv):
         """
         Get all analytic journal type
         """
-        return [('sale','Sale'), \
-            ('purchase','Purchase'), \
-            ('cash','Cash'), \
-            ('general','General'), \
-            ('situation','Situation'), \
-            ('engagement', 'Engagement'), \
-            ('hq', 'HQ'), \
-            ('correction', 'Correction'), \
-            ('cur_adj', 'Currency Adjustement'), \
-            ('hr', 'HR'), \
-            ('inkind', 'In-kind Donation'),]
+        return [
+            ('sale','Sale'),
+            ('purchase','Purchase'),
+            ('cash','Cash'),
+            ('general','General'),
+            ('situation','Situation'),
+            ('engagement', 'Engagement'),
+            ('hq', 'HQ'),
+            ('correction', 'Correction'),
+            ('cur_adj', 'Currency Adjustement'),
+            ('hr', 'HR'),
+            ('inkind', 'In-kind Donation'),
+            ('intermission', 'Intermission'),
+        ]
 
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \

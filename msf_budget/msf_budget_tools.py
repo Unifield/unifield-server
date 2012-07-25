@@ -42,6 +42,7 @@ class msf_budget_tools(osv.osv):
         chart_of_account_ids = account_obj.search(cr, uid, [('code', '=', 'MSF')], context=context)
         # get normal expense accounts
         general_account_ids = account_obj.search(cr, uid, [('user_type_code', '=', 'expense'),
+                                                           ('user_type_report_type', '=', 'expense'),
                                                            ('type', '!=', 'view')], context=context)
         expense_account_ids = [(account_id, False) for account_id in general_account_ids]
         # go through parents
@@ -105,12 +106,12 @@ class msf_budget_tools(osv.osv):
             context = {}
         destination_obj = self.pool.get('account.destination.link')
         # list to store every existing destination link in the system
-        destination_link_ids = destination_obj.search(cr, uid, [], context=context)
+        account_ids = self._get_expense_accounts(cr, uid, context=context)
+        
+        destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  [x[0] for x in account_ids])], context=context)
         account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
                                    for dest
                                    in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
-        
-        account_ids = self._get_expense_accounts(cr, uid, context=context)
         
         # Fill all general accounts
         for account_id, destination_id in account_destination_ids:

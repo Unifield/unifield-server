@@ -185,8 +185,8 @@ class purchase_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'default_code': fields.char('Product Reference', size=1024),
-        'default_name': fields.char('Product Name', size=1024),
+        'default_code': fields.char('Product Code', size=1024),
+        'default_name': fields.char('Product Description', size=1024),
         'name': fields.char('Comment', size=1024, required=True),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
@@ -236,8 +236,8 @@ class purchase_order_merged_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'default_code': fields.char('Product Reference', size=1024),
-        'default_name': fields.char('Product Name', size=1024),
+        'default_code': fields.char('Product Code', size=1024),
+        'default_name': fields.char('Product Description', size=1024),
         'name': fields.char('Comment', size=1024, required=True),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
@@ -490,8 +490,8 @@ class sale_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'default_code': fields.char('Product Reference', size=1024),
-        'default_name': fields.char('Product Name', size=1024),
+        'default_code': fields.char('Product Code', size=1024),
+        'default_name': fields.char('Product Description', size=1024),
         'name': fields.char('Comment', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template

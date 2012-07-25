@@ -122,6 +122,12 @@ class sourcing_line(osv.osv):
             result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
             # display confirm button - display if state == draft and not proc or state == progress and proc
             result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and obj.sale_order_id.state == 'validated')
+            # sale_order_state
+            result[obj.id]['sale_order_state'] = False
+            if obj.sale_order_id:
+                result[obj.id]['sale_order_state'] = obj.sale_order_id.state
+                if obj.sale_order_id.state == 'done' and obj.sale_order_id.split_type_sale_order == 'original_sale_order':
+                    result[obj.id]['sale_order_state'] = 'split_so'
         
         return result
     
@@ -226,7 +232,11 @@ class sourcing_line(osv.osv):
                                          'sourcing.line': (_get_souring_lines_ids, ['sale_order_line_id'], 10)}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
-        'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
+        # I do not directly set the store on state_hidden_sale_order because I did not find definitive clue that dynamic store could be used in cascade
+        'sale_order_state': fields.function(_get_sourcing_vals, method=True, readonly=True, type='selection', selection=_SELECTION_SALE_ORDER_STATE, string='Order State', multi='get_vals_sourcing',
+                                            store={'sale.order': (_get_sale_order_ids, ['state', 'split_type_sale_order'], 10),
+                                                   'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
+#        'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
         'sale_order_state_search': fields.function(_get_fake, string="Order State", type='selection', method=True, selection=[x for x in SALE_ORDER_STATE_SELECTION if x[0] != 'manual'], fnct_search=_search_sale_order_state),
         'line_number': fields.integer(string='Line', readonly=True),
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
@@ -453,15 +463,14 @@ class sourcing_line(osv.osv):
                 if ol.state != state_to_use:
                     linesConfirmed = False
                     break
-                
+            # the line reads estimated_dd, after trg_validate, the lines are deleted, so all read/write must be performed before
+            self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
                 if sl.sale_order_id.procurement_request:
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
                 else:
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
-            
-            self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
                 
         return result
     
@@ -512,8 +521,10 @@ class sale_order(osv.osv):
             values.update({'priority': vals['priority']})
         if 'categ' in vals:
             values.update({'categ': vals['categ']})
-        if 'state' in vals:
-            values.update({'sale_order_state': vals['state']})
+#        if 'state' in vals:
+#            values.update({'sale_order_state': vals['state']})
+#        if 'state_hidden_sale_order' in vals:
+#            values.update({'sale_order_state': vals['state_hidden_sale_order']})
         
         # for each sale order
         for so in self.browse(cr, uid, ids, context):
@@ -748,7 +759,7 @@ class sale_order_line(osv.osv):
         
         # order state
         order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
-        orderState = order.state
+        orderState = order.state_hidden_sale_order
         orderPriority = order.priority
         orderCategory = order.categ
         customer_id = order.partner_id.id
@@ -766,7 +777,7 @@ class sale_order_line(osv.osv):
                   'product_id': vals.get('product_id', False),
                   'priority': orderPriority,
                   'categ': orderCategory,
-                  'sale_order_state': orderState,
+#                  'sale_order_state': orderState,
                   'state': self.browse(cr, uid, result, context=context).state
                   }
         
