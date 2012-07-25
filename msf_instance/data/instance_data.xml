@@ -6,7 +6,7 @@
             <field name="code">OCG</field>
             <field name="name">Geneva</field>
             <field name="level">section</field>
-            <field name="state">active</field>
+            <field name="state">draft</field>
             <field name="cost_center_id" ref="analytic_distribution.analytic_account_project"/>
         </record>
 
