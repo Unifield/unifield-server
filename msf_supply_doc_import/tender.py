@@ -83,6 +83,7 @@ class tender(osv.osv):
             error_list = []
             to_correct_ok = False
             default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
             product_qty = 1
             nb_lines_error = 0
             
@@ -101,7 +102,6 @@ class tender(osv.osv):
                     product_code = product_code.strip()
                     code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                     if not code_ids:
-                        default_code = False
                         to_correct_ok = True
                     else:
                         default_code = code_ids[0]
@@ -109,23 +109,20 @@ class tender(osv.osv):
                      error_list.append('The Product Code has to be a string.')
                      to_correct_ok = True
             
-            product_qty = row.cells[2].data
-            if not product_qty:
-                to_correct_ok = True
+            if not row.cells[2].data :
                 product_qty = 1.0
+                to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
-                try:
-                    float(product_qty)
-                    product_qty = float(product_qty)
-                except ValueError:
+                if row.cells[4].type in ['int','float']:
+                    product_qty = row.cells[2].data
+                else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
                      product_qty = 1.0
             
             p_uom = row.cells[3].data
             if not p_uom:
-                uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                 to_correct_ok = True
                 error_list.append('No product UoM was defined.')
             else:
@@ -133,14 +130,12 @@ class tender(osv.osv):
                     uom_name = p_uom.strip()
                     uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                     if not uom_ids:
-                        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                         to_correct_ok = True
                         error_list.append('The UOM was not found.')
                     else:
                         uom_id = uom_ids[0]
                 except Exception:
                      error_list.append('The UoM Name has to be a string.')
-                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                      to_correct_ok = True
                 
             to_write = {
@@ -181,8 +176,6 @@ class tender(osv.osv):
                 for var in var.tender_line_ids:
                     if var.to_correct_ok:
                         raise osv.except_osv(_('Warning !'), _('You still have lines to correct: check the red lines'))
-                    else:
-                        self.log(cr, uid, var.id, _("There isn't error in import"), context=context)
         return True
         
 tender()

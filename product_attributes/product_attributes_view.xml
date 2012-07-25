@@ -475,7 +475,7 @@
 
         <act_window
             context="{}"
-            domain="[('product_id', 'in', active_ids)]"
+            domain="[('procurement_request', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
             id="action_order_line_product_tree"
             name="Field orders"
             res_model="sale.order"
@@ -484,7 +484,7 @@
 
         <act_window
             context="{}"
-            domain="[('product_id', 'in', active_ids)]"
+            domain="['|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
             id="action_tender_product_tree"
             name="Tenders"
             res_model="tender"
@@ -497,13 +497,14 @@
         <delete id="purchase.action_purchase_line_product_tree" model="ir.actions.act_window" />
 
         <act_window
-            context="{'search_default_product_id': [active_id]}"
-            id="action_purchase_line_product_tree"
+            context="{}"
+            domain="[('rfq_ok', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+            id="purchase.action_purchase_line_product_tree"
             name="Purchases"
-            res_model="purchase.order.line"
+            res_model="purchase.order"
             src_model="product.product"
-            domain="[('order_id.rfq_ok', '=', False)]"
-            groups="purchase.group_purchase_user"/>
+            groups=""/>
+
 
 
 <!--        <delete id="product.menu_products_category" model="ir.ui.menu" /> -->
