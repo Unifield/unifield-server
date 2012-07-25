@@ -884,7 +884,7 @@ class kit_creation_to_consume(osv.osv):
     _columns = {'kit_creation_id_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True, on_delete='cascade'),
                 'module_to_consume': fields.char(string='Module', size=1024, readonly=True),
                 'product_id_to_consume': fields.many2one('product.product', string='Product', readonly=True),
-                'qty_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+                'qty_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', readonly=True),
                 'location_src_id_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'line_number_to_consume': fields.integer(string='Line', required=True, readonly=True),
@@ -893,7 +893,7 @@ class kit_creation_to_consume(osv.osv):
                 'qty_consumed_to_consume': fields.float(string='Consumed Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
-                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Qty', multi='get_vals', store=False),
+                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Quantity', multi='get_vals', store=False),
                 'qty_available_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
                                          store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),

@@ -249,10 +249,10 @@ class assign_to_kit_line(osv.osv_memory):
                 'kit_id_assign_to_kit_line': fields.many2one('composition.kit', string="Kit Composition List", readonly=True, required=True),
                 'wizard_id_assign_to_kit_line': fields.many2one('assign.to.kit', string='Assign wizard'),
                 # data
-                'assigned_qty_assign_to_kit_line': fields.float(string='Assigned Qty for Batch Number', digits_compute=dp.get_precision('Product UoM'), required=True),
-                'required_qty_assign_to_kit_line': fields.float(string='Required Qty for Product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+                'assigned_qty_assign_to_kit_line': fields.float(string='Assign Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'required_qty_assign_to_kit_line': fields.float(string='Qty required per kit', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 # functions
-                'qty_assign_to_kit_by_product_uom': fields.function(_vals_get, method=True, type='float', digits_compute=dp.get_precision('Product UoM'), string='Qty Assigned for Product', multi='get_vals', store=False, readonly=True),
+                'qty_assign_to_kit_by_product_uom': fields.function(_vals_get, method=True, type='float', digits_compute=dp.get_precision('Product UoM'), string='Qty already assigned', multi='get_vals', store=False, readonly=True),
                 #'qty_assign_to_kit_by_product_uom': fields.float(string='Total Qty Assigned', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 }
     
