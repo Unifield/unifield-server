@@ -127,9 +127,20 @@ class account_journal(osv.osv):
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         elif type == 'cur_adj':
-            default_dom += [('user_type.code', '=', 'expense')]
-            value['domain']['default_debit_account_id'] = default_dom
-            value['domain']['default_credit_account_id'] = default_dom
+            debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
+            credit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
+            try:
+                xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_expense')
+                debit_default_dom += [('user_type', '=', xml_id[1])]
+            except KeyError:
+                pass
+            try:
+                xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_income')
+                credit_default_dom += [('user_type', '=', xml_id[1])]
+            except KeyError:
+                pass
+            value['domain']['default_debit_account_id'] = debit_default_dom
+            value['domain']['default_credit_account_id'] = credit_default_dom
         return value
 
     def create(self, cr, uid, vals, context=None):

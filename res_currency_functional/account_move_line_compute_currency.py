@@ -128,28 +128,30 @@ class account_move_line_compute_currency(osv.osv):
                 partner_cr = addendum_db = abs(total)
                 addendum_line_account_id = addendum_line_debit_account_id
                 addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
-            # create an analytic distribution
-            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
-            # add a cost center for analytic distribution
-            distrib_line_vals = {
-                'distribution_id': distrib_id,
-                'currency_id': company_currency_id,
-                'analytic_id': search_ids[0],
-                'percentage': 100.0,
-                'date': oldiest_date or current_date,
-                'source_date': oldiest_date or current_date,
-                'destination_id': addendum_line_account_default_destination_id,
-            }
-            cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
-            # add a funding pool line for analytic distribution
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            if not fp_id:
-                raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
-            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0],})
-            self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+            # create an analytic distribution if addendum_line_account_id is an expense account
+            account = self.pool.get('account.account').browse(cr, uid, addendum_line_account_id)
+            if account and account.user_type and account.user_type.code == 'expense':
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
+                # add a cost center for analytic distribution
+                distrib_line_vals = {
+                    'distribution_id': distrib_id,
+                    'currency_id': company_currency_id,
+                    'analytic_id': search_ids[0],
+                    'percentage': 100.0,
+                    'date': oldiest_date or current_date,
+                    'source_date': oldiest_date or current_date,
+                    'destination_id': addendum_line_account_default_destination_id,
+                }
+                cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+                # add a funding pool line for analytic distribution
+                try:
+                    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    fp_id = 0
+                if not fp_id:
+                    raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
+                distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0],})
+                self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             
             move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
             # Create default vals for the new two move lines
