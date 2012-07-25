@@ -47,7 +47,6 @@
         'procurement_request_workflow.xml',
         'procurement_request_wizard.xml',
         'wizard/wizard_import_list_view.xml',
-        'data/sol_data_tbd.xml',
     ],
     'demo_xml': [
     ],

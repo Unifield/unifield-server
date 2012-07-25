@@ -562,10 +562,32 @@ class procurement_order(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        sale_obj = self.pool.get('sale.order.line')
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         # give the purchase order line a link to corresponding procurement
         procurement = kwargs['procurement']
         line.update({'procurement_id': procurement.id,})
+        # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
+        sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id','=', procurement.id)], context=context)
+        for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
+            if sol.order_id.procurement_request and not sol.product_id and sol.comment:
+                line.update({'product_id': False,
+                             'name': 'Description: %s' %sol.comment,
+                             'comment': sol.comment,
+                             'product_qty': sol.product_uom_qty,
+                             'price_unit': sol.price_unit,
+                             'date_planned': sol.date_planned,
+                             'product_uom': sol.product_uom.id,
+                             'nomen_manda_0': sol.nomen_manda_0.id,
+                             'nomen_manda_1': sol.nomen_manda_1.id or False,
+                             'nomen_manda_2': sol.nomen_manda_2.id or False,
+                             'nomen_manda_3': sol.nomen_manda_3.id or False,
+                             'nomen_sub_0': sol.nomen_sub_0.id or False,
+                             'nomen_sub_1': sol.nomen_sub_1.id or False,
+                             'nomen_sub_2': sol.nomen_sub_2.id or False,
+                             'nomen_sub_3': sol.nomen_sub_3.id or False,
+                             'nomen_sub_4': sol.nomen_sub_4.id or False,
+                             'nomen_sub_5': sol.nomen_sub_5.id or False})
         return line
     
 procurement_order()

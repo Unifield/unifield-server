@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
     <!-- 'tbd' stands for 'to be defined' -->
     <record model="product.nomenclature" id="nomen_tbd0">
         <field name="code">tbd0</field>
@@ -50,20 +50,37 @@
         <field name="rounding" eval="1.0"/>
     </record>
     
-    
     <!-- Product to be defined -->
     <record id="product_tbd" model="product.product">
-        <field name="default_code" >To Be Defined</field>
+        <field name="default_code" >TBD</field>
         <field name="name">To be defined</field>
         <field name="nomen_manda_0" ref="msf_supply_doc_import.nomen_tbd0"/>
         <field name="nomen_manda_1" ref="msf_supply_doc_import.nomen_tbd1"/>
         <field name="nomen_manda_2" ref="msf_supply_doc_import.nomen_tbd2"/>
         <field name="nomen_manda_3" ref="msf_supply_doc_import.nomen_tbd3"/>
-        <!-- 
-        <field name="uom_id" ref="uom_tbd"/>
-        <field name="uom_po_id" ref="uom_tbd"/>
-        <field name="categ_id" ref="cat_tbd"/>
-         -->
+        <field name="uom_id" ref="product.product_uom_unit"/>
+        <field name="uom_po_id" ref="product.product_uom_unit"/>
+        <field name="categ_id" ref="product.cat0"/>
+    </record>
+    
+    <!-- Partner to be defined -->
+    <record id="supplier_tbd" model="res.partner">
+        <field name="name">To be defined</field>
+    </record>
+    
+    <!-- Partner address to be defined -->
+    <record id="address_tbd" model="res.partner.address">
+        <field name="type">default</field>
+        <field name="street">To be defined</field>
+        <field name="zip">To be defined</field>
+        <field name="city">To be defined</field>
+        <field name="partner_id" ref="supplier_tbd"/>
+    </record>
+    
+    <!-- SupplierInfo to be defined -->
+    <record id="supplierinfo_tbd" model="product.supplierinfo">
+        <field name="name" ref="supplier_tbd"/>
+        <field name="product_id" ref="product_tbd"/>
     </record>
     
     </data>

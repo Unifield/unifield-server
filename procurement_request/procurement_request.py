@@ -248,11 +248,11 @@ class procurement_request(osv.osv):
         Validate the request
         '''
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd3')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'procurement_request', 'uom_tbd')[1]
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
         vals = {}
         nb_lines = 0
         for req in self.browse(cr, uid, ids, context=context):
@@ -427,10 +427,10 @@ class procurement_request_line(osv.osv):
             context = {}
         res = {}
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'procurement_request', 'nomen_tbd3')[1]
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
         
         if comment and not product_id:
             res.update({'nomen_manda_0': nomen_manda_0,
