@@ -174,7 +174,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
         if staffcode_ids:
-            message = "More than 1 employee have the same unique identification code: "
+            message = "Several employee have the same ID code: "
             employee_error_list = []
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
                 if employee.homere_codeterrain != missioncode or str(employee.homere_id_staff) != staff_id or employee.homere_id_unique != uniq_id:
@@ -314,7 +314,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if res:
                     updated += 1
         else:
-            message = _('code_terrain, id_unique and/or id_staff seems to be missing for this line: %s. Line content: %s') % (line_number, employee_data)
+            message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often appends when the line is empty.') % (line_number)
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
             return False, created, updated
         return True, created, updated
@@ -362,7 +362,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         staff_file = 'staff.csv'
         contract_file = 'contrat.csv'
         res = False
-        message = _("Employee import FAILED.")
+        message = _("")
         created = 0
         updated = 0
         processed = 0
