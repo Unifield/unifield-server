@@ -367,7 +367,28 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         # Otherway: delete FP
         else:
             res = {'value': {'analytic_id': False}}
-        # If destination given, search if given 
+        return res
+
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
+        """
+        Check given cost_center with funding pool
+        """
+        # Prepare some values
+        res = {}
+        if cost_center_id and analytic_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
+                res = {'value': {'analytic_id': False}}
+        elif not cost_center_id:
+            res = {}
+        else:
+            res = {'value': {'analytic_id': False}}
         return res
 
 analytic_distribution_wizard_fp_lines()
