@@ -47,13 +47,13 @@ class product_list(report_sxw.rml_parse):
         return "Sublist"
 
     def getDateCrea(self, o):
-        return time.strftime('%d-%b-%y',time.strptime(o.creation_date,'%Y-%m-%d'))
+        return time.strftime('%d/%b/%Y',time.strptime(o.creation_date,'%Y-%m-%d'))
 
     def getDateModif(self, o):
-        return time.strftime('%d-%b-%y',time.strptime(o.last_update_date,'%Y-%m-%d'))
+        return time.strftime('%d/%b/%Y',time.strptime(o.last_update_date,'%Y-%m-%d'))
 
     def getDateRemoved(self, o):
-        return time.strftime('%d-%b-%y',time.strptime(o.removal_date,'%Y-%m-%d'))
+        return time.strftime('%d/%b/%Y',time.strptime(o.removal_date,'%Y-%m-%d'))
 
     def get_lines(self, o):
         return o.product_ids
