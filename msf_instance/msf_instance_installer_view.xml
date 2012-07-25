@@ -42,7 +42,7 @@
     <record id="fixed_msf_instance_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_msf_instance_setup"/>
         <field name="sequence">5</field>
-        <field name="restart">always</field>
+        <field name="restart">never</field>
     </record>
   </data>
 </openerp>
