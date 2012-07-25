@@ -1,2 +1,4 @@
 "id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
 "access_stock_location_chained_options_all","stock.location.chained.options.all","model_stock_location_chained_options",,1,1,1,1
+"access_initial_inventory_all","initial.stock.inventory.all","model_initial_stock_inventory",,1,1,1,1
+"access_initial_inventory_line_all","initial.stock.inventory.line.all","model_initial_stock_inventory_line",,1,1,1,1

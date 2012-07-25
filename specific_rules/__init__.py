@@ -19,6 +19,7 @@
 #
 ##############################################################################
 import specific_rules
+import stock
 import wizard
 import report
 

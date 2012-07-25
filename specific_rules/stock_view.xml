@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <record id="stock_initial_inventory_form_view" model="ir.ui.view">
+            <field name="name">stock.initial.inventory.form.view</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Initial stock inventory">
+                    <field name="name" string="Reference" />
+                    <field name="date" />
+                    <notebook colspan="4">
+                        <page string="Inventory lines">
+                            <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list">
+                                <tree string="Products" editable="bottom">
+                                    <field name="product_id" domain="[('type', '=', 'product')]" on_change="product_change(product_id)" />
+                                    <field name="average_cost" />
+                                    <field name="currency_id" />
+                                    <field name="location_id" domain="[('usage', '=', 'internal')]" />
+                                    <field name="product_qty" required="True" />
+                                    <field name="product_uom" readonly="True" />
+                                    <field name="prod_lot_id"
+                                        on_change="change_lot(prod_lot_id)"
+                                        groups="base.group_extended"
+                                        context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}"
+                                        domain="[('check_type','=', True), ('product_id', '=', product_id)]"
+                                        attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
+                                    <field name="expiry_date"
+                                        on_change="change_expiry(expiry_date, product_id, 'in')"
+                                        attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />                        
+                                    <field name="hidden_perishable_mandatory" invisible="True" />
+                                    <field name="hidden_batch_management_mandatory" invisible="True" />
+                                    <field name="err_msg" readonly="True" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group colspan="4" col="6">
+                        <field name="state" />
+                        <field name="date_done" readonly="True" attrs="{'invisible': [('state', '!=', 'done')]}" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="stock_initial_inventory_tree_view" model="ir.ui.view">
+            <field name="name">stock.initial.inventory.tree.view</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Initial stock inventories">
+                    <field name="name" string="Reference" />
+                    <field name="date" />
+                    <field name="state" />
+                    <field name="date_done" readonly="True" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock_initial_inventory_search_view" model="ir.ui.view">
+            <field name="name">stock.initial.inventory.search.view</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Initial stock inventories">
+                    <field name="name" string="Reference" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        
+        <record id="action_initial_inventory" model="ir.actions.act_window">
+            <field name="name">Initial stock inventory</field>
+            <field name="res_model">initial.stock.inventory</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="stock_initial_inventory_search_view" />
+        </record>
+        
+        <menuitem action="action_initial_inventory"
+                  id="menu_initial_inventory"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="99" />
+        
+    </data>
+</openerp>
