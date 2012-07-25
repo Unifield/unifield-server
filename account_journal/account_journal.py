@@ -129,6 +129,7 @@ class account_journal(osv.osv):
         elif type == 'cur_adj':
             default_dom += [('user_type.code', '=', 'expense')]
             value['domain']['default_debit_account_id'] = default_dom
+            value['domain']['default_credit_account_id'] = default_dom
         return value
 
     def create(self, cr, uid, vals, context=None):

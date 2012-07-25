@@ -75,10 +75,12 @@ class account_move_line_compute_currency(osv.osv):
         journal_id = j_ids[0]
         # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
         journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
-        if not journal.default_debit_account_id:
+        if not journal.default_debit_account_id or not journal.default_credit_account_id:
             raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
-        addendum_line_account_id = journal.default_debit_account_id.id
-        addendum_line_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
+        addendum_line_debit_account_id = journal.default_debit_account_id.id
+        addendum_line_credit_account_id = journal.default_credit_account_id.id
+        addendum_line_debit_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
+        addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
         # Create analytic distribution if this account is an expense account
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
@@ -114,6 +116,18 @@ class account_move_line_compute_currency(osv.osv):
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
             if not search_ids:
                 raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "Fox FX gain/loss" to permit reconciliation!'))
+            # Prepare some values
+            partner_db = partner_cr = addendum_db = addendum_cr = None
+            if total < 0.0:
+                # data for partner line
+                partner_db = addendum_cr = abs(total)
+                addendum_line_account_id = addendum_line_credit_account_id
+                addendum_line_account_default_destination_id = addendum_line_credit_account_default_destination_id
+            # Conversely some amount is missing @credit for partner
+            else:
+                partner_cr = addendum_db = abs(total)
+                addendum_line_account_id = addendum_line_debit_account_id
+                addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
             # create an analytic distribution
             distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
             # add a cost center for analytic distribution
@@ -134,8 +148,7 @@ class account_move_line_compute_currency(osv.osv):
                 fp_id = 0
             if not fp_id:
                 raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
-            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0], 
-                'destination_id': addendum_line_account_default_destination_id,})
+            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0],})
             self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             
             move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
@@ -157,13 +170,6 @@ class account_move_line_compute_currency(osv.osv):
                 'currency_id': currency_id,
                 #'functional_currency_id': functional_currency_id,
             }
-            partner_db = partner_cr = addendum_db = addendum_cr = None
-            if total < 0.0:
-                # data for partner line
-                partner_db = addendum_cr = abs(total)
-            # Conversely some amount is missing @credit for partner
-            else:
-                partner_cr = addendum_db = abs(total)
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
             partner_line_id = self.create(cr, uid, vals, context=context)

@@ -196,6 +196,7 @@
             <field name="code">MT</field>
             <field name="type">cur_adj</field>
             <field name="default_debit_account_id" ref="msf_chart_of_account.6940" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.6940" />
             <field name="analytic_journal_id" ref="analytic_miscellaneous_transactions"/>
         </record>
 
