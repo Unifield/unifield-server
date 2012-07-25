@@ -363,7 +363,7 @@
                     <para style="TextInformation">[[ getPartnerPhone(objects[0]) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation">To stock</para>
+                    <para style="TextInformation">□ To stock</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
@@ -384,7 +384,7 @@
                     <para style="TextInformation"></para>
                 </td>
                 <td>
-                    <para style="TextInformation">To cross-docking</para>
+                    <para style="TextInformation">□ To cross-docking</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>

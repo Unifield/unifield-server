@@ -33,7 +33,7 @@
         "msf_chart_of_account", "financing_contract"
     ],
     "update_xml": [
-
+        "data.xml",
         "import_analytic_lines_view.xml",
     ],
     "demo_xml": [
