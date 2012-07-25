@@ -120,15 +120,11 @@
             <lineStyle kind="GRID" colorName="#000000" thickness="0.5" />
         </blockTableStyle>
 
-
-
         <blockTableStyle id="ItemsTitleS">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
             <blockBackground colorName="silver" />
         </blockTableStyle>
-
-
 
         <blockTableStyle id="ItemsTitle">
             <blockAlignment value="LEFT" />
@@ -137,7 +133,6 @@
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
             <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
         </blockTableStyle>
-
 
         <blockTableStyle id="ItemsTitle2">
             <blockAlignment value="LEFT" />
@@ -259,6 +254,7 @@
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationSpe" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationN" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="white"/>
 
         <paraStyle name="TextInformationGROS" fontName="Helvetica" fontSize="11.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
@@ -561,10 +557,10 @@
                                 <blockTable colWidths="75,300" style="OrderInformations4">
                                     <tr>
                                         <td>
-                                            <para style="TextInformation" alignment="CENTER">[[ line.product_id and line.product_id.default_code or False ]]</para>
+                                            <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.default_code or False ]]</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformation" alignment="CENTER">[[ line.product_id and line.product_id.name or False ]]</para>
+                                            <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.name or False ]]</para>
                                         </td>
                                     </tr>
                                     <tr>

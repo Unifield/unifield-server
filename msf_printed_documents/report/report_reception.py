@@ -34,8 +34,6 @@ class report_reception(report_sxw.rml_parse):
             'enumerate': enumerate,
             'get_lines': self.get_lines,
             'getDateCreation': self.getDateCreation,
-            'getDateFrom': self.getDateFrom,
-            'getDateTo': self.getDateTo,
             'getNbItem': self.getNbItem,
             'check': self.check,
             'getTotItems': self.getTotItems,
@@ -108,7 +106,7 @@ class report_reception(report_sxw.rml_parse):
         return o and o.purchase_id and o.purchase_id.name or False
 
     def getERD(self,o):
-        return time.strftime('%d-%m-%Y', time.strptime(o.min_date,'%Y-%m-%d %H:%M:%S'))
+        return time.strftime('%d/%m/%Y', time.strptime(o.min_date,'%Y-%m-%d %H:%M:%S'))
 
     def getPartnerCity(self,o):
         return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.city or False
@@ -120,7 +118,9 @@ class report_reception(report_sxw.rml_parse):
         return o.purchase_id and o.purchase_id.partner_id and o.purchase_id.partner_id.name or False
 
     def getPartnerAddress(self,o):
-        return o and o.purchase_id and o.purchase_id.partner_address_id 
+        temp = o.purchase_id and o.purchase_id.partner_address_id.name_get()
+        if temp:
+            return temp[0][1]
 
     def getWarehouse(self,o):
         return o.warehouse_id and o.warehouse_id.name or False
@@ -135,7 +135,7 @@ class report_reception(report_sxw.rml_parse):
 
     def getConfirmedDeliveryDate(self,o):
         if o.purchase_id:
-            return time.strftime('%d/%m/%y', time.strptime( o.purchase_id.delivery_confirmed_date,'%Y-%m-%d'))
+            return time.strftime('%d/%m/%Y', time.strptime( o.purchase_id.delivery_confirmed_date,'%Y-%m-%d'))
         return False
 
     def getTotItems(self,o):
@@ -163,13 +163,8 @@ class report_reception(report_sxw.rml_parse):
         return self.item
 
     def getDateCreation(self, o):
-        return time.strftime('%d-%b-%y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
+        return time.strftime('%d-%b-%Y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
 
-    def getDateFrom(self, o):
-        return time.strftime('%d-%b-%y', time.strptime(o.period_from,'%Y-%m-%d'))
-
-    def getDateTo(self, o):
-        return time.strftime('%d-%b-%y', time.strptime(o.period_to,'%Y-%m-%d'))
 
     def get_lines(self, o):
         return o.move_lines
