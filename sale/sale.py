@@ -744,7 +744,16 @@ class sale_order(osv.osv):
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
         
-        - allow to execute specific code at position 02
+        - allow to modifiy product especially for internal request which type is "make_to_order"
+        '''
+        pass
+    
+    def _hook_ship_create_uom_id(self, cr, uid, ids, context=None,  *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to  modifiy uom especially for internal request which type is "make_to_order"
         '''
         pass
 
@@ -813,15 +822,18 @@ class sale_order(osv.osv):
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                     # customer code execution position 02
                     self._hook_ship_create_execute_specific_code_02(cr, uid, ids, context=context, order=order, line=line, move_id=move_id)
+                # the hook _hook_ship_create_product_id is useful when we make an IR with the type "make_to_order" => we take a 'ghost' product because it is required in procurement and we do not have product
                 product_id = self._hook_ship_create_product_id(cr, uid, ids, context=context, line=line)
                 if product_id \
                 and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order) :
+                    # the hook _hook_ship_create_uom_id is useful when we make an IR with the type "make_to_order"
+                    product_uom = self._hook_ship_create_uom_id(cr, uid, ids, context=context, line=line)
                     proc_data = {'name': line.name,
                                  'origin': order.name,
                                  'date_planned': date_planned,
                                  'product_id': product_id,
                                  'product_qty': line.product_uom_qty,
-                                 'product_uom': line.product_uom.id,
+                                 'product_uom': product_uom,
                                  'product_uos_qty': (line.product_uos and line.product_uos_qty)\
                                  or line.product_uom_qty,
                                  'product_uos': (line.product_uos and line.product_uos.id)\
