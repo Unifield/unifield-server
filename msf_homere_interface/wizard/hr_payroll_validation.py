@@ -207,8 +207,8 @@ class hr_payroll_validation(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('No partner filled in for this line: %s') % (line.get('name', ''),))
                 partner_data = self.pool.get('res.partner').read(cr, uid, partner_id, ['property_account_payable', 'property_account_receivable'])
                 account_id = partner_data.get('property_account_payable', account_id) and partner_data.get('property_account_payable')[0] or account_id
-                if amount < 0.0:
-                    account_id = partner_data.get('property_account_receivable', account_id) and partner_data.get('property_account_receivable')[0] or account_id
+#                if amount > 0.0:
+#                    account_id = partner_data.get('property_account_receivable', account_id) and partner_data.get('property_account_receivable')[0] or account_id
             # create move line values
             line_vals = {
                 'move_id': move_id,
