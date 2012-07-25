@@ -70,6 +70,28 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
             view['arch'] = etree.tostring(form)
         return view
 
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
+        """
+        Check given cost_center with funding pool
+        """
+        # Prepare some values
+        res = {}
+        if cost_center_id and funding_pool_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and funding_pool_id != fp_id:
+                res = {'value': {'funding_pool_id': False}}
+        elif not cost_center_id:
+            res = {}
+        else:
+            res = {'value': {'funding_pool_id': False}}
+        return res
+
     def button_validate(self, cr, uid ,ids, context=None):
         """
         Give all lines the given analytic distribution
