@@ -193,18 +193,7 @@ class sale_order_line(osv.osv):
                 res[line['id']] = True
         return res
 
-    def _get_analytic_distribution_available(self, cr, uid, ids, name, arg, context=None):
-        """
-        Return true if analytic distribution must be available (which means partner is inter-section)
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for sol in self.browse(cr, uid, ids):
-            res[sol.id] = False
-            if sol.order_id and sol.order_id.partner_id and sol.order_id.partner_id.partner_type == 'section':
-                res[sol.id] = True
-        return res
+    # METHOD _get_analytic_distribution_available removed (become useless since analytic distribution is mandatory on ALL FO)
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
@@ -261,7 +250,6 @@ class sale_order_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
-        'analytic_distribution_available': fields.function(_get_analytic_distribution_available, string='Is analytic distribution available?', method=True, type='boolean'),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
