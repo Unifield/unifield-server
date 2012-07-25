@@ -109,12 +109,6 @@ class hr_payroll_validation(osv.osv_memory):
                 if m.groups() and m.groups()[0] and m.groups()[1]:
                     partner_id = vals.get(m.groups()[0])
                     newvals = {'partner_id': vals.get(m.groups()[0])}
-                    if partner_id:
-                        partner = partner_obj.read(cr, uid, partner_id, ['property_account_payable', 'name'])
-                        if not partner['property_account_payable']:
-                                raise osv.except_osv(_('Error'), _('Partner %s has no Account Payable')%(partner['name'],))
-                        newvals['account_id'] =  partner['property_account_payable'][0]
-
                     self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], newvals)
         for field in to_delete:
             del vals[field]
@@ -165,7 +159,8 @@ class hr_payroll_validation(osv.osv_memory):
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
         # Create lines into this move
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 
-            'free1_id', 'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id']):
+            'free1_id', 'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 
+            'period_id', 'destination_id']):
             line_vals = {}
             # fetch amounts
             amount = line.get('amount', 0.0)
@@ -176,7 +171,9 @@ class hr_payroll_validation(osv.osv_memory):
                 debit = amount
             # create new distribution (only for expense accounts)
             distrib_id = False
-            if line.get('cost_center_id', False):
+            account_id = line.get('account_id', False) and line.get('account_id')[0] or False
+            account = self.pool.get('account.account').browse(cr, uid, account_id)
+            if account and account.user_type and account.user_type.code == 'expense':
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
                 fp_id = line.get('funding_pool_id', False) and line.get('funding_pool_id')[0] or False
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
@@ -191,6 +188,7 @@ class hr_payroll_validation(osv.osv_memory):
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
+                        'destination_id': line.get('destination_id', False) and line.get('destination_id')[0] or False,
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
@@ -203,6 +201,14 @@ class hr_payroll_validation(osv.osv_memory):
                     if f2_id:
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+            elif account and account.type_for_register and account.type_for_register == 'payroll':
+                partner_id = line.get('partner_id', False) and line.get('partner_id')[0] or False
+                if not partner_id:
+                    raise osv.except_osv(_('Warning'), _('No partner filled in for this line: %s') % (line.get('name', ''),))
+                partner_data = self.pool.get('res.partner').read(cr, uid, partner_id, ['property_account_payable', 'property_account_receivable'])
+                account_id = partner_data.get('property_account_payable', account_id) and partner_data.get('property_account_payable')[0] or account_id
+                if amount < 0.0:
+                    account_id = partner_data.get('property_account_receivable', account_id) and partner_data.get('property_account_receivable')[0] or account_id
             # create move line values
             line_vals = {
                 'move_id': move_id,
@@ -213,7 +219,7 @@ class hr_payroll_validation(osv.osv_memory):
                 'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
                 'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
                 'transfer_journal_id': line.get('journal_id', False) and line.get('journal_id')[0] or False,
-                'account_id': line.get('account_id', False) and line.get('account_id')[0] or False,
+                'account_id': account_id or False,
                 'debit_currency': debit,
                 'credit_currency': credit,
                 'journal_id': journal_id,
