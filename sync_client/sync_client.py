@@ -467,6 +467,7 @@ class entity(osv.osv, Thread):
         if me.is_syncing:
             return False
 
+        ## TODO check at any step launched!
         # Init log dict for sync.monitor
         log = {
             'error' : '',
@@ -487,6 +488,8 @@ class entity(osv.osv, Thread):
                 })
                 self.pool.get('sync.monitor').create(cr, uid, log)
                 return False
+            else:
+                log['error'] += "Revision Update Status: " + up_to_date[1]
         
         log_id = self.pool.get('sync.monitor').create(cr, uid, log)
         cr.commit()

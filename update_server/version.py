@@ -65,6 +65,7 @@ class version(osv.osv):
                     'message' : "Last revision"}
         
         # Save client revision in our database
+        # TODO more accurate!
         self.pool.get("sync.server.entity")._set_version(cr, uid, entity.id, rev_client, context=context)
         revisions = self.read(cr, uid, revisions, ['name','sum','date','importance'], context=context)
         status = 'update'
@@ -122,7 +123,7 @@ class sync_manager(osv.osv):
     
     @sync_server.sync_server.check_validated
     def get_next_revisions(self, cr, uid, entity, rev_sum, context=None):
-        return self.pool.get('sync_server.version')._compare_with_last_rev(cr, 1, entity, rev_sum)
+        return (True, self.pool.get('sync_server.version')._compare_with_last_rev(cr, 1, entity, rev_sum))
 
     @sync_server.sync_server.check_validated
     def get_zip(self, cr, uid, entity, revision, context=None):

@@ -60,6 +60,13 @@ class version(osv.osv):
             revisions = self.search(cr, uid, [('state','=','not-installed')], order='date asc')
         return revisions
 
+    def _is_outdated(self, cr, uid, context=None):
+        current = self._get_last_revision(cr, uid, context=context)
+        if current:
+            return bool(self.search(cr, uid, [('date','>',current.date),('state','=','not-installed'),('importance','=','required')], limit=1))
+        else:
+            return bool(self.search(cr, uid, [], context=context))
+
     def _is_update_available(self, cr, uid, ids, context=None):
         for id in ids if isinstance(ids, list) else [ids]:
             if not self.browse(cr, uid, id, context=context).patch:
@@ -73,6 +80,29 @@ version()
 class entity(osv.osv):
     _inherit = "sync.client.entity"
 
+    def get_status(self, cr, uid, context=None):
+        me = self.get_entity(cr, uid, context)
+        if me.is_syncing:
+            return "Syncing..."
+        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            return "Not Connected"
+        monitor = self.pool.get("sync.monitor")
+        monitor_ids = monitor.search(cr, uid, [], context=context)
+        if monitor_ids:
+            last_log = monitor.browse(cr, uid, monitor_ids[0], context=context)
+            status = filter(lambda x:x[0] == last_log.status, self.pool.get("sync.monitor")._columns['status'].selection)[0][1]
+            return "Last Sync: %s at %s" % (status, last_log.end)
+        else:
+            return "Connected"
+
+    def get_upgrade_status(self, cr, uid, context=None):
+        revisions = self.pool.get('sync_client.version')
+        if revisions._need_restart(cr, uid, context=context):
+            return "OpenERP needs to be restarted<br/>to finish upgrade."
+        if not revisions._is_outdated(cr, uid, context=context):
+            return ""
+        return "Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded."
+
     def upgrade(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
@@ -80,8 +110,11 @@ class entity(osv.osv):
         current_revision = revisions._get_last_revision(cr, uid, context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision.sum if current_revision else False)
-        revisions._update(cr, uid, res.get('revisions', []), context=context)
-        return ((res['status'] == 'ok'), res['message'])
+        if res[0]:
+            revisions._update(cr, uid, res[1].get('revisions', []), context=context)
+            return ((res[1]['status'] != 'failed'), res[1]['message'])
+        else:
+            return res
 
 entity()
 

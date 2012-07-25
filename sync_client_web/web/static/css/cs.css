@@ -1,0 +1,22 @@
+#client_string_one {
+    float: left;
+    margin: 0;
+    padding: 4px 0 4px 10px;
+    background: none;
+    color: #fff;
+    text-shadow: #111 0 1px 0;
+    font-size: 1.1em;
+}
+
+#client_string_two {
+    margin: 0;
+    position: absolute;
+    right: 40%;
+    padding: 20px 0 0 0;
+    background: none;
+    color: red;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+}
+

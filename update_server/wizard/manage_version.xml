@@ -8,27 +8,35 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Unifield Version Manager">
-                    <group colspan="4" col="6">
-                        <field name="name" required="1" />
-                        <!-- the following trick force the user to select the importance from the list -->
-                        <field name="importance" attrs="{'required':[('name','!=','')]}" />
-                        <field name="date" />
-                    </group>
-                    <field name="patch" required="1" />
-                    <label string="" colspan="1" />
-                    <button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
-                    <separator string="History of Revision" />
-                    <field name="version_ids" colspan="4" nolabel="1">
-                        <tree>
-                            <field name="state" />
-                            <field name="name"/>
-                            <field name="sum" />
+                    <field name="state" invisible="1" />
+                    <group states="upload">
+                        <group colspan="4" col="6">
+                            <field name="name" required="1" />
+                            <!-- the following trick force the user to select the importance from the list -->
+                            <field name="importance" attrs="{'required':[('name','!=','')]}" />
                             <field name="date" />
-                            <field name="importance" />
-                            <button name="activate_revision" string="Activate" type="object"  icon="gtk-ok" confirm="Are you sure you want to activate this revision?" states="draft" />
-                            <button name="delete_revision" string="Delete" type="object"  icon="gtk-cancel" confirm="Are you sure you want to delete this revision?" states="draft" />
-                        </tree>
-                    </field>
+                        </group>
+                        <field name="patch" required="1" />
+                        <label string="" colspan="1" />
+                        <button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
+                        <separator string="History of Revision" />
+                        <field name="version_ids" colspan="4" nolabel="1">
+                            <tree>
+                                <field name="state" />
+                                <field name="name"/>
+                                <field name="sum" />
+                                <field name="date" />
+                                <field name="importance" />
+                               <button name="activate_revision" string="Activate" type="object"  icon="gtk-ok" confirm="Are you sure you want to activate this revision?" states="draft" />
+                               <button name="delete_revision" string="Delete" type="object"  icon="gtk-cancel" confirm="Are you sure you want to delete this revision?" states="draft" />
+                            </tree>
+                        </field>
+                    </group>
+                    <group states="error">
+                        <field name="message" colspan="4" nolabel="1" />
+                        <label string="" colspan="3"/>
+                        <button name="back" string="OK" type="object" icon="gtk-go-back" />
+                    </group>
                 </form>
             </field>
         </record>
