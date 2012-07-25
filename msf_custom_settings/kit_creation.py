@@ -47,7 +47,8 @@ class kit_creation(osv.osv):
             stock_picking.write(cr, uid, [internal_picking_id_kit_creation], {'state': 'cancel'}, context=context)
             
         if kit.consumed_ids_kit_creation:
-            move_obj.action_cancel(cr, uid, kit.consumed_ids_kit_creation, context=context)
+            for move in kit.consumed_ids_kit_creation:
+                move_obj.action_cancel(cr, uid, [move.id], context=context)
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
 
