@@ -249,6 +249,10 @@ class purchase_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         for id in unlink_ids:
             wf_service.trg_validate(uid, 'purchase.order', id, 'purchase_cancel', cr)
+        # force removal on concurrency-check field from context because
+        # system will raise an error if record was modified by workflow
+        if context and unlink_ids:
+            context.pop(self.CONCURRENCY_CHECK_FIELD, None)
 
         return super(purchase_order, self).unlink(cr, uid, unlink_ids, context=context)
 
@@ -285,11 +289,30 @@ class purchase_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': time.strftime('%Y-%m-%d')})
         return True
 
-    def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
+    def _hook_confirm_order_message(self, cr, uid, context=None, *args, **kwargs):
         '''
         Add a hook to modify the logged message
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+            
         return kwargs['message']
+    
+    def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the wkf_confirm_order method from purchase>purchase.py>purchase_order
+        
+        - allow to execute code in order to update corresponding sale order lines and sale orders if exist
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        return True
 
     #TODO: implement messages system
     def wkf_confirm_order(self, cr, uid, ids, context=None):
@@ -303,6 +326,8 @@ class purchase_order(osv.osv):
             message = _("Purchase order '%s' is confirmed.") % (po.name,)
             message = self._hook_confirm_order_message(cr, uid, context=context, message=message, po=po)
             self.log(cr, uid, po.id, message)
+            # hook for corresponding Fo update
+            self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 #        current_name = self.name_get(cr, uid, ids)[0][1]
         self.pool.get('purchase.order.line').action_confirm(cr, uid, todo, context)
         for id in ids:
@@ -870,7 +895,7 @@ class procurement_order(osv.osv):
             seller_delay = hook['seller_delay']
             partner_id = partner.id
             address_id = partner_obj.address_get(cr, uid, [partner_id], ['delivery'])['delivery']
-            pricelist_id = partner.property_product_pricelist_purchase.id
+            pricelist_id = partner.property_product_pricelist_purchase
 
             uom_id = procurement.product_id.uom_po_id.id
 
@@ -878,7 +903,7 @@ class procurement_order(osv.osv):
             if seller_qty:
                 qty = max(qty,seller_qty)
 
-            price = pricelist_obj.price_get(cr, uid, [pricelist_id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id]
+            price = pricelist_obj.price_get(cr, uid, [pricelist_id.id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id.id]
             if hook.get('price_unit', False):
                 price = hook.get('price_unit', False)            
 
@@ -902,7 +927,7 @@ class procurement_order(osv.osv):
             }
             
             # line values modification from hook
-            line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement,)
+            line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement, pricelist=pricelist_id)
 
             taxes_ids = procurement.product_id.product_tmpl_id.supplier_taxes_id
             taxes = acc_pos_obj.map_tax(cr, uid, partner.property_account_position, taxes_ids)
@@ -914,7 +939,7 @@ class procurement_order(osv.osv):
                       'partner_id': partner_id,
                       'partner_address_id': address_id,
                       'location_id': procurement.location_id.id,
-                      'pricelist_id': pricelist_id,
+                      'pricelist_id': pricelist_id.id,
                       'order_line': [(0,0,line)],
                       'company_id': procurement.company_id.id,
                       'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,

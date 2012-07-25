@@ -24,6 +24,7 @@
     picking_policy: direct
     pricelist_id: product.list0
     shop_id: sale.shop
+    yml_module_name: sale
 -
   I use the Advance Payment wizard.
 -

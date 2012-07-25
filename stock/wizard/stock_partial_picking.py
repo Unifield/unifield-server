@@ -33,10 +33,13 @@ class stock_partial_picking(osv.osv_memory):
         'product_moves_in' : fields.one2many('stock.move.memory.in', 'wizard_pick_id', 'Moves'),
      }
 
+    def _is_incoming_move(self, move):
+        return (move.location_id.usage not in ('internal','view') and move.location_dest_id.usage == 'internal')
+
     def get_picking_type(self, cr, uid, picking, context=None):
         picking_type = picking.type
         for move in picking.move_lines:
-            if picking.type == 'in' and move.product_id.cost_method == 'average':
+            if self._is_incoming_move(move) and move.product_id.cost_method == 'average':
                 picking_type = 'in'
                 break
             else:
@@ -61,13 +64,7 @@ class stock_partial_picking(osv.osv_memory):
         if not picking_ids:
             return res
 
-        result = []
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            pick_type = self.get_picking_type(cr, uid, pick, context=context)
-            for m in pick.move_lines:
-                if m.state in ('done', 'cancel'):
-                    continue
-                result.append(self.__create_partial_picking_memory(m, pick_type))
+        result = self._hook_default_get(cr, uid, picking_ids, context)
 
         if 'product_moves_in' in fields:
             res.update({'product_moves_in': result})

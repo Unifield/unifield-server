@@ -621,6 +621,12 @@ class account_voucher(osv.osv):
             res['account_id'] = account_id
         return {'value':res}
 
+    def __hook_move_line_values_before_creation(self, cr, uid, move_line):
+        """
+        Change move line vals before its creation
+        """
+        return move_line
+
     def action_move_line_create(self, cr, uid, ids, context=None):
 
         def _get_payment_term_lines(term_id, amount):
@@ -696,6 +702,7 @@ class account_voucher(osv.osv):
                 'date': inv.date,
                 'date_maturity': inv.date_due
             }
+            move_line = self.__hook_move_line_values_before_creation(cr, uid, move_line)
             move_line_pool.create(cr, uid, move_line)
             rec_list_ids = []
             line_total = debit - credit
@@ -751,6 +758,7 @@ class account_voucher(osv.osv):
                         raise osv.except_osv(_('No Account Base Code and Account Tax Code!'),_("You have to configure account base code and account tax code on the '%s' tax!") % (tax_data.name))
                 sign = (move_line['debit'] - move_line['credit']) < 0 and -1 or 1
                 move_line['amount_currency'] = company_currency <> current_currency and sign * line.amount or 0.0
+                move_line = self.__hook_move_line_values_before_creation(cr, uid, move_line)
                 voucher_line = move_line_pool.create(cr, uid, move_line)
                 if line.move_line_id.id:
                     rec_ids = [voucher_line, line.move_line_id.id]
@@ -777,6 +785,7 @@ class account_voucher(osv.osv):
                     #'amount_currency': company_currency <> current_currency and currency_pool.compute(cr, uid, company_currency, current_currency, diff * -1, context=context_multi_currency) or 0.0,
                     #'currency_id': company_currency <> current_currency and current_currency or False,
                 }
+                move_line = self.__hook_move_line_values_before_creation(cr, uid, move_line)
                 move_line_pool.create(cr, uid, move_line)
             self.write(cr, uid, [inv.id], {
                 'move_id': move_id,

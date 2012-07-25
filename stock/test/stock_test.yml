@@ -275,7 +275,7 @@
   !python {model: stock.fill.inventory}: |
     self.fill_inventory(cr, uid, [ref("stock_fill_inventory_0")], {"lang": 'en_US',
       "full": "1", "tz": False, "active_model": "stock.inventory", "active_ids":
-      [ref("stock_inventory_physicalinventoy0")], "active_id": ref("stock_inventory_physicalinventoy0"), })
+      [ref("stock_inventory_physicalinventoy0")], "active_id": ref("stock_inventory_physicalinventoy0"), "update_mode": "update"})
 
 -
   I create stock.move.split record.

@@ -224,6 +224,9 @@ class stock_location(osv.osv):
         'scrap_location': False,
     }
 
+    def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
+        return kwargs.get('result', None)
+
     def chained_location_get(self, cr, uid, location, partner=None, product=None, context=None):
         """ Finds chained location
         @param location: Location id
@@ -237,6 +240,7 @@ class stock_location(osv.osv):
                 result = partner.property_stock_customer
         elif location.chained_location_type == 'fixed':
             result = location.chained_location_id
+        result = self._hook_chained_location_get(cr, uid, context=context, location=location, partner=partner, product=product, result=result)
         if result:
             return result, location.chained_auto_packing, location.chained_delay, location.chained_journal_id and location.chained_journal_id.id or False, location.chained_company_id and location.chained_company_id.id or False, location.chained_picking_type
         return result
@@ -359,7 +363,7 @@ class stock_location(osv.osv):
     def _product_virtual_get(self, cr, uid, id, product_ids=False, context=None, states=['done']):
         return self._product_all_get(cr, uid, id, product_ids, context, ['confirmed', 'waiting', 'assigned', 'done'])
 
-    def _product_reserve(self, cr, uid, ids, product_id, product_qty, context=None, lock=False):
+    def _product_reserve(self, cr, uid, ids, product_id, product_qty, location_dest_id, context=None, lock=False):
         """
         Attempt to find a quantity ``product_qty`` (in the product's default uom or the uom passed in ``context``) of product ``product_id``
         in locations with id ``ids`` and their child locations. If ``lock`` is True, the stock.move lines
@@ -386,7 +390,9 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         pool_uom = self.pool.get('product.uom')
-        for id in self.search(cr, uid, [('location_id', 'child_of', ids)]):
+        for id in self.search(cr, uid, [('location_id', 'child_of', ids)], order="parent_left"):
+            if id == location_dest_id:
+                continue
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
@@ -452,13 +458,9 @@ class stock_location(osv.osv):
             if amount > 0:
                 if amount > min(total, product_qty):
                     amount = min(product_qty, total)
-                result.append((amount, id))
-                product_qty -= amount
-                total -= amount
-                if product_qty <= 0.0:
-                    return result
-                if total <= 0.0:
-                    continue
+
+                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id, ids)
+
         return False
 
 stock_location()
@@ -818,7 +820,7 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines]
+            move_ids = [x.id for x in pick.move_lines if x.state == 'assigned']
             move_obj.cancel_assign(cr, uid, move_ids)
             wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
         return True
@@ -996,6 +998,12 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
+    def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
+        """
+        Hook to permit to change invoice values before its creation
+        """
+        return invoice_vals
+
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
             group=False, type='out_invoice', context=None):
         """ Creates invoice based on the invoice state selected for picking.
@@ -1068,6 +1076,8 @@ class stock_picking(osv.osv):
                     invoice_vals['currency_id'] = cur_id
                 if journal_id:
                     invoice_vals['journal_id'] = journal_id
+                # Add hook to changes values before creation
+                invoice_vals = self._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
                 invoice_id = invoice_obj.create(cr, uid, invoice_vals,
                         context=context)
                 invoices_group[partner.id] = invoice_id
@@ -1856,6 +1866,8 @@ class stock_move(osv.osv):
         @return: Dictionary containing destination location with chained location type.
         """
         result = {}
+        if context is None:
+            context = {}
         for m in moves:
             dest = self.pool.get('stock.location').chained_location_get(
                 cr,
@@ -1866,7 +1878,7 @@ class stock_move(osv.osv):
                 context
             )
             if dest:
-                if dest[1] == 'transparent':
+                if dest[1] == 'transparent' and context.get('action_confirm', False):
                     newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
                     self.write(cr, uid, [m.id], {
                         'date': newdate,
@@ -1881,7 +1893,7 @@ class stock_move(osv.osv):
                     for pick_id in res2.keys():
                         result.setdefault(pick_id, [])
                         result[pick_id] += res2[pick_id]
-                else:
+                elif not context.get('action_confirm', False):
                     result.setdefault(m.picking_id, [])
                     result[m.picking_id].append( (m, dest) )
         return result
@@ -1951,6 +1963,10 @@ class stock_move(osv.osv):
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
                 wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
+                # Make the stock moves available
+                picking_obj.action_assign(cr, uid, [pickid], context=context)
+                picking_obj.log_picking(cr, uid, [pickid], context=context)
         if new_moves:
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
@@ -1966,7 +1982,9 @@ class stock_move(osv.osv):
         moves = self.browse(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
 
-        self.create_chained_picking(cr, uid, moves, context)
+        ctx = context.copy()
+        ctx.update({'action_confirm': True})
+        self.create_chained_picking(cr, uid, moves, context=ctx)
         return []
     
     def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
@@ -2009,6 +2027,7 @@ class stock_move(osv.osv):
         @return: No. of moves done
         """
         done = []
+        notdone = []
         count = 0
         pickings = {}
         if context is None:
@@ -2021,7 +2040,7 @@ class stock_move(osv.osv):
                 continue
             if move.state in ('confirmed', 'waiting'):
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, {'uom': move.product_uom.id}, lock=True)
+                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, move.location_dest_id.id ,{'uom': move.product_uom.id}, lock=True)
                 if res:
                     #_product_available_test depends on the next status for correct functioning
                     #the test does not work correctly if the same product occurs multiple times
@@ -2033,13 +2052,8 @@ class stock_move(osv.osv):
                     r = res.pop(0)
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
-                    while res:
-                        r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
-                        done.append(move_id)
-        if done:
-            count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
+                    done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
+        count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
             for pick_id in pickings:
@@ -2280,6 +2294,9 @@ class stock_move(osv.osv):
 
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+            
+        moves = self.browse(cr, uid, move_ids, context=context)
+        self.create_chained_picking(cr, uid, moves, context)
 
         return True
 
@@ -2561,6 +2578,9 @@ class stock_move(osv.osv):
                 too_many.append(move)
 
             # Average price computation
+            # Average and chaining with type='in' 
+            #old_moves = self.search(cr, uid, [('type', '=', 'in'), ('move_dest_id', '=', move.id)], context=context)
+            #if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not old_moves:
             if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
                 product = product_obj.browse(cr, uid, move.product_id.id)
                 move_currency_id = move.company_id.currency_id.id
