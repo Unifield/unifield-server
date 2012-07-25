@@ -576,6 +576,7 @@
     type: cur_adj
     view_id: account_journal_view0
     default_debit_account_id: account_account_adjustement0
+    default_credit_account_id: account_account_adjustement0
     allow_date: 0
     analytic_journal_id: account_analytic_journal_adjustement_0
 -
