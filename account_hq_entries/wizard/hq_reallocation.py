@@ -53,7 +53,7 @@ class hq_analytic_reallocation(osv.osv_memory):
             except ValueError:
                 oc_id = 0
             # Change OC field
-            fields = form.xpath('/form/field[@name="cost_center_id"]')
+            fields = form.xpath('//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
             # Change FP field
@@ -61,12 +61,35 @@ class hq_analytic_reallocation(osv.osv_memory):
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
-            fp_fields = form.xpath('/form/field[@name="funding_pool_id"]')
+            fp_fields = form.xpath('//field[@name="analytic_id"]')
             # Do not use line with account_id, because of NO ACCOUNT_ID PRESENCE!
             for field in fp_fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
             # NO NEED TO CHANGE DESTINATION_ID FIELD because NO ACCOUNT_ID PRESENCE!
+            view['arch'] = etree.tostring(form)
         return view
+
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
+        """
+        Check given cost_center with funding pool
+        """
+        # Prepare some values
+        res = {}
+        if cost_center_id and analytic_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
+                res = {'value': {'analytic_id': False}}
+        elif not cost_center_id:
+            res = {}
+        else:
+            res = {'value': {'analytic_id': False}}
+        return res
 
     def button_validate(self, cr, uid ,ids, context=None):
         """

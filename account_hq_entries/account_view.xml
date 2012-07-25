@@ -85,7 +85,7 @@
                 <form string="Analytic Reallocation">
                     <group  colspan="6" col="6">
                         <field name="destination_id"/>
-                        <field name="cost_center_id"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)"/>
                         <field name="analytic_id"/>
                     </group>
                     <newline/>
