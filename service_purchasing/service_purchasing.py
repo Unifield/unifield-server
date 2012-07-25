@@ -36,8 +36,14 @@ class product_template(osv.osv):
     '''
     _inherit = "product.template"
     
+    PRODUCT_TYPE = [
+        ('product','Stockable Product'),
+        ('consu', 'Non-Stockable'),
+        ('service_recep', 'Service with Reception'),
+    ]
+    
     _columns = {
-        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service'), ('service_recep', 'Service with Reception'),], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'type': fields.selection(PRODUCT_TYPE, 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
     }
     
 product_template()
@@ -89,6 +95,12 @@ class stock_location(osv.osv):
         'service_location': fields.boolean(string='Service Location', readonly=True,),
     }
     
+    def get_service_location(self, cr, uid, context=None):
+        ids = self.search(cr, uid, [('service_location', '=', True)])
+        if not ids:
+            raise osv.except_osv(_('Error'), _('You must have a location with "Service Location".'))
+        return ids[0]
+
 stock_location()
 
 
@@ -104,18 +116,30 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False):
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False):
         '''
         if the product is "service with reception" or "service", the destination location is Service
         '''
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id)
+        service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        if service_loc:
+            service_loc = service_loc[0]
         
-        if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service'):
-            service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service') and parent_type == 'in':
             if service_loc:
-                result.setdefault('value', {}).update(location_dest_id=service_loc[0])
+                prod_type = prod_obj.browse(cr, uid, prod_id).type
+                result.setdefault('value', {}).update(location_dest_id=service_loc, product_type=prod_type)
+                result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
+        else:
+            if loc_dest_id == service_loc: 
+                result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
+            if parent_type == 'out':
+                result.update({'domain': {'location_dest_id': [('standard_out_ok', '=', 'dest')]}})
+            else:
+                result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
+            
         
         return result
     

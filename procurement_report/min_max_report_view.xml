@@ -69,6 +69,27 @@
 			key2="client_action_multi"
 			view_type="form"
 			view_mode="tree,form" />
+			
+			
+		<!-- Min/Max rules search view -->
+		<record id="unifield_warehouse_orderpoint_search" model="ir.ui.view">
+			<field name="name">unifield.warehouse.orderpoint.search</field>
+			<field name="model">stock.warehouse.orderpoint</field>
+			<field name="type">search</field>
+			<field name="inherit_id" ref="procurement.warehouse_orderpoint_search" />
+			<field name="arch" type="xml">
+				<xpath expr="/search//field[@name='name']" position="attributes">
+					<attribute name="string">Reference</attribute>	
+				</xpath>
+				<xpath expr="/search//field[@name='company_id']" position="replace" />
+				
+				<xpath expr="/search//filter[@string='Location']" position="after">
+					<separator orientation="vertical" />
+					 <filter string="Product" icon="terp-stock_symbol-selection" domain="[]"  context="{'group_by':'product_id'}"/>
+				</xpath>
+				
+			</field>
+		</record>
 		
 	</data>
 </openerp>

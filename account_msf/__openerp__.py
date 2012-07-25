@@ -35,13 +35,16 @@
     "update_xml" : [
         'board_account_view.xml',
         'res_company_view.xml',
-        'debit_note_view.xml',
+        'res_partner_view.xml',
+        'invoice_view.xml',
         'wizard_view.xml',
+        'product_product_view.xml',
     ],
     "demo_xml" : [],
     "test": [
         'test/accounting_data.yml',
         'test/intersection_flow.yml',
+        'test/inkind_donation.yml',
     ],
     "installable": True,
     "active": False

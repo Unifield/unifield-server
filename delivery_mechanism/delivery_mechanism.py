@@ -107,19 +107,21 @@ class stock_move(osv.osv):
                         procurement_id = obj.purchase_line_id.procurement_id.id
                         # find the corresponding sale order line
                         so_line_ids = so_line_obj.search(cr, uid, [('procurement_id', '=', procurement_id)], context=context)
-                        assert len(so_line_ids) == 1, 'number of so line is wrong - 1 - %s'%len(so_line_ids)
-                        # find the corresponding OUT move
-                        # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
-                        move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
-                        # list of matching out moves
-                        integrity_check = []
-                        for move in self.browse(cr, uid, move_ids, context=context):
-                            # move from draft picking or standard picking
-                            if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
-                                integrity_check.append(move.id)
-                        # return the first one matching
-                        if integrity_check:
-                            res[obj.id] = integrity_check[0]
+                        # if the procurement comes from replenishment rules, there will be a procurement, but no associated sale order line
+                        # we therefore do not raise an exception, but handle the case only if sale order lines are found
+                        if so_line_ids:
+                            # find the corresponding OUT move
+                            # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                            move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                            # list of matching out moves
+                            integrity_check = []
+                            for move in self.browse(cr, uid, move_ids, context=context):
+                                # move from draft picking or standard picking
+                                if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
+                                    integrity_check.append(move.id)
+                            # return the first one matching
+                            if integrity_check:
+                                res[obj.id] = integrity_check[0]
             else:
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'
@@ -276,7 +278,10 @@ class stock_picking(osv.osv):
         create_picking_obj = self.pool.get('create.picking')
         # workflow
         wf_service = netsvc.LocalService("workflow")
-        
+       
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        ctx_avg = context.copy()
+        ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
             # corresponding backorder object - not necessarily created
             backorder_id = None
@@ -310,7 +315,7 @@ class stock_picking(osv.osv):
                     # original openERP logic - average price computation - To be validated by Matthias
                     # Average price computation
                     # selected product from wizard must be tested
-                    product = product_obj.browse(cr, uid, partial['product_id'], context=context)
+                    product = product_obj.browse(cr, uid, partial['product_id'], context=ctx_avg)
                     if (pick.type == 'in') and (product.cost_method == 'average'):
                         move_currency_id = move.company_id.currency_id.id
                         context['currency_id'] = move_currency_id
@@ -519,7 +524,7 @@ class stock_picking(osv.osv):
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
-                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.')%(obj.purchase_id.name, obj.purchase_id.shipped_rate))
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received.')%(obj.purchase_id.name, round(obj.purchase_id.shipped_rate,2)))
             # correct the corresponding so
             for sale_id in sale_ids:
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)

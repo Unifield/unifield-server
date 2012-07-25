@@ -35,16 +35,14 @@ class sale_order(osv.osv):
         Set the intl_customer_ok field if the partner is an ESC or an international partner
         '''
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
-
         if part:
             partner = self.pool.get('res.partner').browse(cr, uid, part)
-            if partner.partner_type == 'esc' or partner.zone == 'international':
+            if partner.partner_type == 'esc' or partner.partner_type == 'external' or partner.zone == 'international':
                 res['value'].update({'intl_customer_ok': True})
             else:
                 res['value'].update({'intl_customer_ok': False})
         else:
             res['value'].update({'intl_customer_ok': True})
-
         return res
 
 

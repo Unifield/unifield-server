@@ -40,11 +40,12 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'updated': fields.integer(string="Updated", size=64, readonly=True),
         'created': fields.integer(string="Created", size=64, readonly=True),
         'total': fields.integer(string="Processed", size=64, readonly=True),
-        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll')], string="State", 
-            required=True, readonly=True),
+        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')], 
+            string="State", required=True, readonly=True),
         'error_line_ids': fields.many2many("hr.payroll.employee.import.errors", "employee_import_error_relation", "wizard_id", "error_id", "Error list", 
             readonly=True),
         'errors': fields.integer(string="Errors", size=64, readonly=True),
+        'nberrors': fields.integer(string="Errors", readonly=True),
     }
 
     _defaults = {
@@ -101,8 +102,15 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
                 domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
+            if context.get('from') == 'hq_entries_import':
+                result = ('hq_entries_tree', 'hq.entries', 'account_hq_entries')
+                domain = ""
+                context.update({'search_default_non_validated': 1})
             if result:
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', result[0])
+                module_name = 'msf_homere_interface'
+                if result and len(result) > 2:
+                    module_name = result[2]
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module_name, result[0])
                 if view_id:
                     view_id = view_id and view_id[1] or False
                 return {
@@ -214,6 +222,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0]), ('homere_id_unique', '=', id_unique[0])])
             # Prepare vals
             res = False
+            name = (nom and prenom and nom[0] and prenom[0] and ustr(nom[0]) + ', ' + ustr(prenom[0])) or (nom and ustr(nom[0])) or (prenom and ustr(prenom[0])) or False
             vals = {
                 'active': True,
                 'employee_type': 'local',
@@ -227,6 +236,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'work_email': email and email[0] or False,
                 # Do "NOM, Prenom"
                 'name': employee_name,
+                'name': name,
                 'ssnid': num_soc and num_soc[0] or False,
                 'mobile_phone': portable and portable[0] or False,
                 'work_phone': tel_bureau and tel_bureau[0] or False,
@@ -272,15 +282,28 @@ class hr_payroll_employee_import(osv.osv_memory):
             # In case of death, desactivate employee
             if decede and decede[0] and decede[0] == 'Y':
                 vals.update({'active': False})
-#            # If employee have a expired date, so desactivate it
-#            if dateexpiration and dateexpiration[0] and dateexpiration[0] <= current_date:
-#                vals.update({'active': False})
+            # Desactivate employee if:
+            # - no contract line found
+            # - end of current contract exists and is inferior to current date
+            # - no contract line found with current = True
+            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0])])
+            if not contract_ids:
+                vals.update({'active': False})
+            current_contract = False
+            for contract in self.pool.get('hr.contract.msf').browse(cr, uid, contract_ids):
+                if contract.current:
+                    current_contract = True
+                    if contract.date_end and contract.date_end < strftime('%Y-%m-%d'):
+                        vals.update({'active': False})
+            # Desactivate employee if no current contract
+            if not current_contract:
+                vals.update({'active': False})
             # Add an analytic distribution
             try:
                 cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
             except ValueError:
                 cc_id = 0
-            if cc_id:
+            if cc_id and not e_ids:
                 vals.update({'cost_center_id': cc_id,})
             if not e_ids:
                 res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
@@ -296,6 +319,39 @@ class hr_payroll_employee_import(osv.osv_memory):
             return False, created, updated
         return True, created, updated
 
+    def update_contract(self, cr, uid, ids, reader, context=None):
+        """
+        Read lines from reader and update database
+        """
+        res = []
+        if not reader:
+            return res
+        for line in reader:
+            if not line.get('contratencours'): #or not line.get('contratencours') == 'O':
+                continue
+            vals = {
+                'homere_codeterrain': line.get('codeterrain') or False,
+                'homere_id_staff': line.get('id_staff') or False,
+                'homere_id_unique': line.get('id_unique') or False,
+                'current': False,
+            }
+            # Update values for current field
+            if line.get('contratencours'):
+                if line.get('contratencours') == 'O':
+                    vals.update({'current': True})
+            # Update values for datedeb and datefin fields
+            for field in [('datedeb', 'date_start'), ('datefin', 'date_end')]:
+                if line.get(field[0]):
+                    if line.get(field[0]) == '0000-00-00':
+                        vals.update({field[1]: False})
+                    else:
+                        vals.update({field[1]: line.get(field[0])})
+            # Add entry to database
+            new_line = self.pool.get('hr.contract.msf').create(cr, uid, vals)
+            if new_line:
+                res.append(new_line)
+        return res
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Open ZIP file and search staff.csv
@@ -304,6 +360,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             context = {}
         # Prepare some values
         staff_file = 'staff.csv'
+        contract_file = 'contrat.csv'
         res = False
         message = _("Employee import FAILED.")
         created = 0
@@ -323,6 +380,13 @@ class hr_payroll_employee_import(osv.osv_memory):
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
+            # read the contract file
+            contract_ids = False
+            if zipobj.namelist() and contract_file in zipobj.namelist():
+                contract_reader = csv.DictReader(zipobj.open(contract_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                contract_ids = self.update_contract(cr, uid, ids, contract_reader, context=context)
+            else:
+                raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
@@ -333,9 +397,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
-            # Unactivate all local employees
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
-            self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False,}, {'from': 'import'})
             res = True
             for i, employee_data in enumerate(reader):
                 update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
@@ -346,6 +407,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                 processed += 1
             # Close Temporary File
             fileobj.close()
+            # Delete previous created lines for employee's contracts
+            if contract_ids:
+                self.pool.get('hr.contract.msf').unlink(cr, uid, contract_ids)
         if res:
             message = _("Employee import successful.")
         else:

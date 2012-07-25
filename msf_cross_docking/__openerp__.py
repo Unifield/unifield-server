@@ -24,7 +24,7 @@
     'category': 'Stock',
     'author': 'MSF, TeMPO Consulting, Smile',
     'developer': 'Matthieu Choplin',
-    'depends': ['purchase_msf','delivery_mechanism', 'stock'],
+    'depends': ['purchase_msf','delivery_mechanism', 'stock', 'purchase_override', 'unifield_setup',],
     'description': '''
         Cross Docking Management.
         We enable the user to change the stock location (on input and output) to "cross docking":

@@ -33,8 +33,12 @@ class purchase_order(osv.osv):
         res = {}
         
         for order in self.browse(cr, uid, ids, context=context):
-            if order.order_type == 'direct' and order.state == 'approved':
+            # Direct PO is 100.00% received when a user confirm the reception at customer side
+            if order.order_type == 'direct' and order.state == 'done':
                 res[order.id] = 100.00
+                continue
+            elif order.order_type == 'direct' and order.state != 'done':
+                res[order.id] = 0.00
                 continue
             res[order.id] = 0.00
             amount_total = 0.00
@@ -46,8 +50,11 @@ class purchase_order(osv.osv):
                         move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
                         if move.type == 'out':
                             amount_received -= move_qty*line.price_unit
-                        else:
+                        elif move.type == 'in':
                             amount_received += move_qty*line.price_unit
+                        elif move.type == 'internal':
+                            # not taken into account
+                            pass
                     
             if amount_total:
                 res[order.id] = (amount_received/amount_total)*100

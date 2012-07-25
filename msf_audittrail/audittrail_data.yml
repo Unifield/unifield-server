@@ -74,6 +74,7 @@
     if object_ids and not rule_id:
       # Create the rule
       fields = ['partner_invoice_id', 'partner_shipping_id', 'picking_ids', 'priority', 'procurement_request',
+                'delivery_requested_date', 'delivery_confirmed_date',
                 'project_id', 'ready_to_ship_date', 'receipt_date', 'requested_date', 'requestor',
                 'shipment_date', 'shipped', 'state', 'transport_type', 'warehouse_id']
 
@@ -167,7 +168,7 @@
                 'reason_type_id', 'state']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.move'), ('name', 'in', fields)], context=context)
-      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'name')], context=context)
+      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'line_number')], context=context)
       field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'picking_id')], context=context)
       
       name_id = False
@@ -180,7 +181,7 @@
         
       rule_id = self.create(cr, uid, {'name': name,
                                       'object_id': object_ids[0],
-                                      'domain_filter': "[('picking_id', '!=', False), ('type', '=', 'in')]",
+                                      'domain_filter': "[('picking_id', '!=', False), ('picking_id.type', '=', 'in')]",
                                       'log_write': True,
                                       'log_unlink': True,
                                       'log_create': True,

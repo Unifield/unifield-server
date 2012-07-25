@@ -27,6 +27,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 import logging
+import datetime
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -36,10 +37,15 @@ class account_invoice(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
             help="This field contains the information related to the numbering of the lines of this order."),
+        'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 
+            'close':[('readonly',True)]}, select=True),
+        'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 
+            'close':[('readonly',True)]}, select=True),
     }
 
     _defaults = {
         'from_yml_test': lambda *a: False,
+        'date_invoice': lambda *a: strftime('%Y-%m-%d'),
     }
 
     def create_sequence(self, cr, uid, vals, context=None):
@@ -80,6 +86,37 @@ class account_invoice(osv.osv):
         vals.update({'sequence_id': res_seq,})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
+    def _check_document_date(self, cr, uid, ids):
+        """
+        Check that document's date is done BEFORE posting date
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for i in self.browse(cr, uid, ids):
+            if i.document_date and i.date_invoice and i.date_invoice < i.document_date:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        return True
+
+    def action_date_assign(self, cr, uid, ids, *args):
+        """
+        Check Document date.
+        Add it if we come from a YAML test.
+        """
+        # Default behaviour to add date
+        res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
+        # Process invoices
+        for i in self.browse(cr, uid, ids):
+            if not i.date_invoice:
+                self.write(cr, uid, i.id, {'date_invoice': strftime('%Y-%m-%d')})
+                i = self.browse(cr, uid, i.id) # This permit to refresh the browse of this element
+            if not i.document_date and i.from_yml_test:
+                self.write(cr, uid, i.id, {'document_date': i.date_invoice})
+            if not i.document_date and not i.from_yml_test:
+                raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
+        # Posting date should not be done BEFORE document date
+        self._check_document_date(cr, uid, ids)
+        return res
+
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Give function to use when changing invoice to open state
@@ -107,6 +144,46 @@ class account_invoice(osv.osv):
         res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
             ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']), 
             ('company_id', '=', inv.company_id.id)], context=context, order="date_start ASC, name ASC")
+        return res
+
+    def finalize_invoice_move_lines(self, cr, uid, inv, line):
+        """
+        Hook that changes move line data before write them.
+        Add invoice document date to data.
+        """
+        res = super(account_invoice, self).finalize_invoice_move_lines(cr, uid, inv, line)
+        new_line = []
+        for el in line:
+            if el[2]:
+                el[2].update({'document_date': inv.document_date})
+        return res
+
+    def copy(self, cr, uid, id, default={}, context=None):
+        """
+        Delete period_id from invoice
+        """
+        if default is None:
+            default = {}
+        default.update({'period_id': False,})
+        return super(account_invoice, self).copy(cr, uid, id, default, context)
+
+    def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
+        """
+        Add document date to account_move_line before pay and reconcile
+        """
+        for line in lines:
+            if line[2] and 'date' in line[2] and not line[2].get('document_date', False):
+                line[2].update({'document_date': line[2].get('date')})
+        return lines
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
+        self._check_document_date(cr, uid, ids)
         return res
 
 account_invoice()

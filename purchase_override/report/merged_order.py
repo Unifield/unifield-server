@@ -25,62 +25,38 @@ from osv import osv
 import pooler
 
 class merged_order(report_sxw.rml_parse):
-    def __init__(self, cr, uid, name, context):
+    def __init__(self, cr, uid, name, context=None):
         super(merged_order, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_line_tax': self._get_line_tax,
-            'get_tax': self._get_tax,
-            'get_product_code': self._get_product_code,
+            'to_time': self.str_to_time,
+            'selection': self._get_selection,
+            'enumerate': enumerate,
         })
-    def _get_line_tax(self, line_obj):
-        line_ids = []
-        for line in line_obj.order_line_ids:
-            line_ids.append(line.id)
-        self.cr.execute("SELECT tax_id FROM purchase_order_taxe WHERE order_line_id in %s", (line_ids))
-        res = self.cr.fetchall() or None
-        if not res:
-            return ""
-        if isinstance(res, list):
-            tax_ids = [t[0] for t in res]
+        
+    def str_to_time(self, time):
+        if isinstance(time, str):
+            if time == 'False':
+                time = False
+                
+        if time:
+            return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=time)
+        
+        return ''
+            
+                    
+    def _get_selection(self, o, field):
+        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        name = '%s,%s' % (o._name, field)
+        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        if tr_ids:
+            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
         else:
-            tax_ids = res[0]
-        res = [tax.name for tax in pooler.get_pool(self.cr.dbname).get('account.tax').browse(self.cr, self.uid, tax_ids)]
-        return ",\n ".join(res)
-    
-    def _get_tax(self, order_obj):
-        self.cr.execute("SELECT DISTINCT tax_id FROM purchase_order_taxe, purchase_order_line, purchase_order \
-            WHERE (purchase_order_line.order_id=purchase_order.id) AND (purchase_order.id=%s)", (order_obj.id))
-        res = self.cr.fetchall() or None
-        if not res:
-            return []
-        if isinstance(res, list):
-            tax_ids = [t[0] for t in res]
-        else:
-            tax_ids = res[0]
-        tax_obj = pooler.get_pool(self.cr.dbname).get('account.tax')
-        res = []
-        for tax in tax_obj.browse(self.cr, self.uid, tax_ids):
-            self.cr.execute("SELECT DISTINCT order_line_id FROM purchase_order_line, purchase_order_taxe \
-                WHERE (purchase_order_taxe.tax_id=%s) AND (purchase_order_line.order_id=%s)", (tax.id, order_obj.id))
-            lines = self.cr.fetchall() or None
-            if lines:
-                if isinstance(lines, list):
-                    line_ids = [l[0] for l in lines]
-                else:
-                    line_ids = lines[0]
-                base = 0
-                for line in pooler.get_pool(self.cr.dbname).get('purchase.order.line').browse(self.cr, self.uid, line_ids):
-                    base += line.price_subtotal
-                res.append({'code':tax.name,
-                    'base':base,
-                    'amount':base*tax.amount})
+            return res
         return res
-    def _get_product_code(self, product_id, partner_id):
-        product_obj=pooler.get_pool(self.cr.dbname).get('product.product')
-        return product_obj._product_code(self.cr, self.uid, [product_id], name=None, arg=None, context={'partner_id': partner_id})[product_id]
 
-report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order)
+report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -46,41 +46,46 @@ class one2many_budget_lines(fields.one2many):
             for budget_line in  budget_line_obj.read(cr, uid, budget_line_ids, ['line_type', 'budget_id'], context=context):
                 budget_id = budget_line['budget_id'][0]
                 if display_type[budget_id] == 'all' \
-                or (display_type[budget_id] == 'view' and budget_line['line_type'] == 'view'):
+                or (display_type[budget_id] == 'view' and budget_line['line_type'] == 'view') \
+                or (display_type[budget_id] == 'expense' and budget_line['line_type'] != 'destination'):
                     res[budget_id].append(budget_line['id'])
         return res
 
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
     
-    def _create_view_line_amounts(self, cr, uid, account_id, actual_amounts, context=None):
-        if account_id not in actual_amounts:
-            account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
-            result = [0] * 12
-            for child_account in account.child_id:
-                if child_account.id not in actual_amounts:
-                    self._create_view_line_amounts(cr, uid, child_account.id, actual_amounts, context=context)
-                result = [sum(pair) for pair in zip(result, actual_amounts[child_account.id])]
-            actual_amounts[account_id] = result
-        return
-    
-    def _get_cc_children(self, browse_cost_center, cost_center_list):
-        for child in browse_cost_center.child_ids:
-            if child.type == 'view':
-                self._get_cc_children(child, cost_center_list)
-            else:
-                cost_center_list.append(child.id)
-        return
-    
-    def _get_cost_center_ids(self, browse_budget):
-        if browse_budget.type == 'normal':
-            # Normal budget, just return a 1-item list
-            return [browse_budget.cost_center_id.id]
-        else:
-            # View budget: return all non-view cost centers below this one
-            cost_center_list = []
-            self._get_cc_children(browse_budget.cost_center_id, cost_center_list)
-            return cost_center_list
+    def _get_actual_amounts(self, cr, uid, ids, context=None):
+        # Input: list of budget lines
+        # Output: a dict of list {general_account_id: [jan_actual, feb_actual,...]}
+        res = {}
+        if context is None:
+            context = {}
+        # global values
+        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
+        
+        # we discard the ids, but retrieve the budget from it
+        # Otherwise, view lines don't have values in "view lines only" display mode
+        budget_line_ids = []
+        if len(ids) > 0:
+            budget = self.browse(cr, uid, ids[0], context=context).budget_id
+            output_currency_id = budget.currency_id.id
+                    
+            cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
+                    
+            # Create search domain (one search for all analytic lines)
+            actual_domain = [('cost_center_id', 'in', cost_center_ids)]
+            actual_domain.append(('date', '>=', budget.fiscalyear_id.date_start))
+            actual_domain.append(('date', '<=', budget.fiscalyear_id.date_stop))
+            # 3. commitments
+            # if commitments are set to False in context, the engagement analytic journals are removed
+            # from the domain
+            if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
+                actual_domain.append(('journal_id', 'in', engagement_journal_ids))
+            
+            # Call budget_tools method
+            res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)
+        
+        return res
         
     def _get_budget_amounts(self, cr, uid, ids, context=None):
         # Input: list of budget lines
@@ -95,25 +100,29 @@ class msf_budget_line(osv.osv):
             if budget.type == 'normal':
                 # Budget values are stored in lines; just retrieve and add them
                 for budget_line in self.browse(cr, uid, ids, context=context):
+                    budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
                     if budget_line.budget_values:
-                        res[budget_line.account_id.id] = eval(budget_line.budget_values)
+                        res[budget_line.account_id.id, budget_line_destination_id] = eval(budget_line.budget_values)
                     else:
-                        res[budget_line.account_id.id] = [0] * 12
+                        res[budget_line.account_id.id, budget_line_destination_id] = [0] * 12
             else:
                 # fill with 0s
                 for budget_line in self.browse(cr, uid, ids, context=context):
-                    res[budget_line.account_id.id] = [0] * 12
+                    budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
+                    res[budget_line.account_id.id, budget_line_destination_id] = [0] * 12
                 # Not stored in lines; retrieve child budgets, get their budget values and add
-                cost_center_list = self._get_cost_center_ids(budget)
+                cost_center_list = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
                 # For each cost center, get the latest non-draft budget
                 for cost_center_id in cost_center_list:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                             AND cost_center_id = %s \
+                                                            AND decision_moment_id = %s \
                                                             AND state != 'draft' \
                                                             AND type = 'normal' \
                                                             ORDER BY version DESC LIMIT 1",
                                                            (budget.fiscalyear_id.id,
-                                                            cost_center_id))
+                                                            cost_center_id,
+                                                            budget.decision_moment_id.id))
                     if cr.rowcount:
                         # A budget was found; get its lines and their amounts
                         child_budget_id = cr.fetchall()[0][0]
@@ -123,92 +132,14 @@ class msf_budget_line(osv.osv):
                                                      context=context)
                         child_budget_amounts = self._get_budget_amounts(cr, uid, child_line_ids, context=context)
                         for child_line in self.browse(cr, uid, child_line_ids, context=context):
-                            if child_line.account_id.id not in res:
-                                res[child_line.account_id.id] = child_budget_amounts[child_line.account_id.id]
+                            child_line_destination_id = child_line.destination_id and child_line.destination_id.id or False
+                            if (child_line.account_id.id, child_line_destination_id) not in res:
+                                res[child_line.account_id.id, child_line_destination_id] = child_budget_amounts[child_line.account_id.id, child_line_destination_id]
                             else:
-                                res[child_line.account_id.id] = [sum(pair) for pair in 
-                                                                 zip(child_budget_amounts[child_line.account_id.id],
-                                                                     res[child_line.account_id.id])]
+                                res[child_line.account_id.id, child_line_destination_id] = [sum(pair) for pair in 
+                                                                                                             zip(child_budget_amounts[child_line.account_id.id, child_line_destination_id],
+                                                                                                             res[child_line.account_id.id, child_line_destination_id])]
 
-        return res
-        
-    
-    def _get_actual_amounts(self, cr, uid, ids, context=None):
-        # Input: list of budget lines
-        # Output: a dict of list {general_account_id: [jan_actual, feb_actual,...]}
-        res = {}
-        if context is None:
-            context = {}
-        # global values
-        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENG')], context=context)
-        
-        # list to store every account in the budget
-        general_account_ids = []
-        # list to store accounts for view lines
-        view_line_account_ids = []
-        
-        # we discard the ids, and retrieve them all
-        # Otherwise, view lines don't have values in "view lines only" display mode
-        budget_line_ids = []
-        if len(ids) > 0:
-            budget = self.browse(cr, uid, ids[0], context=context).budget_id
-            cr.execute("SELECT id FROM msf_budget_line WHERE budget_id = %s" % budget.id)
-            budget_line_ids = [i[0] for i in cr.fetchall()]
-        
-            # Browse each budget line for type
-            for budget_line in self.browse(cr, uid, budget_line_ids, context=context):
-                if budget_line.line_type == 'normal':
-                    # add to list of accounts
-                    res[budget_line.account_id.id] = [0] * 12
-                    general_account_ids.append(budget_line.account_id.id)
-                else:
-                    view_line_account_ids.append(budget_line.account_id.id)
-                    
-            cost_center_ids = self._get_cost_center_ids(budget_line.budget_id)
-                    
-            # Create search domain (one search for all analytic lines)
-            actual_domain = [('general_account_id', 'in', general_account_ids)]
-            actual_domain.append(('account_id', 'in', cost_center_ids))
-            actual_domain.append(('date', '>=', budget_line.budget_id.fiscalyear_id.date_start))
-            actual_domain.append(('date', '<=', budget_line.budget_id.fiscalyear_id.date_stop))
-            # 3. commitments
-            # if commitments are set to False in context, the ENG analytic journal is removed
-            # from the domain
-            if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', '!=', engagement_journal_ids[0]))
-            
-            # Analytic domain is now done; lines are retrieved and added
-            analytic_line_obj = self.pool.get('account.analytic.line')
-            analytic_lines = analytic_line_obj.search(cr, uid, actual_domain, context=context)
-            # use currency_table_id
-            currency_table = None
-            if 'currency_table_id' in context:
-                currency_table = context['currency_table_id']
-            main_currency_id = budget_line.budget_id.currency_id.id
-            
-            # parse each line and add it to the right array
-            for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                date_context = {'date': analytic_line.source_date or analytic_line.date,
-                                'currency_table_id': currency_table}
-                actual_amount = self.pool.get('res.currency').compute(cr,
-                                                                      uid,
-                                                                      analytic_line.currency_id.id,
-                                                                      main_currency_id, 
-                                                                      analytic_line.amount_currency or 0.0,
-                                                                      round=True,
-                                                                      context=date_context)
-                # add the amount to correct month
-                month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
-                res[analytic_line.general_account_id.id][month - 1] += round(actual_amount)
-                
-            # after all lines are parsed, absolute of every column
-            for budget_line in res.keys():
-                res[budget_line] = map(abs, res[budget_line])
-                    
-            # do the view lines
-            for account_id in view_line_account_ids:
-                self._create_view_line_amounts(cr, uid, account_id, res, context=context)
-            
         return res
     
     def _compute_total_amounts(self, cr, uid, budget_amount_list, actual_amount_list, context=None):
@@ -245,10 +176,11 @@ class msf_budget_line(osv.osv):
         
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
+            budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
             line_amounts = self._compute_total_amounts(cr,
                                                        uid,
-                                                       budget_amounts[budget_line.account_id.id],
-                                                       actual_amounts[budget_line.account_id.id],
+                                                       budget_amounts[budget_line.account_id.id, budget_line_destination_id],
+                                                       actual_amounts[budget_line.account_id.id, budget_line_destination_id],
                                                        context=context)
             actual_amount = line_amounts['actual_amount']
             budget_amount = line_amounts['budget_amount']
@@ -282,11 +214,18 @@ class msf_budget_line(osv.osv):
                 
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
-            if budget_line.line_type == 'view' or ('granularity' in context and context['granularity'] == 'all'):
-                line_actual_amounts = actual_amounts[budget_line.account_id.id]
-                line_budget_amounts = budget_amounts[budget_line.account_id.id]
+            budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
+            if budget_line.line_type == 'view' \
+                or ('granularity' in context and context['granularity'] == 'all') \
+                or ('granularity' in context and context['granularity'] == 'expense' and budget_line.line_type != 'destination'):
+                line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
+                line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
                 
-                line_values = [budget_line.account_id.code + " " + budget_line.account_id.name]
+                line_name = budget_line.account_id.code
+                if budget_line.destination_id:
+                    line_name += " " + budget_line.destination_id.code
+                line_name += " " + budget_line.account_id.name
+                line_values = [line_name]
                 if 'breakdown' in context and context['breakdown'] == 'month':
                     # Need to add breakdown values
                     for i in range(month_stop):
@@ -306,9 +245,25 @@ class msf_budget_line(osv.osv):
             
         return res
     
+    def _get_name(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        result = self.browse(cr, uid, ids, context=context)
+        res = {}
+        for rs in result:
+            account = rs.account_id
+            name = account.code 
+            if rs.destination_id:
+                name += " "
+                name += rs.destination_id.code
+            name += " "
+            name += account.name
+            res[rs.id] = name
+        return res
+    
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
+        'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')]),
+        'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True"),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
         'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
         'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
@@ -317,7 +272,8 @@ class msf_budget_line(osv.osv):
         'parent_id': fields.many2one('msf.budget.line', 'Parent Line'),
         'child_ids': fields.one2many('msf.budget.line', 'parent_id', 'Child Lines'),
         'line_type': fields.selection([('view','View'),
-                                       ('normal','Normal')], 'Line type', required=True),
+                                       ('normal','Normal'),
+                                       ('destination', 'Destination')], 'Line type', required=True),
     }
     
     _defaults = {
@@ -328,46 +284,62 @@ class msf_budget_line(osv.osv):
         # Method to check if the used account has a parent,
         # and retrieve or create the corresponding parent line.
         # It also adds budget values to parent lines
+        parent_account_id = False
+        parent_line_ids = []
         if 'account_id' in vals and 'budget_id' in vals:
-            # search for budget line
-            account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
-            chart_of_account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
-            if account.parent_id and account.parent_id.id not in chart_of_account_ids:
-                parent_account_id = account.parent_id.id
-                parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
-                                                        ('budget_id', '=', vals['budget_id'])], context=context)
-                if len(parent_line_ids) > 0:
-                    # Parent line exists
-                    if 'budget_values' in vals:
-                        # we add the budget values to the parent one
-                        parent_line = self.browse(cr, uid, parent_line_ids[0], context=context)
-                        parent_budget_values = [sum(pair) for pair in zip(eval(parent_line.budget_values),
-                                                                          eval(vals['budget_values']))]
-                        # write parent
-                        super(msf_budget_line, self).write(cr,
-                                                           uid,
-                                                           parent_line_ids,
-                                                           {'budget_values': str(parent_budget_values)},
-                                                           context=context)
-                        # use method on parent with original budget values
-                        self.get_parent_line(cr,
-                                             uid,
-                                             {'account_id': parent_line.account_id.id,
-                                              'budget_id': parent_line.budget_id.id,
-                                              'budget_values': vals['budget_values']},
-                                             context=context)
-                    # add parent id to vals
-                    vals.update({'parent_id': parent_line_ids[0]})
+            if 'destination_id' in vals:
+                # Special case: the line has a destination, so the parent is a line
+                # with the same account and no destination
+                parent_account_id = vals['account_id']
+                parent_line_ids = self.search(cr, uid, [('account_id', '=', vals['account_id']),
+                                                        ('budget_id', '=', vals['budget_id']),
+                                                        ('line_type', '=', 'normal')], context=context)
+            else:
+                # search for budget line
+                account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
+                chart_of_account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
+                if account.parent_id and account.parent_id.id in chart_of_account_ids:
+                    # no need to create the parent
+                    return
                 else:
-                    # Create parent line and add it to vals, except if it's the main parent
-                    parent_vals = {'budget_id': vals['budget_id'],
-                                   'account_id': parent_account_id,
-                                   'line_type': 'view'}
-                    # default parent budget values: the one from the (currently) only child
-                    if 'budget_values' in vals:
-                        parent_vals.update({'budget_values': vals['budget_values']})
-                    parent_budget_line_id = self.create(cr, uid, parent_vals, context=context)
-                    vals.update({'parent_id': parent_budget_line_id})
+                    parent_account_id = account.parent_id.id
+                    parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
+                                                            ('budget_id', '=', vals['budget_id'])], context=context)
+            if len(parent_line_ids) > 0:
+                # Parent line exists
+                if 'budget_values' in vals:
+                    # we add the budget values to the parent one
+                    parent_line = self.browse(cr, uid, parent_line_ids[0], context=context)
+                    parent_budget_values = [sum(pair) for pair in zip(eval(parent_line.budget_values),
+                                                                      eval(vals['budget_values']))]
+                    # write parent
+                    super(msf_budget_line, self).write(cr,
+                                                       uid,
+                                                       parent_line_ids,
+                                                       {'budget_values': str(parent_budget_values)},
+                                                       context=context)
+                    # use method on parent with original budget values
+                    self.get_parent_line(cr,
+                                         uid,
+                                         {'account_id': parent_line.account_id.id,
+                                          'budget_id': parent_line.budget_id.id,
+                                          'budget_values': vals['budget_values']},
+                                         context=context)
+                # add parent id to vals
+                vals.update({'parent_id': parent_line_ids[0]})
+            else:
+                # Create parent line and add it to vals, except if it's the main parent
+                parent_vals = {'budget_id': vals['budget_id'],
+                               'account_id': parent_account_id}
+                if 'line_type' in vals and vals['line_type'] == 'destination':
+                    parent_vals['line_type'] = 'normal'
+                else:
+                    parent_vals['line_type'] = 'view'
+                # default parent budget values: the one from the (currently) only child
+                if 'budget_values' in vals:
+                    parent_vals.update({'budget_values': vals['budget_values']})
+                parent_budget_line_id = self.create(cr, uid, parent_vals, context=context)
+                vals.update({'parent_id': parent_budget_line_id})
         return
             
     
@@ -378,14 +350,6 @@ class msf_budget_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         self.get_parent_line(cr, uid, vals, context=context)
         return super(msf_budget_line, self).write(cr, uid, ids, vals, context=context)
-    
-    def name_get(self, cr, user, ids, context=None):
-        result = self.browse(cr, user, ids, context=context)
-        res = []
-        for rs in result:
-            account = rs.account_id
-            res += [(rs.id, account.code + " " + account.name)]
-        return res
     
 msf_budget_line()
 

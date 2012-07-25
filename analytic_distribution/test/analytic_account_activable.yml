@@ -58,7 +58,6 @@
     amount_currency: 10.0
     currency_id: cur_1
     date: !eval "'%s-03-12' %(datetime.now().year + 1)"
-    
 -
   I change the inactivation date to today (forbidden)
 -

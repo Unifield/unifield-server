@@ -38,6 +38,7 @@ KIT_STATE = [('draft', 'Draft'),
              ('in_production', 'In Production'),
              ('completed', 'Completed'),
              ('done', 'Closed'),
+             ('cancel', 'Canceled'),
              ]
 
 class composition_kit(osv.osv):
@@ -1191,7 +1192,7 @@ class stock_location(osv.osv):
                     # aggregation/group by's (when individual rows aren't identifiable).
                     # We use a SAVEPOINT to be able to rollback this part of the transaction without
                     # failing the whole transaction in case the LOCK cannot be acquired.
-                    cr.execute("SAVEPOINT stock_location_product_reserve")
+                    cr.execute("SAVEPOINT stock_location_product_reserve_lot")
                     cr.execute("""SELECT id FROM stock_move
                                   WHERE product_id=%s AND
                                           (

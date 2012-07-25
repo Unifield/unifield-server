@@ -7,15 +7,14 @@
 			<field name="name">sale.order.form</field>
 			<field name="model">sale.order</field>
 			<field name="type">form</field>
+			<field name="priority">500</field>
 			<field name="inherit_id" ref="sale.view_order_form" />
 			<field name="arch" type="xml">
 				<data>
-
 					<field name="price_unit" position="after">
 						<field name="supplier" invisible="True" />
 						<field name="po_cft" invisible="True" />
 					</field>
-
 				</data>
 			</field>
 		</record>
@@ -44,7 +43,7 @@
 					<field name="display_confirm_button" invisible="True" />
 					<field name="procurement_request" invisible="True" />
 					<field name="name" invisible="True" />
-					<field name="sale_order_id" />
+					<field name="sale_order_id" string="Order" />
 					<field name="priority" />
 					<field name="categ" />
 					<field name="line_number" />
@@ -57,20 +56,22 @@
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-					<field name="po_cft" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+					<field name="po_cft"
+						on_change="onChangePoCft(po_cft, sale_order_id)" 
+						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />
 					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
-						domain="[('id', '!=', company_id)]"
-						context="{'product_id': product_id, 'choose_supplier': True}"
+						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft)]"
+						context="{'product_id': product_id, 'choose_supplier': True, 'uom': uom_id, 'product_qty': qty}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />
 					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />
-					<button name="confirmLine" string="Confirm line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
+					<button name="confirmLine" string="Source Line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
 					<!-- does not work. openerp bug ? <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('state', '!=', 'confirmed'), ('sale_order_state', '!=', 'draft')]}" />--> 
 
 				</tree>
@@ -88,7 +89,7 @@
 					<filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
 					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="['&amp;', '|', ('state', '!=', 'draft'), ('procurement_request', '=', True), '|', ('sale_order_state', '!=', 'progress'), ('procurement_request', '=', False)]" />
 					<separator orientation="vertical"/>
-					<field name="sale_order_id" />
+					<field name="sale_order_id" string="Order" />
 					<field name="priority" />
 					<field name="categ" />
 					<field name="sale_order_state_search" />

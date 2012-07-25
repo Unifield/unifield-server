@@ -45,14 +45,14 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Ref.', 'Posting Date', 'Document Date', 'Period', 'Account', 'Third Party', 'Book. Debit', 'Book. Credit', 'Book. Currency', 'Out. Amount', 'Out. Currency', 'Reconcile', 'State']:
+% for header in ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Ref.', 'Document Date', 'Posting Date', 'Period', 'Account', 'Third Party', 'Book. Debit', 'Book. Credit', 'Book. Currency', 'Out. Amount', 'Out. Currency', 'Reconcile', 'State']:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
 % for o in objects:
 <Row>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.instance or '')|x}</Data>
+        <Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
@@ -66,18 +66,18 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.ref or '')|x}</Data>
 </Cell>
-% if o.date and o.date != 'False':
+% if o.document_date and o.document_date != 'False':
 <Cell ss:StyleID="ssBorderDate">
-        <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
+        <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
 </Cell>
 % else:
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String"> </Data>
 </Cell>
 % endif
-% if o.document_date and o.document_date != 'False':
+% if o.date and o.date != 'False':
 <Cell ss:StyleID="ssBorderDate">
-        <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
+        <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
 </Cell>
 % else:
 <Cell ss:StyleID="ssBorder">

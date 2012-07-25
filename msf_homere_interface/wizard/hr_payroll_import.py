@@ -57,7 +57,7 @@ class hr_payroll_import(osv.osv_memory):
 
     def update_payroll_entries(self, cr, uid, data='', field='', context=None):
         """
-        Import payroll entries regarding 
+        Import payroll entries regarding all elements given in "data"
         """
         # Some verifications
         if not context:
@@ -78,6 +78,7 @@ class hr_payroll_import(osv.osv_memory):
         line_date = False
         name = ''
         ref = ''
+        destination_id = False
         accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
         financing_contract, date, currency, project, analytic_line = zip(data)
         # Check period
@@ -85,7 +86,7 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
             line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], '%d/%m/%Y'))
-        except:
+        except ValueError, e:
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s' % date[0]))
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
@@ -124,18 +125,27 @@ class hr_payroll_import(osv.osv_memory):
         is_payroll_rounding = False
         if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE':
             is_payroll_rounding = True
+        # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
+        is_counterpart = False
+        if third and third[0] and third[0] != '':
+            is_counterpart = True
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
+            # Add default destination from account
+            if not account.default_destination_id:
+                raise osv.except_osv(_('Warning'), _('No default Destination defined for expense account: %s') % (account.code or '',))
+            destination_id = account.default_destination_id and account.default_destination_id.id or False
             if second_description and second_description[0] and not is_payroll_rounding:
-                # fetch employee ID
-                employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-                employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
-                employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
-                if not employee_ids:
-                    raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
-                if len(employee_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
-                employee_id = employee_ids[0]
+                if not is_counterpart:
+                    # fetch employee ID
+                    employee_identification_id = ustr(second_description[0]).split(' ')[-1]
+                    employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
+                    if not employee_ids:
+                        employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
+                        raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
+                    if len(employee_ids) > 1:
+                        raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
+                    employee_id = employee_ids[0]
                 # Create description
                 name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], '%d/%m/%Y')))
                 # Create reference
@@ -161,6 +171,7 @@ class hr_payroll_import(osv.osv_memory):
         # Create the payroll entry
         vals = {
             'date': line_date,
+            'document_date': line_date,
             'period_id': period_id,
             'employee_id': employee_id,
             'name': name,
@@ -170,6 +181,7 @@ class hr_payroll_import(osv.osv_memory):
             'currency_id': currency_id,
             'state': 'draft',
             'field': field,
+            'destination_id': destination_id,
         }
         # Retrieve analytic distribution from employee
         if employee_id:

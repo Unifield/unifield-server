@@ -133,9 +133,9 @@ class product_list_line(osv.osv):
     _description = 'Line of product list'
     
     _columns = {
-        'name': fields.many2one('product.product', string='Product name', required=True),
+        'name': fields.many2one('product.product', string='Product Description', required=True),
         'list_id': fields.many2one('product.list', string='List', ondelete='cascade'),
-        'ref': fields.related('name', 'default_code', string='Product reference', readonly=True, type='char'),
+        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char'),
         'comment': fields.char(size=256, string='Comment'),
     }
 
@@ -230,8 +230,18 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        'default_code' : fields.char('CODE', size=14),
     }
 
 product_product()
+
+class product_template(osv.osv):
+    _name = 'product.template'
+    _inherit = 'product.template'
+
+    _columns = {
+        'name': fields.char(size=60, string='DESCRIPTION', required=True),
+    }
+product_template()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

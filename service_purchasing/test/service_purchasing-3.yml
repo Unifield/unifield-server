@@ -20,16 +20,7 @@
 - 
   !record {model: res.partner.address, id: res_partner_address_0}:
     partner_id: res_partner_a0
-    street: A
-
--
-  Creating a product.product record service with reception
-- 
-  !record {model: product.product, id: product_service_p0}:
-    default_code: P0
-    name: product 0 test
-    type: service
-    
+    street: A   
 - 
   Creating a product.product record service with reception
 - 

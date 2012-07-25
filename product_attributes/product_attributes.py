@@ -61,7 +61,7 @@ class product_attributes_template(osv.osv):
     _inherit = "product.template"
     
     _columns = {
-        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
     }
     
     _defaults = {
@@ -69,6 +69,22 @@ class product_attributes_template(osv.osv):
     }
     
 product_attributes_template()
+
+
+class product_country_restriction(osv.osv):
+    _name = 'res.country'
+    _inherit = 'res.country'
+    
+    _columns = {
+        'is_restrictive': fields.boolean(string='Is restrictive ?'),
+    }
+    
+    _defaults = {
+        'is_restrictive': lambda *a: False,
+    }
+    
+product_country_restriction()
+
 
 class product_attributes(osv.osv):
     _inherit = "product.product"
@@ -132,6 +148,7 @@ class product_attributes(osv.osv):
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
+        'new_code' : fields.char('New code', size=64),
         'international_status': fields.selection([('',''),('itc','Approved (ITC)'),('esc', 'Approved (ESC)'),('temp','Temporary'),('local','Not approved (Local)')], 'International Status'),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
@@ -192,11 +209,7 @@ class product_attributes(osv.osv):
         'closed_article': fields.boolean('Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
-        # TODO: add real country restrictions
-        'country_restriction': fields.selection([('',''),
-            ('A','A'),
-            ('B','B'),
-            ('C','C')], 'Country Restriction'),
+        'country_restriction': fields.many2one('res.country', 'Country Restriction', domain=[('is_restrictive', '=', True)]),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -208,6 +221,8 @@ class product_attributes(osv.osv):
         'removal_time': fields.integer('Product Removal Time',
             help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
+        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+        'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
     }
@@ -223,6 +238,8 @@ class product_attributes(osv.osv):
         'closed_article': False,
         'dangerous_goods': False,
         'restricted_country': False,
+        'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+        'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
     
     def _check_gmdn_code(self, cr, uid, ids, context=None):
