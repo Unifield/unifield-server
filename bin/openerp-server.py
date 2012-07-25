@@ -142,9 +142,10 @@ if os.path.exists('update.lock'):
     os.unlink( 'update.lock' )
     print "Restart OpenERP in", infos['exec_path'], "with: ", list(sys.argv) + args
     if infos: os.chdir(infos['exec_path'])
-    os.execv(sys.argv[0], args)
+    os.execv(sys.executable, [sys.executable] + args)
 
-print "OpenERP Started with: ", sys.argv
+print "OpenERP Started with:", sys.argv
+print "Executable:", sys.executable
 
 #----------------------------------------------------------
 # python imports
@@ -349,10 +350,17 @@ def quit(restart=False):
                 # and would present the forced shutdown
                 thread.join(0.05)
                 time.sleep(0.05)
+                time.sleep(1)
+                if os.name == 'nt':
+                    try:
+                        logger.info("Killing", thread.getName())
+                        thread._Thread__stop()
+                    except:
+                        logger.info(str(thread.getName()) + ' could not be terminated')
     if not restart:
         sys.exit(0)
     else:
-        os.execv(sys.argv[0], sys.argv)
+	os.execv(sys.executable, [sys.executable] + sys.argv)
 
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')
