@@ -111,7 +111,7 @@ class distribution_line(osv.osv):
         'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
 
-    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, source_date=False, name=False, context=None):
+    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
         '''
         Creates an analytic lines from a distribution line and an account.move.line
         '''
@@ -134,6 +134,7 @@ class distribution_line(osv.osv):
                 'general_account_id': move_line.account_id.id,
                 'date': date,
                 'source_date': source_date,
+                'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,
                 'name': name or move_line.name,
