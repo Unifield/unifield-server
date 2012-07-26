@@ -88,7 +88,7 @@
                         <field name="updated" invisible="1"/> <!-- attrs="{'invisible': ['!', ('updated', '=', False), ('state', 'in', ['none', 'payroll'])]}"/-->
                         <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
                     </group>
-                    <field name="error_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('errors', '=', 0)]}">
+                    <field name="error_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
                         <tree string="Error List">
                             <field name="msg"/>
                         </tree>
