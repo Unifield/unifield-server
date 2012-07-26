@@ -75,13 +75,14 @@ class restrictive_country_setup(osv.osv_memory):
             if restrict_id not in country_ids:
                 to_delete.append(restrict_id)
             
-        product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', 'not in', country_ids)], order='country_restriction')
         error_msg = ''
-        for p in self.pool.get('product.product').browse(cr, uid, product_ids):
-            error_msg += '\n'
-            error_msg += '\'%s\' is already in use on product [%s] %s' % (p.country_restriction.name, p.default_code, p.name)
-            if p.country_restriction.id in to_delete:
-                to_delete.remove(p.country_restriction.id)
+        if country_ids:
+            product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', 'not in', country_ids)], order='country_restriction')
+            for p in self.pool.get('product.product').browse(cr, uid, product_ids):
+                error_msg += '\n'
+                error_msg += '\'%s\' is already in use on product [%s] %s' % (p.country_restriction.name, p.default_code, p.name)
+                if p.country_restriction.id in to_delete:
+                    to_delete.remove(p.country_restriction.id)
         
         # Create the new restrictions
         for rest in to_create:
@@ -92,7 +93,7 @@ class restrictive_country_setup(osv.osv_memory):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'view_restrictive_countries_setup')[1]
         
         if error_msg:
-            self.write(cr, uid, ids, {'error_msg': error_msg, 'error': True})
+            self.write(cr, uid, [payload.id], {'error_msg': error_msg, 'error': True})
             return {'type': 'ir.actions.act_window',
                     'res_model': 'restrictive.country.setup',
                     'view_type': 'form',
@@ -101,6 +102,8 @@ class restrictive_country_setup(osv.osv_memory):
                     'res_id': payload.id,
                     'view_id': [view_id],
                     'context': {'product_ids': product_ids, 'error': True}}
+        else:
+            return True
             
     def go_to_products(self, cr, uid, ids, context=None):
         assert len(ids) == 1, "We should only get one object from the form"
