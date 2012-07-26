@@ -2866,7 +2866,7 @@ class sale_order(osv.osv):
         if self.read(cr, uid, ids, ['procurement_request', 'location_requestor_id'], context=context):
             procurement_request = self.read(cr, uid, ids, ['procurement_request'], context=context)[0]['procurement_request']
             location_requestor_id = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
-            if procurement_request:
+            if procurement_request and location_requestor_id:
                 move_data['type'] = 'internal'
                 move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                 move_data['location_dest_id'] = location_requestor_id
