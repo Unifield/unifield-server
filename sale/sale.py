@@ -878,7 +878,6 @@ class sale_order(osv.osv):
                             val['state'] = 'manual'
                             break
             self.write(cr, uid, [order.id], val)
-            print order.state
         return True
 
     def action_ship_end(self, cr, uid, ids, context=None):
