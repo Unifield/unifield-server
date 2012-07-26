@@ -229,10 +229,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
             ids = [ids]
         # Retrieve some values
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
+        ml = self.browse(cr, uid, ids[0])
         # Create wizard
         wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0]}, context=context)
         # Change wizard state in order to change date requirement on wizard
         wiz_obj.write(cr, uid, [wizard], {'state': 'open'}, context=context)
+        # Update context
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Change context if account special type is "donation"
+        if ml.account_id and ml.account_id.type_for_register and ml.account_id.type_for_register == 'donation':
+            wiz_obj.write(cr, uid, [wizard], {'from_donation': True}, context=context)
         return {
             'name': "Accounting Corrections Wizard",
             'type': 'ir.actions.act_window',
@@ -241,11 +250,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'view_mode': 'form,tree',
             'view_type': 'form',
             'res_id': [wizard],
-            'context':
-            {
-                'active_id': ids[0],
-                'active_ids': ids,
-            }
+            'context': context,
         }
 
     def button_open_corrections(self, cr, uid, ids, context=None):
