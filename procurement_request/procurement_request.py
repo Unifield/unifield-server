@@ -262,8 +262,7 @@ class procurement_request(osv.osv):
                 if line.nomen_manda_0.id == nomen_manda_0 \
                 or line.nomen_manda_1.id == nomen_manda_1 \
                 or line.nomen_manda_2.id == nomen_manda_2 \
-                or line.nomen_manda_3.id == nomen_manda_3 \
-                or line.product_uom.id == uom_tbd:
+                or line.nomen_manda_3.id == nomen_manda_3 :
                     nb_lines += 1
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !')%nb_lines)
@@ -431,12 +430,14 @@ class procurement_request_line(osv.osv):
         nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
         nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
         nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        product_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
         
         if comment and not product_id:
             res.update({'nomen_manda_0': nomen_manda_0,
                         'nomen_manda_1': nomen_manda_1,
                         'nomen_manda_2': nomen_manda_2,
                         'nomen_manda_3': nomen_manda_3,
+                        'product_uom': product_uom,
                         'name': 'To be defined',})
         return {'value': res}
     
