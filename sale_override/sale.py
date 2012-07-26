@@ -590,7 +590,7 @@ class sale_order(osv.osv):
             result = line.product_uom.id
         elif line.order_id.procurement_request and not line.product_id and line.comment:
             # do we need to have one product data per uom?
-            result = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            result = obj_data.get_object_reference(cr, uid, 'product', 'cat0')[1]
         return result
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):

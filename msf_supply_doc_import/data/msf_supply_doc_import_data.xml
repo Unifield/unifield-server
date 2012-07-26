@@ -58,9 +58,9 @@
         <field name="nomen_manda_1" ref="msf_supply_doc_import.nomen_tbd1"/>
         <field name="nomen_manda_2" ref="msf_supply_doc_import.nomen_tbd2"/>
         <field name="nomen_manda_3" ref="msf_supply_doc_import.nomen_tbd3"/>
-        <field name="uom_id" ref="uom_tbd"/>
-        <field name="uom_po_id" ref="uom_tbd"/>
-        <field name="categ_id" ref="cat_tbd"/>
+        <field name="uom_id" ref="product.product_uom_unit"/>
+        <field name="uom_po_id" ref="product.product_uom_unit"/>
+        <field name="categ_id" ref="product.cat0"/>
     </record>
     
     <!-- Partner to be defined -->
