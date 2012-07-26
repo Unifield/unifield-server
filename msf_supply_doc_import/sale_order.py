@@ -115,7 +115,7 @@ class sale_order(osv.osv):
             row_len = len(row)
             if row_len != 6:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
-Product Reference (Code), Product Name, Quantity, UoM, Currency, Comment.
+Product Code, Product Description, Quantity, UoM, Currency, Comment.
 That means Not price, Neither Delivery requested date. """))
             
             # for each cell we check the value
@@ -123,8 +123,8 @@ That means Not price, Neither Delivery requested date. """))
             if not product_code:
                 default_code = False
                 to_correct_ok = True
-                error_list.append('No Product Reference (Code).')
-                comment = 'Product Reference (Code) to be defined'
+                error_list.append('No Product Code.')
+                comment = 'Product Code to be defined'
             else:
                 try:
                     product_code = product_code.strip()
@@ -137,7 +137,7 @@ That means Not price, Neither Delivery requested date. """))
                         default_code = code_ids[0]
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
-                     comment = 'Product Reference (Code) to be defined'
+                     comment = 'Product Code to be defined'
                      default_code = False
                      product_code = False
                      to_correct_ok = True
@@ -146,8 +146,8 @@ That means Not price, Neither Delivery requested date. """))
             if not p_name:
                 product_id = False
                 to_correct_ok = True
-                error_list.append('No Product Name')
-                comment = 'Product Name to be defined'
+                error_list.append('No Product Description')
+                comment = 'Product Description to be defined'
             else:
                 try:
                     product_name = p_name.strip()
@@ -164,9 +164,9 @@ That means Not price, Neither Delivery requested date. """))
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 except Exception:
-                     error_list.append('The Product Name has to be a string.')
+                     error_list.append('The Product Description has to be a string.')
                      product_id = False
-                     comment = 'Product Name to be defined'
+                     comment = 'Product Description to be defined'
                      to_correct_ok = True
                 
             product_qty = row.cells[2].data
@@ -305,15 +305,15 @@ That means Not price, Neither Delivery requested date. """))
             row_len = len(row)
             if row_len != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
+Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             # for each cell we check the value
             product_code = row.cells[0].data
             if not product_code:
                 default_code = False
                 to_correct_ok = True
-                error_list.append('No Product Reference (Code).')
-                comment = 'Product Reference (Code) to be defined'
+                error_list.append('No Product Code.')
+                comment = 'Product Code to be defined'
             else:
                 try:
                     product_code = product_code.strip()
@@ -326,7 +326,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         default_code = code_ids[0]
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
-                     comment = 'Product Reference (Code) to be defined'
+                     comment = 'Product Code to be defined'
                      default_code = False
                      to_correct_ok = True
             
@@ -334,8 +334,8 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             if not p_name:
                 product_id = False
                 to_correct_ok = True
-                error_list.append('No Product Name')
-                comment = 'Product Name to be defined'
+                error_list.append('No Product Description')
+                comment = 'Product Description to be defined'
             else:
                 try:
                     product_name = p_name.strip()
@@ -352,21 +352,19 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 except Exception:
-                     error_list.append('The Product Name has to be a string.')
-                     comment = 'Product Name to be defined'
+                     error_list.append('The Product Description has to be a string.')
+                     comment = 'Product Description to be defined'
                      product_id = False
                      to_correct_ok = True
                 
-            product_qty = row.cells[2].data
-            if not product_qty:
+            if not row.cells[2].data :
+                product_qty = 1.0
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
-                product_qty = 1.0
             else:
-                try:
-                    float(product_qty)
-                    product_qty = float(product_qty)
-                except ValueError:
+                if row.cells[4].type in ['int','float']:
+                    product_qty = row.cells[2].data
+                else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
                      to_correct_ok = True
                      product_qty = 1.0
@@ -397,28 +395,22 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
                 price_unit = 1.0
             else:
-                try:
-                    float(price_unit)
-                    price_unit = float(price_unit)
-                except ValueError:
+                if row.cells[4].type in ['int','float']:
+                    price_unit = row.cells[4].data
+                else:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
                      price_unit = 1.0
             
-            check_date = row.cells[5].data
-            if check_date:
-                try:
-                    datetime.strptime(str(check_date), '%d/%b/%Y')
-                    date_planned = check_date
-                except ValueError:
-                    try:
-                        datetime.strptime(str(check_date), '%d/%m/%Y')
-                        date_planned = check_date
-                    except ValueError:
-                        error_list.append('The date format should be "DD-MM-YYYY", we took the one from the parent.')
-                        to_correct_ok = True
+            if row.cells[5].data :
+                if row.cells[5].type == 'datetime':
+                    date_planned = row.cells[5].data
+                else:
+                    error_list.append('The date format was not good so we took the date from the parent.')
+                    to_correct_ok = True
             else:
-                error_list.append('The date was not specified so we took the one from the parent.')
+                error_list.append('The date was not specified so we took the date from the parent.')
+                to_correct_ok = True
             
             curr = row.cells[6].data
             if not curr:
@@ -494,8 +486,6 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                             plural = 's'
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
-        else:
-            self.log(cr, uid, var.id, _("There isn't error in import"), context=context)
         return True
             
 sale_order()
@@ -549,6 +539,8 @@ class sale_order_line(osv.osv):
         return view_to_return
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         uom_obj = self.pool.get('product.uom')
@@ -556,24 +548,25 @@ class sale_order_line(osv.osv):
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
         message = ''
         
-        if vals.get('product_uom'):
-            if vals.get('product_uom') == tbd_uom:
-                message += 'You have to define a valid UOM, i.e. not "To be define".'
-        if vals.get('nomen_manda_0'):
-            if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
-                message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        if vals.get('nomen_manda_1'):
-            if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
-                message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        if vals.get('nomen_manda_2'):
-            if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
-                message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        # the 3rd level is not mandatory
-        if message:
-            raise osv.except_osv(_('Warning !'), _(message))
-        else:
-            vals['to_correct_ok'] = False
-            vals['text_error'] = False
+        if not context.get('button'):
+            if vals.get('product_uom'):
+                if vals.get('product_uom') == tbd_uom:
+                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if vals.get('nomen_manda_0'):
+                if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                    message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if vals.get('nomen_manda_1'):
+                if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                    message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if vals.get('nomen_manda_2'):
+                if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                    message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            # the 3rd level is not mandatory
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+            else:
+                vals['to_correct_ok'] = False
+                vals['text_error'] = False
         
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 

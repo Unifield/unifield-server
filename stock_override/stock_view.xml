@@ -51,7 +51,7 @@
                 </xpath>
             </field>
         </record>
-        
+
         <record id="inherit_view_move_form" model="ir.ui.view">
             <field name="name">inherit.view.move.form</field>
             <field name="model">stock.move</field>
@@ -308,7 +308,15 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines}" context="{'reason_type_id': reason_type_id}" on_change="onchange_move()">
+                            <field name="move_lines"
+                                colspan="4"
+                                nolabel="1"
+                                widget="one2many_list"
+                                default_get="{'move_line':move_lines}"
+                                context="{'reason_type_id': reason_type_id}" 
+                                on_change="onchange_move()"
+                                attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned'])]}"
+                                >
                                 <tree colors="grey:scrapped == True" string="Stock Moves">
                                     <field name="line_number"/>
                                     <field name="product_id"/>
@@ -320,12 +328,15 @@
                                     <field name="asset_id"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
-                                    <button name="310" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>
+                                    <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>
                                     <field name="tracking_id"/>
                                     <field name="location_id"/>
                                     <field name="location_dest_id"/>
                                     <field name="date" string="Actual Move Date"/>
                                     <field name="state"/>
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check"/>
@@ -407,7 +418,8 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="check_assign" states="draft" string="Check Availability" type="object" icon="gtk-apply"/>
+                                        <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
+                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -416,14 +428,13 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-apply"/>
-                                <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-media-play"/>
-                                <button name="action_assign" states="confirmed" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                                <button name="315" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional info">
@@ -435,6 +446,7 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="from_wkf" invisible="1"/>
                         </page>
                     </notebook>
                 </form>
@@ -489,8 +501,12 @@
                     </group>
                     <notebook colspan="4">
                         <page string="General Information">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
-                            	default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id} " context="{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}" on_change="onchange_move()">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
+                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                context="{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                on_change="onchange_move()"
+                                attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned'])]}"
+                                >
                             	<tree colors="grey:scrapped==True" string="Stock Moves">
                                     <field name="line_number"/>
 									<field name="product_id"/>
@@ -586,24 +602,25 @@
                                     icon="gtk-cancel"
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
-								<button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-ok"/>
-                                <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-media-play"/>
-                                <button name="action_assign" states="confirmed" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+
+                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
-                                	<button name="321" string="Return Products" states="done" type="action" icon="gtk-execute"/>
+                                    <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
-                                <button states="done" name="315" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button states="done" name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional Info">
                             <field name="type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
                             <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                			<field name="company_id" widget="selection" invisible="1"/>
+                            <field name="company_id" widget="selection" invisible="1"/>
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="from_wkf" invisible="1"/>
                         </page>
                     </notebook>
                 </form>
@@ -726,6 +743,7 @@
                                 default_get="{'move_line':move_lines, 'address_out_id': address_id}"
                                 context="{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}" 
                                 on_change="onchange_move()"
+                                attrs="{'readonly': [('from_wkf', '=', True), ('state', 'in', ['draft', 'confirmed', 'assigned'])]}"
                                 >
                                 <tree colors="grey:scrapped==True" string="Stock Moves">
                                     <field name="line_number"/>
@@ -738,21 +756,22 @@
                                     <field name="scrapped" invisible="1"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
-                                    <button name="310" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/>
+                                    <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/>
                                     <field name="tracking_id" />
                                     <field name="location_id"/>
-                                    <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color" attrs="{'invisible':['|', ('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"/>
-                                    <button name="button_stock" string="Stock" type="object" icon="gtk-media-play" attrs="{'invisible':['|', ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"/>
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     <field name="date" string="Actual Shipped Date"/>
                                     <field name="state"/>
+                                    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned"/>
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check"/>
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
-                                    <button name="313" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
+                                    <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -815,19 +834,16 @@
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
-                                <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color" attrs="{'invisible':['|', ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"/>
-                                <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play" attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Process Later" type="object" icon="gtk-ok"/>
-                                <button name="draft_validate" states="draft" string="Process Now" type="object" icon="gtk-yes"/>
-                                <button name="action_assign" states="confirmed" string="Check Availability" type="object" icon="gtk-find"/>
-                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                                <button name="321" string="Return Products" states="done" type="action" icon="gtk-execute"/>
-                                <button name="315" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
+                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional info">
@@ -840,6 +856,7 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="from_wkf" readonly="1"/>
                         </page>
                     </notebook>
                 </form>

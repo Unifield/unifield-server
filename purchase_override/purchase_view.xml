@@ -143,6 +143,7 @@
                     <group col="8" colspan="4">
                       <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
                       <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
+                      <filter icon="terp-check" name="confirmed_wait" string="Confirmed (waiting)" domain="[('state', 'in', ['confirmed_wait'])]" separator="1" help="Purchase orders which are in approved state." />
                       <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
                       <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
                       <separator orientation="vertical" />
@@ -308,12 +309,12 @@
         <!-- Picking on Purchase menu -->
         <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
         <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
-        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" />
+<!--        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" /> -->
 
         <!-- Purchase configuration menu -->
+<!--
         <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
+-->
         <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
@@ -321,9 +322,15 @@
         <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
         <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
         <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
+<!--
         <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
         <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
+    used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
         <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" />
 
+        <!-- Here was an act_window to display all PO from products views.
+             This action is defined on product_attributes module -->
+        
     </data>
 </openerp>

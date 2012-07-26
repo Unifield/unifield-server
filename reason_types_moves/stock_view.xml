@@ -15,7 +15,7 @@
 		    		</xpath>
 
                     <xpath expr="/tree/field[@name='product_uom']" position="after">
-	    	        	<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+	    	        	<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
                         <field name="comment" />
                     </xpath>
 				</data>
@@ -34,7 +34,7 @@
 		    		</xpath>
 
 	                <xpath expr="/tree/field[@name='create_date']" position="after">
-			    		<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+			    		<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
        	                <field name="comment" />
 	                </xpath>
 	        	</data>
@@ -243,7 +243,7 @@
                     <field name="backorder_id" groups="base.group_extended"/>
                     <field name="origin"/>
                     <field name="order_category" />
-                    <field name="reason_type_id" widget="selection" />
+                    <field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date" string="Expected Receipt Date" />
                     <field name="state"/>
@@ -258,7 +258,6 @@
         						   'picking_type': 'incoming_shipment',
         						   "search_default_available":1}</field>
         </record>
-
 	</data>
 </openerp>
 

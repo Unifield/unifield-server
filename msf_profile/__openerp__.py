@@ -103,6 +103,7 @@
         "msf_instance",
         "return_claim",
         "msf_processes",
+        "useability_dashboard_and_menu",
         "msf_custom_settings",
         "spreadsheet_xml",
         "msf_supply_doc_export",

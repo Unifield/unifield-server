@@ -105,8 +105,8 @@
 					<field name="internal_val" invisible="not context.get('with_valuation')" />
 					<field name="in_pipe_qty" />
 					<field name="in_pipe_val" invisible="not context.get('with_valuation')" />
-					<field name="in_pipe_coor_qty" />
-					<field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" />
+					<!-- field name="in_pipe_coor_qty" />
+					<field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
 					<field name="stock_qty" />
 					<field name="stock_val" invisible="not context.get('with_valuation')" />
 					<field name="central_qty" />

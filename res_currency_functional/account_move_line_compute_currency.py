@@ -200,6 +200,8 @@ class account_move_line_compute_currency(osv.osv):
             if addendum_line_ids:
                 # Search all lines that have same reconcile_id but that are not addendum_lines !
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id), ('is_addendum_line', '=', False)], context=context)
+                if not reconciled_line_ids:
+                    continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 # update addendum line if needed
                 partner_db = partner_cr = addendum_db = addendum_cr = None
@@ -227,6 +229,8 @@ class account_move_line_compute_currency(osv.osv):
             else:
                 # Search all lines that have same reconcile_id
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)
+                if not reconciled_line_ids:
+                    continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 if total != 0.0:
                     partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)

@@ -279,7 +279,7 @@ class product_pricelist(osv.osv):
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
                 else:
-                    if arg[2] == 'internal':
+                    if arg[2] in ('internal', 'intermission'):
                         func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
                         dom.append(('currency_id', '=', func_currency_id))
                     elif arg[2] == 'section':

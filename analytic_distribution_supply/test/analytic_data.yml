@@ -38,6 +38,24 @@
     type: default
     zip: '1234'
 -
+  I create a partner with a partner type = 'intermission' in order NOT TO generate commitment for PO that come from this partner
+-
+  !record {model: res.partner, id: res_partner_mission_42}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: Mission 42
+    supplier: true
+    partner_type: intermission
+-
+  Then I create its partner address
+-
+  !record {model: res.partner.address, id: res_partner_address_42}:
+    country_id: base.au
+    partner_id: res_partner_mission_42
+    street: street
+    type: default
+    zip: '4242'
+-
   I create a product category
 - 
   !record {model: product.category, id: product_category_testproducts0}:
@@ -62,6 +80,37 @@
         name: res_partner_africom0
         product_code: PUE-AFRI-1234
         product_name: Fromage qui pue Africom
+    seller_qty: 0.0
+    standard_price: 1.0
+    supply_method: buy
+    type: consu
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    valuation: manual_periodic
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    property_account_expense: account_account_expense0
+-
+  I create a second product
+-
+  !record {model: product.product, id: product_product_book0}:
+    categ_id: product_category_testproducts0
+    cost_method: standard
+    default_code: BOOK-INT-4242
+    mes_type: fixed
+    name: Book
+    name_template: Book
+    procure_method: make_to_stock
+    seller_delay: '1'
+    seller_id: res_partner_mission_42
+    seller_ids:
+      - delay: 1
+        min_qty: 0.0
+        name: res_partner_mission_42
+        product_code: PROD-BOOK-4242
+        product_name: How to product 42 figures Book
     seller_qty: 0.0
     standard_price: 1.0
     supply_method: buy

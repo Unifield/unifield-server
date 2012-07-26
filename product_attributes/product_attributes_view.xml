@@ -66,6 +66,7 @@
                             <separator string="Description" colspan="2"/>
                             <field name="name" string="Description"/>
                             <field groups="product.group_product_variant" name="variants" />
+                            <field name="new_code"/>
                         </group>
                     </group>
 
@@ -352,6 +353,7 @@
             <field name="arch" type="xml">
                <field name="default_code" position="after">
                    <field name="old_code"/>
+                   <field name="new_code"/>
 
                </field>
             </field>
@@ -472,15 +474,17 @@
         <delete id="procurement.act_make_procurement" model="ir.actions.act_window" />
 
         <act_window
-            context="{'search_default_product_id': [active_id]}"
+            context="{}"
+            domain="[('procurement_request', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
             id="action_order_line_product_tree"
             name="Field orders"
-            res_model="sale.order.line"
+            res_model="sale.order"
             src_model="product.product"
             groups="base.group_sale_salesman"/>
 
         <act_window
-            context="{'search_default_product_id': [active_id]}"
+            context="{}"
+            domain="['|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
             id="action_tender_product_tree"
             name="Tenders"
             res_model="tender"
@@ -490,8 +494,21 @@
         <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
         <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
 
-        <delete id="product.menu_products_category" model="ir.ui.menu" />
-        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" />
+        <delete id="purchase.action_purchase_line_product_tree" model="ir.actions.act_window" />
+
+        <act_window
+            context="{}"
+            domain="[('rfq_ok', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+            id="purchase.action_purchase_line_product_tree"
+            name="Purchases"
+            res_model="purchase.order"
+            src_model="product.product"
+            groups=""/>
+
+
+
+<!--        <delete id="product.menu_products_category" model="ir.ui.menu" /> -->
+<!--        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" /> -->
 
         <record id="view_act_product_stock_move_open" model="ir.ui.view">
             <field name="name">Stock Moves</field>

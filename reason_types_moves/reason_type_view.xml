@@ -125,9 +125,6 @@
             <field name="inherit_id" ref="stock.view_inventory_form" />
             <field name="arch" type="xml">
                 <data>
-                	<xpath expr="/form//field[@name='inventory_line_id']/tree" position="attributes">
-                		<attribute name="hide_delete_button">1</attribute>
-                	</xpath>
                 	
                     <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='product_id']" position="after">
                         <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
@@ -172,7 +169,7 @@
 					<field name="backorder_id" />
 				</xpath>
 				<xpath expr="/tree/field[@name='origin']" position="after">
-					<field name="reason_type_id" widget="selection" />
+					<field name="reason_type_id" />
 				</xpath>
 				<xpath expr="/tree//field[@name='invoice_state']" position="replace" />
 				<xpath expr="/tree//field[@name='stock_journal_id']" position="replace" />
@@ -251,7 +248,7 @@
                     </xpath>
 
                     <xpath expr="/search/group/field[@name='name']" position="before">
-                        <field name="reason_type_id" widget="selection" />
+                        <field name="reason_type_id" />
                     </xpath>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
                         <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
@@ -295,7 +292,6 @@
         
         <delete model="ir.actions.report.xml" id="stock.report_move_labels" />
         <delete model="ir.values" id="stock.ir_open_partial_move_wizard" />
-        <delete model="ir.actions.server" id="stock.action_partial_move_server" />
 
     </data>
 </openerp>

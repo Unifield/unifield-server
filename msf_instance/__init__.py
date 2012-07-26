@@ -21,5 +21,5 @@
 import msf_instance
 import res_company
 import add_instance
-
+import msf_instance_installer
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

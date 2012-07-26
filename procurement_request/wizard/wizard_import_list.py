@@ -46,8 +46,8 @@ class wizard_import_list(osv.osv_memory):
         'info': lambda *a : """
         The file should be in CSV format (with ';' character as delimiter).
         The columns should be in this order :
-          * Product code
-          * Product name
+          * Product Code
+          * Product Description
           * UoM
           * Quantity
           * Comment

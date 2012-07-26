@@ -11,10 +11,10 @@
                     <separator colspan="4" string="Products to import" />
                     <field name="product_ids" colspan="4" />
                     <separator colspan="4" string="List definition" />
-                    <field name="type" />
-                    <field name="list_id" attrs="{'invisible': [('type', '=', 'new')], 'required': [('type', 'in', ['exist', 'replace'])]}" />
-                    <field name="new_list_name" attrs="{'invisible': [('type', 'in', ['exist', 'replace'])], 'required': [('type', '=', 'new')]}" />
-                    <field name="new_list_type" attrs="{'invisible': [('type', 'in', ['exist', 'replace'])], 'required': [('type', '=', 'new')]}" />
+                    <field name="list_type" />
+                    <field name="list_id" attrs="{'invisible': [('list_type', '=', 'new')], 'required': [('list_type', 'in', ['exist', 'replace'])]}" />
+                    <field name="new_list_name" attrs="{'invisible': [('list_type', 'in', ['exist', 'replace'])], 'required': [('list_type', '=', 'new')]}" />
+                    <field name="new_list_type" attrs="{'invisible': [('list_type', 'in', ['exist', 'replace'])], 'required': [('list_type', '=', 'new')]}" />
                     <separator colspan="4" string="" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
                     <button name="import_products" string="Import products" icon="gtk-execute" type="object" />

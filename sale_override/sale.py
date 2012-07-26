@@ -41,7 +41,6 @@ class sale_order(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         Delete the loan_id field on the new sale.order
-
         - reset split flag to original value (field order flow) if not in default
         '''
         if context is None:
@@ -56,7 +55,6 @@ class sale_order(osv.osv):
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
-
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     #@@@override sale.sale_order._invoiced
@@ -196,6 +194,7 @@ class sale_order(osv.osv):
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
     }
@@ -826,6 +825,9 @@ class sale_order(osv.osv):
     def test_lines(self, cr, uid, ids, context=None):
         '''
         return True if all lines of type 'make_to_order' are 'confirmed'
+        
+        only if a product is selected
+        internal requests are not taken into account (should not be the case anyway because of separate workflow)
         '''
         for order in self.browse(cr, uid, ids, context=context):
             # backward compatibility for yml tests, if test we do not wait
@@ -845,6 +847,7 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),

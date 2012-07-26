@@ -116,7 +116,7 @@
   Name Camembert
   Reference CAM-INT-1234
   Supplier AFRICOM
-  * Supplier product Name Fromage qui pue Africom
+  * Supplier product Description Fromage qui pue Africom
   * Supplier product Code PUE AFRI 1234
 
 
@@ -154,7 +154,7 @@
   Name Pneu
   Reference PNEU INT 1234
   Supplier AlainDeLoin
-  * Supplier product Name Pneu AlainDeLoin
+  * Supplier product Description Pneu AlainDeLoin
   * Supplier product Code PNEU ALAIN 1234
   Supplier Berthe
 

@@ -284,6 +284,7 @@ class shipment(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+        context['group_by'] = False
             
         wiz_obj = self.pool.get('wizard')
         
@@ -405,7 +406,8 @@ class shipment(osv.osv):
         partial_datas = context['partial_datas']
         # shipment ids from ids must be equal to shipment ids from partial datas
         assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
-        
+       
+        draft_picking_id = False
         for draft_shipment_id in partial_datas:
             # log flag - log for draft shipment is displayed only one time for each draft shipment
             log_flag = False
@@ -2172,6 +2174,7 @@ class stock_picking(osv.osv):
         # create picking object
         create_picking_obj = self.pool.get('create.picking')
         
+        new_ppl = False
         for pick in self.browse(cr, uid, ids, context=context):
             # create stock moves corresponding to partial datas
             move_ids = partial_datas[pick.id].keys()
@@ -2267,7 +2270,7 @@ class stock_picking(osv.osv):
                 'view_id': [view_id],
                 'view_type': 'form',
                 'res_model': 'stock.picking',
-                'res_id': new_ppl.id,
+                'res_id': new_ppl and new_ppl.id or False,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
@@ -2438,7 +2441,8 @@ class stock_picking(osv.osv):
         
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
-        
+       
+        draft_picking_id = False
         for picking in self.browse(cr, uid, ids, context=context):
             # for each picking
             # corresponding draft picking ticket

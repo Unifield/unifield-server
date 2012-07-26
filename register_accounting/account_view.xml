@@ -56,8 +56,8 @@
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                        <field name="date" string="Posting Date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="date"/>
                                         <field name="sequence_for_reference" />
                                         <field name="name" string="Description"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
@@ -100,8 +100,8 @@
                                         <field name="from_import_cheque_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
-                                        <field name="date" string="Posting Date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="date"/>
                                         <field name="sequence" invisible="1"/>
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
@@ -193,8 +193,8 @@
                                             icon="terp-stock_effects-object-colorize" context="context" 
                                             attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
                                             ('employee_id', '=', False)]}"/>
-                                        <field name="date" />
                                         <field name="document_date"/>
+                                        <field name="date" />
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
@@ -237,8 +237,8 @@
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="from_cash_return" invisible="1"/>
-                                        <field name="date"/>
                                         <field name="document_date"/>
+                                        <field name="date"/>
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
@@ -354,8 +354,8 @@
                             ('employee_id', '=', False)]}"/>
                     <field name="from_cash_return" invisible="1"/>
                     <field name="amount" invisible="1"/>
-                    <field name="date"/>
                     <field name="document_date"/>
+                    <field name="date"/>
                     <field name="sequence"/>
                     <field name="name" string="Description"/>
                     <field name="ref"/>
@@ -388,8 +388,8 @@
                         <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
                         <filter string="Temp" domain="[('state','=','temp')]" icon="terp-camera_test"/>
                         <separator orientation="vertical"/>
-                        <field name="date" select='1'/>
                         <field name="document_date" select='1'/>
+                        <field name="date" select='1'/>
                         <newline/>
                         <field name="sequence" select='1'/>
                         <field name="name" select='1' string="Description"/>
@@ -624,8 +624,8 @@
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                    <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
+                                    <field name="date"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
@@ -663,8 +663,8 @@
                                     <field name="state" readonly="True"/>
                                 </tree>
                                 <form string="Statement lines">
-                                    <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
+                                    <field name="date"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence" invisible="1"/>
                                     <field name="sequence_for_reference"/>
@@ -799,61 +799,6 @@
                 </xpath>
             </field>
         </record>
-
-    <!-- Journal Items -->
-        <record model="ir.ui.view" id="inherit_view_move_form">
-            <field name="name">inherit.view.move.form</field>
-            <field name="model">account.move</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='account.view_move_form' />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page/field[@name='line_id']/form/group/field[@name='partner_id']" position="replace">
-                        <field name="partner_type" />
-                        <field name="partner_type_mandatory" invisible="1"/>
-                    </xpath>
-                    <xpath expr="/form/notebook/page/field[@name='line_id']/tree/field[@name='account_id']" position="replace" />
-                    <xpath expr="/form/notebook/page/field[@name='line_id']/tree/field[@name='partner_id']" position="replace">
-                        <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
-                        <field name="partner_id" invisible="1"/>
-                        <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"
-                            domain="[('filter_for_third_party', '=', account_id)]" 
-                            context="{'curr': currency_id}"/>
-                        <field name="partner_type_mandatory" invisible="1"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!-- Journal Entries Tree -->
-        <record model="ir.ui.view" id="inherit_view_move_tree">
-            <field name="name">inherit.view.move.tree</field>
-            <field name="model">account.move</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_move_tree" />
-            <field name="arch" type="xml">
-                <xpath expr="/tree/field[@name='partner_id']" position="replace">
-                    <field name="partner_id" invisible="1"/>
-                    <field name="partner_type" />
-                </xpath>
-            </field>
-        </record>
-
-    <!-- Journal Entries Search (filter) -->
-        <record model="ir.ui.view" id="inherit_view_account_move_filter">
-            <field name="name">inherit.view.account.move.filter</field>
-            <field name="model">account.move</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_filter" />
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='partner_id']" position="replace">
-                    <field name="partner_id" invisible="1"/>
-                    <field name="partner_type"/>
-                </xpath>
-            </field>
-        </record>
-
     <!-- UF-426: remove Journal Items in Cash and Bank -->
         <delete model="ir.ui.menu" id="account.menu_action_account_moves_bank"/>
 
