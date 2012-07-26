@@ -79,6 +79,7 @@
 	                    		<button name="cancel_all_lines" type="object" string="Cancel All Lines" icon="gtk-cancel" invisible="True" />
 	                    		<button name="force_assign2" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="check_availability" type="object" string="Check Availability" icon="gtk-find" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
+	                    		<button name="validate_assign_all_lines" type="object" string="Validate Lines" icon="gtk-go-forward" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
 	                    		<button name="process_to_consume" type="object" string="Assign Automatically to Kits" icon="gtk-go-forward" readonly="True" invisible="True" />
                     		</group>
                     	</page>
@@ -96,7 +97,8 @@
                     	<field name="state" colspan="3" />
                     </group>
                     <group col="7" colspan="2">
-                    	<button name="confirm_kitting" type="object" string="Confirm Kitting" icon="gtk-apply" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+                    	<field name="completed_kit_creation" invisible="True" />
+                    	<button name="confirm_kitting" type="object" string="Confirm Kitting" icon="gtk-apply" attrs="{'invisible': ['|', ('completed_kit_creation', '=', False), ('state', '!=', 'in_production')]}" />
                     </group>
             	</form>
             </field>

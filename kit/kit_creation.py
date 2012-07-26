@@ -265,6 +265,29 @@ class kit_creation(osv.osv):
         
         return True
     
+    def assert_confirm_kitting(self, cr, uid, ids, context=None):
+        '''
+        if the returned value evaluates to True (True or text), the confirm kitting cannot be processed
+        '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # all products to consume must have been consumed
+            for to_consume in obj.to_consume_ids_kit_creation:
+                if not to_consume.consumed_to_consume:
+                    return 'All products have not been consumed.'
+            # all moves must be done
+            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', obj.id),('state', '!=', 'done')], context=context)
+            if move_ids:
+                return 'All products consumed are not done.'
+            # all moves with perishable/batch management products must have been assigned totally
+            for move in obj.consumed_ids_kit_creation:
+                if move.product_id.perishable and move.assigned_qty_stock_move != move.product_qty:
+                    return 'All Products with Batch Number must be assigned manually to Kits.'
+        
+        return False
+    
     def confirm_kitting(self, cr, uid, ids, context=None):
         '''
         confirm the kitting, assign the production to kits
@@ -276,20 +299,12 @@ class kit_creation(osv.osv):
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
+        # validation of kitting order
+        assertion = self.assert_confirm_kitting(cr, uid, ids, context=context)
+        if assertion:
+            raise osv.except_osv(_('Warning !'), _(assertion))
         
         for obj in self.browse(cr, uid, ids, context=context):
-            # all products to consume must have been consumed
-            for to_consume in obj.to_consume_ids_kit_creation:
-                if not to_consume.consumed_to_consume:
-                    raise osv.except_osv(_('Warning !'), _('All products have not been consumed.'))
-            # all moves must be done
-            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', obj.id),('state', '!=', 'done')], context=context)
-            if move_ids:
-                raise osv.except_osv(_('Warning !'), _('All products consumed are not done.'))
-            # all moves with perishable/batch management products must have been assigned totally
-            for move in obj.consumed_ids_kit_creation:
-                if move.product_id.perishable and move.assigned_qty_stock_move != move.product_qty:
-                    raise osv.except_osv(_('Warning !'), _('All Products with Batch Number must be assigned manually to Kits.'))
             # assign products to kits TODO modify to many2many to keep stock move traceability?? needed?
             for kit in obj.kit_ids_kit_creation:
                 for item in obj.version_id_kit_creation.composition_item_ids:
@@ -353,6 +368,21 @@ class kit_creation(osv.osv):
             if obj.state != 'in_production':
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id]) #original function does not support context
+        
+    def validate_assign_all_lines(self, cr, uid, ids, context=None):
+        '''
+        validate all lines in 'assigned' state
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
+            for line in obj.consumed_ids_kit_creation:
+                move_obj.validate_assign(cr, uid, [line.id], context=context)
+        return True
     
     def cancel_all_lines(self, cr, uid, ids, context=None):
         '''
@@ -617,6 +647,25 @@ class kit_creation(osv.osv):
         
         return result
     
+    def _vals_get_kit_creation(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            # batch management
+            completed = not self.assert_confirm_kitting(cr, uid, [obj.id], context=context)
+            result.setdefault(obj.id, {}).update({'completed_kit_creation': completed})
+        return result
+    
     _columns = {'name': fields.char(string='Reference', size=1024, required=True),
                 'to_consume_sequence_id': fields.many2one('ir.sequence', 'To Consume Sequence', required=True, ondelete='cascade'),
                 'creation_date_kit_creation': fields.date(string='Creation Date', required=True),
@@ -637,6 +686,8 @@ class kit_creation(osv.osv):
                 'batch_check_kit_creation': fields.related('product_id_kit_creation', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
                 'expiry_check_kit_creation': fields.related('product_id_kit_creation', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
+                # function
+                'completed_kit_creation': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Kitting Order completed', multi='get_vals_kit_creation', store=False),
                 }
     
     _defaults = {'state': 'draft',
@@ -1022,8 +1073,24 @@ class stock_move(osv.osv):
         '''
         set the state to done, so the move can be assigned to a kit
         '''
-        self.write(cr, uid, ids, {'state': 'done'}, context=context)
-        return True
+        kit_creation_id = False
+        for move in self.browse(cr, uid, ids, context=context):
+            kit_creation_id = move.kit_creation_id_stock_move.id
+            if move.state == 'assigned':
+                self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
+        
+        # refresh the vue so the completed flag is updated and Confirm Kitting button possibly appears
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_kit_creation_form')
+        view_id = view_id and view_id[1] or False
+        return {'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'kit.creation',
+                'res_id': kit_creation_id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                }
     
     def check_assign_lot(self, cr, uid, ids, context=None):
         """
