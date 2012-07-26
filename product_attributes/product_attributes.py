@@ -76,7 +76,7 @@ class product_country_restriction(osv.osv):
     
     _columns = {
         'name': fields.char(size=128, string='Restriction'),
-        'product_ids': fields.one2many('product.product', 'restriction_id', string='Products'),
+        'product_ids': fields.one2many('product.product', 'country_restriction', string='Products'),
     }
     
 product_country_restriction()
