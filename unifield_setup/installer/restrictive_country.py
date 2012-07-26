@@ -25,25 +25,40 @@ from osv import fields
 from tools.translate import _
 
 
+class restrictive_country_temp(osv.osv_memory):
+    _name = 'restrictive.country.temp'
+    
+    _columns = {
+        'name': fields.char(size=64, string='Country restriction', required=True),
+        'restriction_id': fields.many2one('res.country.restriction', string='Restriction'),
+    }
+
+restrictive_country_temp()
+
+
 class restrictive_country_setup(osv.osv_memory):
     _name = 'restrictive.country.setup'
     _inherit = 'res.config'
     
     _columns = {
-        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
-                                                 string='Restrictive countries'),
+        'restrict_country_ids': fields.many2many('restrictive.country.tempo', 'restrictive_countries', 'wizard_id', 'country_id', 
+                                                 string='Country restrictions'),
     }
     
     
     def default_get(self, cr, uid, fields, context=None):
         '''
-        Display the default value for sale price
+        Display the default value for country restrictions
         '''
         res = super(restrictive_country_setup, self).default_get(cr, uid, fields, context=context)
         
-        country_ids = self.pool.get('res.country').search(cr, uid, [('is_restrictive', '=', True)], context=context)
+        country_ids = self.pool.get('res.country.restriction').search(cr, uid, [], context=context)
+        temp_ids = []
+
+        for country in self.pool.get('res.country.restriction').browse(cr, uid, country_ids, context=context):
+            temp_ids.append(self.pool.get('restrictive.country.temp').create(cr, uid, {'name': country.name, 'restriction_id': country.id}, context=context)
         
-        res['restrict_country_ids'] = country_ids
+        res['restrict_country_ids'] = temp_ids
         
         return res
     
@@ -55,24 +70,35 @@ class restrictive_country_setup(osv.osv_memory):
         payload = self.browse(cr, uid, ids[0], context=context)
         
         setup_obj = self.pool.get('unifield.setup.configuration')
-        country_obj = self.pool.get('res.country')
+        country_obj = self.pool.get('res.country.restriction')
         
         setup_id = setup_obj.get_config(cr, uid)
             
+        restriction_ids = self.pool.get('res.country.restriction').search(cr, uid, [], context=context)
+
         # Update all restrictive countries
         country_ids = []
+        to_create = []
+        to_delete = []
         for country in payload.restrict_country_ids:
             country_ids.append(country.id)
+            if country.id not in restriction_ids:
+                to_create.append(country.id)
             
-        product_ids = self.pool.get('product.product').search(cr, uid, [('restricted_country', '=', True), ('country_restriction', 'not in', country_ids)])
-        if product_ids:
-            raise osv.except_osv(_('Error'), _('You cannot change the restrictive countries because one or more products have a restriction on a country which is not in the new selection.'))
-        
-        all_countries_ids = country_obj.search(cr, uid, [('is_restrictive', '=', True)], context=context)
-        country_obj.write(cr, uid, all_countries_ids, {'is_restrictive': False}, context=context)
-        
-        country_obj.write(cr, uid, country_ids, {'is_restrictive': True}, context=context)
-    
-        setup_obj.write(cr, uid, [setup_id.id], {'restrict_country_ids': [(6,0,country_ids)]}, context=context)
+        for restrict_id in restriction_ids.
+            if restrict_id not in country_ids:
+                product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', '=', restrict_id)])
+                if len(product_ids) > 0:
+                    restrict_name = country_obj.browse(cr, uid, restrict_id).name
+                    raise osv.except_osv(_('Error'), _('The country restriction \'%s\' is in used on at least one product, so you cannot delete it !') % restrict_name
+))
+                else:
+                    to_delete.append(restrict_id)
+
+
+        country_obj.unlink(cr, uid, to_delete, context=context)
+
+        for c in self.pool.get('restrictive.country.temp').browse(cr, uid, to_create, context=context):
+            country_obj.create(cr, uid, {'name': c.name}, context=context)
         
 restrictive_country_setup()

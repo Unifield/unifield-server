@@ -8,13 +8,13 @@
       <field name="arch" type="xml">
         <data>
           <form position="attributes">
-            <attribute name="string">Restrictive Countries Configuration</attribute>
+            <attribute name="string">Country restrictions Configuration</attribute>
           </form>
           <xpath expr="//label[@string='description']" position="attributes">
-                <attribute name="string">Determines which countries are restricted.</attribute>
+                <attribute name="string">Determines the country restrictions.</attribute>
           </xpath>
           <xpath expr='//separator[@string="title"]' position='attributes'>
-                    <attribute name='string'>Configure Your Restrictive Countries</attribute>
+                    <attribute name='string'>Configure Your Country Restrictions</attribute>
           </xpath>
           <xpath expr='//separator[@string="vsep"]' position='attributes'>
                     <attribute name='rowspan'>25</attribute>
@@ -22,7 +22,11 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="restrict_country_ids" colspan="5" nolabel="1" />
+              	<field name="restrict_country_ids" colspan="5" nolabel="1">
+                    <tree string="Country restrictions" editable="top">
+                        <field name="name" required="True" />
+                    </tree>
+                </field>
               </group>
            </group>
         </data>
