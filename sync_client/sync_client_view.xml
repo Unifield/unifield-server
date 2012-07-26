@@ -403,7 +403,12 @@
             <field name="context">{}</field>
         </record>
 
-        <menuitem id="main_menu" name="Synchronization" parent=""/>
+        <menuitem id="main_menu" 
+        		 name="Synchronization" 
+        		 parent=""
+                 web_icon="images/sync.jpg"
+                 web_icon_hover="images/sync-hover.jpg"
+        		/>
 
         <menuitem id="sync_menu" name="Synchronization" parent="main_menu" sequence="20"/>
 
@@ -429,9 +434,6 @@
 
         <menuitem id="message_sent_menu" name="Messages Sent Monitor" parent="message_menu"
                 action="message_sent_action" />
-
-
-
 
         <record model="ir.ui.view" id="ir_model_data_inherit">
             <field name="name">ir.model.data.inherit</field>
