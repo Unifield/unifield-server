@@ -59,6 +59,7 @@
             <field name="help">If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales.</field>
         </record>
         
+        <!-- ASSET TYPE -->
         <menuitem id="menu_asset_type" 
         name="Asset Types" 
         parent="menu_supply_config" 
@@ -66,7 +67,29 @@
         
         <menuitem id="product_asset.menu_asset_type_sales" 
         name="Asset Types" 
-        parent="menu_asset_type"  />
+        action="product_asset.asset_type_normal_action"
+        parent="menu_asset_type"
+        sequence="10" />
+        
+        <!-- UOM -->
+        <menuitem id="menu_uom" 
+        name="Unit Of Measure" 
+        parent="menu_supply_config" 
+        sequence="12" />
+        
+         <menuitem
+             action="product.product_uom_categ_form_action" 
+             name="Units of Measure Categories"
+             id="stock.menu_stock_uom_categ_form_action"
+             parent="menu_uom" 
+             sequence="1"/>
+        
+         <menuitem
+              action="product.product_uom_form_action" 
+              name="Units of Measure"
+              id="stock.menu_stock_uom_form_action"
+              parent="menu_uom" 
+              sequence="2" />
         
         <!-- PURCHASE CONFIG -->
         <menuitem id="purchase.menu_purchase_config_purchase" 

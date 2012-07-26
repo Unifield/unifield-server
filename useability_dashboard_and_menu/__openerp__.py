@@ -35,6 +35,7 @@
                 "supplier_catalogue",
                 "procurement_request",
                 "procurement",
+                "mission_stock",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
