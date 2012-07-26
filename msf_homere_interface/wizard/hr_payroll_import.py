@@ -53,6 +53,7 @@ class hr_payroll_import(osv.osv_memory):
 
     _columns = {
         'file': fields.binary(string="File", filters="*.zip", required=True),
+        'filename': fields.char(string="Imported filename", size=256),
     }
 
     def update_payroll_entries(self, cr, uid, data='', field='', context=None):
@@ -219,6 +220,7 @@ class hr_payroll_import(osv.osv_memory):
         res = False
         created = 0
         processed = 0
+        filename = ""
         
         # Search homere password file
         homere_file = os.path.join(os.path.expanduser('~'),relativepath)
@@ -240,6 +242,7 @@ class hr_payroll_import(osv.osv_memory):
             fileobj.seek(0)
             try:
                 zipobj = zf(fileobj.name, 'r')
+                filename = wiz.filename or ""
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
@@ -309,7 +312,7 @@ class hr_payroll_import(osv.osv_memory):
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed, 'state': 'payroll'})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'})
         
         return {
             'name': 'Payroll Import Confirmation',

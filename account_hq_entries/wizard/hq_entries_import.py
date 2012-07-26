@@ -38,6 +38,7 @@ class hq_entries_import_wizard(osv.osv_memory):
 
     _columns = {
         'file': fields.binary(string="File", filters="*.csv", required=True),
+        'filename': fields.char(string="Imported filename", size=256),
     }
 
     def parse_date(self, date):
@@ -176,6 +177,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
+        filename = ""
         
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -187,6 +189,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             # Read CSV file
             try:
                 reader = csv.reader(fileobj, delimiter=',', quotechar='"')
+                filename = wiz.filename or ""
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
@@ -220,8 +223,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # This is to redirect to HQ Entries Tree View
         context.update({'from': 'hq_entries_import'})
         
-
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed, 'state': 'hq', 'errors':"\n".join(errors), 'nberrors': len(errors)})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'total': processed, 'state': 'hq', 'errors': "\n".join(errors), 'nberrors': len(errors)})
         
         return {
             'name': 'HQ Entries Import Confirmation',

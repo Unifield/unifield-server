@@ -44,8 +44,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             string="State", required=True, readonly=True),
         'error_line_ids': fields.many2many("hr.payroll.employee.import.errors", "employee_import_error_relation", "wizard_id", "error_id", "Error list", 
             readonly=True),
-        'errors': fields.integer(string="Errors", size=64, readonly=True),
+        'errors': fields.text(string="Errors", readonly=True),
         'nberrors': fields.integer(string="Errors", readonly=True),
+        'filename': fields.char(string="Filename", size=256, readonly=True),
     }
 
     _defaults = {
@@ -53,7 +54,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'created': lambda *a: 0,
         'total': lambda *a: 0,
         'state': lambda *a: 'none',
-        'errors': lambda *a: 0,
+        'nberrors': lambda *a: 0,
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -68,7 +69,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 wiz_ids = [wiz_ids]
             line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
             if line_ids:
-                vals.update({'error_line_ids': [(6, 0, line_ids)], 'errors': len(line_ids) or 0})
+                vals.update({'error_line_ids': [(6, 0, line_ids)], 'nberrors': len(line_ids) or 0})
         return super(hr_payroll_import_confirmation, self).create(cr, uid, vals, context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -144,6 +145,7 @@ class hr_payroll_employee_import(osv.osv_memory):
 
     _columns = {
         'file': fields.binary(string="File", filters='*.zip', required=True),
+        'filename': fields.char(string="Imported filename", size=256),
     }
 
     def update_employee_check(self, cr, uid, staffcode=False, missioncode=False, staff_id=False, uniq_id=False, wizard_id=None, employee_name=False):
@@ -314,7 +316,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if res:
                     updated += 1
         else:
-            message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often appends when the line is empty.') % (line_number)
+            message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often happens when the line is empty.') % (line_number)
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
             return False, created, updated
         return True, created, updated
@@ -362,10 +364,11 @@ class hr_payroll_employee_import(osv.osv_memory):
         staff_file = 'staff.csv'
         contract_file = 'contrat.csv'
         res = False
-        message = _("")
+        message = _("Employee import FAILED.")
         created = 0
         updated = 0
         processed = 0
+        filename = ""
         # Delete old errors
         error_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [])
         if error_ids:
@@ -377,6 +380,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             fileobj.seek(0)
             try:
                 zipobj = zf(fileobj.name)
+                filename = wiz.filename or ""
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
@@ -422,7 +426,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # This is to redirect to Employee Tree View
         context.update({'from': 'employee_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context)
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context)
         
         return {
             'name': 'Employee Import Confirmation',
