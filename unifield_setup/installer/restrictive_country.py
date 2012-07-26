@@ -79,7 +79,7 @@ class restrictive_country_setup(osv.osv_memory):
         error_msg = ''
         for p in self.pool.get('product.product').browse(cr, uid, product_ids):
             error_msg += '\n'
-            error_msg += '%s : Already in use on product [%s] %s' % (p.country_restriction.name, p.default_code, p.name)
+            error_msg += '\'%s\' is already in use on product [%s] %s' % (p.country_restriction.name, p.default_code, p.name)
             if p.country_restriction.id in to_delete:
                 to_delete.remove(p.country_restriction.id)
         
