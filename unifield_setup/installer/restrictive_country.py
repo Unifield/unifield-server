@@ -24,25 +24,12 @@ from osv import fields
 
 from tools.translate import _
 
-
-class restrictive_country_temp(osv.osv_memory):
-    _name = 'restrictive.country.temp'
-    
-    _columns = {
-        'name': fields.char(size=64, string='Country restriction', required=True),
-        'restriction_id': fields.many2one('res.country.restriction', string='Restriction'),
-    }
-
-restrictive_country_temp()
-
-
 class restrictive_country_setup(osv.osv_memory):
     _name = 'restrictive.country.setup'
     _inherit = 'res.config'
     
     _columns = {
-        'restrict_country_ids': fields.many2many('restrictive.country.tempo', 'restrictive_countries', 'wizard_id', 'country_id', 
-                                                 string='Country restrictions'),
+        'restrict_country_ids': fields.one2many('restrictive.country.temp', 'wizard_id', string='Country restrictions'),
     }
     
     
@@ -56,7 +43,7 @@ class restrictive_country_setup(osv.osv_memory):
         temp_ids = []
 
         for country in self.pool.get('res.country.restriction').browse(cr, uid, country_ids, context=context):
-            temp_ids.append(self.pool.get('restrictive.country.temp').create(cr, uid, {'name': country.name, 'restriction_id': country.id}, context=context)
+            temp_ids.append(self.pool.get('restrictive.country.temp').create(cr, uid, {'name': country.name, 'restriction_id': country.id}, context=context))
         
         res['restrict_country_ids'] = temp_ids
         
@@ -85,13 +72,12 @@ class restrictive_country_setup(osv.osv_memory):
             if country.id not in restriction_ids:
                 to_create.append(country.id)
             
-        for restrict_id in restriction_ids.
+        for restrict_id in restriction_ids:
             if restrict_id not in country_ids:
                 product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', '=', restrict_id)])
                 if len(product_ids) > 0:
                     restrict_name = country_obj.browse(cr, uid, restrict_id).name
-                    raise osv.except_osv(_('Error'), _('The country restriction \'%s\' is in used on at least one product, so you cannot delete it !') % restrict_name
-))
+                    raise osv.except_osv(_('Error'), _('The country restriction \'%s\' is in used on at least one product, so you cannot delete it !') % restrict_name)
                 else:
                     to_delete.append(restrict_id)
 
@@ -102,3 +88,23 @@ class restrictive_country_setup(osv.osv_memory):
             country_obj.create(cr, uid, {'name': c.name}, context=context)
         
 restrictive_country_setup()
+
+
+class restrictive_country_temp(osv.osv_memory):
+    _name = 'restrictive.country.temp'
+    
+    _columns = {
+        'name': fields.char(size=64, string='Country restriction', required=True),
+        'restriction_id': fields.many2one('res.country.restriction', string='Restriction'),
+        'wizard_id': fields.many2one('restrictive.country.setup', string='Wizard'),
+    }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        for c in self.browse(cr, uid, ids, context=context):
+            if c.restriction_id and c.restriction_id.product_ids:
+                raise osv.except_osv(_('Error'), _('The country restriction \'%s\' is in used on at least one product, so you cannot delete it !') % c.name)
+        
+        return super(restrictive_country_temp, self).unlink(cr, uid, ids, context=context)
+
+restrictive_country_temp()
+
