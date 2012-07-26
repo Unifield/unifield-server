@@ -536,6 +536,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Abort process if this move line was corrected before
             if ml.corrected:
                 continue
+            # Abort process if the move line is a donation expense account and that new account is not a donation expense account
+            if ml.account_id.type_for_register == 'donation':
+                new_account = self.pool.get('account.account').browse(cr, uid, new_account_id)
+                if new_account.type_for_register != 'donation':
+                    raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
             # Create a new move
             move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': period_ids[0], 'date': date}, context=context)
             # Prepare default value for new line
