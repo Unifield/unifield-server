@@ -2888,6 +2888,16 @@ class sale_order(osv.osv):
         picking_data = super(sale_order, self)._hook_ship_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']
         
+        picking_data['state'] = 'draft'
+        if setup.delivery_process == 'simple':
+            picking_data['subtype'] = 'standard'
+            # use the name according to picking ticket sequence
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+        else:
+            picking_data['subtype'] = 'picking'
+            # use the name according to picking ticket sequence
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            
         # For IR
         if self.read(cr, uid, ids, ['procurement_request'], context=context):
             procurement_request = self.read(cr, uid, ids, ['procurement_request'], context=context)[0]['procurement_request']
@@ -2899,18 +2909,6 @@ class sale_order(osv.osv):
             else:
                 # use the name according to picking ticket sequence
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
-                
-        picking_data['name'] = pick_name
-
-        picking_data['state'] = 'draft'
-        if setup.delivery_process == 'simple':
-            picking_data['subtype'] = 'standard'
-            # use the name according to picking ticket sequence
-            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
-        else:
-            picking_data['subtype'] = 'picking'
-            # use the name according to picking ticket sequence
-            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
             
         picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
