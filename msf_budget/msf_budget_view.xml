@@ -131,6 +131,8 @@
             <field name="arch" type="xml">
                 <form string="Actuals by CC Export">
                     <field name="currency_table_id"/>
+                    <newline/>
+                    <field name="cost_center_ids"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>

@@ -20,24 +20,27 @@
 ##############################################################################
 from osv import osv, fields
 import datetime
+from tools.translate import _
 
 class wizard_actual_export(osv.osv_memory):
     _name = "wizard.actual.export"
 
     _columns = {
         'currency_table_id': fields.many2one('res.currency.table', 'Currency table'),
+        'cost_center_ids': fields.many2many('account.analytic.account', 'actual_export_cost_centers', 'wizard_id', 'cost_center_id', 'Cost Centers', domain=[('category', '=', 'OC')]),
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
-        data['ids'] = context.get('active_ids', [])
-        data['model'] = context.get('active_model', 'ir.ui.menu')
-        if 'active_id' in context:
-            # add parameters
-            data['form'] = {}
-            if wizard.currency_table_id:
-                data['form'].update({'currency_table_id': wizard.currency_table_id.id})
+        # add parameters
+        data['form'] = {}
+        if len(wizard.cost_center_ids) == 0:
+            raise osv.except_osv(_('No Cost Center'),_("No cost center was selected for the report!"))
+        else:
+            data['form'].update({'cost_center_ids': [x.id for x in wizard.cost_center_ids]})
+        if wizard.currency_table_id:
+            data['form'].update({'currency_table_id': wizard.currency_table_id.id})
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'msf.budget.actual', 'datas': data}
         
