@@ -24,7 +24,7 @@
             </group>
             </page>
             <xpath expr="/form//field[@name='currency']" position="replace">
-                <field name="currency" readonly="1" />
+                <field name="currency_id" readonly="1" />
             </xpath>
             </field>
         </record>
