@@ -180,6 +180,7 @@ class stock_inventory(osv.osv):
         move_vals.update({
             'comment': inventory_line.comment,
             'reason_type_id': inventory_line.reason_type_id.id,
+            'not_chained': True,
         })
 
         return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
@@ -388,10 +389,12 @@ class stock_move(osv.osv):
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
         'product_type': fields.function(_get_product_type, method=True, type='char', string='Product type', store=False),
+        'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will be not run.'),
     }
     
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
+        'not_chainde': lambda *a: False,
     }
 
     def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
@@ -409,6 +412,11 @@ class stock_move(osv.osv):
 
 
         return {'value': vals}
+    
+    def _hook_dest(self, cr, uid, *args, **kwargs):
+        move = kwargs['m']
+        res = super(stock_move, self)._hook_dest(cr, uid, *args, **kwargs)
+        return res and not move.not_chained
     
 stock_move()
 
