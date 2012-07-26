@@ -81,16 +81,16 @@ class entity(osv.osv):
     _inherit = "sync.client.entity"
 
     def get_status(self, cr, uid, context=None):
+        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            return "Not Connected"
         me = self.get_entity(cr, uid, context)
         if me.is_syncing:
             return "Syncing..."
-        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
-            return "Not Connected"
         monitor = self.pool.get("sync.monitor")
         monitor_ids = monitor.search(cr, uid, [], context=context)
         if monitor_ids:
             last_log = monitor.browse(cr, uid, monitor_ids[0], context=context)
-            status = filter(lambda x:x[0] == last_log.status, self.pool.get("sync.monitor")._columns['status'].selection)[0][1]
+            status = filter(lambda x:x[0] == last_log.status, self.pool.get("sync.monitor")._columns['status'].selection)[0][1] if last_log.status else 'Unknown Status'
             return "Last Sync: %s at %s" % (status, last_log.end)
         else:
             return "Connected"

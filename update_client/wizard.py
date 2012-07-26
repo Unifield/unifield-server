@@ -35,6 +35,7 @@ class upgrade(osv.osv_memory):
 
     def download(self, cr, uid, ids, context=None):
         """Downlad the patch to fill the version record"""
+        ## TODO all revisions at once? wait MSF
         revisions = self.pool.get('sync_client.version')
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
         if not next_revisions:
@@ -53,7 +54,7 @@ class upgrade(osv.osv_memory):
 
     def do_upgrade(self, cr, uid, ids, context=None):
         """Actualy, prepare the upgrade to be done at server restart"""
-        ## TODO all revisions at once? ask MSF
+        ## TODO all revisions at once? wait MSF
         ## Check if revision upgrade applies
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
