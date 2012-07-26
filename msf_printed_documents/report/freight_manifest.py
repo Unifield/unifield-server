@@ -30,6 +30,7 @@ class freight_manifest(report_sxw.rml_parse):
         self.kgtot = 0.0
         self.voltot = 0.0
         self.valtot = 0.0
+        self.cur = False
         self.localcontext.update({
             'time': time,
             'enumerate': enumerate,
@@ -55,7 +56,7 @@ class freight_manifest(report_sxw.rml_parse):
         })
 
     def getFonCur(self,ligne):
-        return ligne.currency_id and ligne.currency_id.name or False
+        return self.cur
 
     def getTotM3(self):
         return self.voltot and self.voltot or '0.0'
@@ -64,19 +65,19 @@ class freight_manifest(report_sxw.rml_parse):
         return self.valtot and self.valtot or '0.0'
 
     def getTotParce(self):
-        return self.parcetot
+        return self.parcetot and self.parcetot or '0.0'
 
     def getTotKg(self):
-        return self.kgtot
+        return self.kgtot and self.kgtot or '0.0'
 
     def get_lines(self, o): 
         return o[0].pack_family_memory_ids
 
     def getEtd(self, o):
-        return time.strftime('%d/%m/%y',time.strptime(o.date_of_departure,'%Y-%m-%d'))
+        return time.strftime('%d/%m/%Y',time.strptime(o.date_of_departure,'%Y-%m-%d'))
 
     def getEta(self, o):
-        return time.strftime('%d/%m/%y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
+        return time.strftime('%d/%m/%Y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
 
     def getTransport(self, o):
         sta = self.get_selection(o, 'transport_type')
@@ -93,6 +94,8 @@ class freight_manifest(report_sxw.rml_parse):
             return res
 
     def getDataRef(self, ligne):
+        if ligne.currency_id:
+            self.cur = ligne.currency_id.name
         return ligne and ligne.sale_order_id and ligne.sale_order_id.name or False
 
     def getDataPpl(self, ligne):
@@ -111,13 +114,12 @@ class freight_manifest(report_sxw.rml_parse):
         return ligne and ligne.num_of_packs or '0'
 
     def getDataM3(self, ligne):
-        #self.voltot += ligne.total_volume
-        #return ligne.total_volume and ligne.total_volume or 0.0
-        return '0.0'
+        self.voltot += ligne.total_volume
+        return ligne and ligne.total_volume or '0.0'
 
     def getDataValue(self, ligne):
         self.valtot += ligne.total_amount
-        return ligne.total_amount and ligne.total_amount or '0.0'
+        return ligne and ligne.total_amount or '0.0'
 
     def getDataKC(self, ligne):
         for x in ligne.move_lines:
