@@ -27,6 +27,9 @@
                         <field name="name" required="True" />
                     </tree>
                 </field>
+                <field name="error" invisible="1" />
+                <field name="error_msg" colspan="4" nolabel="1" attrs="{'invisible': [('error', '=', False)]}" />
+                <button name="go_to_products" type="object" string="Products" attrs="{'invisible': [('error', '=', False)]}" />
               </group>
            </group>
         </data>

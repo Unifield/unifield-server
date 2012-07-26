@@ -29,9 +29,10 @@ class restrictive_country_setup(osv.osv_memory):
     _inherit = 'res.config'
     
     _columns = {
-        'restrict_country_ids': fields.one2many('restrictive.country.temp', 'wizard_id', string='Country restrictions'),
+        'restrict_country_ids': fields.many2many('res.country.restriction', 'wiz_restric_country', 'country_id', 'wizard_id', string='Country restriction'),
+        'error_msg': fields.text(string='Error', readonly=True),
+        'error': fields.boolean(string='Error'),
     }
-    
     
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -40,12 +41,10 @@ class restrictive_country_setup(osv.osv_memory):
         res = super(restrictive_country_setup, self).default_get(cr, uid, fields, context=context)
         
         country_ids = self.pool.get('res.country.restriction').search(cr, uid, [], context=context)
-        temp_ids = []
-
-        for country in self.pool.get('res.country.restriction').browse(cr, uid, country_ids, context=context):
-            temp_ids.append(self.pool.get('restrictive.country.temp').create(cr, uid, {'name': country.name, 'restriction_id': country.id}, context=context))
         
-        res['restrict_country_ids'] = temp_ids
+        res['restrict_country_ids'] = country_ids
+        res['error_msg'] = ''
+        res['error'] = False
         
         return res
     
@@ -70,41 +69,55 @@ class restrictive_country_setup(osv.osv_memory):
         for country in payload.restrict_country_ids:
             country_ids.append(country.id)
             if country.id not in restriction_ids:
-                to_create.append(country.id)
-            
+                to_create.append(country)
+                
         for restrict_id in restriction_ids:
             if restrict_id not in country_ids:
-                product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', '=', restrict_id)])
-                if len(product_ids) > 0:
-                    restrict_name = country_obj.browse(cr, uid, restrict_id).name
-                    raise osv.except_osv(_('Error'), _('The country restriction \'%s\' is in used on at least one product, so you cannot delete it !') % restrict_name)
-                else:
-                    to_delete.append(restrict_id)
-
-
+                to_delete.append(restrict_id)
+            
+        product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', 'not in', country_ids)], order='country_restriction')
+        error_msg = ''
+        for p in self.pool.get('product.product').browse(cr, uid, product_ids):
+            error_msg += '\n'
+            error_msg += '%s : Already in use on product [%s] %s' % (p.country_restriction.name, p.default_code, p.name)
+            if p.country_restriction.id in to_delete:
+                to_delete.remove(p.country_restriction.id)
+        
+        # Create the new restrictions
+        for rest in to_create:
+            country_obj.create(cr, uid, {'name': rest.name}, context=context)
+        
+        # Delete the old restrictions
         country_obj.unlink(cr, uid, to_delete, context=context)
-
-        for c in self.pool.get('restrictive.country.temp').browse(cr, uid, to_create, context=context):
-            country_obj.create(cr, uid, {'name': c.name}, context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'unifield_setup', 'view_restrictive_countries_setup')[1]
+        
+        if error_msg:
+            self.write(cr, uid, ids, {'error_msg': error_msg, 'error': True})
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'restrictive.country.setup',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': payload.id,
+                    'view_id': [view_id],
+                    'context': {'product_ids': product_ids, 'error': True}}
+            
+    def go_to_products(self, cr, uid, ids, context=None):
+        assert len(ids) == 1, "We should only get one object from the form"
+        payload = self.browse(cr, uid, ids[0], context=context)
+        
+        country_ids = []
+        for country in payload.restrict_country_ids:
+            country_ids.append(country.id)
+            
+        product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', 'not in', country_ids)], order='country_restriction')
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_normal_form_view')[1]
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.product',
+                'view_mode': 'tree,form',
+                'view_type': 'form',
+                'domain': [('id', 'in', product_ids)],
+                'nodestroy': True}
         
 restrictive_country_setup()
-
-
-class restrictive_country_temp(osv.osv_memory):
-    _name = 'restrictive.country.temp'
-    
-    _columns = {
-        'name': fields.char(size=64, string='Country restriction', required=True),
-        'restriction_id': fields.many2one('res.country.restriction', string='Restriction'),
-        'wizard_id': fields.many2one('restrictive.country.setup', string='Wizard'),
-    }
-    
-    def unlink(self, cr, uid, ids, context=None):
-        for c in self.browse(cr, uid, ids, context=context):
-            if c.restriction_id and c.restriction_id.product_ids:
-                raise osv.except_osv(_('Error'), _('The country restriction \'%s\' is in used on at least one product, so you cannot delete it !') % c.name)
-        
-        return super(restrictive_country_temp, self).unlink(cr, uid, ids, context=context)
-
-restrictive_country_temp()
-
