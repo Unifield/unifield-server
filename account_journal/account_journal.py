@@ -118,13 +118,16 @@ class account_journal(osv.osv):
         value['domain']['default_credit_account_id'] = default_dom
         # Analytic journal associated
         if type == 'cash':
-            analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS')], context=context)[0]
+            analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS'),
+                                                                          ('instance_id', '=', self.pool.get('res.company').browse(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id).instance_id.id)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cash_journal
         elif type == 'bank': 
-            analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK')], context=context)[0]
+            analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK'),
+                                                                          ('instance_id', '=', self.pool.get('res.company').browse(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id).instance_id.id)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_bank_journal
         elif type == 'cheque': 
-            analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
+            analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
+                                                                            ('instance_id', '=', self.pool.get('res.company').browse(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id).instance_id.id)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         elif type == 'cur_adj':
             default_dom += [('user_type.code', '=', 'expense')]
