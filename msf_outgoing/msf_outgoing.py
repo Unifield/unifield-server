@@ -2905,8 +2905,10 @@ class sale_order(osv.osv):
         - trigger the logging message for the created picking, as it stays in draft state and no call to action_confirm is performed
           for the moment within the msf_outgoing logic
         '''
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
-        cond = cond and False
+        if setup.delivery_process != 'standard':
+            cond = cond and False
         
         # diplay creation message for draft picking ticket
         picking_id = kwargs['picking_id']
