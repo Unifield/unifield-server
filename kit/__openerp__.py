@@ -42,6 +42,7 @@
         'wizard/process_to_consume_view.xml',
         'wizard/assign_to_kit_view.xml',
         'security/ir.model.access.csv',
+        'wizard/split_move_view.xml',
     ],
     "demo_xml": [],
     'test': ['test/kit_data.yml',
