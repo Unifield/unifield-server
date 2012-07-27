@@ -53,6 +53,8 @@ class version(osv.osv):
                 return {'status' : 'failed',
                         'message' : 'Cannot find revision %s on the server' % (rev_sum)}
             rev_client = rev_client[0]
+            # Save client revision in our database
+            self.pool.get("sync.server.entity")._set_version(cr, uid, entity.id, rev_client, context=context)
 
         # Otherwise, get the whole
         else:
@@ -64,9 +66,6 @@ class version(osv.osv):
             return {'status' : 'ok', 
                     'message' : "Last revision"}
         
-        # Save client revision in our database
-        # TODO more accurate!
-        self.pool.get("sync.server.entity")._set_version(cr, uid, entity.id, rev_client, context=context)
         revisions = self.read(cr, uid, revisions, ['name','sum','date','importance'], context=context)
         status = 'update'
         for rev in revisions:
