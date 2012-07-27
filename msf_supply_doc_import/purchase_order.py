@@ -111,6 +111,7 @@ class purchase_order(osv.osv):
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         currency_obj = self.pool.get('res.currency')
+        sale_obj = self.pool.get('sale.order')
 
         vals = {}
         vals['order_line'] = []
@@ -134,7 +135,8 @@ class purchase_order(osv.osv):
             to_correct_ok = False
             comment = False
             date_planned = obj.delivery_requested_date
-            functional_currency_id = False
+            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+            functional_currency_id = browse_sale.pricelist_id.currency_id.id
             price_unit = 1.0
             product_qty = 1.0
             nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
@@ -260,13 +262,14 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 try:
                     curr_name = curr.strip()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                    if currency_ids:
-                        functional_currency_id = curr
+                    if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                        functional_currency_id = currency_ids[0]
                     else:
-                        error_list.append('The currency was not found or the format of the currency was not good.')
+                        error_list.append('The imported currency was not consistent and has been replaced by the currency of the order, please check the price.')
+                        to_correct_ok = True
                 except Exception:
-                    error_list.append('The Currency name should be a string.')
-                    to_correct_ok = True
+                     error_list.append('The Currency Name has to be a string.')
+                     to_correct_ok = True
                 
             proc_type = 'make_to_stock'
             for product in product_obj.read(cr, uid, ids, ['type'], context=context):

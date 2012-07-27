@@ -84,6 +84,7 @@ class sale_order(osv.osv):
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         currency_obj = self.pool.get('res.currency')
+        sale_obj = self.pool.get('sale.order')
 
         vals = {}
         vals['order_line'] = []
@@ -106,12 +107,14 @@ class sale_order(osv.osv):
             error_list = []
             to_correct_ok = False
             comment = False
-            functional_currency_id = False
+            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+            functional_currency_id = browse_sale.pricelist_id.currency_id.id
             product_qty = 1
             nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
             nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
             nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
             nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+            proc_type = 'make_to_order'
             
             line_num += 1
             row_len = len(row)
@@ -165,6 +168,7 @@ That means Not price, Neither Delivery requested date. """))
                         nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
+                        proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
                 except Exception:
                      error_list.append('The Product Description has to be a string.')
                      product_id = False
@@ -213,20 +217,15 @@ That means Not price, Neither Delivery requested date. """))
                 try:
                     curr_name = curr.strip()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                    if currency_ids:
-                        functional_currency_id = curr
+                    if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                        functional_currency_id = currency_ids[0]
                     else:
-                        error_list.append('The currency was not found or the format of the currency was not good.')
+                        error_list.append('The imported currency was not consistent and has been replaced by the currency of the order, please check the price.')
                         to_correct_ok = True
                 except Exception:
                      error_list.append('The Currency Name has to be a string.')
                      to_correct_ok = True
                 
-            proc_type = 'make_to_stock'
-            for product in product_obj.read(cr, uid, ids, ['type'], context=context):
-                if product['type'] == 'service_recep':
-                    proc_type = 'make_to_order'
-
             to_write = {
                 'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
                 'comment': comment,
@@ -272,6 +271,7 @@ That means Not price, Neither Delivery requested date. """))
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         currency_obj = self.pool.get('res.currency')
+        sale_obj = self.pool.get('sale.order')
 
         vals = {}
         vals['order_line'] = []
@@ -295,13 +295,15 @@ That means Not price, Neither Delivery requested date. """))
             to_correct_ok = False
             comment = False
             date_planned = obj.delivery_requested_date
-            functional_currency_id = False
-            price_unit = 1
+            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+            functional_currency_id = browse_sale.pricelist_id.currency_id.id
+            price_unit = 1 # in case that the product is not found and we do not have price
             product_qty = 1
             nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
             nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
             nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
             nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+            proc_type = 'make_to_order'
             
             line_num += 1
             row_len = len(row)
@@ -353,6 +355,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
+                        proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
+                        price_unit = product_obj.browse(cr, uid, [product_id], context=context)[0].list_price
                 except Exception:
                      error_list.append('The Product Description has to be a string.')
                      comment = 'Product Description to be defined'
@@ -391,18 +395,20 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                      uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                      to_correct_ok = True
                 
-            price_unit = row.cells[4].data
-            if not price_unit:
+            if not row.cells[4].data and product_id:
                 to_correct_ok = True
-                error_list.append('The Price Unit was not set, we set it to 1 by default.')
-                price_unit = 1.0
+                error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
+            elif not row.cells[4].data and not product_id:
+                to_correct_ok = True
+                error_list.append('The Price Unit was not set and no product was found so we set the price unit to 1.')
+            elif row.cells[4].type not in ['int','float'] and product_id:
+                 error_list.append('The Price Unit was not a number, we have taken the default "Field Price" of the product.')
+                 to_correct_ok = True
+            elif row.cells[4].type not in ['int','float'] and not product_id:
+                to_correct_ok = True
+                error_list.append('The Price Unit was not a number and no product was found so we set the price unit to 1.')
             else:
-                if row.cells[4].type in ['int','float']:
-                    price_unit = row.cells[4].data
-                else:
-                     error_list.append('The Price Unit was not a number, we set it to 1 by default.')
-                     to_correct_ok = True
-                     price_unit = 1.0
+                price_unit = row.cells[4].data
             
             if row.cells[5].data :
                 if row.cells[5].type == 'datetime':
@@ -422,19 +428,14 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 try:
                     curr_name = curr.strip()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                    if currency_ids:
-                        functional_currency_id = curr
+                    if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                        functional_currency_id = currency_ids[0]
                     else:
-                        error_list.append('The currency was not found or the format of the currency was not good.')
+                        error_list.append('The imported currency was not consistent and has been replaced by the currency of the order, please check the price.')
                         to_correct_ok = True
                 except Exception:
                      error_list.append('The Currency Name has to be a string.')
                      to_correct_ok = True
-                
-            proc_type = 'make_to_stock'
-            for product in product_obj.read(cr, uid, ids, ['type'], context=context):
-                if product['type'] == 'service_recep':
-                    proc_type = 'make_to_order'
 
             to_write = {
                 'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
