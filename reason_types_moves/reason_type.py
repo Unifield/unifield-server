@@ -394,7 +394,7 @@ class stock_move(osv.osv):
     
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
-        'not_chainde': lambda *a: False,
+        'not_chained': lambda *a: False,
     }
 
     def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
