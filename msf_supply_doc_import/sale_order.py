@@ -51,7 +51,9 @@ class sale_order(osv.osv):
 
     _columns = {
         'file_to_import': fields.binary(string='File to import', 
-                                        help='You can use the template of the export for the format that you need to use'),
+                                        help='* You can use the template of the export for the format that you need to use. \
+                                            \n* The file should be in XML Spreadsheet 2003 format.'
+                                        ),
     }
 
     def button_remove_lines(self, cr, uid, ids, context=None):

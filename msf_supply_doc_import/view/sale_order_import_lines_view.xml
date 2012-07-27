@@ -18,8 +18,7 @@
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                    <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
-                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment" align="0.0"/>
+                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment" align="0.0" invisible="1"/>
                     <field name="file_to_import" colspan="2" />
                     <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1"/>
