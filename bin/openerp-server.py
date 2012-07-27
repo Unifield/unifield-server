@@ -44,6 +44,29 @@ def find(path):
             files.extend( map(lambda x:name+os.path.sep+x, os.listdir(abspath)) )
     return files
 
+## Try...Resume...
+def Try(command):
+    try:
+        command()
+    except:
+        e, msg = sys.exc_info()[0].__name__, str(sys.exc_info()[1])
+        print str(msg)
+        return False
+    else:
+        return True
+
+def rmFR(files, path=None, verbose=False):
+    if path is None and isinstance(files, str):
+        path, files = files, find(files)
+    for f in reversed(files):
+        target = os.path.join(path, f) if path is not None else f
+        if os.path.isfile(target) or os.path.islink(target):
+            print "unlink", target
+            os.unlink( target )
+        elif os.path.isdir(target):
+            print "rmdir", target
+            os.rmdir( target )
+
 ## We expect to be in the bin/ directory to proceed
 if os.path.exists('update.lock'):
     rev_file = os.path.join('.update','revisions.txt')
@@ -76,14 +99,7 @@ if os.path.exists('update.lock'):
         if not os.path.exists('backup'):
             os.mkdir('backup')
         else:
-            for f in reversed(find('backup')):
-                target = os.path.join('backup', f)
-                if os.path.isfile(target) or os.path.islink(target):
-                    print "rm", target
-                    os.unlink( target )
-                elif os.path.isdir(target):
-                    print "rmdir", target
-                    os.rmdir( target )
+            rmFR('backup')
         ## Update Files
         print "Updating..."
         for f in files:
@@ -111,8 +127,8 @@ if os.path.exists('update.lock'):
         print 'failure!'
         ## Update DB to mark revisions as not-installed
         if cur and infos:
-            cur.execute("""UPDATE sync_client_version SET state = 'not-installed' WHERE name in (%s)"""
-                % ( revisions ))
+            Try(lambda:cur.execute("""UPDATE sync_client_version SET state = 'not-installed' WHERE name in (%s)"""
+                % ( revisions )))
         ## Restore backup and purge .update
         if files:
             print "Restoring..."
@@ -124,22 +140,15 @@ if os.path.exists('update.lock'):
                     print "rmdir", target
                     os.rmdir( target )
             print "Purging..."
-            for f in reversed(files):
-                target = os.path.join('.update', f)
-                if os.path.isfile(target) or os.path.islink(target):
-                    print "rm", target
-                    os.unlink( target )
-                elif os.path.isdir(target):
-                    print "rmdir", target
-                    os.rmdir( target )
+            Try(lambda:rmFR(files, '.update'))
             print "rmdir", '.update'
-            os.rmdir( '.update' )
+            Try(lambda:os.rmdir( '.update' ))
     finally:
         if cur: cur.close()
         if conn: conn.close()
     ## Remove lock file
     print "rm", 'update.lock'
-    os.unlink( 'update.lock' )
+    Try(lambda:os.unlink( 'update.lock' ))
     print "Restart OpenERP in", infos['exec_path'], "with: ", list(sys.argv) + args
     if infos: os.chdir(infos['exec_path'])
     os.execv(sys.executable, [sys.executable] + args)
