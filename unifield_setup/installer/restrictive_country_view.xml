@@ -22,8 +22,8 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="restrict_country_ids" colspan="5" nolabel="1" mode="tree">
-                    <tree string="Country restrictions" editable="top">
+              	<field name="restrict_country_ids" colspan="5" nolabel="1" mode="tree" widget="one2many_list">
+                    <tree string="Country restrictions" editable="bottom">
                         <field name="name" required="True" />
                     </tree>
                 </field>
@@ -35,7 +35,7 @@
         </data>
       </field>
     </record>
-
+    
     <record id="action_restrictive_countries_setup" model="ir.actions.act_window">
       <field name="name">Restrictive Countries Configuration</field>
       <field name="type">ir.actions.act_window</field>
