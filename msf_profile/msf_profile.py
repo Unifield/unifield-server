@@ -90,14 +90,23 @@ class base_setup_company(osv.osv_memory):
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            addresses = self.pool.get('res.partner').address_get(cr, uid, company, ['default'])
+            default_id = addresses.get('default', False)
+            # Default address
+            if default_id:
+                address = self.pool.get('res.partner.address').browse(cr, uid, default_id, context=context)
+                for field in ['street','street2','zip','city','email','phone']:
+                    ret[field] = address[field]
+                for field in ['country_id','state_id']:
+                    if address[field]:
+                        ret[field] = address[field].id
+            # Currency
             cur = self.pool.get('res.currency').search(cr, uid, [('name','=','EUR')])
             if company.currency_id:
                 ret['currency'] = company.currency_id.id
             elif cur:
                 ret['currency'] = cur[0]
-            country = self.pool.get('res.country').search(cr, uid, [('name','=','Switzerland')])
-            if country:
-                ret['country_id'] = country[0]
+                
             fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'))
             ret['logo'] = base64.encodestring(fp.read())
             fp.close()
