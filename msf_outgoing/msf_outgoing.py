@@ -2907,7 +2907,7 @@ class sale_order(osv.osv):
         '''
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
-        if setup.delivery_process != 'standard':
+        if setup.delivery_process != 'simple':
             cond = cond and False
         
         # diplay creation message for draft picking ticket
