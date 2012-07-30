@@ -80,7 +80,8 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             domain = False
             if context.get('from') == 'employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
-                context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
+                context.update({'search_default_active': 1})
+                domain = "[('employee_type', '=', 'local')]"
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
                 domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
