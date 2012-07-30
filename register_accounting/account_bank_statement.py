@@ -30,6 +30,7 @@ from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
 from register_tools import create_cashbox_lines
 from register_tools import totally_or_partial_reconciled
+from register_tools import open_register_view
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -781,6 +782,15 @@ class account_bank_statement_line(osv.osv):
         'direct_invoice': lambda *a: 0,
         'transfer_amount': lambda *a: 0,
     }
+
+    def return_to_register(self, cr, uid, ids, context=None):
+        """
+        Return to register from which lines come from
+        """
+        st_line = self.browse(cr, uid, ids[0])
+        if st_line and st_line.statement_id:
+            return open_register_view(self, cr, uid, st_line.statement_id.id)
+        raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
 
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
