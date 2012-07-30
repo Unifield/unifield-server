@@ -113,11 +113,12 @@
         </record>
 
         <record id="action_employee_allocation_tree" model="ir.actions.act_window">
-            <field name="name">Employee Allocation</field>
+            <field name="name">Local Staff Allocation</field>
             <field name="res_model">hr.employee</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="editable_view_employee_tree"/>
+            <field name="search_view_id" ref="view_employee_filter_2"/>
             <field name="domain">[('employee_type', '=', 'local')]</field>
         </record>
 
@@ -146,7 +147,7 @@
         <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="1"/>
         <menuitem string="Import Payroll" action="action_payroll_import_wizard" id="menu_finance_payroll_import" parent="menu_finance_payroll" sequence="2"/>
         <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>
-        <menuitem string="Employee Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
+        <menuitem string="Local Staff Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
 
     </data>
 </openerp>
