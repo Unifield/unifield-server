@@ -970,6 +970,7 @@ class account_bank_statement_line(osv.osv):
             employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
             if employee.employee_type and employee.employee_type == 'ex' and is_expense and employee.cost_center_id:
                 # Create a distribution
+                destination_id = account.default_destination_id and account.default_destination_id.id or False
                 cc_id = employee.cost_center_id and employee.cost_center_id.id or False
                 fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
                 f1_id = employee.free1_id and employee.free1_id.id or False
@@ -987,6 +988,7 @@ class account_bank_statement_line(osv.osv):
                         'percentage': 100.0,
                         'date': values.get('date', False),
                         'source_date': values.get('date', False),
+                        'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
