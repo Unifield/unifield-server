@@ -62,9 +62,6 @@ class product_supplierinfo(osv.osv):
         if count:
             return res
         
-        if count:
-            return res
-        
         if isinstance(res, (int, long)):
             res = [res]
         
@@ -189,6 +186,9 @@ class pricelist_partnerinfo(osv.osv):
                                  help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
         'valid_from': fields.date(string='Valid from'),
+        'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
+        'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),
+        'sequence': fields.related('suppinfo_id', 'sequence', string='Sequence', type='integer'),
     }
     
     _constraints = [
@@ -210,6 +210,7 @@ class product_product(osv.osv):
         res = {}
         one_product = False
         partner_price = self.pool.get('pricelist.partnerinfo')
+        cur_obj = self.pool.get('res.currency')
         suppinfo_obj = self.pool.get('product.supplierinfo')
         prod_obj = self.pool.get('product.product')
         catalogue_obj = self.pool.get('supplier.catalogue')
@@ -223,28 +224,37 @@ class product_product(osv.osv):
             
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
             info_prices = []            
-            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                         ('product_id', '=', product.product_tmpl_id.id)], 
-                                                         order='sequence asc', context=context)
+#            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
+#                                                         ('product_id', '=', product.product_tmpl_id.id)], 
+#                                                         order='sequence asc', context=context)
                 
             domain = [('min_quantity', '<=', product_qty),
                       ('uom_id', '=', product_uom_id),
-                      ('currency_id', '=', currency_id),
+                      ('partner_id', '=', partner_id),
+                      ('product_id', '=', product.product_tmpl_id.id),
                       '|', ('valid_from', '<=', order_date),
                       ('valid_from', '=', False),
                       '|', ('valid_till', '>=', order_date),
                       ('valid_till', '=', False)]
             
-            if sequence_ids:
-                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
-                domain.append(('suppinfo_id.sequence', '=', min_seq))
-                domain.append(('suppinfo_id', 'in', sequence_ids))
+            domain_cur = domain
+            domain_cur.append(('currency_id', '=', currency_id))
             
-                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+            if not info_prices:
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+            
+#            if sequence_ids:
+#                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
+#                domain.append(('suppinfo_id.sequence', '=', min_seq))
+#                domain.append(('suppinfo_id', 'in', sequence_ids))
+#            
+#                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
                 
             if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
+                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id.id, info.price)
                 res[product.id] = (info.price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)
