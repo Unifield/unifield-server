@@ -90,7 +90,8 @@ class base_setup_company(osv.osv_memory):
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            addresses = self.pool.get('res.partner').address_get(cr, uid, company, ['default'])
+            ret['name'] = company.name
+            addresses = self.pool.get('res.partner').address_get(cr, uid, company.id, ['default'])
             default_id = addresses.get('default', False)
             # Default address
             if default_id:
