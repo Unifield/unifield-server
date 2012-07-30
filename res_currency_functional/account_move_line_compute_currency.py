@@ -52,7 +52,6 @@ class account_move_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
-        'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
 
@@ -63,7 +62,8 @@ class account_move_line_compute_currency(osv.osv):
 
     def create_addendum_line(self, cr, uid, lines, total, context=None):
         """
-        Create an addendum line
+        Create an addendum line.
+        posting_date and document_date should be the oldiest date from all lines!
         """
         current_date = time.strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
@@ -78,6 +78,7 @@ class account_move_line_compute_currency(osv.osv):
         if not journal.default_debit_account_id:
             raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
         addendum_line_account_id = journal.default_debit_account_id.id
+        addendum_line_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
         # Create analytic distribution if this account is an expense account
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
@@ -123,6 +124,7 @@ class account_move_line_compute_currency(osv.osv):
                 'percentage': 100.0,
                 'date': oldiest_date or current_date,
                 'source_date': oldiest_date or current_date,
+                'destination_id': addendum_line_account_default_destination_id,
             }
             cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             # add a funding pool line for analytic distribution
@@ -132,7 +134,8 @@ class account_move_line_compute_currency(osv.osv):
                 fp_id = 0
             if not fp_id:
                 raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
-            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0]})
+            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0], 
+                'destination_id': addendum_line_account_default_destination_id,})
             self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             
             move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
@@ -141,6 +144,7 @@ class account_move_line_compute_currency(osv.osv):
                 'move_id': move_id,
                 'date': oldiest_date or current_date,
                 'source_date': oldiest_date or current_date,
+                'document_date': oldiest_date or current_date,
                 'journal_id': journal_id,
                 'period_id': period_id,
                 'partner_id': partner_id,
@@ -196,6 +200,8 @@ class account_move_line_compute_currency(osv.osv):
             if addendum_line_ids:
                 # Search all lines that have same reconcile_id but that are not addendum_lines !
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id), ('is_addendum_line', '=', False)], context=context)
+                if not reconciled_line_ids:
+                    continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 # update addendum line if needed
                 partner_db = partner_cr = addendum_db = addendum_cr = None
@@ -223,6 +229,8 @@ class account_move_line_compute_currency(osv.osv):
             else:
                 # Search all lines that have same reconcile_id
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)
+                if not reconciled_line_ids:
+                    continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 if total != 0.0:
                     partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)
@@ -325,6 +333,9 @@ class account_move_line_compute_currency(osv.osv):
         if vals.get('source_date', source_date):
             ctxcurr['date'] = vals.get('source_date', source_date)
         
+#        if ctxcurr.get('date', False):
+#            newvals['date'] = ctxcurr['date']
+        
         if vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
@@ -415,14 +426,6 @@ class account_move_line_compute_currency(osv.osv):
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
         return res
 
-    def _get_instance_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.browse(cr, uid, ids):
-            ret[line.id] = line.journal_id and line.journal_id.instance_id or False
-        return ret
-
     def _get_journal_move_line(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
     
@@ -446,12 +449,6 @@ class account_move_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
-        'instance': fields.function(_get_instance_type, type='char', string='Proprietary instance', size=64, method=True,
-                store = {
-                    'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['journal_id'], 10),
-                    'account.journal': (_get_journal_move_line, ['instance_id'], 10),
-                }
-            ),
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
                 store = {
                     'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),

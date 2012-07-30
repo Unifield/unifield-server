@@ -84,7 +84,7 @@ class sale_report(osv.osv):
             ('done', 'Closed'),
             ('cancel', 'Cancelled')
             ], 'Order State', readonly=True),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', readonly=True),
+        'pricelist_id': fields.many2one('product.pricelist', 'Currency', readonly=True),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account', readonly=True),
         'name': fields.char('Order Reference', size=64, required=True,
             readonly=True, states={'draft': [('readonly', False)]}, select=True),
@@ -96,8 +96,19 @@ class sale_report(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'order_id': fields.many2one('sale.order', string='Order'),
+        'currency_id': fields.many2one('res.currency',string='Currency'),
     }
     _order = 'date desc'
+
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0,limit=None, context=None, orderby=False):
+        res = super(sale_report, self).read_group(cr, uid, domain,fields, groupby, offset, limit, context, orderby)
+        if self._name == 'sale.report':
+            for data in res:
+                if not '__count' in data or data['__count'] != 0:
+                    currency = self.pool.get('res.users').browse(cr,uid, uid, context=context).company_id.currency_id
+                    data.update({'currency_id': (currency.id,currency.name)})
+        return res
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'sale_report')
         cr.execute("""
@@ -123,7 +134,8 @@ class sale_report(osv.osv):
                      s.shipped,
                      s.shipped::integer as shipped_qty_1,
                      s.pricelist_id as pricelist_id,
-                     s.project_id as analytic_account_id
+                     s.project_id as analytic_account_id,
+                     0 as currency_id
                 from
                 sale_order s,
                     (

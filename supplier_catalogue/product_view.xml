@@ -100,6 +100,77 @@
             	
             </field>
         </record>
+        
+        
+        <!-- Add a new default search and tree views for pricelists -->
+        <record id="currency_product_pricelist_tree_view" model="ir.ui.view">
+        	<field name="name">currency.product.pricelist.tree.view</field>
+        	<field name="model">product.pricelist</field>
+        	<field name="type">tree</field>
+        	<field name="priority" eval="8" />
+        	<field name="arch" type="xml">
+        		<tree string="Currencies" hide_new_button="1">
+        			<field name="currency_id" string="Currency" />
+        			<field name="currency_name" string="Currency name" />
+        		</tree>
+        	</field>
+        </record>
+        
+        <record id="currency_product_pricelist_search_view" model="ir.ui.view">
+        	<field name="name">currency.product.pricelist.search.view</field>
+        	<field name="model">product.pricelist</field>
+        	<field name="type">search</field>
+        	<field name="priority" eval="8" />
+        	<field name="arch" type="xml">
+        		<search string="Currencies" >
+        			<field name="currency_name" string="Currency name" />
+        			<field name="currency_id" string="Currency" />
+        		</search>
+        	</field>
+        </record>
+        
+        <record id="action_menu_pricelist" model="ir.actions.act_window.view">
+        	<field name="view_mode">tree</field>
+        	<field name="view_id" ref="product.product_pricelist_view_tree" />
+        	<field name="act_window_id" ref="product.product_pricelist_action2" />
+        </record>
+        
+        <!-- Add the two fields in Currency form -->
+        <record id="res_currency_add_checkboxes_form_view" model="ir.ui.view">
+        	<field name="name">res.currency.add.checkboxes.form.view</field>
+        	<field name="model">res.currency</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="base.view_currency_form" />
+        	<field name="arch" type="xml">
+        		<data>
+        			<xpath expr="/form//group[3]" position="attributes">
+        				<attribute name="col">4</attribute>
+        			</xpath>
+        			
+        			<xpath expr="/form//separator[@string='Miscelleanous']" position="attributes">
+        				<attribute name="colspan">4</attribute>
+        			</xpath>
+        			
+	        		<xpath expr="/form//field[@name='active']" position="after">
+	        			<field name="is_section_currency" />
+	        			<field name="is_esc_currency" />
+	        		</xpath>
+        		</data>
+        	</field>
+        </record>
+        
+        
+        <!-- Remove pricelists configuration menu entries -->
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_main" />
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action" />
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action2" />
+<!--        <delete model="ir.ui.menu" id="product.menu_product_price_type" /> -->
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_type_action2" />
+<!--        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" /> -->
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
+        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
+        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
+
 		
 	</data>
 </openerp>

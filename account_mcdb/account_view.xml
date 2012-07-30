@@ -9,13 +9,13 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100">
-                    <field name="instance"/>
+                    <field name="instance_id"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date"/>
                     <field name="document_date"/>
+                    <field name="date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id"/>
                     <field name="account_type" invisible="1"/>
@@ -51,15 +51,16 @@
                 <tree string="Analytic Line" min_rows="100">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
-                    <field name="company_id" string="Proprietary Instance"/>
+                    <field name="instance_id"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date"/>
                     <field name="document_date"/>
+                    <field name="date"/>
                     <field name="period_id"/>
                     <field name="general_account_id"/>
+                    <field name="destination_id" string="Destination" invisible="not context.get('display_fp', False)"/>
                     <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     <field name="account_id"/>
                     <field name="partner_txt"/>
@@ -95,8 +96,8 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1" string="Number (Move)"/>
-                        <field name="date" select='1'/>
                         <field name="document_date"/>
+                        <field name="date" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
@@ -129,7 +130,7 @@
                         <separator orientation="vertical"/>
                         <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance'}"/>
+                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                     </group>
                     <newline/>
                 </search>
@@ -143,7 +144,7 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
             <field name="arch" type="xml">
-                <xpath expr="/search/group[1]/field[@name='date']" position='after'>
+                <xpath expr="/search/group[1]/field[@name='date']" position='before'>
                     <field name="document_date" select="1"/>
                     <newline/>
                 </xpath>
@@ -158,7 +159,7 @@
                 </xpath>
                 <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='after'>
                     <separator orientation="vertical"/>
-                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'company_id'}"/>
+                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                 </xpath>
             </field>
         </record>

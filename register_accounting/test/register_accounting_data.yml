@@ -216,6 +216,19 @@
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
 -
+  I create a Down Payment account
+-
+  !record {model: account.account, id: account_account_down_payment_0}:
+    name: Advance for suppliers
+    code: '4203-down-payment-test'
+    type: receivable
+    user_type: account_account_type_receivable0
+    type_for_register: down_payment
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: 1
+-
   I create Supplier 401 Payable Account.
 -
   !record {model: account.account, id: account_account_payable_supplier0}:
@@ -240,6 +253,8 @@
     user_type: account_account_type_expense0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create a X2110 Expense Account.
 -
@@ -252,6 +267,8 @@
     user_type: account_account_type_expense0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_support
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
   I create Cash Advance 4204 Account.
 -
@@ -265,6 +282,8 @@
     type_for_register: advance
     reconcile: 1
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_national_staff
+    destination_ids: [analytic_distribution.analytic_account_destination_national_staff]
 -
   I create a X11002 Receivable Account.
 -
@@ -382,6 +401,8 @@
     user_type: account_account_type_expense0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_support, analytic_distribution.analytic_account_destination_operation]
 -
   I create a Journal View with some columns
 -
@@ -437,7 +458,7 @@
   !record {model: account.analytic.journal, id: analytic_journal_cash_0}:
     code: acsh
     name: Analytic Cash Journal
-    type: general
+    type: cash
 -
   I create a Cash Journal
 -
@@ -599,6 +620,7 @@
     city: Oberhausbergen
     phone: +33 3 88 56 82 10
     email: info@tempo-consulting.fr
+    partner_id: res_partner_supplier_wood_0
 -
   I create a Cheque USD Register
 -
@@ -658,7 +680,7 @@
 -
   !record {model: product.product, id: product_basic_finance_0}:
     categ_id: product.cat0
-    cost_method: standard
+    cost_method: average
     mes_type: fixed
     name: Basic product for finance tests
     price_margin: 2.0

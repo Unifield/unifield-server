@@ -127,6 +127,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'corrected': False,
             'reversal': False,
         })
+        # Add default date if no one given
+        if not 'date' in default:
+            default.update({'date': strftime('%Y-%m-%d')})
         return super(account_move_line, self).copy(cr, uid, id, default, context=context)
 
     def get_corrections_history(self, cr, uid, ids, context=None):
@@ -425,6 +428,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                         if ml.id != first_line_id:
                             to_reverse.append(ml.id)
             # Browse all move lines and change information
+            new_ml_ids = []
             for ml in self.browse(cr, uid, to_reverse, context=context):
                 amt = -1 * ml.amount_currency
                 name = self.join_without_redundancy(ml.name, 'REV')
@@ -439,14 +443,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     new_distrib_id = ana_obj.copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
-                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id}, context=context)
+                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'period_id': period_ids[0]}, context=context)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
                     'credit': ml.debit,
                     'amount_currency': amt,
                     'reversal_line_id': ml.id,
-                    'source_date': ml.date,
+                    'source_date': ml.source_date or ml.date,
                     'reversal': True,
                 })
                 # Add distribution if new one
@@ -458,8 +462,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 # Only add line ID that appear in IDS (success move lines)
                 if ml.id in ids:
                     success_move_line_ids.append(ml.id)
+                new_ml_ids.append(new_line_id)
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
+            # Update analytic lines data (reversal: True)
+            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', new_ml_ids)])
+            self.pool.get('account.analytic.line').write(cr, uid, ana_ids, {'is_reversal': True})
+            # Save successful new move_id post
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
 
@@ -493,7 +502,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context=None):
+    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, context=None):
         """
         Correct given account_move_line by only changing account
         """
@@ -531,8 +540,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'journal_id': j_corr_ids[0],
                 'period_id': period_ids[0],
             }
-            context.update({'omit_analytic_distribution': True})
             # Copy the line
+            context.update({'omit_analytic_distribution': False})
             rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             correction_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             # Do the reverse
@@ -561,14 +570,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'source_date': ml.date,
                 'have_an_historic': True,
             }
+            if distrib_id:
+                cor_vals['analytic_distribution_id'] = distrib_id
+            else:
+                cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context)
-            # Do process on analytic distribution:
+            # Do process on analytic distribution: 
             # 1/ copy old distribution_id on new correction line
             # 2/ delete old distribution on original move line
-            if ml.analytic_distribution_id:
-                self.write(cr, uid, [correction_line_id], 
-                    {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
-                self.write(cr, uid, [ml.id], {'analytic_distribution_id': False}, context=context)
+#            if ml.analytic_distribution_id:
+#                analytic_distribution_id = ml.analytic_distribution_id and ml.analytic_distribution_id.id or False
+#                if distrib_id:
+#                    analytic_distribution_id = distrib_id
+#                self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': analytic_distribution_id,}, context=context)
             # Update register line if exists
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
@@ -576,15 +590,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
-            # Copy old journal attached to old distribution. Copy those from first line
-            if ml.analytic_distribution_id:
-                cl = self.browse(cr, uid, [correction_line_id], context=context)[0]
-                cl_journal = ml.journal_id.analytic_journal_id.id
-                first_line_id = self.get_first_corrected_line(cr, uid, ml.id, context=context).get(str(ml.id), False)
-                if first_line_id:
-                    first_line = self.browse(cr, uid, [first_line_id], context=context)[0]
-                    cl_journal = first_line.journal_id and first_line.journal_id.analytic_journal_id and first_line.journal_id.analytic_journal_id.id or cl_journal
-                self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_distribution_id.analytic_lines], {'journal_id': cl_journal}, context=context)
+#            # Copy old journal attached to old distribution. Copy those from first line
+#            if ml.analytic_distribution_id:
+#                cl = self.browse(cr, uid, [correction_line_id], context=context)[0]
+##                cl_journal = ml.journal_id.analytic_journal_id.id
+#                first_line_id = self.get_first_corrected_line(cr, uid, ml.id, context=context).get(str(ml.id), False)
+#                if first_line_id:
+#                    first_line = self.browse(cr, uid, [first_line_id], context=context)[0]
+#                    cl_journal = first_line.journal_id and first_line.journal_id.analytic_journal_id and first_line.journal_id.analytic_journal_id.id or cl_journal
+#                self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_distribution_id.analytic_lines], {'journal_id': cl_journal}, context=context)
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
         return success_move_line_ids
@@ -674,4 +688,23 @@ receivable, item have not been corrected, item have not been reversed and accoun
         return success_move_line_ids
 
 account_move_line()
+
+class account_move(osv.osv):
+    _name = 'account.move'
+    _inherit = 'account.move'
+
+    def reverse(self, cr, uid, ids, date=False):
+        """
+        Reverse move
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        reversed_move = []
+        for m in self.browse(cr, uid, ids):
+            res_reverse = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date)
+            if res_reverse:
+                reversed_move.append(m.id)
+        return reversed_move
+
+account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

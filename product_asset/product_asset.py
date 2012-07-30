@@ -184,7 +184,7 @@ class product_asset(osv.osv):
                 'product_id': fields.many2one('product.product', 'Product', domain="[('subtype','=','asset')]", required=True, ondelete='cascade'),
                 # msf codification
                 'prod_int_code': fields.char('Product Code', size=128, readonly=True), # from product
-                'prod_int_name': fields.char('Product Name', size=128, readonly=True), # from product
+                'prod_int_name': fields.char('Product Description', size=128, readonly=True), # from product
                 'nomenclature_description': fields.char('Product Nomenclature', size=128, readonly=True), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
                 'hq_ref': fields.char('HQ Reference', size=128),
                 'local_ref': fields.char('Local Reference', size=128),
@@ -206,7 +206,8 @@ class product_asset(osv.osv):
                 'invo_num': fields.char('Invoice Number', size=128, required=True),
                 'invo_date': fields.date('Invoice Date', required=True),
                 'invo_value': fields.float('Value', required=True),
-                'invo_currency': fields.char('Currency', size=128, required=True),
+                #'invo_currency': fields.char('Currency', size=128, required=True),
+                'invo_currency': fields.many2one('res.currency', 'Currency', required=True),
                 'invo_supplier': fields.char('Supplier', size=128),
                 'invo_donator_code': fields.char('Donator Code', size=128),
                 'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
@@ -354,8 +355,10 @@ class product_template(osv.osv):
     _inherit = "product.template"
     _description = "Product Template"
     
+    PRODUCT_SUBTYPE = [('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')]
+    
     _columns = {
-        'subtype': fields.selection([('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')], 'Product SubType', required=True, help="Will change the way procurements are processed."),
+        'subtype': fields.selection(PRODUCT_SUBTYPE, 'Product SubType', required=True, help="Will change the way procurements are processed."),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type'),
     }
 
@@ -371,6 +374,9 @@ class product_product(osv.osv):
     _description = "Product"
     
     def create(self, cr, uid, vals, context=None):
+        if vals.get('type',False) == 'service':
+            vals.update({'type': 'service_recep'})
+            vals['procure_method'] = 'make_to_order'
         '''
         if a product is not of type product, it is set to single subtype
         '''
@@ -431,9 +437,9 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.subtype == 'asset':
-                    if not move.asset_id:
+                    if not move.asset_id and move.product_qty:
                         return False
         return True
     

@@ -69,7 +69,8 @@ class account_move_line(osv.osv):
             ('account_id.type','in',['receivable','payable']),
             ('reconcile_id','=',False), 
             ('state', '=', 'valid'), 
-            ('journal_id.type', 'in', ['purchase', 'sale']) 
+            ('journal_id.type', 'in', ['purchase', 'sale']), 
+            ('account_id.type_for_register', 'not in', ['down_payment']) 
         ]
         return dom1+[('amount_residual_import_inv', '>', 0)]
 
@@ -181,13 +182,16 @@ class account_move_line(osv.osv):
                           'account.move.reconcile': (_get_reconciles, None, 10),
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
-        'partner_txt': fields.text(string="Third Party", help="Help user to display and sort Third Parties"),
+        'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'down_payment_id': fields.many2one('purchase.order', string="Purchase Order for Down Payment", readonly=True, ondelete='cascade'),
+        'down_payment_amount': fields.float(string='Down Payment used amount', readonly=True),
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
     }
 
     _defaults = {
-        'partner_txt': lambda *a: '', # empty string
+        'partner_txt': lambda *a: '',
+        'down_payment_amount': lambda *a: 0.0,
         'is_transfer_with_change': lambda *a: False,
     }
 

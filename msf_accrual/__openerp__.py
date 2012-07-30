@@ -35,7 +35,7 @@
         'wizard/wizard_accrual_view.xml'
     ],
     'test': [
-        'test/accrual_test.yml'
+        #'test/accrual_test.yml'
     ],
     'demo_xml': [
     ],

@@ -2,13 +2,13 @@
 <openerp>
     <data>
     
-        <report auto="True" 
+        <!-- <report auto="True" 
                 id="destruction_location_report" 
                 model="stock.move" 
                 name="destruction.location"
                 header="True"
                 rml="addons/stock_override/report/destruction_location.rml"
                 string="Destruction Report"
-                 />
+                 /> -->
     </data>
 </openerp>

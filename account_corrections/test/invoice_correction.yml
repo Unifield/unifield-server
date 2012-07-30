@@ -23,7 +23,7 @@
         # Update wizard date
         date = self.onchange_date(cr, uid, wiz.id, wiz.move_line_id.date)
         for line in wiz.to_be_corrected_ids:
-            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [line.id], {'account_id': ref('account_account_expense0')})
+            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [line.id], {'account_id': ref('account_account_expense1')})
         # Click on correct button to validate changes
         self.action_confirm(cr,  uid, [wiz.id])
 -

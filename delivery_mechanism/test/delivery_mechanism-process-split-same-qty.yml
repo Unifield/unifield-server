@@ -102,7 +102,8 @@
           split_obj.write(cr, uid, split_ids, {'quantity': 1}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
-      
+
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']

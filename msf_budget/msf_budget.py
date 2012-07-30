@@ -53,7 +53,9 @@ class msf_budget(osv.osv):
         'decision_moment_order': fields.related('decision_moment_id', 'order', string="Decision Moment Order", readonly=True, store=True, type="integer"),
         'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'display_type': fields.selection([('all', 'All lines'), ('view', 'View lines only')], string="Display type"),
+        'display_type': fields.selection([('all', 'Expenses and destinations'),
+                                          ('expense', 'Expenses only'),
+                                          ('view', 'Parent expenses only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly="True"),
     }
@@ -69,9 +71,10 @@ class msf_budget(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         res = super(msf_budget, self).create(cr, uid, vals, context=context)
-        # If the "parent" budget does not exist, create it.
+        # If the "parent" budget does not exist and we're not on the proprietary instance level already, create it.
         budget = self.browse(cr, uid, res, context=context)
-        if budget.cost_center_id and budget.cost_center_id.parent_id:
+        prop_instance_cost_center = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.cost_center_id.id
+        if budget.cost_center_id and budget.cost_center_id.id != prop_instance_cost_center and budget.cost_center_id.parent_id:
             parent_cost_center = budget.cost_center_id.parent_id
             parent_budget_ids = self.search(cr,
                                             uid,
@@ -87,12 +90,20 @@ class msf_budget(osv.osv):
                                                 'cost_center_id': budget.cost_center_id.parent_id.id,
                                                 'decision_moment_id': budget.decision_moment_id.id,
                                                 'type': 'view'}, context=context)
-                # Create all lines for all accounts (no budget values, those are retrieved)
+                # Create all lines for all accounts/destinations (no budget values, those are retrieved)
                 expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
+                                                                                        ('user_type_report_type', '=', 'expense'),
                                                                                         ('type', '!=', 'view')], context=context)
-                for expense_account_id in expense_account_ids:
+                destination_obj = self.pool.get('account.destination.link')
+                destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  expense_account_ids)], context=context)
+                account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
+                                           for dest
+                                           in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
+                for account_id, destination_id in account_destination_ids:
                     budget_line_vals = {'budget_id': parent_budget_id,
-                                        'account_id': expense_account_id}
+                                        'account_id': account_id,
+                                        'destination_id': destination_id,
+                                        'line_type': 'destination'}
                     self.pool.get('msf.budget.line').create(cr, uid, budget_line_vals, context=context)
                 # validate this parent
                 self.write(cr, uid, [parent_budget_id], {'state': 'valid'}, context=context)
@@ -108,33 +119,35 @@ class msf_budget(osv.osv):
             display_types[budget['id']] = budget['display_type']
             
         for budget_id in ids:
-            self.write(cr, uid, [budget_id], {'display_type': display_types[budget_id] == 'all' and 'view' or 'all'}, context=context)
+            result = 'all'
+            if display_types[budget_id] == 'all':
+                result = 'expense'
+            elif display_types[budget_id] == 'expense':
+                result = 'view'
+            elif display_types[budget_id] == 'view':
+                result = 'all'
+            self.write(cr, uid, [budget_id], {'display_type': result}, context=context)
         return True
     
     
     def budget_summary_open_window(self, cr, uid, ids, context=None):
         parent_line_id = False
-        fiscalyear_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<=', datetime.date.today()),
-                                                                              ('date_stop', '>=', datetime.date.today())], context=context)
-        if len(fiscalyear_ids) == 0:
-            raise osv.except_osv(_('Warning !'), _("The fiscal year for the current date is not defined!"))
-        else:
-            fiscalyear_id = fiscalyear_ids[0]
-            cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', False)], context=context)                       
-            if len(cost_center_ids) != 0:
-                cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
-                                                        AND cost_center_id = %s \
-                                                        AND state != 'draft' \
-                                                        ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
-                                                        (fiscalyear_id,
-                                                         cost_center_ids[0]))
-                if cr.rowcount:
-                    # A budget was found
-                    budget_id = cr.fetchall()[0][0]
-                    parent_line_id = self.pool.get('msf.budget.summary').create(cr,
-                                                                                uid,
-                                                                                {'budget_id': budget_id},
-                                                                                context=context)
+        fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
+        cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', False)], context=context)                       
+        if len(cost_center_ids) != 0:
+            cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
+                                                    AND cost_center_id = %s \
+                                                    AND state != 'draft' \
+                                                    ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
+                                                    (fiscalyear_id,
+                                                     cost_center_ids[0]))
+            if cr.rowcount:
+                # A budget was found
+                budget_id = cr.fetchall()[0][0]
+                parent_line_id = self.pool.get('msf.budget.summary').create(cr,
+                                                                            uid,
+                                                                            {'budget_id': budget_id},
+                                                                            context=context)
         
         return {
                'type': 'ir.actions.act_window',

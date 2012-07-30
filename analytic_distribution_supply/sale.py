@@ -79,7 +79,7 @@ class sale_order(osv.osv):
                 'context': context,
         }
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order.
         """
@@ -89,38 +89,67 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
         # Default method
-        res = super(sale_order, self).copy(cr, uid, id, default=default, context=context)
-        # Update analytic distribution
-        if res:
-            so = self.browse(cr, uid, res, context=context)
-        if res and so.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, so.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
-        return res
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
+            default['analytic_distribution_id'] = False
+        new_data = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
-    def wkf_validated(self, cr, uid, ids, context=None):
+    def action_ship_proc_create(self, cr, uid, ids, context=None):
         """
-        Check analytic distribution for each sale order line if partner type is 'internal'
+        Check analytic distribution for each sale order line (except if we come from YAML tests)
+        Get a default analytic distribution if intermission.
+        Change analytic distribution if intermission.
         """
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Analytic distribution verification if partner_type is 'internal'
+        # Analytic distribution verification
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
-            if so.partner_id.partner_type == 'section' and not so.analytic_distribution_id:
-                for line in so.order_line:
-                    if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                            'analytic_account_project_dummy')
-                        ana_id = ana_obj.create(cr, uid, {'sale_order_ids': [(4,so.id)], 
-                            'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
-                        break
+            for line in so.order_line:
+                # Search intermission
+                intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                    'analytic_account_project_intermission')
+                # check distribution presence
+                distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
+                if not distrib_id and so.partner_id.partner_type == 'intermission':
+                    # Search product account_id
+                    a = False
+                    if line.product_id:
+                        a = line.product_id.product_tmpl_id.property_account_income.id
+                        if not a:
+                            a = line.product_id.categ_id.property_account_income_categ.id
+                        if not a:
+                            raise osv.except_osv(_('Error !'),
+                                    _('There is no income account defined ' \
+                                            'for this product: "%s" (id:%d)') % \
+                                            (line.product_id.name, line.product_id.id,))
+                    else:
+                        prop = self.pool.get('ir.property').get(cr, uid,
+                                'property_account_income_categ', 'product.category',
+                                context=context)
+                        a = prop and prop.id or False
+                    # Search default destination_id
+                    destination_id = self.pool.get('account.account').read(cr, uid, a, ['default_destination_id']).get('default_destination_id', False)
+                    distrib_id = ana_obj.create(cr, uid, {'sale_order_line_ids': [(4,line.id)], 
+                        'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id})
+                    line = self.pool.get('sale.order.line').browse(cr, uid, line.id)
+                elif distrib_id and so.partner_id.partner_type == 'intermission':
+                    # Change CC lines
+                    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
+                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                if not distrib_id and not so.from_yml_test:
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
+                # check distribution state
+                if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
         # Default behaviour
-        res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
+        res = super(sale_order, self).action_ship_proc_create(cr, uid, ids, context=context)
         return res
 
     def action_invoice_create(self, cr, uid, ids, *args):
@@ -132,17 +161,7 @@ class sale_order(osv.osv):
         # Set analytic distribution from sale order to invoice
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids):
-            # Copy analytic distribution from sale order to invoices
-            if so.analytic_distribution_id and so.invoice_ids:
-                for inv in so.invoice_ids:
-                    distrib_id = so.analytic_distribution_id and so.analytic_distribution_id.id or False
-                    if distrib_id:
-                        new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
-                        if not new_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                        # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
-                        self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
+            # Code to retrieve DISTRO from SO have been removed because of impossibility to retrieve some DESTINATION AXIS from FO
             # Copy analytic distribution from sale order line to invoice lines
             for sol in so.order_line:
                 if sol.analytic_distribution_id and sol.invoice_lines:
@@ -187,11 +206,66 @@ class sale_order_line(osv.osv):
                 res[sol.id] = True
         return res
 
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the sale order line, then "valid"
+         - if no distribution, take a tour of sale order distribution, if compatible, then "valid"
+         - if no distribution on sale order line and sale order, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.from_yml_test:
+                res[line.id] = 'valid'
+            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
+                res[line.id] = 'none'
+            else:
+                so_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
+                distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+                # Search product account_id
+                a = False
+                if line.product_id:
+                    a = line.product_id.product_tmpl_id.property_account_income.id
+                    if not a:
+                        a = line.product_id.categ_id.property_account_income_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'),
+                                _('There is no income account defined ' \
+                                        'for this product: "%s" (id:%d)') % \
+                                        (line.product_id.name, line.product_id.id,))
+                else:
+                    prop = self.pool.get('ir.property').get(cr, uid,
+                            'property_account_income_categ', 'product.category',
+                            context=context)
+                    a = prop and prop.id or False
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, so_distrib_id, a)
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
+            res[sol['id']] = "%s%s"%(sol['analytic_distribution_state'].capitalize(), sol['have_analytic_distribution_from_header'] and " (from header)" or "")
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
         'analytic_distribution_available': fields.function(_get_analytic_distribution_available, string='Is analytic distribution available?', method=True, type='boolean'),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
     }
 
     _defaults = {
@@ -215,12 +289,29 @@ class sale_order_line(osv.osv):
         currency = sol.order_id.currency_id and sol.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id
+        # Search account_id
+        a = False
+        if sol.product_id:
+            a = sol.product_id.product_tmpl_id.property_account_income.id
+            if not a:
+                a = sol.product_id.categ_id.property_account_income_categ.id
+            if not a:
+                raise osv.except_osv(_('Error !'),
+                        _('There is no income account defined ' \
+                                'for this product: "%s" (id:%d)') % \
+                                (sol.product_id.name, sol.product_id.id,))
+        else:
+            prop = self.pool.get('ir.property').get(cr, uid,
+                    'property_account_income_categ', 'product.category',
+                    context=context)
+            a = prop and prop.id or False
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'sale_order_line_id': sol.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'account_id': a,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -247,7 +338,6 @@ class sale_order_line(osv.osv):
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order line
-        Copy global distribution and give it to new sale order line.
         """
         # Some verifications
         if not context:
@@ -255,12 +345,12 @@ class sale_order_line(osv.osv):
         if default is None:
             default = {}
         # Copy analytic distribution
-        sol = self.browse(cr, uid, [id], context=context)[0]
-        if sol.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, sol.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                default.update({'analytic_distribution_id': new_distrib_id})
-        return super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
+            default['analytic_distribution_id'] = False
+        new_data = super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
 sale_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

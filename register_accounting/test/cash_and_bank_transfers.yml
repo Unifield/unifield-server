@@ -45,8 +45,10 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_4}:
     line_ids:
+
         - name: Transfer to a CashBox
           date: !eval time.strftime('%Y-06-10')
+          document_date: !eval time.strftime('%Y-06-10')
           account_id: account_account_transfer_0
           amount: -1000.0
           transfer_amount: 1000.0
@@ -66,6 +68,7 @@
     line_ids:
         - name: Transfer from 
           date: !eval time.strftime('%Y-06-10')
+          document_date: !eval time.strftime('%Y-06-10')
           account_id: account_account_transfer_0
           amount: 1000.0
           transfer_amount: 1000.0
