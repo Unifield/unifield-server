@@ -111,7 +111,7 @@ class purchase_order(osv.osv):
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         currency_obj = self.pool.get('res.currency')
-        sale_obj = self.pool.get('sale.order')
+        purchase_obj = self.pool.get('purchase.order')
 
         vals = {}
         vals['order_line'] = []
@@ -135,8 +135,8 @@ class purchase_order(osv.osv):
             to_correct_ok = False
             comment = False
             date_planned = obj.delivery_requested_date
-            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
-            functional_currency_id = browse_sale.pricelist_id.currency_id.id
+            browse_purchase = purchase_obj.browse(cr, uid, ids, context=context)[0]
+            functional_currency_id = browse_purchase.pricelist_id.currency_id.id
             price_unit = 1.0
             product_qty = 1.0
             nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
@@ -231,18 +231,15 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                      uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                      to_correct_ok = True
                 
-            price_unit = row.cells[4].data
-            if not price_unit:
+            if not row.cells[4].data:
                 to_correct_ok = True
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
-                price_unit = 1.0
             else:
                 if row.cells[4].type in ['int', 'float']:
                     price_unit = row.cells[4].data
                 else:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
                      to_correct_ok = True
-                     price_unit = 1.0
             
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
@@ -262,7 +259,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 try:
                     curr_name = curr.strip()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                    if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                    if currency_ids[0] == browse_purchase.pricelist_id.currency_id.id:
                         functional_currency_id = currency_ids[0]
                     else:
                         error_list.append('The imported currency was not consistent and has been replaced by the currency of the order, please check the price.')
