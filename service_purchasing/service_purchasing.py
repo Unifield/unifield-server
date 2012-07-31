@@ -116,31 +116,61 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False):
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False):
         '''
         if the product is "service with reception" or "service", the destination location is Service
         '''
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
-        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id)
+        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id, parent_type, purchase_line_id,out)
         service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+
         if service_loc:
             service_loc = service_loc[0]
         
         if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service') and parent_type == 'in':
+            #case product is SERVICE
             if service_loc:
                 prod_type = prod_obj.browse(cr, uid, prod_id).type
                 result.setdefault('value', {}).update(location_dest_id=service_loc, product_type=prod_type)
                 result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
         else:
-            if loc_dest_id == service_loc: 
+            #case product is NOT SERVICE
+            if loc_dest_id == service_loc:
                 result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
+
             if parent_type == 'out':
+                #case OUT
+                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    #case NON STOCK
+                    result.update({'domain': {'location_id': [('check_prod_loc','=',[prod_id,'out'])]}})
+                else:
+                    #case STOCK
+                    result.update({'domain': {'location_id': [('standard_out_ok', '=', 'src')]}})
                 result.update({'domain': {'location_dest_id': [('standard_out_ok', '=', 'dest')]}})
+
+            elif parent_type == 'internal':
+                #case INTERNAL
+                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    from_ids = self.pool.get('stock.location').search(cr,uid,['|', ('quarantine_location','=',True), ('cross_docking_location_ok','=',True)])
+                    to_ids = from_ids + self.pool.get('stock.location').search(cr,uid,['|', ('usage','=','inventory'), ('destruction_location','=',True)])
+                    result.update({'domain': {'location_dest_id': [('id', 'in', to_ids)], 'location_id': [('id', 'in', from_ids)]}})
+                else:
+                    id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+                    loc_ids = self.pool.get('stock.location').search(cr,uid,['|', ('usage','=','internal'), ('location_id','child_of',id_virt)])
+                    result.update({'domain': {'location_dest_id': [('id', 'in', loc_ids)], 'location_id': [('id', 'in', loc_ids)]}})
+
             else:
-                result.update({'domain': {'location_dest_id': [('usage','=','internal')]}})
-            
-        
+                #case IN
+                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
+                    #case NON STOCK
+                    result.update({'domain': {'location_dest_id': [('check_prod_loc', '=', [prod_id, 'in'])]}})
+                else:
+                    #case STOCK
+                    id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+                    loc_ids = self.pool.get('stock.location').search(cr,uid,['|', ('usage', '=', 'internal'), ('location_id', 'child_of', id_virt)])
+                    result.update({'domain': {'location_dest_id': [('id', 'in', loc_ids)]}})
+
         return result
     
     def _check_constaints_service(self, cr, uid, ids, context=None):

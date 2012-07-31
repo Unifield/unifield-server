@@ -325,9 +325,9 @@ class stock_move(osv.osv):
 
         if 'location_dest_id' in vals:
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory':
+            if dest_id.usage == 'inventory'  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location:
+            if dest_id.scrap_location  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
                 
         # Change the reason type of the picking if it is not the same
@@ -345,9 +345,9 @@ class stock_move(osv.osv):
         '''
         if 'location_dest_id' in vals:
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory':
+            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location:
+            if dest_id.scrap_location and not dest_id.virtual_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
                 
         # Change the reason type of the picking if it is not the same
@@ -480,13 +480,10 @@ class stock_location(osv.osv):
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
                 if arg[2] == 'dest':
-                    virtual_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-                    virtual_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', virtual_loc_id)], context=context)
-                    
                     customer_loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'customer')], context=context)
                     output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
                     
-                    loc_ids = virtual_loc_ids
+                    loc_ids = []
                     loc_ids.extend(customer_loc_ids)
                     loc_ids.append(output_loc_id)
                     res.append(('id', 'in', loc_ids))

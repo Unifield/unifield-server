@@ -383,7 +383,8 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
-            
+        if 'type' in vals and vals['type'] == 'consu':
+            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).create(cr, uid, vals, context=context)
     
@@ -394,13 +395,27 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
-            
+        if 'type' in vals and vals['type'] == 'consu':
+            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
+
+    def _constaints_product_consu(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'consu' and obj.procure_method != 'make_to_order':
+                return False
+        return True
+
     
     _columns = {
         'asset_ids': fields.one2many('product.asset', 'product_id', 'Assets')
     }
+
+    _constraints = [
+        (_constaints_product_consu, 'If you select "Non-stockable" as product type then you have to select "Make to order" as procurement method', []),
+    ]
 
 product_product()
 
@@ -456,14 +471,14 @@ class stock_move(osv.osv):
         result = super(stock_move, self).create(cr, uid, vals, context=context)
         
         return result
-    
+
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False):
+                            loc_dest_id=False, address_id=False,parent_type=False,purchase_line_id=False,out=False):
         '''
         override to clear asset_id
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                            loc_dest_id, address_id)
+                            loc_dest_id, address_id, parent_type, purchase_line_id,out)
         
         if 'value' not in result:
             result['value'] = {}
@@ -472,12 +487,10 @@ class stock_move(osv.osv):
             prod = self.pool.get('product.product').browse(cr, uid, prod_id)
             result['value'].update({'subtype': prod.product_tmpl_id.subtype})
             
-            
         result['value'].update({'asset_id': False})
         
         return result
-    
-    
+        
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset'),
         'subtype': fields.char(string='Product Subtype', size=128),

@@ -1244,17 +1244,16 @@ class sale_order_line(osv.osv):
         
         return False
 
-    def  _get_type_def(self, cr, uid, context=None):
-        if context is None:
-            context= {}
-        return 'make_to_order'
-
     def _get_uom_def(self, cr, uid, context=None):
         if context is None:
             context= {}
-        ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        try:
+            ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        except ValueError:
+            return False
+
         if ids:
-            return ids[1] 
+            return ids[1]
         return False
 
     _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
@@ -1267,8 +1266,8 @@ class sale_order_line(osv.osv):
     _defaults = {'date_planned': _get_planned_date,
                  'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
-                 'type': _get_type_def,
-                 'product_uom': _get_uom_def,      
+                 'type': lambda *a: 'make_to_order',
+                 'product_uom': _get_uom_def,
                  }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
