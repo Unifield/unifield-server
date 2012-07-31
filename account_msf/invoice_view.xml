@@ -200,7 +200,8 @@
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
-                                <label string="" colspan="3"/>
+                                <label string="" colspan="2"/>
+                                <button name="button_donation_certificate" type="object" string="Certificate of Donation" icon="terp-mail-replied"/>
                                 <field name="state"/>
                                 <field name="amount_total"/>
                             </group>

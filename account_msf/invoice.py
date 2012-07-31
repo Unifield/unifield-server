@@ -215,6 +215,24 @@ class account_invoice(osv.osv):
                 'target': 'new',
             }
 
+    def button_donation_certificate(self, cr, uid, ids, context=None):
+        """
+        """
+        for inv in self.browse(cr, uid, ids):
+            pick_id = inv.picking_id and inv.picking_id.id or ''
+            domain = "[('res_model', '=', 'stock.picking'), ('res_id', '=', " + str(pick_id) + "), ('description', '=', 'Certificate of Donation')]"
+            return {
+                'name': "Certificate of Donation",
+                'type': 'ir.actions.act_window',
+                'res_model': "ir.attachment",
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': domain,
+                'context': context,
+                'target': 'current',
+            }
+        return False
+
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new invoice
