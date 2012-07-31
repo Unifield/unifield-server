@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-
+        
     <!-- We move the buttons below the notebook -->
         <record id="msf_cross_docking.purchase_move_buttons" model="ir.ui.view">
             <field name="name">purchase.form.view</field>
@@ -17,6 +17,30 @@
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
+                    </xpath>
+                    <!-- We change the positions of the supplier information fields -->
+                    <xpath expr="/form//field[@name='internal_type']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_id']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_address_id']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_type']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form//field[@name='origin']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form//field[@name='pricelist_id']" position="replace" >
+                    </xpath>
+                    <xpath expr="/form//group[@name='import']" position="before" >
+                        <group colspan="4" col="12">
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" 
+                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="partner_type" colspan="3" />
+                            <field name="internal_type" string="Zone" colspan="3" />
+                            <field name="partner_address_id" colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="pricelist_id" string="Currency" colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="origin" colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                        </group>
                     </xpath>
                     <xpath expr="/form/notebook" position="after">
                         <group col="11" colspan="4">
