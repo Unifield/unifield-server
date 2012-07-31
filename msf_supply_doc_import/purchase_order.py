@@ -236,7 +236,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 
             if not row.cells[4].data:
                 to_correct_ok = True
-                error_list.append('The Price Unit was not set, we set it to 0 by default but ou cannot have a price unit with 0 quantity.')
+                error_list.append('The Price Unit was not set, we set it to 0 by default and it was recomputed according to the Unit Price Mecanism.')
             else:
                 if row.cells[4].type in ['int', 'float']:
                     price_unit = row.cells[4].data
@@ -260,12 +260,12 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 error_list.append('No currency was defined.')
             else:
                 try:
-                    curr_name = curr.strip()
+                    curr_name = curr.strip().upper()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
                     if currency_ids[0] == browse_purchase.pricelist_id.currency_id.id:
                         functional_currency_id = currency_ids[0]
                     else:
-                        error_list.append('The imported currency was not consistent and has been replaced by the currency of the order, please check the price.')
+                        error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_purchase.pricelist_id.currency_id.name))
                         to_correct_ok = True
                 except Exception:
                      error_list.append('The Currency Name has to be a string.')
@@ -294,6 +294,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 'functional_currency_id': functional_currency_id,
                 'type': proc_type,
                 'text_error': '\n'.join(error_list), 
+                'order_id': ids,
             }
             # we check consistency on the model of on_change functions to call for updating values
             purchase_line_obj.check_line_consistency(cr, uid, ids, to_write=to_write, context=context)
@@ -357,21 +358,22 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         error_list = []
         to_write = kwargs['to_write']
-        pol_obj = self.pool.get('purchase.order.line')
-        browse_pol = pol_obj.browse(cr, uid, ids, context=context)
-        for pol in browse_pol:
+        order_id = to_write['order_id']
+        po_obj = self.pool.get('purchase.order')
+        browse_po = po_obj.browse(cr, uid, order_id, context=context)
+        for po in browse_po:
             # on_change functions to call for updating values
-            pricelist_id = pol.order_id.pricelist_id.id or False
-            partner_id = pol.order_id.partner_id.id or False
-            date_order = pol.order_id.date_order or False
-            fiscal_position = pol.order_id.fiscal_position or False
-            state =  pol.order_id.state or False
-            order_id = pol.order_id.id or False
+            pricelist_id = po.pricelist_id.id or False
+            partner_id = po.partner_id.id or False
+            date_order = po.date_order or False
+            fiscal_position = po.fiscal_position or False
+            state =  po.state or False
+            order_id = po.id or False
             product_id = to_write['product_id']
             product_qty = to_write['product_qty']
             uom_id = to_write['product_uom']
             if product_id and product_qty:
-                self.compute_price_unit(cr, uid, ids,to_write= to_write,product_qty=product_qty, product_id=product_id, uom_id=uom_id, 
+                self.compute_price_unit(cr, uid, ids,to_write= to_write,partner_id=partner_id,product_qty=product_qty, product_id=product_id, uom_id=uom_id, 
                                         state=state,order_id=order_id,pricelist_id=pricelist_id, date_order=date_order,context=context)
             if uom_id:
                 self.check_data_for_uom(cr, uid, ids, to_write= to_write, context=context)
@@ -390,6 +392,7 @@ class purchase_order_line(osv.osv):
         to_write = kwargs['to_write']
         text_error = to_write['text_error']
         to_correct_ok = to_write['to_correct_ok']
+        partner_id = kwargs['partner_id']
         product = kwargs['product_id']
         uom = kwargs['uom_id']
         qty = kwargs['product_qty']
