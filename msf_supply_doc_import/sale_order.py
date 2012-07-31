@@ -220,7 +220,7 @@ That means Not price, Neither Delivery requested date. """))
                     if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
                         functional_currency_id = currency_ids[0]
                     else:
-                        error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_purchase.pricelist_id.currency_id.name))
+                        error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_sale.pricelist_id.currency_id.name))
                         to_correct_ok = True
                 except Exception:
                      error_list.append('The Currency Name was not found.')
@@ -431,7 +431,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                     if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
                         functional_currency_id = currency_ids[0]
                     else:
-                        error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_purchase.pricelist_id.currency_id.name))
+                        error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_sale.pricelist_id.currency_id.name))
                         to_correct_ok = True
                 except Exception:
                      error_list.append('The Currency Name was not found.')
