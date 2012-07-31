@@ -202,6 +202,35 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
+    def _get_partner_info_price(self, cr, uid, product, partner_id, product_qty, currency_id,
+                                          order_date, product_uom_id, context=None):
+        '''
+        Returns the pricelist_information from product form
+        '''
+        if not context:
+            context = {}
+            
+        partner_price = self.pool.get('pricelist.partnerinfo')
+        info_prices = []
+                
+        domain = [('min_quantity', '<=', product_qty),
+                  ('uom_id', '=', product_uom_id),
+                  ('partner_id', '=', partner_id),
+                  ('product_id', '=', product.product_tmpl_id.id),
+                  '|', ('valid_from', '<=', order_date),
+                  ('valid_from', '=', False),
+                  '|', ('valid_till', '>=', order_date),
+                  ('valid_till', '=', False)]
+        
+        domain_cur = [('currency_id', '=', currency_id)]
+        domain_cur.extend(domain)
+        
+        info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+        if not info_prices:
+            info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+        
+        return info_prices
+    
     def _get_partner_price(self, cr, uid, product_ids, partner_id, product_qty, currency_id,
                                           order_date, product_uom_id, context=None):
         '''
@@ -209,8 +238,8 @@ class product_product(osv.osv):
         '''
         res = {}
         one_product = False
-        partner_price = self.pool.get('pricelist.partnerinfo')
         cur_obj = self.pool.get('res.currency')
+        partner_price = self.pool.get('pricelist.partnerinfo')
         suppinfo_obj = self.pool.get('product.supplierinfo')
         prod_obj = self.pool.get('product.product')
         catalogue_obj = self.pool.get('supplier.catalogue')
@@ -223,39 +252,14 @@ class product_product(osv.osv):
             product_ids = [product_ids]
             
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
-            info_prices = []            
-#            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-#                                                         ('product_id', '=', product.product_tmpl_id.id)], 
-#                                                         order='sequence asc', context=context)
-                
-            domain = [('min_quantity', '<=', product_qty),
-                      ('uom_id', '=', product_uom_id),
-                      ('partner_id', '=', partner_id),
-                      ('product_id', '=', product.product_tmpl_id.id),
-                      '|', ('valid_from', '<=', order_date),
-                      ('valid_from', '=', False),
-                      '|', ('valid_till', '>=', order_date),
-                      ('valid_till', '=', False)]
-            
-            domain_cur = domain
-            domain_cur.append(('currency_id', '=', currency_id))
-            
-            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
-            if not info_prices:
-                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
-            
-#            if sequence_ids:
-#                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
-#                domain.append(('suppinfo_id.sequence', '=', min_seq))
-#                domain.append(('suppinfo_id', 'in', sequence_ids))
-#            
-#                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+            info_prices = self._get_partner_info_price(cr, uid, product, partner_id, product_qty, currency_id,
+                                                       order_date, product_uom_id, context=context)
                 
             if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
-                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id.id, info.price)
-                res[product.id] = (info.price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
+                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price)
+                res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)
                         
