@@ -111,7 +111,6 @@ class update(osv.osv):
                     privates = [entity.id]
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
-                               self.pool.get('sync.server.entity')._get_all_children(cr, uid, update.owner.id, context=context) + \
                                [update.owner.id]
             else:
                 privates = []

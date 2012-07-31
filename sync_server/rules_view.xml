@@ -67,7 +67,7 @@
                         <field name="sequence_number" on_change="invalidate(model_ref)"/>
                         <newline/>
                         <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
-                        <field name="direction" />
+                        <field name="direction" on_change="invalidate(model_ref)" />
                         <group colspan="2" col="2">
                             <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}"/>
                         </group>
