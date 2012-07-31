@@ -205,12 +205,12 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
             if not row.cells[2].data :
                 product_qty = 1.0
                 to_correct_ok = True
-                error_list.append('The Product Quantity was not set, we set it to 1 by default.')
+                error_list.append('The Product Quantity was not set and it is required to be more than 0, we set it to 1 by default.')
             else:
                 if row.cells[4].type in ['int', 'float']:
                     product_qty = row.cells[2].data
                 else:
-                     error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
+                     error_list.append('The Product Quantity was not a number and it is required to be more than 0, we set it to 1 by default.')
                      to_correct_ok = True
                      product_qty = 1.0
             
@@ -417,7 +417,7 @@ class purchase_order_line(osv.osv):
         else:
             currency_id = func_curr_id
         
-        # Update the old price value        
+        # Update the old price value
         to_write.update({'product_qty': qty})
         if product and not to_write.get('price_unit', False) and all_qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
@@ -477,7 +477,12 @@ class purchase_order_line(osv.osv):
                                  'old_price_unit': st_price})
                 
         elif qty == 0.00:
-            to_write.update({'price_unit': 0.00, 'old_price_unit': 0.00})
+            text_error += "\n You cannot have a 0 quantity, we set the price unit to 0.0." 
+            to_write.update({'price_unit': 0.00, 
+                             'old_price_unit': 0.00,
+                             'to_correct_ok': True,
+                             'text_error': text_error,
+                             })
         elif not product and not comment and not nomen_manda_0:
             text_error += "\n You cannot save a line without quantity, nor comment, nor product"
             to_write.update({'price_unit': 0.00, 
