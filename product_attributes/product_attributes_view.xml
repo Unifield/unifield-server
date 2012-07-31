@@ -189,7 +189,7 @@
                                             <field name="uom_id" />
                                             <field name="price" />
                                             <field name="rounding" />
-                                            <field name="currency_id" domain="[('partner_currency', '=', 1)]" />
+                                            <field name="currency_id" domain="[('partner_currency', '=', parent.name)]" />
                                             <field name="min_order_qty" />
                                             <field name="valid_from" />
                                             <field name="valid_till" />
