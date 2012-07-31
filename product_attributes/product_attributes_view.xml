@@ -183,13 +183,13 @@
                                     <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
                                     <field name="delay"/>
                                     <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
-                                    <field colspan="4" groups="base.group_extended" name="pricelist_ids" nolabel="1" widget="one2many_list">
-                                        <tree editable="bottom" string="Pricelist">
+                                    <field colspan="4" groups="base.group_extended" name="pricelist_ids" nolabel="1" widget="one2many_list" context="{'partner_id': name}">
+                                        <tree editable="top" string="Pricelist">
                                             <field name="min_quantity" />
                                             <field name="uom_id" />
                                             <field name="price" />
                                             <field name="rounding" />
-                                            <field name="currency_id" />
+                                            <field name="currency_id" domain="[('partner_currency', '=', 1)]" />
                                             <field name="min_order_qty" />
                                             <field name="valid_from" />
                                             <field name="valid_till" />
@@ -208,6 +208,7 @@
                                     <field name="get_from_date"/>
                                     <field name="get_till_date"/>
                                     <field name="get_first_price"/>
+                                    <field name="get_first_currency" />
                                     <field name="check_manufacturer"/>
                                 </tree>
                             </field>

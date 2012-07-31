@@ -133,6 +133,7 @@ class pricelist_partnerinfo(osv.osv):
         if context.get('partner_id', False) and isinstance(context['partner_id'], (int, long)):
             partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)
             res['currency_id'] = partner.property_product_pricelist_purchase.currency_id.id
+            res['partner_id'] = partner.id
         
         return res
     
@@ -190,7 +191,7 @@ class pricelist_partnerinfo(osv.osv):
         'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),
         'sequence': fields.related('suppinfo_id', 'sequence', string='Sequence', type='integer'),
     }
-    
+
     _constraints = [
         (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
     ]
@@ -413,6 +414,36 @@ class res_currency(osv.osv):
                     po_currency_id = price_obj.browse(cr, uid, arg[2]).currency_id.id
                     dom.append(('id', 'in', [func_currency_id, po_currency_id]))
         return dom
+    
+    def _get_partner_currency(self, cr, uid, ids, field_name, args, context=None):
+        res = []
+        for id in ids:
+            res[id] = True
+            
+        return res
+    
+    def _src_partner_currency(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns currencies according to partner type
+        '''
+        user_obj = self.pool.get('res.users')
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'partner_currency':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                elif arg[2]:
+                    partner = self.pool.get('res.partner').browse(cr, uid, arg[2], context=context)
+                    if partner.partner_type in ('internal', 'intermission'):
+                        func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+                        dom.append(('id', '=', func_currency_id))
+                    elif partner.partner_type == 'section':
+                        dom.append(('is_section_currency', '=', True))
+                    elif partner.partner_type == 'esc':
+                        dom.append(('is_esc_currency', '=', True))
+                        
+        return dom
 
     _columns = {
         'is_section_currency': fields.boolean(string='Functional currency', 
@@ -421,6 +452,8 @@ class res_currency(osv.osv):
                                         help='If this box is checked, this currency is used as a currency for at least one ESC.'),
         'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
                                             type='boolean', string='transport PO currencies'),
+        'partner_currency': fields.function(_get_partner_currency, fnct_search=_src_partner_currency, type='boolean', method=True,
+                                            string='Partner currency', store=False, help='Only technically to filter currencies according to partner type'),
     }
 
     def write(self, cr, uid, ids, values, context=None):

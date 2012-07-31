@@ -1649,7 +1649,7 @@ class purchase_order_line(osv.osv):
         elif qty == 0.00:
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
-            res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})            
+            res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
         
         return res
 

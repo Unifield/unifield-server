@@ -897,7 +897,7 @@ class pricelist_partnerinfo(osv.osv):
     add new information from specifications
     '''
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
+    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True, domain="[('partner_currency', '=', partner_id)]"),
                 'valid_till': fields.date(string="Valid Till",),
                 'comment': fields.char(size=128, string='Comment'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
