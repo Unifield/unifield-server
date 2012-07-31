@@ -147,6 +147,9 @@ class pricelist_partnerinfo(osv.osv):
         '''
         if context is None:
             context = {}
+            
+        if isinstance(info_id, (int, long)):
+            info_id = [info_id]
 
         for info in self.browse(cr, uid, info_id, context=context):
             if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
