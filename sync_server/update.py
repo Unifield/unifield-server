@@ -134,19 +134,27 @@ class update(osv.osv):
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         
+        update_to_send = []
+        ids = True
+        where = [
+                    ('rule_id', 'in', rules), 
+                    ('sequence', '>', last_seq), 
+                    ('sequence', '<=', max_seq),
+                ]
         if not recover:
-            ids = self.search(cr, uid, [('rule_id', 'in', rules), 
-                                    ('source', '!=', entity.id), #avoid receiving his own update
-                                    ('sequence', '>', last_seq), 
-                                    ('sequence', '<=', max_seq)], context=context)
-        else:
-            ids = self.search(cr, uid, [('rule_id', 'in', rules), 
-                                    ('sequence', '>', last_seq), 
-                                    ('sequence', '<=', max_seq)], context=context)
-        update_to_send = self.get_update_to_send(cr, uid, entity, ids, context)
-        #offset + limit 
-        update_to_send = update_to_send[offset:offset+max_size]
-        self.__logger.debug("Update to send to %s : %s" % (entity.name, update_to_send))
+            where.append( ('source', '!=', entity.id) )
+        while ids and len(update_to_send) < max_size:
+            ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
+            offset += len(ids)
+            update_to_send += self.get_update_to_send(cr, uid, entity, ids, context)
+        exceed = len(update_to_send) - max_size
+        if exceed > 0:
+            update_to_send = update_to_send[:max_size]
+            offset -= exceed
+
+        if len(update_to_send) > max_size:
+            raise Exception("What a f...?!")
+
         self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
             self.__logger.debug("No update to send to %s" % (entity.name,))
