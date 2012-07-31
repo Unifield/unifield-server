@@ -858,7 +858,7 @@
 			<field name="view_id" ref="view_pt_ppl_form"/>
 			<field name="act_window_id" ref="action_pt_ppl"/>
 		</record>
-		<menuitem action="action_pt_ppl" id="menu_action_pt_ppl" parent="menu_warehouse_deliveries" sequence="6" />
+		<!-- <menuitem action="action_pt_ppl" id="menu_action_pt_ppl" parent="menu_warehouse_deliveries" sequence="6" /> -->
 
 		<!-- Changed name to 'Packing' -->
 		<record id="view_packing_tree" model="ir.ui.view">
@@ -1293,7 +1293,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[]</field>
-			<field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1, 'group_by': 'partner_id2'  }</field>
+			<field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
 			<field name="search_view_id" ref="view_shipment_search"/>
 			<field name="help">This is the list of all shipment lists that have been picked. The shipment lists are regrouped by address.</field>
 		</record>
