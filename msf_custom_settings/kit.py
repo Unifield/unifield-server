@@ -33,7 +33,7 @@ class composition_kit(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         kit_obj = self.pool.get('composition.kit')
-        if not kit_obj.read(cr, uid, ids, ['state'], context=context)[0]['state'] == 'in_production':
+        if kit_obj.read(cr, uid, ids, ['state'], context=context)[0]['state'] == 'draft':
             self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         else:
             raise osv.except_osv(_('Warning !'), _('You cannot cancel a composition list if it is in production.'))
