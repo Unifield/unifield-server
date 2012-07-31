@@ -156,7 +156,6 @@
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
 					<field name="state"/>
-					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
 				</tree>
