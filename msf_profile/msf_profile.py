@@ -89,8 +89,11 @@ class base_setup_company(osv.osv_memory):
         ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context)
         if not ret.get('name'):
             ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             cur = self.pool.get('res.currency').search(cr, uid, [('name','=','EUR')])
-            if cur:
+            if company.currency_id:
+                ret['currency'] = company.currency_id.id
+            elif cur:
                 ret['currency'] = cur[0]
             country = self.pool.get('res.country').search(cr, uid, [('name','=','Switzerland')])
             if country:

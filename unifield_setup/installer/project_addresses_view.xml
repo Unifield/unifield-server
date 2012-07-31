@@ -43,7 +43,7 @@
 					                    <field name="phone"/>
 					                    <field name="email"/>
 				    	                <field name="account_no"/>
-				        	            <field name="currency" widget="selection"/>
+				        	            <field name="currency" widget="selection" invisible="1"/>
 				            	    </page>
 				                	<page string="Ship to address">
 					                	<field name="ship_street" />
