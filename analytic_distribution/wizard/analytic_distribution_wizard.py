@@ -420,10 +420,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
             # verify purchase state
-            if el.purchase_id and el.purchase_id.state in ['sourced', 'wait', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice', 'done', 'cancel', 'rfq_sent', 'rfq_updated', 'split']:
+            if el.purchase_id and el.purchase_id.state not in ['draft']:
                 res[el.id] = False
             # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state in ['sourced', 'wait', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice', 'done', 'cancel', 'rfq_sent', 'rfq_updated', 'split']:
+            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state not in ['draft']:
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
@@ -441,10 +441,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except', 'sourced']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except', 'sourced']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft']:
                 res[el.id] = False
         return res
 
