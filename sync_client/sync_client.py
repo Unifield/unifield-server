@@ -163,7 +163,7 @@ class entity(osv.osv, Thread):
         # Prevent synchronization to be started multiple times
         me = self.get_entity(cr, uid, context)
         if me.is_syncing and log is None:
-            return (None, None, None)
+            return (None, log_id, log)
 
         # First time we run into startSync()
         if log is None:
@@ -186,10 +186,11 @@ class entity(osv.osv, Thread):
                 if not up_to_date[0]:
                     log.update({
                         'end' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'error' : "Revision Update failed: " + up_to_date[1],
+                        'error' : log['error'] + "Revision Update failed: " + up_to_date[1],
                         'status' : 'failed',
                     })
-                    self.pool.get('sync.monitor').create(cr, uid, log)
+                    log_id = self.pool.get('sync.monitor').create(cr, uid, log)
+                    return (None, log_id, log)
                 else:
                     log['error'] += "Revision Update Status: " + up_to_date[1]
         

@@ -62,10 +62,10 @@ class version(osv.osv):
 
     def _is_outdated(self, cr, uid, context=None):
         current = self._get_last_revision(cr, uid, context=context)
+        where = [('state','=','not-installed'),('importance','=','required')]
         if current:
-            return bool(self.search(cr, uid, [('date','>',current.date),('state','=','not-installed'),('importance','=','required')], limit=1))
-        else:
-            return bool(self.search(cr, uid, [], context=context))
+            where.append(('date','>',current.date))
+        return bool(self.search(cr, uid, where, limit=1))
 
     def _is_update_available(self, cr, uid, ids, context=None):
         for id in ids if isinstance(ids, list) else [ids]:
@@ -98,10 +98,10 @@ class entity(osv.osv):
     def get_upgrade_status(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
-            return "OpenERP needs to be restarted<br/>to finish upgrade."
-        if not revisions._is_outdated(cr, uid, context=context):
-            return ""
-        return "Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded."
+            return "OpenERP is restarting<br/>to finish upgrade..."
+        if revisions._is_outdated(cr, uid, context=context):
+            return "Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded."
+        return ""
 
     def upgrade(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')

@@ -42,29 +42,33 @@ class upgrade(osv.osv_memory):
             raise osv.except_osv("Error!", "Nothing to do.")
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         uuid = self.pool.get('sync.client.entity').get_uuid(cr, uid)
-        d = revisions.browse(cr, uid, next_revisions[0], context=context)
-        patch = proxy.get_zip( uuid, d.sum )
-        if not patch[0]:
-            raise osv.except_osv("Error!", "Can't retrieve the patch %s (%s)!" % (d.name, d.sum))
-        revisions.write(cr, uid, next_revisions[0], {'patch':patch[1]})
+        text = "These patches has been downloaded and are ready to install:\n\n"
+        for rev in revisions.browse(cr, uid, next_revisions, context=context):
+            text += "- [%s] %s (%s at %s)\n" % (rev.importance, rev.name, rev.sum, rev.date, )
+            if not rev.patch:
+                patch = proxy.get_zip( uuid, rev.sum )
+                if not patch[0]:
+                    raise osv.except_osv("Error!", "Can't retrieve the patch %s (%s)!" % (rev.name, rev.sum))
+                revisions.write(cr, uid, rev.id, {'patch':patch[1]})
+                cr.commit()
         return self.write(cr, uid, ids, {
-            'message' : 'The patch %s (%s at %s) has been downloaded and is ready to install.' % (d.name, d.sum, d.date),
+            'message' : text,
             'state' : 'need-install',
         }, context=context)
 
     def do_upgrade(self, cr, uid, ids, context=None):
         """Actualy, prepare the upgrade to be done at server restart"""
-        ## TODO all revisions at once? wait MSF
         ## Check if revision upgrade applies
+        next_state = self._get_state(cr, uid, context=context)
+        if next_state != 'need-install':
+            message = "Cannot install now.\n\n"
+            message += self._generate(cr, uid, context=context)
+            return self.write(cr, uid, ids, {
+                'message' : message,
+                'state' : next_state,
+            }, context=context)
         revisions = self.pool.get('sync_client.version')
-        if revisions._need_restart(cr, uid, context=context):
-            raise osv.except_osv("Error!", "Cannot proceed, another installation is processing... Please restart OpenERP.")
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
-        if not next_revisions:
-            raise osv.except_osv("Error!", "No revision to install found")
-        d = revisions.browse(cr, uid, next_revisions[0], context=context)
-        if not revisions._is_update_available(cr, uid, next_revisions[0], context=context):
-            raise osv.except_osv("Error!", "The patch for revision %s is missing" % d.name)
         ## Make an update temporary path
         path = os.path.join(config['root_path'], ".update")
         if not os.path.exists(path):
@@ -82,26 +86,33 @@ class upgrade(osv.osv_memory):
             return self.write(cr, uid, ids, {
                 'message' : "The path `%s' is not a dir or is not writable!" % path,
             }, context=context)
-        ## Check if the file match the expected sum
-        patch = b64decode( d.patch )
-        local_sum = md5(patch).hexdigest()
-        if local_sum != d.sum:
-            return self.write(cr, uid, ids, {
-                'message' : "The file you downloaded seems to be corrupt.\nLocal sum: %s\nDistant sum: %s\n\nPlease download it again." % (local_sum, d.sum),
-                'state' : 'need-download',
-            }, context=context)
-        ## Extract the Zip
-        f = StringIO(patch)
-        try:
-            zip = ZipFile(f, 'r')
-            zip.extractall(path)
-        finally:
-            f.close()
+        ## Proceed all patches
+        new_revisions = list()
+        for rev in revisions.browse(cr, uid, next_revisions, context=context):
+            ## Check if the file match the expected sum
+            patch = b64decode( rev.patch )
+            local_sum = md5(patch).hexdigest()
+            if local_sum != rev.sum:
+                return self.write(cr, uid, ids, {
+                    'message' : "The file you downloaded seems to be corrupt.\nLocal sum: %s\nDistant sum: %s\n\nPlease download it again." % (local_sum, rev.sum),
+                    'state' : 'need-download',
+                }, context=context)
+            ## Extract the Zip
+            f = StringIO(patch)
+            try:
+                zip = ZipFile(f, 'r')
+                zip.extractall(path)
+            finally:
+                f.close()
+            ## Store to list of updates
+            new_revisions.append( rev.name )
+            ## Fix the flag of the pending revisions
+            revisions.write(cr, uid, rev.id, {'state':'need-restart'}, context=context)
         ## Make a lock file to make OpenERP able to detect an update
         f = open(os.path.join(config['root_path'], "update.lock"), "w")
         f.write(str({
             'dbname' : cr.dbname,
-            'revisions' : [d.name],
+            'revisions' : new_revisions,
             'db_user' : config['db_user'] or None, ## Note that False values are not acceptable for psycopg
             'db_host' : config['db_host'] or None,
             'db_port' : config['db_port'] or None,
@@ -109,16 +120,20 @@ class upgrade(osv.osv_memory):
             'exec_path' : os.getcwd(),
         }))
         f.close()
-        ## Fix the flag of the pending revisions
-        revisions.write(cr, uid, d.id, {'state':'need-restart'}, context=context)
         ## Refresh the window
-        return self.write(cr, uid, ids, {
+        self.write(cr, uid, ids, {
             'message' : self._generate(cr, uid, context=context),
             'state' : 'need-restart',
         }, context=context)
+        ## Restart automatically
+        cr.commit()
+        return self.restart(cr, uid, ids, context=context)
 
     def _generate(self, cr, uid, context=None):
         """Make the wizard caption"""
+        me = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
+        if me.is_syncing:
+            return "Blocked during synchro.\n\nPlease try again later."
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
             return "OpenERP needs to be restart to complete the installation."
@@ -130,31 +145,34 @@ class upgrade(osv.osv_memory):
             text += "No revision has been applied yet.\n"
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
         if next_revisions:
-            d = revisions.browse(cr, uid, next_revisions[0])
             text += "\n"
             if len(next_revisions) == 1:
-                text += "One revision remains.\n"
+                text += "There is 1 revision available.\n"
             else:
-                text += "It remains %s revisions.\n" % len(next_revisions)
-            text += "The next revision is %s (%s at %s) and is %s.\n" % (d.name, d.sum, d.date, d.importance)
+                text += "There are %s revisions available.\n" % len(next_revisions)
+            for rev in revisions.browse(cr, uid, next_revisions):
+                text += "- [%s] %s (%s at %s)\n" % (rev.importance, rev.name, rev.sum, rev.date, )
         else:
             text += "\nYour OpenERP version is up-to-date.\n"
         return text
 
     def _get_state(self, cr, uid, context=None):
+        me = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
+        if me.is_syncing:
+            return 'blocked'
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
             return 'need-restart'
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
         if not next_revisions:
             return 'up-to-date'
-        if not revisions._is_update_available(cr, uid, next_revisions[0], context=context):
+        if not revisions._is_update_available(cr, uid, next_revisions, context=context):
             return 'need-download'
         return 'need-install'
 
     _columns = {
         'message' : fields.text("Caption", readonly=True),
-        'state' : fields.selection([('need-download','Need Download'),('up-to-date','Up-To-Date'),('need-install','Need Install'),('need-restart','Need Restart')], string="Status"),
+        'state' : fields.selection([('need-download','Need Download'),('up-to-date','Up-To-Date'),('need-install','Need Install'),('need-restart','Need Restart'),('blocked','Blocked')], string="Status"),
     }
 
     _defaults = {
