@@ -111,6 +111,7 @@ class account_invoice(osv.osv):
         'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
+        'picking_id': fields.many2one('stock.picking', string="Picking"),
     }
 
     _defaults = {
