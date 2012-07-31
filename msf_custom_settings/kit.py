@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class composition_kit(osv.osv):
     _inherit = 'composition.kit'
@@ -31,7 +32,11 @@ class composition_kit(osv.osv):
     def action_cancel(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        kit_obj = self.pool.get('composition.kit')
+        if not kit_obj.read(cr, uid, ids, ['state'], context=context)[0]['state'] == 'in_production':
+            self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        else:
+            raise osv.except_osv(_('Warning !'), _('You cannot cancel a composition list if it is in production.'))
         return True
 
 composition_kit()
