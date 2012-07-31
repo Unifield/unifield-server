@@ -41,7 +41,7 @@
         'security/ir.model.access.csv',
     ],
     "additional_xml": [
-        'data/additional_data.xml',
+        'additional_data.xml',
     ],
     "demo_xml": [],
     'test': [
