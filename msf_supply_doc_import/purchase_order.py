@@ -268,7 +268,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_purchase.pricelist_id.currency_id.name))
                         to_correct_ok = True
                 except Exception:
-                     error_list.append('The Currency Name has to be a string.')
+                     error_list.append('The Currency Name was not found.')
                      to_correct_ok = True
                 
             proc_type = 'make_to_stock'
