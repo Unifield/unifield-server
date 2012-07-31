@@ -201,7 +201,9 @@
                             </field>
                             <group col="8" colspan="4">
                                 <label string="" colspan="2"/>
-                                <button name="button_donation_certificate" type="object" string="Certificate of Donation" icon="terp-mail-replied"/>
+                                <field name="have_donation_certificate" invisible="1"/>
+                                <button name="button_donation_certificate" type="object" string="No Certificate of Donation" icon="terp-mail-replied" readonly="1" attrs="{'invisible': [('have_donation_certificate', '!=', False)]}"/>
+                                <button name="button_donation_certificate" type="object" string="Certificate of Donation" icon="terp-mail-replied" attrs="{'invisible': [('have_donation_certificate', '=', False)]}"/>
                                 <field name="state"/>
                                 <field name="amount_total"/>
                             </group>
