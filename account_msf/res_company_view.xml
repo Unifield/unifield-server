@@ -23,7 +23,7 @@
                 <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
             </group>
             </page>
-            <xpath expr="/form//field[@name='currency']" position="replace">
+            <xpath expr="/form//field[@name='currency_id']" position="replace">
                 <field name="currency_id" readonly="1" />
             </xpath>
             </field>
