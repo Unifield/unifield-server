@@ -40,6 +40,9 @@
 #        'mission_stock_report.xml',
         'security/ir.model.access.csv',
     ],
+    "additional_xml": [
+        'data/additional_data.xml',
+    ],
     "demo_xml": [],
     'test': [
         'test/data.yml',
