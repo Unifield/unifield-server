@@ -123,55 +123,21 @@ class res_partner(osv.osv):
                                        'valide_until_date': False}
                 else:
                     info_price = partner_price.browse(cr, uid, price_list[0], context=context)
-                    res[partner.id] = {'price_currency': info_price.currency_id.id,
-                                       'price_unit': info_price.price,
+                    partner_currency_id = pricelist.currency_id.id
+                    price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price)
+                    currency = partner_currency_id
+                    # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
+#                    currency = info_price.currency_id.id
+#                    price = info_price.price
+                    res[partner.id] = {'price_currency': currency,
+                                       'price_unit': price,
                                        'valide_until_date': info_price.valid_till}
             
         return res
 
-#    def _get_price_unit(self, cr, uid, ids, field_name, args, context=None):
-#        '''
-#        Returns the unit price of the product if product_id is in context
-#        '''
-#        if not context:
-#            context = {}
-#
-#        res = {}
-#
-#        for id in ids:
-#            res[id] = 0
-#
-#        if context.get('product_id'):
-#            for partner in self.browse(cr, uid, ids, context=context):
-#                product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
-#                uom = context.get('uom', product.uom_id.id)
-#                pricelist = partner.property_product_pricelist_purchase
-#                context.update({'uom': uom})
-#                price_list = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], context.get('product_id'), context.get('product_qty', 1.00), partner.id, context=context)
-#                price = price_list[pricelist.id]
-#                if not price:
-#                    func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-#                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
-#                res[partner.id] = price
-#        return res
-#
-#    def _get_valide_until_date(self, cr, uid, ids, field_name, args, context=None):
-#        if not context:
-#            context = {}
-#        res = {}
-#        if context.get('product_id'):
-#            for partner in self.browse(cr, uid, ids, context=context):
-#                res[partner.id] = False
-#                supplier_ids = self.pool.get('product.supplierinfo').search(cr, uid,[('name','=',partner.id)])
-#                for sup in self.pool.get('product.supplierinfo').browse(cr, uid, supplier_ids):
-#                    for price in sup.pricelist_ids:
-#                        if price.valid_till:
-#                            untill=  time.strftime('%d-%m-%Y', time.strptime(price.valid_till,'%Y-%m-%d'))
-#                            if not res[partner.id]:
-#                                res[partner.id] = untill
-#                            elif res[partner.id] and res[partner.id] > price.valid_till :
-#                                res[partner.id] = untill
-#        return res
+## QT : Remove _get_price_unit
+
+## QT : Remove _get_valide_until_date 
 
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
