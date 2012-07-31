@@ -271,7 +271,7 @@ class entity(osv.osv, Thread):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_max_sequence(entity.identifier, context)
         if res and res[0]:
-            self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
+            return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
 
@@ -297,7 +297,7 @@ class entity(osv.osv, Thread):
             elif res and not res[0]:
                 raise Exception, res[1]
         
-        self.write(cr, uid, entity.id, {'update_offset' : 0, 
+        return self.write(cr, uid, entity.id, {'update_offset' : 0, 
                                         'max_update' : 0, 
                                         'update_last' : max_seq}, context=context) 
         
