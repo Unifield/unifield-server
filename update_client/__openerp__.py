@@ -31,7 +31,7 @@
     'website': 'http://openerp.com',
     'depends': ['sync_client'],
     'data': [
-
+        'wizard_view.xml',
     ],
     'installable': True,
 }
