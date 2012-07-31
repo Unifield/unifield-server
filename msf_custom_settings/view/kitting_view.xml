@@ -26,7 +26,7 @@
                         <attribute name='hide_duplicate_button'>1</attribute>
                         <attribute name='hide_delete_button'>1</attribute>
                     </xpath>
-                    <xpath expr="/form//button[@name='confirm_kitting']" position="after" >
+                    <xpath expr="/form//button[@name='confirm_kitting']" position="before" >
                         <button 
                         name="action_cancel"
                         string="Cancel" 

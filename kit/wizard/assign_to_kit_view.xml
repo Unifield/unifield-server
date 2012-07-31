@@ -13,6 +13,7 @@
             			<field name="qty_assign_to_kit" />
             			<field name="uom_id_assign_to_kit" />
             			<field name="prodlot_id_assign_to_kit" />
+            			<field name="move_id_assign_to_kit" invisible="True" />
             			<field name="expiry_date_assign_to_kit" />
             		</group>
                     <group col="4" colspan="4">
@@ -27,7 +28,8 @@
                         </field>
                     </group>
                     <group col="4" colspan="4">
-	                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+	                    <button icon="gtk-cancel" type="object" name="refresh_kit_creation_view" string="Cancel"/>
+	                    <button name="automatic_assignment" type="object" string="Auto Assignment" icon="gtk-execute" />
 	                    <button name="do_assign_to_kit" string="Process" type="object" icon="gtk-go-forward" />
                     </group>
             	</form>

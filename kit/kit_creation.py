@@ -1134,8 +1134,16 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
             # hidden_exp_check
             result[obj.id].update({'hidden_exp_check': obj.exp_check})
+            
+            hidden_creation_state = False
+            hidden_creation_qty_stock_move = 0.0
+            if obj.kit_creation_id_stock_move:
+                hidden_creation_state = obj.kit_creation_id_stock_move.state
+                hidden_creation_qty_stock_move = obj.kit_creation_id_stock_move.qty_kit_creation
             # hidden_creation_state
-            result[obj.id].update({'hidden_creation_state': obj.kit_creation_id_stock_move.state})
+            result[obj.id].update({'hidden_creation_state': hidden_creation_state})
+            # hidden_creation_qty_stock_move
+            result[obj.id].update({'hidden_creation_qty_stock_move': hidden_creation_qty_stock_move})
         return result
     
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
@@ -1147,6 +1155,7 @@ class stock_move(osv.osv):
                 'hidden_exp_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Expiry Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='int', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 }
     
     _defaults = {'to_consume_id_stock_move': False,
@@ -1171,15 +1180,64 @@ class stock_move(osv.osv):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
     
+    def automatic_assignment(self, cr, uid, ids, context=None):
+        '''
+        automatic assignment of products to generated kits
+        
+        + a_sum = compute sum of assigned qty
+        + left = compute available qty not assigned (available - a_sum)
+        + for each line we update assigned qty if needed
+          + assigned < required
+            + needed = required - assigned
+            + needed <= left:
+              + assigned = assigned + needed
+              + left = left - needed
+            + needed > left:
+              + assigned = assigned + left
+              + left = 0.0
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # create corresponding wizard object (containing processing logic)
+        res = self.assign_to_kit(cr, uid, ids, context=context)
+        # objects
+        wiz_obj = self.pool.get(res['res_model'])
+        # perform auto assignment
+        wiz_obj.automatic_assignment(cr, uid, [res['res_id']], context=res['context'])
+        # process the wizard
+        return wiz_obj.do_assign_to_kit(cr, uid, [res['res_id']], context=res['context'])
+    
     def validate_assign(self, cr, uid, ids, context=None):
         '''
         set the state to done, so the move can be assigned to a kit
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # this method is only applicable to an unique stock move
+        assert len(ids) == 1
+        
         kit_creation_id = False
         for move in self.browse(cr, uid, ids, context=context):
             kit_creation_id = move.kit_creation_id_stock_move.id
             if move.state == 'assigned':
                 self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
+            
+            # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
+            if move.product_id.perishable:
+                if move.hidden_creation_qty_stock_move == 1:
+                    # if only one kit, automatic assignement
+                    self.automatic_assignment(cr, uid, [move.id], context=context)
+                else:
+                    # multiple kit, we open the assignation wizard
+                    return self.assign_to_kit(cr, uid, ids, context=context)
         
         # refresh the vue so the completed flag is updated and Confirm Kitting button possibly appears
         data_obj = self.pool.get('ir.model.data')

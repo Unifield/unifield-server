@@ -60,6 +60,53 @@ class assign_to_kit(osv.osv_memory):
         # check the encountered errors
         return all([not x for x in errors.values()])
     
+    def automatic_assignment(self, cr, uid, ids, context=None):
+        '''
+        automatic assignment of products to generated kits
+        
+        + reset all assigned qty to 0.0
+        + left = available qty
+        + for each line we update assigned qty if needed
+          + assigned < required
+            + needed = required - assigned
+            + needed <= left:
+              + assigned = assigned + needed
+              + left = left - needed
+            + needed > left:
+              + assigned = assigned + left
+              + left = 0.0
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for wizard in self.browse(cr, uid, ids, context=context):
+            # compute total of assigned qty
+            for line in wizard.kit_ids_assign_to_kit:
+                # we then reset
+                line.write({'assigned_qty_assign_to_kit_line': 0.0}, context=context)
+            # compute what is left to assign
+            left = wizard.qty_assign_to_kit
+            # process lines
+            for line in wizard.kit_ids_assign_to_kit:
+                if line.qty_assign_to_kit_by_product_uom < line.required_qty_assign_to_kit_line:
+                    # we must treat the line
+                    needed = line.required_qty_assign_to_kit_line - line.qty_assign_to_kit_by_product_uom
+                    if needed <= left:
+                        # assign some of left qty
+                        assigned = needed
+                        left = left - needed
+                    else:
+                        # assign everything left
+                        assigned = left
+                        left = 0.0
+                    # update the line
+                    line.write({'assigned_qty_assign_to_kit_line': assigned}, context=context)
+        
+        return True
+    
     def do_assign_to_kit(self, cr, uid, ids, context=None):
         '''
         - for each kit, we look for the corresponding item (or create it)
@@ -126,7 +173,34 @@ class assign_to_kit(osv.osv_memory):
                 item_list.extend(item_ids)
             # delete empty items
             item_obj.unlink(cr, uid, item_list, context=context)
+        
+        # because we need to refresh the view as the stock move changed from assigned to done
+        return self.refresh_kit_creation_view(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
+    
+    def refresh_kit_creation_view(self, cr, uid, ids, context=None):
+        '''
+        refresh the kit creation view when calling from a button
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # refresh the view so the completed flag is updated and Confirm Kitting button possibly appears
+            data_obj = self.pool.get('ir.model.data')
+            view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_kit_creation_form')
+            view_id = view_id and view_id[1] or False
+            return {'view_mode': 'form,tree',
+                    'view_id': [view_id],
+                    'view_type': 'form',
+                    'res_model': 'kit.creation',
+                    'res_id': obj.kit_creation_id_assign_to_kit.id,
+                    'type': 'ir.actions.act_window',
+                    'target': 'crush',
+                    }
     
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -187,6 +261,9 @@ class assign_to_kit(osv.osv_memory):
             # lot
             if 'prodlot_id_assign_to_kit' in fields:
                 res.update({'prodlot_id_assign_to_kit': obj.prodlot_id.id})
+            # move
+            if 'move_id_assign_to_kit' in fields:
+                res.update({'move_id_assign_to_kit': obj.id})
             # expiry date
             if 'expiry_date_assign_to_kit' in fields:
                 res.update({'expiry_date_assign_to_kit': obj.expired_date})
@@ -201,6 +278,7 @@ class assign_to_kit(osv.osv_memory):
                 'qty_assign_to_kit': fields.float(string='Qty Available', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 'uom_id_assign_to_kit': fields.many2one('product.uom', string='UoM', readonly=True),
                 'prodlot_id_assign_to_kit': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),
+                'move_id_assign_to_kit': fields.many2one('stock.move', string='Corresponding Stock Move', readonly=True),
                 'expiry_date_assign_to_kit': fields.date(string='Expiry Date', readonly=True),
                 'kit_ids_assign_to_kit': fields.one2many('assign.to.kit.line', 'wizard_id_assign_to_kit_line', string='Components to Consume'),
                 }
@@ -231,10 +309,11 @@ class assign_to_kit_line(osv.osv_memory):
         for obj in self.browse(cr, uid, ids, context=context):
             # qty_assign_to_kit_by_product_uom - loop all items from the kit and count for product/uom
             total_qty_assigned = 0.0
-            # find corresponding items
+            # find corresponding items from other stock moves !
             item_ids = item_obj.search(cr, uid, [('item_kit_id', '=', obj.kit_id_assign_to_kit_line.id),
                                                  ('item_product_id', '=', obj.wizard_id_assign_to_kit_line.product_id_assign_to_kit.id),
-                                                 ('item_uom_id', '=', obj.wizard_id_assign_to_kit_line.uom_id_assign_to_kit.id)], context=context)
+                                                 ('item_uom_id', '=', obj.wizard_id_assign_to_kit_line.uom_id_assign_to_kit.id),
+                                                 ('item_stock_move_id', '!=', obj.wizard_id_assign_to_kit_line.move_id_assign_to_kit.id)], context=context)
             # read data
             if item_ids:
                 data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
