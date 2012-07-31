@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+	<record model="ir.ui.view" id="entity_tree_view_version_inherit">
+            <field name="name">entity.tree.inherit</field>
+            <field name="inherit_id" ref="sync_server.entity_tree_view" />
+            <field name="model">sync.server.entity</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<field name="identifier" position="after">
+            	 <field name="version_id" ></field>
+                </field>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="entity_form_view_version_inherit">
+            <field name="name">entity.form.inherit</field>
+            <field name="model">sync.server.entity</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sync_server.entity_form_view" />
+            <field name="arch" type="xml">
+            	<field name="state" position="after">
+                	<field name="version_id" ></field>
+                </field>
+            </field>
+        </record>
+    </data>
+ </openerp>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+		<record model="ir.ui.view" id="version_tree_view">
+            <field name="name">version_tree_view</field>
+            <field name="model">sync_server.version</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Update Version">
+                    <field name="name"/>
+                    <field name="sum" />
+                    <field name="date" />
+                </tree>
+            </field>
+        </record>
+        
+    </data>
+</openerp>
+
