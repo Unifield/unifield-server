@@ -35,7 +35,7 @@ class account_move_line(osv.osv):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is posted
-         - The account is not payable or receivable
+         - The account is not payables, receivables or tax
          - Item have not been corrected
          - Item have not been reversed
          - Item come from a reconciliation that have set 'is_addendum_line' to True
@@ -51,11 +51,8 @@ class account_move_line(osv.osv):
             # False if move is posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
-            # False if account is payable or receivable
-            if ml.account_id.type in ['payable', 'receivable']:
-                res[ml.id] = False
-            # False if account is tax
-            if ml.account_id.user_type.code in ['tax']:
+            # False if account is tax, payables or receivables
+            if ml.account_id.user_type.code in ['tax', 'payables', 'receivables']:
                 res[ml.id] = False
             # False if line have been corrected
             if ml.corrected:
