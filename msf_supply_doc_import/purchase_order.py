@@ -371,8 +371,9 @@ class purchase_order_line(osv.osv):
             order_id = po.id or False
             product_id = to_write['product_id']
             product_qty = to_write['product_qty']
+            price_unit = to_write['price_unit']
             uom_id = to_write['product_uom']
-            if product_id and product_qty:
+            if product_id and product_qty and not price_unit:
                 self.compute_price_unit(cr, uid, ids,to_write= to_write,partner_id=partner_id,product_qty=product_qty, product_id=product_id, uom_id=uom_id, 
                                         state=state,order_id=order_id,pricelist_id=pricelist_id, date_order=date_order,context=context)
             if uom_id:
