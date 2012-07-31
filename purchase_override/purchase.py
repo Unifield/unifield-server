@@ -347,10 +347,24 @@ class purchase_order(osv.osv):
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         '''
-        Update the confirmation date of the PO at confirmation
+        Update the confirmation date of the PO at confirmation.
+        Check analytic distribution.
         '''
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+        # Analytic distribution verification
+        # NOT MANDATORY for In-kind donation PO
+        for po in self.browse(cr, uid, ids, context=context):
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
         return res
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
@@ -488,20 +502,8 @@ stock moves which are already processed : '''
         # objects
         ana_obj = self.pool.get('analytic.distribution')
         
-        # Analytic distribution verification
-        # NOT MANDATORY for In-kind donation PO
         for po in self.browse(cr, uid, ids, context=context):
-            for pol in po.order_line:
-                # Forget check if we come from YAML tests
-                if po.from_yml_test:
-                    continue
-                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
-                # Raise an error if no analytic distribution found
-                if not distrib_id:
-                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
-                if pol.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
-
+            # MOVE CODE from common_code_from_wkf_approve_order to wkf_confirm_order
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))

@@ -420,10 +420,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
             # verify purchase state
-            if el.purchase_id and el.purchase_id.state in ['approved', 'done']:
+            if el.purchase_id and el.purchase_id.state in ['sourced', 'wait', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice', 'done', 'cancel', 'rfq_sent', 'rfq_updated', 'split']:
                 res[el.id] = False
             # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state in ['approved', 'done']:
+            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state in ['sourced', 'wait', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice', 'done', 'cancel', 'rfq_sent', 'rfq_updated', 'split']:
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
