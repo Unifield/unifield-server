@@ -32,6 +32,22 @@
         <field name="factor" eval="1.0" />
         <field name="factor_inv" eval="1.0" />
     </record>
+
+    <record id="base.main_partner" model="res.partner">
+        <field name="name">MSF</field>
+    </record>
+    <record id="base.main_address" model="res.partner.address">
+        <field name="partner_id" ref="base.main_partner"/>
+        <field name="name">MSF</field>
+        <field name="street">Rue de Lausanne 78</field>
+        <field name="street2">CP 116</field>
+        <field name="zip">1211</field>
+        <field name="city">Geneva</field>
+        <field name="phone">+41 (22) 849.84.00</field>
+        <field name="type">default</field>
+        <field model="res.country" name="country_id" ref="base.ch"/>
+    </record>
+
     
 </data>
 </openerp>
