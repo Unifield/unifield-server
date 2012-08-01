@@ -20,9 +20,48 @@
 ##############################################################################
 
 from osv import fields, osv
+import decimal_precision as dp
 
 class account_move_compute_currency(osv.osv):
     _inherit = "account.move"
+    
+    def _book_amount_compute(self, cr, uid, ids, name, args, context, where =''):
+        """
+        On the same model of the function defined in account>account.py,
+        we compute the booking amount
+        """
+        if not ids: return {}
+        cr.execute( """SELECT move_id, SUM(debit_currency) 
+                    FROM account_move_line 
+                    WHERE move_id IN %s 
+                    GROUP BY move_id""", (tuple(ids),))
+        result = dict(cr.fetchall())
+        for id in ids:
+            result.setdefault(id, 0.0)
+        return result
+    
+    def _get_currency(self, cr, uid, ids, fields, arg, context=None):
+        """
+        get booking currency: we look at the currency_id of the first line
+        """
+        if not context:
+            context = {}
+        res = {}
+        for move in self.pool.get('account.move').browse(cr, uid, ids, context=context):
+            res[move.id] = {}
+            if move.line_id:
+                line = move.line_id[0]
+                if line.currency_id:
+                    res[move.id] = line.currency_id.id
+                else:
+                    res[move.id] = False
+        return res
+    
+    _columns = {
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
+        'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
+    }
     
     def validate(self, cr, uid, ids, context=None):
         for move in self.browse(cr, uid, ids, context):
