@@ -89,7 +89,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="240" />
 % for x in range(2,nb_of_columns):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -117,7 +117,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % for line in data.get('form').get('report_lines'):
 <Row>
 % for value in line[0:2]:
-<Cell ss:StyleID="ssBorderCenter">
+<Cell ss:StyleID="ssBorderLeft">
    <Data ss:Type="String">${value}</Data>
 </Cell>
 % endfor
