@@ -10,9 +10,10 @@
                 <form string="Change currency of the order">
                     <field name="order_id" readonly="1" />
                     <field name="partner_id" readonly="1" />
+                    <field name="partner_type" invisible="1" />
                     <field name="old_pricelist_id" readonly="1" />
-                    <field name="new_pricelist_id" widget="selection" required="1"
-                            domain="[('type', '=', 'purchase')]" 
+                    <field name="new_pricelist_id" required="1"
+                            domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" 
                             on_change="currency_change(old_pricelist_id, new_pricelist_id)" />
                     <field name="currency_rate" readonly="1" />
                     <separator colspan="4" />

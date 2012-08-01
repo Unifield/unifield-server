@@ -358,6 +358,7 @@ class purchase_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             data = {'order_id': order.id,
                     'partner_id': order.partner_id.id,
+                    'partner_type': order.partner_id.partner_type,
                     'new_pricelist_id': order.pricelist_id.id,
                     'currency_rate': 1.00,
                     'old_pricelist_id': order.pricelist_id.id}

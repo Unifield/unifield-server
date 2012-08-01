@@ -20,7 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
-
+from msf_partner import PARTNER_TYPE
 from tools.translate import _
 
 
@@ -30,6 +30,7 @@ class sale_order_change_currency(osv.osv_memory):
     _columns = {
         'order_id': fields.many2one('sale.order', string='Order', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True),
+        'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE),
         'old_pricelist_id': fields.many2one('product.pricelist', string='Old currency', required=True, readonly=True),
         'new_pricelist_id': fields.many2one('product.pricelist', string='New currency', required=True),
         'currency_rate': fields.float(digits=(16,6), string='Currency rate', readonly=True),
