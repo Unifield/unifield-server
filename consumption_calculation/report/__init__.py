@@ -19,10 +19,6 @@
 #
 ##############################################################################
 
-import consumption_calculation
-import expiry_calculation
-import history_consumption
-import report
-import wizard
+import expiry_report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
