@@ -105,7 +105,7 @@ class report_local_expenses(WebKitParser):
             for expense_account in pool.get('account.account').browse(cr, uid, expenses.keys(), context=context):
                 rounded_values = map(int, map(round, expenses[expense_account.id][0:month_stop]))
                 # add line to result (code, name)...
-                if expense_account.type == 'view' or data['form']['granularity'] == 'all':
+                if expense_account.type == 'view' and expense_account.code != '6' or data['form']['granularity'] == 'all' :
                     line = [expense_account.code, xml.sax.saxutils.escape(expense_account.name)]
                     # ...monthly amounts, ...
                     if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
