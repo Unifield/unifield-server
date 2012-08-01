@@ -47,6 +47,9 @@
         <field name="type">default</field>
         <field model="res.country" name="country_id" ref="base.ch"/>
     </record>
+    <record id="base.main_company" model="res.company">
+        <field name="name">MSF</field>
+    </record>
 
     
 </data>
