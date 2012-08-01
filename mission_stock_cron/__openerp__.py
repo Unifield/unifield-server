@@ -19,17 +19,20 @@
 #
 ##############################################################################
 {
-    "name" : "Mission Stock Data",
+    "name" : "Mission Stock Tron",
     "version" : "0.1",
     "author" : "TeMPO Consulting/MSF",
     "category" : "Stock",
     "description": """
-        Stock mission report.
+        Disallow the cron of the mission stock data on runbot
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
     "depends" : ["mission_stock"],
     'update_xml': [
+    ],
+    "additional_xml": [
+        'mission_stock_cron_data.xml',
     ],
     "demo_xml": [],
     'test': [
