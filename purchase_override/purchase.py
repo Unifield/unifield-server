@@ -105,6 +105,16 @@ class purchase_order(osv.osv):
         
         return res
     
+    def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = True
+            for line in order.order_line:
+                res[order.id] = False
+                
+        return res
+    
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -145,6 +155,7 @@ class purchase_order(osv.osv):
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=64),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
     
     _defaults = {
@@ -155,7 +166,8 @@ class purchase_order(osv.osv):
         'from_yml_test': lambda *a: False,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
-        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery']
+        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery'],
+        'no_line': lambda *a: True,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -332,6 +344,38 @@ class purchase_order(osv.osv):
             v.update({'dest_address_id': delivery_addr['delivery']})
         
         return {'value': v, 'domain': d}
+    
+    def change_currency(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to change the currency and update lines
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            data = {'order_id': order.id,
+                    'partner_id': order.partner_id.id,
+                    'old_pricelist_id': order.pricelist_id.id}
+            wiz = self.pool.get('purchase.order.change.currency').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'purchase.order.change.currency',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': wiz,
+                    'target': 'new'}
+            
+        return True
+    
+    def order_line_change(self, cr, uid, ids, order_line):
+        res = {'no_line': True}
+        
+        if order_line:
+            res = {'no_line': False}
+        
+        return {'value': res}
 
     def _hook_confirm_order_message(self, cr, uid, context=None, *args, **kwargs):
         '''

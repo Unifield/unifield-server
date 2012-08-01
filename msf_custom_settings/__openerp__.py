@@ -35,7 +35,8 @@
                 'procurement',
                 'product',
                 'msf_supply_doc_export',
-                'tender_flow',],
+                'tender_flow',
+                ],
     'description': '''
     ''',
     'init_xml': [],
