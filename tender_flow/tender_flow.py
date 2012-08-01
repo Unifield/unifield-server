@@ -721,7 +721,19 @@ class procurement_order(osv.osv):
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
         
-        values['date_planned'] = procurement.date_planned 
+        values['date_planned'] = procurement.date_planned
+        
+        if procurement.product_id:
+            if procurement.product_id.type == 'consu':
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_non_stockable')[1]
+            elif procurement.product_id.type == 'service_recep':
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
+            else:
+                wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+                if wh_ids:
+                    values['location_id'] = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
+                else:
+                    values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
         
         return values
     
