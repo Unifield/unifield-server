@@ -95,6 +95,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 % if data.get('form').get('header'):
 % for line in data.get('form').get('header'):
+## HEADER +++++++++++++++++++++++++++++++++++
 <Row>
 % for value in line:
 <Cell ss:StyleID="ssBoldLeft">
@@ -105,6 +106,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 <Row/>
 % endif
+
+## LINES +++++++++++++++++++++++++++++++++++
+## HEADER OF LINES -------------------------
 <Row>
 <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account code</Data></Cell>
 <Cell ss:StyleID="ssBoldLeft"><Data ss:Type="String">Account name</Data></Cell>
@@ -113,10 +117,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Total</Data></Cell>
 </Row>
+
+## CONTENT OF LINES -------------------------
 % if data.get('form').get('report_lines'):
 % for line in data.get('form').get('report_lines'):
 <Row>
-% for value in line[0:2]:
+% for value in line[0:1]:
+<Cell ss:StyleID="ssBorderCenter">
+   <Data ss:Type="String">${value}</Data>
+</Cell>
+% endfor
+% for value in line[1:2]:
 <Cell ss:StyleID="ssBorderLeft">
    <Data ss:Type="String">${value}</Data>
 </Cell>
@@ -132,6 +143,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 % endfor
 % endif
+
+## FOOTER +++++++++++++++++++++++++++++++++++
 % if data.get('form').get('total_line'):
 <Row>
 % for total_value in data.get('form').get('total_line')[0:2]:
