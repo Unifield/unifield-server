@@ -532,19 +532,24 @@ class entity(osv.osv, Thread):
         self.sync(cr, uid, context)
         cr.close()
         
-    def get_status(self, cr, uid, context=None):
-        monitor_ids = self.pool.get("sync.monitor").search(cr, uid, [], context=context)
-        if not monitor_ids:
-            return "None update done yet"
-        monitor = self.pool.get("sync.monitor").browse(cr, uid, monitor_ids[0], context=context)
-        if monitor.status == 'failed':
-            return "Last Sync failed at %s" % monitor.end
-        if monitor.status == "ok":
-            return "Last Sync Ok at %s" % monitor.end
-        if monitor.status == 'in-progress':
-            return "Sync In progress : started at %s" % monitor.start
+    def get_upgrade_status(self, cr, uid, context=None):
         return ""
-    
+
+    def get_status(self, cr, uid, context=None):
+        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            return "Not Connected"
+        me = self.get_entity(cr, uid, context)
+        if me.is_syncing:
+            return "Syncing..."
+        monitor = self.pool.get("sync.monitor")
+        monitor_ids = monitor.search(cr, uid, [], context=context)
+        if monitor_ids:
+            last_log = monitor.browse(cr, uid, monitor_ids[0], context=context)
+            status = filter(lambda x:x[0] == last_log.status, self.pool.get("sync.monitor")._columns['status'].selection)[0][1] if last_log.status else 'Unknown Status'
+            return "Last Sync: %s at %s" % (status, last_log.end)
+        else:
+            return "Connected"
+   
 entity()
 
 
