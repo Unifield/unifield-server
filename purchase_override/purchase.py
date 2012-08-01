@@ -497,13 +497,23 @@ stock moves which are already processed : '''
     def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
         '''
         delivery confirmed date at po level is mandatory
-        update corresponding date at line level if needed
+        update corresponding date at line level if needed.
+        Check analytic distribution
         '''
         # objects
         ana_obj = self.pool.get('analytic.distribution')
         
         for po in self.browse(cr, uid, ids, context=context):
-            # MOVE CODE from common_code_from_wkf_approve_order to wkf_confirm_order
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
