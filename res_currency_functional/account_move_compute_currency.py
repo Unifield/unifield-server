@@ -25,7 +25,7 @@ import decimal_precision as dp
 class account_move_compute_currency(osv.osv):
     _inherit = "account.move"
     
-    def _book_amount_compute(self, cr, uid, ids, name, args, context, where =''):
+    def _book_amount_compute(self, cr, uid, ids, name, args, context=None):
         """
         On the same model of the function defined in account>account.py,
         we compute the booking amount
