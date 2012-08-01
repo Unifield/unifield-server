@@ -358,6 +358,8 @@ class purchase_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             data = {'order_id': order.id,
                     'partner_id': order.partner_id.id,
+                    'new_pricelist_id': order.pricelist_id.id,
+                    'currency_rate': 1.00,
                     'old_pricelist_id': order.pricelist_id.id}
             wiz = self.pool.get('purchase.order.change.currency').create(cr, uid, data, context=context)
             return {'type': 'ir.actions.act_window',
