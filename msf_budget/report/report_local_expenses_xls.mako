@@ -21,7 +21,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </ExcelWorkbook>
 <Styles>
 <Style ss:ID="ssBoldLeft">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
 <Font ss:Bold="1" />
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -107,7 +107,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endif
 <Row>
 <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account code</Data></Cell>
-<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account name</Data></Cell>
+<Cell ss:StyleID="ssBoldLeft"><Data ss:Type="String">Account name</Data></Cell>
 % for month in month_list:
     <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">${month}</Data></Cell>
 % endfor
