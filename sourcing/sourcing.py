@@ -360,6 +360,20 @@ class sourcing_line(osv.osv):
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
+    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, context=None):
+        '''
+        '''
+        warning = {}
+        value = {}
+            
+        if order_id:
+            order = self.pool.get('sale.order').browse(cr, uid, order_id, context=context)
+            if order.procurement_request and po_cft == 'dpo':
+                warning = {'title': 'DPO for IR',
+                           'message': 'You cannot choose Direct Purchase Order as method to source an Internal Request line.'}
+                value = {'po_cft': 'po'} 
+        return {'warning': warning, 'value': value}
+    
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
         if type == make to stock, change pocft to False
