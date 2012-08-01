@@ -156,6 +156,16 @@ class sale_order(osv.osv):
             
         return result
     
+    def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = True
+            for line in order.order_line:
+                res[order.id] = False
+                
+        return res
+    
     _columns = {
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
@@ -197,6 +207,7 @@ class sale_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
     
     _defaults = {
@@ -209,6 +220,7 @@ class sale_order(osv.osv):
         'order_policy': lambda *a: 'picking',
         'split_type_sale_order': 'original_sale_order',
         'active': True,
+        'no_line': lambda *a: True,
     }
 
     def _check_own_company(self, cr, uid, company_id, context=None):
@@ -249,6 +261,32 @@ class sale_order(osv.osv):
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+    
+    def change_currency(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to change the currency and update lines
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            data = {'order_id': order.id,
+                    'partner_id': order.partner_id.id,
+                    'new_pricelist_id': order.pricelist_id.id,
+                    'currency_rate': 1.00,
+                    'old_pricelist_id': order.pricelist_id.id}
+            wiz = self.pool.get('sale.order.change.currency').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'sale.order.change.currency',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': wiz,
+                    'target': 'new'}
+            
+        return True
 
     def wkf_validated(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
@@ -487,6 +525,14 @@ class sale_order(osv.osv):
             return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',r_types[order.order_type])[1]
 
         return False
+    
+    def order_line_change(self, cr, uid, ids, order_line):
+        res = {'no_line': True}
+        
+        if order_line:
+            res = {'no_line': False}
+        
+        return {'value': res}
     
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
         '''

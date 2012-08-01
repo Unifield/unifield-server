@@ -37,6 +37,7 @@
         "sale_view.xml",
         "sale_workflow.xml",
         "wizard/split_order_line_view.xml",
+        "wizard/order_change_currency_view.xml",
         "sale_sequence.xml",
         "report/sale_report_view.xml",
     ],
