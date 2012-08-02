@@ -6,5 +6,7 @@
         <report auto="False" id="sale.report_reception_in" model="stock.picking" name="msf.report_reception_in" rml="msf_printed_documents/report/report_reception.rml" string="Reception" />
 
         <report auto="False" id="sale.consumption_report" model="real.average.consumption" name="msf.consumption_report" rml="msf_printed_documents/report/consumption_report.rml" string="Consumption Report" />
+
+        <report auto="False" id="sale.product_list_report" model="product.list" name="msf.product_list" rml="msf_printed_documents/report/product_list.rml" string="Product List / Sub-List" />
     </data>
 </openerp>
