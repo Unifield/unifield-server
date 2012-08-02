@@ -678,6 +678,13 @@ class stock_move(osv.osv):
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
         return count
+    
+    def _hook_check_assign(self, cr, uid, *args, **kwargs):
+        '''
+        kwargs['move'] is the current move
+        '''
+        move = kwargs['move']
+        return move.location_id.usage == 'supplier'
 
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
