@@ -35,7 +35,7 @@ class account_move_line(osv.osv):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is posted
-         - The account is not payable or receivable
+         - The account is not payables, receivables or tax
          - Item have not been corrected
          - Item have not been reversed
          - Item come from a reconciliation that have set 'is_addendum_line' to True
@@ -51,11 +51,8 @@ class account_move_line(osv.osv):
             # False if move is posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
-            # False if account is payable or receivable
-            if ml.account_id.type in ['payable', 'receivable']:
-                res[ml.id] = False
-            # False if account is tax
-            if ml.account_id.user_type.code in ['tax']:
+            # False if account is tax, payables or receivables
+            if ml.account_id.user_type.code in ['tax', 'payables', 'receivables']:
                 res[ml.id] = False
             # False if line have been corrected
             if ml.corrected:
@@ -229,10 +226,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
             ids = [ids]
         # Retrieve some values
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
+        ml = self.browse(cr, uid, ids[0])
         # Create wizard
         wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0]}, context=context)
         # Change wizard state in order to change date requirement on wizard
         wiz_obj.write(cr, uid, [wizard], {'state': 'open'}, context=context)
+        # Update context
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Change context if account special type is "donation"
+        if ml.account_id and ml.account_id.type_for_register and ml.account_id.type_for_register == 'donation':
+            wiz_obj.write(cr, uid, [wizard], {'from_donation': True}, context=context)
         return {
             'name': "Accounting Corrections Wizard",
             'type': 'ir.actions.act_window',
@@ -241,11 +247,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'view_mode': 'form,tree',
             'view_type': 'form',
             'res_id': [wizard],
-            'context':
-            {
-                'active_id': ids[0],
-                'active_ids': ids,
-            }
+            'context': context,
         }
 
     def button_open_corrections(self, cr, uid, ids, context=None):
@@ -531,6 +533,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Abort process if this move line was corrected before
             if ml.corrected:
                 continue
+            # Abort process if the move line is a donation expense account and that new account is not a donation expense account
+            if ml.account_id.type_for_register == 'donation':
+                new_account = self.pool.get('account.account').browse(cr, uid, new_account_id)
+                if new_account.type_for_register != 'donation':
+                    raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
             # Create a new move
             move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': period_ids[0], 'date': date}, context=context)
             # Prepare default value for new line
