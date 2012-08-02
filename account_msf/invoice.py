@@ -235,12 +235,18 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             pick_id = inv.picking_id and inv.picking_id.id or ''
             domain = "[('res_model', '=', 'stock.picking'), ('res_id', '=', " + str(pick_id) + "), ('description', '=', 'Certificate of Donation')]"
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_tree_2')
+            view_id = view_id and view_id[1] or False
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_search_2')
+            search_view_id = search_view_id and search_view_id[1] or False
             return {
                 'name': "Certificate of Donation",
                 'type': 'ir.actions.act_window',
-                'res_model': "ir.attachment",
+                'res_model': 'ir.attachment',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'view_id': [view_id],
+                'search_view_id': search_view_id,
                 'domain': domain,
                 'context': context,
                 'target': 'current',
