@@ -232,6 +232,13 @@ class procurement_order(osv.osv):
                   }
         
         return values
+    
+    def _hook_product_type_consu(self, cr, uid, *args, **kwargs):
+        '''
+        kwargs['op'] is the current min/max rule
+        '''
+        op = kwargs['op']
+        return op.product_id.type not in ('consu')
 
     def _procure_orderpoint_confirm(self, cr, uid, automatic=False,\
             use_new_cursor=False, context=None, user_id=False):
@@ -282,7 +289,8 @@ class procurement_order(osv.osv):
                             days = int(op.product_id.seller_delay))
                     if qty <= 0:
                         continue
-                    if op.product_id.type not in ('consu'):
+                    if self._hook_product_type_consu(cr, uid, op=op):
+#                    if op.product_id.type not in ('consu'):
                         if op.procurement_draft_ids:
                         # Check draft procurement related to this order point
                             pro_ids = [x.id for x in op.procurement_draft_ids]
