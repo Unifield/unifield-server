@@ -344,6 +344,10 @@ class kit_creation(osv.osv):
                                'prodlot_id': kit.composition_lot_id.id,
                                }
                 new_move_id = move_obj.create(cr, uid, move_values, context=context)
+                # for all kit, we compute the expiry date if batch management will update corresponding lot, otherwise corresponding field
+                # we need to compute it for each kit, as the distribution of lots across kits is not homogeneous
+                expiry_date = kit_obj._compute_expiry_date(cr, uid, [kit.id], context=context)
+                kit_obj.write(cr, uid, [kit.id], {'composition_exp': expiry_date}, context=context)
                 # all kits are completed
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
             # state of kitting order is Done
@@ -793,8 +797,8 @@ class kit_creation(osv.osv):
     _defaults = {'state': 'draft',
                  'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'kit.creation'),
                  'creation_date_kit_creation': lambda *a: time.strftime('%Y-%m-%d'),
-                 'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
-                 'location_dest_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+#                 'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+#                 'location_dest_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'consider_child_locations_kit_creation': True,
                  'qty_kit_creation': 1,
                  }
@@ -1161,7 +1165,7 @@ class stock_move(osv.osv):
                 'hidden_asset_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Asset Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
-                'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='int', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='integer', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 }
     
     _defaults = {'to_consume_id_stock_move': False,

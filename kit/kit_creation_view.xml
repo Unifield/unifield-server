@@ -13,7 +13,6 @@
             				<field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
             				<field name="qty_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
                         	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" string="UoM" />
-                        	<field name="location_dest_id_kit_creation" attrs="{'readonly': [('state', 'not in', ['in_production'])]}" />
             			</group>
                         <group col="4" colspan="2">
                         	<field name="name" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -31,8 +30,8 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Components">
-                    		<field name="default_location_src_id_kit_creation" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
-                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', 'not in', ['in_production'])]}" />
+                    		<field name="default_location_src_id_kit_creation" attrs="{'readonly': [('state', 'not in', ['draft', 'in_production'])]}" />
+                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', 'not in', ['draft', 'in_production'])]}" />
                     		<field name="internal_picking_id_kit_creation" />
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" attrs="{'readonly': [('state', 'not in', ['in_production'])]}">
 	                    		<tree string="Components to Consume" hide_new_button="True" hide_delete_button="True" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume;grey:consumed_to_consume">
@@ -94,6 +93,7 @@
                     				<field name="hidden_state" invisible="True" />
                     				<field name="hidden_prodlot_id" invisible="True" />
                     				<field name="hidden_creation_state" invisible="True" />
+                    				<field name="hidden_creation_qty_stock_move" invisible="True" />
                     				<button name="split_stock_move" type="object" string="Split Move" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('hidden_state', 'not in', ['confirmed'])]}" />
                     				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
                     				<button name="cancel_assign" type="object" string="Cancel Availability" icon="gtk-undo" attrs="{'invisible': [('hidden_state', '!=', 'assigned')]}" />
@@ -114,6 +114,7 @@
                     		</group>
                     	</page>
                     	<page string="Kits">
+                    		<field name="location_dest_id_kit_creation" attrs="{'readonly': [('state', 'not in', ['draft', 'in_production'])]}" />
                     		<group col="4" colspan="4">
                     			<field name="kit_ids_kit_creation" nolabel="True" readonly="True" colspan="4" />
                    			</group>
