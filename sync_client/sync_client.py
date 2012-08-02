@@ -604,9 +604,9 @@ class sync_server_connection(osv.osv):
     _defaults = {
         'host' : 'localhost',
         'port' : 8070,
-        'protocol': 'netrpc',
+        'protocol': 'netrpc_gzip',
         'login' : 'admin',
-        'max_size' : 200,
+        'max_size' : 1000,
     }
     
     def _get_connection_manager(self, cr, uid, context=None):
