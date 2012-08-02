@@ -631,6 +631,9 @@ class sync_server_connection(osv.osv):
     def connect(self, cr, uid, ids, context=None):
         for con in self.browse(cr, uid, ids, context=context):
             connector = self.connector_factory(con)
+            if not con.password or not con.database or not con.login:
+                raise osv.except_osv(_('Error !'), _('All the fields in this form are mandatory!'))
+            
             cnx = rpc.Connection(connector, con.database, con.login, con.password)
             if cnx.user_id:
                 self.write(cr, uid, con.id, {'uid' : cnx.user_id}, context=context)
