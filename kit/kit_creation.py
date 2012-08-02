@@ -1044,7 +1044,7 @@ class kit_creation_to_consume(osv.osv):
                 'qty_consumed_to_consume': fields.float(string='Consumed Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
-                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Quantity', multi='get_vals', store=False),
+                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Qty', multi='get_vals', store=False),
                 'qty_available_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
                                          store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),

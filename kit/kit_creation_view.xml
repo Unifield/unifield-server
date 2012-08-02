@@ -12,7 +12,7 @@
             			<group col="4" colspan="4">
             				<field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
             				<field name="qty_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
+                        	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" string="UoM" />
                         	<field name="location_dest_id_kit_creation" attrs="{'readonly': [('state', 'not in', ['in_production'])]}" />
             			</group>
                         <group col="4" colspan="2">
@@ -70,9 +70,9 @@
                     				<field name="kit_creation_id_stock_move" invisible="True" />
                     				<field name="line_number" invisible="True" />
                     				<field name="product_id" readonly="True" />
-                    				<field name="product_qty" readonly="True" />
+                    				<field name="product_qty" readonly="True" string="Qty" />
                     				<field name="assigned_qty_stock_move" invisible="True" />
-                    				<field name="product_uom" readonly="True" />
+                    				<field name="product_uom" readonly="True" string="UoM" />
                     				<field name="hidden_asset_check" invisible="True" />
                     				<field name="asset_id" domain="[('product_id', '=', product_id)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
