@@ -2,5 +2,6 @@
 <openerp>
     <data>
         <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Order"/>
+        <report auto="False" id="sale.report_reception_in" model="stock.picking" name="msf.report_reception_in" rml="msf_printed_documents/report/report_reception.rml" string="Reception" />
     </data>
 </openerp>
