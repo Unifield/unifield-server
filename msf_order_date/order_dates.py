@@ -1089,17 +1089,17 @@ class sale_order(osv.osv):
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         
         if res.get('value', {}).get('pricelist_id') and part:
-            pricelist_id = res['value'].pop('pricelist_id')
             if ids:
                 if isinstance(ids, (int, long)):
                     ids = [ids]
             
-            order = self.pool.get('sale.order').browse(cr, uid, ids[0])
-            partner = self.pool.get('res.partner').browse(cr, uid, part)
-            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner.partner_type)])
-            if order.pricelist_id.id not in pricelist_ids:
-                res.update({'warning': {'title': 'Warning',
-                                        'message': 'The currency used currently on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
+                order = self.pool.get('sale.order').browse(cr, uid, ids[0])
+                partner = self.pool.get('res.partner').browse(cr, uid, part)
+                pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner.partner_type)])
+                pricelist_id = res['value'].pop('pricelist_id')
+                if order.pricelist_id.id not in pricelist_ids:
+                    res.update({'warning': {'title': 'Warning',
+                                            'message': 'The currency used currently on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
         return res
     
     def onchange_date_order(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
