@@ -13,13 +13,14 @@
                     <field name="date" on_change="onchange_date(date)"/>
                     <newline/>
                     <field name="to_be_corrected_ids" colspan="6">
-                        <tree hide_new_button="1" hide_delete_button="1" editable="bottom">
+                        <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
                             <field name="journal_id"/>
                             <field name="ref"/>
                             <field name="date"/>
                             <field name="period_id"/>
                             <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
                             <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
+                            <field name="analytic_distribution_state"/>
                             <field name="debit_currency"/>
                             <field name="credit_currency"/>
                             <field name="currency_id"/>

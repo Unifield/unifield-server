@@ -82,7 +82,7 @@ class wizard_import_invoice(osv.osv_memory):
         'invoice_lines_ids': fields.one2many('wizard.import.invoice.lines', 'wizard_id', string='', required=True),
         'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter invoices regarding currency."),
-        'date': fields.date('Posting Date'),
+        'date': fields.date('Payment posting date'),
         'document_date': fields.date('Document Date'),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
     }
@@ -151,7 +151,7 @@ class wizard_import_invoice(osv.osv_memory):
                 'ref': 'Imported Invoice',
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
-                'document_date': ordered_lines[key][0].document_date or None,
+                'document_date': wizard.date or time.strftime('%Y-%m-%d'),
                 'amount': abs(amount_cur),
                 'amount_to_pay': amount_cur,
                 'amount_currency': total,

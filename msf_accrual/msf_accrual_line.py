@@ -74,7 +74,8 @@ class msf_accrual_line(osv.osv):
     
     _defaults = {
         'third_party_type': 'res.partner',
-        'journal_id': lambda self,cr,uid,c: self.pool.get('account.journal').search(cr, uid, [('code', '=', 'AC')])[0],
+        'journal_id': lambda self,cr,uid,c: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'accrual'),
+                                                                                              ('instance_id', '=', self.pool.get('res.company').browse(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id).instance_id.id)])[0],
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
     }
@@ -92,6 +93,12 @@ class msf_accrual_line(osv.osv):
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
             vals['date'] = period.date_stop
+        if 'currency_id' in vals and 'date' in vals:
+            cr.execute("SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(vals['currency_id'], vals['date']))
+            if not cr.rowcount:
+                currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
+                formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
+                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!" % (currency_name, formatted_date)))
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -107,6 +114,12 @@ class msf_accrual_line(osv.osv):
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
             vals['date'] = period.date_stop
+        if 'currency_id' in vals and 'date' in vals:
+            cr.execute("SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(vals['currency_id'], vals['date']))
+            if not cr.rowcount:
+                currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
+                formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
+                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!" % (currency_name, formatted_date)))
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
     
     def button_cancel(self, cr, uid, ids, context=None):

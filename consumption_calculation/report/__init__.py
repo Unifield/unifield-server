@@ -18,28 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "MSF Proprietary Instance",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["account_msf", "res_currency_functional"],
-    "description": """Module for defining proprietary instances, their informations
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'msf_instance_installer_view.xml',
-        'security/ir.model.access.csv',
-        'msf_instance_view.xml',
-    ],
-    "additional_xml": [
-        'data/instance_data.xml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import expiry_report
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
