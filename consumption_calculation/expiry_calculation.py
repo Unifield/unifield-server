@@ -53,6 +53,28 @@ class expiry_quantity_report(osv.osv_memory):
         'line_ids': fields.one2many('expiry.quantity.report.line', 'report_id', string='Products', readonly=True),
     }
     
+    def print_report_wizard(self, cr, uid, ids, context=None):
+        '''
+        Print the report directly from the wizard
+        '''
+        self.process_lines(cr, uid, ids, context=context)
+        return self.print_report(cr, uid, ids, context=context)
+    
+    def print_report(self, cr, uid, ids, context=None):
+        '''
+        Print the report of expiry report
+        '''
+        datas = {'ids': ids} 
+        
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'expiry.report',
+            'datas': datas,
+            'nodestroy': True,
+            'context': context,
+        }
+        
+    
     def process_lines(self, cr, uid, ids, context=None):
         '''
         Creates all lines of expired products
@@ -131,6 +153,7 @@ class expiry_quantity_report(osv.osv_memory):
                 'res_model': 'expiry.quantity.report',
                 'view_type': 'form',
                 'view_mode': 'form',
+                'nodestroy': True,
                 'view_id': [view_id],
                 'res_id': ids[0],
         }
@@ -151,7 +174,8 @@ class expiry_quantity_report_line(osv.osv_memory):
         'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'real_stock': fields.float(digits=(16, 2), string='Real stock'),
         'expired_qty': fields.float(digits=(16, 2), string='Batch exp.'),
-        'batch_number': fields.many2one('production.lot', string='Batch'),
+        #'batch_number': fields.many2one('production.lot', string='Batch'),
+        'batch_number': fields.char(size=64, string='Batch'),
         'expiry_date': fields.date(string='Exp. date'),
         'location_id': fields.many2one('stock.location', string='Loc.'),
     }
