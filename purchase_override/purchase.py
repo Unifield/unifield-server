@@ -396,6 +396,10 @@ class purchase_order(osv.osv):
         '''
         Update the confirmation date of the PO at confirmation
         '''
+        for order in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
+            if order.pricelist_id.id not in pricelist_ids:
+                raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
         return res

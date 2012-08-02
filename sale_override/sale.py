@@ -291,6 +291,9 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
+            if order.pricelist_id.id not in pricelist_ids:
+                raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated', 'validated_date': time.strftime('%Y-%m-%d')}, context=context)
@@ -316,6 +319,9 @@ class sale_order(osv.osv):
         
         # must be original-sale-order to reach this method
         for so in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', so.partner_id.partner_type)], context=context)
+            if so.pricelist_id.id not in pricelist_ids:
+                raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
             # links to split Fo
             split_fo_dic = {'esc_split_sale_order': False,
                             'stock_split_sale_order': False,

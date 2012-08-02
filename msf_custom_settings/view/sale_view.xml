@@ -56,7 +56,7 @@
                             <field name="pricelist_id" string="Currency" colspan="2" 
                                    attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft', 'validated'])]}"
                                    domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
-                            <button name="change_currency" string="Change currency" icon="terp-dolar" type="object"
+                            <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
                                     attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'validated'])]}" />
                         </group>
                     </xpath>

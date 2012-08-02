@@ -86,7 +86,7 @@ class sale_order_change_currency(osv.osv_memory):
                 
             order_data = {'pricelist_id': wiz.new_pricelist_id.id,}
             
-            order_obj.write(cr, uid, wiz.order_id.id, order_data)
+            order_obj.write(cr, uid, wiz.order_id.id, order_data, context=context)
             
         return {'type': 'ir.actions.act_window_close'}
     
