@@ -440,7 +440,7 @@ class stock_move(osv.osv):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.subtype == 'asset':
                     if not move.asset_id and move.product_qty:
-                        return False
+                        raise osv.except_osv(_('Error!'),  _('You must assign an asset for this product.'))
         return True
     
     def create(self, cr, uid, vals, context=None):
@@ -485,7 +485,7 @@ class stock_move(osv.osv):
     
     _constraints = [
         (_check_asset,
-            'You must assign an asset for this product',
+            'You must assign an asset for this product.',
             ['asset_id']),]
     
 stock_move()

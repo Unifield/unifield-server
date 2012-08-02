@@ -13,7 +13,7 @@
             				<field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
             				<field name="qty_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
                         	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="location_dest_id_kit_creation" />
+                        	<field name="location_dest_id_kit_creation" attrs="{'readonly': [('state', 'not in', ['in_production'])]}" />
             			</group>
                         <group col="4" colspan="2">
                         	<field name="name" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -32,7 +32,7 @@
                     <notebook colspan="4">
                     	<page string="Components">
                     		<field name="default_location_src_id_kit_creation" attrs="{'readonly': [('state', '!=', 'in_production')]}" />
-                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', 'not in', ['in_production'])]}" /> 
+                    		<field name="consider_child_locations_kit_creation" attrs="{'readonly': [('state', 'not in', ['in_production'])]}" />
                     		<field name="internal_picking_id_kit_creation" />
                     		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_to_consume': default_location_src_id_kit_creation}" attrs="{'readonly': [('state', 'not in', ['in_production'])]}">
 	                    		<tree string="Components to Consume" hide_new_button="True" hide_delete_button="True" editable="top" colors="red:qty_available_to_consume &lt; total_qty_to_consume;grey:consumed_to_consume">
@@ -73,6 +73,9 @@
                     				<field name="product_qty" readonly="True" />
                     				<field name="assigned_qty_stock_move" invisible="True" />
                     				<field name="product_uom" readonly="True" />
+                    				<field name="hidden_asset_check" invisible="True" />
+                    				<field name="asset_id" domain="[('product_id', '=', product_id)]"
+                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
                     				<field name="prodlot_id"
                     					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 	                    			  		'search_default_real': True}"

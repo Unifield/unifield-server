@@ -1134,6 +1134,11 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
             # hidden_exp_check
             result[obj.id].update({'hidden_exp_check': obj.exp_check})
+            # hidden_asset_check
+            hidden_asset_check = False
+            if obj.product_id.type == 'product' and obj.product_id.subtype == 'asset':
+                hidden_asset_check = True
+            result[obj.id].update({'hidden_asset_check': hidden_asset_check})
             
             hidden_creation_state = False
             hidden_creation_qty_stock_move = 0.0
@@ -1153,6 +1158,7 @@ class stock_move(osv.osv):
                 'hidden_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=SELECTION, string='Hidden State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_prodlot_id': fields.function(_vals_get_kit_creation, method=True, type='many2one', relation='stock.production.lot', string='Hidden Prodlot', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_exp_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Expiry Check', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_asset_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Asset Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='int', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
