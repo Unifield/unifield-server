@@ -280,6 +280,7 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="virtual_location">True</field>
+        <field name="non_stockable_ok">True</field>
     </record>
 
     <record id="stock_location_service" model="stock.location">

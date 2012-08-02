@@ -355,6 +355,11 @@ class stock_picking(osv.osv):
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
                         if move.state != 'done':
+                            '''
+                            Specific rules for non-stockable products:
+                               * if the move is an outgoing delivery, picked them from cross-docking
+                               * else picked them from the non-stockable location
+                            '''
                             if move.product_id.type == 'consu':
                                 if pick.type == 'out':
                                     id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')
@@ -553,6 +558,11 @@ class stock_move(osv.osv):
         todo = []
         for move in self.browse(cr, uid, ids, context=context):
             if move.state != 'done':
+                '''
+                Specific rules for non-stockable products:
+                   * if the move is an outgoing delivery, picked them from cross-docking
+                   * else picked them from the non-stockable location
+                '''
                 if move.product_id.type == 'consu':
                     if move.picking_id.type == 'out':
                         id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')
