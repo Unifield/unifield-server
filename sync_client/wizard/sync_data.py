@@ -392,7 +392,7 @@ class update_received(osv.osv):
             return False
         if ir_data.sync_date < ir_data.last_modification: #modify after synchro conflict
             return True
-        if update.version <= ir_data.version: #not a higher version conflict
+        if update.version < ir_data.version: #not a higher version conflict
             return True
         return False
     
