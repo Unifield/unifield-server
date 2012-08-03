@@ -1626,8 +1626,8 @@ class purchase_order_line(osv.osv):
                       '|', ('valid_till', '>=', date_order),
                       ('valid_till', '=', False)]
             
-            domain_cur = list(domain)
-            domain_cur.append(('currency_id', '=', currency_id))
+            domain_cur = [('currency_id', '=', currency_id)]
+            domain_cur.extend(domain)
             
             info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
             if not info_prices:
