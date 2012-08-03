@@ -518,6 +518,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Prepare some values
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
+        al_obj = self.pool.get('account.analytic.line')
         success_move_line_ids = []
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
@@ -590,6 +591,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
+            # Change analytic lines that come from:
+            #- initial move line: is_reallocated is True
+            #- reversal move line: is_reversal is True
+            #- correction line: change is_reallocated and is_reversal to False
+            for search_data in [(ml.id, {'is_reallocated': True}), (rev_line_id, {'is_reversal': True}), (correction_line_id, {'is_reallocated': False, 'is_reversal': False})]:
+                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
+                if search_ids:
+                    al_obj.write(cr, uid, search_ids, search_data[1])
 #            # Copy old journal attached to old distribution. Copy those from first line
 #            if ml.analytic_distribution_id:
 #                cl = self.browse(cr, uid, [correction_line_id], context=context)[0]
