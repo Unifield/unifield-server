@@ -548,7 +548,6 @@
             							<field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('incoming_dest', '=', product_id)]"
-<!--                                             domain="[('check_usage', '=', product_id), ('service_location', '=', product_type=='service_recep' and True or False),('check_prod_loc','=',[product_id,'in']),('check_cd','in',[purchase_line_id,move_cross_docking_ok])]" -->
                                             on_change="location_dest_change(location_dest_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
