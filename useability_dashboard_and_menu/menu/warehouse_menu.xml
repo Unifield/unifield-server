@@ -90,6 +90,16 @@
 	              parent="stock.menu_stock_inventory_control"
 	              sequence="20"/>
 	              
+	    <record id="stock.action_stock_inventory_report" model="ir.actions.act_window">
+	        <field name="name">Inventory level</field>
+	        <field name="res_model">report.stock.inventory</field>
+	        <field name="view_type">form</field>
+	        <field name="view_mode">tree,graph</field>
+	        <field name="search_view_id"  eval="False"/>
+	        <field name="context">{'contact_display': 'partner', 'search_default_real':1, 'search_default_location_type_internal':1,'search_default_group_product':1,'group_by':[], 'group_by_no_leaf':1}</field>
+	        <field name="help">Inventory Analysis allows you to easily check and analyse your company stock levels. Sort and group by selection criteria in order to better analyse and manage your company  activities.</field>
+	    </record>
+	              
         <menuitem name="Inventory level"
                   action="stock.action_stock_inventory_report"
                   id="stock.menu_action_stock_inventory_report" 

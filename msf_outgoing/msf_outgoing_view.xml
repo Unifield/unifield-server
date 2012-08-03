@@ -455,7 +455,7 @@
 
 		<!-- Added 'subtype' in domain -->
 		<record id="action_picking_ticket" model="ir.actions.act_window">
-			<field name="name">Picking Tickets</field>
+			<field name="name">Picking</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -704,7 +704,7 @@
 		</record>
 		<!-- Added 'subtype' in domain -->
 		<record id="action_ppl" model="ir.actions.act_window">
-			<field name="name">Pre-Packing Lists</field>
+			<field name="name">Packing</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -1286,7 +1286,7 @@
 		</record>
 		<!-- Added 'subtype' in domain -->
 		<record id="action_shipment" model="ir.actions.act_window">
-			<field name="name">Shipment Lists</field>
+			<field name="name">Shipment</field>
 			<field name="res_model">shipment</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
