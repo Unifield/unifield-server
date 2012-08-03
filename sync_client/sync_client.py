@@ -514,7 +514,9 @@ class entity(osv.osv, Thread):
         context = context or {}
 
         (status, log_id, log) = self.startSync(cr, uid, context=context)
-        if status is None: return False
+        #if status is None: return False
+        if status is None:
+            raise osv.except_osv(_('Error!'), _('Unable to start the synchronization process now!'))
        
         #self.sync_core(cr, uid, log_id, log, context=context)
         self.pull_update(cr, uid, log, log_id, context=context)
@@ -631,8 +633,8 @@ class sync_server_connection(osv.osv):
     def connect(self, cr, uid, ids, context=None):
         for con in self.browse(cr, uid, ids, context=context):
             connector = self.connector_factory(con)
-            if not con.password or not con.database or not con.login:
-                raise osv.except_osv(_('Error !'), _('All the fields in this form are mandatory!'))
+            #if not con.password or not con.database or not con.login:
+            #    raise osv.except_osv(_('Error !'), _('All the fields in this form are mandatory!'))
             
             cnx = rpc.Connection(connector, con.database, con.login, con.password)
             if cnx.user_id:

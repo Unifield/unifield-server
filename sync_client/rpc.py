@@ -11,6 +11,8 @@ import zlib
 import xmlrpclib
 from timeout_transport import TimeoutTransport
 from gzip_xmlrpclib import GzipTransport
+from osv import osv
+from tools.translate import _
 
 try:
     import cPickle as pickle
@@ -261,7 +263,7 @@ class NetRPCConnector(Connector):
                 
         socket.disconnect()
         if error:
-            raise e
+            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason: %s\n%s" % (e.faultCode, e.faultString))
         return result
 
 class GzipNetRPCConnector(NetRPCConnector):
@@ -338,7 +340,7 @@ class Connection(object):
             self.user_id = Common(self.connector).login(self.database, self.login, self.password)
             
         if self.user_id is False:
-            raise Exception('Unable to connect to the distant server with this user!')
+            raise osv.except_osv(_('Error!'), _('Unable to connect to the distant server with this user!'))
         self.__logger.debug(self.user_id)
 
     def __repr__(self):
