@@ -42,7 +42,7 @@ class entity_manager(osv.osv_memory):
         'name' : fields.char("Identifier", size=64, readonly=True),
     }
     
-    def retreive(self, cr, uid, ids, context=None):
+    def retrieve(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
         try:

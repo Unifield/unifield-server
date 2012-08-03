@@ -338,7 +338,7 @@ class entity(osv.osv, Thread):
         try:
             if entity.state == 'init': 
                 self.set_last_sequence(cr, uid, context)
-            self.retreive_update(cr, uid, recover=recover, context=context)
+            self.retrieve_update(cr, uid, recover=recover, context=context)
             cr.commit()
             self.execute_update(cr, uid, context)
         except Exception, e:
@@ -356,7 +356,7 @@ class entity(osv.osv, Thread):
         elif res and not res[0]:
             raise Exception, res[1]
 
-    def retreive_update(self, cr, uid, recover=False, context=None):
+    def retrieve_update(self, cr, uid, recover=False, context=None):
         entity = self.get_entity(cr, uid, context)
         last = False
         last_seq = entity.update_last

@@ -68,8 +68,8 @@ class test(osv.osv_memory):
         #create wizard
         em_obj = self.pool.get("sync.client.entity_manager")
         res_id = em_obj.create(cr, uid, {'state' : 'data_needed'}, context=context)
-        #retreive info 
-        em_obj.retreive(cr, uid, [res_id], context=context)
+        #retrieve info 
+        em_obj.retrieve(cr, uid, [res_id], context=context)
         #check for child exist and validate
         wiz = em_obj.browse(cr, uid, res_id, context=context)
         for entity in wiz.entity_ids:

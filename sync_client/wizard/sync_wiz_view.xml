@@ -57,7 +57,7 @@
                 <form string="Registration Status" col="6" >
                     <field name="state" invisible="1"/>
                     <group states="data_needed" width="700" height="200" col="1" colspan="6">
-                        <button type="object" string="Retrieve instance information" name="retreive" icon="gtk-ok"/>
+                        <button type="object" string="Retrieve instance information" name="retrieve" icon="gtk-ok"/>
                     </group>
                     <group states="ready" colspan="4" col="6">
                         <field name="name"/>
