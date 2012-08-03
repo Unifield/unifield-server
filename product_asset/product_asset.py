@@ -381,9 +381,11 @@ class product_product(osv.osv):
         if a product is not of type product, it is set to single subtype
         '''
         # fetch the product
-        if 'type' in vals and vals['type'] != 'product':
+#        if 'type' in vals and vals['type'] != 'product':
+        if vals.get('type') != 'product':
             vals.update(subtype='single')
-        if 'type' in vals and vals['type'] == 'consu':
+#        if 'type' in vals and vals['type'] == 'consu':
+        if vals.get('type') == 'consu':
             vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).create(cr, uid, vals, context=context)
@@ -393,9 +395,11 @@ class product_product(osv.osv):
         if a product is not of type product, it is set to single subtype
         '''
         # fetch the product
-        if 'type' in vals and vals['type'] != 'product':
+#        if 'type' in vals and vals['type'] != 'product':
+        if vals.get('type') != 'product':
             vals.update(subtype='single')
-        if 'type' in vals and vals['type'] == 'consu':
+#        if 'type' in vals and vals['type'] == 'consu':
+        if vals.get('type') == 'consu':
             vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)

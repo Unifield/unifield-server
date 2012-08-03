@@ -58,7 +58,11 @@ class stock_location(osv.osv):
         for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids):
             output_loc.extend(self.search(cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)]))
             
-        return [('id', 'in', output_loc)]
+        operator = 'in'
+        if (args[0][1] == '=' and args[0][2] == False) or (args[0][1] and '!=' and args[0][2] == True):
+            operator = 'not in'
+            
+        return [('id', operator, output_loc)]
     
     def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -73,16 +77,18 @@ class stock_location(osv.osv):
         '''
         Returns the available locations for source location of a picking ticket according to the product.
         '''
-        res = []
+        res = [('usage', '=', 'internal')]
         for arg in args:
             if arg[0] == 'picking_ticket_src' and arg[1] == '=':
+                if arg[2] == False:
+                    break
                 if type(arg[2]) != type(1):
                     raise osv.except_osv(_('Error'), _('Bad operand'))
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     res = [('cross_docking_location_ok', '=', True)]
                 else:
-                    res = [('usage', '=', 'internal'), ('quarantine', '=', False), ('output_ok', '=', False)]
+                    res = [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('output_ok', '=', False)]
                     
         return res
     
@@ -90,9 +96,9 @@ class stock_location(osv.osv):
         'central_location_ok': fields.boolean(string='If check, all products in this location are unallocated.'),
         'non_stockable_ok': fields.boolean(string='Non-stockable', help="If checked, the location will be used to store non-stockable products"),
         'output_ok': fields.function(_get_output, fnct_search=_src_output, method=True, string='Output Location', type='boolean',
-                                     method=True, help='If checked, the location is the output location of a warehouse or a children.'),
+                                     help='If checked, the location is the output location of a warehouse or a children.'),
         'picking_ticket_src': fields.function(_get_dummy, fnct_search=_src_pick_src, method=True, string='Picking Ticket Src. Loc.', type='boolean',
-                                              method=True, help='Returns the available locations for source location of a picking ticket according to the product.')
+                                              help='Returns the available locations for source location of a picking ticket according to the product.')
     }
     
 stock_location()
