@@ -26,10 +26,32 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from register_accounting.register_tools import _get_third_parties, _set_third_parties
+from lxml import etree
 
 class journal_items_corrections_lines(osv.osv_memory):
     _name = 'wizard.journal.items.corrections.lines'
     _description = 'Journal items corrections lines'
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the line, then "valid"
+         - if no distribution on line, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = 'none'
+            if line.analytic_distribution_id:
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+        return res
 
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
@@ -56,7 +78,29 @@ class journal_items_corrections_lines(osv.osv_memory):
         'credit_currency': fields.float('Book. Credit', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
+
+    _defaults = {
+        'from_donation': lambda *a: False,
+    }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change account_id domain if account is donation expense
+        """
+        if not context:
+            context = {}
+        view = super(journal_items_corrections_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if context and context.get('from_donation_account', False):
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath('//field[@name="account_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('type_for_register', '=', 'donation')]")
+            view['arch'] = etree.tostring(tree)
+        return view
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -125,6 +169,7 @@ class journal_items_corrections(osv.osv_memory):
         'move_line_id': fields.many2one('account.move.line', string="Move Line", required=True, readonly=True),
         'to_be_corrected_ids': fields.one2many('wizard.journal.items.corrections.lines', 'wizard_id', string='', help='Line to be corrected'),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
+        'from_donation': fields.boolean('From Donation account?'),
     }
 
     _defaults = {

@@ -197,7 +197,10 @@
                         <field name="journal_id"/>
                         <field name="partner_id" invisible="1"/>
                         <field name="partner_type"/>
+                        <field name="book_amount" sum="Booking Amount"/>
+                        <field name="currency_id" />
                         <field name="amount" sum="Total Amount"/>
+                        <field name="functional_currency_id" />
                         <field name="state"/>
                     </tree>
                 </tree>
