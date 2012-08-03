@@ -233,6 +233,23 @@ class product_product(osv.osv):
         info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
         if not info_prices:
             info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+
+        # If no price found for the min. qty, check if a price can be found for a higher min. qty. and return the price of the first higher min. qty.
+        if not info_prices:
+            domain = [('uom_id', '=', product_uom_id),
+                      ('partner_id', '=', partner_id),
+                      ('product_id', '=', product.product_tmpl_id.id),
+                      '|', ('valid_from', '<=', order_date),
+                      ('valid_from', '=', False),
+                      '|', ('valid_till', '>=', order_date),
+                      ('valid_till', '=', False)]
+            
+            domain_cur = list(domain)
+            domain_cur.append(('currency_id', '=', currency_id))
+            
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+            if not info_prices:
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
         
         return info_prices
     
