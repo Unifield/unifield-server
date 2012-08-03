@@ -24,7 +24,7 @@ class account_journal(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         journal = self.browse(cr, uid, res_id)
-        return 'journal_' + journal.instance_id.code + "_" + journal.code + "_" + journal.name
+        return 'journal_' + (journal.instance_id.code or 'noinstance') + "_" + (journal.code or 'nocode') + "_" + (journal.name or 'noname')
     
 account_journal()
 
