@@ -64,6 +64,34 @@ class stock_location(osv.osv):
             
         return [('id', operator, output_loc)]
     
+    def _get_virtual(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the location is under the Virtual locations view
+        '''
+        res = {}
+        virtual_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+        virtual_ids = self.search(cr, uid, [('location_id', 'child_of', virtual_id)], context=context)
+        for id in ids:
+            res[id] = False
+            if id in virtual_ids:
+                res[id] = True
+                
+        return res
+    
+    def _src_virtual(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all virtual locations
+        '''
+        res = []
+        virtual_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+        virtual_ids = self.search(cr, uid, [('location_id', 'child_of', virtual_id)], context=context)
+        
+        operator = 'in'
+        if (args[0][1] == '=' and args[0][2] == False) or (args[0][1] and '!=' and args[0][2] == True):
+            operator = 'not in'
+            
+        return [('id', operator, virtual_ids)]
+    
     def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
         '''
         Set all object to true
@@ -92,13 +120,38 @@ class stock_location(osv.osv):
                     
         return res
     
+    def _dest_inc_ship(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns the available locations for destination location of an incoming shipment according to the product.
+        '''
+        res = [('usage', '=', 'internal')]
+        for arg in args:
+            if arg[0] == 'incoming_dest' and arg[1] == '=':
+                if arg[2] == False:
+                    break
+                if type(arg[2]) != type(1):
+                    raise osv.except_osv(_('Error'), _('Bad operand'))
+                product = self.pool.get('product.product').browse(cr, uid, arg[2])
+                if product.type in ('service', 'service_recep'):
+                    res = [('service_location', '=', True)]
+                elif product.type == 'consu':
+                    res = ['|', ('cross_docking_location_ok', '=', True), ('non_stockable_ok', '=', True), ('virtual_ok', '=', True)]
+                else:
+                    res = [('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+                    
+        return res
+    
     _columns = {
         'central_location_ok': fields.boolean(string='If check, all products in this location are unallocated.'),
         'non_stockable_ok': fields.boolean(string='Non-stockable', help="If checked, the location will be used to store non-stockable products"),
         'output_ok': fields.function(_get_output, fnct_search=_src_output, method=True, string='Output Location', type='boolean',
                                      help='If checked, the location is the output location of a warehouse or a children.'),
+        'virtual_ok': fields.function(_get_virtual, fnct_search=_src_virtual, method=True, string='Virtual Location', type='boolean',
+                                     help='If checked, the location is a virtual location.'),
         'picking_ticket_src': fields.function(_get_dummy, fnct_search=_src_pick_src, method=True, string='Picking Ticket Src. Loc.', type='boolean',
-                                              help='Returns the available locations for source location of a picking ticket according to the product.')
+                                              help='Returns the available locations for source location of a picking ticket according to the product.'),
+        'incoming_dest': fields.function(_get_dummy, fnct_search=_dest_inc_ship, method=True, string='Incoming shipment Dest. Loc.', type='boolean',
+                                         help="Returns the available locations for destination location of an incoming shipment according to the product."),
     }
     
 stock_location()
