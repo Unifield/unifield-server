@@ -773,7 +773,7 @@ class kit_creation(osv.osv):
     _columns = {'name': fields.char(string='Reference', size=1024, required=True),
                 'to_consume_sequence_id': fields.many2one('ir.sequence', 'To Consume Sequence', required=True, ondelete='cascade'),
                 'creation_date_kit_creation': fields.date(string='Creation Date', required=True),
-                'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
+                'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit'), ('has_active_completed_theo_kit_kit', '=', True)]),
                 'version_id_kit_creation': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')], required=True),
                 'qty_kit_creation': fields.integer(string='Qty', required=True),
                 'uom_id_kit_creation': fields.many2one('product.uom', string='UoM', required=True),

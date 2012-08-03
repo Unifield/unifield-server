@@ -275,7 +275,7 @@ class composition_kit(osv.osv):
         # data
         name = _("Substitute Kit Items")
         model = 'substitute'
-        step = 'substitute'
+        step = 'substitute' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
@@ -302,7 +302,7 @@ class composition_kit(osv.osv):
         # data
         name = _("De-Kitting")
         model = 'substitute'
-        step = 'de_kitting'
+        step = 'de_kitting' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
@@ -1018,6 +1018,59 @@ class product_product(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('The Kit product cannot be Expiry Date Mandatory only.'))
             
         return True
+    
+    def _vals_get_kit(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            for f in fields:
+                result[obj.id].update({f:False})
+        return result
+    
+    def _search_completed_kit(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        # ids of products to be returned
+        ids = []
+        # sql query
+        sql_query = """
+                    select distinct p.id from product_product as p
+                    inner join composition_kit as k
+                    on p.id=k.composition_product_id
+                    inner join product_template as t
+                    on p.product_tmpl_id=t.id
+                    where t.type = 'product'
+                    and t.subtype = 'kit'
+                    and k.composition_type = 'theoretical'
+                    and k.active = True
+                    and k.state = 'completed'
+                    """
+        for arg in args:
+            if arg[0] == 'has_active_completed_theo_kit_kit' and arg[1] == '=' and arg[2]:
+                # execute query
+                cr.execute(sql_query)
+                results = cr.dictfetchall()
+                for res in results:
+                    ids.append(res['id'])
+            else:
+                assert False, 'Search Not implemented'
+            
+        return [('id', 'in', ids)]
+    
+    _columns = {'has_active_completed_theo_kit_kit': fields.function(_vals_get_kit, fnct_search=_search_completed_kit, method=True, type='boolean', string='Kit and completed theoretical list', multi='get_vals_kit', store=False),
+                }
     
     _constraints = [(_kit_product_constraints, 'Constraint error on Kit Product.', []),
                     ]

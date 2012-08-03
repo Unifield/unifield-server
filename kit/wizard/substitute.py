@@ -534,14 +534,16 @@ class substitute(osv.osv_memory):
     _columns = {'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
                 'wizard_id': fields.integer(string='Wizard Id', readonly=True),
                 'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')], required=True),
-                'source_location_id': fields.many2one('stock.location', string='Source Location of Kit', domain=[('usage', '=', 'internal')], required=True),
+                'source_location_id': fields.many2one('stock.location', string='Source Location of Kit', domain=[('usage', '=', 'internal')]),
                 'composition_item_ids': fields.many2many('substitute.item.mirror', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
                 'replacement_item_ids': fields.one2many('substitute.item', 'wizard_id', string='Replacement items'),
+                'step_substitute': fields.char(string='Step', size=1024),
                 }
     
     _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
-                 'destination_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
-                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+                 'step_substitute': lambda s, cr, uid, c: c.get('step', False),
+#                 'destination_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+#                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  }
 
 substitute()
