@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+import pooler
 from analytic_distribution.destination_tools import many2many_sorted
 
 
@@ -231,15 +232,17 @@ class financing_contract_format_line(osv.osv):
                                                                               analytic_line.amount_currency or 0.0,
                                                                               round=False,
                                                                               context=date_context)
-                        real_sum = abs(real_sum)
+                        # Invert the result from the lines (positive for out, negative for in)
+                        real_sum = -real_sum
                         res[line.id] = real_sum
         return res
+    
     
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=16, required=True),
         'format_id': fields.many2one('financing.contract.format', 'Format'),
-        'account_destination_ids': many2many_sorted('account.destination.link', 'financing_contract_actual_account_destinations', 'actual_line_id', 'account_destination_id', string='Accounts/Destinations'),
+        'account_destination_ids': many2many_sorted('account.destination.link', 'financing_contract_actual_account_destinations', 'actual_line_id', 'account_destination_id', string='Accounts/Destinations', domain=[('account_id.user_type_report_type', '=', 'expense')]),
         'parent_id': fields.many2one('financing.contract.format.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.format.line', 'parent_id', 'Child lines'),
         'line_type': fields.selection([('view','View'),

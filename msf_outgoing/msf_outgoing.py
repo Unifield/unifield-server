@@ -285,6 +285,7 @@ class shipment(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+        context['group_by'] = False
             
         wiz_obj = self.pool.get('wizard')
         
@@ -2196,8 +2197,10 @@ class stock_picking(osv.osv):
                     vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
 
-            # trigger workflow
+            # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [obj.id])
+            # check availability
+            self.action_assign(cr, uid, [obj.id], context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')

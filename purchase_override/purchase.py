@@ -113,18 +113,18 @@ class purchase_order(osv.osv):
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'details': fields.char(size=30, string='Details', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'details': fields.char(size=30, string='Details', states={'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced', type='boolean', help="It indicates that an invoice has been generated"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)],'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'date_order':fields.date(string='Creation Date', readonly=True, required=True,
                             states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
-        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
+        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'confirmed': [('readonly',False)]}),
-        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
+        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
             states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
@@ -144,6 +144,7 @@ class purchase_order(osv.osv):
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=64),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
     }
     
     _defaults = {
@@ -344,12 +345,39 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
 
+    def check_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution validity for given PO.
+        Also check that partner have a donation account (is PO is in_kind)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Analytic distribution verification
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type and po.order_type == 'in_kind':
+                if not po.partner_id.donation_payable_account:
+                    raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
+        return True
+
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         '''
-        Update the confirmation date of the PO at confirmation
+        Update the confirmation date of the PO at confirmation.
+        Check analytic distribution.
         '''
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+        # CODE MOVED TO self.check_analytic_distribution()
+        self.check_analytic_distribution(cr, uid, ids, context=context)
         return res
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
@@ -482,25 +510,16 @@ stock moves which are already processed : '''
     def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
         '''
         delivery confirmed date at po level is mandatory
-        update corresponding date at line level if needed
+        update corresponding date at line level if needed.
+        Check analytic distribution
         '''
         # objects
         ana_obj = self.pool.get('analytic.distribution')
         
-        # Analytic distribution verification
-        # NOT MANDATORY for In-kind donation PO
+        # Check analytic distribution
+        self.check_analytic_distribution(cr, uid, ids, context=context)
         for po in self.browse(cr, uid, ids, context=context):
-            for pol in po.order_line:
-                # Forget check if we come from YAML tests
-                if po.from_yml_test or po.order_type == 'in_kind':
-                    continue
-                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
-                # Raise an error if no analytic distribution found
-                if not distrib_id:
-                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
-                if pol.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
-
+            # CODE MOVED TO self.check_analytic_distribution()
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
@@ -566,7 +585,7 @@ stock moves which are already processed : '''
     
     def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        Add a hook to modify the logged message
+        Add a hook to update correspondingn so
         '''
         # Some verifications
         if context is None:
@@ -609,6 +628,9 @@ stock moves which are already processed : '''
                                                                               db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
+                    # do not update Internal Requests
+                    if sol.order_id.procurement_request:
+                        continue
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
                     date_context = {'date': po.date_order}
@@ -695,10 +717,13 @@ stock moves which are already processed : '''
             # with product_id (if no product id, no procurement, no po, so should not be taken into account)
             # in case of grouped po, multiple Fo depend on this po, all Po of these Fo need to be completed
             # and all Fo will be confirmed together. Because IN of grouped Po need corresponding OUT document of all Fo
+            # internal request are automatically 'confirmed'
+            # not take done into account, because IR could be done as they are confirmed before the Po are all done
+            # see video in uf-1050 for detail
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
-                                                                 ('state', '!=', 'confirmed')], context=context)
+                                                                 ('state', 'not in', ['confirmed', 'done'])], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:
                 return False
@@ -1593,26 +1618,25 @@ class purchase_order_line(osv.osv):
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
             info_prices = []
-            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                     ('product_id', '=', tmpl_id)], 
-                                                     order='sequence asc', context=context)
             domain = [('uom_id', '=', uom),
-                      ('currency_id', '=', currency_id),
+                      ('partner_id', '=', partner_id),
+                      ('product_id', '=', tmpl_id),
                       '|', ('valid_from', '<=', date_order),
                       ('valid_from', '=', False),
                       '|', ('valid_till', '>=', date_order),
                       ('valid_till', '=', False)]
-        
-            if sequence_ids:
-                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
-                domain.append(('suppinfo_id.sequence', '=', min_seq))
-                domain.append(('suppinfo_id', 'in', sequence_ids))
-        
-                info_prices = partner_price.search(cr, uid, domain, order='min_quantity asc, id desc', limit=1, context=context)
+            
+            domain_cur = domain
+            domain_cur.append(('currency_id', '=', currency_id))
+            
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+            if not info_prices:
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
-                res['value'].update({'old_price_unit': info_price.price, 'price_unit': info_price.price})
+                info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id, info_price.price)
+                res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
@@ -1643,7 +1667,7 @@ class purchase_order_line(osv.osv):
         elif qty == 0.00:
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
-            res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})            
+            res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
         
         return res
 

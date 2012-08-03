@@ -89,11 +89,14 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
         # Default method
-        if 'analytic_distribution_id' not in default:
+        if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
-        return super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        new_data = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        if new_data and new_data.get('analytic_distribution_id'):
+            new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
+        return new_data
 
-    def action_ship_proc_create(self, cr, uid, ids, context=None):
+    def wkf_validated(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
         Get a default analytic distribution if intermission.
@@ -146,7 +149,7 @@ class sale_order(osv.osv):
                 if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
                     raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
         # Default behaviour
-        res = super(sale_order, self).action_ship_proc_create(cr, uid, ids, context=context)
+        res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
 
     def action_invoice_create(self, cr, uid, ids, *args):
@@ -246,6 +249,14 @@ class sale_order_line(osv.osv):
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, so_distrib_id, a)
         return res
 
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
+            res[sol['id']] = "%s%s"%(sol['analytic_distribution_state'].capitalize(), sol['have_analytic_distribution_from_header'] and " (from header)" or "")
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
@@ -254,6 +265,7 @@ class sale_order_line(osv.osv):
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
     }
 
     _defaults = {

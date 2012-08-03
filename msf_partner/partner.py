@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE 
+import time
 
 
 class res_partner(osv.osv):
@@ -91,35 +92,52 @@ class res_partner(osv.osv):
                     res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
 
         return res
-
-    def _get_price_unit(self, cr, uid, ids, field_name, args, context=None):
+    
+    def _get_price_info(self, cr, uid, ids, fiedl_name, args, context=None):
         '''
-        Returns the unit price of the product if product_id is in context
+        Returns information from product supplierinfo if product_id is in context
         '''
         if not context:
             context = {}
-
+            
+        partner_price = self.pool.get('pricelist.partnerinfo')
         res = {}
-
+        
         for id in ids:
-            res[id] = 0
-
+            res[id] = {'price_currency': False,
+                       'price_unit': 0.00,
+                       'valide_until_date': False}
+            
         if context.get('product_id'):
             for partner in self.browse(cr, uid, ids, context=context):
                 product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
                 uom = context.get('uom', product.uom_id.id)
                 pricelist = partner.property_product_pricelist_purchase
-
                 context.update({'uom': uom})
-                price_list = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], context.get('product_id'), context.get('product_qty', 1.00), partner.id, context=context)
-                price = price_list[pricelist.id]
-                if not price:
+                price_list = self.pool.get('product.product')._get_partner_info_price(cr, uid, product, partner.id, context.get('product_qty', 1.00), pricelist.currency_id.id, time.strftime('%Y-%m-%d'), uom, context=context)
+                if not price_list:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                     price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
-
-                res[partner.id] = price
-
+                    res[partner.id] = {'price_currency': pricelist.currency_id.id,
+                                       'price_unit': price,
+                                       'valide_until_date': False}
+                else:
+                    info_price = partner_price.browse(cr, uid, price_list[0], context=context)
+                    partner_currency_id = pricelist.currency_id.id
+                    price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price)
+                    currency = partner_currency_id
+                    # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
+#                    currency = info_price.currency_id.id
+#                    price = info_price.price
+                    res[partner.id] = {'price_currency': currency,
+                                       'price_unit': price,
+                                       'valide_until_date': info_price.valid_till}
+            
         return res
+
+## QT : Remove _get_price_unit
+
+## QT : Remove _get_valide_until_date 
 
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
@@ -147,7 +165,9 @@ class res_partner(osv.osv):
             view_load=True,
             required=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
-        'price_unit': fields.function(_get_price_unit, method=True, type='float', string='Unit price'),
+        'price_unit': fields.function(_get_price_info, method=True, type='float', string='Unit price', multi='info'),
+        'valide_until_date' : fields.function(_get_price_info, method=True, type='char', string='Valid until date', multi='info'),
+        'price_currency': fields.function(_get_price_info, method=True, type='many2one', relation='res.currency', string='Currency', multi='info'),
     }
 
     _defaults = {
@@ -156,7 +176,7 @@ class res_partner(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc'):
+        if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
             if msf_customer and not 'property_stock_customer' in vals:
@@ -187,7 +207,7 @@ class res_partner(osv.osv):
         if purchase_authorized_price and purchase_pricelist not in purchase_authorized_price:
             r.update({'property_product_pricelist_purchase': purchase_authorized_price[0]})
         
-        if partner_type and partner_type in ('internal', 'section', 'esc'):
+        if partner_type and partner_type in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             if msf_customer:
                 r.update({'property_stock_customer': msf_customer[1]})

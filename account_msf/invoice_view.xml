@@ -81,7 +81,7 @@
                                 <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                                 <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                                <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
                                 <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                             </group>
                         </page>
@@ -200,13 +200,16 @@
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
-                                <label string="" colspan="3"/>
+                                <label string="" colspan="2"/>
+                                <field name="have_donation_certificate" invisible="1"/>
+                                <button name="button_donation_certificate" type="object" string="No Donation certificate" icon="terp-mail-replied" readonly="1" attrs="{'invisible': [('have_donation_certificate', '!=', False)]}"/>
+                                <button name="button_donation_certificate" type="object" string="Donation certificate" icon="terp-mail-replied" attrs="{'invisible': [('have_donation_certificate', '=', False)]}"/>
                                 <field name="state"/>
                                 <field name="amount_total"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="draft">
                                 <label string=""/>
-                                <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="open,paid">
                                 <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel" confirm="Do you confirm Donation received cancellation?"/>
@@ -230,8 +233,8 @@
             <field name="priority">19</field>
             <field name="arch" type="xml">
                 <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" hide_new_button="1">
-                    <field name="date_invoice"/>
                     <field name="document_date" string="I/MI voucher date"/>
+                    <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id"/>
                     <field name="name"/>
@@ -298,7 +301,7 @@
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="draft">
                                 <label string=""/>
-                                <button name="invoice_open" states="draft" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
                             <group col="2" colspan="4" groups="base.group_user" states="open,paid">
                                 <label string=""/>
@@ -362,7 +365,7 @@
                             <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                            <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
+                            <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward" type="object"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                         </group>
                     </xpath>

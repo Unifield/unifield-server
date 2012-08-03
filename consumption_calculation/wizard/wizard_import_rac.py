@@ -44,7 +44,7 @@ class wizard_import_rac(osv.osv_memory):
         
         The file should be in CSV format (with ',' character as delimiter).
         The columns should be in this order :
-           Product code ; Product name ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
+           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
         """
     }
     

@@ -98,7 +98,8 @@
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
 				<tree string="Stock mission report" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
-					<field name="product_id" />
+                                        <field name="default_code" />
+                                        <field name="name" />
 					<field name="uom_id" />
 					<field name="currency_id" invisible="not context.get('with_valuation')" />
 					<field name="internal_qty" />

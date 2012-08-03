@@ -66,6 +66,7 @@
                             <separator string="Description" colspan="2"/>
                             <field name="name" string="Description"/>
                             <field groups="product.group_product_variant" name="variants" />
+                            <field name="new_code"/>
                         </group>
                     </group>
 
@@ -182,13 +183,13 @@
                                     <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
                                     <field name="delay"/>
                                     <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
-                                    <field colspan="4" groups="base.group_extended" name="pricelist_ids" nolabel="1" widget="one2many_list">
-                                        <tree editable="bottom" string="Pricelist">
+                                    <field colspan="4" groups="base.group_extended" name="pricelist_ids" nolabel="1" widget="one2many_list" context="{'partner_id': name}">
+                                        <tree editable="top" string="Pricelist">
                                             <field name="min_quantity" />
                                             <field name="uom_id" />
                                             <field name="price" />
                                             <field name="rounding" />
-                                            <field name="currency_id" />
+                                            <field name="currency_id" domain="[('partner_currency', '=', parent.name)]" />
                                             <field name="min_order_qty" />
                                             <field name="valid_from" />
                                             <field name="valid_till" />
@@ -207,6 +208,7 @@
                                     <field name="get_from_date"/>
                                     <field name="get_till_date"/>
                                     <field name="get_first_price"/>
+                                    <field name="get_first_currency" />
                                     <field name="check_manufacturer"/>
                                 </tree>
                             </field>
@@ -352,6 +354,7 @@
             <field name="arch" type="xml">
                <field name="default_code" position="after">
                    <field name="old_code"/>
+                   <field name="new_code"/>
 
                </field>
             </field>
@@ -472,15 +475,17 @@
         <delete id="procurement.act_make_procurement" model="ir.actions.act_window" />
 
         <act_window
-            context="{'search_default_product_id': [active_id]}"
+            context="{}"
+            domain="[('procurement_request', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
             id="action_order_line_product_tree"
             name="Field orders"
-            res_model="sale.order.line"
+            res_model="sale.order"
             src_model="product.product"
             groups="base.group_sale_salesman"/>
 
         <act_window
-            context="{'search_default_product_id': [active_id]}"
+            context="{}"
+            domain="['|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
             id="action_tender_product_tree"
             name="Tenders"
             res_model="tender"
@@ -489,6 +494,19 @@
 
         <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
         <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
+
+        <delete id="purchase.action_purchase_line_product_tree" model="ir.actions.act_window" />
+
+        <act_window
+            context="{}"
+            domain="[('rfq_ok', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+            id="purchase.action_purchase_line_product_tree"
+            name="Purchases"
+            res_model="purchase.order"
+            src_model="product.product"
+            groups=""/>
+
+
 
 <!--        <delete id="product.menu_products_category" model="ir.ui.menu" /> -->
 <!--        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" /> -->

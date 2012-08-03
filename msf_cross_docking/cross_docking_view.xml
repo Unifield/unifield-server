@@ -34,7 +34,8 @@
                     </xpath>
                     <field name="location_id" position= "replace">
                         <field name="location_id" 
-                        attrs="{'readonly':['|', ('state', 'not in', ['draft', 'confirmed']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"
+                        domain="[('usage', '=', 'internal')]"
+                        attrs="{'readonly':['|', ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice', 'confirmed_wait']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"
                         on_change="onchange_location_id(location_id,categ)"/>
                     </field>
                 </data>

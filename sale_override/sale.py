@@ -196,6 +196,7 @@ class sale_order(osv.osv):
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
     }
@@ -340,11 +341,11 @@ class sale_order(osv.osv):
         
         # objects
         sol_obj = self.pool.get('sale.order.line')
-        
         # get all corresponding sale order lines
         sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
-        # delete the lines
-        sol_obj.unlink(cr, uid, sol_ids, context=dict(context, call_unlink=True))
+        # set lines state to done
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
         return True
@@ -826,6 +827,9 @@ class sale_order(osv.osv):
     def test_lines(self, cr, uid, ids, context=None):
         '''
         return True if all lines of type 'make_to_order' are 'confirmed'
+        
+        only if a product is selected
+        internal requests are not taken into account (should not be the case anyway because of separate workflow)
         '''
         for order in self.browse(cr, uid, ids, context=context):
             # backward compatibility for yml tests, if test we do not wait

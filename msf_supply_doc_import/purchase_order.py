@@ -51,6 +51,18 @@ class purchase_order(osv.osv):
                                         help='You can use the template of the export for the format that you need to use'),
     }
 
+    def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
+        - check lines after import
+        '''
+        res = super(purchase_order, self).hook_rfq_sent_check_lines(cr, uid, ids, context)
+        
+        if self.check_lines_to_fix(cr, uid, ids, context):
+            res = False
+        return res
+
     def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
         if context is None:
             context = {}
@@ -133,14 +145,14 @@ class purchase_order(osv.osv):
             row_len = len(row)
             if row_len != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
+Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             product_code = row.cells[0].data
             if not product_code :
                 default_code = False
                 to_correct_ok = True
-                error_list.append('No Product Reference (Code).')
-                comment = 'Product Reference (Code) to be defined'
+                error_list.append('No Product Code.')
+                comment = 'Product Code to be defined'
             else:
                 try:
                     product_code = product_code.strip()
@@ -153,7 +165,7 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         default_code = code_ids[0]
                 except Exception:
                      error_list.append('The Product Code has to be a string.')
-                     comment = 'Product Reference (Code) to be defined'
+                     comment = 'Product Code to be defined'
                      default_code = False
                      to_correct_ok = True
             
@@ -161,8 +173,8 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             if not p_id:
                 product_id = False
                 to_correct_ok = True
-                error_list.append('No Product Name')
-                comment = 'Product Name to be defined'
+                error_list.append('No Product Description')
+                comment = 'Product Description to be defined'
             else:
                 try:
                     p_name = p_id.strip()
@@ -179,24 +191,22 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                         nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                         nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                 except Exception:
-                     error_list.append('The Product Name has to be a string.')
-                     comment = 'Product Name to be defined'
+                     error_list.append('The Product Description has to be a string.')
+                     comment = 'Product Description to be defined'
                      product_id = False
                      to_correct_ok = True
                 
-            product_qty = row.cells[2].data
-            if not product_qty :
+            if not row.cells[2].data :
                 product_qty = 1.0
                 to_correct_ok = True
                 error_list.append('The Product Quantity was not set, we set it to 1 by default.')
             else:
-                try:
-                    float(product_qty)
-                    product_qty = float(product_qty)
-                except ValueError:
+                if row.cells[4].type in ['int', 'float']:
+                    product_qty = row.cells[2].data
+                else:
                      error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
-                     product_qty = 1.0
                      to_correct_ok = True
+                     product_qty = 1.0
             
             p_uom = row.cells[3].data
             if not p_uom:
@@ -221,31 +231,25 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
             price_unit = row.cells[4].data
             if not price_unit:
                 to_correct_ok = True
-                price_unit = 1.0
                 error_list.append('The Price Unit was not set, we set it to 1 by default.')
+                price_unit = 1.0
             else:
-                try:
-                    float(price_unit)
-                    price_unit = float(price_unit)
-                except ValueError:
+                if row.cells[4].type in ['int', 'float']:
+                    price_unit = row.cells[4].data
+                else:
                      error_list.append('The Price Unit was not a number, we set it to 1 by default.')
-                     price_unit = 1.0
                      to_correct_ok = True
+                     price_unit = 1.0
             
-            check_date = row.cells[5].data
-            if check_date:
-                try:
-                    datetime.strptime(str(check_date), '%d/%b/%Y')
-                    date_planned = check_date
-                except ValueError:
-                    try:
-                        datetime.strptime(str(check_date), '%d/%m/%Y')
-                        date_planned = check_date
-                    except ValueError:
-                        error_list.append('The date format should be "DD-MM-YYYY", we took the one from the parent.')
-                        to_correct_ok = True
+            if row.cells[5].data:
+                if row.cells[5].type == 'datetime':
+                    date_planned = row.cells[5].data
+                else:
+                    error_list.append('The date format was not good so we took the date from the parent.')
+                    to_correct_ok = True
             else:
-                error_list.append('The date was not specified so we took the one from the parent.')
+                error_list.append('The date was not specified or so we took the one from the parent.')
+                to_correct_ok = True
             
             curr = row.cells[6].data
             if not curr:
@@ -319,8 +323,6 @@ Product Code*, Product Name*, Quantity*, Product UoM*, Unit Price*, Delivery Req
                             plural = 's'
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
-        else:
-            self.log(cr, uid, var.id, _("There isn't error in import"), context=context)
         return True
         
 purchase_order()

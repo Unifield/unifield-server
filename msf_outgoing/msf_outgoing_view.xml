@@ -156,7 +156,6 @@
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
 					<field name="state"/>
-					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
 				</tree>
@@ -228,11 +227,12 @@
 									<field name="virtual_available" invisible="1" />
 									<field name="date" string="Actual Pick Date" />
 
+									<field name="state"/>
+
 								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
 
-									<field name="state"/>
 									<field name="lot_check" />
 									<field name="exp_check" />
 									<field name="kc_check" />
@@ -363,11 +363,61 @@
 						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
 						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
 						<separator orientation="vertical" />
-						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>
+                                                <!-- Field stock_journal_id is not in the tree view
+						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>-->
 					</group>
 				</search>
 			</field>
 		</record>
+
+		<!-- Search 'PT and PPL' -->
+		<record id="view_pt_ppl_search" model="ir.ui.view">
+			<field name="name">pt.ppl.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Picking Tickets">
+					<group col="8" colspan="4">
+						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
+						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
+						<filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
+						<separator orientation="vertical"/>
+						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
+						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
+						<separator orientation="vertical"/>
+
+						<filter icon="" name="pt" string="PT" domain="[('subtype','=', 'picking')]" />
+						<filter icon="" name="ppl" string="PPL" domain="[('subtype','=', 'ppl')]" />
+
+						<field name="name"/>
+						<field name="partner_id2" />
+						<field name="origin"/>
+						<newline />
+						<field name="reason_type_id" widget="selection" />
+						<field name="date" />
+						<field name="min_date" />
+					</group>
+					<newline/>
+					<group expand="0" string="Group By..." colspan="4" col="8">
+						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
+						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
+						<separator orientation="vertical" />
+						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+						<separator orientation="vertical" />
+						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+						<separator orientation="vertical" />
+						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+						<separator orientation="vertical" />
+					</group>
+				</search>
+			</field>
+		</record>
+
+
 		<!-- Added 'subtype' in domain -->
 		<record id="action_draft_picking_ticket" model="ir.actions.act_window">
 			<field name="name">Draft Picking Ticket</field>
@@ -530,15 +580,6 @@
 									<field name="state"/>
 
 
-
-
-								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
-                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-
-
-
-
 									<field name="lot_check" />
 									<field name="exp_check" />
 									<field name="kc_check" />
@@ -606,7 +647,7 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="return_products" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo"/>
-								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
@@ -700,7 +741,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="PT and PPL">
+				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Shipment preparation">
 					<group col="6" colspan="4">
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
@@ -777,7 +818,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="PT and PPL">
+				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Shipment preparation">
 					<field name="name"/>
 					<field name="partner_id2" />
 					<field name="sale_id" invisible="True" />
@@ -795,14 +836,14 @@
 			</field>
 		</record>
 		<record id="action_pt_ppl" model="ir.actions.act_window">
-			<field name="name">PT and PPL</field>
+			<field name="name">Shipment preparation</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field> 
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('type','=','out'), ( 'subtype', 'in', ['picking','ppl'] )]</field>
 			<field name="context">{'group_by':'origin,state' }</field>
-			<field name="search_view_id" ref="view_picking_ticket_search"/>
+			<field name="search_view_id" ref="view_pt_ppl_search"/>
 		</record>
 		<record id="action_pt_ppl_tree" model="ir.actions.act_window.view">
 			<field eval="1" name="sequence"/>
@@ -816,7 +857,7 @@
 			<field name="view_id" ref="view_pt_ppl_form"/>
 			<field name="act_window_id" ref="action_pt_ppl"/>
 		</record>
-		<menuitem action="action_pt_ppl" id="menu_action_pt_ppl" parent="menu_warehouse_deliveries" sequence="6" />
+		<!-- <menuitem action="action_pt_ppl" id="menu_action_pt_ppl" parent="menu_warehouse_deliveries" sequence="6" /> -->
 
 		<!-- Changed name to 'Packing' -->
 		<record id="view_packing_tree" model="ir.ui.view">
@@ -1077,8 +1118,8 @@
 					<field name="partner_id2"/>
 					<field name="address_id"/>
 					<field name="num_of_packs" />
-					<field name="total_volume" />
 					<field name="total_weight" />
+					<field name="total_volume" />
 					<field name="total_amount" />
 					<field name="currency_id" />
 					<field name="date" />
@@ -1116,6 +1157,7 @@
 								<tree string="Pack Families">
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
+                                    <field name="description_ppl" />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
@@ -1127,7 +1169,6 @@
 									<field name="total_amount" />
 									<field name="currency_id" />
 									<field name="location_id" />
-									<field name="location_dest_id" />
 									<field name="state" />
 								</tree>
 								<form>
@@ -1251,10 +1292,11 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[]</field>
-			<field name="context">{'packing_screen': True,'search_default_not_empty':1}</field>
+			<field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
 			<field name="search_view_id" ref="view_shipment_search"/>
 			<field name="help">This is the list of all shipment lists that have been picked. The shipment lists are regrouped by address.</field>
 		</record>
+
 		<record id="action_shipment_tree" model="ir.actions.act_window.view">
 			<field eval="1" name="sequence"/>
 			<field name="view_mode">tree</field>

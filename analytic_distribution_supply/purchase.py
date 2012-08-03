@@ -168,7 +168,17 @@ class purchase_order(osv.osv):
             })
             # Create commitment
             commit_id = commit_obj.create(cr, uid, vals, context=context)
-            # Code to retrieve analytic distribution from PO to commitment header have been delete because of impossibility to know which analytic destination could be used.
+            # Add analytic distribution from purchase
+            if po.analytic_distribution_id:
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
+                # Update this distribution not to have a link with purchase but with new commitment
+                if new_distrib_id:
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], 
+                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                    # Create funding pool lines if needed
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
+                    # Update commitment with new analytic distribution
+                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id
@@ -303,6 +313,10 @@ class purchase_order_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
+            # Check if PO is inkind
+            is_inkind = False
+            if line.order_id and line.order_id.order_type == 'in_kind':
+                is_inkind = True
             if line.order_id and line.order_id.from_yml_test:
                 res[line.id] = 'valid'
             elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
@@ -322,7 +336,26 @@ class purchase_order_line(osv.osv):
                     a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 fpos = line.order_id.fiscal_position or False
                 a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                # Regarding inkind donation expense accounts
+                # NB: we consider that no in kind donation could be done with another thing that a line with a product.
+                # To support other cases, we need more information and a specification (for an example an In-kind donation PO with a nomenclature line)
+                if is_inkind:
+                    a = False
+                    if line.product_id:
+                        a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
+                        if not a:
+                            a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
+                    if not a:
+                        raise osv.except_osv(_('Error'), _('No donation account found for this line: %s.') % (line.name,))
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, a)
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
+            res[pol['id']] = "%s%s"%(pol['analytic_distribution_state'].capitalize(), pol['have_analytic_distribution_from_header'] and " (from header)" or "")
         return res
 
     _columns = {
@@ -333,6 +366,7 @@ class purchase_order_line(osv.osv):
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
     }
 
     _defaults = {
@@ -356,6 +390,10 @@ class purchase_order_line(osv.osv):
         currency = purchase_line.order_id.currency_id and purchase_line.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = purchase_line.analytic_distribution_id and purchase_line.analytic_distribution_id.id
+        # Check if PO is inkind
+        is_inkind = False
+        if purchase_line.order_id and purchase_line.order_id.order_type == 'in_kind':
+            is_inkind = True
         # Search product account_id
         if purchase_line.product_id:
             a = purchase_line.product_id.product_tmpl_id.property_account_expense.id
@@ -366,6 +404,17 @@ class purchase_order_line(osv.osv):
                     _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
         else:
             a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+        # Regarding inkind donation expense accounts
+        # NB: we consider that no in kind donation could be done with another thing that a line with a product.
+        # To support other cases, we need more information and a specification (for an example an In-kind donation PO with a nomenclature line)
+        if is_inkind:
+            a = False
+            if purchase_line.product_id:
+                a = purchase_line.product_id.donation_expense_account and purchase_line.product_id.donation_expense_account.id or False
+                if not a:
+                    a = purchase_line.product_id.categ_id.donation_expense_account and purchase_line.product_id.categ_id.donation_expense_account.id or False
+            if not a:
+                raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
         fpos = purchase_line.order_id.fiscal_position or False
         a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
         # Prepare values for wizard

@@ -8,7 +8,7 @@
     property_account_payable: account_account_payable_customer0
     donation_payable_account: account_account_payable_donation0
 -
-    I create the address for S1
+  I create the address for S1
 -
   !record {model: res.partner.address, id: address1}:
     name: S1

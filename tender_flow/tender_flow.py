@@ -555,7 +555,7 @@ class tender2(osv.osv):
     tender class
     '''
     _inherit = 'tender'
-    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)], 'comparison': [('readonly',False)]}, readonly=True),
+    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)]}, readonly=True),
                 }
     
     def copy(self, cr, uid, id, default=None, context=None):
@@ -790,7 +790,18 @@ class purchase_order(osv.osv):
                 result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
+    def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
+        - check lines after import
+        '''
+        res = True
+        return res
+        
+        
     def rfq_sent(self, cr, uid, ids, context=None):
+        self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
@@ -885,13 +896,23 @@ class pricelist_partnerinfo(osv.osv):
     '''
     add new information from specifications
     '''
+    def _get_line_number(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for price in self.browse(cr, uid, ids, context=context):
+            res[price.id] = 0
+            if price.purchase_order_line_id:
+                res[price.id] = price.purchase_order_line_id.line_number
+                
+        return res
+    
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
+    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True, domain="[('partner_currency', '=', partner_id)]"),
                 'valid_till': fields.date(string="Valid Till",),
                 'comment': fields.char(size=128, string='Comment'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
+                #'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", ),
+                'purchase_order_line_number': fields.function(_get_line_number, method=True, type="integer", string="Related Line Number", readonly=True),
                 }
 pricelist_partnerinfo()
 
@@ -909,7 +930,8 @@ class ir_values(osv.osv):
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)', 
                                                      'Purchase Order',
-                                                     'Allocation report'],
+                                                     'Allocation report',
+                                                     'Order impact vs. Budget'],
                               'client_action_relate': ['ir_open_product_list_export_view',
                                                        'View_log_purchase.order',
                                                        'Allocation report'],
@@ -929,7 +951,8 @@ class ir_values(osv.osv):
                 or v[2]['name'] == 'Purchase Order Excel Export' \
                 or v[2]['name'] == 'Purchase Order' \
                 or v[2]['name'] == 'Purchase Order (Merged)' \
-                or v[2]['name'] == 'Allocation report' :
+                or v[2]['name'] == 'Allocation report' \
+                or v[2]['name'] == 'Order impact vs. Budget' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
