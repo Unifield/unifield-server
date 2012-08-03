@@ -330,8 +330,10 @@ class purchase_order_line(osv.osv):
                     if not a:
                         a = line.product_id.categ_id.property_account_expense_categ.id
                     if not a:
-                        raise osv.except_osv(_('Error !'), 
-                            _('There is no expense account defined for this product: "%s" (id:%d)') % (line.product_id.name, line.product_id.id))
+                        res[line.id] = 'invalid'
+                        continue
+#                        raise osv.except_osv(_('Error !'), 
+#                            _('There is no expense account defined for this product: "%s" (id:%d)') % (line.product_id.name, line.product_id.id))
                 else:
                     a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
                 fpos = line.order_id.fiscal_position or False
@@ -346,7 +348,9 @@ class purchase_order_line(osv.osv):
                         if not a:
                             a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
                     if not a:
-                        raise osv.except_osv(_('Error'), _('No donation account found for this line: %s.') % (line.name,))
+                        res[line.id] = 'invalid'
+                        continue
+#                        raise osv.except_osv(_('Error'), _('No donation account found for this line: %s.') % (line.name,))
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, a)
         return res
 
