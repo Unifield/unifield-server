@@ -13,7 +13,7 @@
         
         <!-- ASSET TYPE -->
         
-        <menuitem id="product_asset.menu_asset_type_sales" 
+        <menuitem id="menu_asset_type_sales" 
         name="Asset Types" 
         action="product_asset.asset_type_normal_action"
         parent="purchase.menu_product_in_config_purchase"
