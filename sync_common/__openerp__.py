@@ -32,6 +32,7 @@
     'depends': ['base'],
     'init_xml': [],
     'data': [
+        'security/group.xml',
     ],
     'installable': True,
 }

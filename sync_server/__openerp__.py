@@ -34,7 +34,6 @@
     'data': [
         'sync_server_view.xml',
         'rules_view.xml',
-        'security/group.xml',
         'security/ir.model.access.csv'
     ],
     'demo_xml': [

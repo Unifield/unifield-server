@@ -38,6 +38,7 @@
         'fallback_values/demo.xml',
         'monitor_view.xml',
         'data/cron.xml',
+        'security/ir.model.access.csv'
     ],
     'demo_xml': [
     ],
