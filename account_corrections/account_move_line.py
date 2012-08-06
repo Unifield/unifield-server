@@ -539,6 +539,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 new_account = self.pool.get('account.account').browse(cr, uid, new_account_id)
                 if new_account.type_for_register != 'donation':
                     raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
+            # Abort process if the move line have some analytic line that have one line with a FP used in a soft/hard closed contract
+            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', ml.id)])
+            for aal in self.pool.get('account.analytic.line').browse(cr, uid, aal_ids):
+                check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
+                if check_accounts and aal.account_id.id in check_accounts:
+                    raise osv.except_osv(_('Warning'), _('An analytic line have an open contract for this move line. You cannot change its G/L account.'))
             # Create a new move
             move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': period_ids[0], 'date': date}, context=context)
             # Prepare default value for new line
