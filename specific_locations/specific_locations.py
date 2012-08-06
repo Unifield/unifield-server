@@ -117,7 +117,7 @@ class stock_location(osv.osv):
 
     
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
-                'destruction_location': fields.boolean(string='Destruction Loction'),
+                'destruction_location': fields.boolean(string='Destruction Location'),
                 'location_category': fields.selection([('stock', 'Stock'),
                                                        ('consumption_unit', 'Consumption Unit'),
                                                        ('transition', 'Transition'),
