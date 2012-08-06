@@ -414,10 +414,10 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 if row.cells[5].type == 'datetime':
                     date_planned = row.cells[5].data
                 else:
-                    error_list.append('The date format was not good so we took the date from the parent.')
+                    error_list.append('The date format was not good so we took the date from the header.')
                     to_correct_ok = True
             else:
-                error_list.append('The date was not specified so we took the date from the parent.')
+                error_list.append('The date was not specified so we took the date from the header.')
                 to_correct_ok = True
             
             curr = row.cells[6].data

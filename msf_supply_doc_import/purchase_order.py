@@ -150,7 +150,7 @@ class purchase_order(osv.osv):
             line_num += 1
             row_len = len(row)
             if row_len != 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
+                raise osv.except_osv(_('Warning !'), _("""You should have exactly 8 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
             
             product_code = row.cells[0].data
@@ -210,9 +210,13 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 if row.cells[4].type in ['int', 'float']:
                     product_qty = row.cells[2].data
                 else:
-                     error_list.append('The Product Quantity was not a number and it is required to be more than 0, we set it to 1 by default.')
-                     to_correct_ok = True
-                     product_qty = 1.0
+                     try:
+                         float(row.cells[2].data)
+                         product_qty = row.cells[2].data
+                     except ValueError:
+                         error_list.append('The Product Quantity was not a number and it is required to be more than 0, we set it to 1 by default.')
+                         to_correct_ok = True
+                         product_qty = 1.0
             
             p_uom = row.cells[3].data
             if not p_uom:
@@ -241,17 +245,21 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 if row.cells[4].type in ['int', 'float']:
                     price_unit = row.cells[4].data
                 else:
-                     error_list.append('The Price Unit was not a number, we set it to 0 by default.')
-                     to_correct_ok = True
+                     try:
+                         float(row.cells[2].data)
+                         product_qty = row.cells[2].data
+                     except ValueError:
+                         error_list.append('The Price Unit was not a number, we set it to 0 by default.')
+                         to_correct_ok = True
             
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
                     date_planned = row.cells[5].data
                 else:
-                    error_list.append('The date format was not good so we took the date from the parent.')
+                    error_list.append('The date format was not good so we took the date from the header.')
                     to_correct_ok = True
             else:
-                error_list.append('The date was not specified or so we took the one from the parent.')
+                error_list.append('The date was not specified or so we took the one from the header.')
                 to_correct_ok = True
             
             curr = row.cells[6].data
