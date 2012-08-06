@@ -34,7 +34,7 @@ class bank_statement(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         bank = self.browse(cr, uid, res_id)
-        return 'bank_statement_' + bank.instance_id.code + '_' + bank.name + '_' + bank.journal_id.code
+        return 'bank_statement_' + (bank.instance_id.code or 'noinstance') + '_' + (bank.name or 'nobank') + '_' + (bank.journal_id.code or 'nojournal')
     
 bank_statement()
 
