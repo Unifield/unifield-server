@@ -407,6 +407,9 @@ class stock_picking(osv.osv):
         if setup.allocation_setup != 'unallocated':        
             cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        stock_location_non_stockable = self.pool.get('stock.location').search(cr, uid, [('non_stockable_ok', '=', True)])
+        if stock_location_non_stockable:
+            stock_location_non_stockable = stock_location_non_stockable[0]
 # ----------------------------------------------------------------------------------------------------------------
         partial_picking_obj = self.pool.get('stock.partial.picking')
         
@@ -430,8 +433,11 @@ class stock_picking(osv.osv):
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 if product_type not in ('service_recep', 'service'):
-                    # treat moves towards STOCK if NOT SERVICE
-                    values.update({'location_dest_id': stock_location_input})
+                    if product_type == 'consu' and stock_location_non_stockable:
+                        values.update({'location_dest_id': stock_location_non_stockable})
+                    else:
+                        # treat moves towards STOCK if NOT SERVICE
+                        values.update({'location_dest_id': stock_location_input})
         return values
     
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
