@@ -129,43 +129,21 @@ That means Not price, Neither Delivery requested date. """))
                 
                 # for each cell we check the value
                 product_code = row.cells[0].data
-                if not product_code:
-                    default_code = False
-                    to_correct_ok = True
-                    error_list.append('No Product Code.')
-                    comment += ' Product Code to be defined'
-                else:
+                p_name = row.cells[1].data
+                if product_code and p_name:
                     try:
                         product_code = product_code.strip()
-                        code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                        if not code_ids:
-                            default_code = False
-                            to_correct_ok = True
-                            comment += ' Code: %s'%product_code
-                        else:
-                            default_code = code_ids[0]
-                    except Exception:
-                         error_list.append('The Product Code has to be a string.')
-                         comment += ' Product Code to be defined'
-                         default_code = False
-                         to_correct_ok = True
-                
-                p_name = row.cells[1].data
-                if not p_name:
-                    product_id = False
-                    to_correct_ok = True
-                    error_list.append('No Product Description')
-                    comment += ' Product Description to be defined'
-                else:
-                    try:
                         product_name = p_name.strip()
-                        p_ids = product_obj.search(cr, uid, [('name', '=', product_name)])
+                        p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code),('name', '=', product_name)])
                         if not p_ids:
+                            default_code = False
                             product_id = False
                             to_correct_ok = True
-                            comment += ' Description: %s'%p_name
-                            error_list.append('The Product was not found in the list of the products.')
+                            comment += ' Code: %s, Description: %s'%(product_code, product_name)
+                            error_list.append('The Product\'s Code and Description do not match.')
                         else:
+                            code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                            default_code = p_ids[0]
                             product_id = p_ids[0]
                             nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
                             nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
@@ -173,10 +151,16 @@ That means Not price, Neither Delivery requested date. """))
                             nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                             proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
                     except Exception:
-                         error_list.append('The Product Description has to be a string.')
-                         product_id = False
-                         comment += ' Product Description to be defined'
+                         error_list.append('The Product Code has to be a string.')
+                         comment += ' Product Code and Description to be defined'
+                         default_code = False
                          to_correct_ok = True
+                else:
+                    default_code = False
+                    product_id = False
+                    to_correct_ok = True
+                    comment += ' Code: %s, Description: %s'%(product_code or 'To be defined', product_name or 'To be defined')
+                    error_list.append('The Product\'s Code and Description have to be defined both.')
                     
                 product_qty = row.cells[2].data
                 if not product_qty:
@@ -324,54 +308,31 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 
                 # for each cell we check the value
                 product_code = row.cells[0].data
-                if not product_code:
-                    default_code = False
-                    to_correct_ok = True
-                    error_list.append('No Product Code.')
-                    comment += ' Product Code to be defined'
-                else:
+                p_name = row.cells[1].data
+                if product_code and p_name:
                     try:
                         product_code = product_code.strip()
-                        code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                        if not code_ids:
-                            default_code = False
-                            to_correct_ok = True
-                            comment += ' Code: %s'%product_code
-                        else:
-                            default_code = code_ids[0]
-                    except Exception:
-                         error_list.append('The Product Code has to be a string.')
-                         comment += ' Product Code to be defined'
-                         default_code = False
-                         to_correct_ok = True
-                
-                p_name = row.cells[1].data
-                if not p_name:
-                    product_id = False
-                    to_correct_ok = True
-                    error_list.append('No Product Description')
-                    comment += ' Product Description to be defined'
-                else:
-                    try:
                         product_name = p_name.strip()
-                        p_ids = product_obj.search(cr, uid, [('name', '=', product_name)])
+                        p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code),('name', '=', product_name)])
                         if not p_ids:
+                            default_code = False
                             product_id = False
                             to_correct_ok = True
-                            comment += ' Description: %s'%p_name
-                            error_list.append('The Product was not found in the list of the products.')
+                            comment += ' Code: %s, Description: %s'%(product_code, product_name)
+                            error_list.append('The Product\'s Code and Description do not match.')
                         else:
+                            code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                            default_code = p_ids[0]
                             product_id = p_ids[0]
                             nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
                             nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
                             nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                             nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                             proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
-                            price_unit = product_obj.browse(cr, uid, [product_id], context=context)[0].list_price
                     except Exception:
-                         error_list.append('The Product Description has to be a string.')
-                         comment += 'Product Description to be defined'
-                         product_id = False
+                         error_list.append('The Product Code has to be a string.')
+                         comment += ' Product Code and Description to be defined'
+                         default_code = False
                          to_correct_ok = True
                     
                 if not row.cells[2].data :
