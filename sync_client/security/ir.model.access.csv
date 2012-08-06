@@ -9,4 +9,6 @@
 "sync_read_write_info_id","sync_read_write_info","sync.client.write_info","True","","","","sync_common.sync_read_group"
 "sync_read_entity_id","sync_read_entity","sync.client.entity","True","","","","sync_common.sync_read_group"
 "sync_read_sync_server_connection_id","sync_read_sync_server_connection","sync.client.sync_server_connection","True","","","","sync_common.sync_read_group"
+"sync_read_monitor_id","sync_read_monitor","sync.monitor","True","","","","sync_common.sync_read_group"
+"sync_read_version_id","sync_read_version","sync_client.version","True","","","","sync_common.sync_read_group"
 
