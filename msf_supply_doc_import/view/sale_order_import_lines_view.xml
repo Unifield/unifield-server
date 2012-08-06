@@ -28,11 +28,12 @@
                 <xpath expr="//form[@string='Sales Order Lines']//notebook" position="after">
                     <newline/>
                     <field name="to_correct_ok" readonly="1" invisible="1"/>
+                    <field name="show_msg_ok" readonly="1" invisible="1"/>
                     <field name="text_error" 
                     nolabel="1" 
                     readonly="1" 
                     colspan="3" 
-                    attrs="{'invisible': [('to_correct_ok', '=', False)]}"/>
+                    attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
                     <newline/>
                 </xpath>
                 </data>
