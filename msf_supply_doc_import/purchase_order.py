@@ -231,44 +231,52 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         price_unit = row.cells[4].data
                     else:
                          try:
-                             float(row.cells[2].data)
-                             product_qty = row.cells[2].data
+                             float(row.cells[4].data)
+                             product_qty = row.cells[4].data
                          except ValueError:
                              error_list.append('The Price Unit was not a number, we set it to 0 by default.')
                              to_correct_ok = True
                 
-                if row.cells[5].data:
+                try:
                     if row.cells[5].type == 'datetime':
                         date_planned = row.cells[5].data
                     else:
                         error_list.append('The date format was not good so we took the date from the header.')
                         to_correct_ok = True
-                else:
+                except Exception:
                     error_list.append('The date was not specified so we took the one from the header.')
                     to_correct_ok = True
                 
-                curr = row.cells[6].data
-                if not curr:
-                    show_msg_ok = True
-                    error_list.append('No currency was defined.')
-                else:
-                    try:
-                        curr_name = curr.strip().upper()
-                        currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                        if currency_ids[0] == browse_purchase.pricelist_id.currency_id.id:
-                            functional_currency_id = currency_ids[0]
-                        else:
-                            error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_purchase.pricelist_id.currency_id.name))
-                            show_msg_ok = True
-                    except Exception:
-                         error_list.append('The Currency Name was not found.')
-                         show_msg_ok = True
-                
-                if row.cells[7].data:
-                    if comment:
-                        comment += ', %s'%row.cells[7].data
+                try:
+                    curr = row.cells[6].data
+                    if not curr:
+                        show_msg_ok = True
+                        error_list.append('No currency was defined.')
                     else:
-                        comment = row.cells[7].data
+                        try:
+                            curr_name = curr.strip().upper()
+                            currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
+                            if currency_ids[0] == browse_purchase.pricelist_id.currency_id.id:
+                                functional_currency_id = currency_ids[0]
+                            else:
+                                error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_purchase.pricelist_id.currency_id.name))
+                                show_msg_ok = True
+                        except Exception:
+                             error_list.append('The Currency Name was not found.')
+                             show_msg_ok = True
+                except Exception:
+                    error_list.append('No currency was defined.')
+                    to_correct_ok = True
+                
+                try:
+                    if row.cells[7].data:
+                        if comment:
+                            comment += ', %s'%row.cells[7].data
+                        else:
+                            comment = row.cells[7].data
+                except Exception:
+                    error_list.append("No comment defined")
+                    show_msg_ok = True
                     
                 proc_type = 'make_to_stock'
                 for product in product_obj.read(cr, uid, ids, ['type'], context=context):
@@ -302,6 +310,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 vals['order_line'].append((0, 0, to_write))
             
         # write order line on PO
+        context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
         
         if [x for x in obj.order_line if x.to_correct_ok]:
@@ -538,26 +547,26 @@ class purchase_order_line(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
         message = ''
-        
-        if vals.get('product_uom'):
-            if vals.get('product_uom') == tbd_uom:
-                message += 'You have to define a valid UOM, i.e. not "To be define".'
-        if vals.get('nomen_manda_0'):
-            if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
-                message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        if vals.get('nomen_manda_1'):
-            if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
-                message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        if vals.get('nomen_manda_2'):
-            if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
-                message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
-        # the 3rd level is not mandatory
-        if message:
-            raise osv.except_osv(_('Warning !'), _(message))
-        else:
-            vals['show_msg_ok'] = False
-            vals['to_correct_ok'] = False
-            vals['text_error'] = False
+        if not context.get('button') or not context.get('import_in_progress'):
+            if vals.get('product_uom'):
+                if vals.get('product_uom') == tbd_uom:
+                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if vals.get('nomen_manda_0'):
+                if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                    message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if vals.get('nomen_manda_1'):
+                if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                    message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if vals.get('nomen_manda_2'):
+                if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                    message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            # the 3rd level is not mandatory
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+            else:
+                vals['show_msg_ok'] = False
+                vals['to_correct_ok'] = False
+                vals['text_error'] = False
         
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 

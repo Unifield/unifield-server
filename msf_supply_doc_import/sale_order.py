@@ -240,7 +240,8 @@ That means Not price, Neither Delivery requested date. """))
                 sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
                 vals['order_line'].append((0, 0, to_write))
             
-        # write order line on PO
+        # write order line on SO
+        context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
         
         if [x for x in obj.order_line if x.to_correct_ok]:
@@ -444,7 +445,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 
                 vals['order_line'].append((0, 0, to_write))
             
-        # write order line on PO
+        # write order line on SO
+        context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
         
         if [x for x in obj.order_line if x.to_correct_ok]:
@@ -570,7 +572,7 @@ class sale_order_line(osv.osv):
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
         message = ''
         
-        if not context.get('button'):
+        if not context.get('button') or not context.get('import_in_progress'):
             if vals.get('product_uom'):
                 if vals.get('product_uom') == tbd_uom:
                     message += 'You have to define a valid UOM, i.e. not "To be define".'
