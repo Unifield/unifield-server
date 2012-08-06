@@ -122,54 +122,88 @@ class stock_move(osv.osv):
         '''
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
+        
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id, loc_dest_id, address_id, parent_type, purchase_line_id,out)
+        
+        product_type = False
+        location_id = loc_id and location_obj.browse(cr, uid, loc_id) or False
+        location_dest_id = loc_dest_id and location_obj.browse(cr, uid, loc_dest_id) or False
         service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        non_stockable_loc = location_obj.search(cr, uid, [('non_stockable_ok', '=', True)])
+        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        input_id = location_obj.search(cr, uid, [('input_ok', '=', True)])
+        po = purchase_line_id and self.pool.get('purchase.order.line').browse(cr, uid, purchase_line_id) or False
+        cd = po and po.order_id.cross_docking_ok or False
+        packing_ids = []
+        
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+        for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids):
+            packing_ids.append(wh.lot_packing_id.id)
+        
+        vals = {}
+        
+        if prod_id:
+            product_type = prod_obj.browse(cr, uid, prod_id).type
+            vals.update({'product_type': product_type})
+        else:
+            vals.update({'product_type': False})
 
         if service_loc:
             service_loc = service_loc[0]
-        
-        if prod_id and prod_obj.browse(cr, uid, prod_id).type in ('service_recep', 'service') and parent_type == 'in':
-            #case product is SERVICE
-            if service_loc:
-                prod_type = prod_obj.browse(cr, uid, prod_id).type
-                result.setdefault('value', {}).update(location_dest_id=service_loc, product_type=prod_type)
-                result.update({'domain': {'location_dest_id': [('id', '=', service_loc)]}})
-        else:
-            #case product is NOT SERVICE
-            if loc_dest_id == service_loc:
-                result.setdefault('value', {}).update(location_dest_id=False, product_type=prod_id and prod_id.type or 'product')
-
-            if parent_type == 'out':
-                #case OUT
-                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
-                    #case NON STOCK
-                    result.update({'domain': {'location_id': [('check_prod_loc','=',[prod_id,'out'])]}})
-                else:
-                    #case STOCK
-                    result.update({'domain': {'location_id': [('standard_out_ok', '=', 'src')]}})
-                result.update({'domain': {'location_dest_id': [('standard_out_ok', '=', 'dest')]}})
-
-            elif parent_type == 'internal':
-                #case INTERNAL
-                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
-                    from_ids = self.pool.get('stock.location').search(cr,uid,['|', ('quarantine_location','=',True), ('cross_docking_location_ok','=',True)])
-                    to_ids = from_ids + self.pool.get('stock.location').search(cr,uid,['|', ('usage','=','inventory'), ('destruction_location','=',True)])
-                    result.update({'domain': {'location_dest_id': [('id', 'in', to_ids)], 'location_id': [('id', 'in', from_ids)]}})
-                else:
-                    id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-                    loc_ids = self.pool.get('stock.location').search(cr,uid,['|', ('usage','=','internal'), ('location_id','child_of',id_virt)])
-                    result.update({'domain': {'location_dest_id': [('id', 'in', loc_ids)], 'location_id': [('id', 'in', loc_ids)]}})
-
+            
+        if non_stockable_loc:
+            non_stockable_loc = non_stockable_loc[0]
+            
+        if input_id:
+            input_id = input_id[0]
+            
+        if not prod_id:
+            if parent_type == 'in':
+                vals.update(location_dest_id=False)
+            elif parent_type == 'out':
+                vals.update(location_id=False)
             else:
-                #case IN
-                if prod_id and prod_obj.browse(cr, uid, prod_id).type == 'consu':
-                    #case NON STOCK
-                    result.update({'domain': {'location_dest_id': [('check_prod_loc', '=', [prod_id, 'in'])]}})
-                else:
-                    #case STOCK
-                    id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-                    loc_ids = self.pool.get('stock.location').search(cr,uid,['|', ('usage', '=', 'internal'), ('location_id', 'child_of', id_virt)])
-                    result.update({'domain': {'location_dest_id': [('id', 'in', loc_ids)]}})
+                vals.update(location_id=False, location_dest_id=False)
+            
+        # Case when incoming shipment
+        if product_type and parent_type == 'in':
+            if product_type in ('service_recep', 'service'):
+                if service_loc:
+                    vals.update(location_dest_id=service_loc, product_type=product_type)
+            elif product_type == 'consu' and cd and loc_dest_id not in (id_cross, service_loc):
+                vals.update(location_dest_id=id_cross)
+            elif product_type == 'consu' and not cd and loc_dest_id not in (id_cross, service_loc):
+                vals.update(location_dest_id=non_stockable_loc)
+            elif product_type == 'product' and not (loc_dest_id and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok)):
+                vals.update(location_dest_id=input_id)
+        # Case when internal picking
+        elif product_type and parent_type == 'internal':
+            # Source location
+            if product_type == 'consu' and not (loc_id and (location_id.cross_docking_location_ok or location_id.quarantine_location)):
+                vals.update(location_id=id_cross)
+            elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or location_dest_id.virtual_ok)):
+                vals.update(location_id=False)
+            # Destination location
+            if product_type == 'consu' and not (loc_dest_id and (location_dest_id.usage == 'inventory' or location_dest_id.destruction_location or location_dest_id.quarantine_location)):
+                vals.update(location_dest_id=False)
+            elif product_type == 'product' and not (loc_dest_id and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok)):
+                vals.update(location_dest_id=False)
+        # Case when outgoing delivery or picking ticket
+        elif product_type and parent_type == 'out':
+            # Source location
+            if product_type == 'consu' and not (loc_id and location_id.cross_docking_location_ok):
+                vals.update(location_id=id_cross)
+            elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or not location_id.quarantine_location or not location_id.output_ok or not location_id.input_ok)):
+                vals.update(location_id=False)
+            # Destinatio location
+            if product_type == 'consu' and not (loc_id and (location_id.output_ok or location_id.usage == 'customer')):
+                if loc_id and loc_id not in packing_ids:
+                    vals.update(location_dest_id=False)
+                
+        if not result.get('value'):
+            result['value'] = vals
+        else:
+            result['value'].update(vals)
 
         return result
     

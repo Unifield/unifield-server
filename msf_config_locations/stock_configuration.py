@@ -43,7 +43,7 @@ class stock_location(osv.osv):
         input_loc = []
         for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids):
             output_loc.extend(self.search(cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)]))
-            input_loc.extend(self.search(cr, uid, [('location_id', 'child of', wh.lot_input_id.id)]))
+            input_loc.extend(self.search(cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)]))
             
         for id in ids:
             if field_name == 'output_ok':
@@ -138,7 +138,7 @@ class stock_location(osv.osv):
         '''
         Returns the available locations for destination location of an incoming shipment according to the product.
         '''
-        res = [('usage', '=', 'internal')]
+        res = ['|', '|', '|', '|', ('usage', '=', 'internal'), ('service_location', '=', True), ('non_stockable_ok', '=', True), ('cross_docking_location_ok', '=', True), ('virtual_ok', '=', True)]
         for arg in args:
             if arg[0] == 'incoming_dest' and arg[1] == '=':
                 if arg[2] == False:
@@ -149,9 +149,9 @@ class stock_location(osv.osv):
                 if product.type in ('service', 'service_recep'):
                     res = [('service_location', '=', True)]
                 elif product.type == 'consu':
-                    res = ['|', ('cross_docking_location_ok', '=', True), ('non_stockable_ok', '=', True), ('virtual_ok', '=', True)]
+                    res = ['|', '|', ('cross_docking_location_ok', '=', True), ('non_stockable_ok', '=', True), ('virtual_ok', '=', True)]
                 else:
-                    res = [('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+                    res = ['|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
                     
         return res
     
@@ -170,7 +170,7 @@ class stock_location(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     # Cross-docking locations
-                    res = ['|', ('cross_docking_location_ok', '=' ,True)]
+                    res = [('cross_docking_location_ok', '=' ,True)]
                 else:
                     # All internal locations except Quarantine (both), Output (& children) and Input locations
                     res = [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]
@@ -181,7 +181,7 @@ class stock_location(osv.osv):
         '''
         Return the available locations for source location of an internal picking according to the product
         '''
-        res = ['|', '|', '|', ('cross_docking_location_ok', '=', True), ('quarantine_location', '=', True), ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+        res = [('service_location', '=', False), '|', '|', '|', ('cross_docking_location_ok', '=', True), ('quarantine_location', '=', True), ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
         for arg in args:
             if arg[0] == 'internal_src' and arg[1] == '=':
                 if arg[2] == False:
@@ -191,10 +191,10 @@ class stock_location(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     # Cross docking and quarantine locations
-                    res = ['|', ('cross_docking_location_ok', '=', True), ('quarantine_location', '=', True)]
+                    res = [('service_location', '=', False), '|', ('cross_docking_location_ok', '=', True), ('quarantine_location', '=', True)]
                 else:
                     # All internal and virtual locations
-                    res = ['|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+                    res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
                     
         return res
     
@@ -203,7 +203,7 @@ class stock_location(osv.osv):
         Returns the available locations for destination location of an internal picking according to the product
         '''
         # Inventory, destruction, quarantine and all internal and virtual locations
-        res = ['|', '|', '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True), ('usage', '=,' 'internal'), ('virtual_ok', '=', True)]
+        res = [('service_location', '=', False), '|', '|', '|', ('usage', 'in', ('internal', 'inventory')), ('destruction_location', '=', True), ('quarantine_location', '=', True), ('virtual_ok', '=', True)]
         for arg in args:
             if arg[0] == 'internal_dest' and arg[1] == '=':
                 if arg[2] == False:
@@ -213,27 +213,30 @@ class stock_location(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     # Inventory, destruction and quarantine location
-                    res = ['|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
+                    res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
                 else:
                     # All internal and virtual locations
-                    res = ['|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+                    res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
                     
         return res
     
     _columns = {
         'central_location_ok': fields.boolean(string='If check, all products in this location are unallocated.'),
         'non_stockable_ok': fields.boolean(string='Non-stockable', help="If checked, the location will be used to store non-stockable products"),
-        'output_ok': fields.function(_get_input_output, fnct_search=_src_input_output, method=True, string='Output Location', type='boolean',
+        'output_ok': fields.function(_get_input_output, method=True, string='Output Location', type='boolean',
+                                     store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20)},
                                      help='If checked, the location is the output location of a warehouse or a children.'),
-        'input_ok': fields.function(_get_input_output, fnct_search=_src_input_output, method=True, string='Input Location', type='boolean',
+        'input_ok': fields.function(_get_input_output,  method=True, string='Input Location', type='boolean',
+                                    store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20)},
                                      help='If checked, the location is the input location of a warehouse or a children.'),
-        'virtual_ok': fields.function(_get_virtual, fnct_search=_src_virtual, method=True, string='Virtual Location', type='boolean',
+        'virtual_ok': fields.function(_get_virtual,  method=True, string='Virtual Location', type='boolean',
+                                      store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20)},
                                      help='If checked, the location is a virtual location.'),
         'picking_ticket_src': fields.function(_get_dummy, fnct_search=_src_pick_src, method=True, string='Picking Ticket Src. Loc.', type='boolean',
                                               help='Returns the available locations for source location of a picking ticket according to the product.'),
         'incoming_dest': fields.function(_get_dummy, fnct_search=_dest_inc_ship, method=True, string='Incoming shipment Dest. Loc.', type='boolean',
                                          help="Returns the available locations for destination location of an incoming shipment according to the product."),
-        'outgoing_src': fields.function(_get_dummy, fnct_searc=_src_out, method=True, string='Outgoing delivery Src. Loc.', type='boolean',
+        'outgoing_src': fields.function(_get_dummy, fnct_search=_src_out, method=True, string='Outgoing delivery Src. Loc.', type='boolean',
                                         help='Returns the available locations for source location of an outgoing delivery according to the product.'),
         'internal_src': fields.function(_get_dummy, fnct_search=_src_int, method=True, string='Internal Picking Src. Loc.', type='boolean',
                                         help='Returns the available locations form source loctaion of an internal picking according to the product.'),
