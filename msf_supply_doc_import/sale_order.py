@@ -125,7 +125,7 @@ class sale_order(osv.osv):
                 if row_len > 6:
                     raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
 Product Code, Product Description, Quantity, UoM, Currency, Comment.
-That means Not price, Neither Delivery requested date. Please check the line %s of your Excel File """%line_num))
+That means Not price, Neither Delivery requested date. """))
                 
                 # for each cell we check the value
                 product_code = row.cells[0].data
@@ -159,7 +159,7 @@ That means Not price, Neither Delivery requested date. Please check the line %s 
                     default_code = False
                     product_id = False
                     to_correct_ok = True
-                    comment += ' Code: %s, Description: %s'%(product_code or 'To be defined', product_name or 'To be defined')
+                    comment += ' Code: %s, Description: %s'%(product_code or 'To be defined', p_name or 'To be defined')
                     error_list.append('The Product\'s Code and Description have to be defined both.')
                     
                 product_qty = row.cells[2].data
@@ -304,7 +304,7 @@ That means Not price, Neither Delivery requested date. Please check the line %s 
                 row_len = len(row)
                 if row_len > 8:
                     raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. Please check the line %s of your Excel File """%line_num))
+Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
                 
                 # for each cell we check the value
                 product_code = row.cells[0].data
@@ -334,6 +334,12 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                          product_id = False
                          default_code = False
                          to_correct_ok = True
+                else:
+                    default_code = False
+                    product_id = False
+                    to_correct_ok = True
+                    comment += ' Code: %s, Description: %s'%(product_code or 'To be defined', p_name or 'To be defined')
+                    error_list.append('The Product\'s Code and Description have to be defined both.')
                     
                 if not row.cells[2].data :
                     to_correct_ok = True
