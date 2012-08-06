@@ -103,7 +103,7 @@ class sale_order(osv.osv):
         
         # ignore the first row
         reader.next()
-        line_num = 1
+        line_num = 0
         for row in reader:
             if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data :
                 # default values
@@ -125,7 +125,7 @@ class sale_order(osv.osv):
                 if row_len > 6:
                     raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
 Product Code, Product Description, Quantity, UoM, Currency, Comment.
-That means Not price, Neither Delivery requested date. """))
+That means Not price, Neither Delivery requested date. Please check the line %s of your Excel File """%line_num))
                 
                 # for each cell we check the value
                 product_code = row.cells[0].data
@@ -142,7 +142,6 @@ That means Not price, Neither Delivery requested date. """))
                             comment += ' Code: %s, Description: %s'%(product_code, product_name)
                             error_list.append('The Product\'s Code and Description do not match.')
                         else:
-                            code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                             default_code = p_ids[0]
                             product_id = p_ids[0]
                             nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
@@ -151,8 +150,9 @@ That means Not price, Neither Delivery requested date. """))
                             nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                             proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
                     except Exception:
-                         error_list.append('The Product Code has to be a string.')
+                         error_list.append('The Product Code and Description have to be a string.')
                          comment += ' Product Code and Description to be defined'
+                         product_id = False
                          default_code = False
                          to_correct_ok = True
                 else:
@@ -281,7 +281,7 @@ That means Not price, Neither Delivery requested date. """))
         
         # ignore the first row
         reader.next()
-        line_num = 1
+        line_num = 0
         for row in reader:
             if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data or row.cells[6].data or row.cells[7].data:
                 # default values
@@ -304,7 +304,7 @@ That means Not price, Neither Delivery requested date. """))
                 row_len = len(row)
                 if row_len > 8:
                     raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"""))
+Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. Please check the line %s of your Excel File """%line_num))
                 
                 # for each cell we check the value
                 product_code = row.cells[0].data
@@ -321,7 +321,6 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                             comment += ' Code: %s, Description: %s'%(product_code, product_name)
                             error_list.append('The Product\'s Code and Description do not match.')
                         else:
-                            code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                             default_code = p_ids[0]
                             product_id = p_ids[0]
                             nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
@@ -330,8 +329,9 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                             nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                             proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
                     except Exception:
-                         error_list.append('The Product Code has to be a string.')
+                         error_list.append('The Product Code and Description have to be a string.')
                          comment += ' Product Code and Description to be defined'
+                         product_id = False
                          default_code = False
                          to_correct_ok = True
                     
