@@ -11,9 +11,6 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
@@ -71,19 +68,7 @@
             </field>
         </record>
         
-        <record id="purchase_order_tree" model="ir.ui.view">
-            <field name="name">purchase.order.type.tree.view</field>
-            <field name="model">purchase.order</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="purchase.purchase_order_tree" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
+        <!-- Here, there was a view to remove the 'Delete' button on purchase order tree view -->
         
     </data>
 </openerp>
