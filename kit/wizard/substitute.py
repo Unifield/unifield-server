@@ -71,8 +71,8 @@ class substitute(osv.osv_memory):
                 # integrity is not met
                 if item.integrity_status_func_substitute_item != 'empty':
                     return False
-                # availability is not met
-                if item.availability_status_func_substitute_item != 'available':
+                # availability is not met - we use the hidden one, used for testing with fixed selection values
+                if item.availability_status_hidden_func_substitute_item != 'available':
                     return False
                 
         return True
@@ -353,6 +353,55 @@ class substitute(osv.osv_memory):
     
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
+        check if confirmation wizard is needed
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        item_obj = self.pool.get('substitute.item')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # we check the availability of selected src location for processed product - uom_id is false, we take the default one from kit product
+            res = item_obj.common_on_change(cr, uid, ids, obj.source_location_id.id, obj.product_id_substitute.id, obj.lot_id_substitute.id, uom_id=False, result=None, context=context)
+            # de-kitting need 1 PCE, if less available, we open the confirmation wizard
+            available_qty = res['value']['qty_substitute_item']
+            if available_qty < 1.0:
+                # we display the back button - hide close button
+                return self.confirmation_de_kitting(cr, uid, ids, context=dict(context, display_back_confirm=True, display_close_confirm=False))
+            else:
+                return self._do_de_kitting(cr, uid, ids, context=context)
+    
+    def confirmation_de_kitting(self, cr, uid, ids, context=None):
+        '''
+        open confirmation wizard
+        '''
+        # objects
+        wiz_obj = self.pool.get('wizard')
+        
+        # to de kitting
+        for obj in self.browse(cr, uid, ids, context=context):
+            # data
+            name = _("The Kit \'%s\' is not available from selected source location \'%s\'. Are you sure you want to process the Dekitting?")%(obj.product_id_substitute.name, obj.source_location_id.name)
+            model = 'confirm'
+            step = context.get('step', 'default')
+            question = 'The Kit \'%s\' is not available from selected source location \'%s\'. Are you sure you want to process the Dekitting?'
+            clazz = 'substitute'
+            func = '_do_de_kitting'
+            args = [ids]
+            kwargs = {}
+            # open the selected wizard - context['active_ids']
+            res = wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                    callback={'clazz': clazz,
+                                                                                                              'func': func,
+                                                                                                              'args': args,
+                                                                                                              'kwargs': kwargs}))
+        return res
+    
+    def _do_de_kitting(self, cr, uid, ids, context=None):
+        '''
         de-kitting method
         '''
         if isinstance(ids, (int, long)):
@@ -573,9 +622,7 @@ class substitute_item(osv.osv_memory):
         product_obj = prod_obj.browse(cr, uid, product_id, context=context)
         # uom from product is taken by default if needed
         uom_id = uom_id or product_obj.uom_id.id
-        # we do not want the children location
-        stock_context = dict(context, compute_child=False)
-        # we check for the available qty (in:done, out: assigned, done)
+        # we check for the available qty (in:done, out: assigned, done) - consider_child_locations=False
         res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
         if prodlot_id:
             # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
@@ -750,8 +797,8 @@ class substitute_item(osv.osv_memory):
             result[obj.id].update({'integrity_status_func_substitute_item': self.validate_item(cr, uid, obj.id, context=context)})
             # availability_status_func_substitute_item
             result[obj.id].update({'availability_status_func_substitute_item': (compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'Available (%.2f %s)' or 'Not Enough Available (%.2f %s)')%(compute_avail['value']['qty_substitute_item'], obj.uom_id_substitute_item.name)})
-            # integrity_status_hidden_func_substitute_item
-            result[obj.id].update({'integrity_status_hidden_func_substitute_item': compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'available' or 'not_available'})
+            # availability_status_hidden_func_substitute_item
+            result[obj.id].update({'availability_status_hidden_func_substitute_item': compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'available' or 'not_available'})
             
         return result
     
@@ -769,7 +816,7 @@ class substitute_item(osv.osv_memory):
                 'hidden_batch_management_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='B.Num', multi='get_vals_substitute_item', store=False, readonly=True),
                 'availability_value_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='float', string='Availability Value', multi='get_vals_substitute_item', store=False, readonly=True),
                 'availability_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='char', size=1024, string='Availability', multi='get_vals_substitute_item', store=False, readonly=True),
-                'integrity_status_hidden_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=SELECTION_AVAILABLE, string='Hidden availability', multi='get_vals_substitute_item', store=False, readonly=True),
+                'availability_status_hidden_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=SELECTION_AVAILABLE, string='Hidden availability', multi='get_vals_substitute_item', store=False, readonly=True),
                 'integrity_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_substitute_item', store=False, readonly=True),
                 }
     

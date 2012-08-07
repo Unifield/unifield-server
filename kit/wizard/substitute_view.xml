@@ -41,7 +41,7 @@
                     </group>
                     <group col="4" colspan="4">
                         <field name="replacement_item_ids" nolabel="True">
-                        	<tree string="Products from the stock to the Kit" editable="top" colors="red:integrity_status_func_substitute_item != 'empty' or integrity_status_hidden_func_substitute_item != 'available'">
+                        	<tree string="Products from the stock to the Kit" editable="top" colors="red:integrity_status_func_substitute_item != 'empty' or availability_status_hidden_func_substitute_item != 'available'">
                         		<field name="product_id_substitute_item"
                 					on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item, context)"
                 					context="location=location_id_substitute_item, uom=uom_id_substitute_item" />
@@ -64,7 +64,7 @@
                 				<field name="module_substitute_item" />
             					<field name="integrity_status_func_substitute_item" />
             					<field name="availability_status_func_substitute_item" />
-            					<field name="integrity_status_hidden_func_substitute_item" invisible="True" />
+            					<field name="availability_status_hidden_func_substitute_item" invisible="True" />
                         	</tree>
                         </field>
                     </group>
