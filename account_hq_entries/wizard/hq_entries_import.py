@@ -195,7 +195,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
             if filename:
                 if filename.split('.')[-1] != 'csv':
-                    raise osv.except_osv(_('Warning'), _('This wizard only accept CSV files.'))
+                    raise osv.except_osv(_('Warning'), _('You are trying to import a file with the wrong file format; please import a CSV file.'))
             res = True
             res_amount = 0.0
             amount = 0.0
