@@ -271,8 +271,8 @@
                             </page>
                             <page string="CashBox">
                                 <field name="prev_reg_id" invisible="1"/>
-                                <group col="2" colspan="2" expand="1">
-                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
+                                <group col="4" colspan="4">
+                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
                                         <tree string = "Opening Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
@@ -284,8 +284,6 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                </group>
-                                <group col="2" colspan="2" expand="1">
                                     <field name="closing_balance_frozen" invisible="1"/>
                                     <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|', ('state','!=','open'), ('closing_balance_frozen', '=', True)]}">
                                         <tree string = "Closing Balance" editable="bottom">
