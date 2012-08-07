@@ -139,6 +139,7 @@ class purchase_order(osv.osv):
                 error_list = []
                 to_correct_ok = False
                 show_msg_ok = False
+                uom_id = False
                 comment = ''
                 date_planned = obj.delivery_requested_date
                 browse_purchase = purchase_obj.browse(cr, uid, ids, context=context)[0]
@@ -205,7 +206,6 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 
                 p_uom = row.cells[3].data
                 if not p_uom:
-                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                     to_correct_ok = True
                     error_list.append('No product UoM was defined.')
                 else:
@@ -213,14 +213,12 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         uom_name = p_uom.strip()
                         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                         if not uom_ids:
-                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                             to_correct_ok = True
                             error_list.append('The UOM was not found.')
                         else:
                             uom_id = uom_ids[0]
                     except Exception:
                          error_list.append('The UOM name has to be a string.')
-                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                          to_correct_ok = True
                     
                 if not row.cells[4].data:
@@ -363,148 +361,40 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        error_list = []
+        obj_data = self.pool.get('ir.model.data')
         to_write = kwargs['to_write']
         order_id = to_write['order_id']
+        text_error = to_write['text_error']
         po_obj = self.pool.get('purchase.order')
         browse_po = po_obj.browse(cr, uid, order_id, context=context)
         for po in browse_po:
             # on_change functions to call for updating values
-            pricelist_id = po.pricelist_id.id or False
+            pricelist = po.pricelist_id.id or False
             partner_id = po.partner_id.id or False
             date_order = po.date_order or False
             fiscal_position = po.fiscal_position or False
             state =  po.state or False
-            order_id = po.id or False
-            product_id = to_write['product_id']
-            product_qty = to_write['product_qty']
+            product = to_write['product_id']
+            qty = to_write['product_qty']
             price_unit = to_write['price_unit']
-            uom_id = to_write['product_uom']
-            if product_id and product_qty and not price_unit:
-                self.compute_price_unit(cr, uid, ids,to_write= to_write,partner_id=partner_id,product_qty=product_qty, product_id=product_id, uom_id=uom_id, 
-                                        state=state,order_id=order_id,pricelist_id=pricelist_id, date_order=date_order,context=context)
-            if uom_id:
+            uom = to_write['product_uom']
+            if product and qty and not price_unit:
+                res = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
+                        partner_id, date_order, fiscal_position, date_planned=False,
+                        name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
+                        nomen_manda_0=False, comment=False, context=context)
+                price_unit = res.get('value', {}).get('price_unit', False)
+                uom = res.get('value', {}).get('product_uom', False)
+                date_planned = res.get('value', {}).get('date_planned', False)
+                warning_msg = res.get('warning', {}).get('message', '')
+                text_error += '\n %s'%warning_msg
+                to_write.update({'price_unit': price_unit, 'product_uom':uom,'text_error':text_error})
+            if uom:
                 self.check_data_for_uom(cr, uid, ids, to_write= to_write, context=context)
-        
-    def compute_price_unit(self, cr, uid, ids, *args, **kwargs):
-        """
-        This method was strongly influenced by the on_change method "product_id_on_change"
-        in purchase_override>purchase.py
-        """
-        context = kwargs['context']
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
-        to_write = kwargs['to_write']
-        text_error = to_write['text_error']
-        to_correct_ok = to_write['to_correct_ok']
-        partner_id = kwargs['partner_id']
-        product = kwargs['product_id']
-        uom = kwargs['uom_id']
-        qty = kwargs['product_qty']
-        state = kwargs['state']
-        order_id = kwargs['order_id']
-        pricelist = kwargs['pricelist_id']
-        date_order = kwargs['date_order']
-        suppinfo_obj = self.pool.get('product.supplierinfo')
-        partner_price = self.pool.get('pricelist.partnerinfo')
-        all_qty = qty
-        if product and not uom or uom == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]:
-            uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
-        
-        if order_id and state == 'draft' and product:
-            domain = [('product_id', '=', product), 
-                      ('product_uom', '=', uom), 
-                      ('order_id', '=', order_id)]
-            other_lines = self.search(cr, uid, domain)
-            for l in self.browse(cr, uid, other_lines):
-                all_qty += l.product_qty 
-        
-        func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-        if pricelist:
-            currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
-        else:
-            currency_id = func_curr_id
-        
-        # Update the old price value
-        to_write.update({'product_qty': qty})
-        if product and not to_write.get('price_unit', False) and all_qty != 0.00:
-            # Display a warning message if the quantity is under the minimal qty of the supplier
-            currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
-            tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
-            info_prices = []
-            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                     ('product_id', '=', tmpl_id)], 
-                                                     order='sequence asc', context=context)
-            domain = [('uom_id', '=', uom),
-                      ('currency_id', '=', currency_id),
-                      '|', ('valid_from', '<=', date_order),
-                      ('valid_from', '=', False),
-                      '|', ('valid_till', '>=', date_order),
-                      ('valid_till', '=', False)]
-        
-            if sequence_ids:
-                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
-                domain.append(('suppinfo_id.sequence', '=', min_seq))
-                domain.append(('suppinfo_id', 'in', sequence_ids))
-        
-                info_prices = partner_price.search(cr, uid, domain, order='min_quantity asc, id desc', limit=1, context=context)
-                
-            if info_prices:
-                info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
-                to_write.update({'old_price_unit': info_price.price, 'price_unit': info_price.price})
-                text_error += '\n The product unit price has been set ' \
-                              'for a minimal quantity of %s (the min quantity of the price list), '\
-                              'it might change at the supplier confirmation.' % info_price.min_quantity
-                to_write.update({'text_error': text_error,
-                                 'to_correct_ok': True})
             else:
-                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, to_write['price_unit'])
-                to_write.update({'old_price_unit': old_price})
-        else:
-            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, to_write.get('price_unit'))
-            to_write.update({'old_price_unit': old_price})
-                
-        # Set the unit price with cost price if the product has no staged pricelist
-        if product and qty != 0.00: 
-            to_write.update({'nomen_manda_0': False, 'nomen_manda_1': False,
-                             'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False, 
-                             'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
-                             'nomen_sub_4': False, 'nomen_sub_5': False})
-            st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
-            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price)
-        
-            if to_write.get('price_unit', False) == False and (state and state == 'draft') or not state :
-                to_write.update({'price_unit': st_price, 
-                                 'old_price_unit': st_price})
-            elif state and state != 'draft' and old_price_unit:
-                to_write.update({'price_unit': old_price_unit, 
-                                 'old_price_unit': old_price_unit})
-                
-            if to_write['price_unit'] == 0.00:
-                to_write.update({'price_unit': st_price, 
-                                 'old_price_unit': st_price})
-                
-        elif qty == 0.00:
-            text_error += "\n You cannot have a 0 quantity, we set the price unit to 0.0." 
-            to_write.update({'price_unit': 0.00, 
-                             'old_price_unit': 0.00,
-                             'to_correct_ok': True,
-                             'text_error': text_error,
-                             })
-        elif not product and not comment and not nomen_manda_0:
-            text_error += "\n You cannot save a line without quantity, nor comment, nor product"
-            to_write.update({'price_unit': 0.00, 
-                             'text_error': text_error,
-                             'to_correct_ok': True,
-                             'product_qty': 0.00, 
-                             'product_uom': False, 
-                             'old_price_unit': 0.00})
-        
-        return to_write
-
+                uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                text_error += '\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.'
+                to_write.update({'product_uom':uom,'text_error':text_error})
         
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
