@@ -212,11 +212,15 @@ That means Not price, Neither Delivery requested date. """))
                          error_list.append('The Currency Name was not found.')
                          show_msg_ok = True
                 
-                if row.cells[5].data:
-                    if comment:
-                        comment += ', %s'%row.cells[7].data
-                    else:
-                        comment = row.cells[5].data
+                try:
+                    if row.cells[5].data:
+                        if comment:
+                            comment += ', %s'%row.cells[5].data
+                        else:
+                            comment = row.cells[5].data
+                except Exception:
+                    error_list.append("No comment defined")
+                    show_msg_ok = True
                     
                 to_write = {
                     'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
@@ -387,38 +391,46 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 else:
                     price_unit = row.cells[4].data
                 
-                if row.cells[5].data :
+                try:
                     if row.cells[5].type == 'datetime':
                         date_planned = row.cells[5].data
                     else:
-                        error_list.append('The date format was not good so we took the date from the header.')
+                        error_list.append('The date format was not in a good format so we took the one from the header.')
                         to_correct_ok = True
-                else:
-                    error_list.append('The date was not specified so we took the date from the header.')
+                except Exception:
+                    error_list.append('The date was not specified so we took the one from the header.')
                     to_correct_ok = True
                 
-                curr = row.cells[6].data
-                if not curr:
-                    show_msg_ok = True
-                    error_list.append('No currency was defined.')
-                else:
-                    try:
-                        curr_name = curr.strip().upper()
-                        currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                        if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
-                            functional_currency_id = currency_ids[0]
-                        else:
-                            error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_sale.pricelist_id.currency_id.name))
-                            show_msg_ok = True
-                    except Exception:
-                         error_list.append('The Currency Name was not found.')
-                         show_msg_ok = True
-                
-                if row.cells[7].data:
-                    if comment:
-                        comment += ', %s'%row.cells[7].data
+                try:
+                    curr = row.cells[6].data
+                    if not curr:
+                        show_msg_ok = True
+                        error_list.append('No currency was defined.')
                     else:
-                        comment = row.cells[7].data
+                        try:
+                            curr_name = curr.strip().upper()
+                            currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
+                            if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                                functional_currency_id = currency_ids[0]
+                            else:
+                                error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_sale.pricelist_id.currency_id.name))
+                                show_msg_ok = True
+                        except Exception:
+                             error_list.append('The Currency Name was not found.')
+                             show_msg_ok = True
+                except Exception:
+                    error_list.append('No currency was defined.')
+                    to_correct_ok = True
+                
+                try:
+                    if row.cells[7].data:
+                        if comment:
+                            comment += ', %s'%row.cells[7].data
+                        else:
+                            comment = row.cells[7].data
+                except Exception:
+                    error_list.append("No comment defined")
+                    show_msg_ok = True
     
                 to_write = {
                     'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
