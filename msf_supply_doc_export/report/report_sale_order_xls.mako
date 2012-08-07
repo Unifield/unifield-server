@@ -50,11 +50,11 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-<ss:Worksheet ss:Name="Sale Order">
-<Table>
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 ##  we loop over the sale_order so "objects" == sale_order
 % for o in objects:
+<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<Table>
+    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 
 ## we loop over the sale_order_line
     <Row>
