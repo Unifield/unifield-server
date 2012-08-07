@@ -202,8 +202,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
         for line in account_change:
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
-                corrected_distrib={
+            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'funding_pool_lines': [(0, 0, {
                             'percentage': 100,
                             'analytic_id': line.analytic_id.id,
@@ -212,8 +211,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                             'source_date': line.date,
                             'destination_id': line.destination_id.id,
                         })]
-                    }
-                )
+                    })
+            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
 
         for line in cc_change:
             # actual distrib_id
@@ -232,14 +231,14 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ])
             ana_line_obj.reverse(cr, uid, fp_old_lines)
             # create new lines
-            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,})
+            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
+                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
         for line in cc_account_change:
             # call correct_account with a new arg: new_distrib
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
-                corrected_distrib={
+            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'cost_center_lines': [(0, 0, {
                             'percentage': 100, 
                             'analytic_id': line.cost_center_id.id,
@@ -256,6 +255,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                             'destination_id': line.destination_id.id,
                         })]
                 })
+            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
 
         # Write lines and validate them
         # Return HQ Entries Tree View in current view
