@@ -299,7 +299,7 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                    <button name="button_confirm_closing_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply" 
+                                    <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply" 
                                         colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
                                         confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
                                 </group>
