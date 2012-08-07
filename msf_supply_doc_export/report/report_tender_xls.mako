@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
  xmlns:x="urn:schemas-microsoft-com:office:excel"
@@ -49,11 +50,12 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-## we loop over the tender so "objects" == tender
-% for o in objects:
-<ss:Worksheet ss:Name="${(o.name or 'Sheet')|x}">
+<ss:Worksheet ss:Name="Tender">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
+## we loop over the tender so "objects" == tender
+% for o in objects:
+
 
 ## we loop over the tender_line_ids
 

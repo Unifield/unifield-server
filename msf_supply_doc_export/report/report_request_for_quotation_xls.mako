@@ -50,12 +50,15 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-## we loop over the purchase_order so "objects" == purchase_order 
-% for o in objects:
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="Request For Quotation">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
+## we loop over the purchase_order so "objects" == purchase_order 
+% for o in objects:
 
+## we loop over the purchase_order_line
+
+    
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
@@ -66,7 +69,6 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">Currency</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
     </Row>
-## we loop over the purchase_order_line
     % for line in o.order_line:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
