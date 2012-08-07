@@ -38,6 +38,7 @@ class hq_entries_import_wizard(osv.osv_memory):
 
     _columns = {
         'file': fields.binary(string="File", filters="*.csv", required=True),
+        'hqfilename': fields.char(string="Filename", size=256),
     }
 
     def parse_date(self, date):
@@ -176,6 +177,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
+        filename = ""
         
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -187,14 +189,21 @@ class hq_entries_import_wizard(osv.osv_memory):
             # Read CSV file
             try:
                 reader = csv.reader(fileobj, delimiter=',', quotechar='"')
+                filename = wiz.hqfilename or ""
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
+            if filename:
+                if filename.split('.')[-1] != 'csv':
+                    raise osv.except_osv(_('Warning'), _('This wizard only accept CSV files.'))
             res = True
             res_amount = 0.0
             amount = 0.0
             # Omit first line that contains columns ' name
-            reader.next()
+            try:
+                reader.next()
+            except e:
+                raise osv.except_osv(_('Error'), _('File is empty!'))
             nbline = 1
             for line in reader:
                 nbline += 1
