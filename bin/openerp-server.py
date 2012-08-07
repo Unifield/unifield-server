@@ -30,6 +30,9 @@ GNU Public Licence.
 (c) 2003-TODAY, Fabien Pinckaers - OpenERP s.a.
 """
 
+from updater import do_update
+do_update()
+
 #----------------------------------------------------------
 # python imports
 #----------------------------------------------------------
@@ -215,7 +218,7 @@ for signum in SIGNALS:
 if os.name == 'posix':
     signal.signal(signal.SIGQUIT, dumpstacks)
 
-def quit():
+def quit(restart=False):
     netsvc.Agent.quit()
     netsvc.Server.quitAll()
     if tools.config['pidfile']:
@@ -235,7 +238,17 @@ def quit():
                 # and would present the forced shutdown
                 thread.join(0.05)
                 time.sleep(0.05)
-    sys.exit(0)
+                time.sleep(1)
+                if os.name == 'nt':
+                    try:
+                        logger.info("Killing", thread.getName())
+                        thread._Thread__stop()
+                    except:
+                        logger.info(str(thread.getName()) + ' could not be terminated')
+    if not restart:
+        sys.exit(0)
+    else:
+	os.execv(sys.executable, [sys.executable] + sys.argv)
 
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')
@@ -247,9 +260,11 @@ netsvc.Server.startAll()
 
 logger.info('OpenERP server is running, waiting for connections...')
 
-while netsvc.quit_signals_received == 0:
-    time.sleep(60)
+tools.restart_required = False
 
-quit()
+while netsvc.quit_signals_received == 0 and not tools.restart_required:
+    time.sleep(5)
+
+quit(restart=tools.restart_required)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
