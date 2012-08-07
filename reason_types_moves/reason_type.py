@@ -130,6 +130,9 @@ class stock_reason_type(osv.osv):
         'is_inventory': fields.function(_get_inventory, fnct_search=_search_inventory, 
                                         method=True, type='boolean', string='Inventory type', 
                                         readonly=True, help='If checked, this reason type will be available in inventory line'),
+        'incoming_ok': fields.boolean(string='Available for incoming shipment ?'),
+        'internal_ok': fields.boolean(string='Available for internal picking ?'),
+        'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
     }
     
 stock_reason_type()

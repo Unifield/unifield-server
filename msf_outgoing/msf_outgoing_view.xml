@@ -198,7 +198,7 @@
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
 							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
-							<field name="reason_type_id" widget="selection"/>
+							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]"/>
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
@@ -280,7 +280,9 @@
 											<field name="dg_check" />
 											<field name="np_check" />
 										</group>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
+										<field name="reason_type_id"
+										       domain="[('outgoing_ok', '=', True)]" 
+										       attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />
@@ -347,7 +349,7 @@
 						<field name="partner_id2" />
 						<field name="origin"/>
 						<newline />
-						<field name="reason_type_id" widget="selection" />
+						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
 						<field name="min_date" />
 					</group>
