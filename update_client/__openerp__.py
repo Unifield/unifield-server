@@ -32,7 +32,10 @@
     'depends': ['sync_client'],
     'data': [
         'wizard_view.xml',
+        'security/ir.model.access.csv',
     ],
     'installable': True,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

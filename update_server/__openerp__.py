@@ -34,7 +34,10 @@
         'entity.xml',
         'version.xml',
         'wizard/manage_version.xml',
+        'security/ir.model.access.csv',
     ],
     'installable': True,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
