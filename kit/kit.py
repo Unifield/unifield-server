@@ -265,6 +265,27 @@ class composition_kit(osv.osv):
                 result.append(id)
         return result
     
+    def _get_new_context(self, cr, uid, ids, context=None):
+        '''
+        add attributes for wizard window
+        
+        kit + product + lot
+        '''
+        # get corresponding data
+        datas = self.read(cr, uid, ids, ['composition_product_id', 'composition_lot_id'], context=context)
+        # kit ids
+        kit_id = ids[0]
+        # product_id
+        product_id = datas[0]['composition_product_id'][0]
+        # prod lot
+        prodlot_id = False
+        if datas[0]['composition_lot_id']:
+            prodlot_id = datas[0]['composition_lot_id'][0]
+        # update the context with needed data
+        context.update(kit_id=kit_id, product_id=product_id, prodlot_id=prodlot_id)
+        
+        return context
+    
     def substitute_items(self, cr, uid, ids, context=None):
         '''
         substitute lines from the composition kit with created new lines
@@ -277,8 +298,10 @@ class composition_kit(osv.osv):
         model = 'substitute'
         step = 'substitute' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
+        # get a context with needed data
+        wiz_context = self._get_new_context(cr, uid, ids, context=dict(context))
         # open the selected wizard
-        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=wiz_context)
         # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
         self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=res['context'])
         # generate mirrors item objects
@@ -304,14 +327,16 @@ class composition_kit(osv.osv):
         model = 'substitute'
         step = 'de_kitting' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
+        # get a context with needed data
+        wiz_context = self._get_new_context(cr, uid, ids, context=dict(context))
         # open the selected wizard
-        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=wiz_context)
         # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
-        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=context)
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=res['context'])
         # generate mirrors item objects
-        data = self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=context)
+        data = self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=res['context'])
         # fill all elements into the many2many field
-        self.pool.get(model).write(cr, uid, [res['res_id']], {'composition_item_ids': [(6,0,data)]}, context=context)
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'composition_item_ids': [(6,0,data)]}, context=res['context'])
         return res
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):

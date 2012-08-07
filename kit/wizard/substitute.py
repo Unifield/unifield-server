@@ -27,6 +27,7 @@ import decimal_precision as dp
 from datetime import datetime, timedelta
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
+from kit import SELECTION_AVAILABLE
 
 class substitute(osv.osv_memory):
     '''
@@ -36,119 +37,62 @@ class substitute(osv.osv_memory):
     
     def validate_item_mirror(self, cr, uid, ids, context=None):
         '''
-        validate the mirror objects for lot and expiry date
+        integrity must be OK
         
-        - lot AND expiry date are mandatory for batch management products
-        - expiry date is mandatory for perishable products
+        'integrity_status_func_substitute_item'
         
         return True or False
         '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        lot_obj = self.pool.get('stock.production.lot')
-        # errors
-        errors = {'missing_lot': False,
-                  'missing_date': False,
-                  'wrong_lot_type_need_standard': False,
-                  'no_lot_needed': False,
-                  }
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
-                # reset the integrity status
-                item.write({'integrity_status': 'empty'}, context=context)
-                # product management type
-                data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable'], context=context)[0]
-                management = data['batch_management']
-                perishable = data['perishable']
-                if management:
-                    if not item.lot_mirror:
-                        # lot is needed
-                        errors.update(missing_lot=True)
-                        item.write({'integrity_status': 'missing_lot'}, context=context)
-                    else:
-                        # we check the lot type is standard if the lot exists
-                        # the type is not specified, as 1) name must be unique for one product 2) lot type cannot be mixed for one product, either std or int, not both
-                        prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
-                                                               ('product_id', '=', item.product_id_substitute_item.id)], context=context)
-                        if prodlot_ids:
-                            data = lot_obj.read(cr, uid, prodlot_ids, ['life_date','name','type'], context=context)
-                            lot_type = data[0]['type']
-                            if lot_type != 'standard':
-                                errors.update(wrong_lot_type_need_standard=True)
-                                item.write({'integrity_status': 'wrong_lot_type_need_standard'}, context=context)
-                        else:
-                            # the lot does not exist, the expiry date is mandatory
-                            if not item.exp_substitute_item:
-                                errors.update(missing_date=True)
-                                item.write({'integrity_status': 'missing_date'}, context=context)
-                elif perishable:
-                    if not item.exp_substitute_item:
-                        # expiry date is needed
-                        errors.update(missing_date=True)
-                        item.write({'integrity_status': 'missing_date'}, context=context)
-                else:
-                    # no lot needed - no date needed
-                    if item.lot_mirror or item.exp_substitute_item:
-                        errors.update(no_lot_needed=True)
-                        item.write({'integrity_status': 'no_lot_needed'}, context=context)
-        # check the encountered errors
-        return all([not x for x in errors.values()])
+                # integrity is not met
+                if item.integrity_status_func_substitute_item != 'empty':
+                    return False
+        
+        return True
     
     def validate_item_from_stock(self, cr, uid, ids, context=None):
         '''
-        validate the from stock objects for lot and expiry date
+        both integrity and availability must be OK
         
-        - lot AND expiry date are mandatory for batch management products
-        - expiry date is mandatory for perishable products
+        'availability_status_func_substitute_item'
+        'integrity_status_func_substitute_item'
         
         return True or False
         '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        lot_obj = self.pool.get('stock.production.lot')
-        # errors
-        errors = {'missing_lot': False,
-                  'missing_date': False,
-                  'wrong_lot_type_need_standard': False,
-                  'must_be_greater_than_0': False,
-                  }
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.replacement_item_ids:
-                # reset the integrity status
-                item.write({'integrity_status': 'empty'}, context=context)
-                # product management type
-                data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable'], context=context)[0]
-                management = data['batch_management']
-                perishable = data['perishable']
-                if management:
-                    if not item.lot_id_substitute_item:
-                        # lot is needed
-                        errors.update(missing_lot=True)
-                        item.write({'integrity_status': 'missing_lot'}, context=context)
-                    else:
-                        data = lot_obj.read(cr, uid, [item.lot_id_substitute_item.id], ['life_date','name','type'], context=context)
-                        lot_type = data[0]['type']
-                        if lot_type != 'standard':
-                            errors.update(wrong_lot_type_need_standard=True)
-                            item.write({'integrity_status': 'wrong_lot_type_need_standard'}, context=context)
-                elif perishable:
-                    if not item.exp_substitute_item:
-                        # expiry date is needed
-                        errors.update(missing_date=True)
-                        item.write({'integrity_status': 'missing_date'}, context=context)
-                else:
-                    # no lot needed
-                    if item.lot_id_substitute_item:
-                        errors.update(no_lot_needed=True)
-                        item.write({'integrity_status': 'no_lot_needed'}, context=context)
-                # quantity check
-                if item.qty_substitute_item <= 0:
-                    errors.update(must_be_greater_than_0=True)
-                    item.write({'integrity_status': 'must_be_greater_than_0'}, context=context)
-        # check the encountered errors
-        return all([not x for x in errors.values()])
+                # integrity is not met
+                if item.integrity_status_func_substitute_item != 'empty':
+                    return False
+                # availability is not met
+                if item.availability_status_func_substitute_item != 'available':
+                    return False
+                
+        return True
     
     def check_integrity(self, cr, uid, ids, context=None):
+        '''
+        simply refresh the wizard - line level fields.function are recomputed
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # kit ids
+        kit_ids = context['active_ids']
+        # simple refresh the wizard, as availability is now a function at line level
+        return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
+    
+    def _check_integrity(self, cr, uid, ids, context=None):
         '''
         call both integrity validation methods
         '''
@@ -335,7 +279,7 @@ class substitute(osv.osv_memory):
         # kit ids
         kit_ids = context['active_ids']
         # integrity constraint
-        integrity_check = self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
+        integrity_check = self._check_integrity(cr, uid, ids, context=context)
         if not integrity_check:
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
@@ -431,7 +375,7 @@ class substitute(osv.osv_memory):
         # kit ids
         kit_ids = context['active_ids']
         # integrity constraint
-        integrity_check = self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
+        integrity_check = self._check_integrity(cr, uid, ids, context=context)
         if not integrity_check:
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
@@ -479,27 +423,18 @@ class substitute(osv.osv_memory):
         
     def check_availability(self, cr, uid, ids, context=None):
         '''
-        check the availability of the replacement items
-        
-        - feedback in the integrity_status column
+        simply refresh the wizard - line level fields.function are recomputed
         '''
-        # objects
-        item_obj = self.pool.get('substitute.item')
-        for obj in self.browse(cr, uid, ids, context=context):
-            for item in obj.replacement_item_ids:
-                # reset the integrity status if it was an availability status
-                # other integrity have 
-                if item.integrity_status == 'not_available':
-                    item.write({'integrity_status': 'empty'}, context=context)
-                # call common_on_change
-                result = item_obj.common_on_change(cr, uid, [item.id], item.location_id_substitute_item.id, item.product_id_substitute_item.id, item.lot_id_substitute_item.id, item.uom_id_substitute_item.id, result=None, context=context)
-                # update the available qty
-                item.write({'hidden_stock_available': result['value']['qty_substitute_item']}, context=context)
-                # check that selected qty is smaller or equal to available one (from on_change function)
-                if item.qty_substitute_item > 0 and result['value']['qty_substitute_item'] < item.qty_substitute_item:
-                    item.write({'integrity_status': 'not_available'}, context=context)
-                    
-        return True
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # kit ids
+        kit_ids = context['active_ids']
+        # simple refresh the wizard, as availability is now a function at line level
+        return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -531,17 +466,23 @@ class substitute(osv.osv_memory):
         
         return result
         
-    _columns = {'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
-                'wizard_id': fields.integer(string='Wizard Id', readonly=True),
+    _columns = {'wizard_id': fields.integer(string='Wizard Id', readonly=True),
+                'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
+                'step_substitute': fields.char(string='Step', size=1024, readonly=True),
+                'product_id_substitute': fields.many2one('product.product', string='Product', readonly=True),
+                'lot_id_substitute': fields.many2one('stock.production.lot', string='Batch Nb', readonly=True),
                 'destination_location_id': fields.many2one('stock.location', string='Destination Location of Items', domain=[('usage', '=', 'internal')], required=True),
                 'source_location_id': fields.many2one('stock.location', string='Source Location of Kit', domain=[('usage', '=', 'internal')]),
+                # m2m
                 'composition_item_ids': fields.many2many('substitute.item.mirror', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
+                # o2m
                 'replacement_item_ids': fields.one2many('substitute.item', 'wizard_id', string='Replacement items'),
-                'step_substitute': fields.char(string='Step', size=1024),
                 }
     
-    _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
-                 'step_substitute': lambda s, cr, uid, c: c.get('step', False),
+    _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False), # from _get_new_context
+                 'step_substitute': lambda s, cr, uid, c: c.get('step', False), # comes from open_wizard function
+                 'product_id_substitute': lambda s, cr, uid, c: c.get('product_id', False), # from _get_new_context
+                 'lot_id_substitute': lambda s, cr, uid, c: c.get('prodlot_id', False), # from _get_new_context
 #                 'destination_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
 #                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  }
@@ -622,7 +563,7 @@ class substitute_item(osv.osv_memory):
         if result is None:
             result = {}
         if not product_id or not location_id:
-            result.setdefault('value', {}).update({'qty_substitute_item': 0.0, 'hidden_stock_available': 0.0})
+            result.setdefault('value', {}).update({'qty_substitute_item': 0.0})
             return result
         
         # objects
@@ -645,7 +586,6 @@ class substitute_item(osv.osv_memory):
         # update the result
         result.setdefault('value', {}).update({'qty_substitute_item': qty,
                                                'uom_id_substitute_item': uom_id,
-                                               'hidden_stock_available': qty,
                                                })
         return result
     
@@ -734,7 +674,58 @@ class substitute_item(osv.osv_memory):
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
     
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+    def _validate_item_from_stock(self, cr, uid, id, context=None):
+        '''
+        validate the from stock objects for lot and expiry date
+        
+        - lot AND expiry date are mandatory for batch management products
+        - expiry date is mandatory for perishable products
+        
+        return corresponding key error for selection
+        
+        from stock and mirror need different validation function
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        # browse the object
+        item = self.browse(cr, uid, id, context=context)
+        # by default we return empty result
+        result = 'empty'
+        # product management type
+        data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable'], context=context)[0]
+        management = data['batch_management']
+        perishable = data['perishable']
+        if management:
+            if not item.lot_id_substitute_item:
+                # lot is needed
+                result = 'missing_lot'
+            else:
+                data = lot_obj.read(cr, uid, [item.lot_id_substitute_item.id], ['life_date','name','type'], context=context)
+                lot_type = data[0]['type']
+                if lot_type != 'standard':
+                    result = 'wrong_lot_type_need_standard'
+        elif perishable:
+            if not item.exp_substitute_item:
+                # expiry date is needed
+                result = 'missing_date'
+        else:
+            # no lot needed
+            if item.lot_id_substitute_item:
+                result = 'no_lot_needed'
+        # quantity check
+        if item.qty_substitute_item <= 0:
+            result = 'must_be_greater_than_0'
+        # we return the found result
+        return result
+    
+    def validate_item(self, cr, uid, id, context=None):
+        '''
+        validation interface to allow modifying behavior in inherited classes
+        '''
+        return self._validate_item_from_stock(cr, uid, id, context=context)
+    
+    def _vals_get_substitute_item(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
         '''
@@ -751,10 +742,20 @@ class substitute_item(osv.osv_memory):
             result[obj.id].update({'hidden_batch_management_mandatory': obj.product_id_substitute_item.batch_management})
             # perishable
             result[obj.id].update({'hidden_perishable_mandatory': obj.product_id_substitute_item.perishable})
+            # call common_on_change
+            compute_avail = self.common_on_change(cr, uid, [obj.id], obj.location_id_substitute_item.id, obj.product_id_substitute_item.id, obj.lot_id_substitute_item.id, obj.uom_id_substitute_item.id, result=None, context=context)
+            # availability_value_func_substitute_item
+            result[obj.id].update({'availability_value_func_substitute_item': compute_avail['value']['qty_substitute_item']})
+            # integrity_status_func_substitute_item
+            result[obj.id].update({'integrity_status_func_substitute_item': self.validate_item(cr, uid, obj.id, context=context)})
+            # availability_status_func_substitute_item
+            result[obj.id].update({'availability_status_func_substitute_item': (compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'Available (%.2f %s)' or 'Not Enough Available (%.2f %s)')%(compute_avail['value']['qty_substitute_item'], obj.uom_id_substitute_item.name)})
+            # integrity_status_hidden_func_substitute_item
+            result[obj.id].update({'integrity_status_hidden_func_substitute_item': compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'available' or 'not_available'})
+            
         return result
     
-    _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
-                'wizard_id': fields.many2one('substitute', string='Substitute wizard'),
+    _columns = {'wizard_id': fields.many2one('substitute', string='Substitute wizard'),
                 'location_id_substitute_item': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'module_substitute_item': fields.char(string='Module', size=1024),
                 'product_id_substitute_item': fields.many2one('product.product', string='Product', required=True),
@@ -762,17 +763,18 @@ class substitute_item(osv.osv_memory):
                 'uom_id_substitute_item': fields.many2one('product.uom', string='UoM', required=True),
                 'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'exp_substitute_item': fields.date(string='Expiry Date'),
-                'type_check': fields.char(string='Type Check', size=1024,),
-                'hidden_stock_available': fields.float(string='Available Stock', digits_compute=dp.get_precision('Product UoM'), invisible=True),
+                'type_check': fields.char(string='Type Check', size=1024, readonly=True),
                 # functions
-                'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
-                'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
+                'hidden_perishable_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='Exp', multi='get_vals_substitute_item', store=False, readonly=True),
+                'hidden_batch_management_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='B.Num', multi='get_vals_substitute_item', store=False, readonly=True),
+                'availability_value_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='float', string='Availability Value', multi='get_vals_substitute_item', store=False, readonly=True),
+                'availability_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='char', size=1024, string='Availability', multi='get_vals_substitute_item', store=False, readonly=True),
+                'integrity_status_hidden_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=SELECTION_AVAILABLE, string='Hidden availability', multi='get_vals_substitute_item', store=False, readonly=True),
+                'integrity_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_substitute_item', store=False, readonly=True),
                 }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'out',
-                 'hidden_stock_available': 0.0,
-                 'integrity_status': 'empty',
                  }
     
 substitute_item()
@@ -936,6 +938,63 @@ class substitute_item_mirror(osv.osv_memory):
                                    exp_substitute_item=False,
                                    )
         return result
+    
+    def _validate_item_mirror(self, cr, uid, id, context=None):
+        '''
+        validate the mirror objects for lot and expiry date
+        
+        - lot AND expiry date are mandatory for batch management products
+        - expiry date is mandatory for perishable products
+        
+        return True or False
+        
+        from stock and mirror need different validation function
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        # browse the mirror object
+        item = self.browse(cr, uid, id, context=context)
+        # by default we return empty result
+        result = 'empty'
+        # product management type
+        data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable'], context=context)[0]
+        management = data['batch_management']
+        perishable = data['perishable']
+        if management:
+            if not item.lot_mirror:
+                # lot is needed
+                result = 'missing_lot'
+            else:
+                # we check the lot type is standard if the lot exists
+                # the type is not specified, as 1) name must be unique for one product 2) lot type cannot be mixed for one product, either std or int, not both
+                prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
+                                                       ('product_id', '=', item.product_id_substitute_item.id)], context=context)
+                if prodlot_ids:
+                    data = lot_obj.read(cr, uid, prodlot_ids, ['life_date','name','type'], context=context)
+                    lot_type = data[0]['type']
+                    if lot_type != 'standard':
+                        result = 'wrong_lot_type_need_standard'
+                else:
+                    # the lot does not exist, the expiry date is mandatory
+                    if not item.exp_substitute_item:
+                        result = 'missing_date'
+        elif perishable:
+            if not item.exp_substitute_item:
+                # expiry date is needed
+                result = 'missing_date'
+        else:
+            # no lot needed - no date needed
+            if item.lot_mirror or item.exp_substitute_item:
+                result = 'no_lot_needed'
+        # return the corresponding integrity problem
+        return result
+    
+    def validate_item(self, cr, uid, id, context=None):
+        '''
+        validation interface to allow modifying behavior in inherited classes
+        '''
+        return self._validate_item_mirror(cr, uid, id, context=context)
     
     _columns = {'item_id_mirror': fields.integer(string='Id of original Item', readonly=True),
                 'kit_id_mirror': fields.many2one('composition.kit', string='Kit', readonly=True),
