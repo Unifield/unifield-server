@@ -52,7 +52,7 @@
 </Styles>
 ## we loop over the tender so "objects" == tender
 % for o in objects:
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="${(o.name or 'Sheet')|x}">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 

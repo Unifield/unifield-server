@@ -43,7 +43,7 @@
 </Styles>
 ## we loop over the sale_order so "objects" == sale_order
 % for o in objects:
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="${(o.name or 'Sheet')|x}">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 
