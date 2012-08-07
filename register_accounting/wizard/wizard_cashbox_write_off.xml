@@ -11,7 +11,7 @@
                     <separator string="Your decision about the action to do on this CashBox"/>
                     <field name='choice'/>
                     <newline />
-                    <field name='account_id' attrs="{'invisible':[('choice','!=','writeoff')], 'required':[('choice', '=', 'writeoff')]}" domain="[('type', '!=', 'view')]"/>
+                    <field name='account_id' attrs="{'invisible':[('choice','!=','writeoff')], 'required':[('choice', '=', 'writeoff')]}"/>
                     <newline />
                     <field name='amount' attrs="{'invisible':[('choice','!=','writeoff')]}"/>
                     <newline />

@@ -10,6 +10,9 @@
             <form string="Replacement Items Selection">
             	<separator string="You can import replacement items from theoretical kits." colspan="4"/>
             	<field name="order_line_id_kit_selection" invisible="True" />
+            	<field name="corresponding_so_id_kit_selection" attrs="{'invisible': [('corresponding_so_line_id_kit_selection', '=', False)]}" />
+            	<field name="corresponding_so_line_id_kit_selection" invisible="True" />
+            	<field name="impact_so_kit_selection" invisible="True" />
                 <field name="product_id" colspan="4" />
                 <field name="kit_id" colspan="3"
                 	context="{'wizard_composition_type': 'theoretical','composition_type': 'theoretical'}"

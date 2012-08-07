@@ -73,7 +73,7 @@
 -
   !python {model: account.invoice.line}: |
     vals = {
-        'account_id': ref('account.a_expense'),
+        'account_id': ref('account_account_expense0'),
         'name': 'Product PC1',
         'price_unit': 50.0,
         'product_id': ref('product.product_product_pc1'),
@@ -88,10 +88,10 @@
   !python {model: account.invoice}: |
     self.action_open_invoice(cr, uid, [ref('invoice_for_engagement_1')])
 -
-  I check that analytic lines where written for Gabon and Kenya in cost_center and funding_pool elements.
+  I check that analytic lines where written for Gabon and Kenya in funding_pool elements.
 -
   !python {model: account.analytic.line}: |
     # We should 2 lines for each analytic account with an amount of -187.5 and one of -62.5
     for el in [(187.50, ref('analytic_account_gabon')), (62.50, ref('analytic_account_kenya'))]:
-        search_ids = self.search(cr, uid, [('amount', '=', -1 * el[0]), ('account_id', '=', el[1])])
-        assert len(search_ids) == 2, "Some lines are missing."
+        search_ids = self.search(cr, uid, [('amount', '=', -1 * el[0])])
+        assert len(search_ids) == 1, "Some lines are missing."

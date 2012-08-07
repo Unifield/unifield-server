@@ -39,7 +39,7 @@ class msf_budget_summary(osv.osv_memory):
                 #  Budget Amount, normal budget
                 budget_amount = summary_line.budget_id.total_budget_amount
                 # Actual amount, normal budget
-                actual_domain = [('account_id', '=', summary_line.budget_id.cost_center_id.id)]
+                actual_domain = [('cost_center_id', '=', summary_line.budget_id.cost_center_id.id)]
                 actual_domain.append(('date', '>=', summary_line.budget_id.fiscalyear_id.date_start))
                 actual_domain.append(('date', '<=', summary_line.budget_id.fiscalyear_id.date_stop))
                 analytic_line_obj = self.pool.get('account.analytic.line')
@@ -76,10 +76,12 @@ class msf_budget_summary(osv.osv_memory):
                 for child_cc in budget.cost_center_id.child_ids:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                             AND cost_center_id = %s \
+                                                            AND decision_moment_id = %s \
                                                             AND state != 'draft' \
                                                             ORDER BY version DESC LIMIT 1",
                                                            (budget.fiscalyear_id.id,
-                                                            child_cc.id))
+                                                            child_cc.id,
+                                                            budget.decision_moment_id.id))
                     if cr.rowcount:
                         child_budget_id = cr.fetchall()[0][0]
                         child_line_id = self.create(cr, uid, {'budget_id': child_budget_id,

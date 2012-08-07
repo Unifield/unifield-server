@@ -111,4 +111,4 @@
     try:
       self.write(cr, uid, ref('move_line_test'), vals={'account_id': ref('account_1'), 'date': '%s-03-01' %(datetime.datetime.now().year + 2)})
     except Exception as exception:
-      assert exception.value == "The account selected is not active.", "Date out"
+      assert exception.value.startswith("The selected account is not active:"), "Date out"

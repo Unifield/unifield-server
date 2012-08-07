@@ -33,11 +33,16 @@ class stock_location(osv.osv):
     _parent_order = 'location_id, posz'
     _order = 'location_id, posz'
     
+    _columns = {
+        'central_location_ok': fields.boolean(string='If check, all products in this location are unallocated.'),
+    }
+    
 stock_location()
 
 
 class stock_location_configuration_wizard(osv.osv_memory):
     _name = 'stock.location.configuration.wizard'
+    _inherit = 'res.config'
     
     _columns = {
         'location_name': fields.char(size=64, string='Location name', required=True),
@@ -51,6 +56,27 @@ class stock_location_configuration_wizard(osv.osv_memory):
     _defaults = {
         'reactivate': lambda *a: False,
     }
+    
+    def action_add(self, cr, uid, ids, context=None):
+        self.confirm_creation(cr, uid, ids[0], context=context)
+        return {
+            'view_type': 'form',
+            "view_mode": 'form',
+            'res_model': 'stock.location.configuration.wizard',
+            'view_id':self.pool.get('ir.ui.view')\
+                .search(cr,uid,[('name','=','Configurable Locations Configuration')]),
+            'type': 'ir.actions.act_window',
+            'target':'new',
+            }
+        
+    def action_stop(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.confirm_creation(cr, uid, ids, context=context)
+        return self.action_next(cr, uid, ids, context=context)
+    
+    def execute(self, cr, uid, ids, context=None):
+        pass
     
     def name_on_change(self, cr, uid, ids, location_name, usage, type, context=None):
         '''
@@ -97,6 +123,8 @@ class stock_location_configuration_wizard(osv.osv_memory):
     def confirm_creation(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         parent_location_id = False
@@ -136,22 +164,22 @@ class stock_location_configuration_wizard(osv.osv_memory):
                     location_obj.write(cr, uid, [location_id[1]], {'active': True}, context=context)
                 
                 if wizard.location_usage in ('stock', 'eprep'):
-                    if wizard.location_usage == 'stock':
-                        location_category = 'stock'
-                        location_usage = 'internal'
+#                    if wizard.location_usage == 'stock':
+                    location_category = 'stock'
+                    location_usage = 'internal'
                         # Check if 'Intermediate Stocks' is active − If note activate it !
-                        parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
-                    else:
-                        location_stock_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
-                        if not location_stock_id:
-                            raise osv.except_osv(_('Error'), _('Location \'Stock\' not found in the instance or is not activated !'))
-                        location_category = 'eprep'
-                        location_usage = 'internal'
-                        chained_location_type = 'fixed'
-                        chained_auto_packing = 'manual'
-                        chained_picking_type = 'internal'
-                        chained_location_id = location_stock_id[1]
-                        parent_location_id = location_id
+                    parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+#                    else:
+#                        location_stock_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
+#                        if not location_stock_id:
+#                            raise osv.except_osv(_('Error'), _('Location \'Stock\' not found in the instance or is not activated !'))
+#                        location_category = 'eprep'
+#                        location_usage = 'internal'
+#                        chained_location_type = 'fixed'
+#                        chained_auto_packing = 'manual'
+#                        chained_picking_type = 'internal'
+#                        chained_location_id = location_stock_id[1]
+#                        parent_location_id = location_id
                 
                     if not parent_location_id:
                         raise osv.except_osv(_('Error'), _('Location \'Intermediate Stocks\' not found in the instance or is not activated !'))
@@ -214,6 +242,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
         
         if return_view_id:
             return {'type': 'ir.actions.act_window',
+                    'name': 'Locations Structure',
                     'res_model': 'stock.location',
                     'domain': [('location_id','=',False)],
                     'view_type': 'tree',

@@ -20,6 +20,7 @@
 ##############################################################################
 from osv import fields, osv
 import locale
+from tools.translate import _
 
 class wizard_expense_report(osv.osv_memory):
     
@@ -34,6 +35,10 @@ class wizard_expense_report(osv.osv_memory):
         
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
         
+        # check for the contract type; if it's not supposed to be displayed, return an error
+        if contract.reporting_type != 'all' and contract.reporting_type != reporting_type:
+            raise osv.except_osv(_('Warning !'), _("This report does not apply to the reporting type selected."))
+        
         header_data = self._get_contract_header(cr, uid, contract, context=context)
         footer_data = self._get_contract_footer(cr, uid, contract, context=context)
         
@@ -43,6 +48,7 @@ class wizard_expense_report(osv.osv_memory):
                           'Reference',
                           'Description',
                           'General Account',
+                          'Destination',
                           'Cost Center',
                           'Funding Pool',
                           'Booking Amount',
@@ -62,7 +68,7 @@ class wizard_expense_report(osv.osv_memory):
         amount_currency_sum = 0.0
         currency_table = None
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            date_context = {'date': analytic_line.source_date or analytic_line.date,
+            date_context = {'date': analytic_line.document_date,
                             'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
             amount = self.pool.get('res.currency').compute(cr,
                                                            uid,
@@ -84,19 +90,20 @@ class wizard_expense_report(osv.osv_memory):
                                   analytic_line.ref or '',
                                   analytic_line.name,
                                   analytic_line.general_account_id.code + ' ' + analytic_line.general_account_id.name,
+                                  analytic_line.destination_id and analytic_line.destination_id.name,
                                   analytic_line.cost_center_id.name,
                                   analytic_line.account_id.name,
                                   formatted_amount,
                                   contract.reporting_currency.name,
                                   formatted_amount_currency,
                                   analytic_line.currency_id.name,
-                                  analytic_line.invoice_line_id.name])
+                                  analytic_line.move_id and analytic_line.move_id.invoice_line_id and analytic_line.move_id.invoice_line_id.name or ''])
             
         # Localized to add comma separators for thousands
         formatted_amount_sum = locale.format("%.2f", amount_sum, grouping=True)
         formatted_amount_currency_sum = locale.format("%.2f", amount_currency_sum, grouping=True)
         
-        analytic_data.append(['','','','','','','',formatted_amount_sum,'', formatted_amount_currency_sum])
+        analytic_data.append(['','','','','','','','',formatted_amount_sum,'', formatted_amount_currency_sum])
         
         data = header_data + [[]] + analytic_data + [[]] + footer_data
         

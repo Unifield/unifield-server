@@ -46,7 +46,7 @@ class import_currencies(osv.osv_memory):
             raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create a fiscal year.')%rate_date)
         else:
             period = period_obj.browse(cr, uid, period_ids[0], context=context)
-            if period.state == 'done':
+            if period.state not in ['created', 'draft']:
                 raise osv.except_osv(_('Error !'), _('Period %s is closed !\nNo rates can be set for it.')%period.name)
         return
                 

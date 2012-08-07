@@ -29,6 +29,7 @@
     account_id: account_account_expense0
     amount: -238.41
     date: !eval time.strftime('%Y-04-20')
+    document_date: !eval time.strftime('%Y-04-20')
     name: Some water
     partner_id: res_partner_supplier_0
     sequence: 0.0

@@ -23,9 +23,12 @@
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>
-                            <field name="instance_id" readonly="1"/>
                             <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                             <field name="analytic_journal_id" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
+                        </group>
+                        <group colspan="4" col="4">
+                            <label string="" colspan="2"/>
+                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
                         </group>
                     </form>
                 </form>
@@ -39,9 +42,6 @@
             <field name="inherit_id" ref="account.view_account_journal_tree"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="code" position="before">
-                        <field name="instance_id"/>
-                    </field>
                     <field name="user_id" position="replace"/>
                     <field name="company_id" position="replace"/>
                 </data>

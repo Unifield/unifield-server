@@ -120,7 +120,7 @@
   !python {model: wizard.import.invoice}: |
     self.action_confirm(cr, uid, [ref('wizard_import_invoice_0')])
 -
-  I check that a line exists incash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 - 36 = 96).
+  I check that a line exists in cash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 - 36 = 96).
 -
   !python {model: account.bank.statement.line}: |
     search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_10y'))])
@@ -200,7 +200,7 @@
                      for ll in ml.move_id.line_id:
                          if ll.account_id.user_type.code == 'expense':
                              ana_lines = ana_obj.search(cr, uid, [('move_id', '=', ll.id)])
-                             assert len(ana_lines) == 2, "No analytic line found for addendum line (%s)"%(len(ana_lines))
+                             assert len(ana_lines) == 1, "No analytic line found for addendum line (%s)"%(len(ana_lines))
                              found_ana = True
                              for ana in ana_obj.browse(cr, uid, ana_lines):
                                  assert ana.currency_id.id == ml.functional_currency_id.id, "Addendum line: wrong ana. line currency"

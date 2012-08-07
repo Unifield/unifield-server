@@ -30,8 +30,9 @@ class wizard_budget_criteria_export(osv.osv_memory):
         'commitment': fields.boolean('Commitments'),
         'breakdown': fields.selection([('month','By month'),
                                        ('year','Total figure')], 'Breakdown', select=1, required=True),
-        'granularity': fields.selection([('all','By budget line'),
-                                         ('parent','By parent budget line')], 'Granularity', select=1, required=True),
+        'granularity': fields.selection([('all','By expense and destination'),
+                                         ('expense','By expense'),
+                                         ('parent','By parent expense')], 'Granularity', select=1, required=True),
     }
     
     _defaults = {

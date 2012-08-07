@@ -28,9 +28,19 @@ from tools.translate import _
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
+
+    def _get_bool_cat(self, cr, uid, ids, field, arg, context=None):
+        res = {}
+        for part in self.browse(cr, uid, ids, context=context):
+            if part.catalogue_ids:
+                res[part.id] = 'Yes'
+            else:
+                res[part.id] = 'No'
+        return res
     
     _columns = {
         'catalogue_ids': fields.one2many('supplier.catalogue', 'partner_id', string='Catalogues', readonly=True),
+        'catalogue_bool': fields.function(_get_bool_cat, type='char', method=True, string='Catalogue'),
     }
     
 res_partner()

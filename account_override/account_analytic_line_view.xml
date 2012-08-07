@@ -10,13 +10,12 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <tree editable="top" string="Analytic Journal Items">
-                    <field name="company_id" string="Proprietary Instance"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date"/>
                     <field name="document_date"/>
+                    <field name="date"/>
                     <field name="period_id"/>
                     <field name="general_account_id"/>
                     <field name="account_id"/>

@@ -46,6 +46,18 @@
     reconcile: 1
     activation_date: !eval time.strftime('%Y-01-01')
 -
+  I create 9302 Payable Account.
+-
+  !record {model: account.account, id: account_account_payable_donation0}:
+    code: '9302-customer-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Donation Payable Account
+    type: payable
+    user_type: account_account_type_receivable0
+    reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
+-
   I create a 4500 receivable Account.
 -
   !record {model: account.account, id: account_account_receivable0}:
@@ -68,8 +80,74 @@
     type: other
     user_type: account_account_type_expense0
     activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_expatriates
+    destination_ids: [analytic_distribution.analytic_account_destination_expatriates]
+-
+  I create a 8101 Expense Account.
+-
+  !record {model: account.account, id: account_account_expense1}:
+    code: '8101-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Donation Expense Account
+    type: other
+    user_type: account_account_type_expense0
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_expatriates
+    destination_ids: [analytic_distribution.analytic_account_destination_expatriates]
+    type_for_register: donation
 -
   I set 4500 account than default debit note account
 -
   !python {model: res.company}: |
     self.write(cr, uid, uid, {'import_invoice_default_account': ref("account_account_receivable0")})
+-
+  I create an analytic In-kind donation Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_inkind_donation0}:
+    code: AIKD
+    name: Analytic In-kind donation Journal
+    type: inkind
+-
+  I create a In-kind donation Journal
+-
+  !record {model: account.journal, id: account_journal_inkind_donation0}:
+    code: IKD
+    company_id: base.main_company
+    name: In-kind donation Journal (test)
+    type: inkind
+    analytic_journal_id: account_analytic_inkind_donation0
+    allow_date: 0
+-
+  I create an analytic correction Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_correction_journal0}:
+    code: ACOR
+    name: Analytic Correction Journal
+    type: correction
+-
+  I create a Correction Journal.
+-
+  !record {model: account.journal, id: account_journal_correction0}:
+    code: COR
+    company_id: base.main_company
+    name: Correction Journal
+    type: correction
+    analytic_journal_id: account_analytic_correction_journal0
+    allow_date: 0
+-
+  I create a analytic distribution
+-
+  !record {model: analytic.distribution, id: analytic_distrib1}:
+    name: distrib1
+-
+  And one FP line
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_l1}:
+    name: FP Line 1
+    percentage: 100
+    currency_id: 1
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
+    distribution_id: analytic_distrib1
+    cost_center_id: analytic_distribution.analytic_account_project_dummy
+    destination_id: analytic_distribution.analytic_account_destination_expatriates

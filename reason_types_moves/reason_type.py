@@ -21,6 +21,8 @@
 
 from osv import osv, fields
 
+from tools.translate import _
+
 import logging
 from os import path
 import math
@@ -178,6 +180,7 @@ class stock_inventory(osv.osv):
         move_vals.update({
             'comment': inventory_line.comment,
             'reason_type_id': inventory_line.reason_type_id.id,
+            'not_chained': True,
         })
 
         return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
@@ -374,13 +377,24 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
     
+    def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = move.product_id.type
+        
+        return res
+    
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
+        'product_type': fields.function(_get_product_type, method=True, type='char', string='Product type', store=False),
+        'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),
     }
     
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
+        'not_chained': lambda *a: False,
     }
 
     def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
@@ -398,6 +412,11 @@ class stock_move(osv.osv):
 
 
         return {'value': vals}
+    
+    def _hook_dest(self, cr, uid, *args, **kwargs):
+        move = kwargs['m']
+        res = super(stock_move, self)._hook_dest(cr, uid, *args, **kwargs)
+        return res and not move.not_chained
     
 stock_move()
 
@@ -427,5 +446,88 @@ class stock_return_picking(osv.osv_memory):
         return default_value
 
 stock_return_picking()
+
+class stock_location(osv.osv):
+    _name = 'stock.location'
+    _inherit = 'stock.location'
+    
+    def _get_replenishment(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for loc in ids:
+            res[loc] = True
+        return res
+
+    def _get_st_out(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+    
+    def _src_replenishment(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if arg[0] == 'is_replenishment':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                elif arg[2] and isinstance(arg[2], (int, long)):
+                    warehouse_id = arg[2]
+                    stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+                    res.append(('location_id', 'child_of', stock_id))
+                    res.append(('location_category', '=', 'stock'))
+                    res.append(('quarantine_location', '=', False))
+        return res
+        
+    def _src_st_out(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns location allowed for Standard out
+        '''
+        res = [('usage', '!=', 'view')]
+        loc_obj = self.pool.get('stock.location')
+        for arg in args:
+            if arg[0] == 'standard_out_ok':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                if arg[2] == 'dest':
+                    virtual_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+                    virtual_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', virtual_loc_id)], context=context)
+                    
+                    customer_loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'customer')], context=context)
+                    output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
+                    
+                    loc_ids = virtual_loc_ids
+                    loc_ids.extend(customer_loc_ids)
+                    loc_ids.append(output_loc_id)
+                    res.append(('id', 'in', loc_ids))
+                elif arg[2] == 'src':
+                    warehouse_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+                    output_loc_ids = []
+                    input_loc_ids = []
+                    output_ids = []
+                    input_ids = []
+                    for w in self.pool.get('stock.warehouse').browse(cr, uid, warehouse_ids, context=context):
+                        output_ids.append(w.lot_output_id.id)
+                        input_ids.append(w.lot_input_id.id)
+                        
+                    for loc_id in output_ids:
+                        output_loc_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', loc_id)], context=context))
+                    for loc_id in input_ids:
+                        input_loc_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', loc_id)], context=context))
+                    
+                    res.append(('quarantine_location', '=', False))
+                    res.append(('usage', '=', 'internal'))
+                    res.append(('cross_docking_location_ok', '=', False))
+                    res.append(('id', 'not in', output_loc_ids))
+                    res.append(('id', 'not in', input_loc_ids))
+                    
+        return res
+                    
+    _columns = {
+        'is_replenishment': fields.function(_get_replenishment, fnct_search=_src_replenishment, type='boolean',
+                                            method=True, string='Is replenishment ?', store=False,
+                                            help='Is True, the location could be used in replenishment rules'),
+        'standard_out_ok': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
+    }
+    
+stock_location()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

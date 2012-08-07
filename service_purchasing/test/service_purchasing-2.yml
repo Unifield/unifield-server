@@ -28,7 +28,8 @@
   !record {model: product.product, id: product_service_p0}:
     default_code: P0
     name: product 0 test
-    type: service
+    type: service_recep
+    procure_method: make_to_order
     
 - 
   Creating a product.product record service with reception
@@ -68,25 +69,4 @@
     location_dest_id: stock.stock_location_stock
     location_id: stock.stock_location_stock
     picking_id: stock_picking_2
-
--
-  Change the source location to Service location
--
-  !python {model: stock.move}: |
-    from osv import osv
-    service_location = self.pool.get('stock.location').search(cr, uid, [('service_location', '=', True)], context=context)
-    assert service_location, 'No Service Location available'
-    service_location = service_location[0]
-    
-    # try on_change function
-    self.onchange_product_id(cr, uid, [ref("stock_move_2")], prod_id=ref("product_service_p0"), loc_id=False, loc_dest_id=False, address_id=False)
-    
-    try:
-      self.write(cr, uid, ref("stock_move_2"), {'location_dest_id': service_location, 'product_id': ref("product_service_recep_p1")}, context=context)
-    except osv.except_osv, e:
-      # ok the constraint has been raised
-      #print e
-      pass
-    else:
-      assert False, 'The constraint: "Only Incoming Shipment can manipulate Service Products." has not been triggered.'
     

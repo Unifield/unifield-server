@@ -47,6 +47,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         'ref': fields.char('Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date': fields.date('Posting Date', readonly=False, required=True),
+        'document_date': fields.date('Document Date', readonly=True, required=True),
         'amount': fields.float('Amount', readonly=False, required=True, digits_compute=dp.get_precision('Account')),
         'amount_to_pay': fields.float('Amount to pay', readonly=True, digits_compute=dp.get_precision('Account')),
         'amount_currency': fields.float('Book. Amount', readonly=True, digits_compute=dp.get_precision('Account')),
@@ -81,7 +82,8 @@ class wizard_import_invoice(osv.osv_memory):
         'invoice_lines_ids': fields.one2many('wizard.import.invoice.lines', 'wizard_id', string='', required=True),
         'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter invoices regarding currency."),
-        'date': fields.date('Date'),
+        'date': fields.date('Payment posting date'),
+        'document_date': fields.date('Document Date'),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
     }
 
@@ -149,6 +151,7 @@ class wizard_import_invoice(osv.osv_memory):
                 'ref': 'Imported Invoice',
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
+                'document_date': wizard.date or time.strftime('%Y-%m-%d'),
                 'amount': abs(amount_cur),
                 'amount_to_pay': amount_cur,
                 'amount_currency': total,
@@ -195,6 +198,7 @@ class wizard_import_invoice(osv.osv_memory):
             register_vals = {
                 'name': line.ref,
                 'date': line.date,
+                'document_date': line.document_date,
                 'statement_id': st_id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,

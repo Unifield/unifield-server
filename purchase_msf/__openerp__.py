@@ -45,7 +45,6 @@
     'update_xml' : [
         'purchase_msf_view.xml',
         'security/ir.model.access.csv',
-        'purchase_report.xml',
     ],
     'installable': True,
 }

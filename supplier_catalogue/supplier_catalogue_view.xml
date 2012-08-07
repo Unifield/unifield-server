@@ -33,7 +33,7 @@
 					<field name="name" colspan="4" />
 					<field name="period_from" />
 					<field name="period_to" />
-					<field name="currency_id" />
+					<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
 					<field name="partner_id" readonly="1" />
 					<field name="active" />
 					<button name="catalogue_import_lines" type="object" string="Update/Import lines" icon="gtk-go-down" colspan="4" />
@@ -220,7 +220,8 @@
 		<!-- Menu in Purchases / Configuration -->
 		<menuitem id="menu_supplier_catalogue"
 				  action="action_supplier_catalogue_list"
-				  parent="purchase.menu_purchase_config_purchase" />
+				  sequence="4"
+				  parent="purchase.menu_procurement_management" />
 		
 		<!-- Menu in Purchases / Configuration -->		  
 		<!-- <menuitem id="menu_supplier_catalogue_line"

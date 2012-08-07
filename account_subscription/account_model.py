@@ -152,7 +152,8 @@ class account_model(osv.osv):
                     'move_id': move_id,
                     'partner_id': line.partner_id.id,
                     'date': context.get('date',time.strftime('%Y-%m-%d')),
-                    'date_maturity': date_maturity
+                    'document_date': context.get('date',time.strftime('%Y-%m-%d')),
+                    'date_maturity': date_maturity,
                 })
                 c = context.copy()
                 c.update({'journal_id': model.journal_id.id,'period_id': period_id})

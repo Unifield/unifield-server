@@ -10,8 +10,10 @@ ORDER_CATEGORY = [('medical', 'Medical'),
 
 PURCHASE_ORDER_STATE_SELECTION = [
     ('draft', 'Draft'),
+    ('sourced', 'Sourced'),
     ('wait', 'Waiting'),
     ('confirmed', 'Validated'),
+    ('confirmed_wait', 'Confirmed (waiting)'),
     ('approved', 'Confirmed'),
     ('except_picking', 'Receipt Exception'),
     ('except_invoice', 'Invoice Exception'),
@@ -19,6 +21,7 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('cancel', 'Cancelled'),
     ('rfq_sent', 'Sent'),
     ('rfq_updated', 'Updated'),
+    ('split', 'Split'),
 ]
 
 

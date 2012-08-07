@@ -23,6 +23,9 @@
                   <field name="create"/>
                   <newline/>
                   <field name="import_invoice_default_account" />
+                  <newline/>
+                  <field name="expat_salaries_default_account" />
+                  <field name="counterpart_hq_entries_default_account" />
                 </group>
               </data>
             </field>
@@ -41,7 +44,8 @@
         <!-- register configuration wizard -->
         <record id="config_wizard_config_msf_coa_amount" model="ir.actions.todo">
             <field name="action_id" ref="action_config_msf_coa_amount"/>
-            <field name="restart">onskip</field>
+            <field name="sequence" eval="13" />
+            <field name="restart">never</field>
         </record>
         
     </data>

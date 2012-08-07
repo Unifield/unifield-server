@@ -21,6 +21,7 @@
 					<field name="percentage" />
 					<field name="subtotal" />
 					<field name="currency_id" />
+                                        <field name="destination_id" />
 					<field name="cost_center_id" />
 					<field name="account_id" />
 					<field name="source_doc" />
@@ -104,6 +105,7 @@
 							<field name="percentage" />
 							<field name="subtotal" />
 							<field name="currency_id" />
+                                                        <field name="destination_id" />
 							<field name="cost_center_id" />
 							<field name="account_id" />
 							<field name="source_doc" />
@@ -123,7 +125,7 @@
         </record>
         
         <record id="ir_open_product_list_export_view" model="ir.values">
-            <field name="key2">client_action_multi</field>
+            <field name="key2">client_action_relate</field>
             <field name="model">purchase.order</field>
             <field name="name">Allocation report</field>
             <field eval="'ir.actions.server,%d'%action_from_purchase_order_allocation_report" name="value"/>

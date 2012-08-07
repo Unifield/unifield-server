@@ -35,6 +35,11 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
+#    Remove this block because it has been modified and moved to the sync module
+#    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+#        bank = self.browse(cr, uid, res_id)
+#        return bank.name + '_' +bank.journal_id.code
+
     def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
@@ -68,7 +73,7 @@ class account_cash_statement(osv.osv):
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.balance_end_real})
-        res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
@@ -77,25 +82,43 @@ class account_cash_statement(osv.osv):
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context=None):
-        """
-        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
-        """
-        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        st = self.browse(cr, uid, ids)[0]
-        # Calculate the starting balance
+            ids = [ids] # Calculate the starting balance
+            
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
-            self.write(cr, uid, [rs], res.get(rs))
-            # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
+            self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
             register = self.browse(cr, uid, [rs], context=context)[0]
             if register and not register.prev_reg_id:
                 if not register.balance_start > 0:
-                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+                    return {'name' : "Open Empty CashBox Confirmation",
+                            'type' : 'ir.actions.act_window',
+                            'res_model' :"wizard.open.empty.cashbox",
+                            'target': 'new',
+                            'view_mode': 'form',
+                            'view_type': 'form',
+                            'context': {'active_id': ids[0],
+                                        'active_ids': ids
+                                        }
+                            }
+
+        # if the cashbox is valid for opening, just continue the method do open
+        return self.do_button_open_cash(cr, uid, ids, context)
+
+    def do_button_open_cash(self, cr, uid, ids, context=None):
+        """
+        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids] # Calculate the starting balance
+
+        # Prepare some values
+        st = self.browse(cr, uid, ids)[0]
+                
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')
         # Search lines from current register starting balance
@@ -114,8 +137,7 @@ class account_cash_statement(osv.osv):
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
-            res_id = self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
-            return res_id
+            return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
         else:
             return False
 
@@ -252,4 +274,33 @@ class account_cash_statement(osv.osv):
 
 account_cash_statement()
 
+class account_cashbox_line(osv.osv):
+
+    _inherit = "account.cashbox.line"
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Override for the synch module: create new cashbox line only when this line for the cash register does not exist 
+        """
+        pieces = int(vals['pieces'])
+        existed_ids = False
+        temp = "-open-"
+        
+        if 'starting_id' in vals:
+            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], context=context)
+
+        if 'ending_id' in vals:
+            temp = "-close-"
+            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], context=context)
+        
+        number = False
+        if 'number' in vals:
+            number = vals['number']
+        
+        if existed_ids:
+            return osv.osv.write(self, cr, uid, existed_ids, vals, context=context)
+        
+        return osv.osv.create(self, cr, uid, vals, context=None)
+    
+account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
