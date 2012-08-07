@@ -572,7 +572,7 @@ class sale_order_line(osv.osv):
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
         message = ''
         
-        if not context.get('button') or not context.get('import_in_progress'):
+        if not context.get('import_in_progress') and not context.get('button') :
             if vals.get('product_uom'):
                 if vals.get('product_uom') == tbd_uom:
                     message += 'You have to define a valid UOM, i.e. not "To be define".'
