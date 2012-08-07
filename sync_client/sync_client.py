@@ -208,7 +208,6 @@ class entity(osv.osv, Thread):
     def stopSync(self, cr, uid, log_id, log, step='status', status=None, context=None):
         if status is not None:
             log[step] = status
-        #statuses = [v for k, v in log.iteritems() if k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]
         statuses = [log[k] for k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]
         if 'failed' in statuses or 'in-progress' not in statuses[:-1]:
             # Determine final status
@@ -233,9 +232,6 @@ class entity(osv.osv, Thread):
         if entity.state not in ['init', 'update_send', 'update_validate']: 
             self.stateSync('null', log, 'data_push', message="Not valid state: " + entity.state)
             return False
-            #log['error'] += 'Push data: ' + "Not a valid state to push data: " + entity.state
-            #log['data_push'] = 'null'
-            #return False
         
         try :
             cont = False
@@ -306,6 +302,7 @@ class entity(osv.osv, Thread):
             send_more = send_package(entity.id)
             i += 1
         #state update_send => update_validate
+
     def validate_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
         session_id = entity.session_id
@@ -371,10 +368,10 @@ class entity(osv.osv, Thread):
             res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, recover, context)
             if res and res[0]:
                 nb_upate = self.pool.get('sync.client.update_received').unfold_package(cr, uid, res[1], context=context)
-                #unfold packet with res[1]
                 last = res[2]
-                offset += nb_upate
-                self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
+                if res[1]:
+                    offset = res[1]['offset']
+                    self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
                 raise Exception, res[1]
         

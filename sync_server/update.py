@@ -74,9 +74,9 @@ class update(osv.osv):
                 'owner': owner,
             })
             ids = self.search(cr, uid, [('version', '=', data['version']), 
-                                  ('session_id', '=', data['session_id']),
-                                  ('owner','=', data['owner']),
-                                  ('values', '=', data['values'])], context=context)
+                                        ('session_id', '=', data['session_id']),
+                                        ('owner','=', data['owner']),
+                                        ('values', '=', data['values'])], context=context)
             if ids: #Avoid add two time the same update.
                 continue
             self.create(cr, uid, data,context=context)
@@ -133,52 +133,75 @@ class update(osv.osv):
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         
-        update_to_send = []
-        ids = True
         where = [
                     ('rule_id', 'in', rules), 
                     ('sequence', '>', last_seq), 
                     ('sequence', '<=', max_seq),
                 ]
+
+        ## Recover add own client updates to the list
         if not recover:
             where.append( ('source', '!=', entity.id) )
-        while ids and len(update_to_send) < max_size:
+
+        ## Search first update which is "master"
+        update_master = None
+        while update_master is None:
             ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
+            fetched_updates = self.get_update_to_send(cr, uid, entity, ids, context)
+            if fetched_updates:
+                update_master = fetched_updates[0]
+            elif not ids:
+                return None
+            else:
+                offset += len(ids)
+
+        ## Find next updates to send
+        ids = range(max_size)
+        update_to_send = []
+        while len(ids) == max_size and len(update_to_send) < max_size:
+            ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
+            for update in self.get_update_to_send(cr, uid, entity, ids, context):
+                if update.model == update_master.model and \
+                   update.rule_id.id == update_master.rule_id.id and \
+                   update.source.id == update_master.source.id:
+                    update_to_send.append(update)
+                else:
+                    ids = ids[:ids.index(update.id)]
+                    break
             offset += len(ids)
-            update_to_send += self.get_update_to_send(cr, uid, entity, ids, context)
+
+        ## Truncate updates if their number exceed max_size
         exceed = len(update_to_send) - max_size
         if exceed > 0:
             update_to_send = update_to_send[:max_size]
             offset -= exceed
 
-        if len(update_to_send) > max_size:
-            raise Exception("What a f...?!")
-
+        ## Save who pulls these updates
         self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
             self.__logger.debug("No update to send to %s" % (entity.name,))
-            return False
-        update_master = update_to_send[0]
+            return None
+
+        ## Prepare package
         complete_fields = self.get_additional_forced_field(update_master) 
         data = {
             'model' : update_master.model,
             'source_name' : update_master.source.name,
             'fields' : tools.ustr(complete_fields),
             'sequence' : update_master.sequence,
-            'fallback_values' : update_master.rule_id.fallback_values
+            'fallback_values' : update_master.rule_id.fallback_values,
+            'load' : list(),
+            'offset' : offset,
         }
-        load = []
+
+        ## Process & Push all updates in the packet
         for update in update_to_send:
-            if update.model != update_master.model or \
-               update.rule_id.id != update_master.rule_id.id or \
-               update_master.source.id != update.source.id:
-                break
-            load.append({
+            data['load'].append({
                 'version' : update.version,
                 'values' : self.set_forced_values(update, complete_fields),
                 'owner_name' : update.owner.name if update.owner else '',
             })
-        data['load'] = load
+
         return data
     
     def get_additional_forced_field(self, update): 
