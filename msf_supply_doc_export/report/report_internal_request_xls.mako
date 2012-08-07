@@ -44,7 +44,7 @@
 ## we loop over the sale_order so "objects" == sale_order
 % for o in objects:
 ## we loop over the sale_order_line
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="Internal Request">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     <Row>

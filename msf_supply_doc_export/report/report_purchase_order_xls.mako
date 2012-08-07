@@ -50,7 +50,7 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-## ==================================== we loop over the purchase_order so "objects" == purchase_order  ====================================================
+## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="${(o.name or '')|x}">
 <Table >
