@@ -125,22 +125,27 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         to_correct_ok = True
                         product_qty = 1.0
                 
-                p_uom = row.cells[3].data
-                if not p_uom:
-                    to_correct_ok = True
-                    error_list.append('No product UoM was defined.')
-                else:
-                    try:
-                        uom_name = p_uom.strip()
-                        uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
-                        if not uom_ids:
-                            to_correct_ok = True
-                            error_list.append('The UOM was not found.')
-                        else:
-                            uom_id = uom_ids[0]
-                    except Exception:
-                         error_list.append('The UoM Name has to be a string.')
-                         to_correct_ok = True
+                try:
+                    p_uom = row.cells[3].data
+                    if not p_uom:
+                        to_correct_ok = True
+                        error_list.append('No product UoM was defined.')
+                    else:
+                        try:
+                            uom_name = p_uom.strip()
+                            uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                            if not uom_ids:
+                                to_correct_ok = True
+                                error_list.append('The UOM was not found.')
+                            else:
+                                uom_id = uom_ids[0]
+                        except Exception:
+                             error_list.append('The UoM Name has to be a string.')
+                             to_correct_ok = True
+                except IndexError:
+                     error_list.append('The UOM Name was not properly defined.')
+                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                     to_correct_ok = True
                     
                 to_write = {
                     'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
