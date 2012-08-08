@@ -95,69 +95,71 @@ class tender(osv.osv):
             if row_len != 6:
                 raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
-            # we check that cells are not empty
-            if [x for x in enumerate(row.cells)] :
-                product_code = row.cells[0].data
-                if not product_code:
-                    to_correct_ok = True
-                    error_list.append('No Product Description')
-                else:
-                    try:
-                        product_code = product_code.strip()
-                        code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                        if not code_ids:
-                            to_correct_ok = True
-                        else:
-                            default_code = code_ids[0]
-                    except Exception:
-                         error_list.append('The Product Code has to be a string.')
-                         to_correct_ok = True
-                
-                if not row.cells[2].data :
-                    product_qty = 1.0
-                    to_correct_ok = True
-                    error_list.append('The Product Quantity was not set, we set it to 1 by default.')
-                else:
-                    if row.cells[2].type in ['int', 'float']:
-                        product_qty = row.cells[2].data
-                    else:
-                        error_list.append('The Product Quantity was not a number and it is required to be more than 0, we set it to 1 by default.')
+            try:
+                if row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data:
+                    product_code = row.cells[0].data
+                    if not product_code:
                         to_correct_ok = True
-                        product_qty = 1.0
-                
-                try:
-                    p_uom = row.cells[3].data
-                    if not p_uom:
-                        to_correct_ok = True
-                        error_list.append('No product UoM was defined.')
+                        error_list.append('No Product Description')
                     else:
                         try:
-                            uom_name = p_uom.strip()
-                            uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
-                            if not uom_ids:
+                            product_code = product_code.strip()
+                            code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                            if not code_ids:
                                 to_correct_ok = True
-                                error_list.append('The UOM was not found.')
                             else:
-                                uom_id = uom_ids[0]
+                                default_code = code_ids[0]
                         except Exception:
-                             error_list.append('The UoM Name has to be a string.')
+                             error_list.append('The Product Code has to be a string.')
                              to_correct_ok = True
-                except IndexError:
-                     error_list.append('The UOM Name was not properly defined.')
-                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                     to_correct_ok = True
                     
-                to_write = {
-                    'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
-                    'text_error': '\n'.join(error_list), 
-                    'tender_id': obj.id,
-                    'product_id': default_code,
-                    'product_uom': uom_id,
-                    'qty': product_qty,
-                }
-                # we check consistency of uom and product values
-                tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-                vals['tender_line_ids'].append((0, 0, to_write))
+                    if not row.cells[2].data :
+                        product_qty = 1.0
+                        to_correct_ok = True
+                        error_list.append('The Product Quantity was not set, we set it to 1 by default.')
+                    else:
+                        if row.cells[2].type in ['int', 'float']:
+                            product_qty = row.cells[2].data
+                        else:
+                            error_list.append('The Product Quantity was not a number and it is required to be more than 0, we set it to 1 by default.')
+                            to_correct_ok = True
+                            product_qty = 1.0
+                    
+                    try:
+                        p_uom = row.cells[3].data
+                        if not p_uom:
+                            to_correct_ok = True
+                            error_list.append('No product UoM was defined.')
+                        else:
+                            try:
+                                uom_name = p_uom.strip()
+                                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                                if not uom_ids:
+                                    to_correct_ok = True
+                                    error_list.append('The UOM was not found.')
+                                else:
+                                    uom_id = uom_ids[0]
+                            except Exception:
+                                 error_list.append('The UoM Name has to be a string.')
+                                 to_correct_ok = True
+                    except IndexError:
+                         error_list.append('The UOM Name was not properly defined.')
+                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                         to_correct_ok = True
+                        
+                    to_write = {
+                        'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
+                        'text_error': '\n'.join(error_list), 
+                        'tender_id': obj.id,
+                        'product_id': default_code,
+                        'product_uom': uom_id,
+                        'qty': product_qty,
+                    }
+                    # we check consistency of uom and product values
+                    tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                    vals['tender_line_ids'].append((0, 0, to_write))
+            except IndexError:
+                print "The line num %s in the Excel file got element outside the defined 6 columns"% line_num
             
         # write tender line on tender
         context['import_in_progress'] = True
