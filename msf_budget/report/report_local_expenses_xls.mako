@@ -129,7 +129,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
    <Data ss:Type="String">${code}</Data>
 </Cell>
 % else:
-<Cell ss:StyleID="ssBoldCenter">
+<Cell ss:StyleID="ssBorderCenter">
    <Data ss:Type="String">${code}</Data>
 </Cell>
 % endif

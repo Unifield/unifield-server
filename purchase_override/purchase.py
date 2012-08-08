@@ -1613,7 +1613,7 @@ class purchase_order_line(osv.osv):
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
+        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
@@ -1626,12 +1626,12 @@ class purchase_order_line(osv.osv):
                       '|', ('valid_till', '>=', date_order),
                       ('valid_till', '=', False)]
             
-            domain_cur = domain
-            domain_cur.append(('currency_id', '=', currency_id))
+            domain_cur = [('currency_id', '=', currency_id)]
+            domain_cur.extend(domain)
             
-            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
             if not info_prices:
-                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
