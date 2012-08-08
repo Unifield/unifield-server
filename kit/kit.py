@@ -1177,7 +1177,7 @@ class stock_move(osv.osv):
                 'res_id': False,
                 'type': 'ir.actions.act_window',
                 'nodestroy': False,
-                'target': False,
+                'target': 'current', # current: open a new tab, new: open a wizard
                 'domain': "[('composition_type', '=', 'real')]",
                 'context': dict(context,
                                 composition_type=composition_type,
