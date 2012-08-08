@@ -436,6 +436,8 @@ class purchase_order_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]

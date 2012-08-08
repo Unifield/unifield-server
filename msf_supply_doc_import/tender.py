@@ -239,6 +239,8 @@ class tender_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         if not context.get('import_in_progress') and not context.get('button'):
             uom_obj = self.pool.get('product.uom')
             obj_data = self.pool.get('ir.model.data')
