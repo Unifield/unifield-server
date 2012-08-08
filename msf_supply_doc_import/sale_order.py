@@ -343,6 +343,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                                 nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
                                 nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
                                 proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
+                                price_unit = product_obj.browse(cr, uid, [product_id], context=context)[0].list_price
                         except Exception:
                              error_list.append('The Product Code and Description have to be a string.')
                              comment += ' Product Code and Description to be defined'
