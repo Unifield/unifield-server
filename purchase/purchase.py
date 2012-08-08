@@ -528,6 +528,12 @@ class purchase_order(osv.osv):
         update_values = self._hook_copy_name(cr, uid, [id], context=context, default=default)
         default.update(update_values)
         return super(purchase_order, self).copy(cr, uid, id, default, context)
+    
+    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
+        '''
+        Hook to change the values of the PO line
+        '''
+        return kwargs['o_line']
 
 
     def do_merge(self, cr, uid, ids, context=None):
@@ -598,9 +604,10 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
 
             for order_line in porder.order_line:
-                line_key = make_key(order_line, ('order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
+                line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
                 o_line = order_infos['order_line'].setdefault(line_key, {})
                 if o_line:
+                    o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
                     # merge the line with an existing line
                     o_line['product_qty'] += order_line.product_qty * order_line.product_uom.factor / o_line['uom_factor']
                 else:
