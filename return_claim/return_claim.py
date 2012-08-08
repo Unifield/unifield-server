@@ -744,7 +744,7 @@ class claim_event(osv.osv):
                           'partner_id': claim.partner_id_return_claim.id, # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
                           'reason_type_id': context['common']['rt_goods_return']}
-        move_values = {}
+        move_values = {'reason_type_id': context['common']['rt_goods_return']}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
             # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
@@ -780,7 +780,7 @@ class claim_event(osv.osv):
                                   'purchase_id': origin_picking.purchase_id.id,
                                   'sale_id': origin_picking.sale_id.id,
                                   }
-            replacement_move_values = {}
+            replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement']}
             
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
