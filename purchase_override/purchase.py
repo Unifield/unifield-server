@@ -978,7 +978,7 @@ stock moves which are already processed : '''
             
             if order.order_type in ('regular', 'purchase_list', 'direct') and order.partner_id.partner_type in ('internal', 'intermission', 'inter-section', 'esc'):
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-            if order.order_type in ('regular', 'purchase_list', 'direct') and order.partner_id.partner_type == 'external':
+            elif order.order_type in ('regular', 'purchase_list', 'direct'):
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
             if order.order_type == 'loan':
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]

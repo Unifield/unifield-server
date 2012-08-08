@@ -55,7 +55,7 @@
 -
   !python {model: stock.move}: |
     move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('regular1_l1'), ref('regular1_l2')])])
-    reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+    reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
     assert move_ids, ('No generated stock moves from Regular PO with internal supplier')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
