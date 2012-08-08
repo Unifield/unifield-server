@@ -36,18 +36,19 @@ class account_analytic_journal(osv.osv):
         Get all analytic journal type
         """
         return [
-            ('sale','Sale'),
-            ('purchase','Purchase'),
             ('cash','Cash'),
-            ('general','General'),
-            ('situation','Situation'),
-            ('engagement', 'Engagement'),
-            ('hq', 'HQ'),
             ('correction', 'Correction'),
             ('cur_adj', 'Currency Adjustement'),
+            ('engagement', 'Engagement'),
+            ('extra', 'Extra-Accounting'),
+            ('general','General'),
+            ('hq', 'HQ'),
             ('hr', 'HR'),
             ('inkind', 'In-kind Donation'),
             ('intermission', 'Intermission'),
+            ('purchase','Purchase'),
+            ('sale','Sale'),
+            ('situation','Situation'),
         ]
 
     _columns = {

@@ -237,5 +237,17 @@
             <field name="analytic_journal_id" ref="account_journal.analytic_intermission_journal"/>
         </record>
 
+        <record id="account_journal.analytic_extra_accounting_journal" model="account.analytic.journal">
+            <field name="name">Analytic Extra-Accounting</field>
+            <field name="code">AXA</field>
+            <field name="type">extra</field>
+        </record>
+        <record id="account_journal.extra_accounting_journal" model="account.journal">
+            <field name="name">Extra-Accounting</field>
+            <field name="code">XA</field>
+            <field name="type">extra</field>
+            <field name="analytic_journal_id" ref="account_journal.analytic_extra_accounting_journal"/>
+        </record>
+
     </data>
 </openerp>
