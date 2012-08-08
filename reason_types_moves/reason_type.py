@@ -135,6 +135,17 @@ class stock_reason_type(osv.osv):
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
     }
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Prevent the deletion of standard reason types
+        '''
+        data_ids = self.pool.get('ir.model.data').search(cr, uid, [('model', '=', 'stock.reason.type'), ('res_id', 'in', ids)])
+        if data_ids:
+            raise osv.except_osv(_('Error'), _('You cannot delete a standard reason type move'))
+        
+        return super(stock_reason_type, self).unlink(cr, uid, ids, context=context)
+            
+    
 stock_reason_type()
 
 class stock_inventory_line(osv.osv):
@@ -399,6 +410,19 @@ class stock_move(osv.osv):
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
         'not_chained': lambda *a: False,
     }
+    
+    def location_src_change(self, cr, uid, ids, location_id, context=None):
+        '''
+        Tries to define a reason type for the move according to the source location
+        '''
+        vals = {}
+        
+        if location_id:
+            loc_id = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
+            if loc_id.usage == 'inventory':
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+                
+        return {'value': vals}
 
     def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
         '''

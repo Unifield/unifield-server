@@ -377,7 +377,8 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id" 
-                                            domain="[('usage','in',('internal', 'procurement', 'production'))]"
+                                            domain="[('usage','in',('internal', 'procurement', 'production', 'inventory'))]"
+                                            on_change="location_src_change(location_id)"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
