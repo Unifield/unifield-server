@@ -152,8 +152,8 @@
         			</xpath>
         			
 	        		<xpath expr="/form//field[@name='active']" position="after">
-	        			<field name="is_section_currency" />
-	        			<field name="is_esc_currency" />
+	        			<field name="is_section_currency" invisible="1" />
+	        			<field name="is_esc_currency" invisible="1" />
 	        		</xpath>
         		</data>
         	</field>

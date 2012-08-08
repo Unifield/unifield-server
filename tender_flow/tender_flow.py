@@ -896,13 +896,23 @@ class pricelist_partnerinfo(osv.osv):
     '''
     add new information from specifications
     '''
+    def _get_line_number(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for price in self.browse(cr, uid, ids, context=context):
+            res[price.id] = 0
+            if price.purchase_order_line_id:
+                res[price.id] = price.purchase_order_line_id.line_number
+                
+        return res
+    
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
+    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True, domain="[('partner_currency', '=', partner_id)]"),
                 'valid_till': fields.date(string="Valid Till",),
                 'comment': fields.char(size=128, string='Comment'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
+                #'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", ),
+                'purchase_order_line_number': fields.function(_get_line_number, method=True, type="integer", string="Related Line Number", readonly=True),
                 }
 pricelist_partnerinfo()
 
