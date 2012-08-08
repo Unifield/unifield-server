@@ -39,6 +39,7 @@
         'invoice_view.xml',
         'wizard_view.xml',
         'product_product_view.xml',
+        'attachment_view.xml',
     ],
     "demo_xml" : [],
     "test": [

@@ -100,6 +100,19 @@ class account_invoice(osv.osv):
             res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
+    def _get_have_donation_certificate(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        If this invoice have a stock picking in which there is a Certificate of Donation, return True. Otherwise return False.
+        """
+        res = {}
+        for i in self.browse(cr, uid, ids):
+            res[i.id] = False
+            if i.picking_id:
+                a_ids = self.pool.get('ir.attachment').search(cr, uid, [('res_model', '=', 'stock.picking'), ('res_id', '=', i.picking_id.id), ('description', '=', 'Certificate of Donation')])
+                if a_ids:
+                    res[i.id] = True
+        return res
+
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
@@ -111,6 +124,8 @@ class account_invoice(osv.osv):
         'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
+        'picking_id': fields.many2one('stock.picking', string="Picking"),
+        'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
     }
 
     _defaults = {
@@ -213,6 +228,30 @@ class account_invoice(osv.osv):
                 'context': context,
                 'target': 'new',
             }
+
+    def button_donation_certificate(self, cr, uid, ids, context=None):
+        """
+        """
+        for inv in self.browse(cr, uid, ids):
+            pick_id = inv.picking_id and inv.picking_id.id or ''
+            domain = "[('res_model', '=', 'stock.picking'), ('res_id', '=', " + str(pick_id) + "), ('description', '=', 'Certificate of Donation')]"
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_tree_2')
+            view_id = view_id and view_id[1] or False
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_search_2')
+            search_view_id = search_view_id and search_view_id[1] or False
+            return {
+                'name': "Certificate of Donation",
+                'type': 'ir.actions.act_window',
+                'res_model': 'ir.attachment',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'view_id': [view_id],
+                'search_view_id': search_view_id,
+                'domain': domain,
+                'context': context,
+                'target': 'current',
+            }
+        return False
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
