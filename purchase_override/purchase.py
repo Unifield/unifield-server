@@ -1754,6 +1754,53 @@ class purchase_order_line(osv.osv):
 
 purchase_order_line()
 
+class purchase_order_group(osv.osv_memory):
+    _name = "purchase.order.group"
+    _inherit = "purchase.order.group"
+    _description = "Purchase Order Merge"
+    
+    _columns = {
+        'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
+    }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
+        if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
+            raise osv.except_osv(_('Warning'),
+            _('Please select multiple order to merge in the list view.'))
+            
+        res['po_value_id'] = context['active_ids'][0]
+        
+        return res
+    
+    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
+        o_line = super(purchase_order_group, self)._hook_o_line_value(cr, uid, *args, **kwargs)
+        order_line = kwargs['order_line']
+        o_line['nomenclature_description'] = order_line.nomenclature_description
+        o_line['comment'] = order_line.comment
+        o_line['nomen_manda_0'] = order_line.nomen_manda_0
+        o_line['nomen_manda_1'] = order_line.nomen_manda_1
+        o_line['nomen_manda_2'] = order_line.nomen_manda_2
+        o_line['nomen_manda_3'] = order_line.nomen_manda_3
+        o_line['nomen_sub_0'] = order_line.nomen_sub_0
+        o_line['nomen_sub_1'] = order_line.nomen_sub_1
+        o_line['nomen_sub_2'] = order_line.nomen_sub_2
+        o_line['nomen_sub_3'] = order_line.nomen_sub_3
+        o_line['nomen_sub_4'] = order_line.nomen_sub_4
+        o_line['nomen_sub_5'] = order_line.nomen_sub_5
+        
+        distrib_id = False
+        if order_line.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
+        elif order_line.order_id.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
+            
+        o_line['analytic_distribution_id'] = distrib_id
+        
+        return o_line
+    
+purchase_order_group()
+
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
