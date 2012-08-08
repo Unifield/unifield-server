@@ -41,6 +41,7 @@
         </Borders>
     </Style>
   <Style ss:ID="short_date">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -53,9 +54,15 @@
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="Tender">
-<Table >
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 
+## definition of the columns' size
+<% nb_of_columns = 6 %>
+<Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="320" />
+% for x in range(2,nb_of_columns):
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+% endfor
     
 ## we loop over the tender_line_ids
     <Row>

@@ -45,8 +45,15 @@
 % for o in objects:
 ## we loop over the sale_order_line
 <ss:Worksheet ss:Name="Internal Request">
-<Table>
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
+## definition of the columns' size
+<% nb_of_columns = 6 %>
+<Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="320" />
+% for x in range(2,nb_of_columns - 1):
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+% endfor
+<Column ss:AutoFitWidth="1" ss:Width="250" />
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
