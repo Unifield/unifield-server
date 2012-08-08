@@ -82,21 +82,21 @@ class tender(osv.osv):
         line_num = 1
         reader.next()
         for row in reader:
-            if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data :
-                # default values
-                error_list = []
-                to_correct_ok = False
-                default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
-                uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                product_qty = 1
-                nb_lines_error = 0
-                
-                line_num += 1
-                row_len = len(row)
-                if row_len > 6:
-                    raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
+            # default values
+            error_list = []
+            to_correct_ok = False
+            default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+            product_qty = 1
+            nb_lines_error = 0
+            
+            line_num += 1
+            row_len = len(row)
+            if row_len != 6:
+                raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
-                
+            # we check that cells are not empty
+            if [x for x in enumerate(row.cells)] :
                 product_code = row.cells[0].data
                 if not product_code:
                     to_correct_ok = True

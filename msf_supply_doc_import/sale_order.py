@@ -105,28 +105,28 @@ class sale_order(osv.osv):
         reader.next()
         line_num = 0
         for row in reader:
-            if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data :
-                # default values
-                error_list = []
-                to_correct_ok = False
-                show_msg_ok = False
-                comment = ''
-                browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
-                functional_currency_id = browse_sale.pricelist_id.currency_id.id
-                product_qty = 1
-                nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
-                proc_type = 'make_to_order'
-                
-                line_num += 1
-                row_len = len(row)
-                if row_len > 6:
-                    raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
+            # default values
+            error_list = []
+            to_correct_ok = False
+            show_msg_ok = False
+            comment = ''
+            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+            functional_currency_id = browse_sale.pricelist_id.currency_id.id
+            product_qty = 1
+            nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+            nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+            nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+            nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+            proc_type = 'make_to_order'
+            
+            line_num += 1
+            row_len = len(row)
+            if row_len != 6:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order: 
 Product Code, Product Description, Quantity, UoM, Currency, Comment.
 That means Not price, Neither Delivery requested date. """))
-                
+            # we check that cells are not empty
+            if [x for x in enumerate(row.cells)] :
                 # for each cell we check the value
                 product_code = row.cells[0].data
                 p_name = row.cells[1].data
@@ -296,29 +296,29 @@ That means Not price, Neither Delivery requested date. """))
         reader.next()
         line_num = 0
         for row in reader:
-            if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data or row.cells[6].data or row.cells[7].data:
-                # default values
-                error_list = []
-                to_correct_ok = False
-                show_msg_ok = False
-                comment = ''
-                date_planned = obj.delivery_requested_date
-                browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
-                functional_currency_id = browse_sale.pricelist_id.currency_id.id
-                price_unit = 1 # in case that the product is not found and we do not have price
-                product_qty = 1
-                nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-                nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-                nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-                nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
-                proc_type = 'make_to_order'
-                
-                line_num += 1
-                row_len = len(row)
-                if row_len > 8:
-                    raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
+            # default values
+            error_list = []
+            to_correct_ok = False
+            show_msg_ok = False
+            comment = ''
+            date_planned = obj.delivery_requested_date
+            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+            functional_currency_id = browse_sale.pricelist_id.currency_id.id
+            price_unit = 1 # in case that the product is not found and we do not have price
+            product_qty = 1
+            nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+            nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+            nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+            nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+            proc_type = 'make_to_order'
+            
+            line_num += 1
+            row_len = len(row)
+            if row_len != 8:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
-                
+            # we check that cells are not empty
+            if [x for x in enumerate(row.cells)] :
                 # for each cell we check the value
                 product_code = row.cells[0].data
                 p_name = row.cells[1].data
