@@ -96,7 +96,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
             try:
-                if row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data:
+                if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data:
                     product_code = row.cells[0].data
                     if not product_code:
                         to_correct_ok = True

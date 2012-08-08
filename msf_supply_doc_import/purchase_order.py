@@ -156,7 +156,7 @@ class purchase_order(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("""You should have exactly 8 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
             try:
-                if row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data or row.cells[6].data or row.cells[7].data:
+                if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data or row.cells[6].data or row.cells[7].data:
                     # for each cell we check the value
                     product_code = row.cells[0].data
                     p_name = row.cells[1].data
