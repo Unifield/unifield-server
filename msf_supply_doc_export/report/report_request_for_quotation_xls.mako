@@ -53,7 +53,7 @@
 ## we loop over the purchase_order so "objects" == purchase_order 
 % for o in objects:
 ## we loop over the purchase_order_line
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="Request For Quotation">
 <Table>
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     

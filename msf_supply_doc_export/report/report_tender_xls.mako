@@ -50,11 +50,13 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-## we loop over the tender so "objects" == tender
+## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="Tender">
-<Table>
+<Table >
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
+
+    
 ## we loop over the tender_line_ids
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
