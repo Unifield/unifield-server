@@ -12,14 +12,16 @@ from osv import fields, osv
 import netsvc
 import tools
 
-class account_analytic_line(osv.osv):
-    _inherit = 'account.analytic.line'
-
-    _columns = {
-        'owner' : fields.char('Instance Owner', size=64),
-    }
-
-account_analytic_line()
+# NOTE: Deprecated since the use of msf_instance
+#       instance_id already exists for this model
+#class account_analytic_line(osv.osv):
+#    _inherit = 'account.analytic.line'
+#
+#    _columns = {
+#        #'owner' : fields.char('Instance Owner', size=64),
+#    }
+#
+#account_analytic_line()
 
 class account_installer(osv.osv_memory):
     _inherit = 'account.installer'
@@ -36,9 +38,9 @@ class account_installer(osv.osv_memory):
         # will not be shown in the configurator form!
         
         #display in the widget selection of companies, only the companies that haven't been configured yet (but don't care about the demo chart of accounts)
-#        cr.execute("SELECT company_id FROM account_account WHERE active = 't' AND account_account.parent_id IS NULL AND name != %s", ("Chart For Automated Tests",))
-#        configured_cmp = [r[0] for r in cr.fetchall()]
-#        unconfigured_cmp = list(set(company_ids)-set(configured_cmp))
+        #cr.execute("SELECT company_id FROM account_account WHERE active = 't' AND account_account.parent_id IS NULL AND name != %s", ("Chart For Automated Tests",))
+        #configured_cmp = [r[0] for r in cr.fetchall()]
+        #unconfigured_cmp = list(set(company_ids)-set(configured_cmp))
 
         unconfigured_cmp = company_ids
         
@@ -52,3 +54,4 @@ class account_installer(osv.osv_memory):
         return res
     
 account_installer()  
+
