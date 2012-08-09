@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+import netsvc
 
 class kit_creation(osv.osv):
     _inherit = 'kit.creation'
@@ -31,10 +32,10 @@ class kit_creation(osv.osv):
     def action_cancel(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
         kit = self.browse(cr, uid, ids, context=context)[0]
         move_obj = self.pool.get('stock.move')
         composition_kit = self.pool.get('composition.kit')
-        stock_picking = self.pool.get('stock.picking')
         move_ids = []
         
         if kit.kit_ids_kit_creation:
@@ -44,7 +45,8 @@ class kit_creation(osv.osv):
             
         if kit.internal_picking_id_kit_creation:
             internal_picking_id_kit_creation = kit.internal_picking_id_kit_creation.id
-            stock_picking.write(cr, uid, [internal_picking_id_kit_creation], {'state': 'cancel'}, context=context)
+            # Cancel the picking
+            wf_service.trg_validate(uid, 'stock.picking', internal_picking_id_kit_creation, 'button_cancel', cr)
             
         if kit.consumed_ids_kit_creation:
             for move in kit.consumed_ids_kit_creation:
