@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,10 +19,20 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+from osv import fields, osv
+import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from tools.translate import _
 
-import account_move_line
-import account_model
-import account_use_model
-import account_subscription
-
+class account_subscription(osv.osv):
+    _name = "account.subscription"
+    _inherit = "account.subscription" 
+    
+    _columns = {
+        'period_nbr': fields.integer('Periodicity', required=True, help="This field will determine how often entries will be generated: if the period type is 'month' and the periodicity '2' then entries will be generated every 2 months"),
+    }
+    
+account_subscription()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+ 

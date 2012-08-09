@@ -28,11 +28,100 @@ from tools.translate import _
 class account_model_line(osv.osv):
     _name = "account.model.line"
     _inherit = "account.model.line"
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the invoice line, then "valid"
+         - if no distribution, take a tour of invoice distribution, if compatible, then "valid"
+         - if no distribution on invoice line and invoice, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.model_id.analytic_distribution_id.id, line.account_id.id)
+        return res
+
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
+        """
+        If model has an analytic distribution, return False, else return True
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for model in self.browse(cr, uid, ids, context=context):
+            res[model.id] = True
+            if model.analytic_distribution_id:
+                res[model.id] = False
+        return res
+
+    def _get_is_allocatable(self, cr, uid, ids, name, arg, context=None):
+        """
+        If expense account, then this account is allocatable.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for model_line in self.browse(cr, uid, ids):
+            res[model_line.id] = True
+            if model_line.account_id and model_line.account_id.user_type and model_line.account_id.user_type.code and model_line.account_id.user_type.code != 'expense':
+                res[model_line.id] = False
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get a recap from analytic distribution state and if it come from header or not.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for model_line in self.browse(cr, uid, ids):
+            res[model_line.id] = ''
+            if not model_line.is_allocatable:
+                continue
+            from_header = ''
+            if model_line.have_analytic_distribution_from_header:
+                from_header = ' (from header)'
+            res[model_line.id] = model_line.analytic_distribution_state.capitalize() + from_header
+        return res
     
     _columns = {
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+            string='Header Distrib.?'),
+        'is_allocatable': fields.function(_get_is_allocatable, method=True, type='boolean', string="Is allocatable?", readonly=True, store=False),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, 
+            string="Distribution", 
+            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+        'sequence': fields.integer('Sequence', readonly=True, help="The sequence field is used to order the resources from lower sequences to higher ones"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'account_user_type_code': fields.related('account_id', 'user_type_code', type="char", string="Account User Type Code", store=False)
     }
+    
+    _defaults = {
+        'have_analytic_distribution_from_header': lambda *a: True,
+        'is_allocatable': lambda *a: True,
+        'analytic_distribution_state_recap': lambda *a: '',
+    }
+
+    
+    def create(self, cr, uid, vals, context=None):
+        model = self.pool.get('account.model').browse(cr, uid, vals['model_id'], context=context)
+        # just add the next line
+        vals['sequence'] = len(model.lines_id) + 1
+        return super(account_model_line, self).create(cr, uid, vals, context=context)
+        
     
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -48,14 +137,15 @@ class account_model_line(osv.osv):
         model_line = self.browse(cr, uid, ids[0], context=context)
         distrib_id = False
         amount = abs(model_line.debit - model_line.credit)
-        currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = model_line.model_id and  model_line.model_id.currency_id and  model_line.model_id.currency_id.id or company_currency
         # Get analytic distribution id from this line
         distrib_id = model_line.analytic_distribution_id and model_line.analytic_distribution_id.id or False
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'model_line_id': model_line.id,
-            'currency_id': currency,
+            'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': model_line.account_id.id,
         }
@@ -80,12 +170,38 @@ class account_model_line(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
+        
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        """
+        Copy global distribution and give it to new model line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+        # Copy analytic distribution
+        model_line = self.browse(cr, uid, [id], context=context)[0]
+        if model_line.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, model_line.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
+        return super(account_model_line, self).copy_data(cr, uid, id, default, context)
     
 account_model_line()
 
 class account_model(osv.osv):
     _name = "account.model"
     _inherit = "account.model"
+    
+    _columns = {
+        'currency_id': fields.many2one('res.currency', 'Currency', required=True),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+    }
+    
+    _defaults = {
+        'currency_id': lambda self, cr, uid, context: self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+    }
     
     # @@@override@account.account_model.generate()
     def generate(self, cr, uid, ids, datas={}, context=None):
@@ -154,12 +270,63 @@ class account_model(osv.osv):
                     'date': context.get('date',time.strftime('%Y-%m-%d')),
                     'document_date': context.get('date',time.strftime('%Y-%m-%d')),
                     'date_maturity': date_maturity,
+                    'currency_id': model.currency_id.id,
+                    'is_recurring': True,
                 })
                 c = context.copy()
                 c.update({'journal_id': model.journal_id.id,'period_id': period_id})
                 account_move_line_obj.create(cr, uid, val, context=c)
 
         return move_ids
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on a model
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        model = self.browse(cr, uid, ids[0], context=context)
+        amount = 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = model.currency_id and model.currency_id.id or company_currency
+        for line in model.lines_id:
+            amount += (line.debit - line.credit)
+        amount = abs(amount)
+        # Get analytic_distribution_id
+        distrib_id = model.analytic_distribution_id and model.analytic_distribution_id.id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'model_id': model.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': 'Global analytic distribution',
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
 
 account_model()
 
