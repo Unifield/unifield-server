@@ -215,8 +215,8 @@ class composition_kit(osv.osv):
                           'item_product_id': item_v.item_product_id.id,
                           'item_qty': item_v.item_qty,
                           'item_uom_id': item_v.item_uom_id.id,
-                          'item_lot': item_v.item_lot,
-                          'item_exp': item_v.item_exp,
+                          'item_lot': item_v.item_lot, # is set to False
+                          'item_exp': item_v.item_exp, # is set to False
                           'item_kit_id': obj.id,
                           'item_description': item_v.item_description,
                           }
@@ -247,8 +247,6 @@ class composition_kit(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
                 # create a mirror object which can be later selected and modified in the many2many field
-                batch_management = item.item_product_id.batch_management
-                perishable = item.item_product_id.perishable
                 values = {'wizard_id': wizard_data['res_id'],
                           'item_id_mirror': item.id,
                           'kit_id_mirror': item.item_kit_id.id,
@@ -256,10 +254,9 @@ class composition_kit(osv.osv):
                           'product_id_substitute_item': item.item_product_id.id,
                           'qty_substitute_item': item.item_qty,
                           'uom_id_substitute_item': item.item_uom_id.id,
+                          'asset_id_substitute_item': item.item_asset_id.id,
                           'lot_mirror': item.item_lot,
                           'exp_substitute_item': item.item_exp,
-                          'hidden_batch_management_mandatory': batch_management,
-                          'hidden_perishable_mandatory': perishable,
                           }
                 id = mirror_obj.create(cr, uid, values, context=context)
                 result.append(id)
@@ -450,8 +447,8 @@ class composition_kit(osv.osv):
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type - fields from one2many field
         if view_type == 'form' and context.get('composition_type', False) == 'theoretical':
-            # fields to be modified
-            list = ['<field name="item_lot"', '<field name="item_exp"']
+            # fields to be modified - set invisible
+            list = ['<field name="item_lot"', '<field name="item_exp"', '<field name="item_asset_id"']
             replace_text = result['fields']['composition_item_ids']['views']['tree']['arch']
             replace_text = reduce(lambda x, y: x.replace(y, y + ' invisible="True" '), [replace_text] + list)
             result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
@@ -761,9 +758,9 @@ class composition_item(osv.osv):
     '''
     _name = 'composition.item'
     
-    def create(self, cr, uid, vals, context=None):
+    def _common_update(self, cr, uid, vals, context=None):
         '''
-        force writing of expired_date which is readonly for batch management products
+        common function for values update during create and write
         '''
         # objects
         prod_obj = self.pool.get('product.product')
@@ -771,9 +768,11 @@ class composition_item(osv.osv):
         if 'item_product_id' in vals:
             if vals['item_product_id']:
                 product_id = vals['item_product_id']
-                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
+                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management', 'type', 'subtype'], context=context)[0]
                 management = data['batch_management']
                 perishable = data['perishable']
+                type = data['type']
+                subtype = data['subtype']
                 # if management and we have a lot_id, we fill the expiry date
                 if management and vals.get('item_lot'):
                     prodlot_id = vals.get('item_lot')
@@ -792,45 +791,29 @@ class composition_item(osv.osv):
                 else:
                     # not perishable nor management, exp and lot are False
                     vals.update(item_lot=False, item_exp=False)
+                # if the product is not of type 'product' or type is 'product' but subtype is not 'asset', we set asset to False
+                if (type != 'product') or (type == 'product' and subtype != 'asset'):
+                    vals.update(item_asset_id=False)
             else:
-                # product is False, exp and lot are set to False
-                vals.update(item_lot=False, item_exp=False)
+                # product is False, exp and lot are set to False - asset is set to False
+                vals.update(item_lot=False, item_exp=False, item_asset_id=False)
+        
+        return vals
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        force writing of expired_date which is readonly for batch management products
+        
+        force writing asset_id to False.
+        '''
+        vals = self._common_update(cr, uid, vals, context=context)
         return super(composition_item, self).create(cr, uid, vals, context=context)
         
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        prodlot_obj = self.pool.get('stock.production.lot')
-        if 'item_product_id' in vals:
-            if vals['item_product_id']:
-                product_id = vals['item_product_id']
-                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
-                management = data['batch_management']
-                perishable = data['perishable']
-                # if management and we have a lot_id, we fill the expiry date
-                if management and vals.get('item_lot'):
-                    prodlot_id = vals.get('item_lot')
-                    prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
-                                                            ('type', '=', 'standard'),
-                                                            ('product_id', '=', product_id)], context=context)
-                    # if it exists, we set the date
-                    if prod_ids:
-                        prodlot_id = prod_ids[0]
-                        data = prodlot_obj.read(cr, uid, [prodlot_id], ['life_date'], context=context)
-                        expired_date = data[0]['life_date']
-                        vals.update({'item_exp': expired_date})
-                elif perishable:
-                    # nothing special here
-                    pass
-                else:
-                    # not perishable nor management, exp and lot are False
-                    vals.update(item_lot=False, item_exp=False)
-            else:
-                # product is False, exp and lot are set to False
-                vals.update(item_lot=False, item_exp=False)
+        vals = self._common_update(cr, uid, vals, context=context)
         return super(composition_item, self).write(cr, uid, ids, vals, context=context)
     
     def on_product_change(self, cr, uid, ids, product_id, context=None):
@@ -840,9 +823,11 @@ class composition_item(osv.osv):
         # objects
         prod_obj = self.pool.get('product.product')
         result = {'value': {'item_uom_id': False,
+                            'item_asset_id': False,
                             'item_qty': 0.0,
                             'hidden_perishable_mandatory': False,
                             'hidden_batch_management_mandatory': False,
+                            'hidden_asset_mandatory': False,
                             'item_exp': False,
                             'item_lot': False,
                             }}
@@ -851,6 +836,7 @@ class composition_item(osv.osv):
             result['value']['item_uom_id'] = product.uom_po_id.id
             result['value']['hidden_perishable_mandatory'] = product.perishable
             result['value']['hidden_batch_management_mandatory'] = product.batch_management
+            result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
             
         return result
     
@@ -890,8 +876,8 @@ class composition_item(osv.osv):
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type
         if view_type == 'tree' and context.get('composition_type', False) == 'theoretical':
-            # fields to be modified
-            list = ['<field name="item_lot"', '<field name="item_exp"']
+            # fields to be modified - set to invisible
+            list = ['<field name="item_lot"', '<field name="item_exp"', '<field name="item_asset_id"']
             replace_text = result['arch']
             replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
             result['arch'] = replace_text
@@ -923,6 +909,9 @@ class composition_item(osv.osv):
             result[obj.id].update({'hidden_batch_management_mandatory': obj.item_product_id.batch_management})
             # perishable
             result[obj.id].update({'hidden_perishable_mandatory': obj.item_product_id.perishable})
+            # hidden_asset_mandatory
+            result[obj.id].update({'hidden_asset_mandatory': obj.item_product_id.type == 'product' and obj.item_product_id.subtype == 'asset'})
+            
         return result
     
     def name_get(self, cr, uid, ids, context=None):
@@ -968,6 +957,7 @@ class composition_item(osv.osv):
                 'item_product_id': fields.many2one('product.product', string='Product', required=True),
                 'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'item_uom_id': fields.many2one('product.uom', string='UoM', required=True),
+                'item_asset_id': fields.many2one('product.asset', string='Asset'),
                 'item_lot': fields.char(string='Batch Nb', size=1024),
                 'item_exp': fields.date(string='Expiry Date'),
                 'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
@@ -987,10 +977,13 @@ class composition_item(osv.osv):
                                         'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
                 'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
+                'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
                 }
     
     _defaults = {'hidden_batch_management_mandatory': False,
-                 'hidden_perishable_mandatory': False}
+                 'hidden_perishable_mandatory': False,
+                 'hidden_asset_mandatory': False,
+                 }
     
     def _composition_item_constraint(self, cr, uid, ids, context=None):
         '''

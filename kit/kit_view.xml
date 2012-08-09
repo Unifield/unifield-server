@@ -30,7 +30,8 @@
 	                        	domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_exp" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
 	                        <field name="active" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="1" />
-	                        <button colspan="6" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
+	                        <button colspan="2" name="reset_to_version" type="object" string="Load items from Version" icon="gtk-sort-descending" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
+	                        <button colspan="2" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -56,10 +57,13 @@
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
 				            		<field name="item_qty" />
 				            		<field name="item_uom_id" />
+				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
+				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 				            		<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
 				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
 				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+				            		<field name="hidden_asset_mandatory" />
 				            		<field name="hidden_batch_management_mandatory" />
 				            		<field name="hidden_perishable_mandatory" />
 				            	</tree>
@@ -73,7 +77,6 @@
                     	<field name="state" colspan="3" />
                     </group>
                     <group col="7" colspan="2">
-                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
                     	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
                     	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
@@ -217,6 +220,7 @@
            						<field name="item_product_id" readonly="True" />
 		                        <field name="item_qty" readonly="True" />
 		                        <field name="item_uom_id" readonly="True" />
+		                        <field name="item_asset_id" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
             					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 	                        </page>
@@ -241,6 +245,7 @@
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
             		<field name="item_qty" readonly="True" />
             		<field name="item_uom_id" readonly="True" />
+            		<field name="item_asset_id" readonly="True" />
             		<field name="item_lot" readonly="True" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />

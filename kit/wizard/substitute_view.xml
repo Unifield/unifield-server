@@ -26,6 +26,9 @@
 			            		<field name="product_id_substitute_item" readonly="True" />
 			            		<field name="qty_substitute_item" readonly="True" />
 			            		<field name="uom_id_substitute_item" readonly="True" />
+			            		<field name="asset_id_substitute_item"
+			            			domain="[('product_id', '=', product_id_substitute_item)]"
+			            			attrs="{'required': [('hidden_asset_mandatory', '=', True)], 'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 			            		<field name="lot_mirror"
                						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
                         			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
@@ -33,6 +36,7 @@
                 					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
                 					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
                 				<field name="type_check" invisible="True" />
+                				<field name="hidden_asset_mandatory" />
                 				<field name="hidden_batch_management_mandatory" string="Lot" />
                 				<field name="hidden_perishable_mandatory" string="Exp" />
             					<field name="integrity_status_func_substitute_item" />
@@ -58,7 +62,11 @@
                 					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', True)]}" />
                 				<field name="qty_substitute_item" />
                 				<field name="uom_id_substitute_item" />
+                				<field name="asset_id_substitute_item"
+                					domain="[('product_id', '=', product_id_substitute_item)]"
+			            			attrs="{'required': [('hidden_asset_mandatory', '=', True)], 'readonly': [('hidden_asset_mandatory', '=', False)]}" />
                					<field name="type_check" invisible="True" />
+               					<field name="hidden_asset_mandatory" />
                 				<field name="hidden_batch_management_mandatory" string="Lot" />
                 				<field name="hidden_perishable_mandatory" string="Exp" />
                 				<field name="module_substitute_item" />
@@ -89,8 +97,10 @@
             		<field name="product_id_substitute_item" readonly="True" />
             		<field name="qty_substitute_item" readonly="True" />
             		<field name="uom_id_substitute_item" readonly="True" />
+            		<field name="asset_id_substitute_item" />
             		<field name="lot_mirror" />
             		<field name="exp_substitute_item" />
+            		<field name="hidden_asset_mandatory" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
             	</tree>

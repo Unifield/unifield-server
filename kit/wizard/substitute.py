@@ -220,6 +220,7 @@ class substitute(osv.osv_memory):
         move_values = {'name': item.product_id_substitute_item.name[:64],
                        'picking_id': pick_id,
                        'product_id': item.product_id_substitute_item.id,
+                       'asset_id': item.asset_id_substitute_item.id,
                        'date': date,
                        'date_expected': date,
                        'product_qty': item.qty_substitute_item,
@@ -314,6 +315,7 @@ class substitute(osv.osv_memory):
                 move_values =  {'name': item.product_id_substitute_item.name[:64],
                                 'picking_id': pick_id,
                                 'product_id': item.product_id_substitute_item.id,
+                                'asset_id': item.asset_id_substitute_item.id,
                                 'date': date,
                                 'date_expected': date,
                                 'product_qty': item.qty_substitute_item,
@@ -338,6 +340,7 @@ class substitute(osv.osv_memory):
                                'item_product_id': item.product_id_substitute_item.id,
                                'item_qty': item.qty_substitute_item,
                                'item_uom_id': item.uom_id_substitute_item.id,
+                               'item_asset_id': item.asset_id_substitute_item.id,
                                'item_lot': item.lot_id_substitute_item.name,
                                'item_exp': item.exp_substitute_item,
                                'item_kit_id': obj.kit_id.id,
@@ -545,9 +548,9 @@ class substitute_item(osv.osv_memory):
     '''
     _name = 'substitute.item'
     
-    def create(self, cr, uid, vals, context=None):
+    def _common_update(self, cr, uid, vals, context=None):
         '''
-        force writing of expired_date which is readonly for batch management products
+        common function for values update during create and write
         '''
         # objects
         prod_obj = self.pool.get('product.product')
@@ -555,9 +558,11 @@ class substitute_item(osv.osv_memory):
         if 'product_id_substitute_item' in vals:
             if vals['product_id_substitute_item']:
                 product_id = vals['product_id_substitute_item']
-                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
+                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management', 'type', 'subtype'], context=context)[0]
                 management = data['batch_management']
                 perishable = data['perishable']
+                type = data['type']
+                subtype = data['subtype']
                 # if management and we have a lot_id, we fill the expiry date
                 if management and vals.get('lot_id_substitute_item'):
                     data = prodlot_obj.read(cr, uid, [vals.get('lot_id_substitute_item')], ['life_date'], context=context)
@@ -569,38 +574,27 @@ class substitute_item(osv.osv_memory):
                 else:
                     # not perishable nor management, exp and lot are False
                     vals.update(lot_id_substitute_item=False, exp_substitute_item=False)
+                # if the product is not of type 'product' or type is 'product' but subtype is not 'asset', we set asset to False
+                if (type != 'product') or (type == 'product' and subtype != 'asset'):
+                    vals.update(asset_id_substitute_item=False)
             else:
-                # product is False, exp and lot are set to False
-                vals.update(lot_id_substitute_item=False, exp_substitute_item=False)
+                # product is False, exp and lot are set to False - asset set to False
+                vals.update(lot_id_substitute_item=False, exp_substitute_item=False, asset_id_substitute_item=False)
+        
+        return vals
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        force writing of expired_date which is readonly for batch management products
+        '''
+        vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item, self).create(cr, uid, vals, context=context)
         
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        prodlot_obj = self.pool.get('stock.production.lot')
-        if 'product_id_substitute_item' in vals:
-            if vals['product_id_substitute_item']:
-                product_id = vals['product_id_substitute_item']
-                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
-                management = data['batch_management']
-                perishable = data['perishable']
-                # if management and we have a lot_id, we fill the expiry date
-                if management and vals.get('lot_id_substitute_item'):
-                    data = prodlot_obj.read(cr, uid, [vals.get('lot_id_substitute_item')], ['life_date'], context=context)
-                    expired_date = data[0]['life_date']
-                    vals.update({'exp_substitute_item': expired_date})
-                elif perishable:
-                    # nothing special here
-                    pass
-                else:
-                    # not perishable nor management, exp and lot are False
-                    vals.update(lot_id_substitute_item=False, exp_substitute_item=False)
-            else:
-                # product is False, exp and lot are set to False
-                vals.update(lot_id_substitute_item=False, exp_substitute_item=False)
+        vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item, self).write(cr, uid, ids, vals, context=context)
     
     def common_on_change(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, result=None, context=None):
@@ -702,21 +696,24 @@ class substitute_item(osv.osv_memory):
         the product changes, set the hidden flag if necessary
         '''
         result = {}
-        # product changes, prodlot is always cleared
+        # product changes, prodlot is always cleared - asset is cleared
         result.setdefault('value', {})['lot_id_substitute_item'] = False
         result.setdefault('value', {})['exp_substitute_item'] = False
+        result.setdefault('value', {})['asset_id_substitute_item'] = False
         # clear uom
         result.setdefault('value', {})['uom_id_substitute_item'] = False
         # reset the hidden flags
         result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
+        result.setdefault('value', {})['hidden_asset_mandatory'] = False
         if product_id:
-            product_obj = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             # set the default uom
-            uom_id = product_obj.uom_id.id
+            uom_id = product.uom_id.id
             result.setdefault('value', {})['uom_id_substitute_item'] = uom_id
-            result.setdefault('value', {})['hidden_batch_management_mandatory'] = product_obj.batch_management
-            result.setdefault('value', {})['hidden_perishable_mandatory'] = product_obj.perishable
+            result.setdefault('value', {})['hidden_batch_management_mandatory'] = product.batch_management
+            result.setdefault('value', {})['hidden_perishable_mandatory'] = product.perishable
+            result.setdefault('value', {})['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
@@ -739,10 +736,12 @@ class substitute_item(osv.osv_memory):
         item = self.browse(cr, uid, id, context=context)
         # by default we return empty result
         result = 'empty'
-        # product management type
-        data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable'], context=context)[0]
+        # product management type - cannot use hidden checks, because validate is called within get_vals function, would result in infinite loop
+        data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
         management = data['batch_management']
         perishable = data['perishable']
+        type = data['type']
+        subtype = data['subtype']
         if management:
             if not item.lot_id_substitute_item:
                 # lot is needed
@@ -763,6 +762,14 @@ class substitute_item(osv.osv_memory):
         # quantity check
         if item.qty_substitute_item <= 0:
             result = 'must_be_greater_than_0'
+        # asset check
+        if type == 'product' and subtype == 'asset':
+            if not item.asset_id_substitute_item:
+                result = 'missing_asset'
+        else:
+            if item.asset_id_substitute_item:
+                result = 'not_asset_needed'
+        
         # we return the found result
         return result
     
@@ -789,6 +796,8 @@ class substitute_item(osv.osv_memory):
             result[obj.id].update({'hidden_batch_management_mandatory': obj.product_id_substitute_item.batch_management})
             # perishable
             result[obj.id].update({'hidden_perishable_mandatory': obj.product_id_substitute_item.perishable})
+            # hidden_asset_mandatory
+            result[obj.id].update({'hidden_asset_mandatory': obj.product_id_substitute_item.type == 'product' and obj.product_id_substitute_item.subtype == 'asset'})
             # call common_on_change
             compute_avail = self.common_on_change(cr, uid, [obj.id], obj.location_id_substitute_item.id, obj.product_id_substitute_item.id, obj.lot_id_substitute_item.id, obj.uom_id_substitute_item.id, result=None, context=context)
             # availability_value_func_substitute_item
@@ -808,12 +817,14 @@ class substitute_item(osv.osv_memory):
                 'product_id_substitute_item': fields.many2one('product.product', string='Product', required=True),
                 'qty_substitute_item': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_substitute_item': fields.many2one('product.uom', string='UoM', required=True),
+                'asset_id_substitute_item': fields.many2one('product.asset', string='Asset'),
                 'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'exp_substitute_item': fields.date(string='Expiry Date'),
                 'type_check': fields.char(string='Type Check', size=1024, readonly=True),
                 # functions
                 'hidden_perishable_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='Exp', multi='get_vals_substitute_item', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='B.Num', multi='get_vals_substitute_item', store=False, readonly=True),
+                'hidden_asset_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='Asset', multi='get_vals_substitute_item', store=False, readonly=True),
                 'availability_value_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='float', string='Availability Value', multi='get_vals_substitute_item', store=False, readonly=True),
                 'availability_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='char', size=1024, string='Availability', multi='get_vals_substitute_item', store=False, readonly=True),
                 'availability_status_hidden_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=SELECTION_AVAILABLE, string='Hidden availability', multi='get_vals_substitute_item', store=False, readonly=True),
@@ -835,21 +846,24 @@ class substitute_item_mirror(osv.osv_memory):
     _name = 'substitute.item.mirror'
     _inherit = 'substitute.item'
     
-    def create(self, cr, uid, vals, context=None):
+    def _common_update(self, cr, uid, vals, context=None):
         '''
-        force writing of expired_date which is readonly for batch management products
+        common function for values update during create and write
         '''
+        return vals # called by super create/write...
         # objects
         prod_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         if 'product_id_substitute_item' in vals:
             if vals['product_id_substitute_item']:
                 product_id = vals['product_id_substitute_item']
-                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
+                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management', 'type', 'subtype'], context=context)[0]
                 management = data['batch_management']
                 perishable = data['perishable']
+                type = data['type']
+                subtype = data['subtype']
                 # if management and we have a lot_id, we fill the expiry date
-                if management and vals.get('lot_mirror'):
+                if management and vals.get('lot_mirror', False):
                     prodlot_id = vals.get('lot_mirror')
                     prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
                                                             ('type', '=', 'standard'),
@@ -860,51 +874,57 @@ class substitute_item_mirror(osv.osv_memory):
                         data = prodlot_obj.read(cr, uid, [prodlot_id], ['life_date'], context=context)
                         expired_date = data[0]['life_date']
                         vals.update({'exp_substitute_item': expired_date})
-                elif perishable:
-                    # nothing special here
-                    pass
+                elif perishable and vals.get('exp_substitute_item', False):
+                    # check the date, if an internal lot exists, we set the name in lot_mirror
+                    exp_date = vals.get('exp_substitute_item')
+                    prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', exp_date),
+                                                            ('type', '=', 'internal'),
+                                                            ('product_id', '=', product_id)], context=context)
+                    # if exists, we set the lot name
+                    if prod_ids:
+                        prodlot_id = prod_ids[0]
+                        data = prodlot_obj.read(cr, uid, [prodlot_id], ['name'], context=context)
+                        name = data[0]['name']
+                        vals.update({'lot_mirror': name})
                 else:
                     # not perishable nor management, mirror, exp and lot are False
                     vals.update(lot_mirror=False, lot_id_substitute_item=False, exp_substitute_item=False)
+                # if the product is not of type 'product' or type is 'product' but subtype is not 'asset', we set asset to False
+                if (type != 'product') or (type == 'product' and subtype != 'asset'):
+                    vals.update(asset_id_substitute_item=False)
             else:
-                # product is False, mirror, exp and lot are set to False
-                vals.update(lot_mirror=False, lot_id_substitute_item=False, exp_substitute_item=False)
+                # product is False, mirror, exp and lot are set to False - why set lot_id to False? it is not used in mirror...
+                vals.update(lot_mirror=False, lot_id_substitute_item=False, exp_substitute_item=False, asset_id_substitute_item=False)
+        
+        return vals
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        force writing of expired_date which is readonly for batch management products
+        
+        is it really needed as product is readonly?
+        - the product does not change, so no problem with readonly which was not readonly
+        - when we write sth in readonly field (as batch name for perishable), it will anyway
+          not work because product_id is not sent (readonly)
+        I would say no, this is of no use.
+        '''
+        #vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item_mirror, self).create(cr, uid, vals, context=context)
         
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
+        
+        is it really needed as product is readonly?
+        - the product does not change, so no problem with readonly which was not readonly
+        - when we write sth in readonly field (as batch name for perishable), it will anyway
+          not work because product_id is not sent (readonly)
+        I would say no, this is of no use.
+        
+        product_id is readonly, we're getting into trouble over. write forced for lot with perishable will simply not work.
+        there is however not fonctional issue about this point. as the name of the lot is not used for perishable when processing the screen.
         '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        prodlot_obj = self.pool.get('stock.production.lot')
-        if 'product_id_substitute_item' in vals:
-            if vals['product_id_substitute_item']:
-                product_id = vals['product_id_substitute_item']
-                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
-                management = data['batch_management']
-                perishable = data['perishable']
-                # if management and we have a lot_id, we fill the expiry date
-                if management and vals.get('lot_mirror'):
-                    prodlot_id = vals.get('lot_mirror')
-                    prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
-                                                            ('type', '=', 'standard'),
-                                                            ('product_id', '=', product_id)], context=context)
-                    # if it exists, we set the date
-                    if prod_ids:
-                        prodlot_id = prod_ids[0]
-                        data = prodlot_obj.read(cr, uid, [prodlot_id], ['life_date'], context=context)
-                        expired_date = data[0]['life_date']
-                        vals.update({'exp_substitute_item': expired_date})
-                elif perishable:
-                    # nothing special here
-                    pass
-                else:
-                    # not perishable nor management, mirror, exp and lot are False
-                    vals.update(lot_mirror=False, lot_id_substitute_item=False, exp_substitute_item=False)
-            else:
-                # product is False, mirror, exp and lot are set to False
-                vals.update(lot_mirror=False, lot_id_substitute_item=False, exp_substitute_item=False)
+        #vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item_mirror, self).write(cr, uid, ids, vals, context=context)
     
     def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
@@ -977,8 +997,11 @@ class substitute_item_mirror(osv.osv_memory):
                     else:
                         # return first prodlot
                         prodlot_id = prod_ids[0]
-                        # the lot is not displayed here, internal useless internal name for the user, lot is read only anyway for perishable products
-                        #result['value'].update(lot_mirror=prodlot_id)
+                        # get the name
+                        data = prodlot_obj.read(cr, uid, prodlot_id, ['name'], context=context)
+                        name = data['name']
+                        # we write the name of the prod lot (mirror move)
+                        result['value'].update(lot_mirror=name)
         else:
             # clear expiry date, we clear production lot
             result['value'].update(lot_mirror=False,
@@ -1004,10 +1027,12 @@ class substitute_item_mirror(osv.osv_memory):
         item = self.browse(cr, uid, id, context=context)
         # by default we return empty result
         result = 'empty'
-        # product management type
-        data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable'], context=context)[0]
+        # product management type - cannot use hidden checks, because validate is called within get_vals function, would result in infinite loop
+        data = prod_obj.read(cr, uid, [item.product_id_substitute_item.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
         management = data['batch_management']
         perishable = data['perishable']
+        type = data['type']
+        subtype = data['subtype']
         if management:
             if not item.lot_mirror:
                 # lot is needed
@@ -1034,6 +1059,14 @@ class substitute_item_mirror(osv.osv_memory):
             # no lot needed - no date needed
             if item.lot_mirror or item.exp_substitute_item:
                 result = 'no_lot_needed'
+        # asset check
+        if type == 'product' and subtype == 'asset':
+            if not item.asset_id_substitute_item:
+                result = 'missing_asset'
+        else:
+            if item.asset_id_substitute_item:
+                result = 'not_asset_needed'
+                
         # return the corresponding integrity problem
         return result
     
