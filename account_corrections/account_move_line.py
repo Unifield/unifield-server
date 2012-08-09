@@ -708,8 +708,8 @@ class account_move(osv.osv):
             ids = [ids]
         reversed_move = []
         for m in self.browse(cr, uid, ids):
-            res_reverse = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date)
-            if res_reverse:
+            res_ml_ids, res_move_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date)
+            if res_ml_ids:
                 reversed_move.append(m.id)
         return reversed_move
 

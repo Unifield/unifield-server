@@ -356,12 +356,30 @@ class account_invoice(osv.osv):
         Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
         """
         to_cancel = []
+        ml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        ej_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'extra')])
+        journal_id = ej_ids and ej_ids[0] or False
+        aej_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'extra')])
+        analytic_journal_id = aej_ids and aej_ids[0] or False
         for i in self.browse(cr, uid, ids):
             if i.is_inkind_donation:
                 move_id = i.move_id.id
                 tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id], strftime('%Y-%m-%d'))
                 # If success change invoice to cancel and detach move_id
                 if tmp_res:
+                    # Change journal for reversal entries
+                    if not journal_id:
+                        raise osv.except_osv(_('Error'), _('No Extra-Accounting journal found!'))
+                    reversal_ids = ml_obj.search(cr, uid, [('reversal_line_id', 'in', [x.id for x in i.move_id.line_id])])
+                    # NB: update_check is set to False. If not, system raise an error about some field that cannot be changed on a confirmed entry.
+                    ml_obj.write(cr, uid, reversal_ids, {'journal_id': journal_id,}, check=False, update_check=False)
+                    # Change analytic journal of analytic lines that come from REVersal move lines
+                    if not analytic_journal_id:
+                        raise osv.except_osv(_('Error'), _('No analytic Extra-Accounting journal found!'))
+                    ana_reversal_ids = aal_obj.search(cr, uid, [('move_id', 'in', reversal_ids)])
+                    aal_obj.write(cr, uid, ana_reversal_ids, {'journal_id': analytic_journal_id,})
+                    # Change invoice state
                     self.write(cr, uid, [i.id], {'state': 'cancel', 'move_id':False})
                 continue
             to_cancel.append(i.id)
