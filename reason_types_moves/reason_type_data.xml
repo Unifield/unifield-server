@@ -43,6 +43,7 @@
             <field name="name">Loan</field>
             <field name="code">7</field>
             <field name="incoming_ok">True</field>
+            <field name="outgoing_ok">True</field>
         </record>
         
         <record id="reason_type_donation" model="stock.reason.type">
@@ -121,6 +122,7 @@
         <record id="reason_type_kit" model="stock.reason.type">
             <field name="name">Kit</field>
             <field name="code">14</field>
+            <field name="internal_ok">True</field>
         </record>
         
         <record id="reason_type_goods_return" model="stock.reason.type">
