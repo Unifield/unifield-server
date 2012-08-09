@@ -14,6 +14,9 @@
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="text_error" attrs="{'invisible':[('to_correct_ok', '=', False)]}" readonly="1" />
                 </xpath>
+                <xpath expr="/form//field[@name='product_uom']" position="attributes">
+                    <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+                </xpath>
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree" position="attributes" >
                     <attribute name="colors">red:to_correct_ok == True</attribute>
                 </xpath>

@@ -236,6 +236,29 @@ class tender_line(osv.osv):
                                     'to_correct_ok': True,
                                     'price_unit':0.0,})
 
+    def onchange_uom(self, cr, uid, ids, product_id, product_uom, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        res = {}
+        if product_uom and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, product_uom, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                warning = {
+                    'title': 'Wrong Product UOM !',
+                    'message':
+                        "You have to select a product UOM in the same category than the purchase UOM of the product"
+                    }
+                res.update({'warning': warning})
+                domain = {'product_uom':[('category_id','=',product.uom_id.category_id.id)]}
+                res['domain'] = domain
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -254,6 +277,12 @@ class tender_line(osv.osv):
             if vals.get('product_id'):
                 if vals.get('product_id') == tbd_product:
                     message += 'You have to define a valid product, i.e. not "To be define".'
+            if vals.get('product_uom') and vals.get('product_id') :
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
             if message:
                 raise osv.except_osv(_('Warning !'), _(message))
             else:
