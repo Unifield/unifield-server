@@ -274,9 +274,11 @@ class act_window(osv.osv):
         'display_menu_tip':fields.function(_get_help_status, type='boolean', method=True, string='Display Menu Tips',
             help='It gives the status if the tip has to be displayed or not when a user executes an action'),
         'multi': fields.boolean('Action on Multiple Doc.', help="If set to true, the action will not be displayed on the right toolbar of a form view"),
+        'empty_ids': fields.boolean('For action: is selection of records needed ?'),
     }
 
     _defaults = {
+        'empty_ids': lambda *a: False,
         'type': lambda *a: 'ir.actions.act_window',
         'view_type': lambda *a: 'form',
         'view_mode': lambda *a: 'tree,form',
