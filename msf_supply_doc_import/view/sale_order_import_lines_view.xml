@@ -36,6 +36,9 @@
                     attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
                     <newline/>
                 </xpath>
+                <xpath expr="/form//field[@name='product_uom']" position="attributes">
+                    <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+                </xpath>
                 </data>
             </field>
         </record>

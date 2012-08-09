@@ -597,6 +597,29 @@ class sale_order_line(osv.osv):
         }
         return view_to_return
 
+    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        res = {}
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                warning = {
+                    'title': 'Wrong Product UOM !',
+                    'message':
+                        "You have to select a product UOM in the same category than the purchase UOM of the product"
+                    }
+                res.update({'warning': warning})
+                domain = {'product_uom':[('category_id','=',product.uom_id.category_id.id)]}
+                res['domain'] = domain
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
@@ -617,6 +640,12 @@ class sale_order_line(osv.osv):
                     message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
                 if vals.get('nomen_manda_2') and vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
                     message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                if vals.get('product_uom') and vals.get('product_id') :
+                    product_id = vals.get('product_id')
+                    uom_id = vals.get('product_uom')
+                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context)
+                    if res and res['warning']:
+                        message += res['warning']['message']
                 if message:
                     raise osv.except_osv(_('Warning !'), _(message))
                 else:
