@@ -904,6 +904,36 @@ class sale_order_line(osv.osv):
             default.update({'so_back_update_dest_po_id_sale_order_line': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        Default procurement method is 'on order' if no product selected
+        """
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        if context is None:
+            context = {}
+        sale_id = context.get('sale_id', [])
+        if not sale_id:
+            return default_data
+        else:
+            default_data.update({'type': 'make_to_order'})
+        return default_data
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Override create method so that the procurement method is on order if no product is selected
+        """
+        if not vals.get('product_id') and context.get('sale_id', []):
+            vals.update({'type': 'make_to_order'})
+        return super(sale_order_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Override write method so that the procurement method is on order if no product is selected
+        """
+        if not vals.get('product_id') and context.get('sale_id', []):
+            vals.update({'type': 'make_to_order'})
+        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
 sale_order_line()
 
 

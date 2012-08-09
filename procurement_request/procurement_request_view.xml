@@ -37,7 +37,7 @@
                 <form string="Internal Request">
                     <group col="6" colspan="4">
                         <field name="name"/>
-                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="requestor" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" string="Requested date" />
