@@ -724,6 +724,9 @@ class claim_event(osv.osv):
         - (is not set to done - defined in _picking_done_cond)
         - if replacement is needed, we create a new picking
         '''
+        context = context.copy()
+        context.update({'from_claim': True})
+        
         # objects
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')

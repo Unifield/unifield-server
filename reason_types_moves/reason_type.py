@@ -348,7 +348,7 @@ class stock_move(osv.osv):
         # Change the reason type of the picking if it is not the same
         if vals.get('picking_id'):
             pick_id = self.pool.get('stock.picking').browse(cr, uid, vals['picking_id'], context=context)
-            if pick_id.reason_type_id.id != vals['reason_type_id']:
+            if pick_id.reason_type_id.id != vals['reason_type_id'] and not context.get('from_claim'):
                 other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                 self.pool.get('stock.picking').write(cr, uid, vals['picking_id'], {'reason_type_id': other_type_id}, context=context)
 
