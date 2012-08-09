@@ -35,17 +35,17 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
-                    <group col="6" colspan="4">
+                    <group col="6" colspan="4" name="header" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                         <field name="name"/>
-                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" string="Requested date" />
-                        <field name="origin" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="date_order" />
+                        <field name="warehouse_id" widget="selection" />
+                        <field name="requestor"  />
+                        <field name="delivery_requested_date" required="1" string="Requested date" />
+                        <field name="origin" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'in', ['done', 'validated'])]}">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                                 <tree editable="top" string="Products">
                                     <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
