@@ -266,10 +266,6 @@ class sourcing_line(osv.osv):
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
 
-    _sql_constraints = [
-        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
-    ]
-
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
         Open the split line wizard
