@@ -1036,7 +1036,7 @@ class shipment(osv.osv):
                                                         'account_id': account_id,
                                                         'price_unit': price_unit,
                                                         'discount': discount,
-                                                        'quantity': move.product_uos_qty or move.product_qty,
+                                                        'quantity': move.product_qty or move.product_uos_qty,
                                                         'invoice_line_tax_id': [(6, 0, tax_ids)],
                                                         'analytic_distribution_id': distrib_id,
                                                        }, context=context)
