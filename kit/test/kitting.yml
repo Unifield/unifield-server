@@ -126,10 +126,14 @@
   !python {model: stock.move}: |
     self.write(cr, uid, context['sm_idsC'], {'prodlot_id': ref("kit_lot_Cs")}, context=context)
 -
-  I force assign and validate both stock move
+  I force assign stock move
 -
   !python {model: stock.move}: |
     self.force_assign(cr, uid, context['sm_idsB'] + context['sm_idsC'], context=context)
+-
+  I force validate stock move
+-
+  !python {model: stock.move}: |
     self.validate_assign(cr, uid, context['sm_idsB'] + context['sm_idsC'], context=context)
 -
   I open the assign wizard
