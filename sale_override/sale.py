@@ -558,6 +558,17 @@ class sale_order(osv.osv):
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
         return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
 
+    def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+
+        - allow to add more actions when the picking is confirmed
+        '''
+        picking_id = kwargs['pick_id']
+        res = super(sale_order, self)._hook_execute_action_assign(cr, uid, *args, **kwargs)
+        return self.pool.get('stock.picking').action_assign(cr, uid, [picking_id])
+
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the sale order and all related documents to done state

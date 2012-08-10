@@ -78,12 +78,12 @@ So, you cannot choose 'Simple OUT' as Delivery process while these documents are
         pre_packing_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_ppl')[1]
         pack_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_pack_type_tree')[1]
         packing_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_shipment')[1]
-        preparation_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_pt_ppl')[1]
+#        preparation_menu_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'menu_action_pt_ppl')[1]
         
         menu_ids = [picking_menu_id, 
                     pre_packing_menu_id, 
                     pack_menu_id,
-                    preparation_menu_id,
+#                    preparation_menu_id,
                     packing_menu_id]
             
         if payload.delivery_process == 'simple':
