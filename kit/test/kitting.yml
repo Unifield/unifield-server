@@ -38,6 +38,8 @@
     qty_kit_creation: 3
     uom_id_kit_creation: product.product_uom_unit
     version_id_kit_creation: kit_compo_06
+    location_dest_id_kit_creation: stock.stock_location_stock
+    default_location_src_id_kit_creation: stock.stock_location_stock
 -
   I check the display items from version function
 -
