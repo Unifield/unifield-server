@@ -1230,9 +1230,6 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
-        # this method is only applicable to an unique stock move
-        assert len(ids) == 1
         
         kit_creation_id = False
         for move in self.browse(cr, uid, ids, context=context):
