@@ -236,6 +236,11 @@
     c = res['context']
     context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
+  I update mandatory locations - 
+-
+  !python {model: substitute}: |
+    self.write(cr, uid, context['wizard']['ids'], {'destination_location_id': ref("stock.stock_location_stock")}, context=context)
+-
   I complete the lot name for the product C
 -
   !python {model: substitute.item.mirror}: |
