@@ -1251,7 +1251,11 @@ class stock_move(osv.osv):
         
         # refresh the vue so the completed flag is updated and Confirm Kitting button possibly appears
         data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_kit_creation_form')
+        view_id = False
+        try:
+            view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_kit_creation_form')
+        except:
+            pass
         view_id = view_id and view_id[1] or False
         return {'view_mode': 'form,tree',
                 'view_id': [view_id],
