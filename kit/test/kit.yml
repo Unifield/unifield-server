@@ -271,7 +271,8 @@
               'uom_id_substitute_item': ref("product.product_uom_unit"),
               'lot_id_substitute_item': ref("kit_lot_Cs"),
               }
-    self.create(cr, uid, values, context=context)
+    item_id = self.create(cr, uid, values, context=context)
+    assert self.browse(cr, uid, item_id, context=context).exp_substitute_item, 'expiried date has not been completed by create function'
 -
   I test the on_change functions for substitute.item - type check is 'out' for standard substitute.item (products come from the stock)
 -
