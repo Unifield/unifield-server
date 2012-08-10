@@ -67,6 +67,7 @@ class base_setup_company(osv.osv_memory):
             return defaults
         company = companies.browse(cr, uid, company_id[0], context=context)
         defaults['company_id'] = company.id
+        defaults['currency'] = company.currency_id.id
 
         if not self._show_company_data(cr, uid, context=context):
             return defaults

@@ -739,6 +739,15 @@ class sale_order(osv.osv):
         result = line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu')
         return result
 
+    def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+
+        - allow to add more actions when the picking is confirmed
+        '''
+        return True
+
     def action_ship_create(self, cr, uid, ids, context=None, *args):
         if context is None:
             context = {}
@@ -842,6 +851,7 @@ class sale_order(osv.osv):
 
             if self._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, picking_id=picking_id,):
                 wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+                self._hook_execute_action_assign(cr, uid, pick_id=picking_id)
 
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
