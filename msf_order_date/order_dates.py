@@ -675,15 +675,38 @@ class purchase_order(osv.osv):
         return {}
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
-    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, context=None):
+    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, order_type=False, context=None):
         '''
         Set the confirmed date with the requested date if the first is not fill
+        And the delivery_confirmed_date takes the value of the computed requested date by default only if order_type == 'purchase_list'
         '''
         if context is None:
             context = {}
         res = {}
+        res['value'] = {}
+        if order_type == 'purchase_list':
+            res['value'].update({'delivery_confirmed_date': requested_date})
+        else:
+            res['value'].update({'delivery_confirmed_date': False})
         # compute ready to ship date
         res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        return res
+    
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+        """
+        Set the delivery_confirmed_date if order_type == 'purchase_list'
+        """
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
+        if order_type == 'purchase_list' and delivery_requested_date:
+            if 'value' in res:
+                res['value'].update({'delivery_confirmed_date': delivery_requested_date})
+            else:
+                res.update({'value': {'delivery_confirmed_date': delivery_requested_date}})
+        else:
+            if 'value' in res:
+                res['value'].update({'delivery_confirmed_date': False})
+            else:
+                res.update({'value': {'delivery_confirmed_date': False}})
         return res
     
     def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):

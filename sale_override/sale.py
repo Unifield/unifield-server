@@ -863,6 +863,10 @@ class sale_order_line(osv.osv):
                 'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
                 }
 
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
+
     def create(self, cr, uid, vals, context=None):
         '''
         Add the database ID of the SO line to the value sync_sol_db_id

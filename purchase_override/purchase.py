@@ -198,7 +198,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         '''
         Changes the invoice method of the purchase order according to
         the choosen order type
@@ -1558,6 +1558,10 @@ class purchase_order_line(osv.osv):
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
     }
+    
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
     
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,

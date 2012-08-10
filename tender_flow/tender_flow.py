@@ -547,6 +547,10 @@ class tender_line(osv.osv):
                  'state': lambda *a: 'draft',
                  }
     
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
+    
 tender_line()
 
 
