@@ -201,16 +201,17 @@ class analytic_account(osv.osv):
         res = []
         # Browse all accounts
         for account in self.browse(cr, uid, ids, context=context):
-            data = []
-            acc = account
-            while acc:
-                data.insert(0, acc.code)
-                acc = acc.parent_id
-            data = ' / '.join(data[1:-1])
-            display = "%s" % (account.code)
-            if len(data) and len(data) > 0:
-                display = "%s (%s)" % (account.code, data)
-            res.append((account.id, display))
+#            data = []
+#            acc = account
+#            while acc:
+#                data.insert(0, acc.code)
+#                acc = acc.parent_id
+#            data = ' / '.join(data[1:-1])
+#            display = "%s" % (account.code)
+#            if len(data) and len(data) > 0:
+#                display = "%s (%s)" % (account.code, data)
+#            res.append((account.id, display))
+            res.append((account.id, account.code))
         return res
 
     def unlink(self, cr, uid, ids, context=None):
