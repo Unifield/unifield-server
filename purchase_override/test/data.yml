@@ -16,12 +16,34 @@
     name: Local Market
     partner_id: localmarket
 -
+  I create a Receivable Account Type
+-
+   !record {model: account.account.type, id: account_account_type_receivable0}:
+      close_method: balance
+      code: receivable
+      name: Receivable
+      sign: 1
+-
+    I create a donation account
+-
+  !record {model: account.account, id: donation_account}:
+    code: '9xxxxx'
+    company_id: base.main_company
+    currency_mode: current
+    name: Olivier please dont forget the tests
+    type: payable
+    user_type: account_account_type_receivable0
+    reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
+
+-
     I create supplier S1
 -
   !record {model: res.partner, id: supplier1}:
     name: S1
     supplier: True
     partner_type: internal
+    donation_payable_account: donation_account
 -
     I create the address for S1
 -

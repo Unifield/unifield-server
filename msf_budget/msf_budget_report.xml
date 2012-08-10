@@ -51,6 +51,13 @@
         auto="False"
         menu="True"/>
 
+        <report id="budget_actual"
+        string="Actuals by CC"
+        model="msf.budget"
+        name="msf.budget.actual"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
     </data>
 </openerp>
 
