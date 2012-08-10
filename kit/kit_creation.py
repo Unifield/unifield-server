@@ -302,7 +302,7 @@ class kit_creation(osv.osv):
         # validation of kitting order
         assertion = self.assert_confirm_kitting(cr, uid, ids, context=context)
         if assertion:
-            raise osv.except_osv(_('Warning !'), _(assertion))
+            raise osv.except_osv(_(assertion), _(assertion))
         
         for obj in self.browse(cr, uid, ids, context=context):
             # assign products to kits TODO modify to many2many to keep stock move traceability?? needed?
