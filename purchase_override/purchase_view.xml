@@ -129,6 +129,7 @@
                       <field name="shipped_rate" widget="progressbar" />
                       <field name="invoiced_rate" widget="progressbar" />
                       <field name="amount_total" sum="Total amount" />
+                      <field name="pricelist_id" string="Currency" />
                       <field name="state" />
                 </tree>
             </field>

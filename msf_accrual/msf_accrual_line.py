@@ -75,7 +75,7 @@ class msf_accrual_line(osv.osv):
     _defaults = {
         'third_party_type': 'res.partner',
         'journal_id': lambda self,cr,uid,c: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'accrual'),
-                                                                                              ('instance_id', '=', self.pool.get('res.company').browse(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id).instance_id.id)])[0],
+                                                                                              ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])[0],
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
     }
