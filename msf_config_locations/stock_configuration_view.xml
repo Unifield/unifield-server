@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+                <!-- Override the stock location tree view -->
+<!--                <record id="stock_location_view_location_tree" model="ir.ui.view">
+                    <field name="name">stock.location.view.location.tree</field>
+                    <field name="model">stock.location</field>
+                    <field name="type">tree</field>
+                    <field name="inherit_id" ref="stock.view_location_tree2" />
+                    <field name="arch" type="xml">
+                        <xpath expr="/tree/field[@name='complete_name']" position="replace">
+                            <field name="name" />
+                        </xpath>
+                    </field>
+                </record>-->
+		
+		<record id="stock_location_configuration_wizard" model="ir.ui.view">
+			<field name="name">stock.location.configuration.wizard</field>
+			<field name="model">stock.location.configuration.wizard</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="New location creation">
+				    <field name="reactivate" invisible="1" />
+					<separator colspan="4" string="Location configuration" />
+					<field name="location_usage" colspan="4" required="1" />
+					<newline />
+					<field name="location_type" attrs="{'invisible': [('location_usage', '!=', 'consumption_unit')],
+														'required': [('location_usage', '=', 'consumption_unit')]}" colspan="4" />
+					<field name="location_name" colspan="4" attrs="{'invisible': [('location_usage', '=', False)]]}" 
+					       required="0" on_change="name_on_change(location_name, location_type, location_usage)"/>
+					<newline />
+					<field name="location_id" colspan="4" invisible="1" attrs="{'invisible': ['|', ('location_usage', '=', False), ('reactivate', '=', False)]}" 
+					       domain="[('active', '=', False), ('optional_loc', '=', True), ('usage', '=', location_type), ('location_category', '=', location_usage)]" />
+					<newline />
+					<separator colspan="4" string="Actions" />
+					<button special="cancel" icon="gtk-cancel" string="Cancel" />
+					<group colspan="3" col="2">
+					   <button name="confirm_creation" icon="terp-camera_test" string="Confirm" type="object" />
+					   <button name="confirm_creation2" icon="terp-camera_test" string="Re-activate location" type="object" attrs="{'readonly': [('reactivate', '=', False)]}" />
+					</group>
+				</form>
+			</field>
+		</record>
+		
+		<record id="action_stock_location_configuration_wizard" model="ir.actions.act_window">
+			<field name="name">Create new stock location</field>
+			<field name="res_model">stock.location.configuration.wizard</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+		</record>
+		
+		<menuitem id="menu_stock_location_configuration_wizard"
+				  action="action_stock_location_configuration_wizard"
+				  parent="stock.menu_warehouse_config" />
+				  
+		<record id="stock_remove_location_wizard_form_view" model="ir.ui.view">
+			<field name="name">stock.remove.location.wizard.form.view</field>
+			<field name="model">stock.remove.location.wizard</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Remove an optional location">
+					<field name="error" invisible="1" />
+					<field name="move_from_to" invisible="1" />
+					<field name="not_empty" invisible="1" />
+					<field name="has_child" invisible="1" />
+					<separator string="Parameters" colspan="4" />
+					<!--<field name="location_usage" string="Which is the usage of the location to remove ?" colspan="4" 
+						   on_change="location_usage_change(location_usage)" />
+					<newline />
+					<field name="location_category" string="Which is the type of the location to remove ?" colspan="4"
+						   attrs="{'invisible': [('location_usage', '=', False)], 'readonly': [('location_usage', '=', 'customer')]}" />
+					<newline />-->
+					<field name="location_id" string="Choose a location" colspan="4" required="1" 
+							on_change="location_id_on_change(location_id)" domain="[('optional_loc', '=', True), ('usage', 'not in', ['view',])]"/>
+					<group colspan="4" col="3" attrs="{'invisible': [('error', '=', False)]}">
+						<separator string="Message" colspan="4" />
+						<field name="error_message" nolabel="1" colspan="4" />
+						<button type="object" name="see_moves" string="See moves" attrs="{'invisible': [('move_from_to', '=', False)]}" />
+						<button type="object" name="products_in_location" string="Products in location" attrs="{'invisible': [('not_empty', '=', False)]}" />
+						<button type="object" name="children_location" string="Children locations" attrs="{'invisible': [('has_child', '=', False)]}" />
+					</group>
+					<separator colspan="4" string="Actions" />
+					<button special="cancel" icon="gtk-cancel" string="Cancel" />
+					<group colspan="3" col="2">
+						<button type="object" name="deactivate_location" icon="terp-camera_test" string="Inactivate the location" 
+							attrs="{'invisible': [('error', '=', True)]}" colspan="2" />
+						<button type="object" name="check_error" icon="gtk-execute" string="Check errors" 
+							attrs="{'invisible': [('error', '=', False)]}" colspan="2" />
+					</group>
+				</form>
+			</field>
+		</record>
+		
+		<record id="action_stock_remove_location_wizard" model="ir.actions.act_window">
+			<field name="name">Remove a stock location</field>
+			<field name="res_model">stock.remove.location.wizard</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+		</record>
+		
+		<menuitem id="menu_stock_remove_location_wizard"
+				  action="action_stock_remove_location_wizard"
+				  parent="stock.menu_warehouse_config" />
+				  
+		<record id="view_location_tree" model="ir.ui.view">
+		    <field name="name">view.location.tree</field>
+		    <field name="model">stock.location</field>
+		    <field name="type">tree</field>
+		    <field name="inherit_id" ref="stock.view_location_tree" />
+		    <field name="arch" type="xml">
+		        <xpath expr="/tree" position="attributes">
+		            <attribute name="expand_button">1</attribute>
+		        </xpath>
+		    </field>
+		</record>
+		
+	</data>
+</openerp>

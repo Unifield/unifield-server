@@ -28,7 +28,7 @@ class product_list(osv.osv):
     _name = 'product.list'
     _description = 'Products list'
     
-    def _get_nb_products(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_nb_products(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the number of products on the list
         '''
@@ -39,7 +39,7 @@ class product_list(osv.osv):
         
         return res
     
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
         '''
         Adds update date and user information
         '''
@@ -49,7 +49,7 @@ class product_list(osv.osv):
         return super(product_list, self).write(cr, uid, ids, vals, context=context)
     
         
-    def copy(self, cr, uid, id, defaults={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         '''
         Remove the last update date and the reviewer on the new list
         '''
@@ -89,7 +89,7 @@ class product_list(osv.osv):
         ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
     ]
 
-    def change_product_line(self, cr, uid, ids, context={}):
+    def change_product_line(self, cr, uid, ids, context=None):
         '''
         Refresh the old product list
         '''
@@ -103,7 +103,7 @@ class product_list(osv.osv):
 
         return {'value': res}
 
-    def call_add_products(self, cr, uid, ids, context={}):
+    def call_add_products(self, cr, uid, ids, context=None):
         '''
         Call the add multiple products wizard
         '''
@@ -133,13 +133,13 @@ class product_list_line(osv.osv):
     _description = 'Line of product list'
     
     _columns = {
-        'name': fields.many2one('product.product', string='Product name', required=True),
+        'name': fields.many2one('product.product', string='Product Description', required=True),
         'list_id': fields.many2one('product.list', string='List', ondelete='cascade'),
-        'ref': fields.related('name', 'default_code', string='Product reference', readonly=True, type='char'),
+        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char'),
         'comment': fields.char(size=256, string='Comment'),
     }
 
-    def unlink(self, cr, uid, ids, context={}):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Create old product list line on product list line deletion
         '''
@@ -183,7 +183,7 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
 
-    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns all lists/sublists where the product is in
         '''
@@ -204,7 +204,7 @@ class product_product(osv.osv):
                     
         return res
     
-    def _search_list_sublist(self, cr, uid, obj, name, args, context={}):
+    def _search_list_sublist(self, cr, uid, obj, name, args, context=None):
         '''
         Filter the search according to the args parameter
         '''
@@ -230,8 +230,18 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        'default_code' : fields.char('CODE', size=14),
     }
 
 product_product()
+
+class product_template(osv.osv):
+    _name = 'product.template'
+    _inherit = 'product.template'
+
+    _columns = {
+        'name': fields.char(size=60, string='DESCRIPTION', required=True),
+    }
+product_template()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

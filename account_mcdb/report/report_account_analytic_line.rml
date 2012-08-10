@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(842.0,595.0)" title="Test" author="Martin Simon" allowSplitting="20">
+  <template pageSize="(1191.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="14.0" y1="14.0" width="814" height="567"/>
+      <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -22,8 +22,8 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
-      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="10,-1"/>
-      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="10,-1" thickness="0.5"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="19,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="19,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <initialize>
@@ -33,6 +33,7 @@
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -44,7 +45,7 @@
     <images/>
   </stylesheet>
   <story>
-    <blockTable colWidths="814.0" style="Tableau1">
+    <blockTable colWidths="1162.0" style="Tableau1">
       <tr>
         <td>
           <para style="P1">Analytic Journal Items</para>
@@ -54,31 +55,59 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="47.0,64.0,43.0,261.0,51.0,51.0,51.0,51.0,51.0,51.0,89.0" style="Tableau3">
+    <!-- colWidths="41.0,41.0,41.0,226.0,44.0,66.0,66.0,62.0,53.0,78.0,78.0,78.0,39.0,39.0,39.0,39.0,39.0,39.0,52.0" -->
+    <blockTable style="Tableau3">
       <tr>
         <td>
-          <para style="P3">Journ.</para>
+          <para style="P3">Proprietary Instance</para>
         </td>
         <td>
-          <para style="P3">Date</para>
+          <para style="P3">Journal Code</para>
         </td>
         <td>
-          <para style="P3">Instance</para>
+          <para style="P3">Entry Sequence</para>
         </td>
         <td>
-          <para style="P3">Description</para>
+          <para style="P3">DESCRIPTION</para>
         </td>
         <td>
-          <para style="P3">Ref.</para>
+          <para style="P3">CODE</para>
         </td>
         <td>
-          <para style="P3">Amount</para>
+          <para style="P3">Document Date</para>
         </td>
         <td>
-          <para style="P3">Amount Curr.</para>
+          <para style="P3">Posting Date</para>
         </td>
         <td>
-          <para style="P3">Currency</para>
+          <para style="P3">Period</para>
+        </td>
+        <td>
+          <para style="P3">General Account</para>
+        </td>
+        <td>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Destination" or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Cost Center" or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and "Funding Pool" or "Analytic Account" ]]</para>
+        </td>
+        <td>
+          <para style="P3">Third Party</para>
+        </td>
+        <td>
+          <para style="P3">Book. Amount</para>
+        </td>
+        <td>
+          <para style="P3">Book. Currency</para>
+        </td>
+        <td>
+          <para style="P3">Func. Amount</para>
+        </td>
+        <td>
+          <para style="P3">Func. Currency</para>
         </td>
         <td>
           <para style="P3">Out. Amount</para>
@@ -87,19 +116,19 @@
           <para style="P3">Out. Currency</para>
         </td>
         <td>
-          <para style="P3">Ana. Account</para>
+          <para style="P3">Reversal Origin</para>
         </td>
       </tr>
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
+          <para style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</para>
+        </td>
+        <td>
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
-        </td>
-        <td>
-          <para style="P3">[[ o.company_id and o.company_id.name or '' ]]</para>
+          <para style="P3">[[ o.move_id and o.move_id.move_id and o.move_id.move_id.name or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.name or '' ]]</para>
@@ -108,13 +137,40 @@
           <para style="P3">[[ o.ref or '' ]]</para>
         </td>
         <td>
-          <para style="P4">[[ o.amount or '0.0' ]]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ o.period_id and o.period_id.name or '' ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.general_account_id and o.general_account_id.code or '' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ data.get('context') and data['context'].get('display_fp', False) and (o.destination_id and o.destination_id.name or '') or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ data.get('context') and data['context'].get('display_fp', False) and (o.cost_center_id and o.cost_center_id.name or '') or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.account_id and o.account_id.name or '' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ o.partner_txt or '' ]]</para>
         </td>
         <td>
           <para style="P4">[[ o.amount_currency or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.currency_id and o.currency_id.name or '' ]]</para>
+          <para style="P4">[[ o.currency_id and o.currency_id.name or '' ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ o.amount or '0.0' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ o.company_id and o.company_id.currency_id and o.company_id.currency_id.name or '' ]]</para>
         </td>
         <td>
           <para style="P4">[[ o.output_amount or '0.0' ]]</para>
@@ -123,7 +179,7 @@
           <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.account_id and o.account_id.name or '' ]]</para>
+          <para style="P3">[[ o.reversal_origin and o.reversal_origin.move_id and o.reversal_origin.move_id.name or '' ]]</para>
         </td>
       </tr>
     </blockTable>

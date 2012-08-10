@@ -21,6 +21,9 @@
 from report import report_sxw
 import csv
 import StringIO
+import pooler
+import locale
+import datetime
 
 class report_budget_criteria(report_sxw.report_sxw):
     _name = 'report.budget.criteria'
@@ -28,12 +31,87 @@ class report_budget_criteria(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
     
+    def _get_budget_header(self, cr, uid, budget, parameters, context=None):
+        pool = pooler.get_pool(cr.dbname)
+        # Dictionary for selection
+        wizard_obj = pool.get('wizard.budget.criteria.export')
+        breakdown_selection = dict(wizard_obj._columns['breakdown'].selection)
+        granularity_selection = dict(wizard_obj._columns['granularity'].selection)
+        result =  [['Budget name:', budget.name],
+                   ['Budget code:', budget.code],
+                   ['Fiscal year:', budget.fiscalyear_id.name],
+                   ['Cost center:', budget.cost_center_id.name],
+                   ['Decision moment:', budget.decision_moment_id.name],
+                   ['Version:', budget.version],
+                   ['Commitments:', parameters['commitment'] and 'Included' or 'Excluded'],
+                   ['Breakdown:', breakdown_selection[parameters['breakdown']]],
+                   ['Granularity:', granularity_selection[parameters['granularity']]]]
+        if 'currency_table_id' in parameters:
+            currency_table = pool.get('res.currency.table').browse(cr,
+                                                                   uid,
+                                                                   parameters['currency_table_id'],
+                                                                   context=context)
+            result.append(['Currency table:', currency_table.name])
+        if 'period_id' in parameters:
+            period = pool.get('account.period').browse(cr,
+                                                       uid,
+                                                       parameters['period_id'],
+                                                       context=context)
+            result.append(['Year-to-date:', period.name])
+        return result
+    
+    def _get_budget_lines(self, cr, uid, budget_line_ids, parameters, context=None):
+        if context is None:
+            context = {}
+        pool = pooler.get_pool(cr.dbname)
+        result = []
+        # Column header
+        month_stop = 12
+        header = ['Account']
+        # check if month detail is needed
+        if 'breakdown' in parameters and parameters['breakdown'] == 'month':
+            month_list = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+            if 'period_id' in parameters:
+                period = pool.get('account.period').browse(cr, uid, parameters['period_id'], context=context)
+                month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
+            for month in range(month_stop):
+                header.append(month_list[month] + ' (Budget)')
+                header.append(month_list[month] + ' (Actual)')
+        header += ['Total (Budget)', 'Total (Actual)']
+        result.append(header)
+        # Update context
+        context.update(parameters)
+        # Retrieve lines
+        formatted_monthly_amounts = []
+        monthly_amounts = pool.get('msf.budget.line')._get_monthly_amounts(cr,
+                                                                           uid,
+                                                                           budget_line_ids,
+                                                                           context=context)
+        for amount_line in monthly_amounts:
+            formatted_amount_line = [amount_line[0]]
+            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
+            formatted_monthly_amounts.append(formatted_amount_line)
+        result += formatted_monthly_amounts
+        return result
+    
+    def _enc(self, st):
+        if isinstance(st, unicode):
+            return st.encode('utf8')
+        return st
+    
     def create(self, cr, uid, ids, data, context=None):
+        pool = pooler.get_pool(cr.dbname)
+        budget = pool.get('msf.budget').browse(cr, uid, context['active_id'], context=context)
+        budget_line_ids = pool.get('msf.budget.line').search(cr, uid, [('budget_id', '=', context['active_id'])], context=context)
+        header_data = self._get_budget_header(cr, uid, budget, data['form'], context)
+        budget_line_data = self._get_budget_lines(cr, uid, budget_line_ids, data['form'], context)
+        data = header_data + [['']] + budget_line_data
+        
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
-        for line in data['form']:
-            writer.writerow(line)
-        out = buffer.getvalue()    
+        for line in data:
+            writer.writerow(map(self._enc,line))
+        out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')
     

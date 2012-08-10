@@ -30,6 +30,8 @@ class financing_contract_donor(osv.osv):
         'name': fields.char('Donor name', size=64, required=True),
         'code': fields.char('Donor code', size=16, required=True),
         'active': fields.boolean('Active'),
+        # Define for _inherits
+        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade", required=True),
     }
     
     _defaults = {
@@ -37,9 +39,9 @@ class financing_contract_donor(osv.osv):
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
 
-    def _check_unicity(self, cr, uid, ids, context={}):
+    def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
-            context={}
+            context = {}
         for donor in self.browse(cr, uid, ids, context=context):
             bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', donor.name),('code', '=ilike', donor.code)])
             if len(bad_ids) and len(bad_ids) > 1:
@@ -50,7 +52,9 @@ class financing_contract_donor(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between donors!', ['code', 'name']),
     ]
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
         donor = self.browse(cr, uid, id, context=context)
         if not default:
             default = {}

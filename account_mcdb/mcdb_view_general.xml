@@ -1,0 +1,19 @@
+                    <separator string="General" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <field name="instance_id" widget="selection"/>
+                        <field name="document_date_from" string="Document date"/>
+                        <field name="posting_date_from" string="Posting date"/>
+                        <field name="document_code"/>
+                        <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}"/>
+                    </group>
+                    <group colspan="2" col="2">
+                        <group colspan="2">
+                            <html>
+                                <br />
+                            </html>
+                        </group>
+                        <field name="document_date_to" string="to"/>
+                        <field name="posting_date_to" string="to"/>
+                        <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                    </group>
+                    <separator string="Accounting" colspan="4"/>

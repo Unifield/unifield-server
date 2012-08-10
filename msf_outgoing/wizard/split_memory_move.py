@@ -67,7 +67,9 @@ class split_memory_move(osv.osv_memory):
         for memory_move in memory_move_obj.browse(cr, uid, memory_move_ids, context=context):
             
             # quantity from memory move
-            available_qty = memory_move.quantity
+
+            available_qty = memory_move.quantity_ordered
+            available_qty_to_process = memory_move.quantity
             
             # leave quantity must be greater than zero
             if leave_qty <= 0:
@@ -85,14 +87,17 @@ class split_memory_move(osv.osv_memory):
             new_qty = available_qty - leave_qty
             
             # update the selected memory move
-            values = {'quantity': new_qty}
+            values = {'quantity_ordered': new_qty}
+
+            if available_qty_to_process > 0.0:
+                values['quantity'] = 0.0
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
             # create new memory move - copy for memory is not implemented
             default_val = {'line_number': memory_move.line_number,
                            'product_id': memory_move.product_id.id,
-                           'quantity': leave_qty,
+                           'quantity_ordered': leave_qty,
                            'force_complete': memory_move.force_complete,
                            'product_uom': memory_move.product_uom.id,
                            'prodlot_id': memory_move.prodlot_id.id,
@@ -103,6 +108,10 @@ class split_memory_move(osv.osv_memory):
                            'currency': memory_move.currency.id,
                            'asset_id': memory_move.asset_id.id,
                            }
+
+            if available_qty_to_process > 0.0:
+                default_val['quantity'] = 0.0
+
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
         
         # no data for type 'back'

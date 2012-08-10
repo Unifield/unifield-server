@@ -34,12 +34,39 @@ class product_supplierinfo(osv.osv):
             r[supinfo['id']] = supinfo['sequence']
         return r
 
+    def _get_manu_price_dates(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        ret = {}
+        for prod in self.browse(cr, uid, ids):
+            ret[prod.id] = {}
+            ret[prod.id]['check_manufacturer'] = prod.manufacturer_id and True or False
+            ret[prod.id]['get_first_price'] = prod.pricelist_ids and prod.pricelist_ids[0].price or False
+            ret[prod.id]['get_first_currency'] = prod.pricelist_ids and prod.pricelist_ids[0].currency_id and prod.pricelist_ids[0].currency_id.id or False
+            ret[prod.id]['get_till_date'] = False
+            ret[prod.id]['get_from_date'] = False
+            min_qty = False
+            if prod.pricelist_ids:
+                for price in prod.pricelist_ids:
+                    if min_qty is False or price.min_order_qty < min_qty:
+                        if price.valid_till:
+                            ret[prod.id]['get_till_date'] = price.valid_till
+                        if price.valid_from:
+                            ret[prod.id]['get_from_date'] = price.valid_from
+                        min_qty = price.min_order_qty
+        return ret
+
     _columns = {
         'manufacturer_id': fields.many2one('res.partner', string='Manufacturer', domain=[('manufacturer', '=', 1)]),
         'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
         'third_manufacturer_id': fields.many2one('res.partner', string='Third Manufacturer', domain=[('manufacturer', '=', 1)]),
         'company_id': fields.many2one('res.company','Company',select=1),
         'sequence_bis': fields.function(_get_order_id, method=True, type="integer", help="Assigns the priority to the list of product supplier.", string="Ranking"),
+        'check_manufacturer': fields.function(_get_manu_price_dates, method=True, type="boolean", string="Manufacturer", multi="compt_f"),
+        'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", multi="compt_f"),
+        'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
+        'get_till_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid till date", multi="compt_f"),
+        'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid form date", multi="compt_f"),
     }
     
     _defaults = {

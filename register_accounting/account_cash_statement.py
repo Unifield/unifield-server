@@ -35,7 +35,12 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    def create(self, cr, uid, vals, context={}):
+#    Remove this block because it has been modified and moved to the sync module
+#    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+#        bank = self.browse(cr, uid, res_id)
+#        return bank.name + '_' +bank.journal_id.code
+
+    def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
         """
@@ -68,7 +73,7 @@ class account_cash_statement(osv.osv):
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.balance_end_real})
-        res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
@@ -76,26 +81,44 @@ class account_cash_statement(osv.osv):
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
-    def button_open_cash(self, cr, uid, ids, context={}):
-        """
-        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
-        """
-        # Some verifications
+    def button_open_cash(self, cr, uid, ids, context=None):
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        st = self.browse(cr, uid, ids)[0]
-        # Calculate the starting balance
+            ids = [ids] # Calculate the starting balance
+            
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
-            self.write(cr, uid, [rs], res.get(rs))
-            # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
+            self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
             register = self.browse(cr, uid, [rs], context=context)[0]
             if register and not register.prev_reg_id:
                 if not register.balance_start > 0:
-                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+                    return {'name' : "Open Empty CashBox Confirmation",
+                            'type' : 'ir.actions.act_window',
+                            'res_model' :"wizard.open.empty.cashbox",
+                            'target': 'new',
+                            'view_mode': 'form',
+                            'view_type': 'form',
+                            'context': {'active_id': ids[0],
+                                        'active_ids': ids
+                                        }
+                            }
+
+        # if the cashbox is valid for opening, just continue the method do open
+        return self.do_button_open_cash(cr, uid, ids, context)
+
+    def do_button_open_cash(self, cr, uid, ids, context=None):
+        """
+        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids] # Calculate the starting balance
+
+        # Prepare some values
+        st = self.browse(cr, uid, ids)[0]
+                
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')
         # Search lines from current register starting balance
@@ -112,16 +135,13 @@ class account_cash_statement(osv.osv):
             }
             cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition : 
-        #+ Cash Journal Code + A Sequence Number (like /02)
-        if st.journal_id and st.journal_id.code:
-            seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
-            name = st.journal_id.code + seq
-            res_id = self.write(cr, uid, ids, {'state' : 'open', 'name': name})
-            return res_id
+        #+ Cash Journal Name
+        if st.journal_id and st.journal_id.name:
+            return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
         else:
             return False
 
-    def button_confirm_cash(self, cr, uid, ids, context={}):
+    def button_confirm_cash(self, cr, uid, ids, context=None):
         """
         when you're attempting to close a CashBox via 'Close CashBox'
         """
@@ -152,7 +172,7 @@ class account_cash_statement(osv.osv):
                 }
         }
 
-    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance: call super, then add the Open Advance Amount to the end balance
         """
@@ -176,17 +196,17 @@ class account_cash_statement(osv.osv):
             'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
-            'name': fields.char('Register Name', size=64, required=False, readonly=True),
+            'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
-            'open_advance_amount': fields.float('Unrecorded Open Advances'),
+            'open_advance_amount': fields.float('Unrecorded Advances'),
             'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
             'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }
 
-    def button_wiz_temp_posting(self, cr, uid, ids, context={}):
+    def button_wiz_temp_posting(self, cr, uid, ids, context=None):
         """
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
@@ -194,18 +214,26 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
         context['type_posting'] = 'temp'
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
         return {
             'name': 'Temp Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'crush', # use any word to crush the actual tab
         }
 
-    def button_wiz_hard_posting(self, cr, uid, ids, context={}):
+    def button_wiz_hard_posting(self, cr, uid, ids, context=None):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
@@ -213,12 +241,20 @@ class account_cash_statement(osv.osv):
         if context is None:
             context = {}
         context['type_posting'] = 'hard'
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
         return {
             'name': 'Hard Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'crush', # use any word to crush the actual tab
@@ -226,4 +262,33 @@ class account_cash_statement(osv.osv):
 
 account_cash_statement()
 
+class account_cashbox_line(osv.osv):
+
+    _inherit = "account.cashbox.line"
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Override for the synch module: create new cashbox line only when this line for the cash register does not exist 
+        """
+        pieces = int(vals['pieces'])
+        existed_ids = False
+        temp = "-open-"
+        
+        if 'starting_id' in vals:
+            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], context=context)
+
+        if 'ending_id' in vals:
+            temp = "-close-"
+            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], context=context)
+        
+        number = False
+        if 'number' in vals:
+            number = vals['number']
+        
+        if existed_ids:
+            return osv.osv.write(self, cr, uid, existed_ids, vals, context=context)
+        
+        return osv.osv.create(self, cr, uid, vals, context=None)
+    
+account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

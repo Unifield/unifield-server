@@ -27,9 +27,9 @@ from tools.translate import _
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'
-    _order = 'sequence, id'
+    _order = 'name, id'
     
-    def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context={}):
+    def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context=None):
         '''
         Returns the next date of the frequency
         '''
@@ -43,7 +43,7 @@ class stock_warehouse_automatic_supply(osv.osv):
                 
         return res
     
-    def _get_frequence_change(self, cr, uid, ids, context={}):
+    def _get_frequence_change(self, cr, uid, ids, context=None):
         '''
         Returns Auto. Sup. ids when frequence change
         '''
@@ -54,7 +54,7 @@ class stock_warehouse_automatic_supply(osv.osv):
                 
         return result.keys()
     
-    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the name_get value of the frequence
         '''
@@ -64,40 +64,106 @@ class stock_warehouse_automatic_supply(osv.osv):
             
         return res
     
+    def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns a list of products for the rule
+        '''
+        res = {}
+        
+        for rule in self.browse(cr, uid, ids, context=context):
+            res[rule.id] = []
+            for line in rule.line_ids:
+                res[rule.id].append(line.product_id.id)
+        
+        return res
+    
+    def _src_product_ids(self, cr, uid, obj, name, args, context=None):
+        if not context:
+            context = {}
+            
+        res = []
+            
+        for arg in args:
+            if arg[0] == 'product_ids':
+                rule_ids = []
+                line_ids = self.pool.get('stock.warehouse.automatic.supply.line').search(cr, uid, [('product_id', arg[1], arg[2])])
+                for l in self.pool.get('stock.warehouse.automatic.supply.line').browse(cr, uid, line_ids):
+                    if l.supply_id.id not in rule_ids:
+                        rule_ids.append(l.supply_id.id)
+                res.append(('id', 'in', rule_ids))
+                
+        return res
+    
     _columns = {
-        'sequence': fields.integer(string='Order', required=True, help='A higher order value means a low priority'),
-        'name': fields.char(size=64, string='Name', required=True),
+        'sequence': fields.integer(string='Order', required=False, help='A higher order value means a low priority'),
+        'name': fields.char(size=64, string='Reference', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', string='Location'),
-        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
-        'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
-        'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products"),
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True, 
+                                       domain="[('is_replenishment', '=', warehouse_id)]",
+                                       help='Location where the computation is made.'),
+        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char',
+                                          help='Define the time between two replenishments'),
+        'frequence_id': fields.many2one('stock.frequence', string='Frequency', help='It\'s the time between two replenishments'),
+        'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products",
+                                    help='Define the quantity to order for each products'),
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
-        'procurement_id': fields.many2one('procurement.order', string='Last procurement', readonly=True),
-        'next_date': fields.function(_get_next_date_from_frequence, method=True, string='Next scheduled date', type='date', 
-                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c={}: ids, ['frequence_id'],20),
+        'procurement_id': fields.many2one('procurement.order', string='Last procurement', readonly=True,
+                                          help='Reference of the last procurement generated by this rule'),
+        'next_date': fields.function(_get_next_date_from_frequence, method=True, string='Next scheduled date', type='date',
+                                     help='As this date is not in the past, no new replenishment will be run', 
+                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c=None: ids, ['frequence_id'],20),
                                             'stock.frequence': (_get_frequence_change, None, 20)}),
+        'product_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
+                                    type='many2many', relation='product.product', method=True, string='Products'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
-        'sequence': lambda *a: 10,
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.automatic.supply') or '',
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=c)
     }
     
-    def choose_change_frequence(self, cr, uid, ids, context={}):
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(stock_warehouse_automatic_supply, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
+    
+    def choose_change_frequence(self, cr, uid, ids, context=None):
         '''
         Open a wizard to define a frequency for the automatic supply
         or open a wizard to modify the frequency if frequency already exists
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
             
         frequence_id = False
         res_id = False
@@ -155,6 +221,9 @@ class stock_warehouse_automatic_supply(osv.osv):
         return {}
    
     def unlink(self, cr, uid, ids, context):
+        '''
+        When delete an automatic supply rule, also remove the frequency
+        '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         freq_ids = []
@@ -166,18 +235,21 @@ class stock_warehouse_automatic_supply(osv.osv):
         return super(stock_warehouse_automatic_supply, self).unlink(cr, uid, ids, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        When duplicate an automatic supply rule, also duplicate the frequency 
+        '''
         if not default:
             default = {}
         obj = self.read(cr, uid, id, ['frequence_id'])
         if obj['frequence_id']:
-            default['frequence_id'] = self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context)
+            default['frequence_id'] = int(self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context))
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.automatic.supply') or '',
             'procurement_id': False,
         })
         return super(stock_warehouse_automatic_supply, self).copy(cr, uid, id, default, context=context)
  
-    def _check_frequency(self, cr, uid, ids, context={}):
+    def _check_frequency(self, cr, uid, ids, context=None):
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -188,18 +260,83 @@ class stock_warehouse_automatic_supply(osv.osv):
 
         for auto in self.read(cr, uid, ids, ['frequence_id']):
             if not auto['frequence_id']:
-                raise osv.except_osv(_('Error !'), _('Frequence is mandatory, please add one by clicking on the "Change/Choose Frequency" button.'))
+                raise osv.except_osv(_('Error !'), _('Frequency is mandatory, please add one by clicking on the "Change/Choose Frequency" button.'))
         return True
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         id = super(stock_warehouse_automatic_supply, self).create(cr, uid, vals, context=context)
         self._check_frequency(cr, uid, [id], context)
         return id
 
-    def write(self, cr, uid, ids, vals, context={}):
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('sublist_id', False):
+            vals.update({'nomen_manda_0': False, 'nomen_manda_1': False, 'nomen_manda_2': False, 'nomen_manda_3': False})
+        if vals.get('nomen_manda_0', False):
+            vals.update({'sublist_id': False})
         ret = super(stock_warehouse_automatic_supply, self).write(cr, uid, ids, vals, context=context)
         self._check_frequency(cr, uid, ids, context)
         return ret
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        if context is None:
+            context = {}
+        for report in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+            nom = False
+            field = False
+            # Get all products for the defined nomenclature
+            if report.nomen_manda_3:
+                nom = report.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif report.nomen_manda_2:
+                nom = report.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif report.nomen_manda_1:
+                nom = report.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif report.nomen_manda_0:
+                nom = report.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if report.sublist_id:
+                for line in report.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in report.line_ids:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    self.pool.get('stock.warehouse.automatic.supply.line').unlink(cr, uid, line.id, context=context)
+
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    self.pool.get('stock.warehouse.automatic.supply.line').create(cr, uid, {'product_id': product.id,
+                                                                                            'product_uom_id': product.uom_id.id,
+                                                                                            'product_qty': 1.00,
+                                                                                            'supply_id': report.id})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.warehouse.automatic.supply',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
 stock_warehouse_automatic_supply()
 
@@ -212,7 +349,7 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
-        'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade')
+        'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade', required=True)
     }
     
     _defaults = {
@@ -221,6 +358,23 @@ class stock_warehouse_automatic_supply_line(osv.osv):
     
     _sql_constraints = [
         ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
+    ]
+    
+    def _check_uniqueness(self, cr, uid, ids, context=None):
+        '''
+        Check if the product is not already in the current rule
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            lines = self.search(cr, uid, [('id', '!=', line.id), 
+                                          ('product_id', '=', line.product_id.id),
+                                          ('supply_id', '=', line.supply_id.id)], context=context)
+            if lines:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_uniqueness, 'You cannot have two times the same product on the same automatic supply rule', ['product_id'])
     ]
     
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
@@ -244,12 +398,14 @@ class stock_frequence(osv.osv):
         'auto_sup_ids': fields.one2many('stock.warehouse.automatic.supply', 'frequence_id', string='Auto. Sup.'),
     }
     
-    def choose_frequency(self, cr, uid, ids, context={}):
+    def choose_frequency(self, cr, uid, ids, context=None):
         '''
         Adds the support of automatic supply on choose frequency method
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
             
         if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
             context.get('active_model') == 'stock.warehouse.automatic.supply':

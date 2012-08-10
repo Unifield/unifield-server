@@ -288,7 +288,7 @@ Find in attachment the rejected lines'''%(nb_error)
         cr.commit()
         cr.close()
 
-    def import_csv(self, cr, uid, ids, context={}):
+    def import_csv(self, cr, uid, ids, context=None):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         return {'type': 'ir.actions.act_window_close'}

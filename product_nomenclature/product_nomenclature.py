@@ -189,10 +189,16 @@ class product_nomenclature(osv.osv):
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
     
-    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context={}):
+    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the number of products for the nomenclature
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         res = {}
         
         for nomen in self.browse(cr, uid, ids, context=context):
@@ -209,7 +215,7 @@ class product_nomenclature(osv.osv):
             
         return res
     
-    def _search_complete_name(self, cr, uid, obj, name, args, context={}):
+    def _search_complete_name(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         if args[0][1] != "=":
@@ -270,13 +276,17 @@ class product_nomenclature(osv.osv):
     def child_get(self, cr, uid, ids):
         return [ids]
     
-    def get_nomen(self, cr, uid, obj, id, field, context={}):
+    def get_nomen(self, cr, uid, obj, id, field, context=None):
         if context is None:
             context = {}
         context['nolevel'] = 1
         parent = {'nomen_manda_1': 'nomen_manda_0', 'nomen_manda_2': 'nomen_manda_1', 'nomen_manda_3': 'nomen_manda_2'}
         level = {'nomen_manda_1': 1, 'nomen_manda_2': 2, 'nomen_manda_3': 3}
         p_id = obj.read(cr, uid, id, [parent[field]])[parent[field]]
+        # when dealing with osv_memory, the read method for many2one returns the id and not the tuple (id, name) as for osv.osv
+        if p_id and isinstance(p_id, int):
+            name = self.name_get(cr, uid, [p_id], context=context)[0]
+            p_id = name
         dom = [('level', '=',  level.get(field)), ('type', '=', 'mandatory'), ('parent_id', '=', p_id and p_id[0] or 0)]
         return self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
     
@@ -316,8 +326,11 @@ class product_template(osv.osv):
             ret[id] = value
         return ret
     
-    def _search_nomen_s(self, cr, uid, obj, name, args, context={}):
-
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+            
         if not args:
             return []
         narg = []
@@ -362,7 +375,11 @@ class product_template(osv.osv):
     }
     ### END OF COPY
 
-    def _get_default_nom(self, cr, uid, context={}):
+    def _get_default_nom(self, cr, uid, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        
         res = {}
         toget = [('nomen_manda_0', 'nomen_med'), ('nomen_manda_1', 'nomen_med_drugs'), 
             ('nomen_manda_2', 'nomen_med_drugs_infusions'), ('nomen_manda_3', 'nomen_med_drugs_infusions_dex')]
@@ -372,12 +389,11 @@ class product_template(osv.osv):
             res[field] = nom[1]
         return res
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
         '''
-
-        if not context:
+        if context is None:
             context = {}
         if context.get('update_mode') in ['init', 'update']:
             required = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']

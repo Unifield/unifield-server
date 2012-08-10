@@ -32,7 +32,18 @@
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line
-    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "analytic_distribution", "purchase_override", "analytic_distribution_invoice"],
+    "depends" : [
+        "base",
+        "msf_audittrail",
+        "account",
+        "hr",
+        "account_payment",
+        "account_accountant",
+        "account_activable",
+        "analytic_distribution",
+        "purchase_override",
+        "analytic_distribution_invoice",
+    ],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
@@ -50,6 +61,11 @@
         'wizard/register_creation.xml',
         'wizard/wizard_confirm_bank.xml',
         'wizard/invoice_date.xml',
+        'wizard/down_payment.xml',
+        'purchase_view.xml',
+        'wizard/transfer_with_change.xml',
+        'register_accounting_report.xml',
+        'account_wizard.xml',
     ],
     "demo_xml" : [],
     "test": [
@@ -66,7 +82,8 @@
         'test/wizard_register_creation.yml',
         'test/bug_closing_balance_on_cashbox.yml',
         'test/import_invoice.yml',
-        'test/import_invoice_rate_before_import.yml'
+        'test/import_invoice_rate_before_import.yml',
+        'test/down_payments.yml',
     ],
     "installable": True,
     "active": False

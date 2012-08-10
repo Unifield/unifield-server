@@ -24,7 +24,7 @@
 from osv import osv
 from tools.translate import _
 
-def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}):
+def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
     """
     Get "Third Parties" following other fields
     """
@@ -49,7 +49,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
             if st_line.account_id:
                 # Prepare some values
                 acc_obj = self.pool.get('account.account')
-                third_type = [('res.partner', 'Partner')]
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
                 if acc_type in ['transfer', 'transfer_same']:
@@ -61,7 +61,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                 res[st_line.id]['partner_type'] = {'options': third_type, 'selection': third_selection}
     return res
 
-def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context={}):
+def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
     """
     Set some fields in function of "Third Parties" field
     """
@@ -85,9 +85,12 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
                 self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
                 return True
             cr.execute(sql)
+    # Delete values for Third Parties if no value given
+    elif name == 'partner_type' and not value:
+        cr.execute("UPDATE %s SET employee_id = Null, register_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
     return True
 
-def _get_third_parties_name(self, cr, uid, vals, context={}):
+def _get_third_parties_name(self, cr, uid, vals, context=None):
     """
     Get third parties name from vals that could contain:
      - partner_type: displayed as "object,id"
@@ -122,7 +125,7 @@ def _get_third_parties_name(self, cr, uid, vals, context={}):
         res = journal and journal[0] and journal[0].code or ''
     return res
 
-def open_register_view(self, cr, uid, register_id, context={}): 
+def open_register_view(self, cr, uid, register_id, context=None):
     """
     Return the necessary object in order to return on the register we come from
     """
@@ -154,14 +157,14 @@ def open_register_view(self, cr, uid, register_id, context={}):
     result['target'] = 'crush'
     return result
 
-def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
+def _get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
     """
     Permit to return a date included in period :
      - if given date is included in period, return the given date
      - else return the date_stop of given period
     """
     if not context:
-        context={}
+        context = {}
     if not date or not period_id:
         return False
     period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
@@ -169,7 +172,7 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
-def previous_period_id(self, cr, uid, period_id, context={}):
+def previous_period_id(self, cr, uid, period_id, context=None):
     """
     Give previous period of those given
     """
@@ -199,7 +202,7 @@ def previous_period_id(self, cr, uid, period_id, context={}):
         return previous_period_ids[0]
     return False
 
-def previous_register_id(self, cr, uid, period_id, journal_id, context={}):
+def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
     """
     Give the previous register id regarding some criteria:
      - period_id: the period of current register
@@ -221,12 +224,12 @@ def previous_register_id(self, cr, uid, period_id, journal_id, context={}):
         return False
     return previous_reg_ids[0]
 
-def previous_register_is_closed(self, cr, uid, ids, context={}):
+def previous_register_is_closed(self, cr, uid, ids, context=None):
     """
     Return true if previous register is closed. Otherwise return an exception
     """
     if not context:
-        context={}
+        context = {}
     if isinstance(ids, (int, long)):
         ids = [ids]
     # Verify that the previous register is closed
@@ -239,7 +242,7 @@ def previous_register_is_closed(self, cr, uid, ids, context={}):
                         (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
     return True
 
-def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
+def totally_or_partial_reconciled(self, cr, uid, ids, context=None):
     """
     Verify that all given statement lines are totally or partially reconciled.
     To conclue first a statement line is reconciled these lines should be hard-posted.
@@ -248,7 +251,7 @@ def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
     """
     # Verifications
     if not context:
-        context={}
+        context = {}
     if isinstance(ids, (int, long)):
         ids = [ids]
     # Prepare some variables
@@ -263,7 +266,7 @@ def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
                     return False
     return True
 
-def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context={}):
+def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None):
     """
     Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)
     """

@@ -44,11 +44,11 @@ class wizard_import_rac(osv.osv_memory):
         
         The file should be in CSV format (with ',' character as delimiter).
         The columns should be in this order :
-           Product code ; Product name ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
+           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
         """
     }
     
-    def default_get(self, cr, uid, fields, context={}):
+    def default_get(self, cr, uid, fields, context=None):
         '''
         Set rac_id with the active_id value in context
         '''
@@ -61,10 +61,12 @@ class wizard_import_rac(osv.osv_memory):
             
         return res
     
-    def import_file(self, cr, uid, ids, context={}):
+    def import_file(self, cr, uid, ids, context=None):
         '''
         Import file
         '''
+        if context is None:
+            context = {}
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
@@ -131,7 +133,7 @@ class wizard_import_rac(osv.osv_memory):
                 if line[3]:
                     lot = prodlot_obj.search(cr, uid, [('name', '=', line[3])])
                     if not lot:
-                        error += "Line %s : batch number %s not found.\n" % (line[3], )
+                        error += "Line %s : batch number %s not found.\n" % (line_num, line[3])
                         ignore_lines += 1
                         continue
                     batch = lot[0]
@@ -184,7 +186,7 @@ class wizard_import_rac(osv.osv_memory):
                 'view_id': [view_id],
                 }
         
-    def close_import(self, cr, uid, ids, context={}):
+    def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''

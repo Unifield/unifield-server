@@ -29,7 +29,7 @@ class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         if not context:
             context = {}
         if not default:
@@ -62,7 +62,7 @@ class account_invoice(osv.osv):
 
     _inherit = 'account.invoice'
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy(self, cr, uid, id, default=None, context=None):
         if not context:
             context = {}
         if not default:
@@ -90,7 +90,7 @@ class account_invoice(osv.osv):
 
         return new_id
 
-    def button_split_invoice(self, cr, uid, ids, context={}):
+    def button_split_invoice(self, cr, uid, ids, context=None):
         """
         Launch the split invoice wizard to split an invoice in two elements.
         """

@@ -46,7 +46,7 @@ class account_period(osv.osv):
         
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -142,7 +142,8 @@ class account_period(osv.osv):
                 journal_state = 'draft'
             for id in ids:
                 cr.execute('update account_journal_period set state=%s where period_id=%s', (journal_state, id))
-                cr.execute('update account_period set state=%s where id=%s', (state, id))
+                # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
+                self.write(cr, uid, id, {'state': state}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
 
     _columns = {
@@ -155,7 +156,7 @@ class account_period(osv.osv):
 
     _order = 'date_start, number'
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
 
@@ -170,13 +171,13 @@ class account_period(osv.osv):
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
     }
 
-    def button_overdue_invoice(self, cr, uid, ids, context={}):
+    def button_overdue_invoice(self, cr, uid, ids, context=None):
         """
         Open a view that display overdue invoices for this period
         """
         # Some verifications
         if not context:
-            context={}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         

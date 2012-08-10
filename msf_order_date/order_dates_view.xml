@@ -16,6 +16,11 @@
                 		<field name="partner_type" />
                 	</field>
                 	
+                	<field name="pricelist_id" position="attributes">
+                		<attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
+                	</field>
+
+                	
                 	<field name="date_order" position="replace">
                 		<field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
                 	</field>
@@ -37,23 +42,23 @@
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" 
-	                            	attrs="{'invisible': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <field name="transport_type"
                             	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"
-                            	attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
-                            <field name="shipment_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
-                            <field name="arrival_date" attrs="{'readonly': [('shipped_rate', '!=', 0.0)], 'invisible': [('internal_type', '!=', 'international')]}" />
+                            	attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            <field name="ready_to_ship_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            <field name="shipment_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
                         </group>
                     </xpath>
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type}</attribute>
+                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'pricelist_id': pricelist_id}</attribute>
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
@@ -100,7 +105,7 @@
                     </xpath>
                     
                     <xpath expr="/form/group/field[@name='date_order']" position="replace">
-                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        <field name="date_order"
                         	on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
                     </xpath>
                                        
@@ -138,7 +143,7 @@
                     
                     <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'sale_id': active_id}</attribute>
+                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id}</attribute>
                     </xpath>
                     
                 </data>
@@ -149,6 +154,7 @@
             <field name="name">leadtime.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority" eval="30" />
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -158,47 +164,11 @@
                 </data>
             </field>
         </record>
-        
-        <record id="view_picking_in_tree" model="ir.ui.view">
-            <field name="name">stock.picking.in.tree</field>
-            <field name="model">stock.picking</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="stock.view_picking_in_tree" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<field name="min_date" position="attributes">
-            			<attribute name="string">Expected Receipt Date</attribute>
-            		</field>
-            	
-            	</data>
-            </field>
-        </record>
-        
-        <record id="view_picking_in_form" model="ir.ui.view">
-            <field name="name">stock.picking.in.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form" />
-            <field name="arch" type="xml">
-            	<data>
-            		<field name="min_date" position="attributes">
-            			<attribute name="string">Expected Receipt Date</attribute>
-            		</field>
-					<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
-						<attribute name="string">Actual Receipt Date</attribute>
-					</xpath>
-					<xpath expr="//form[@string='Stock Moves']//field[@name='date_expected']" position="attributes">
-						<attribute name="string">Expected Receipt Date</attribute>
-					</xpath>
-					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="before">
-						<field name="date" string="Actual Receipt Date" />
-					</xpath>
-					
-				</data>
-			</field>
-		</record>
-		
+
+
+        <!-- id: view_picking_in_tree, name: stock.picking.in.tree, inherit_id: stock.view_picking_in_tree was here -->
+        <!-- id: view_picking_in_form, name: stock.picking.in.form, inherit_id: stock.view_picking_in_form -->
+
 		<record id="vpicktree" model="ir.ui.view">
             <field name="name">stock.picking.tree</field>
             <field name="model">stock.picking</field>
@@ -210,33 +180,8 @@
             		<field name="min_date" position="attributes">
             			<attribute name="string">Expected Move Date</attribute>
             		</field>
-            	
-            	</data>
-            </field>
-        </record>
-		
-		<record id="view_picking_form" model="ir.ui.view">
-            <field name="name">stock.picking.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_form" />
-            <field eval="12" name="priority"/>
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<field name="min_date" position="attributes">
-            			<attribute name="string">Expected Move Date</attribute>
-            		</field>
             		
-            		<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
-						<attribute name="string">Actual Move Date</attribute>
-					</xpath>
-					<xpath expr="//form[@string='Stock Moves']//field[@name='date_expected']" position="attributes">
-						<attribute name="string">Expected Move Date</attribute>
-					</xpath>
-					<xpath expr="//tree[@string='Stock Moves']//field[@name='date_expected']" position="replace">
-						<field name="date" string="Actual Move Date" />
-					</xpath>
+            		<xpath expr="/tree/button[@name='action_process']" position="replace" />
             	
             	</data>
             </field>
@@ -257,30 +202,6 @@
             	</data>
             </field>
         </record>
-		
-		<record id="view_picking_out_form" model="ir.ui.view">
-            <field name="name">stock.picking.out.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_out_form" />
-            <field name="arch" type="xml">
-            	<data>
-            		<field name="min_date" position="attributes">
-            			<attribute name="string">Expected Shipped Date</attribute>
-            		</field>
-					<xpath expr="//form[@string='Stock Moves']//field[@name='date']" position="attributes">
-						<attribute name="string">Actual Shipped Date</attribute>
-					</xpath>
-					<xpath expr="//form[@string='Stock Moves']//field[@name='date_expected']" position="attributes">
-						<attribute name="string">Expected Shipped Date</attribute>
-					</xpath>
-					<xpath expr="//tree[@string='Stock Moves']//field[@name='date']" position="attributes">
-            			<attribute name="string">Actual Shipped Date</attribute>
-            		</xpath>
-					
-				</data>
-			</field>
-		</record>
 		
 		<record id="view_company_form" model="ir.ui.view">
             <field name="name">res.company</field>

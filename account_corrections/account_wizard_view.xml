@@ -3,6 +3,27 @@
     <data>
 
     <!-- Journal Items -->
+        <record model="ir.ui.view" id="wizard_journal_items_corrections_lines_tree">
+            <field name="name">wizard.journal.items.corrections.lines.tree</field>
+            <field name="model">wizard.journal.items.corrections.lines</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                    <field name="journal_id"/>
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
+                    <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
+                    <field name="analytic_distribution_state"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
+                    <field name="currency_id"/>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="wizard_journal_items_corrections_form">
             <field name="name">wizard.journal.items.corrections.form</field>
             <field name="model">wizard.journal.items.corrections</field>
@@ -11,21 +32,9 @@
                 <form string="Journal items corrections Wizard">
                     <field name="move_line_id" invisible="1" colspan="1"/>
                     <field name="date" on_change="onchange_date(date)"/>
+                    <field name="from_donation" invisible="1"/>
                     <newline/>
-                    <field name="to_be_corrected_ids" colspan="6">
-                        <tree hide_new_button="1" hide_delete_button="1" editable="bottom">
-                            <field name="journal_id"/>
-                            <field name="ref"/>
-                            <field name="date"/>
-                            <field name="period_id"/>
-                            <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
-                            <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
-                            <field name="credit_currency"/>
-                            <field name="debit_currency"/>
-                            <field name="currency_id"/>
-                            <field name="analytic_distribution_id" invisible="1"/>
-                        </tree>
-                    </field>
+                    <field name="to_be_corrected_ids" colspan="6" context="{'from_donation_account': from_donation}" />
                     <newline/>
                     <label string="" colspan="6"/>
                     <group colspan="4" col="6">
@@ -47,7 +56,7 @@
             <field name='inherit_id' ref='analytic_distribution.analytic_distribution_wizard_view'/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/field[@name='total_amount']" position="before">
+                    <xpath expr="/form/field[@name='amount']" position="before">
                         <field name="date" context="context" 
                             attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
                         <newline/>

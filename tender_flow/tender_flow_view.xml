@@ -32,6 +32,9 @@
                                     <field name="supplier_id" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
+                                    <field name="currency_id" />
+                                    <!--<field name="func_total_price" />
+                                    <field name="func_currency_id" /> -->
                                     <field name="purchase_order_id" />
                                     <field name="purchase_order_line_number" />
                                     <field name="state" invisible="1" />
@@ -52,9 +55,14 @@
                             </field>
                         </page>
                         <page string="RfQs">
-                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
+                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        		context="{'rfq_ok': True}" >
                                 <tree string="RfQs">
                                     <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="notes" />
+                                    <field name="amount_total" />
+                                    <field name="currency_id" />
                                     <field name="state" />
                                 </tree>
                             </field>
@@ -178,24 +186,25 @@
                         <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
                     </field>
+                    
+                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes">
+                    	<attribute name="string">Lines</attribute>
+                    </xpath>
 
                     <xpath expr="/form//field[@name='date_order']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='warehouse_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='partner_ref']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='order_type']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='priority']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='categ']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='invoiced']" position="attributes">
                         <attribute name="readonly">True</attribute>
@@ -204,276 +213,73 @@
                         <attribute name="readonly">True</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='partner_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='partner_address_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='pricelist_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    	<attribute name="string">Currency</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='fiscal_position']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
+                    <!-- IT was already defined in cross_docking 
                     <xpath expr="/form//field[@name='location_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'invisible': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-
-                    <xpath expr="/form/notebook/page/group[2]" position="replace">
-                        <group colspan="4" col="13">
-                            <field name="state" readonly="1"/>
-                            <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
-                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
-                            <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/>
-                            <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
-                            <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
-                            <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                            <button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
-                            <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
-                            <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
-                            <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
-                            <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
-                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
-                        </group>
-                    </xpath>
+                    -->
                 </data>
             </field>
         </record>
 
-        <record id="rfq_form" model="ir.ui.view">
-            <field name="name">rfq.form</field>
-            <field name="model">purchase.order</field>
+       
+       <record id="product_supplierinfo_form_view" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
-            <field name="priority">500</field>
+            <field name="inherit_id" ref="supplier_catalogue.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
-                <form string="Request for Quotation">
-                    <group col="6" colspan="4">
-                        <field name="name" />
-                        <field name="rfq_ok" invisible="1" />
-                        <field name="date_order" string="Creation date"/>
-                        <field name="invoiced"/>
-                        <newline/>
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id)" widget="selection"/>
-                        <field name="partner_ref"/>
-                        <field name="shipped"/>
-                        <!-- purchase_override > purchase_view.xml -->
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
-                        <field name="priority" />
-                        <newline />
-                        <field name="categ" />
-                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
-                        <field name="details" />
-                        <field name="tender_id" />
+            	<data>
+            		
+            		<xpath expr="//field[@name='pricelist_ids']" position="attributes">
+            			<attribute name="context">{'partner_id': name}</attribute>
+            		</xpath>
+            	
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
+            		    <field name="partner_id" />
+            			<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
+            		</xpath>
+            		
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='valid_from']" position="after">
             			<field name="valid_till" />
-                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
-                    </group>
-                    <notebook colspan="4">
-                        <page string="Purchase Order">
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
-                            <field name="partner_address_id"/>
-                            <field domain="[('type','=','purchase')]" name="pricelist_id" groups="base.group_extended"/>
-                            <field name="origin" groups="base.group_extended"/>
-                            <newline/>
-                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form">
-                                <tree string="Purchase Order Lines">
-                                    <field name="date_planned"/>
-                                    <field name="name"/>
-                                    <field name="product_qty"/>
-                                    <field name="product_uom"/>
-                                    <field name="price_unit"/>
-                                    <field name="price_subtotal"/>
-                                </tree>
-                                <!-- default form view -->
-                            </field>
-                            <group col="7" colspan="4">
-                                <field name="amount_untaxed" sum="Untaxed amount"/>
-                                <field name="amount_tax"/>
-                                <field name="amount_total" sum="Total amount"/>
-                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
-                            </group>
-                            <group col="11" colspan="4">
-                                <field name="state" readonly="1"/>
-                                <button name="purchase_cancel" states="draft,confirmed,wait_auth" string="Cancel" icon="gtk-cancel"/>
-                                <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
-                                <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"/>
-                                <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"/>
-                                <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"/>
-                                <button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', True), ('state', '!=', 'draft')]}" />
-            					<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'rfq_sent')]}" />
-                            </group>
-                        </page>
-                        <page string="Delivery &amp; Invoicing" groups="base.group_extended">
-                            <group colspan="2" col="2">
-                                <separator string="Delivery" colspan="2"/>
-                                <field name="dest_address_id" on_change="onchange_dest_address_id(dest_address_id)"/>
-                                <field name="minimum_planned_date"/>
-                                <field name="location_id"/>
-                            </group>
-                            <group colspan="2" col="2">
-                                <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
-                                <field name="fiscal_position" widget="selection"/>
-                            </group>
-                            <newline/>
-                            <separator string="Purchase Control" colspan="4"/>
-                            <field name="validator"/>
-                            <field name="date_approve"/>
-                        	<separator string="Invoices" colspan="4"/>
-                        	<newline/>
-                        	<field name="invoice_ids" groups="base.group_extended" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
-                        </page>
-                        <page string="Notes">
-                            <field colspan="4" name="notes" nolabel="1"/>
-                        </page>
-                    </notebook>
-                </form>
+            			<field name="comment" />
+            			<field name="purchase_order_id" />
+            			<field name="purchase_order_line_number" />
+            			<field name="purchase_order_line_id" />
+            		</xpath>
+                 </data>
             </field>
         </record>
-       	
-       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
+            		
+        <record id="product_supplierinfo_form_view2" model="ir.ui.view">
             <field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
-            	<data>
-            	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            		
+            	<data>	
+            	    <!-- Modificaiton of lines -->
             		<xpath expr="//form/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            	
-            	</data>
-            </field>
-       	</record>
-       	
-        <record id="rfq_form" model="ir.ui.view">
-            <field name="name">rfq.form</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Request for Quotation">
-                    <group col="6" colspan="4">
-                        <field name="name"/>
-                        <field name="rfq_ok" invisible="1" />
-                        <field name="date_order"/>
-                        <field name="invoiced"/>
-                        <newline/>
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id)" widget="selection"/>
-                        <field name="partner_ref"/>
-                        <field name="shipped"/>
-                        <!-- purchase_override > purchase_view.xml -->
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
-                        <field name="priority" />
-                        <newline />
-                        <field name="categ" />
-                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
-                        <field name="details" />
-                        <field name="tender_id" />
-            			<field name="valid_till" />
-                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
-                    </group>
-                    <notebook colspan="4">
-                        <page string="Purchase Order">
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" />
-                            <field name="partner_address_id"/>
-                            <field domain="[('type','=','purchase')]" name="pricelist_id" groups="base.group_extended"/>
-                            <field name="origin" groups="base.group_extended"/>
-                            <newline/>
-                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form">
-                                <tree string="Purchase Order Lines">
-                                    <field name="date_planned"/>
-                                    <field name="name"/>
-                                    <field name="product_qty"/>
-                                    <field name="product_uom"/>
-                                    <field name="price_unit"/>
-                                    <field name="price_subtotal"/>
-                                </tree>
-                                <!-- default form view -->
-                            </field>
-                            <group col="7" colspan="4">
-                                <field name="amount_untaxed" sum="Untaxed amount"/>
-                                <field name="amount_tax"/>
-                                <field name="amount_total" sum="Total amount"/>
-                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
-                            </group>
-                            <group col="11" colspan="4">
-                                <field name="state" readonly="1"/>
-                                <button name="purchase_cancel" states="draft,confirmed,wait_auth" string="Cancel" icon="gtk-cancel"/>
-                                <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
-                                <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"/>
-                                <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"/>
-                                <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"/>
-                                <button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', True), ('state', '!=', 'draft')]}" />
-            					<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('state', '!=', 'rfq_sent')]}" />
-                            </group>
-                        </page>
-                        <page string="Delivery &amp; Invoicing" groups="base.group_extended">
-                            <group colspan="2" col="2">
-                                <separator string="Delivery" colspan="2"/>
-                                <field name="dest_address_id" on_change="onchange_dest_address_id(dest_address_id)"/>
-                                <field name="minimum_planned_date"/>
-                                <field name="location_id"/>
-                            </group>
-                            <group colspan="2" col="2">
-                                <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
-                                <field name="fiscal_position" widget="selection"/>
-                            </group>
-                            <newline/>
-                            <separator string="Purchase Control" colspan="4"/>
-                            <field name="validator"/>
-                            <field name="date_approve"/>
-                        	<separator string="Invoices" colspan="4"/>
-                        	<newline/>
-                        	<field name="invoice_ids" groups="base.group_extended" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
-                        </page>
-                        <page string="Notes">
-                            <field colspan="4" name="notes" nolabel="1"/>
-                        </page>
-                    </notebook>
-                </form>
-            </field>
-        </record>
-       	
-       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
-            <field name="name">product.supplierinfo.form.view</field>
-            <field name="model">product.supplierinfo</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
-            <field name="arch" type="xml">
-            	<data>
-            	
-            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
-            			<field name="currency_id" />
-            			<field name="valid_till" />
-            			<field name="purchase_order_id" />
-            			<field name="purchase_order_line_number" />
-            			<field name="purchase_order_line_id" />
-            		</xpath>
-            		
-            		<xpath expr="//form/field[@name='price']" position="after">
-            			<field name="currency_id" />
+            		    <field name="partner_id" />
+            			<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
             			<field name="valid_till" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />
@@ -572,7 +378,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
-            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1}</field>
+            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1, 'request_for_quotation': True}</field>
             <field name="domain">[('rfq_ok', '=', True)]</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="search_view_id" ref="view_rfq_filter"/>
@@ -591,10 +397,51 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
             <field name="domain">[('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
+        </record>
+        
+        <record id="act_relate_tender_rfq" model="ir.actions.act_window">
+        	<field name="name">Requests for Quotation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="src_model">tender</field>
+            <field name="key2">client_action_relate</field>
+            <field name="view_type">form</field>
+            <field name="context">{'rfq_ok': True, 'search_default_draft_rfq': 1, 'request_for_quotation': True}</field>
+            <field name="domain">[('rfq_ok', '=', True), ('tender_id', '=', active_id)]</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="search_view_id" ref="view_rfq_filter"/>
+        </record>
+        <record model="ir.values" id="relate_tender_rfq_values">
+            <field name="object" eval="1" />
+            <field name="name">Requests for Quotations</field>
+            <field name="key2">client_action_relate</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('act_relate_tender_rfq'))" />
+            <field name="key">action</field>
+            <field name="model">tender</field>
+        </record>
+            
+        <record id="act_relate_tender_purchase_order" model="ir.actions.act_window">
+            <field name="name">Purchase Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="src_model">tender</field>
+            <field name="key2">client_action_relate</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
+            <field name="domain">[('rfq_ok', '=', False), ('tender_id', '=', active_id)]</field>
+            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+        </record>
+        <record model="ir.values" id="relate_tender_purchase_order_values">
+            <field name="object" eval="1" />
+            <field name="name">Purchase Orders</field>
+            <field name="key2">client_action_relate</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('act_relate_tender_purchase_order'))" />
+            <field name="key">action</field>
+            <field name="model">tender</field>
         </record>
 
 	</data>

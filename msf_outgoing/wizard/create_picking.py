@@ -34,7 +34,23 @@ class create_picking(osv.osv_memory):
         'product_moves_families' : fields.one2many('stock.move.memory.families', 'wizard_id', 'Pack Families'),
         'product_moves_returnproducts': fields.one2many('stock.move.memory.returnproducts', 'wizard_id', 'Return Products')
      }
-    
+
+    def copy_all(self, cr, uid, ids, context=None):
+        create = self.browse(cr, uid, ids[0], context=context)
+        if create.product_moves_picking:
+            for move in create.product_moves_picking:
+                self.pool.get('stock.move.memory.picking').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+        if create.product_moves_ppl:
+            for move in create.product_moves_ppl:
+                self.pool.get('stock.move.memory.ppl').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+        if create.product_moves_families:
+            for move in create.product_moves_families:
+                self.pool.get('stock.move.memory.families').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+        if create.product_moves_returnproducts:
+            for move in create.product_moves_returnproducts:
+                self.pool.get('stock.move.memory.returnproducts').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+        return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
+
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
          @param self: The object pointer.
@@ -62,7 +78,7 @@ class create_picking(osv.osv_memory):
             # memory moves wizards
             # data generated from stock.moves
             for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-                result.extend(self.__create_partial_picking_memory(pick, context=context))
+                result.extend(self.__create_partial_picking_memory(pick, step, context=context))
         elif step in ('ppl2'):
             # pack families wizard
             # data generated from previous wizard data
@@ -86,7 +102,7 @@ class create_picking(osv.osv_memory):
             
         return res
     
-    def __create_partial_picking_memory(self, pick, context=None):
+    def __create_partial_picking_memory(self, pick, step, context=None):
         '''
         generates the memory objects data depending on wizard step
         
@@ -99,19 +115,22 @@ class create_picking(osv.osv_memory):
         # list for the current pick object
         result = []
         for move in pick.move_lines:
-            if move.state in ('done', 'cancel'):
+            if move.state in ('done', 'cancel', 'confirmed') or move.product_qty == 0.00:
                 continue
             move_memory = {
                 'line_number': move.line_number,
                 'product_id' : move.product_id.id,
                 'asset_id': move.asset_id.id, 
-                'quantity' : move.product_qty,
+                'composition_list_id': move.composition_list_id.id,
+                'quantity_ordered' : move.product_qty,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
                 'move_id' : move.id,
                 # specific management rules
                 'expiry_date': move.expired_date,
                 }
+            if step == 'ppl1':
+                move_memory['quantity'] = move.product_qty
             
             # the first wizard of ppl, we set default values as everything is packed in one pack
 #            if step == 'ppl1':
@@ -183,12 +202,13 @@ class create_picking(osv.osv_memory):
                 field = 'families'
             elif step == 'returnproducts':
                 field = 'returnproducts'
-        
+
         _moves_arch_lst = """<form string="%s">
-                        <field name="date" invisible="1"/>
-                        <separator colspan="4" string="%s"/>
-                        <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
-                        """ % (_('Process Document'), _('Products'), field)
+                <field name="date" invisible="1"/>
+                <separator colspan="4" string="%s"/>
+                <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
+                """ % (_('Process Document'), _('Products'), field)
+
         _moves_fields = result['fields']
 
         # add field related to picking type only
@@ -222,7 +242,7 @@ class create_picking(osv.osv_memory):
                 <group col="4" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
                     string="_Cancel" />"""
-                    
+
         if step == 'ppl2':
             _moves_arch_lst += """
                 <button name="back_ppl1" string="previous"
@@ -271,10 +291,10 @@ class create_picking(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.product_moves_picking:
                 # get the qty from the corresponding stock move
-                original_qty = line.move_id.product_qty
+                original_qty = line.quantity_ordered
                 line.write({'quantity':original_qty,}, context=context)
             for line in wiz.product_moves_returnproducts:
-                line.write({'qty_to_return':line.quantity,}, context=context)
+                line.write({'qty_to_return':line.quantity_ordered,}, context=context)
         # update the current wizard
         return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         
@@ -331,10 +351,11 @@ class create_picking(osv.osv_memory):
                     .setdefault(move.to_pack, {}) \
                     .setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                              'product_id': move.product_id.id,
-                                                             'product_qty': move.quantity,
+                                                             'product_qty': move.quantity_ordered,
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
+                                                             'composition_list_id': move.composition_list_id.id,
                                                              'move_id': move.move_id.id,
                                                              'qty_per_pack': move.qty_per_pack,
                                                              'from_pack': move.from_pack,
@@ -355,7 +376,6 @@ class create_picking(osv.osv_memory):
         '''
         assert context, 'no context defined'
         assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 not in context'
-        
         pick_obj = self.pool.get('stock.picking')
         family_obj = self.pool.get('stock.move.memory.families')
         # partial data from wizard
@@ -364,7 +384,6 @@ class create_picking(osv.osv_memory):
         memory_families_list = partial.product_moves_families
         # returned datas
         partial_datas_ppl1 = context['partial_datas_ppl1']
-        
         # picking ids
         picking_ids = context['active_ids']
         for picking_id in picking_ids:
@@ -491,7 +510,16 @@ class create_picking(osv.osv_memory):
         if missing_lot or lot_not_needed or wrong_lot_type:
             return False
         return True
+
+    def do_create_picking_first_hook(self, cr, uid, context, *args, **kwargs):
+        '''
+        add hook to do_create_picking: This hook's first aim was to complete the module msf_cross_docking
+        '''
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'partial_datas missing'
         
+        return partial_datas
+
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
@@ -529,7 +557,10 @@ class create_picking(osv.osv_memory):
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
                                                                                    'asset_id': move.asset_id.id,
+                                                                                   'composition_list_id': move.composition_list_id.id,
                                                                                    })
+                    # override : add hook call
+                    partial_datas = self.do_create_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
@@ -570,7 +601,16 @@ class create_picking(osv.osv_memory):
         
         # ppl2
         self.do_ppl2(cr, uid, [wizard_ppl2], context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
+
+    def do_validate_picking_first_hook(self, cr, uid, context, *args, **kwargs):
+        '''
+        add hook to do_validate_picking: This hook's first aim was to complete the module msf_cross_docking
+        '''
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'partial_datas missing'
         
+        return partial_datas
+
     def do_validate_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
@@ -608,7 +648,10 @@ class create_picking(osv.osv_memory):
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'asset_id': move.asset_id.id,
+                                                                               'composition_list_id': move.composition_list_id.id,
                                                                                })
+                # override : add hook call
+                partial_datas = self.do_validate_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
@@ -688,10 +731,11 @@ class create_picking(osv.osv_memory):
                 if move.qty_to_return:
                     partial_datas[pick.id][move.move_id.id] = {'memory_move_id': move.id,
                                                                'product_id': move.product_id.id,
-                                                               'product_qty': move.quantity,
+                                                               'product_qty': move.quantity_ordered,
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,
+                                                               'composition_list_id': move.composition_list_id.id,
                                                                'qty_to_return': move.qty_to_return,
                                                                }
                     
@@ -858,7 +902,6 @@ class create_picking(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
         pick_obj = self.pool.get('stock.picking')
         # name of the wizard field for moves (one2many)
         field_name = 'product_moves_families'
@@ -868,7 +911,6 @@ class create_picking(osv.osv_memory):
         self.update_data_from_partial(cr, uid, ids, context=context)
         # integrity check on wizard data
         partial_datas_ppl1 = context['partial_datas_ppl1']
-        
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly

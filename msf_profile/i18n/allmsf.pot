@@ -2526,7 +2526,7 @@ msgstr ""
 #: field:sale.order.line,default_code:0
 #: report:product.list:0
 msgid "Product Reference"
-msgstr ""
+msgstr "Product Code"
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.act_product_stock_move_futur_open
@@ -3634,7 +3634,7 @@ msgstr ""
 #. module: sale
 #: model:ir.actions.report.xml,name:sale.report_sale_order
 msgid "Quotation / Order"
-msgstr ""
+msgstr "Order"
 
 #. module: base
 #: model:res.country,name:base.ls
@@ -4265,7 +4265,7 @@ msgid "✔"
 msgstr ""
 
 #. module: msf_profile
-#: model:stock.location,name:msf_profile.stock_location_intermediate_stock_view
+#: model:stock.location,name:msf_profile.stock_location_intermediate_client_view
 msgid "Intermediate Stocks View"
 msgstr ""
 
@@ -6432,7 +6432,7 @@ msgstr ""
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Product Name:"
-msgstr ""
+msgstr "Product Description"
 
 #. module: register_accounting
 #: field:account.bank.statement.line,reconciled:0
@@ -14554,7 +14554,7 @@ msgstr ""
 #. module: stock_move_tracking
 #: report:tracking.move.report:0
 msgid "Product name :"
-msgstr ""
+msgstr "Product Description"
 
 #. module: base
 #: field:ir.module.module,license:0
@@ -16251,7 +16251,7 @@ msgstr ""
 #. module: product
 #: field:product.supplierinfo,product_name:0
 msgid "Supplier Product Name"
-msgstr ""
+msgstr "Supplier Product Description"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/report/pre_packing_list.py:41
@@ -22297,7 +22297,7 @@ msgstr ""
 
 #. module: msf_audittrail
 #: model:ir.actions.act_window,name:msf_audittrail.action_audittrail_view_log
-msgid "View log"
+msgid "Track changes"
 msgstr ""
 
 #. module: consumption_calculation
@@ -26057,7 +26057,7 @@ msgstr ""
 #: model:ir.ui.menu,name:procurement_report.menu_report_procurement_policies
 #: view:report.procurement.policies:0
 msgid "Procurement Rules Analysis"
-msgstr ""
+msgstr "Replenishment Rules Analysis"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.action_product_price_list
@@ -29113,7 +29113,7 @@ msgid "Power"
 msgstr ""
 
 #. module: msf_profile
-#: model:stock.location,name:msf_profile.stock_location_consumption_unit_view
+#: model:stock.location,name:msf_profile.stock_location_consumption_units_view
 msgid "Consumption Units View"
 msgstr ""
 
@@ -33222,7 +33222,7 @@ msgstr ""
 #. module: product
 #: help:product.supplierinfo,product_name:0
 msgid "This supplier's product name will be used when printing a request for quotation. Keep empty to use the internal one."
-msgstr ""
+msgstr "This supplier's Product Description will be used when printing a request for quotation. Keep empty to use the internal one."
 
 #. module: account
 #: view:account.fiscal.position.template:0
@@ -40226,7 +40226,7 @@ msgstr ""
 #: field:old.product.list.line,name:0
 #: field:product.list.line,name:0
 msgid "Product name"
-msgstr ""
+msgstr "Product Description"
 
 #. module: purchase
 #: model:process.transition,note:purchase.process_transition_confirmingpurchaseorder0
@@ -40535,7 +40535,7 @@ msgstr ""
 #. module: product_manufacturer
 #: field:product.product,manufacturer_pname:0
 msgid "Manufacturer Product Name"
-msgstr ""
+msgstr "Manufacturer Product Description"
 
 #. module: base
 #: view:res.lang:0
@@ -41635,7 +41635,7 @@ msgstr ""
 
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,granularity:0
-msgid "By parent budget line"
+msgid "By parent expense account"
 msgstr ""
 
 #. module: service_purchasing
@@ -42074,7 +42074,7 @@ msgstr ""
 #. module: msf_outgoing
 #: report:pre.packing.list:0
 msgid "Product Name /"
-msgstr ""
+msgstr "Product Description /"
 
 #. module: base
 #: model:res.partner.title,shortcut:base.res_partner_title_miss
@@ -43470,7 +43470,7 @@ msgstr ""
 #: report:product.list:0
 #: report:stock.forecast.report:0
 msgid "Product Name"
-msgstr ""
+msgstr "Product Description"
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -43624,7 +43624,7 @@ msgstr ""
 
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,granularity:0
-msgid "By budget line"
+msgid "By expense account"
 msgstr ""
 
 #. module: stock_schedule
@@ -44334,7 +44334,7 @@ msgstr ""
 #: field:product.list.line,ref:0
 #: field:sale.order.line.followup,product_id:0
 msgid "Product reference"
-msgstr ""
+msgstr "Product Code"
 
 #. module: account
 #: model:ir.model,name:account.model_account_subscription

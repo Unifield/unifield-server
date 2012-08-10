@@ -74,6 +74,26 @@ class stock_partial_move_memory_out(osv.osv_memory):
                                                                class_name=self._name,
                                                                product_id=product_id,
                                                                uom_id=uom_id))
+        
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        change the function name to do_incoming_shipment
+        '''
+        res = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree':
+            picking_obj = self.pool.get('stock.picking')
+            picking_id = context.get('active_ids')
+            if picking_id:
+                picking_id = picking_id[0]
+                picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
+                if picking_type == 'in':
+                    # remove the kit column for memory moves
+                    # the creation of composition list (if needed) is performed after the processing wizard
+                    list = ['<field name="composition_list_id"']
+                    replace_text = res['arch']
+                    replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
+                    res['arch'] = replace_text
+        return res
     
 #    update code to allow delete lines (or not but must be consistent in all wizards)
 #    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
@@ -87,11 +107,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
               'change_reason': fields.char(string='Change Reason', size=1024),
               'initial_qty': fields.related('move_id', 'product_qty', string='Initial Qty', readonly=True),
               # override to change the name
-              'quantity' : fields.float("Selected Qty", required=True),
+              'quantity' : fields.float("Quantity to process", required=True),
               }
     
     _defaults = {'integrity_status': 'empty',
                  'force_complete': False,
+                 'quantity': 0.0,
                  }
     
     def _check_quantity(self, cr, uid, ids, context=None):
@@ -139,12 +160,6 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     _inherit = "stock.move.memory.picking"
     _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM') ),
                 }
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
     
     def _check_qty_to_return(self, cr, uid, ids, context=None):
         '''
@@ -196,12 +211,6 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
                     
         return result
     
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
-    
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 # functions
@@ -218,7 +227,7 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
         therefore be completed with default value at creation
         '''
         if 'qty_per_pack' not in vals:
-            vals.update(qty_per_pack=vals['quantity'])
+            vals.update(qty_per_pack=vals['quantity_ordered'])
         
         if 'from_pack' not in vals:
             vals.update(from_pack=1)
@@ -278,12 +287,6 @@ class stock_partial_move_memory_families(osv.osv_memory):
     _defaults = {'integrity_status': 'empty',
                  }
     
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
-    
 stock_partial_move_memory_families()
 
 
@@ -314,18 +317,20 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             values['selected_weight'] = selected_weight
                     
         return result
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
+
+    def _get_volume(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        for shipment in self.browse(cr, uid, ids, context=context):
+            vol = ( shipment.length * shipment.width * shipment.height * float(shipment.num_of_packs) ) / 1000.0
+            result[shipment.id] = vol
+        return result
     
     _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
                 'selected_number': fields.integer(string='Selected Number'),
                 # functions
+                'volume': fields.function(_get_volume, method=True, type='float', string=u'Volume [dm³]',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals_X',), # old_multi get_vals
                 }
@@ -356,12 +361,6 @@ class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
     '''
     _name = "stock.move.memory.shipment.returnpacks"
     _inherit = "stock.move.memory.shipment.create"
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
     
 stock_partial_move_memory_shipment_returnpacks()
 
@@ -405,12 +404,5 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
         
         # udpate the original wizard
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
-    
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        unlink of moves from first ppl screen is forbidden
-        '''
-        raise osv.except_osv(_('Warning !'), _('Not Implemented Yet.'))
-    
     
 stock_partial_move_memory_shipment_returnpacksfromshipment()

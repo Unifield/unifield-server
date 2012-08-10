@@ -11,7 +11,6 @@ class report_allocated_expenses(report_sxw.report_sxw):
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
         res = {}
-        contract_obj = pool.get('financing.contract.contract')
 
         obj = pool.get('wizard.expense.report')
         # Context updated with wizard's value

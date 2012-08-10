@@ -24,7 +24,7 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["res_currency_tables"],
+    "depends" : ["res_currency_tables", "msf_audittrail",],
     "description": """Module for defining financing contract and donor objects.
     """,
     "init_xml" : [],
@@ -32,7 +32,8 @@
         'security/ir.model.access.csv',
         'financing_contract_view.xml',
         'financing_contract_workflow.xml',
-        'financing_contract_report.xml'
+        'financing_contract_report.xml',
+        'wizard/wizard_financing_currency_export_view.xml'
     ],
     'test': [
         'test/financing_contract.yml'

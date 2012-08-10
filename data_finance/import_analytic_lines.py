@@ -235,7 +235,9 @@ Nb register lines: %s
         cr.commit()
         cr.close()
 
-    def import_csv(self, cr, uid, ids, context={}):
+    def import_csv(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         new_id = self.pool.get('data_finance.import_lines.result').create(cr, uid, {})

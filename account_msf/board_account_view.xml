@@ -22,7 +22,7 @@
                     <field name="amount_untaxed" sum="Total Untaxed amount"/>
                     <field name="amount_total" sum="Total amount"/>
                     <field name="state"/>
-                    <button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward"/>
+                    <button name="purchase_confirmed_wait" states="confirmed" string="Confirm" icon="gtk-go-forward"/>
                 </tree>
             </field>
         </record>

@@ -27,7 +27,7 @@ class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
     _name = "account.bank.statement.line"
 
-    def _display_analytic_button(self, cr, uid, ids, name, args, context={}):
+    def _display_analytic_button(self, cr, uid, ids, name, args, context=None):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is draft
@@ -54,7 +54,7 @@ class account_bank_statement_line(osv.osv):
         'display_analytic_button': lambda *a: True,
     }
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard from a statement line
         """
@@ -91,6 +91,7 @@ class account_bank_statement_line(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

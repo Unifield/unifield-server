@@ -32,9 +32,13 @@
     "update_xml" : [
             "purchase_view.xml",
             "account_commitment_view.xml",
+            "sale_view.xml",
     ],
     "demo_xml" : [],
-    "test": [],
+    "test": [
+        "test/analytic_data.yml",
+        "test/commitment.yml",
+    ],
     "installable": True,
     "active": False
 }

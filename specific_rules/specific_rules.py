@@ -194,6 +194,52 @@ class stock_warehouse_orderpoint(osv.osv):
     add message
     '''
     _inherit = 'stock.warehouse.orderpoint'
+
+    _columns = {
+         'name': fields.char('Reference', size=128, required=True, select=True),
+         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
+                                        domain="[('is_replenishment', '=', warehouse_id)]"),
+    }
+    
+    def _check_product_uom(self, cr, uid, ids, context=None):
+        '''
+        Check if the UoM has the same category as the product standard UoM
+        '''
+        if not context:
+            context = {}
+            
+        for rule in self.browse(cr, uid, ids, context=context):
+            if rule.product_id.uom_id.category_id.id != rule.product_uom.category_id.id:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_product_uom, 'You have to select a product UOM in the same category than the purchase UOM of the product', ['product_id', 'product_uom']),
+    ]
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the default values for the replenishment rule
+        '''
+        res = super(stock_warehouse_orderpoint, self).default_get(cr, uid, fields, context=context)
+        
+        company_id = res.get('company_id')
+        warehouse_id = res.get('warehouse_id')
+        
+        if not 'company_id' in res:
+            company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
+            res.update({'company_id': company_id})
+        
+        if not 'warehouse_id' in res:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
+            res.update({'warehouse_id': warehouse_id})
+            
+        if not 'location_id' in res:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            res.update({'location_id': location_id})
+        
+        return res
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -226,8 +272,84 @@ class stock_warehouse_orderpoint(osv.osv):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
+    
+    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+        '''
+        Add domain on UoM to have only UoM on the same category of the
+        product standard UoM
+        '''
+        product_obj = self.pool.get('product.product')
+        
+        res = super(stock_warehouse_orderpoint, self).onchange_product_id(cr, uid, ids, product_id, context=context)
+        domain = {}
+
+        # Get the product UoM category
+        if product_id:        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
+        else:
+            domain = {'product_uom': []}
+            if 'value' in res:
+                res['value'].update({'product_uom': False})
+            else:
+                res.update({'value': {'product_uom': False}})
+                
+        # Apply the domain in res
+        if 'domain' in res:
+            res['domain'].update(domain)
+        else:
+            res.update({'domain': domain})
+            
+        return res
+    
+    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
+        
+        return {}
+        
         
 stock_warehouse_orderpoint()
+
+
+class product_uom(osv.osv):
+    _name = 'product.uom'
+    _inherit = 'product.uom'
+    
+    def _get_uom_by_product(self, cr, uid, ids, field_name, args, context=None):
+        return {}
+    
+    def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'uom_by_product' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_product':
+                product_id = arg[2]
+                if isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                
+        return dom
+    
+    _columns = {
+        'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
+                                          help='Field used to filter the UoM for a specific product'),
+    }
+    
+product_uom()
 
 
 class stock_warehouse_automatic_supply(osv.osv):
@@ -413,7 +535,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.batch_management:
                     if not move.prodlot_id and move.product_qty:
                         return False
@@ -425,7 +547,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
+            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.perishable:
                     if not move.prodlot_id and move.product_qty:
                         return False
@@ -496,6 +618,8 @@ class stock_move(osv.osv):
         '''
         function for KC/SSL/DG/NP products
         '''
+        # objects
+        kit_obj = self.pool.get('composition.kit')
         result = {}
         for id in ids:
             result[id] = {}
@@ -521,6 +645,18 @@ class stock_move(osv.osv):
             # expiry date management
             if obj.product_id.perishable:
                 result[obj.id]['exp_check'] = True
+            # contains a kit and allow the creation of a new composition LIst
+            # will be false if the kit is batch management and a composition list already uses this batch number
+            # only one composition list can  use a given batch number for a given product
+            if obj.product_id.type == 'product' and obj.product_id.subtype == 'kit':
+                if obj.prodlot_id:
+                    # search if composition list already use this batch number
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', obj.prodlot_id.id)], context=context)
+                    if not kit_ids:
+                        result[obj.id]['kit_check'] = True
+                else:
+                    # not batch management, we can create as many composition list as we want
+                    result[obj.id]['kit_check'] = True
             
         return result
     
@@ -549,8 +685,9 @@ class stock_move(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
+        'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
@@ -840,7 +977,7 @@ class stock_production_lot(osv.osv):
             
         return result
 
-    def _check_batch_type_integrity(self, cr, uid, ids, context={}):
+    def _check_batch_type_integrity(self, cr, uid, ids, context=None):
         '''
         Check if the type of the batch is consistent with the product attributes
         '''
@@ -850,7 +987,7 @@ class stock_production_lot(osv.osv):
 
         return True
 
-    def _check_perishable_type_integrity(self, cr, uid, ids, context={}):
+    def _check_perishable_type_integrity(self, cr, uid, ids, context=None):
         '''
         Check if the type of the batch is consistent with the product attributes
         '''
@@ -861,7 +998,8 @@ class stock_production_lot(osv.osv):
         return True
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
-                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
+                # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
+                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
                 #'expiry_date': fields.date('Expiry Date'),
                 'name': fields.char('Batch Number', size=1024, required=True, help="Unique batch number, will be displayed as: PREFIX/SERIAL [INT_REF]"),
                 'date': fields.datetime('Auto Creation Date', required=True),
@@ -877,7 +1015,7 @@ class stock_production_lot(osv.osv):
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+                'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 }
     
@@ -887,7 +1025,7 @@ class stock_production_lot(osv.osv):
                  'life_date': False,
                  }
     
-    _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
+    _sql_constraints = [('name_uniq', 'unique (product_id,name)', 'For a given product, the batch number must be unique.'),
                         ]
 
     _constraints = [(_check_batch_type_integrity,
@@ -898,7 +1036,7 @@ class stock_production_lot(osv.osv):
                     ['Type', 'Product']),
                 ]
 
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
         '''
@@ -924,7 +1062,7 @@ class stock_production_lot(osv.osv):
 
         for record in reads:
             if context.get('with_expiry') and record['life_date']:
-                name = '%s - %s'%(record['name'], DateTime.strptime(record['life_date'],'%Y-%m-%d').strftime(date_format))
+                name = '%s - %s'%(record['name'], DateTime.strptime(record['life_date'],'%Y-%m-%d').strftime(date_format).decode('utf-8'))
             else:
                 name = record['name']
             res.append((record['id'], name))
@@ -1279,7 +1417,7 @@ class stock_inventory_line(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
     }
     
@@ -1379,19 +1517,23 @@ report_stock_inventory()
 
 class product_product(osv.osv):
     _inherit = 'product.product'
-    def open_stock_by_location(self, cr, uid, ids, context={}):
+    def open_stock_by_location(self, cr, uid, ids, context=None):
         name = 'Stock by Location'
         if context is None:
             context = {}
         if ids:
             prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
             name = "%s: [%s] %s"%(name, prod['code'], prod['name'])
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'view_location_tree_tree')[1] 
+
         return {
             'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'stock.location',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_type': 'tree',
+            'view_id': [view_id],
+            'domain': [('location_id','=',False)],
+            'view_mode': 'tree',
             'context': {'product_id': context.get('active_id') , 'compute_child': False},
             'target': 'current',
         }

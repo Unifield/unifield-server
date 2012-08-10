@@ -17,19 +17,20 @@
         auto="True"
         menu="True"/>
         
-        <report id="interactive"
-        string="Interactive Report"
-        model="financing.contract.contract"
-        name="financing.interactive"
-        report_type="txt"
-        auto="True"
-        menu="True"/>
-        
         <report id="contract"
-        string="Financing Contract"
+        string="Export Contract info - pdf"
         model="financing.contract.contract"
         name="financing.contract"
         rml="financing_contract/report/financing_contract.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+        
+        <report id="contract_list"
+        string="Financing Contract List"
+        model="financing.contract.contract"
+        name="financing.contract.list"
+        rml="financing_contract/report/contract_list.rml"
         auto="False"
         menu="True"
         header="False"/>

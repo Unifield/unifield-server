@@ -5,15 +5,15 @@
             <field name="transport_mode">road</field>
             <field name="transport_type" eval="False" />
             <field name="from_yml_test" eval="0"/>
-            <field name="date_order">2012-01-10</field>
+            <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-8*86400))" />
             <field name="transport_cost">60.0</field>
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
             <field name="categ">log</field>
-            <field name="delivery_requested_date">2012-02-21</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
             <field name="invoice_method">order</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'ZEDCO RADIATOR LTD'), ('partner_id.ref', '=', 'ZRL')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'ZEDCO RADIATOR LTD'), ('ref', '=', 'ZRL')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -24,14 +24,14 @@
         <!--model: purchase.order, id: 3-->
         <record model="purchase.order" id="purchase_order_po00006_3">
             <field name="from_yml_test" eval="0"/>
-            <field name="date_order">2012-01-10</field>
+            <field name="date_order"  eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
             <field name="categ">other</field>
-            <field name="delivery_requested_date">2012-01-30</field>
+            <field name="delivery_requested_date"  eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))"/>
             <field name="invoice_method">picking</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'AFRO INDUSTRIES AGENCIES'), ('partner_id.ref', '=', 'AIA')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -40,14 +40,14 @@
         <!--model: purchase.order, id: 2-->
         <record model="purchase.order" id="purchase_order_po00004_2">
             <field name="from_yml_test" eval="0"/>
-            <field name="date_order">2012-01-10</field>
+            <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-5*86400))" />
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
             <field name="categ">transport</field>
-            <field name="delivery_requested_date">2012-02-02</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+8*86400))" />
             <field name="invoice_method">picking</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'TNT EXPRESS'), ('partner_id.ref', '=', 'TNTE')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'TNT EXPRESS'), ('ref', '=', 'TNTE')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -56,14 +56,14 @@
         <!--model: purchase.order, id: 1-->
         <record model="purchase.order" id="purchase_order_po00002_1">
             <field name="from_yml_test" eval="0"/>
-            <field name="date_order">2012-01-10</field>
+            <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
             <field name="categ">medical</field>
-            <field name="delivery_requested_date">2012-03-03</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="invoice_method">picking</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'METRO Pharmaceuticals Ltd'), ('partner_id.ref', '=', 'MPL')]"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
             <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'METRO Pharmaceuticals Ltd'), ('ref', '=', 'MPL')]"/>
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
@@ -71,7 +71,7 @@
 
         <!--model: purchase.order.line, id: 7-->
         <record model="purchase.order.line" id="purchase_order_line_large_copier_canon_ir2020_2_toner_cartrid_7">
-            <field name="date_planned">2012-01-30</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))"/>
             <field name="price_unit">12.0</field>
             <field name="product_qty">2.0</field>
             <field name="name">(large copier Canon IR2020) 2 TONER CARTRIDGES, CEXV14T</field>
@@ -83,7 +83,7 @@
 
         <!--model: purchase.order.line, id: 6-->
         <record model="purchase.order.line" id="purchase_order_line_transpot_express_6">
-            <field name="date_planned">2012-02-02</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+8*86400))" />
             <field name="price_unit">110.0</field>
             <field name="product_qty">1.0</field>
             <field name="name">Transpot Express</field>
@@ -95,7 +95,7 @@
 
         <!--model: purchase.order.line, id: 1-->
         <record model="purchase.order.line" id="purchase_order_line_balloon__anaesthesia___22_mm__1_l_1">
-            <field name="date_planned">2012-03-03</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="price_unit">15.8</field>
             <field name="product_qty">2.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -107,7 +107,7 @@
 
         <!--model: purchase.order.line, id: 9-->
         <record model="purchase.order.line" id="purchase_order_line_chair__office__adjustable_height__wheeled_9">
-            <field name="date_planned">2012-02-21</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
             <field name="price_unit">14.8</field>
             <field name="product_qty">8.0</field>
             <field name="name">CHAIR, office, adjustable height, wheeled</field>
@@ -119,7 +119,7 @@
 
         <!--model: purchase.order.line, id: 10-->
         <record model="purchase.order.line" id="purchase_order_line_cupboard__wooden__2_doors__w:_150___d:_4_10">
-            <field name="date_planned">2012-02-21</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
             <field name="price_unit">33.5</field>
             <field name="product_qty">2.0</field>
             <field name="name">CUPBOARD, WOODEN, 2 doors, w: 150 , d: 40, h: 100 cm</field>
@@ -131,7 +131,7 @@
 
         <!--model: purchase.order.line, id: 2-->
         <record model="purchase.order.line" id="purchase_order_line_mask_laryngeal__reusable_size_2_2">
-            <field name="date_planned">2012-03-03</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="price_unit">4.2</field>
             <field name="product_qty">8.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -143,7 +143,7 @@
 
         <!--model: purchase.order.line, id: 8-->
         <record model="purchase.order.line" id="purchase_order_line_repair_service_8">
-            <field name="date_planned">2012-01-30</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))"/>
             <field name="price_unit">30.0</field>
             <field name="product_qty">1.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -155,7 +155,7 @@
 
         <!--model: purchase.order.line, id: 11-->
         <record model="purchase.order.line" id="purchase_order_line_bin_rubbish__stainless_steel__12_litres_11">
-            <field name="date_planned">2012-02-21</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
             <field name="price_unit">4.3</field>
             <field name="product_qty">4.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -167,7 +167,7 @@
 
         <!--model: purchase.order.line, id: 3-->
         <record model="purchase.order.line" id="purchase_order_line_fluconazole__100_mg__caps__3">
-            <field name="date_planned">2012-03-03</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="price_unit">2.3</field>
             <field name="product_qty">150.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -179,7 +179,7 @@
 
         <!--model: purchase.order.line, id: 4-->
         <record model="purchase.order.line" id="purchase_order_line_protamine_sulfate__10_mg_ml__5_ml__amp__4">
-            <field name="date_planned">2012-03-03</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="price_unit">3.1</field>
             <field name="product_qty">120.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -191,7 +191,7 @@
 
         <!--model: purchase.order.line, id: 5-->
         <record model="purchase.order.line" id="purchase_order_line_test__trypano_catt__reagent__whole_blood__5">
-            <field name="date_planned">2012-03-03</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="price_unit">9.2</field>
             <field name="product_qty">12.0</field>
             <field name="confirmed_delivery_date" eval="False" />
@@ -206,8 +206,8 @@
             <field name="categ">log</field>
             <field name="supplier_ids" search="['|', '&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA'), '&amp;', ('name', '=', 'BLUE CHIP TECHNOLOGIES LTD'), ('ref', '=', 'BCTL')]"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
-            <field name="requested_date">2012-02-15</field>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
         </record>
 
         <!--model: tender.line, id: 1-->
@@ -232,10 +232,10 @@
             <field name="order_type">regular</field>
             <field name="procurement_request" eval="0"/>
             <field name="picking_policy">direct</field>
-            <field name="ready_to_ship_date">2012-02-13</field>
+            <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))" />
             <field name="from_yml_test" eval="0"/>
             <field name="priority">normal</field>
-            <field name="delivery_requested_date">2012-02-13</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
             <field name="partner_shipping_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
             <field name="partner_order_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
             <field name="partner_invoice_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
@@ -249,11 +249,11 @@
             <field name="order_type">regular</field>
             <field name="procurement_request" eval="1"/>
             <field name="picking_policy">direct</field>
-            <field name="ready_to_ship_date">2012-02-20</field>
+            <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="from_yml_test" eval="0"/>
             <field name="priority">normal</field>
-            <field name="delivery_requested_date">2012-02-20</field>
-            <field name="requested_date">2012-02-20</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="partner_shipping_id" ref="base.main_address"/>
             <field name="partner_order_id" ref="base.main_address"/>
             <field name="partner_invoice_id" ref="base.main_address"/>
@@ -263,7 +263,7 @@
 
         <!--model: sale.order.line, id: 1-->
         <record model="sale.order.line" id="sale_order_line_computer_cable__serial_interface_pc_mini-m__f_1">
-            <field name="date_planned">2012-02-13</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
             <field name="type">make_to_order</field>
             <field name="price_unit">1.0</field>
             <field name="product_uom_qty">2.0</field>
@@ -275,10 +275,10 @@
 
         <!--model: sale.order.line, id: 4-->
         <record model="sale.order.line" id="sale_order_line_shelves__wooden__5_plates__200_x_150_x_50_cm__4">
-            <field name="date_planned">2012-02-20</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="type">make_to_stock</field>
             <field name="product_uom_qty">3.0</field>
-            <field name="confirmed_delivery_date">2012-01-12</field>
+            <field name="confirmed_delivery_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AFURSHELW5-'), ('name', '=', 'SHELVES, wooden, 5 plates, 200 x 150 x 50 cm (HxWxD)')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="sale_order_isr_00001_2"/>
@@ -286,7 +286,7 @@
 
         <!--model: sale.order.line, id: 2-->
         <record model="sale.order.line" id="sale_order_line_motor_pump_diesel_lister_aa1__24_m3_h__max__3_2">
-            <field name="date_planned">2012-02-13</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
             <field name="type">make_to_order</field>
             <field name="price_unit">1.0</field>
             <field name="product_uom_qty">1.0</field>
@@ -298,10 +298,10 @@
 
         <!--model: sale.order.line, id: 5-->
         <record model="sale.order.line" id="sale_order_line_printer_laserwriter__cartridge_inking_5">
-            <field name="date_planned">2012-02-20</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="type">make_to_stock</field>
             <field name="product_uom_qty">1.0</field>
-            <field name="confirmed_delivery_date">2012-01-12</field>
+            <field name="confirmed_delivery_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCART02-'), ('name', '=', '(printer Laserwriter ) CARTRIDGE INKING')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="sale_order_isr_00001_2"/>
@@ -309,7 +309,7 @@
 
         <!--model: sale.order.line, id: 3-->
         <record model="sale.order.line" id="sale_order_line_modem__external_u_s_robotics_56k__ccitt_stand_3">
-            <field name="date_planned">2012-02-13</field>
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
             <field name="type">make_to_stock</field>
             <field name="price_unit">59.0</field>
             <field name="product_uom_qty">1.0</field>
@@ -431,7 +431,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0005_5"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 2-->
@@ -446,7 +446,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0004_4"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 3-->
@@ -461,7 +461,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0003_3"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 4-->
@@ -476,7 +476,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0002_2"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 5-->
@@ -491,7 +491,7 @@
             <field name="prod_lot_id" ref="stock_production_lot_lot0001_1"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
         </record>
 
         <!--model: stock.inventory.line, id: 6-->
@@ -504,7 +504,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 7-->
@@ -517,7 +517,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 8-->
@@ -530,7 +530,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 9-->
@@ -543,7 +543,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.inventory.line, id: 10-->
@@ -556,7 +556,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
-            <field name="location_id" ref="msf_profile.stock_location_logistic"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
         </record>
 
         <!--model: stock.picking, id: 2-->
@@ -576,7 +576,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000002_7"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
@@ -591,7 +591,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000003_8"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
@@ -606,7 +606,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000004_9"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
@@ -621,7 +621,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000005_10"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAASPB1TC'), ('name', '=', 'ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y coblister')]"/>
@@ -645,7 +645,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000001_6"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_dest_id" ref="msf_cross_docking.stock_location_input"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00001_1" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>

@@ -36,7 +36,10 @@ class wizard_compare_rfq(osv.osv_memory):
         'tender_id': fields.many2one('tender', string="Tender", readonly=True,)
     }
 
-    def start_compare_rfq(self, cr, uid, ids, context={}):
+    def start_compare_rfq(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
         order_obj = self.pool.get('purchase.order')
         compare_line_obj = self.pool.get('wizard.compare.rfq.line')
         
@@ -134,10 +137,12 @@ class wizard_compare_rfq(osv.osv_memory):
                     'context': context
                     }
         
-    def create_po(self, cr, uid, ids, context={}):
+    def create_po(self, cr, uid, ids, context=None):
         '''
         Creates PO according to the selection
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -225,10 +230,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                        string='Quotation Line'),
     }
     
-    def choose_supplier(self, cr, uid, ids, context={}):
+    def choose_supplier(self, cr, uid, ids, context=None):
         '''
         Opens a wizard to compare and choose a supplier for this line
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]        
         
@@ -250,10 +257,13 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                                              'po_line_id': l.id,
                                                              'price_unit': l.price_unit,
                                                              'qty': l.product_qty,
+                                                             'notes': l.notes,
                                                              'compare_line_id': line_id.id,
                                                              'compare_id': line_id.compare_id.id,
+                                                             'currency_id': l.order_id.pricelist_id.currency_id.id,
                                                              'price_total': l.product_qty*l.price_unit}))
-        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)]})
+        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)],
+                                                 'line_notes_ids': [(6,0,line_ids)]})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.choose.supplier',
@@ -276,13 +286,17 @@ class wizard_choose_supplier(osv.osv_memory):
         'supplier_id': fields.many2one('res.partner', string='Supplier'),
         'line_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
                                      string='Lines'),
+        'line_notes_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
+                                     string='Lines'),
         'compare_id': fields.many2one('wizard.compare.rfq.line', string='Wizard'),
     }
     
-    def return_view(self, cr, uid, ids, context={}):
+    def return_view(self, cr, uid, ids, context=None):
         '''
         Return to the main wizard
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
             
@@ -305,6 +319,21 @@ class wizard_choose_supplier_line(osv.osv_memory):
     
     _order = 'price_unit'
     
+    def _get_func_total(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the total of line in functional currency
+        '''
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            func_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            if field_name == 'func_currency_id':
+                res[line.id] = func_currency
+            elif field_name == 'func_price_total':
+                res[line.id] = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id, func_currency, line.price_total, round=True, context=context)
+                
+        return res
+    
     _columns = {
         'compare_id': fields.many2one('wizard.compare.rfq', string='Compare'),
         'compare_line_id': fields.many2one('wizard.compare.rfq.line', string='Compare Line'),
@@ -313,9 +342,13 @@ class wizard_choose_supplier_line(osv.osv_memory):
         'price_unit': fields.float(digits=(16,2), string='Unit Price'),
         'qty': fields.float(digits=(16,2), string='Qty'),
         'price_total': fields.float(digits=(16,2), string='Total Price'),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
+        'func_price_total': fields.function(_get_func_total, method=True, string='Func. Total Price', type='float'),
+        'func_currency_id': fields.function(_get_func_total, method=True, string='Func. Currency', type='many2one', relation='res.currency'),
+        'notes': fields.text(string='Notes'),
     }
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Change the quantity on the purchase order line if 
         it's modified on the supplier choose line
@@ -329,10 +362,12 @@ class wizard_choose_supplier_line(osv.osv_memory):
                 
         return super(wizard_choose_supplier_line, self).write(cr, uid, ids, data, context=context)
     
-    def choose_supplier(self, cr, uid, ids, context={}):
+    def choose_supplier(self, cr, uid, ids, context=None):
         '''
         Define the supplier for the line
         '''
+        if context is None:
+            context = {}
         compare_obj = self.pool.get('wizard.compare.rfq')
         compare_line_obj = self.pool.get('wizard.compare.rfq.line')
         

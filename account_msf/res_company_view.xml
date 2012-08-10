@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!--
+            Debit note default account configuration
+        -->
+
+        <record model="ir.ui.view" id="view_company_inherit_3_form">
+            <field name="name">res.company.form.inherit</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <page string="Configuration" position="inside">
+            <group col="2" colspan="2">
+                <separator string="Re-billing Inter-section account" colspan="2"/>
+                <field name="import_invoice_default_account" colspan="2"
+                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'receivables')]"/>
+            </group>
+            <group col="2" colspan="2">
+                <separator string="Intermission configuration" colspan="2"/>
+                <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
+            </group>
+            </page>
+            <xpath expr="/form//field[@name='currency_id']" position="replace">
+                <field name="currency_id" readonly="1" />
+            </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

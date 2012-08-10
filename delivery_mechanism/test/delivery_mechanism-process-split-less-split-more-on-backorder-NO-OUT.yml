@@ -42,6 +42,10 @@
   !python {model: stock.picking}: |
     # find the IN
     in_ids = [ref("in_A")]
+    pick = self.browse(cr, uid, in_ids[0], context=context)
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    # process wizard
     self.draft_force_assign(cr, uid, in_ids)
     self.force_assign(cr, uid, in_ids)
     dic = self.action_process(cr, uid, in_ids, context=context)
@@ -50,8 +54,9 @@
     wiz_c = dic['context']
     # reduce qty and then split moves
     wiz_obj = self.pool.get(wiz_model)
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c):
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         # change the product of original move
         dic_change = out.change_product(context=wiz_c)
         change_model = dic_change['res_model']
@@ -68,30 +73,31 @@
         split_c = dic_split['context']
         split_obj = self.pool.get(split_model)
         # depending on the qty, we put different quantity in the new move
-        if out.quantity == 10:
+        if out.quantity_ordered == 10:
           # reduce qty
-          out.write({'quantity': 7}, context=wiz_c)
+          out.write({'quantity': 7, 'quantity_ordered':7}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 5}, context=split_c)
-        if out.quantity == 5:
+        if out.quantity_ordered == 5:
           # reduce qty
-          out.write({'quantity': 4}, context=wiz_c)
+          out.write({'quantity': 4, 'quantity_ordered':4}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 3}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
         
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c): # we have to loop again from wiz to load the updated values for out moves
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         # change the product of splitted move
         dic_change = out.change_product(context=wiz_c)
         change_model = dic_change['res_model']
         change_ids = [dic_change['res_id']]
         change_c = dic_change['context']
         change_obj = self.pool.get(change_model)
-        if out.quantity == 5 or out.quantity == 3:
+        if out.quantity_ordered == 5 or out.quantity_ordered == 3:
           # product C -> D for original A of qty 5 and original B of qty 3
           change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_D"), 'change_reason': 'yml test'}, context=change_c)
           change_obj.change_product(cr, uid, change_ids, context=change_c)
 
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     # openERP swap IN -> backorder
     data = self.read(cr, uid, in_ids, ['backorder_id'], context=context)[0]
@@ -130,6 +136,10 @@
     assert not d_qty, 'Quantity for product D is not empty - %s'%d_qty
 
     # process the back order - splitting and changin product with too much quantity
+    pick = self.browse(cr, uid, back_ids[0], context=context)
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    # process wizard
     dic = self.action_process(cr, uid, back_ids, context=context)
     wiz_model = dic['res_model']
     wiz_id = dic['res_id']
@@ -137,7 +147,7 @@
     # reduce qty and then split moves
     wiz_obj = self.pool.get(wiz_model)
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c):
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         # call the split wizard
         dic_split = out.split(context=wiz_c)
         split_model = dic_split['res_model']
@@ -145,34 +155,35 @@
         split_c = dic_split['context']
         split_obj = self.pool.get(split_model)
         # depending on the qty, we put different quantity in the new move
-        if out.quantity == 3:
+        if out.quantity_ordered == 3:
           # increase qty to 7 then split 5
-          out.write({'quantity': 7}, context=wiz_c)
+          out.write({'quantity': 7, 'quantity_ordered': 7}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 5}, context=split_c)
-        if out.quantity == 1:
+        if out.quantity_ordered == 1:
           # increase qty to 9 then split 8
-          out.write({'quantity': 9}, context=wiz_c)
+          out.write({'quantity': 9, 'quantity_ordered':9}, context=wiz_c)
           split_obj.write(cr, uid, split_ids, {'quantity': 8}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
         
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c): # we have to loop again from wiz to load the updated values for out moves
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         # change the product of splitted move
         dic_change = out.change_product(context=wiz_c)
         change_model = dic_change['res_model']
         change_ids = [dic_change['res_id']]
         change_c = dic_change['context']
         change_obj = self.pool.get(change_model)
-        if out.quantity == 5:
+        if out.quantity_ordered == 5:
           # product A -> C for split A of qty 5
           change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_C"), 'change_reason': 'yml test'}, context=change_c)
           change_obj.change_product(cr, uid, change_ids, context=change_c)
-        if out.quantity == 1:
+        if out.quantity_ordered == 1:
           # product B -> D for split B of qty 1
           change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_D"), 'change_reason': 'yml test'}, context=change_c)
           change_obj.change_product(cr, uid, change_ids, context=change_c)
 
+    wiz_obj.copy_all(cr,uid,[dic['res_id']], context=dic['context'])
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, back_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']

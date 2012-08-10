@@ -24,7 +24,7 @@
 -
   !record {model: sale.order, id: pr1, context: {'procurement_request': True}}:
     name: PR1
-    requested_date: !eval time.strftime('%Y-%m-%d')
+    delivery_requested_date: !eval time.strftime('%Y-%m-%d')
 -
   We check if the new procurement request is a good procurement request
 -
@@ -116,6 +116,11 @@
   !assert {model: sale.order, id: pr3}:
     - state == 'progress', "Bad state for the procurement request"
 -
+  We check if procurement orders have been created for 'on order' lines
+-
+  !assert {model: sale.order.line, id: pr3l2}:
+    - procurement_id != False, "No procurement order generated from procurement request"
+-
   We close this procurement request
 -
   !workflow {model: sale.order, action: procurement_cancel, ref: pr3}
@@ -189,3 +194,49 @@
       self.unlink(cr, uid, [ref('pr1')])
     except osv.except_osv, e:
       assert False, "Error on deletion of a draft procurement request"
+-
+  We create a new procurement request to check the workflow
+-
+  !record {model: sale.order, id: pr_cancel, context: {'procurement_request': True}}:
+    name: PRCANCEL
+-
+  We create lines for this procurement request
+-
+  !record {model: sale.order.line, id: pr_cancel_l1, context: {'procurement_request': True}}:
+    name: P1
+    product_id: product1
+    product_uom: product.product_uom_unit
+    date_planned: !eval time.strftime('%Y-%m-%d')
+    product_uom_qty: 150.00
+    type: make_to_order
+    order_id: pr_cancel
+-
+  We create a second line
+-
+  !record {model: sale.order.line, id: pr_cancel_l2, context: {'procurement_request': True}}:
+    name: P2
+    product_id: product2
+    product_uom: product.product_uom_unit
+    product_uom_qty: 150.00
+    type: make_to_order
+    order_id: pr_cancel
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+  We cancel this procurement request
+-
+  !workflow {model: sale.order, action: procurement_cancel, ref: pr_cancel}
+-
+  We check the state of the procurement request
+-
+  !assert {model: sale.order, id: pr_cancel}:
+    - state == 'cancel', "Bad state for the procurement request"
+-
+  We check the state of the procurement request line
+-
+  !assert {model: sale.order.line, id: pr_cancel_l1}:
+    - state == 'cancel', "Bad state for the procurement request line"
+-
+  We check the state of the procurement request
+-
+  !assert {model: sale.order.line, id: pr_cancel_l2}:
+    - state == 'cancel', "Bad state for the procurement request line"

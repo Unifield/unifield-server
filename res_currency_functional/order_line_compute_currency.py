@@ -41,6 +41,25 @@ class sale_order_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
     }
     
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill currency and functional currency fields
+        '''
+        if not context:
+            context = {}
+        
+        res = super(sale_order_line_compute_currency, self).default_get(cr, uid, fields, context=context)
+        
+        res['functional_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+#        if context.get('pricelist_id'):
+#            res['currency_id'] = self.pool.get('product.pricelist').browse(cr, uid, context.get('pricelist_id'), context=context).currency_id.id
+        if context.get('sale_id'):
+            res['currency_id'] = self.pool.get('sale.order').browse(cr, uid, context.get('sale_id')).pricelist_id.currency_id.id
+        else:
+            res['currency_id'] = res['functional_currency_id']
+        
+        return res
+    
 sale_order_line_compute_currency()
 
 class sale_order_compute_currency(osv.osv):
@@ -101,6 +120,21 @@ class purchase_order_line_compute_currency(osv.osv):
         'functional_subtotal': fields.function(_amount_currency_line, method=True, store=False, string='Functional Subtotal'),
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill currency and functional currency fields
+        '''
+        if not context:
+            context = {}
+        
+        res = super(purchase_order_line_compute_currency, self).default_get(cr, uid, fields, context=context)
+        
+        res['functional_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        if context.get('pricelist_id'):
+            res['currency_id'] = self.pool.get('product.pricelist').browse(cr, uid, context.get('pricelist_id'), context=context).currency_id.id
+        
+        return res
     
 purchase_order_line_compute_currency()
 

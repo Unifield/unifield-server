@@ -40,7 +40,8 @@ class wizard_import_cheque_lines(osv.osv_memory):
         'supplier_ref': fields.char('Supplier Inv. Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date_maturity': fields.date('Due Date', readonly=True),
-        'date': fields.date('Effective Date', readonly=False, required=True),
+        'date': fields.date('Posting Date', readonly=False, required=True),
+        'document_date': fields.date('Document Date', readonly=False, required=True),
         'amount_to_pay': fields.integer('Amount to pay', readonly=True),
         'amount_currency': fields.integer('Amount currency', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
@@ -64,20 +65,23 @@ class wizard_import_cheque(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter cheque regarding currency."),
         'period_id': fields.many2one('account.period', string="Period", required=True, help="Useful for filtering account move line that are in the same period"),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
-        'date': fields.date('Date', required=False),
+        'date': fields.date('Posting Date', required=False),
+        'document_date': fields.date('Document Date', required=False),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
     }
 
-    def action_import(self, cr, uid, ids, context={}):
+    def action_import(self, cr, uid, ids, context=None):
         """
         Import some cheque statement line into wizard.import.cheque.lines before process.
         """
         # Some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
@@ -85,6 +89,7 @@ class wizard_import_cheque(osv.osv_memory):
         imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
         new_lines = []
         date = wizard.date or None
+        document_date = wizard.document_date or None
         for line in wizard.line_ids:
             if line.id not in imported_lines:
                 if not date:
@@ -102,11 +107,12 @@ class wizard_import_cheque(osv.osv_memory):
                     'amount_currency': line.amount_currency or None,
                     'currency_id': line.currency_id.id or None,
                     'wizard_id': wizard.id or None,
+                    'document_date': document_date or None,
                 }
                 new_lines.append((0, 0, vals))
         
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
-        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': ''}, context=context)
+        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
@@ -118,7 +124,7 @@ class wizard_import_cheque(osv.osv_memory):
          'target': 'new',
         }
 
-    def action_confirm(self, cr, uid, ids, context={}):
+    def action_confirm(self, cr, uid, ids, context=None):
         """
         Import some cheque statement lines into the bank register and temp post them.
         """
@@ -127,6 +133,8 @@ class wizard_import_cheque(osv.osv_memory):
             return False
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         absl_obj = self.pool.get('account.bank.statement.line')
@@ -141,6 +149,7 @@ class wizard_import_cheque(osv.osv_memory):
                 'name': 'Imported Cheque: ' + (line.name or line.ref or ''),
                 'ref': line.ref,
                 'date': _get_date_in_period(self, cr, uid, imported_line.date or curr_date, wizard.period_id.id, context=context),
+                'document_date': imported_line.document_date,
                 'statement_id': wizard.statement_id.id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,

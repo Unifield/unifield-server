@@ -45,18 +45,20 @@ class product_list_import(osv.osv_memory):
         'message': lambda *a : """
         The file should be in CSV format (with ';' character as delimiter).
         The columns should be in this order :
-          * Product code
-          * Product name
+          * Product Code
+          * Product Description
           * Comment
         """,
         'type': lambda *a:  'exist',
         'list_id': lambda self, cr, uid, context: context.get('active_ids', False) and context.get('active_ids', [])[0], 
     }
     
-    def close_window(self, cr, uid, ids, context={}):
+    def close_window(self, cr, uid, ids, context=None):
         '''
         Simply close the wizard
         '''
+        if context is None:
+            context = {}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.list',
                 'view_type': 'form',
@@ -64,7 +66,7 @@ class product_list_import(osv.osv_memory):
                 'res_id': context.get('list_id'),
                 'target': 'crush'}
     
-    def import_csv(self, cr, uid, ids, context={}):
+    def import_csv(self, cr, uid, ids, context=None):
         '''
         Import data on the CSV file on new or existing list
         '''

@@ -27,11 +27,14 @@ class financing_contract_format(osv.osv):
     
     _columns = {
         'format_name': fields.char('Name', size=64, required=True),
-        'reporting_type': fields.selection([('project','Total project costs'),
-                                            ('allocated','Funded costs'),
-                                            ('all', 'Total project and funded costs')], 'Reporting type', required=True),
+        'reporting_type': fields.selection([('project','Total project only'),
+                                            ('allocated','Earmarked only'),
+                                            ('all', 'Earmarked and total project')], 'Reporting type', required=True),
         # For contract only, but needed for line domain;
         # we need to keep them available
+        'overhead_percentage': fields.float('Overhead percentage'),
+        'overhead_type': fields.selection([('cost_percentage','Percentage of direct costs'),
+                                           ('grant_percentage','Percentage of grant')], 'Overhead calculation mode'),
         'eligibility_from_date': fields.date('Eligibility date from'),
         'eligibility_to_date': fields.date('Eligibility date to'),
         'funding_pool_ids': fields.one2many('financing.contract.funding.pool.line', 'contract_id', 'Funding Pools'),
@@ -41,6 +44,7 @@ class financing_contract_format(osv.osv):
     _defaults = {
         'format_name': 'Format',
         'reporting_type': 'all',
+        'overhead_type': 'cost_percentage',
     }
     
     def name_get(self, cr, uid, ids, context=None):
@@ -53,11 +57,11 @@ class financing_contract_format(osv.osv):
         
 financing_contract_format()
 
-class account_account(osv.osv):
-    _name = 'account.account'
-    _inherit = 'account.account'
+class account_destination_link(osv.osv):
+    _name = 'account.destination.link'
+    _inherit = 'account.destination.link'
 
-    def _get_used(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         if context is None:
             context = {}
@@ -77,13 +81,13 @@ class account_account(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            for acc in line.account_ids:
-                exclude[acc.id] = True
+            for account_destination in line.account_destination_ids:
+                exclude[account_destination.id] = True
         for id in ids:
             res[id] = id in exclude
         return res
 
-    def _search_used(self, cr, uid, obj, name, args, context={}):
+    def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
         if context is None:
@@ -101,21 +105,21 @@ class account_account(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            for acc in line.account_ids:
-                exclude[acc.id] = True
+            for account_destination in line.account_destination_ids:
+                exclude[account_destination.id] = True
 
         return [('id', 'not in', exclude.keys())]
 
     _columns = {
-        'used': fields.function(_get_used, method=True, type='boolean', string='Used', fnct_search=_search_used),
+        'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if context is None:
             context = {}
         if view_type == 'tree' and (context.get('contract_id') or context.get('donor_id')) :
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'financing_contract', 'view_account_for_contract_tree')[1]
-        return super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'financing_contract', 'view_account_destination_link_for_contract_tree')[1]
+        return super(account_destination_link, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
 
-account_account()
+account_destination_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

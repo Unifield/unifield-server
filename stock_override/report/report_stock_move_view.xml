@@ -26,11 +26,11 @@
                 <field name="origin" invisible="1"/>
                 <field name="prodlot_id" invisible="1"/>
                 <field name="tracking_id" invisible="1"/>
-		<field name="reason_type_id" invisible="1" />
+				<field name="reason_type_id" invisible="1" />
                 <field name="product_qty" sum="Total quantity"/>
                 <field name="product_qty_in" sum="Total incoming quantity" />
                 <field name="product_qty_out" sum="Total outgoing quantity"/>
-                <field name="value"  sum="Total value"/>
+                <field name="currency_id" invisible="1" />
                 <field name="day_diff1"/>
                 <field name="day_diff"/>
                 <field name="day_diff2" string="Delay(Days)"/>
@@ -73,37 +73,27 @@
                 <filter icon="terp-go-home" name="internal" string="Internal" domain="[('type','=','internal')]"/>
                 <filter icon="terp-go-home" name="out" string="Outgoing" domain="[('type','=','out')]"/>
                 <separator orientation="vertical"/>
-		<field name="order_type" />
-		<field name="origin" />
-		<field name="prodlot_id" />
-		<newline />
-		<field name="tracking_id" />
-                <field name="state" />
                 <field name="product_id" default_focus="1"/>
                 <field name="partner_id" context="{'contact_display':'partner'}"/>
-                <separator orientation="vertical"/>
-		<field name="comment" />
+				<field name="order_type" />
+				<field name="reason_type_id" widget="selection"/>
+				<newline />
                 </group>
                 <newline/>
                 <group expand="0" string="Extended Filters..."  groups="base.group_extended">
                     <field name="location_id" />
                     <field name="location_dest_id" />
-                    <field name="categ_id"/>
-                    <field name="reason_type_id"/>
-                    <separator orientation="vertical"/>
-                    <field name="company_id" groups="base.group_multi_company" widget = "selection"/>
-                    <newline/>
+                    <field name="origin" />
+                    <field name="state" />
                     <field name="date"/>
                 </group>
                 <newline/>
                 <group expand="1" string="Group By...">
-                    <filter name="group_partner" string="Partner" icon="terp-partner" context="{'group_by':'partner_id'}"/>
+                    <filter name="group_partner" string="Supplier" icon="terp-partner" context="{'group_by':'partner_id'}"/>
                     <separator orientation="vertical"/>
-                    <filter name="group_categ_id" string="Product Category" icon="terp-stock_symbol-selection" context="{'group_by':'categ_id'}"/>
+                    <filter name="group_categ_id" string="Family" icon="terp-stock_symbol-selection" context="{'group_by':'categ_id'}"/>
                     <filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
                     <filter name="group_prodlot" string="Batch" icon="terp-accessories-archiver" context="{'group_by':'prodlot_id'}"/>
-                    <separator orientation="vertical"/>
-                    <filter name="group_picking" string="Packing" icon="terp-accessories-archiver" context="{'group_by':'picking_id'}"/>
                     <separator orientation="vertical"/>
                     <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_id'}"/>
                     <filter string="Dest. Location" name="dest_location" icon="terp-gtk-jump-to-ltr"  context="{'group_by':'location_dest_id'}"/>

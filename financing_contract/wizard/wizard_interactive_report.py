@@ -26,25 +26,50 @@ class wizard_interactive_report(osv.osv_memory):
     _name = "wizard.interactive.report"
     _inherit = "wizard.csv.report"
     
-    def _create_reporting_line(self, line, parent_hierarchy, data):
+    def _create_reporting_line(self, cr, uid, reporting_currency_id, line, parent_hierarchy, data, out_currency_id=None, context=None):
         max_parent_hierarchy = parent_hierarchy
+        
+        #convert to output currency if it has been selected
+        line_allocated_budget = line.allocated_budget
+        line_allocated_real = line.allocated_real
+        line_project_budget = line.project_budget
+        line_project_real = line.project_real
+        
+        # if the output currency has been selected other than the reporting currency
+        if out_currency_id and out_currency_id != reporting_currency_id:
+            currency_obj = self.pool.get('res.currency')
+            line_allocated_budget = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
+                                                    line_allocated_budget or 0.0, round=True, context=context)
+
+            line_allocated_real = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
+                                                  line_allocated_real or 0.0,round=True, context=context)
+
+            line_project_budget = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
+                                                  line_project_budget or 0.0, round=True, context=context)
+
+            line_project_real = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
+                                                line_project_real or 0.0, round=True, context=context)
+        
         data.append([parent_hierarchy,
                      line.code,
                      line.name,
-                     locale.format("%d", round(line.allocated_budget), grouping=True),
-                     locale.format("%d", round(line.allocated_real), grouping=True),
-                     locale.format("%d", round(line.project_budget), grouping=True),
-                     locale.format("%d", round(line.project_real), grouping=True)])
-        for child_line in line.child_ids:
-            max_parent_hierarchy = self._create_reporting_line(child_line, parent_hierarchy + 1, data)
-        return max_parent_hierarchy
+                     locale.format("%d", line_allocated_budget, grouping=True),
+                     locale.format("%d", line_allocated_real, grouping=True),
+                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format("%d", round(line_allocated_real/line_allocated_budget * 100), grouping=True)) + "%",
+                     locale.format("%d", line_project_budget, grouping=True),
+                     locale.format("%d", line_project_real, grouping=True),
+                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format("%d", round(line_project_real/line_project_budget * 100), grouping=True)) + "%"])
         
+        for child_line in line.child_ids:
+            max_parent_hierarchy = self._create_reporting_line(cr, uid, reporting_currency_id, child_line, parent_hierarchy + 1, data, out_currency_id, context)
+        return max_parent_hierarchy
     
     def _get_interactive_data(self, cr, uid, contract_id, context=None):
         res = {}
         contract_obj = self.pool.get('financing.contract.contract')
         # Context updated with wizard's value
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
+        
         # Update the context
         context.update({'reporting_currency': contract.reporting_currency.id,
                         'reporting_type': contract.reporting_type,
@@ -54,38 +79,72 @@ class wizard_interactive_report(osv.osv_memory):
         footer_data = self._get_contract_footer(cr, uid, contract, context=context)
         
         # Values to be set
-        allocated_budget = 0
-        project_budget = 0
-        allocated_real = 0
-        project_real = 0
+        total_allocated_budget = 0
+        total_project_budget = 0
+        total_allocated_real = 0
+        total_project_real = 0
+        
+        # check the output currency if it has been selected        
+        out_currency_amount = contract.grant_amount
+        out_currency_id = None
+        if 'output_currency' in context:
+            out_currency_id = context.get('output_currency').id
         
         max_parent_hierarchy = 0 # 0 for contract line
         temp_analytic_data = []
+        currency_obj = self.pool.get('res.currency')
+        
         # create "real" lines
         for line in contract.actual_line_ids:
             if not line.parent_id:
-                allocated_budget += round(line.allocated_budget)
-                project_budget += round(line.project_budget)
-                allocated_real += round(line.allocated_real)
-                project_real += round(line.project_real)
-                current_max_parent_hierarchy = self._create_reporting_line(line, 1, temp_analytic_data)
+                line_allocated_budget = line.allocated_budget
+                line_allocated_real = line.allocated_real
+                line_project_budget = line.project_budget
+                line_project_real = line.project_real
+                
+                # if the output currency has been selected other than the reporting currency then convert the given value to 
+                # the selected output currency for exporting
+                if out_currency_id and out_currency_id != contract.reporting_currency.id:
+                    currency_obj = self.pool.get('res.currency')
+                    line_allocated_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                                                            line_allocated_budget or 0.0, round=True, context=context)
+        
+                    line_allocated_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                                                          line_allocated_real or 0.0,round=True, context=context)
+        
+                    line_project_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                                                          line_project_budget or 0.0, round=True, context=context)
+        
+                    line_project_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                                                        line_project_real or 0.0, round=True, context=context)
+    
+                total_allocated_budget += round(line_allocated_budget)
+                total_project_budget += round(line_project_budget)
+                total_allocated_real += round(line_allocated_real)
+                total_project_real += round(line_project_real)
+                current_max_parent_hierarchy = self._create_reporting_line(cr, uid, contract.reporting_currency.id, line, 1, temp_analytic_data, out_currency_id, context)
                 if current_max_parent_hierarchy > max_parent_hierarchy:
                     max_parent_hierarchy = current_max_parent_hierarchy
         # create header + contract line
         temp_analytic_data = [[0,
                                'Code',
                                'Name',
-                               'Funded Amount - Budget',
-                               'Funded Amount - Actuals',
-                               'Total Project Amount - Budget',
-                               'Total Project Amount - Actuals'],
-                              [0,
-                               contract.code,
-                               contract.name,
-                               locale.format("%d", allocated_budget, grouping=True),
-                               locale.format("%d", allocated_real, grouping=True),
-                               locale.format("%d", project_budget, grouping=True),
-                               locale.format("%d", project_real, grouping=True)]] + temp_analytic_data
+                               'Earmarked - Budget',
+                               'Earmarked - Actuals',
+                               'Earmarked - %used',
+                               'Total Project - Budget',
+                               'Total Project - Actuals',
+                               'Total Project - %used']] + temp_analytic_data + [   
+                               [0,
+                               '',
+                               'TOTAL',
+                               locale.format("%d", total_allocated_budget, grouping=True),
+                               locale.format("%d", total_allocated_real, grouping=True),
+                               '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format("%d", round(total_allocated_real/total_allocated_budget * 100), grouping=True)) + "%",
+                               locale.format("%d", total_project_budget, grouping=True),
+                               locale.format("%d", total_project_real, grouping=True),
+                               '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format("%d", round(total_project_real/total_project_budget * 100), grouping=True)) + "%"]]
+
 
         # Now, do the hierarchy
         analytic_data = []
@@ -102,10 +161,10 @@ class wizard_interactive_report(osv.osv_memory):
             final_line.append(temp_line[2])
             # then, add values depending of the reporting type
             if contract.reporting_type != 'project':
-                essai = temp_line[3:5]
-                final_line += temp_line[3:5]
+                essai = temp_line[3:6]
+                final_line += temp_line[3:6]
             if contract.reporting_type != 'allocated':
-                final_line += temp_line[5:7]
+                final_line += temp_line[6:9]
             analytic_data.append(final_line)
             
         data = header_data + [[]] + analytic_data + [[]] + footer_data

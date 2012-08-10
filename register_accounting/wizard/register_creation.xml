@@ -20,7 +20,7 @@
                     <label string="Delete or unselect those which shouldn't be created" colspan="4" align="0.0"/>
                     <field name="new_register_ids" colspan="4" attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}" 
                         nolabel="1">
-                        <tree editable="top">
+                        <tree editable="top" hide_new_button="1">
                             <field name="period_id"/>
                             <field name="register_type"/>
                             <field name="currency_id"/>

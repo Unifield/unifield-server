@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <report id="open_invoices"
+        string="Open Invoices"
+        model="account.invoice"
+        name="open.invoices"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+
+    </data>
+</openerp>
+

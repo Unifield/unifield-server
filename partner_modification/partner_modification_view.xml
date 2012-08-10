@@ -23,12 +23,14 @@
             <field name="name">res.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority" eval="35" />
 			<field name="inherit_id" ref="base.view_partner_form" />
 			<field name="arch" type="xml">
 				<data>
 
 					<field name="lang" position="after">
 						<field name="zone" />
+						<field name="po_by_project" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '!=', False)]}" />
 					</field>
 					<field name="user_id" position="replace"></field>
 					<!-- <field name="leadtime" position="replace"></field> -->
@@ -46,26 +48,11 @@
 			</field>
 		</record>
 		
-        <record id="view_res_partner_filter" model="ir.ui.view">
-            <field name="name">view.res.partner.filter</field>
-            <field name="model">res.partner</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="base.view_res_partner_filter" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group/filter[@name='supplier']" position="after">
-                    	<separator orientation="vertical" />
-                        <filter string="International" name="international" icon="gtk-dnd" domain="[('zone','=','international')]" help="International Partners"/>
-                        <filter string="National" name="national" icon="gtk-dnd-multiple" domain="[('zone','=','national')]" help="National Partners"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-		
 	    <record id="view_partner_property_form" model="ir.ui.view">
 	      <field name="name">res.partner.stock.property.form.inherit</field>
 	      <field name="model">res.partner</field>
 	      <field name="type">form</field>
+	      <field name="priority" eval="16" />
 	      <field name="inherit_id" ref="stock.view_partner_property_form"/>
 	      <field name="arch" type="xml">
 			<data>
@@ -84,24 +71,10 @@
 		            	<field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
 		          	</group>
 				</xpath>
-	            	
+					        	
 	          </data>
 	      </field>
 	    </record>
-		
-		<record id="product_supplierinfo_form_view" model="ir.ui.view">
-            <field name="name">product.supplierinfo.form.view</field>
-            <field name="model">product.supplierinfo</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
-            <field name="arch" type="xml">
-                <data>
-                	<field name="name" position="replace">
-                		<field name="name" on_change="onchange_supplier_id(name)" />
-                	</field>
-                </data>
-            </field>
-        </record>
-
+	    		
 	</data>
 </openerp>

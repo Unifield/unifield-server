@@ -30,7 +30,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
     _description = 'Mass Reallocation Verification Wizard'
 
-    def _get_total(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_total(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get total of lines for given field_name
         """
@@ -54,9 +54,29 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'nb_error': fields.function(_get_total, string="Lines in error", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_process': fields.function(_get_total, string="Allocatable lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'display_fp': fields.boolean('Display FP'),
     }
 
-    def button_validate(self, cr, uid, ids, context={}):
+    _default = {
+        'display_fp': lambda *a: False,
+    }
+
+    def default_get(self, cr, uid, fields=None, context=None):
+        """
+        Fetch display_fp in context
+        """
+        if fields is None:
+            fields = []
+        # Some verifications
+        if not context:
+            context = {}
+        # Default behaviour
+        res = super(mass_reallocation_verification_wizard, self).default_get(cr, uid, fields, context=context)
+        # Populate line_ids field
+        res['display_fp'] = context.get('display_fp', False)
+        return res
+
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation on "process_ids".
         """
@@ -80,7 +100,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
             for distrib_id in lines:
                 for line in lines[distrib_id]:
                     # Update distribution
-                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, [distrib_id], [line.account_id.id], account_id, context=context)
+                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
                     # Then update analytic line
                     self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -92,20 +112,24 @@ class mass_reallocation_wizard(osv.osv_memory):
     _description = 'Mass Reallocation Wizard'
 
     _columns = {
-        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
+        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, domain="[('category', 'in', ['OC', 'FUNDING', 'FREE1', 'FREE2']), ('type', '!=', 'view')]"),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
+        'display_fp': fields.boolean('Display FP'),
     }
 
     _default = {
         'state': lambda *a: 'normal',
+        'display_fp': lambda *a: False,
     }
 
-    def default_get(self, cr, uid, fields=[], context={}):
+    def default_get(self, cr, uid, fields=None, context=None):
         """
         Fetch context active_ids to populate line_ids wizard field
         """
+        if fields is None:
+            fields = []
         # Some verifications
         if not context:
             context = {}
@@ -117,9 +141,10 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
+        res['display_fp'] = context.get('display_fp', False)
         return res
 
-    def button_validate(self, cr, uid, ids, context={}):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation process
         """
@@ -132,22 +157,29 @@ class mass_reallocation_wizard(osv.osv_memory):
         error_ids = []
         non_supported_ids = []
         process_ids = []
+        account_id = False
         # Browse given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             to_process = [x.id for x in wiz.line_ids] or []
             account_id = wiz.account_id.id
             # Don't process lines:
-            # - that are not from choosen category. For an example it's useless to treat line that have a funding pool if we choose a cost center account.
-            # Nevertheless line that have a funding pool line could be indirectally be modified by a change of cost center.
-            # - that have same account
+            # - that have same account (or cost_center_id)
             # - that are commitment lines
             # - that have been reallocated
             # - that have been reversed
             # - that come from an engagement journal
-            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                '|', '|', '|', '|', '|', ('account_id.category', '!=', wiz.account_id.category), ('account_id', '=', account_id),
-                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement')], 
-                context=context)
+            # - that come from a write-off (is_write_off = True)
+            account_field_name = 'account_id'
+            if wiz.account_id.category == 'OC':
+                account_field_name = 'cost_center_id'
+            search_args = [
+                ('id', 'in', to_process), '|', '|', '|', '|', '|',
+                (account_field_name, '=', account_id),
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
+                ('from_write_off', '=', True)
+            ]
+            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:
                 non_supported_ids.extend(search_ns_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids

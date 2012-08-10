@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
@@ -30,13 +30,22 @@
     "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "purchase_msf"],
+    "depends" : ["base", "account", "purchase_msf", "register_accounting"],
     "init_xml" : [],
     "update_xml" : [
         'board_account_view.xml',
+        'res_company_view.xml',
+        'res_partner_view.xml',
+        'invoice_view.xml',
+        'wizard_view.xml',
+        'product_product_view.xml',
+        'attachment_view.xml',
     ],
     "demo_xml" : [],
     "test": [
+        'test/accounting_data.yml',
+        'test/intersection_flow.yml',
+        'test/inkind_donation.yml',
     ],
     "installable": True,
     "active": False

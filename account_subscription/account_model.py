@@ -23,6 +23,7 @@ from osv import fields, osv
 import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from tools.translate import _
 
 class account_model_line(osv.osv):
     _name = "account.model.line"
@@ -33,7 +34,7 @@ class account_model_line(osv.osv):
         'account_user_type_code': fields.related('account_id', 'user_type_code', type="char", string="Account User Type Code", store=False)
     }
     
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice line
         """
@@ -70,6 +71,7 @@ class account_model_line(osv.osv):
         })
         # Open it!
         return {
+                'name': 'Analytic distribution',
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -150,7 +152,8 @@ class account_model(osv.osv):
                     'move_id': move_id,
                     'partner_id': line.partner_id.id,
                     'date': context.get('date',time.strftime('%Y-%m-%d')),
-                    'date_maturity': date_maturity
+                    'document_date': context.get('date',time.strftime('%Y-%m-%d')),
+                    'date_maturity': date_maturity,
                 })
                 c = context.copy()
                 c.update({'journal_id': model.journal_id.id,'period_id': period_id})

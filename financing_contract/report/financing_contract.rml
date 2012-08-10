@@ -72,6 +72,7 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table5">
       <blockAlignment value="LEFT"/>
@@ -96,6 +97,7 @@
     <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P121" fontName="Helvetica-Oblique" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P14" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P15" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -155,22 +157,22 @@
     <blockTable colWidths="266.0,269.0" style="Table2">
       <tr>
         <td>
-          <para style="P13">Eligibility period:</para>
+          <para style="P13" alignment="LEFT">Eligibility period:</para>
         </td>
         <td>
-          <para style="P13">Reporting type:</para>
+          <para style="P13" alignment="LEFT">Reporting type:</para>
         </td>
       </tr>
     </blockTable>
     <blockTable colWidths="266.0,269.0" style="Table3">
       <tr>
         <td>
-          <para style="P14">[[ o.eligibility_from_date ]] to [[ o.eligibility_to_date ]]</para>
+          <para style="P14"  alignment="LEFT">[[ formatLang(o.eligibility_from_date,  date=True) ]] to [[ formatLang(o.eligibility_to_date,  date=True) ]]</para>
         </td>
         <td>
-          <para style="P14">[[ (o.reporting_type=='all') and 'Total project and funded costs' or '' ]]</para>
-          <para style="P14">[[ (o.reporting_type=='project') and 'Total project costs' or '' ]]</para>
-          <para style="P14">[[ (o.reporting_type=='allocated') and 'Funded costs' or '' ]]</para>
+          <para style="P14" alignment="LEFT">[[ (o.reporting_type=='all') and 'Total project and funded costs' or '' ]]</para>
+          <para style="P14" alignment="LEFT">[[ (o.reporting_type=='project') and 'Total project costs' or '' ]]</para>
+          <para style="P14" alignment="LEFT">[[ (o.reporting_type=='allocated') and 'Funded costs' or '' ]]</para>
         </td>
       </tr>
     </blockTable>
@@ -183,7 +185,7 @@
     <para style="P7">Contract information:</para>
     <para style="P1">[[ o.donor_grant_reference and 'Donor grant reference: ' + o.donor_grant_reference or '' ]]</para>
     <para style="P1">[[ o.hq_grant_reference and 'HQ grant reference: ' + o.hq_grant_reference or '' ]]</para>
-    <para style="P1">Grant amount: [[ formatLang(o.grant_amount) ]]</para>
+    <para style="P1">Grant amount: [[ locale.format('%.0f', o.grant_amount, True) ]]</para>
     <para style="P1">[[ o.currency_table_id and 'Currency table: ' + o.currency_table_id.name or '' ]]</para>
     <para style="P1">Reporting currency: [[ o.reporting_currency.name ]]</para>
     <para style="P6">
@@ -192,32 +194,27 @@
     <para style="P6">
       <font color="white"> </font>
     </para>
+    
     <para style="P7">Funding pools:</para>
-    <blockTable colWidths="227.0,151.0,162.0" style="Table10">
+    <blockTable colWidths="281.0,258.0" style="Table10">
       <tr>
         <td>
-          <para style="P2">Funding pool name</para>
+          <para style="P2" alignment="LEFT">Funding pool name</para>
         </td>
         <td>
-          <para style="P2">Funded</para>
-        </td>
-        <td>
-          <para style="P2">Total project</para>
+        <para style="P2" alignment="LEFT">Funding pool code</para>
         </td>
       </tr>
     </blockTable>
     <section>
       <para style="P20">[[repeatIn(o.funding_pool_ids,'line')]]</para>
-      <blockTable colWidths="225.0,149.0,160.0" style="Table12">
+      <blockTable colWidths="281.0,258.0" style="Table12">
         <tr>
           <td>
-            <para style="P3">[[ line.funding_pool_id.name ]]</para>
+            <para style="P3" alignment="LEFT">[[ line.funding_pool_id.name ]]</para>
           </td>
           <td>
-            <para style="P3">[[ (line.funded) and '✔' or '' ]]</para>
-          </td>
-          <td>
-            <para style="P24">✔</para>
+            <para style="P3" alignment="LEFT">[[ line.funding_pool_id.code ]]</para>
           </td>
         </tr>
       </blockTable>
@@ -232,10 +229,10 @@
     <blockTable colWidths="281.0,258.0" style="Table11">
       <tr>
         <td>
-          <para style="P2">Cost center name</para>
+          <para style="P2" alignment="LEFT">Cost center name</para>
         </td>
         <td>
-          <para style="P2">Cost center code</para>
+          <para style="P2" alignment="LEFT">Cost center code</para>
         </td>
       </tr>
     </blockTable>
@@ -244,51 +241,94 @@
       <blockTable colWidths="278.0,255.0" style="Table9">
         <tr>
           <td>
-            <para style="P3">[[ line.name ]]</para>
+            <para style="P3" alignment="LEFT">[[ line.name ]]</para>
           </td>
           <td>
-            <para style="P3">[[ line.code ]]</para>
+            <para style="P3" alignment="LEFT">[[ line.code ]]</para>
           </td>
         </tr>
       </blockTable>
     </section>
     <pageBreak/>
     <para style="P7">Reporting lines:</para>
-    <blockTable colWidths="79.0,89.0,206.0,162.0" repeatRows="1" style="Table4">
+    <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" repeatRows="1" style="Table4">
       <tr>
         <td>
-          <para style="P15">Code</para>
+          <para style="P15" alignment="LEFT">Code</para>
         </td>
         <td>
-          <para style="P16">Name</para>
+          <para style="P16" alignment="LEFT">Name</para>
         </td>
         <td>
-          <para style="P16">Funded amount - Budget</para>
+          <para style="P16" alignment="LEFT">Line Type</para>
         </td>
         <td>
-          <para style="P17">Total project amount - Budget</para>
+          <para style="P16" alignment="RIGHT">Funded - Budget</para>
+        </td>
+        <td>
+          <para style="P17" alignment="RIGHT">Total project - Budget</para>
         </td>
       </tr>
     </blockTable>
     <section>
-      <para style="P21">[[repeatIn(o.actual_line_ids,'line')]]</para>
-      <blockTable colWidths="79.0,90.0,205.0,163.0" style="Table5">
+      <para style="P21">[[repeatIn(process(o.actual_line_ids),'line')]]</para>
+      <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" style="Table5">
         <tr>
           <td>
-            <para style="P19">[[ line.code ]]</para>
+          	<para style="P12" alignment="LEFT">[[ (line['line_type'] != 'View' and line['code']) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['code']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P12">[[ line.name ]]</para>
+          	<para style="P12" alignment="LEFT">[[ (line['line_type'] != 'View' and line['name']) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['name']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P12">[[ formatLang(line.allocated_budget) ]] </para>
+          	<para style="P12" alignment="LEFT">[[ (line['line_type'] != 'View' and line['line_type']) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['line_type']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-            <para style="P18">[[ formatLang(line.project_budget) ]]</para>
+          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and locale.format('%.0f', line['allocated_budget'], True)) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and locale.format('%.0f', line['allocated_budget'], True)) or removeParentNode('para') ]]</para>
+          </td>
+          <td>
+          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and locale.format('%.0f', line['project_budget'], True)) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and locale.format('%.0f', line['project_budget'], True)) or removeParentNode('para') ]]</para>
+            
+          </td>
+        </tr>
+      </blockTable>
+      <blockTable colWidths="80.0,402.0" style="Table5">
+        <tr>
+          <td>
+            <para style="P121" alignment="LEFT"> [[ (line['line_type'] != 'View' and "Accounts: ") or removeParentNode('blockTable') ]]</para>
+          </td>
+          <td>
+            <para style="P121" alignment="LEFT">[[ line['account_list'] ]]</para>
           </td>
         </tr>
       </blockTable>
     </section>
+    <section>
+     <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" style="Table5">
+	    <tr>
+	      <td>
+	      	<para style="P15" alignment="LEFT">Total</para>
+	      </td>
+          <td>
+          
+          </td>
+          <td>
+             
+          </td>
+	      <td>
+	        <para style="P15" alignment="RIGHT">[[ locale.format('%.0f', get_totals(o.actual_line_ids)[0], True) ]] </para>
+	      </td>
+	      <td>
+	        <para style="P15" alignment="RIGHT">[[ locale.format('%.0f', get_totals(o.actual_line_ids)[1], True) ]]</para>
+	      </td>
+	    </tr>
+	  </blockTable>
+  </section>
     <para style="P5">
       <font color="white"> </font>
     </para>
@@ -299,7 +339,7 @@
     <blockTable colWidths="533.0" style="Table7">
       <tr>
         <td>
-          <para style="P11">[[ format(o.notes or '') ]]</para>
+          <para style="P11" alignment="LEFT">[[ format(o.notes or '') ]]</para>
         </td>
       </tr>
     </blockTable>

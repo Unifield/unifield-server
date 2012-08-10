@@ -31,20 +31,26 @@
     ],
     "depends" : [
         "purchase",
+        "account_override",
         "stock_override",
+        "stock",
         "purchase_double_validation",
         "reason_types_moves",
+        "unifield_setup",
     ],
     "update_xml": [
         "purchase_view.xml",
         "purchase_workflow.xml",
-        "report/purchase_report_view.xml",
+        "purchase_report.xml",
+        "wizard/split_order_line_view.xml",
+        "security/ir.model.access.csv",
     ],
     "demo_xml": [
     ],
     "test": [
         "test/data.yml",
         "test/purchase_test.yml",
+        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,

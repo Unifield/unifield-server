@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Redefine analytic line tree -->
+        <record id="account.view_account_analytic_line_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <tree editable="top" string="Analytic Journal Items">
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="general_account_id"/>
+                    <field name="account_id"/>
+                    <field name="partner_txt"/>
+                    <field name="amount_currency"/>
+                    <field name="currency_id"/>
+                    <field name="amount"/>
+                    <field name="functional_currency_id"/>
+                    <field name="reversal_origin"/>
+                    <field name="user_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</openerp>
