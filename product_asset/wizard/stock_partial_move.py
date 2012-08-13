@@ -27,7 +27,7 @@ import time
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
-    def _get_checks_asset(self, cr, uid, ids, name, arg, context=None):
+    def _get_checks_asset(self, cr, uid, ids, fields, arg, context=None):
         '''
         complete asset boolean
         '''
@@ -36,13 +36,20 @@ class stock_partial_move_memory_out(osv.osv_memory):
             result[id] = False
             
         for out in self.browse(cr, uid, ids, context=context):
-            result[out.id] = out.product_id.subtype == 'asset'
+            result[out.id] = {}
+            # asset_check
+            asset_check = out.product_id.subtype == 'asset'
+            result[out.id].update({'asset_check': asset_check})
+            # location_supplier_customer_mem_out
+            location_supplier_customer_mem_out = out.move_id.location_id.usage == 'supplier' or out.move_id.location_dest_id.usage == 'customer'
+            result[out.id].update({'location_supplier_customer_mem_out': location_supplier_customer_mem_out})
             
         return result
     
     _columns = {
         'asset_id' : fields.many2one('product.asset', string="Asset"),
-        'asset_check' : fields.function(_get_checks_asset, method=True, string='Asset Check', type='boolean', readonly=True),
+        'asset_check' : fields.function(_get_checks_asset, method=True, string='Asset Check', type='boolean', readonly=True, multi='move_out_multi'),
+        'location_supplier_customer_mem_out' : fields.function(_get_checks_asset, method=True, string='Location Supplier Customer', type='boolean', readonly=True, multi='move_out_multi'),
     }
     
 stock_partial_move_memory_out()
