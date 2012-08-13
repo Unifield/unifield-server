@@ -345,12 +345,39 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
 
+    def check_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution validity for given PO.
+        Also check that partner have a donation account (is PO is in_kind)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Analytic distribution verification
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type and po.order_type == 'in_kind':
+                if not po.partner_id.donation_payable_account:
+                    raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
+            for pol in po.order_line:
+                # Forget check if we come from YAML tests
+                if po.from_yml_test:
+                    continue
+                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                # Raise an error if no analytic distribution found
+                if not distrib_id:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                if pol.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
+        return True
+
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         '''
-        Update the confirmation date of the PO at confirmation
+        Update the confirmation date of the PO at confirmation.
+        Check analytic distribution.
         '''
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+        # CODE MOVED TO self.check_analytic_distribution()
+        self.check_analytic_distribution(cr, uid, ids, context=context)
         return res
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
@@ -483,25 +510,16 @@ stock moves which are already processed : '''
     def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
         '''
         delivery confirmed date at po level is mandatory
-        update corresponding date at line level if needed
+        update corresponding date at line level if needed.
+        Check analytic distribution
         '''
         # objects
         ana_obj = self.pool.get('analytic.distribution')
         
-        # Analytic distribution verification
-        # NOT MANDATORY for In-kind donation PO
+        # Check analytic distribution
+        self.check_analytic_distribution(cr, uid, ids, context=context)
         for po in self.browse(cr, uid, ids, context=context):
-            for pol in po.order_line:
-                # Forget check if we come from YAML tests
-                if po.from_yml_test:
-                    continue
-                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
-                # Raise an error if no analytic distribution found
-                if not distrib_id:
-                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
-                if pol.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
-
+            # CODE MOVED TO self.check_analytic_distribution()
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
@@ -1595,31 +1613,30 @@ class purchase_order_line(osv.osv):
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
-        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00:
+        if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
             info_prices = []
-            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                     ('product_id', '=', tmpl_id)], 
-                                                     order='sequence asc', context=context)
             domain = [('uom_id', '=', uom),
-                      ('currency_id', '=', currency_id),
+                      ('partner_id', '=', partner_id),
+                      ('product_id', '=', tmpl_id),
                       '|', ('valid_from', '<=', date_order),
                       ('valid_from', '=', False),
                       '|', ('valid_till', '>=', date_order),
                       ('valid_till', '=', False)]
-        
-            if sequence_ids:
-                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
-                domain.append(('suppinfo_id.sequence', '=', min_seq))
-                domain.append(('suppinfo_id', 'in', sequence_ids))
-        
-                info_prices = partner_price.search(cr, uid, domain, order='min_quantity asc, id desc', limit=1, context=context)
+            
+            domain_cur = [('currency_id', '=', currency_id)]
+            domain_cur.extend(domain)
+            
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+            if not info_prices:
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
-                res['value'].update({'old_price_unit': info_price.price, 'price_unit': info_price.price})
+                info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id, info_price.price)
+                res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
@@ -1650,7 +1667,7 @@ class purchase_order_line(osv.osv):
         elif qty == 0.00:
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
-            res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})            
+            res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
         
         return res
 

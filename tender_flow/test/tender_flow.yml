@@ -253,6 +253,8 @@
     assert ids, 'ids is empty'
     tender = self.browse(cr, uid, ids[0])
     assert tender.tender_line_ids[0].price_unit == 10024, 'price_unit has not been updated. %s-10024'%tender.tender_line_ids[0].price_unit
+    # update context in order analytic distribution not to be tested
+    context.update({'update_mode': 'init'})
     po_id = self.create_po(cr, uid, tender.id, context=context)
     
     import netsvc
