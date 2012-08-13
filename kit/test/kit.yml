@@ -274,6 +274,24 @@
     item_id = self.create(cr, uid, values, context=context)
     assert self.browse(cr, uid, item_id, context=context).exp_substitute_item, 'expiried date has not been completed by create function'
 -
+  I create an inventory to enter this product into the stock
+-
+  !record {model: stock.inventory, id: inventory_kit_01}:
+    name: Kit inventory
+    date: !eval time.strftime('%Y-%m-%d')
+    inventory_line_id:
+      - location_id: stock.stock_location_stock
+        product_uom: product.product_uom_unit
+        product_id: kit_product_C
+        product_qty: 100
+        prod_lot_id: kit_lot_Cs
+-
+  I confirm the inventory
+-
+  !python {model: stock.inventory}: |
+    self.action_confirm(cr, uid, [ref('inventory_kit_01')], context=context)
+    self.action_done(cr, uid, [ref('inventory_kit_01')], context=context)
+-
   I test the on_change functions for substitute.item - type check is 'out' for standard substitute.item (products come from the stock)
 -
   !python {model: substitute.item}: |
