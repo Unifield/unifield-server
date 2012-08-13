@@ -25,6 +25,7 @@ from tools.translate import _
 import netsvc
 from mx.DateTime import *
 import time
+from osv.orm import browse_record, browse_null
 
 from workflow.wkf_expr import _eval_expr
 import logging
@@ -1155,6 +1156,38 @@ stock moves which are already processed : '''
 
         return True
     
+    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
+        o_line = super(purchase_order, self)._hook_o_line_value(cr, uid, *args, **kwargs)
+        order_line = kwargs['order_line']
+        
+        # Copy all fields except order_id and analytic_distribution_id
+        fields = ['product_uom', 'price_unit', 'move_dest_id', 'product_qty', 'partner_id',
+                  'confirmed_delivery_date', 'nomenclature_description', 'default_code', 
+                  'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
+                  'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
+                  'to_correct_ok', 'text_error', 'sync_sol_db_id', 'sync_pol_db_id',
+                  'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 
+                  'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
+                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes']
+        
+        for field in fields:
+            field_val = getattr(order_line, field)
+            if isinstance(field_val, browse_record):
+                field_val = field_val.id
+            o_line[field] = field_val
+            
+        
+        # Set the analytic distribution 
+        distrib_id = False
+        if order_line.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
+        elif order_line.order_id.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
+            
+        o_line['analytic_distribution_id'] = distrib_id
+        
+        return o_line
+    
 purchase_order()
 
 
@@ -1772,28 +1805,6 @@ class purchase_order_group(osv.osv_memory):
         res['po_value_id'] = context['active_ids'][0]
         
         return res
-    
-    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
-        o_line = super(purchase_order_group, self)._hook_o_line_value(cr, uid, *args, **kwargs)
-        # Copy all fields except order_id and analytic_distribution_id
-        fields = self.pool.get('purchase.order.line')._columns.keys()
-        fields.pop('order_id')
-        fields.pop('analytic_distribution_id')
-        order_line = kwargs['order_line']
-        
-        for field in fields:
-           o_line[field] = order_line.getattr(field)
-        
-        # Set the analytic distribution 
-        distrib_id = False
-        if order_line.analytic_distribution_id:
-            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
-        elif order_line.order_id.analytic_distribution_id:
-            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
-            
-        o_line['analytic_distribution_id'] = distrib_id
-        
-        return o_line
     
 purchase_order_group()
 
