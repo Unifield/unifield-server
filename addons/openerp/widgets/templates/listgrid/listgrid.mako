@@ -86,9 +86,11 @@
     % if editable:
         <td class="grid-cell selector">
             % if not editors:
+                % if not data['id'] or data['id'] not in noteditable:
                 <img alt="edit record" src="/openerp/static/images/iconset-b-edit.gif"
                     class="listImage" border="0" title="${_('Edit')}"
                     onclick="editRecord(${data['id']}, '${source}')"/>
+                % endif
             % elif not data['id'] or data['id'] not in noteditable:
                 <%
                     if o2m and not data['id']:
