@@ -1775,20 +1775,16 @@ class purchase_order_group(osv.osv_memory):
     
     def _hook_o_line_value(self, cr, uid, *args, **kwargs):
         o_line = super(purchase_order_group, self)._hook_o_line_value(cr, uid, *args, **kwargs)
+        # Copy all fields except order_id and analytic_distribution_id
+        fields = self.pool.get('purchase.order.line')._columns.keys()
+        fields.pop('order_id')
+        fields.pop('analytic_distribution_id')
         order_line = kwargs['order_line']
-        o_line['nomenclature_description'] = order_line.nomenclature_description
-        o_line['comment'] = order_line.comment
-        o_line['nomen_manda_0'] = order_line.nomen_manda_0
-        o_line['nomen_manda_1'] = order_line.nomen_manda_1
-        o_line['nomen_manda_2'] = order_line.nomen_manda_2
-        o_line['nomen_manda_3'] = order_line.nomen_manda_3
-        o_line['nomen_sub_0'] = order_line.nomen_sub_0
-        o_line['nomen_sub_1'] = order_line.nomen_sub_1
-        o_line['nomen_sub_2'] = order_line.nomen_sub_2
-        o_line['nomen_sub_3'] = order_line.nomen_sub_3
-        o_line['nomen_sub_4'] = order_line.nomen_sub_4
-        o_line['nomen_sub_5'] = order_line.nomen_sub_5
         
+        for field in fields:
+           o_line[field] = order_line.getattr(field)
+        
+        # Set the analytic distribution 
         distrib_id = False
         if order_line.analytic_distribution_id:
             distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
