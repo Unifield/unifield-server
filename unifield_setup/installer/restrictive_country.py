@@ -132,8 +132,10 @@ class res_country_restriction_memory(osv.osv_memory):
     
     def unlink(self, cr, uid, ids, context=None):
         for restrict in self.browse(cr, uid, ids, context=context):
-            if restrict.restrict_id.product_ids:
-                raise osv.except_osv(_('Error'), _('You cannot remove this restriction because it is in use in product(s)'))
+            for product in restrict.restrict_id.product_ids:
+                # Raise an error only if the restriction box is checked
+                if product.restricted_country:
+                    raise osv.except_osv(_('Error'), _('You cannot remove this restriction because it is in use in product(s)'))
             
         return super(res_country_restriction_memory, self).unlink(cr, uid, ids, context=context)
     
