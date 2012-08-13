@@ -563,6 +563,8 @@ class stock_move(osv.osv):
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+        'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
+        'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
     }
     
     def create(self, cr, uid, vals, context=None):
