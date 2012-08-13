@@ -64,6 +64,9 @@ MODELS_TO_IGNORE=[
                     'sync.client.message_sync',  
                     'sync.client.write_info',
                     
+                    'sync.server.update',
+                    'sync.server.message',
+
                     'res.widget',
                     
                     #'res.currency'
