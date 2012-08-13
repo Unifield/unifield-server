@@ -204,7 +204,7 @@ class stock_move(osv.osv):
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or not location_id.quarantine_location or not location_id.output_ok or not location_id.input_ok)):
                 vals.update(location_id=stock_ids and stock_ids[0] or False)
             # Destinatio location
-            if product_type == 'consu' and not (loc_id and (location_id.output_ok or location_id.usage == 'customer')):
+            if product_type == 'consu' and not (loc_dest_id and (location_dest_id.output_ok or location_dest_id.usage == 'customer')):
                 # If we are not in Picking ticket and the dest. loc. is not output or customer, unset the dest.
                 if loc_id and loc_id not in packing_ids:
                     vals.update(location_dest_id=False)
