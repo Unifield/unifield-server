@@ -92,7 +92,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
-			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order'}</field>
+			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
@@ -211,7 +211,9 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id, 'warehouse_id': warehouse_id}" on_change="onchange_move()"  attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id, 'warehouse_id': warehouse_id}" 
+							    on_change="onchange_move()"  
+							    attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="composition_list_id" />

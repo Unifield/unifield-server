@@ -151,7 +151,7 @@ class stock_location(osv.osv):
                 elif product.type == 'consu':
                     res = ['|', '|', ('cross_docking_location_ok', '=', True), ('non_stockable_ok', '=', True), ('virtual_ok', '=', True)]
                 else:
-                    res = ['|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+                    res = [('non_stockable_ok', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
                     
         return res
     

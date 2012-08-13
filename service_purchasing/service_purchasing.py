@@ -135,10 +135,12 @@ class stock_move(osv.osv):
         po = purchase_line_id and self.pool.get('purchase.order.line').browse(cr, uid, purchase_line_id) or False
         cd = po and po.order_id.cross_docking_ok or False
         packing_ids = []
+        stock_ids = []
         
         wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
         for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids):
             packing_ids.append(wh.lot_packing_id.id)
+            stock_ids.append(wh.lot_stock_id.id)
         
         vals = {}
         
@@ -167,22 +169,27 @@ class stock_move(osv.osv):
             
         # Case when incoming shipment
         if product_type and parent_type == 'in':
+            # Set service location as destination for service products
             if product_type in ('service_recep', 'service'):
                 if service_loc:
                     vals.update(location_dest_id=service_loc, product_type=product_type)
+            # Set cross-docking as destination for non-stockable with cross-docking context
             elif product_type == 'consu' and cd and loc_dest_id not in (id_cross, service_loc):
                 vals.update(location_dest_id=id_cross)
+            # Set non-stockable as destination for non-stockable without cross-docking context
             elif product_type == 'consu' and not cd and loc_dest_id not in (id_cross, service_loc):
                 vals.update(location_dest_id=non_stockable_loc)
-            elif product_type == 'product' and not (loc_dest_id and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok)):
+            # Set input for standard products
+            elif product_type == 'product' and not (loc_dest_id and (not location_dest_id.non_stockable_ok and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok))):
                 vals.update(location_dest_id=input_id)
         # Case when internal picking
         elif product_type and parent_type == 'internal':
             # Source location
+            # Only cross-docking is available for Internal move for non-stockable products
             if product_type == 'consu' and not (loc_id and (location_id.cross_docking_location_ok or location_id.quarantine_location)):
                 vals.update(location_id=id_cross)
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or location_dest_id.virtual_ok)):
-                vals.update(location_id=False)
+                vals.update(location_id=stock_ids and stock_ids[0] or False)
             # Destination location
             if product_type == 'consu' and not (loc_dest_id and (location_dest_id.usage == 'inventory' or location_dest_id.destruction_location or location_dest_id.quarantine_location)):
                 vals.update(location_dest_id=False)
@@ -191,12 +198,14 @@ class stock_move(osv.osv):
         # Case when outgoing delivery or picking ticket
         elif product_type and parent_type == 'out':
             # Source location
+            # Only cross-docking is available for Outgoing moves for non-stockable products
             if product_type == 'consu' and not (loc_id and location_id.cross_docking_location_ok):
                 vals.update(location_id=id_cross)
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or not location_id.quarantine_location or not location_id.output_ok or not location_id.input_ok)):
-                vals.update(location_id=False)
+                vals.update(location_id=stock_ids and stock_ids[0] or False)
             # Destinatio location
             if product_type == 'consu' and not (loc_id and (location_id.output_ok or location_id.usage == 'customer')):
+                # If we are not in Picking ticket and the dest. loc. is not output or customer, unset the dest.
                 if loc_id and loc_id not in packing_ids:
                     vals.update(location_dest_id=False)
                 

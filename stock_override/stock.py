@@ -538,7 +538,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             res[move.id] = False
             if move.dpo_id:
-               res[move.id] = True
+                res[move.id] = True
 
         return res
 
@@ -553,6 +553,16 @@ class stock_move(osv.osv):
                 return [('dpo_id', '=', False)]
         
         return []
+    
+    def _default_location_destination(self, cr, uid, context=None):
+        if not context:
+            context = {}
+        if context.get('picking_type') == 'out':
+            wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+            if wh_ids:
+                return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
+    
+        return False
 
     _columns = {
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
@@ -563,6 +573,10 @@ class stock_move(osv.osv):
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+    }
+    
+    _defaults = {
+        'location_dest_id': _default_location_destination,
     }
     
     def create(self, cr, uid, vals, context=None):

@@ -287,6 +287,7 @@
         <record id="stock.action_picking_tree6" model="ir.actions.act_window">
         	<field name="context">{'contact_display': 'partner_address',
         						   "search_default_available":1,
+        						   'subtype': 'internal',
         						   'picking_type': 'internal_move'}</field>
         </record>
         
