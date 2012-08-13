@@ -293,6 +293,13 @@
     c = res['context']
     context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
+  I check that the kit items have been updated
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_04")], context=context):
+      for item in obj.composition_item_ids:
+        assert item.item_exp, 'expiry date is missing for item %s'%item.name
+-
   I compute the date from the items, check it, confirm it - the date must now come from the substitute product from stock - 2012-12-24
 -
   !python {model: modify.expiry.date}: |
