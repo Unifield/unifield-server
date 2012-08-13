@@ -748,7 +748,6 @@
                                 widget="one2many_list"
                                 default_get="{'move_line':move_lines, 'address_out_id': address_id}"
                                 context="{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}" 
-                                on_change="onchange_move()"
                                 attrs="{'readonly': [('from_wkf', '=', True), ('state', 'in', ['draft', 'confirmed', 'assigned'])]}"
                                 >
                                 <tree colors="grey:scrapped==True" string="Stock Moves">

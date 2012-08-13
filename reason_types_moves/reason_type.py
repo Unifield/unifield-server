@@ -384,10 +384,14 @@ class stock_move(osv.osv):
         
         return res
     
+    def _get_product_type_selection(self, cr, uid, context=None):
+        return self.pool.get('product.template').PRODUCT_TYPE
+    
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
-        'product_type': fields.function(_get_product_type, method=True, type='char', string='Product type', store=False),
+        'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type', 
+                                        store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20),}),
     }
     
     _defaults = {

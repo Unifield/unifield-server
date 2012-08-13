@@ -73,6 +73,7 @@
                         attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}" />
                         <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"
                         attrs="{'invisible':['|', ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}" />
+                        <field name="product_type" />
                         <field name="move_cross_docking_ok" invisible='1'/>
                         <field name="allocation_setup" invisible="1" />
                     </xpath>
@@ -98,9 +99,10 @@
                 <data>
                     <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
                         <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"  
-                        attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}" />
+                        attrs="{'invisible':['|', '|', '|', ('product_type', '=', 'consu'), ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}" />
                         <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"  
-                        attrs="{'invisible':['|', ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}" />
+                        attrs="{'invisible':['|', '|', ('product_type', '=', 'consu'), ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}" />
+                        <field name="product_type" invisible="1" />
                         <field name="move_cross_docking_ok" invisible='1'/>
                         <field name="allocation_setup" invisible="1" />
                     </xpath>
