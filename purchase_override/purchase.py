@@ -1156,6 +1156,37 @@ stock moves which are already processed : '''
 
         return True
     
+    def _hook_order_infos(self, cr, uid, *args, **kwargs):
+        '''
+        Hook to change the values of the PO
+        '''
+        order_infos = super(purchase_order, self)._hook_order_infos(cr, uid, *args, **kwargs)
+        order_id = kwargs['order_id']
+        
+        fields = ['invoice_method', 'minimum_planned_date', 'order_type',
+                  'categ', 'priority', 'internal_type', 'arrival_date',
+                  'transport_type', 'shipment_date', 'ready_to_ship_date',
+                  'cross_docking_ok', 'delivery_confirmed_date',
+                  'est_transport_lead_time', 'transport_mode']
+        
+
+        delivery_requested_date = getattr(order_id, 'delivery_requested_date')
+        if not order_infos.get('delivery_requested_date') or delivery_requested_date < order_infos['delivery_requested_date']:
+            order_infos['delivery_requested_date'] = delivery_requested_date
+        
+        
+        for field in fields:
+            field_val = getattr(order_id, field)
+            if isinstance(field_val, browse_record):
+                field_val = field_val.id
+            elif isinstance(field_val, browse_null):
+                field_val = False
+            elif isinstance(field_val, list):
+                field_val = ((6, 0, tuple([v.id for v in field_val])),)
+            order_infos[field] = field_val
+            
+        return order_infos
+    
     def _hook_o_line_value(self, cr, uid, *args, **kwargs):
         o_line = super(purchase_order, self)._hook_o_line_value(cr, uid, *args, **kwargs)
         order_line = kwargs['order_line']
@@ -1168,12 +1199,16 @@ stock moves which are already processed : '''
                   'to_correct_ok', 'text_error', 'sync_sol_db_id', 'sync_pol_db_id',
                   'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 
                   'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
-                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes']
+                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id']
         
         for field in fields:
             field_val = getattr(order_line, field)
             if isinstance(field_val, browse_record):
                 field_val = field_val.id
+            elif isinstance(field_val, browse_null):
+                field_val = False
+            elif isinstance(field_val, list):
+                field_val = ((6, 0, tuple([v.id for v in field_val])),)
             o_line[field] = field_val
             
         
@@ -1315,6 +1350,8 @@ class purchase_order_line(osv.osv):
             merged_ids = []
         
         new_vals = vals.copy()
+        # Don't include taxes on merged lines
+        new_vals.pop('taxes_id')
 
         if not merged_ids:
             new_vals['order_id'] = order_id
@@ -1802,7 +1839,13 @@ class purchase_order_group(osv.osv_memory):
             raise osv.except_osv(_('Warning'),
             _('Please select multiple order to merge in the list view.'))
             
-        res['po_value_id'] = context['active_ids'][0]
+        res['po_value_id'] = context['active_ids'][-1]
+        
+        return res
+    
+    def merge_orders(self, cr, uid, ids, context=None):
+        res = super(purchase_order_group, self).merge_orders(cr, uid, ids, context=context)
+        res.update({'context': {'search_default_draft': 1, 'search_default_approved': 0,'search_default_create_uid':uid, 'purchase_order': True}})
         
         return res
     

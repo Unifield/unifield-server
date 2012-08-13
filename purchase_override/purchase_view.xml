@@ -293,7 +293,15 @@
                             <p style="margin-left:20px">* Purchase Orders belong to the same supplier </p>
                             <p style="margin-left:20px">* Purchase Orders have the same stock location and the same currency.</p>
                         </html>
-                        <field name="po_value_id" />
+                    </group>
+                    <separator colspan="4" />
+                    <group colspan="4">
+                        <field name="po_value_id" readonly="1" colspan="2" />
+                        <newline />
+                        <html colspan="4">
+                            <p>All information of the PO template will be written in the new PO,</p>
+                            <p>except the Delivery Requested date which will be the earliest date.</p>
+                        </html>
                     </group>
                  </xpath>
             </field>
