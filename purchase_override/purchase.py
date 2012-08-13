@@ -1351,7 +1351,8 @@ class purchase_order_line(osv.osv):
         
         new_vals = vals.copy()
         # Don't include taxes on merged lines
-        new_vals.pop('taxes_id')
+        if 'taxes_id' in new_vals:
+            new_vals.pop('taxes_id')
 
         if not merged_ids:
             new_vals['order_id'] = order_id
