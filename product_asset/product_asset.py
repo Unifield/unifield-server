@@ -220,9 +220,8 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [
-                        ('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
-    ]
+    _sql_constraints = [('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
+                        ]
     _order = 'name desc'
     
 product_asset()
@@ -438,9 +437,11 @@ class stock_move(osv.osv):
         """
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
-                if move.product_id.subtype == 'asset':
-                    if not move.asset_id and move.product_qty:
-                        raise osv.except_osv(_('Error!'),  _('You must assign an asset for this product.'))
+                # either the asset comes from a supplier or the asset goes to a customer
+                if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer':
+                    if move.product_id.subtype == 'asset':
+                        if not move.asset_id and move.product_qty:
+                            raise osv.except_osv(_('Error!'),  _('You must assign an asset for this product.'))
         return True
     
     def create(self, cr, uid, vals, context=None):
