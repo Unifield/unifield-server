@@ -2870,7 +2870,10 @@ class sale_order(osv.osv):
             move_data['type'] = 'internal'
             move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
-            move_data['state'] = 'draft'
+            move_data['state'] = 'confirmed'
+            # We also do a first 'check availability': cancel then check
+            self.pool.get('stock.picking').cancel_assign(cr, uid, [move_data['picking_id']])
+            self.pool.get('stock.picking').action_assign(cr, uid, [move_data['picking_id']])
         else:
             # first go to packing location
             packing_id = order.shop_id.warehouse_id.lot_packing_id.id
@@ -2908,6 +2911,7 @@ class sale_order(osv.osv):
                 picking_data['type'] = 'internal'
                 picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+                picking_data['state'] = 'confirmed'
             else:
                 # use the name according to picking ticket sequence
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
