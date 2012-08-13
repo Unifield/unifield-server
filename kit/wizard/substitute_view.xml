@@ -54,7 +54,7 @@
                         			context="{'product_id':product_id_substitute_item, 'prodlot_id':lot_id_substitute_item, 'specific_rules_tree_view':True, 'compute_child':False}" />
                 				<field name="lot_id_substitute_item"
                						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
-               						context="{'location_id':location_id_substitute_item, 'product_id':product_id_substitute_item, 'hidden_perishable_mandatory':hidden_perishable_mandatory, 'search_default_real': True}"
+               						context="{'location_id':location_id_substitute_item, 'product_id':product_id_substitute_item, 'expiry_date_check':hidden_perishable_mandatory, 'batch_number_check':hidden_batch_management_mandatory, 'search_default_real': True}"
                         			domain="[('check_type','=', True), ('product_id', '=?', product_id_substitute_item)]"
                         			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                 				<field name="exp_substitute_item"

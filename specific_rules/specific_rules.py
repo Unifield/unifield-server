@@ -731,7 +731,7 @@ class stock_production_lot(osv.osv):
             view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return result
     
     def copy(self, cr, uid, id, default=None, context=None):
