@@ -115,6 +115,23 @@
             </field>
         </record>
 
+        <!--
+            New account attribute for HQ entries corrections
+        -->
+
+        <record id="inherit_view_account_form2" model="ir.ui.view">
+            <field name='name'>inherit.view.account.form</field>
+            <field name='model'>account.account</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_account_form' />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="is_not_hq_correctible"/>
+                </xpath>
+            </field>
+        </record>
+
+
     <!-- Actions: Menu actions -->
         <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
             <field name="name">Import HQ Entries</field>

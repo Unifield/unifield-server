@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,16 @@
 #
 ##############################################################################
 
-import res_company
-import hq_entries
-import wizard
-import account
+from osv import osv
+from osv import fields
 
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = 'account.account'
+
+    _columns = {
+        'is_not_hq_correctible': fields.boolean('To be not correctible in HQ entries.'),
+    }
+
+account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
