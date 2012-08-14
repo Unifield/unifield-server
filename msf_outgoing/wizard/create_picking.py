@@ -203,11 +203,20 @@ class create_picking(osv.osv_memory):
             elif step == 'returnproducts':
                 field = 'returnproducts'
 
-        _moves_arch_lst = """<form string="%s">
+        _moves_arch_lst = """<form string="%s">""" % ( _('Process Document'), )
+
+        if step in ['create', 'validate', 'returnproducts']:
+            _moves_arch_lst += """
+                <button name="select_all" string="Copy All"
+                    colspan="1" type="object"  icon="gtk-jump-to" />
+                <button name="deselect_all" string="Revert Copy All"
+                    colspan="1" type="object" icon="gtk-undo" />"""
+
+        _moves_arch_lst += """
                 <field name="date" invisible="1"/>
                 <separator colspan="4" string="%s"/>
                 <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
-                """ % (_('Process Document'), _('Products'), field)
+                """ % ( _('Products'), field)
 
         _moves_fields = result['fields']
 
@@ -248,12 +257,6 @@ class create_picking(osv.osv_memory):
                 <button name="back_ppl1" string="previous"
                     colspan="1" type="object" icon="gtk-go-back" />"""
                     
-        elif step in ['create', 'validate', 'returnproducts']:
-            _moves_arch_lst += """
-                <button name="select_all" string="Select All"
-                    colspan="1" type="object" icon="terp_stock_symbol-selection" />
-                <button name="deselect_all" string="Deselect All"
-                    colspan="1" type="object" icon="terp_stock_symbol-selection" />"""
                     
         _moves_arch_lst += """
                 <button name="%s" string="%s"
