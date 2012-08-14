@@ -29,7 +29,7 @@ class account_account(osv.osv):
     _inherit = 'account.account'
 
     _columns = {
-        'is_not_hq_correctible': fields.boolean('To be not correctible in HQ entries.'),
+        'is_not_hq_correctible': fields.boolean("Not HQ correctible", help='Cannot be correctible in HQ entries.'),
     }
 
 account_account()
