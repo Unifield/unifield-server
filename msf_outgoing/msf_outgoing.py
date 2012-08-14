@@ -2855,6 +2855,53 @@ class sale_order(osv.osv):
     _inherit = 'sale.order'
     _name = 'sale.order'
     
+    def _hook_ship_create_execute_specific_code_01(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 01
+        '''
+        super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
+        wf_service = netsvc.LocalService("workflow")
+        proc_id = kwargs['proc_id']
+        order = kwargs['order']
+        if order.procurement_request :
+            pick_id = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)[0].move_id.picking_id.id
+            if pick_id:
+                wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
+        
+        return True
+    
+    def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to execute specific code at position 02
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        order = kwargs['order']
+        move_id = kwargs['move_id']
+        pick_id = move_obj.browse(cr, uid, [move_id], context=context)[0].picking_id.id
+        
+        if order.procurement_request:
+            move_obj.action_confirm(cr, uid, [move_id], context=context)
+            # we Validate the picking "Confirms picking directly from draft state."
+            pick_obj.draft_force_assign(cr, uid , [pick_id], context)
+            # We also do a first 'check availability': cancel then check
+            pick_obj.cancel_assign(cr, uid, [pick_id], context)
+            pick_obj.action_assign(cr, uid, [pick_id], context)
+        return True
+    
     def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -2870,10 +2917,6 @@ class sale_order(osv.osv):
             move_data['type'] = 'internal'
             move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
-            move_data['state'] = 'confirmed'
-            # We also do a first 'check availability': cancel then check
-            self.pool.get('stock.picking').cancel_assign(cr, uid, [move_data['picking_id']])
-            self.pool.get('stock.picking').action_assign(cr, uid, [move_data['picking_id']])
         else:
             # first go to packing location
             packing_id = order.shop_id.warehouse_id.lot_packing_id.id
@@ -2911,7 +2954,6 @@ class sale_order(osv.osv):
                 picking_data['type'] = 'internal'
                 picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-                picking_data['state'] = 'assigned'
             else:
                 # use the name according to picking ticket sequence
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')

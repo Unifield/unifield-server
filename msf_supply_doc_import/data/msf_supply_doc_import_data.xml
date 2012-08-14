@@ -54,6 +54,7 @@
     <record id="product_tbd" model="product.product">
         <field name="default_code" >TBD</field>
         <field name="name">To be defined</field>
+        <field name="type">product</field>
         <field name="nomen_manda_0" ref="msf_supply_doc_import.nomen_tbd0"/>
         <field name="nomen_manda_1" ref="msf_supply_doc_import.nomen_tbd1"/>
         <field name="nomen_manda_2" ref="msf_supply_doc_import.nomen_tbd2"/>

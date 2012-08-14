@@ -1418,7 +1418,7 @@ class stock_picking(osv.osv):
         so_obj = self.pool.get('sale.order')
 
         for picking in self.browse(cr, uid, ids, context=context):
-            if picking.sale_id and not picking.sale_id.shipment_date:
+            if picking.sale_id and not picking.sale_id.shipment_date and not picking.sale_id.procurement_request:
                 sale_id = picking.sale_id.id
                 date_format = date_tools.get_date_format(cr, uid, context=context)
                 db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1426,7 +1426,6 @@ class stock_picking(osv.osv):
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
                 so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
-
         return res
 
 stock_picking()
