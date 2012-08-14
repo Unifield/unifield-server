@@ -46,7 +46,7 @@ class stock_location(osv.osv):
         if hasattr(super(stock_location, self), 'init'):
             super(stock_location, self).init(cr)
 
-        logging.getLogget('init').info('HOOK: module msf_config_locations: loading msf_location_data.xml')
+        logging.getLogger('init').info('HOOK: module msf_config_locations: loading msf_location_data.xml')
         pathname = path.join('msf_config_locations', 'msf_location_data.xml')
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'msf_config_locations', file, {}, mode='init', noupdate=False)
