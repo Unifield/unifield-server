@@ -1653,6 +1653,7 @@
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_expatriates"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates')])]"/>
+            <field name="is_not_hq_correctible" eval="True"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.6124">
@@ -1666,6 +1667,7 @@
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_expatriates"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates')])]"/>
+            <field name="is_not_hq_correctible" eval="True"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.6140">
@@ -1692,6 +1694,7 @@
             <field name="accrual_account" eval="False" />
             <field name="default_destination_id" ref="analytic_distribution.analytic_account_destination_expatriates"/>
             <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_expatriates')])]"/>
+            <field name="is_not_hq_correctible" eval="True"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.62">
