@@ -972,7 +972,7 @@ class stock_location(osv.osv):
 
         elif prod_obj and  prod_obj.type != 'consu':
                 if arg[0][2][1] == 'in':
-                    return [('id', 'in', ids_usa+ids_child)]
+                    return [('id', 'in', ids_child)]
                 else:
                     return [('id', 'not in', [id_nonstock]), ('usage', '=', 'internal')]
 
