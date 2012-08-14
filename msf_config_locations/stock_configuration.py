@@ -39,18 +39,6 @@ class stock_location(osv.osv):
     _parent_order = 'location_id, posz'
     _order = 'location_id, posz'
 
-    def init(self, cr):
-        '''
-        Load msf_location_data.xml befor stock_location
-        '''
-        if hasattr(super(stock_location, self), 'init'):
-            super(stock_location, self).init(cr)
-
-        logging.getLogger('init').info('HOOK: module msf_config_locations: loading msf_location_data.xml')
-        pathname = path.join('msf_config_locations', 'msf_location_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'msf_config_locations', file, {}, mode='init', noupdate=False)
-    
     def _get_input_output(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the location is the input/output location of a warehouse or a children of it
@@ -101,8 +89,11 @@ class stock_location(osv.osv):
         Return True if the location is under the Virtual locations view
         '''
         res = {}
-        virtual_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-        virtual_ids = self.search(cr, uid, [('location_id', 'child_of', virtual_id)], context=context)
+        try:
+            virtual_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+            virtual_ids = self.search(cr, uid, [('location_id', 'child_of', virtual_id)], context=context)
+        except:
+            virtual_ids = []
         for id in ids:
             res[id] = False
             if id in virtual_ids:
@@ -115,8 +106,11 @@ class stock_location(osv.osv):
         Returns all virtual locations
         '''
         res = []
-        virtual_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-        virtual_ids = self.search(cr, uid, [('location_id', 'child_of', virtual_id)], context=context)
+        try:
+            virtual_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
+            virtual_ids = self.search(cr, uid, [('location_id', 'child_of', virtual_id)], context=context)
+        except:
+            return res
         
         operator = 'in'
         if (args[0][1] == '=' and args[0][2] == False) or (args[0][1] and '!=' and args[0][2] == True):
