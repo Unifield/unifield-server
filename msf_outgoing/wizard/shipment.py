@@ -201,6 +201,12 @@ class shipment_wizard(osv.osv_memory):
         step = context['step']
         
         _moves_arch_lst = """<form string="%s">
+
+                        <button name="select_all" string="Copy all"
+                            colspan="1" type="object" icon="gtk-jump-to" />
+                        <button name="deselect_all" string="Clear all"
+                            colspan="1" type="object"  icon="gtk-undo"/>
+
                         <field name="date" invisible="1"/>
                         <separator colspan="4" string="%s"/>
                         <field name="product_moves_shipment_%s" colspan="4" nolabel="1" mode="tree,form"></field>
@@ -232,10 +238,7 @@ class shipment_wizard(osv.osv_memory):
                 <button icon='gtk-cancel' special="cancel"
                     string="_Cancel" />
 
-                <button name="select_all" string="Select All"
-                    colspan="1" type="object" icon="terp_stock_symbol-selection" />
-                <button name="deselect_all" string="Deselect All"
-                    colspan="1" type="object" icon="terp_stock_symbol-selection" />
+
 
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />

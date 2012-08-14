@@ -40,7 +40,7 @@ class stock_partial_picking(osv.osv_memory):
         message_in = '<label string="You receive %s products, please refer to the appropriate procedure." colspan="4" />'
         message_out = '<label string="You ship %s products, please refer to the appropriate procedure and ensure that the mean of transport is appropriate." colspan="4" />'
         button = '<button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>'
-        button_2 = '<button name="uncopy_all" string="Revert Copy all" colspan="1" type="object" icon="gtk-undo"/>'
+        button_2 = '<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>'
         if not picking_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result

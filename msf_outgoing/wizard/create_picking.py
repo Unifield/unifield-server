@@ -207,9 +207,9 @@ class create_picking(osv.osv_memory):
 
         if step in ['create', 'validate', 'returnproducts']:
             _moves_arch_lst += """
-                <button name="select_all" string="Copy All"
+                <button name="select_all" string="Copy all"
                     colspan="1" type="object"  icon="gtk-jump-to" />
-                <button name="deselect_all" string="Revert Copy All"
+                <button name="deselect_all" string="Clear all"
                     colspan="1" type="object" icon="gtk-undo" />"""
 
         _moves_arch_lst += """
