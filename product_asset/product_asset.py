@@ -438,7 +438,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 # either the asset comes from a supplier or the asset goes to a customer
-                if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer':
+                if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer' or (move.picking_id and move.picking_id.type == 'out' and move.picking_id.subtype == 'picking'):
                     if move.product_id.subtype == 'asset':
                         if not move.asset_id and move.product_qty:
                             raise osv.except_osv(_('Error!'),  _('You must assign an asset for this product.'))

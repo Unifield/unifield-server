@@ -41,7 +41,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
             asset_check = out.product_id.subtype == 'asset'
             result[out.id].update({'asset_check': asset_check})
             # location_supplier_customer_mem_out
-            location_supplier_customer_mem_out = out.move_id.location_id.usage == 'supplier' or out.move_id.location_dest_id.usage == 'customer'
+            # source location is supplier or destination location is customer or corresponding picking is type out and subtype picking
+            location_supplier_customer_mem_out = out.move_id.location_id.usage == 'supplier' or out.move_id.location_dest_id.usage == 'customer' or (out.move_id.picking_id and out.move_id.picking_id.type == 'out' and out.move_id.picking_id.subtype == 'picking' and out.move_id.picking_id.state != 'draft')
             result[out.id].update({'location_supplier_customer_mem_out': location_supplier_customer_mem_out})
             
         return result
