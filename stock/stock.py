@@ -1859,6 +1859,12 @@ class stock_move(osv.osv):
         if loc_dest_id:
             result['location_dest_id'] = loc_dest_id
         return {'value': result}
+    
+    def _hook_dest(self, cr, uid, *args, **kwargs):
+        '''
+        UF-1239 : Not chained the moves coming from stock.inventory
+        '''
+        return kwargs.get('dest')
 
     def _chain_compute(self, cr, uid, moves, context=None):
         """ Finds whether the location has chained location type or not.
@@ -1877,7 +1883,8 @@ class stock_move(osv.osv):
                 m.product_id,
                 context
             )
-            if dest:
+            #if dest:
+            if self._hook_dest(cr, uid, dest=dest, m=m):
                 if dest[1] == 'transparent' and context.get('action_confirm', False):
                     newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
                     self.write(cr, uid, [m.id], {
