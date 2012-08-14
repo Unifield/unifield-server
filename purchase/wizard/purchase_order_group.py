@@ -47,6 +47,7 @@ class purchase_order_group(osv.osv_memory):
             raise osv.except_osv(_('Warning'),
             _('Please select multiple order to merge in the list view.'))
         return res
+    
     def merge_orders(self, cr, uid, ids, context=None):
         """
              To merge similar type of purchase orders.
