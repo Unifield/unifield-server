@@ -290,8 +290,7 @@
                             <p>Please note that: </p>
                             <p style="margin-left:10px">Orders will only be merged if: </p>
                             <p style="margin-left:20px">* Purchase Orders are in draft</p>
-                            <p style="margin-left:20px">* Purchase Orders belong to the same supplier </p>
-                            <p style="margin-left:20px">* Purchase Orders have the same stock location and the same currency.</p>
+                            <p style="margin-left:20px">* Purchase Orders belong to the same supplier and the same currency</p>
                         </html>
                     </group>
                     <separator colspan="4" />
@@ -300,7 +299,7 @@
                         <newline />
                         <html colspan="4">
                             <p>All information of the PO template will be written in the new PO,</p>
-                            <p>except the Delivery Requested date which will be the earliest date.</p>
+                            <p>except the Delivery Requested date which will be the earliest date of all POs.</p>
                         </html>
                     </group>
                  </xpath>

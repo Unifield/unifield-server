@@ -1167,7 +1167,8 @@ stock moves which are already processed : '''
                   'categ', 'priority', 'internal_type', 'arrival_date',
                   'transport_type', 'shipment_date', 'ready_to_ship_date',
                   'cross_docking_ok', 'delivery_confirmed_date',
-                  'est_transport_lead_time', 'transport_mode']
+                  'est_transport_lead_time', 'transport_mode', 'location_id',
+                  'dest_address_id', 'incoterm_id']
         
 
         delivery_requested_date = getattr(order_id, 'delivery_requested_date')
@@ -1851,7 +1852,7 @@ class purchase_order_group(osv.osv_memory):
         if 'domain' in res and eval(res['domain'])[0][2]:
             return res
         
-        raise osv.except_osv(_('Error'), _('No PO merge !'))
+        raise osv.except_osv(_('Error'), _('No PO merged !'))
         return {'type': 'ir.actions.act_window_close'}
     
 purchase_order_group()
