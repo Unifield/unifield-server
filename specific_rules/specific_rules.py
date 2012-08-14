@@ -29,6 +29,7 @@ import decimal_precision as dp
 import netsvc
 import pooler
 import time
+import logging
 
 from mx import DateTime
 
@@ -726,11 +727,18 @@ class stock_production_lot(osv.osv):
         """
         if context is None:
             context = {}
+        logging.getLogger('DEBUG').info('Enter fields_view_get in specific_rules module (stock_production_lot)')
+        logging.getLogger('DEBUG').info('expiry_date_check:%s'%context.get('expiry_date_check', False))
+        logging.getLogger('DEBUG').info('batch_number_check:%s'%context.get('batch_number_check', False))
+        logging.getLogger('DEBUG').info('hidden_perishable_mandatory:%s'%context.get('hidden_perishable_mandatory', False))
+        
         # warehouse wizards or inventory screen
         if view_type == 'tree' and ((context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory')):
             view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
+            logging.getLogger('DEBUG').info('entered inside the conditional')
             if view:
                 view_id = view[1]
+                logging.getLogger('DEBUG').info('view found')
         result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return result
     
