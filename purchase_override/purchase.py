@@ -1848,7 +1848,11 @@ class purchase_order_group(osv.osv_memory):
         res = super(purchase_order_group, self).merge_orders(cr, uid, ids, context=context)
         res.update({'context': {'search_default_draft': 1, 'search_default_approved': 0,'search_default_create_uid':uid, 'purchase_order': True}})
         
-        return res
+        if 'domain' in res and eval(res['domain'])[0][2]:
+            return res
+        
+        raise osv.except_osv(_('Error'), _('No PO merge !'))
+        return {'type': 'ir.actions.act_window_close'}
     
 purchase_order_group()
 
