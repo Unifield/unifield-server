@@ -32,6 +32,18 @@ class stock_location(osv.osv):
     _inherit = 'stock.location'
     _parent_order = 'location_id, posz'
     _order = 'location_id, posz'
+
+    def init(self, cr):
+        '''
+        Load msf_location_data.xml befor stock_location
+        '''
+        if hasattr(super(stock_location, self), 'init'):
+            super(stock_location, self).init(cr)
+
+        logging.getLogget('init').info('HOOK: module msf_config_locations: loading msf_location_data.xml')
+        pathname = path.join('msf_config_locations', 'msf_location_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'msf_config_locations', file, {}, mode='init', noupdate=False)
     
     def _get_input_output(self, cr, uid, ids, field_name, args, context=None):
         '''
