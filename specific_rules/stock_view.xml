@@ -10,9 +10,37 @@
                 <form string="Initial stock inventory">
                     <field name="name" string="Reference" />
                     <field name="date" />
+                    <separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
                     <notebook colspan="4">
                         <page string="Inventory lines">
-                            <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list">
+                            <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Products" editable="bottom">
                                     <field name="product_id" domain="[('type', '=', 'product')]" on_change="product_change(product_id)" />
                                     <field name="average_cost" />
@@ -39,6 +67,10 @@
                     <group colspan="4" col="6">
                         <field name="state" />
                         <field name="date_done" readonly="True" attrs="{'invisible': [('state', '!=', 'done')]}" />
+                        <button name="action_cancel_inventary" states="draft,confirm,done" string="Cancel Inventory" type="object" icon="gtk-cancel"/>
+                        <button name="action_confirm" states="draft" string="Confirm Inventory" type="object" icon="gtk-apply"/>
+                        <button name="action_done" states="confirm" string="Validate Inventory" type="object" icon="gtk-jump-to"/>
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
                     </group>
                 </form>
             </field>

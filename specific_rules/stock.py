@@ -21,13 +21,155 @@
 from osv import osv
 from osv import fields
 
+from tools.translate import _
+
+import time
+
 class initial_stock_inventory(osv.osv):
     _name = 'initial.stock.inventory'
     _inherit = 'stock.inventory'
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Prevent the deletion of a non-draft/cancel initial inventory
+        '''
+        for inv in self.browse(cr, uid, ids, context=context):
+            if inv.state not in ('draft', 'cancel'):
+                raise osv.except_osv(_('Error'), _('You cannot remove a non-draft or cancel inventory'))
+            
+        return super(initial_stock_inventory, self).unlink(cr, uid, ids, context=context)
+    
     _columns = {
         'inventory_line_id': fields.one2many('initial.stock.inventory.line', 'inventory_id', string='Inventory lines'),
+        'move_ids': fields.many2many('stock.move', 'initial_stock_inventory_move_rel', 'inventory_id', 'move_id', 'Created Moves'),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
+    
+    def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
+        """ Creates a stock move from an inventory line
+        @param inventory_line:
+        @param move_vals:
+        @return:
+        """
+        move_vals['price_unit'] = inventory_line.average_cost
+        return super(initial_stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
+    
+    def action_done(self, cr, uid, ids, context=None):
+        """ Finish the inventory
+        @return: True
+        """
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        currency_obj = self.pool.get('res.currency')
+        for inv in self.browse(cr, uid, ids, context=context):
+            for move in inv.move_ids:
+                new_std_price = move.price_unit
+                if move.product_id.cost_method == 'average':
+                    product = prod_obj.browse(cr, uid, move.product_id.id, context={'location_id': move.location_id.id, 'compute_child': False})
+                    move_currency_id = move.company_id.currency_id.id
+                    context['currency_id'] = move_currency_id
+                    qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, product.uom_id.id)
+                    if qty > 0:
+                        new_price = currency_obj.compute(cr, uid, move_currency_id, move_currency_id, move.price_unit)
+                        new_price = uom_obj._compute_price(cr, uid, move.product_uom.id, new_price, product.uom_id.id)
+                        if product.qty_available <= 0:
+                            new_std_price = new_price
+                        else:
+                            # Get the standard price
+                            amount_unit = product.price_get('standard_price', context)[product.id]
+                            new_std_price = ((amount_unit * product.qty_available) + (new_price * qty))/(product.qty_available+qty)
+                
+                prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
+                move_obj.action_done(cr, uid, move.id, context=context)
+
+            self.write(cr, uid, [inv.id], {'state':'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+        return True
+    
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        if context is None:
+            context = {}
+            
+        location_id = False
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+        if wh_ids:
+            location_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_stock_id.id
+        for inventory in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+
+            nom = False
+            # Get all products for the defined nomenclature
+            if inventory.nomen_manda_3:
+                nom = inventory.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif inventory.nomen_manda_2:
+                nom = inventory.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif inventory.nomen_manda_1:
+                nom = inventory.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif inventory.nomen_manda_0:
+                nom = inventory.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if inventory.sublist_id:
+                for line in inventory.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in inventory.inventory_line_id:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    self.pool.get('initial.stock.inventory.line').unlink(cr, uid, line.id, context=context)
+
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    batch_mandatory = product.batch_management or product.perishable
+                    date_mandatory = not product.batch_management and product.perishable
+                    values = {'product_id': product.id,
+                              'uom_id': product.uom_id.id,
+                              'location_id': location_id,
+                              'average_cost': product.standard_price,
+                              'hidden_batch_management_mandatory': batch_mandatory,
+                              'hidden_perishable_mandatory': date_mandatory,
+                              'inventory_id': inventory.id,}
+                    v = self.pool.get('initial.stock.inventory.line').on_change_product_id(cr, uid, [], location_id, product.id, product.uom_id.id, False)['value']
+                    values.update(v)
+                    if batch_mandatory:
+                        values.update({'err_msg': 'You must assign a batch number'})
+                    if date_mandatory:
+                        values.update({'err_msg': 'You must assign an expiry date'})
+                    self.pool.get('initial.stock.inventory.line').create(cr, uid, values)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'initial.stock.inventory',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+        
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
     
 initial_stock_inventory()
 
