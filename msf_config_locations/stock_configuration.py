@@ -24,6 +24,12 @@ from osv import fields
 
 from tools.translate import _
 
+import logging
+from os import path
+import math
+import re
+import tools
+
 class stock_location(osv.osv):
     '''
     Change the order and parent_order field.
