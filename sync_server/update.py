@@ -100,7 +100,7 @@ class update(osv.osv):
         seq = self.browse(cr, uid, ids, context=context)[0].sequence
         return seq
     
-    def get_update_to_send(self,cr, uid, entity, update_ids, context=None):
+    def get_update_to_send(self,cr, uid, entity, update_ids, recover=False, context=None):
         update_to_send = []
         ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
@@ -116,7 +116,8 @@ class update(osv.osv):
             if (update.rule_id.direction == 'up' and update.source.id in children) or \
                (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
                (update.rule_id.direction == 'bidirectional') or \
-               (entity.id in privates):
+               (entity.id in privates) or \
+               (recover and entity.id == update.source.id):
                 
                 source_rules_ids = self.pool.get('sync_server.sync_rule')._get_group_per_rules(cr, uid, update.source, context)
                 s_group = source_rules_ids.get(update.rule_id.id, [])
@@ -146,7 +147,7 @@ class update(osv.osv):
         update_master = None
         while update_master is None:
             ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
-            fetched_updates = self.get_update_to_send(cr, uid, entity, ids, context)
+            fetched_updates = self.get_update_to_send(cr, uid, entity, ids, recover, context)
             if fetched_updates:
                 update_master = fetched_updates[0]
             elif not ids:
@@ -159,7 +160,7 @@ class update(osv.osv):
         update_to_send = []
         while len(ids) == max_size and len(update_to_send) < max_size:
             ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
-            for update in self.get_update_to_send(cr, uid, entity, ids, context):
+            for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
                 if update.model == update_master.model and \
                    update.rule_id.id == update_master.rule_id.id and \
                    update.source.id == update_master.source.id:
