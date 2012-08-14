@@ -427,12 +427,12 @@ class hq_entries(osv.osv):
             context={}
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
-            expat_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account and \
-                self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account.id or False
-            if not expat_account_id:
-                raise osv.except_osv(_('Warning'), _('Expat Salaries account is not set. Please configure it to Company Settings.'))
+#            expat_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account and \
+#                self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account.id or False
+#            if not expat_account_id:
+#                raise osv.except_osv(_('Warning'), _('Expat Salaries account is not set. Please configure it to Company Settings.'))
             for line in self.browse(cr, uid, ids):
-                if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.id == expat_account_id and account.id != expat_account_id:
+                if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         return super(hq_entries, self).write(cr, uid, ids, vals, context)
 
