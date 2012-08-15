@@ -74,8 +74,7 @@
                     				<field name="product_uom" readonly="True" string="UoM" />
                     				<field name="hidden_asset_check" invisible="True" />
                     				<field name="asset_id" domain="[('product_id', '=', product_id)]"
-                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)],
-                    							'required': [('hidden_asset_check', '=', True)]}" />
+                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
                     				<field name="prodlot_id"
                     					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 	                    			  		'search_default_real': True}"
