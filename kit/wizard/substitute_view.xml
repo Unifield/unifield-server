@@ -28,7 +28,7 @@
 			            		<field name="uom_id_substitute_item" readonly="True" />
 			            		<field name="asset_id_substitute_item"
 			            			domain="[('product_id', '=', product_id_substitute_item)]"
-			            			attrs="{'required': [('hidden_asset_mandatory', '=', True)], 'readonly': [('hidden_asset_mandatory', '=', False)]}" />
+			            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 			            		<field name="lot_mirror"
                						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
                         			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
@@ -64,7 +64,7 @@
                 				<field name="uom_id_substitute_item" />
                 				<field name="asset_id_substitute_item"
                 					domain="[('product_id', '=', product_id_substitute_item)]"
-			            			attrs="{'required': [('hidden_asset_mandatory', '=', True)], 'readonly': [('hidden_asset_mandatory', '=', False)]}" />
+			            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
                					<field name="type_check" invisible="True" />
                					<field name="hidden_asset_mandatory" />
                 				<field name="hidden_batch_management_mandatory" string="Lot" />
