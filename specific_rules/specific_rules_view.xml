@@ -662,7 +662,7 @@
         </record>
 
         <!-- Just define some stock locations to avoid errors on unit tests -->
-        <record id="stock_location_non_stockable" model="stock.location">
+        <record id="stock.stock_location_non_stockable" model="stock.location">
             <field name="name">Non stockable</field>
             <field name="location_id" ref="stock.stock_location_locations_virtual" />
             <field name="location_category">other</field>
