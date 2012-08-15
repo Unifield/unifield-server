@@ -484,7 +484,7 @@ class stock_move(osv.osv):
 
             if vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
                 pick_bro = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'))
-                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_non_stockable')
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
                 if vals.get('sale_line_id'):
                     id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
                     if pick_bro.type == 'out':
@@ -521,7 +521,7 @@ class stock_move(osv.osv):
 
             if vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
                 pick_bro = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'))
-                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_non_stockable')
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
                 if vals.get('sale_line_id'):
                     id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
                     if pick_bro.type == 'out':

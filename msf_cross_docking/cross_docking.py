@@ -364,7 +364,7 @@ class stock_picking(osv.osv):
                                 if pick.type == 'out':
                                     id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')
                                 else:
-                                    id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
+                                    id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override','stock_location_non_stockable')
                                 move_obj.write(cr, uid, [move_ids], {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
                             else:
                                 move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
@@ -607,7 +607,7 @@ class stock_move(osv.osv):
                     if move.picking_id.type == 'out':
                         id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')
                     else:
-                        id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock','stock_location_non_stockable')
+                        id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override','stock_location_non_stockable')
                     self.write(cr, uid, move.id, {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
                 else:
                     self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
