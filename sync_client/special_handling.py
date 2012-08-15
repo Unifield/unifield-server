@@ -82,27 +82,37 @@ class account_move_line(osv.osv):
             context = {}
             
         # indicate to the account.analytic.line not to create such an object to avoid duplication
-        context['do_not_create_analytic_line'] = True
-        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+#        context['do_not_create_analytic_line'] = True
+
+        sync_check = check
+        if 'sync_data' in context:
+            sync_check = False
+
+        return super(account_move_line, self).create(cr, uid, vals, context=context, check=sync_check)
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         if not context:
             context = {}
             
         # indicate to the account.analytic.line not to create such an object to avoid duplication
-        context['do_not_create_analytic_line'] = True
+#        context['do_not_create_analytic_line'] = True
         
         # the coming block is a special treatment when, in sync, the update of an account.analytic.line triggers also an update 
         # on the account move line, in which its move state!=draft, and journal=posted. This update request raises an exception in 
         # opener-addons/account/account_move_line.py, method _update_check, line 1204
         # if this special catch up is not done here, the execution of the synch data is considered as not running due to the exception raised
+        
+        sync_check = check
+        sync_check_update = update_check
         if 'sync_data' in context:
+            sync_check = False
+            sync_check_update = False
             for line in self.browse(cr, uid, ids, context=context):
                 if line.move_id.state <> 'draft' and (not line.journal_id.entry_posted):
                     return True
                 if line.reconcile_id:
                     return True
                 
-        return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=sync_check_update)
 
 account_move_line()
