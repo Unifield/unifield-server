@@ -1,6 +1,7 @@
-#Wed Aug 15 15:29:58 CEST 2012
+#Wed Aug 15 16:18:26 CEST 2012
 eclipse.preferences.version=1
 encoding//account_activable/account_activable.py=utf-8
+encoding//account_msf/purchase.py=utf-8
 encoding//consumption_calculation/consumption_calculation.py=utf-8
 encoding//delivery_mechanism/wizard/change_product_memory_move.py=utf-8
 encoding//msf_budget/report/report_pdf_engagement.py=utf-8

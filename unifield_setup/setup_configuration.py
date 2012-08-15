@@ -105,6 +105,26 @@ class unifield_setup_configuration(osv.osv):
             
         return self.browse(cr, uid, setup_id)
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        On create, update the list_price = Field Price of Product according to the sale_price of the configurator
+        '''
+        if vals.get('sale_price'):
+            percentage = vals.get('sale_price')
+            cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + percentage),))
+        return super(unifield_setup_configuration, self).create(cr, uid, vals, context=context)
+        
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        On write,  update the list_price = Field Price of Product according to the sale_price of the configurator
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if vals.get('sale_price'):
+            percentage = vals.get('sale_price')
+            cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + percentage),))
+        return super(unifield_setup_configuration, self).write(cr, uid, ids, vals, context=context)
+    
 unifield_setup_configuration()
 
 class res_config_view(osv.osv_memory):
