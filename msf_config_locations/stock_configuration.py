@@ -232,14 +232,30 @@ class stock_location(osv.osv):
                     
         return res
     
+    def _get_warehouse_input(self, cr, uid, ids, context=None):
+        res = []
+        for wh in self.browse(cr, uid, ids, context=context):
+            res.append(wh.lot_input_id.id)
+                    
+        return res
+    
+    def _get_warehouse_output(self, cr, uid, ids, context=None):
+        res = []
+        for wh in self.browse(cr, uid, ids, context=context):
+            res.append(wh.lot_output_id.id)
+                    
+        return res
+    
     _columns = {
         'central_location_ok': fields.boolean(string='If check, all products in this location are unallocated.'),
         'non_stockable_ok': fields.boolean(string='Non-stockable', help="If checked, the location will be used to store non-stockable products"),
         'output_ok': fields.function(_get_input_output, method=True, string='Output Location', type='boolean',
-                                     store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20)},
+                                     store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20),
+                                            'stock.warehouse': (_get_warehouse_output, ['lot_input_id'], 10)},
                                      help='If checked, the location is the output location of a warehouse or a children.'),
         'input_ok': fields.function(_get_input_output,  method=True, string='Input Location', type='boolean',
-                                    store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20)},
+                                    store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20),
+                                           'stock.warehouse': (_get_warehouse_input, ['lot_input_id'], 10)},
                                      help='If checked, the location is the input location of a warehouse or a children.'),
         'virtual_ok': fields.function(_get_virtual,  method=True, string='Virtual Location', type='boolean',
                                       store={'stock.location': (lambda self, cr, uid, ids, c={}: ids, ['location_id'], 20)},
