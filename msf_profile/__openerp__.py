@@ -109,7 +109,6 @@
         "msf_supply_doc_export",
         "msf_supply_doc_import",
         "mission_stock_cron",
-        "product_price",
     ],
     "update_xml": [
         "report.xml",
