@@ -762,10 +762,11 @@ class substitute_item(osv.osv_memory):
         # quantity check
         if item.qty_substitute_item <= 0:
             result = 'must_be_greater_than_0'
-        # asset check
+        # asset check - asset is not mandatory for moves performed internally
         if type == 'product' and subtype == 'asset':
-            if not item.asset_id_substitute_item:
-                result = 'missing_asset'
+            pass
+#            if not item.asset_id_substitute_item:
+#                result = 'missing_asset'
         else:
             if item.asset_id_substitute_item:
                 result = 'not_asset_needed'
@@ -1059,10 +1060,11 @@ class substitute_item_mirror(osv.osv_memory):
             # no lot needed - no date needed
             if item.lot_mirror or item.exp_substitute_item:
                 result = 'no_lot_needed'
-        # asset check
+        # asset check - asset is not mandatory for internal moves
         if type == 'product' and subtype == 'asset':
-            if not item.asset_id_substitute_item:
-                result = 'missing_asset'
+            pass
+#            if not item.asset_id_substitute_item:
+#                result = 'missing_asset'
         else:
             if item.asset_id_substitute_item:
                 result = 'not_asset_needed'
