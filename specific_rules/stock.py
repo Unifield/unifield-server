@@ -34,8 +34,8 @@ class initial_stock_inventory(osv.osv):
         Prevent the deletion of a non-draft/cancel initial inventory
         '''
         for inv in self.browse(cr, uid, ids, context=context):
-            if inv.state not in ('draft', 'cancel'):
-                raise osv.except_osv(_('Error'), _('You cannot remove a non-draft or cancel inventory'))
+            if inv.state == 'done':
+                raise osv.except_osv(_('Error'), _('You cannot remove an initial inventory which is done'))
             
         return super(initial_stock_inventory, self).unlink(cr, uid, ids, context=context)
     
@@ -50,13 +50,39 @@ class initial_stock_inventory(osv.osv):
     }
     
     def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
-        """ Creates a stock move from an inventory line
-        @param inventory_line:
-        @param move_vals:
-        @return:
-        """
+        '''
+        Add the price in the stock move
+        '''
         move_vals['price_unit'] = inventory_line.average_cost
         return super(initial_stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
+    
+    def action_confirm(self, cr, uid, ids, context=None):
+        '''
+        Override the action_confirm method to check the batch mgmt/perishable data
+        '''
+        product_dict = {}
+        
+        for inventory in self.browse(cr, uid, ids, context=context):
+            for inventory_line in inventory.inventory_line_id:
+                if inventory_line.product_id.id not in product_dict:
+                    product_dict.update({inventory_line.product_id.id: inventory_line.average_cost})
+                elif product_dict[inventory_line.product_id.id] != inventory_line.average_cost:
+                    raise osv.except_osv(_('Error'), _('You cannot have two lines for the same product with different average cost.'))
+                
+                # Returns error if the line is batch mandatory or perishable without prodlot
+                if inventory_line.product_id.batch_management:
+                        if not inventory_line.prod_lot_id or inventory_line.prod_lot_id.type != 'standard':
+                            raise osv.except_osv(_('Error'), _('You must assign a Batch Number which corresponds to Batch Number Mandatory Products.'))
+                        
+                if inventory_line.product_id.perishable and not inventory_line.product_id.batch_management:
+                    if (not inventory_line.prod_lot_id and not inventory_line.expiry_date) or (inventory_line.prod_lot_id and inventory_line.prod_lot_id.type != 'internal'):
+                            raise osv.except_osv(_('Error'), _('The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory'))
+                        
+                if inventory_line.prod_lot_id:
+                    if not inventory_line.product_id.perishable and not inventory_line.product_id.batch_management:
+                            raise osv.except_osv(_('Error'), _('You must assign a Batch Number which corresponds to Expiry Date Mandatory Products.'))
+        
+        return super(initial_stock_inventory, self).action_confirm(cr, uid, ids, context=context)
     
     def action_done(self, cr, uid, ids, context=None):
         """ Finish the inventory
@@ -66,26 +92,9 @@ class initial_stock_inventory(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
-        currency_obj = self.pool.get('res.currency')
         for inv in self.browse(cr, uid, ids, context=context):
             for move in inv.move_ids:
                 new_std_price = move.price_unit
-                if move.product_id.cost_method == 'average':
-                    product = prod_obj.browse(cr, uid, move.product_id.id, context={'location_id': move.location_id.id, 'compute_child': False})
-                    move_currency_id = move.company_id.currency_id.id
-                    context['currency_id'] = move_currency_id
-                    qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, product.uom_id.id)
-                    if qty > 0:
-                        new_price = currency_obj.compute(cr, uid, move_currency_id, move_currency_id, move.price_unit)
-                        new_price = uom_obj._compute_price(cr, uid, move.product_uom.id, new_price, product.uom_id.id)
-                        if product.qty_available <= 0:
-                            new_std_price = new_price
-                        else:
-                            # Get the standard price
-                            amount_unit = product.price_get('standard_price', context)[product.id]
-                            new_std_price = ((amount_unit * product.qty_available) + (new_price * qty))/(product.qty_available+qty)
-                
                 prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
                 move_obj.action_done(cr, uid, move.id, context=context)
 
@@ -137,7 +146,9 @@ class initial_stock_inventory(osv.osv):
                 else:
                     self.pool.get('initial.stock.inventory.line').unlink(cr, uid, line.id, context=context)
 
-            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+            c = context.copy()
+            c.update({'location_id': location_id, 'compute_child': False})
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=c):
                 # Check if the product is not already on the report
                 if product.id not in products:
                     batch_mandatory = product.batch_management or product.perishable
@@ -145,6 +156,7 @@ class initial_stock_inventory(osv.osv):
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
                               'location_id': location_id,
+                              'product_qty': product.qty_available,
                               'average_cost': product.standard_price,
                               'hidden_batch_management_mandatory': batch_mandatory,
                               'hidden_perishable_mandatory': date_mandatory,
@@ -191,10 +203,10 @@ class initial_stock_inventory_line(osv.osv):
         return res
     
     _columns = {
-        'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory'),
+        'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
         'average_cost': fields.float(digits=(16,2), string='Initial average cost', required=True),
         'currency_id': fields.many2one('res.currency', string='Functional currency', readonly=True),
-        'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Comment', store=False),
+        'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Message', store=False),
     }
     
     _defaults = {
@@ -203,6 +215,47 @@ class initial_stock_inventory_line(osv.osv):
         'product_qty': lambda *a: 0.00,
         'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
     }
+    
+    def _check_batch_management(self, cr, uid, ids, context=None):
+        '''
+        check for batch management
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.batch_management and obj.inventory_id.state != 'draft':
+                if not obj.prod_lot_id or obj.prod_lot_id.type != 'standard':
+                    return False
+        return True
+    
+    def _check_perishable(self, cr, uid, ids, context=None):
+        """
+        check for perishable ONLY
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.perishable and not obj.product_id.batch_management and obj.inventory_id.state != 'draft':
+                if (not obj.prod_lot_id and not obj.expiry_date) or (obj.prod_lot_id and obj.prod_lot_id.type != 'internal'):
+                    return False
+        return True
+    
+    def _check_prodlot_need(self, cr, uid, ids, context=None):
+        """
+        If the inv line has a prodlot but does not need one, return False.
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.prod_lot_id and obj.inventory_id.state != 'draft':
+                if not obj.product_id.perishable and not obj.product_id.batch_management:
+                    return False
+        return True
+    
+    _constraints = [(_check_batch_management,
+                 'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
+                 ['prod_lot_id']),
+                (_check_perishable,
+                 'You must assign a Batch Numbre which corresponds to Expiry Date Mandatory Products.',
+                 ['prod_lot_id']),
+                (_check_prodlot_need,
+                 'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
+                 ['prod_lot_id']),
+                ]
     
     def product_change(self, cr, uid, ids, product_id):
         '''
@@ -219,6 +272,26 @@ class initial_stock_inventory_line(osv.osv):
                           'hidden_batch_management_mandatory': product.batch_management})
             
         return {'value': value}
+    
+    def change_lot(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
+        res = super(initial_stock_inventory_line, self).change_lot(cr, uid, ids, location_id, product, prod_lot_id, uom=uom, to_date=to_date)
+        if 'warning' not in res:
+            if 'value' not in res:
+                res.update({'value': {}})
+                
+            res['value'].update({'err_msg': ''})
+        
+        return res
+    
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, type_check, context=None):
+        res = super(initial_stock_inventory_line, self).change_expiry(cr, uid, id, expiry_date, product_id, type_check, context=None)
+        if 'warning' not in res:
+            if 'value' not in res:
+                res.udptae({'value': {}})
+                
+            res['value'].update({'err_msg': ''})
+        
+        return res
         
     def create(self, cr, uid, vals, context=None):
         '''
@@ -239,3 +312,28 @@ class initial_stock_inventory_line(osv.osv):
         return super(initial_stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
     
 initial_stock_inventory_line()
+
+class stock_cost_reevaluation(osv.osv):
+    _name = 'stock.cost.reevaluation'
+    _description = 'Cost reevaluation'
+    
+    _columns = {
+    }
+    
+stock_cost_reevaluation()
+
+class stock_cost_reevaluation_line(osv.osv):
+    _name = 'stock.cost.reevaluation.line'
+    _description = 'Cost reevaluation line'
+    
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'average_cost': fields.float(digits=(16,2), string='Average cost', required=True),
+        'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+    }
+    
+    _defaults = {
+        'currency_id': lambda obj, cr, uid, c={}: obj.poo.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+    }
+    
+stock_cost_reevaluation_line()

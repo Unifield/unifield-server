@@ -8,11 +8,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Initial stock inventory">
+                    <separator colspan="4" string="General information" />
                     <field name="name" string="Reference" />
                     <field name="date" />
+                    <label colspan="2" string=" " />
+                    <field name="date_done" readonly="True" attrs="{'invisible': [('state', '!=', 'done')]}" />
                     <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}"/>
-                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
                             domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
                             widget="selection"
@@ -41,7 +44,7 @@
                     <notebook colspan="4">
                         <page string="Inventory lines">
                             <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">
-                                <tree string="Products" editable="bottom">
+                                <tree string="Products" editable="bottom" colors="red: err_msg!=''">
                                     <field name="product_id" domain="[('type', '=', 'product')]" on_change="product_change(product_id)" />
                                     <field name="average_cost" />
                                     <field name="currency_id" />
@@ -49,7 +52,7 @@
                                     <field name="product_qty" required="True" />
                                     <field name="product_uom" readonly="True" />
                                     <field name="prod_lot_id"
-                                        on_change="change_lot(prod_lot_id)"
+                                        on_change="change_lot(location_id, product_id, prod_lot_id)"
                                         groups="base.group_extended"
                                         context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}"
                                         domain="[('check_type','=', True), ('product_id', '=', product_id)]"
@@ -66,11 +69,10 @@
                     </notebook>
                     <group colspan="4" col="6">
                         <field name="state" />
-                        <field name="date_done" readonly="True" attrs="{'invisible': [('state', '!=', 'done')]}" />
-                        <button name="action_cancel_inventary" states="draft,confirm,done" string="Cancel Inventory" type="object" icon="gtk-cancel"/>
-                        <button name="action_confirm" states="draft" string="Confirm Inventory" type="object" icon="gtk-apply"/>
-                        <button name="action_done" states="confirm" string="Validate Inventory" type="object" icon="gtk-jump-to"/>
-                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
+                        <button name="action_cancel_inventary" states="draft,confirm" string="Cancel Inventory" type="object" icon="gtk-cancel" />
+                        <button name="action_confirm" states="draft" string="Confirm Inventory" type="object" icon="gtk-apply" />
+                        <button name="action_done" states="confirm" string="Validate Inventory" type="object" icon="gtk-jump-to" />
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" />
                     </group>
                 </form>
             </field>

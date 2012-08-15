@@ -26,6 +26,8 @@ from report import report_sxw
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
 
+import pooler
+
 def getIds(self, cr, uid, ids, context):
     if not context:
         context = {}
