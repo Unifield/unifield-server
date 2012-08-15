@@ -94,7 +94,7 @@
                                 <field name="state" />
                                 <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" />
                                 <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
-                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" />
+                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" confirm="You are about to confirm the Internal Request without going through the sourcing tool. Are you sure?" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
