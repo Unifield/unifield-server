@@ -83,7 +83,7 @@
                     				<field name="expired_date" />
                     				<field name="location_id"
                     					attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}"
-                    					context="{'product_id':product_id, 'prodlot_id': prodlot_id, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}"
+                    					context="{'product_id':product_id, 'prodlot_id': prodlot_id, 'specific_rules_tree_view':True, 'compute_child': False}"
                     					domain="[('usage', '=', 'internal')]" />
                     				<field name="state" />
                     				<field name="lot_check" />

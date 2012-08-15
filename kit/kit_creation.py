@@ -1239,7 +1239,8 @@ class stock_move(osv.osv):
             
             # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
             if move.product_id.perishable:
-                if move.hidden_creation_qty_stock_move == 1:
+                # openERP bug -> fields.function integer returns a string
+                if move.hidden_creation_qty_stock_move in [1, '1']:
                     # if only one kit, automatic assignement
                     self.automatic_assignment(cr, uid, [move.id], context=context)
                 else:
