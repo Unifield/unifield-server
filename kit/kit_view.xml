@@ -63,7 +63,7 @@
 				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
 				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
 				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
-				            		<field name="hidden_asset_mandatory" />
+				            		<field name="hidden_asset_mandatory" invisible="True" />
 				            		<field name="hidden_batch_management_mandatory" />
 				            		<field name="hidden_perishable_mandatory" />
 				            	</tree>

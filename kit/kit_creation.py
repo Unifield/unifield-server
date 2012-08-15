@@ -428,7 +428,8 @@ class kit_creation(osv.osv):
         move_list = []
         
         for move in obj.consumed_ids_kit_creation:
-            if move.state == 'confirmed':
+            # the stock move should not be canceled, but... we recycle them in case.
+            if move.state in ['confirmed', 'cancel']:
                 move_list.append(move.id)
                 # consolidate the moves qty
                 qty = data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {}).setdefault('qty', 0.0)

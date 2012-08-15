@@ -74,12 +74,14 @@
                     				<field name="product_uom" readonly="True" string="UoM" />
                     				<field name="hidden_asset_check" invisible="True" />
                     				<field name="asset_id" domain="[('product_id', '=', product_id)]"
-                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
+                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)],
+                    							'required': [('hidden_asset_check', '=', True)]}" />
                     				<field name="prodlot_id"
                     					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 	                    			  		'search_default_real': True}"
                     					domain="[('product_id', '=', product_id),('check_type','=', True)]"
-                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)]}" />
+                    					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)],
+                    							'required': [('hidden_exp_check', '=', True)]}" />
                     				<field name="expired_date" />
                     				<field name="location_id"
                     					attrs="{'readonly': [('hidden_state', '!=', 'confirmed')]}"
