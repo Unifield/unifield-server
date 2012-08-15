@@ -236,6 +236,9 @@ class stock_location(osv.osv):
         res = []
         for wh in self.browse(cr, uid, ids, context=context):
             res.append(wh.lot_input_id.id)
+            
+        input_ids = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True), ('active', 'in', ('t', 'f'))])
+        res.extend(input_ids)
                     
         return res
     
@@ -243,6 +246,9 @@ class stock_location(osv.osv):
         res = []
         for wh in self.browse(cr, uid, ids, context=context):
             res.append(wh.lot_output_id.id)
+            
+        output_ids = self.pool.get('stock.location').search(cr, uid, [('output_ok', '=', True), ('active', 'in', ('t', 'f'))])
+        res.extend(output_ids)
                     
         return res
     
