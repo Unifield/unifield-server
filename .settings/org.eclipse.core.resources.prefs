@@ -1,0 +1,20 @@
+#Wed Aug 15 14:56:27 CEST 2012
+eclipse.preferences.version=1
+encoding//account_activable/account_activable.py=utf-8
+encoding//consumption_calculation/consumption_calculation.py=utf-8
+encoding//delivery_mechanism/wizard/change_product_memory_move.py=utf-8
+encoding//msf_budget/report/report_pdf_engagement.py=utf-8
+encoding//msf_cross_docking/cross_docking.py=utf-8
+encoding//msf_profile/__openerp__.py=utf-8
+encoding//partner_modification/partner_modification.py=utf-8
+encoding//product_asset/product_asset.py=utf-8
+encoding//product_attributes/product_attributes.py=utf-8
+encoding//product_list/__init__.py=utf-8
+encoding//product_list/__openerp__.py=utf-8
+encoding//product_list/product_list.py=utf-8
+encoding//product_price/__init__.py=utf-8
+encoding//product_price/__openerp__.py=utf-8
+encoding//product_price/product_price.py=utf-8
+encoding//sale_override/sale.py=utf-8
+encoding//unifield_setup/__openerp__.py=utf-8
+encoding//unifield_setup/installer/sales_price.py=utf-8
