@@ -59,8 +59,12 @@ class procurement_request(osv.osv):
         '''
         if not context:
             context = {}
+        obj_data = self.pool.get('ir.model.data')
         if view_type == 'search' and context.get('procurement_request') and not view_id:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_search_view')[1]
+            
+        elif view_type == 'form' and context.get('procurement_request'):
+            view_id = obj_data.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
 
         return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
     
