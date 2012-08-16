@@ -1,0 +1,35 @@
+-
+  In order to test the product revaluation, we will create a new revaluation doc and confirm it
+-
+  Creating a new revaluation doc
+-
+  !record {model: stock.cost.reevaluation, id: reeval1}:
+    name: Test
+    reevaluation_line_ids:
+      - product_id: product_product_testproduct0
+        average_cost: 35.00
+-
+  Check the price is not reevaluate
+-
+  !assert {model: product.product, id: product_nomenclature_test3}:
+    - standard_price == 1.00, "The standard price is reevaluate"
+-
+  Confirm the reevaluation doc
+-
+  !python {model: stock.cost.reevaluation}: |
+    self.action_confirm(cr, udi, ref('reeval1'))
+-
+  Check the price is not reevaluate
+-
+  !assert {model: product.product, id: product_nomenclature_test3}:
+    - standard_price == 1.00, "The standard price is reevaluate"
+-
+  Validate the reevaluation doc
+-
+  !python {model: stock.cost.reevaluation}: |
+    self.action_done(cr, udi, ref('reeval1'))
+-
+  Check the price is not reevaluate
+-
+  !assert {model: product.product, id: product_nomenclature_test3}:
+    - standard_price == 35.00, "The standard price is reevaluate"
