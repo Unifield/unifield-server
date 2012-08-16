@@ -105,25 +105,17 @@ class unifield_setup_configuration(osv.osv):
             
         return self.browse(cr, uid, setup_id)
     
-    def create(self, cr, uid, vals, context=None):
-        '''
-        On create, update the list_price = Field Price of Product according to the sale_price of the configurator
-        '''
-        if vals.get('sale_price'):
-            percentage = vals.get('sale_price')
-            cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + percentage),))
-        return super(unifield_setup_configuration, self).create(cr, uid, vals, context=context)
-        
     def write(self, cr, uid, ids, vals, context=None):
         '''
         On write,  update the list_price = Field Price of Product according to the sale_price of the configurator
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if vals.get('sale_price'):
-            percentage = vals.get('sale_price')
+        if vals.get('sale_price', 0.0) or vals.get('sale_price') == 0.0:
+            percentage = vals.get('sale_price', 0.0)
             cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + percentage),))
         return super(unifield_setup_configuration, self).write(cr, uid, ids, vals, context=context)
+
     
 unifield_setup_configuration()
 
@@ -136,61 +128,5 @@ class res_config_view(osv.osv_memory):
     }
 
 res_config_view()
-
-class product_product(osv.osv):
-    _name = 'product.product'
-    _inherit = 'product.product'
-
-    def onchange_sp(self, cr, uid, ids, standard_price, context=None):
-        '''
-        On change standard_price, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
-        '''
-        res = {}
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        if standard_price :
-            if standard_price < 0.0:
-                warn_msg = {
-                    'title': _('Warning'), 
-                    'message': _("The Cost Price must be greater than 0 !")
-                }
-                res.update({'warning': warn_msg, 
-                            'value': {'standard_price': 1, 
-                                      'list_price': self.onchange_sp(cr, uid, ids, standard_price=1, context=context).get('value').get('list_price')}})
-            else:
-                percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
-                list_price = standard_price * (1 + percentage)
-                if 'value' in res:
-                    res['value'].update({'list_price': list_price})
-                else:
-                    res.update({'value': {'list_price': list_price}})
-        return res
-        
-    def create(self, cr, uid, vals, context=None):
-        '''
-        On create, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
-        '''
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        if vals.get('standard_price'):
-            standard_price = vals.get('standard_price')
-            percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
-            list_price = standard_price * (1 + percentage)
-            vals.update({'list_price': list_price})
-        return super(product_product, self).create(cr, uid, vals, context=context)
-        
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        On write, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        if vals.get('standard_price'):
-            standard_price = vals.get('standard_price')
-            percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
-            list_price = standard_price * (1 + percentage)
-            vals.update({'list_price': list_price})
-        return super(product_product, self).write(cr, uid, ids, vals, context=context)
-    
-product_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
