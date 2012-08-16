@@ -91,8 +91,12 @@ class stock_partial_picking(osv.osv_memory):
         }
 
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+      
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
+
+            if not moves_list:
+                    raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.')) 
 
             for move in moves_list:
                 #Adding a check whether any line has been added with new qty
@@ -131,9 +135,11 @@ class stock_partial_picking(osv.osv_memory):
                     
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context=context, move=move, partial_datas=partial_datas, pick=pick, partial=partial)
-            
+
         res = pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return self.return_hook_do_partial(cr, uid, context=context, partial_datas=partial_datas, res=res)
     #@@@override end
+
+
 
 stock_partial_picking()
