@@ -60,6 +60,9 @@ class initial_stock_inventory(osv.osv):
         '''
         Override the action_confirm method to check the batch mgmt/perishable data
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         product_dict = {}
         
         for inventory in self.browse(cr, uid, ids, context=context):
@@ -90,6 +93,10 @@ class initial_stock_inventory(osv.osv):
         """
         if context is None:
             context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
         for inv in self.browse(cr, uid, ids, context=context):
@@ -107,6 +114,9 @@ class initial_stock_inventory(osv.osv):
         '''
         if context is None:
             context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
             
         location_id = False
         wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
@@ -314,7 +324,8 @@ class initial_stock_inventory_line(osv.osv):
         Set the UoM with the default UoM of the product
         '''
         if vals.get('product_id', False):
-            vals['product_uom'] = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context).uom_id.id
+            product = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
+            vals['product_uom'] = product.uom_id.id
         
         return super(initial_stock_inventory_line, self).create(cr, uid, vals, context=context)
     
@@ -363,6 +374,9 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Confirm the cost reevaluation (don't change the price at this time)
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         # Check if there are two lines with the same product
         for obj in self.browse(cr, uid, ids, context=context):
             products = []
@@ -378,6 +392,9 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Change the price of the products in the lines
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.reevaluation_line_ids:
                 self.pool.get('product.product').write(cr, uid, line.product_id.id, {'standard_price': line.average_cost})
@@ -388,12 +405,18 @@ class stock_cost_reevaluation(osv.osv):
         '''
         Change the state of the document to cancel
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         return self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
     
     def action_cancel_draft(self, cr, uid, ids, context=None):
         '''
         Change the state of the document to draft
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
     
 stock_cost_reevaluation()
