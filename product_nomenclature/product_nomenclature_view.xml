@@ -152,7 +152,7 @@
 						on_change="onChangeParentId(type, parent_id)" />
 					<field name="level" invisible="1" />
 					<field name="category_id" 
-					    attrs="{'required': [('level', '=', '2'), ('type', '=', 'mandatory')], 'invisible': ['|', ('level', '!=', '2'), ('type', '!=', 'mandatory')]}"/>
+					    attrs="{'invisible': ['|', ('level', '!=', '2'), ('type', '!=', 'mandatory')]}"/>
 					<field name="sequence" invisible="1" />
 					<newline />
 				</form>
@@ -250,7 +250,7 @@
 		    <field name="type">tree</field>
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
-		        <tree string="Link nomenclature/category" editable="top" hide_delete_button="True">
+		        <tree string="Link nomenclature/category" editable="top" hide_delete_button="True" noteditable="True">
 		            <field name="name" readonly="1" string="Nomenclature" />
 		            <field name="category_id" required="1" />
 		        </tree>
@@ -273,6 +273,19 @@
         <menuitem id="menu_link_nomenclature_category"
                   action="product_nomenclature_link_category_action"
                   parent="purchase.menu_product_in_config_purchase" />
+                  
+        <!-- Add family in product category view -->
+        <record id="product_category_family_form_view" model="ir.ui.view">
+            <field name="name">product.category.family.form.view</field>
+            <field name="model">product.category</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_category_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='type']" position="after">
+                    <field name="family_id" required="1" />
+                </xpath>
+            </field>
+        </record>
 
 
 	</data>

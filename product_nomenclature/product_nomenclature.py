@@ -234,6 +234,39 @@ class product_nomenclature(osv.osv):
             parent_ids = ids
 
         return [('id', 'in', ids)]
+    
+    def _get_category_id(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the first category of the nomenclature
+        '''
+        res = {}
+        for nom in self.browse(cr, uid, ids, context=context):
+            res[nom.id] = False
+            if nom.category_ids:
+                res[nom.id] = nom.category_ids[0].id
+                
+        return res
+    
+    def _src_category_id(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all nomenclature according to the category
+        '''
+        res = [('level', '=', 2), ('type', '=', 'mandatory')] 
+        if args[0][1] != '=':
+            raise osv.except_osv(_('Error'), _('Bad operator : You can only use the \'=\' operator'))
+        
+        if args[0][2] != False and not isinstance(args[0][2], (int, long)):
+            raise osv.except_osv(_('Error'), _('Bad operand : You can only give False or the id of a category'))
+        
+        if args[0][2] == False:
+            res.append(('category_ids', '=', False))
+            return res
+        
+        if isinstance(args[0][2], (int, long)):
+            categ = self.pool.get('product.category').browse(cr, uid, args[0][2])
+            return [('id', '=', categ.family_id.id)]
+        
+        return res
 
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
@@ -250,7 +283,11 @@ class product_nomenclature(osv.osv):
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
         'sub_level': fields.selection([('0', '1'), ('1', '2'), ('2', '3'), ('3', '4'), ('4', '5'), ('5', '6')], 'Sub-Level', size=256),
         'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
-        'category_id': fields.many2one('product.category', string='Product category'),
+        'category_id': fields.function(_get_category_id, fnct_search=_src_category_id,
+                                       method=True, type='many2one', 
+                                       relation='product.category', string='Category',
+                                       help='If empty, please contact accounting member to create a new product category associated to this family.'),
+        'category_ids': fields.one2many('product.category', 'family_id', string='Categories'),
     }
 
     _defaults = {
@@ -273,9 +310,8 @@ class product_nomenclature(osv.osv):
     
     def _check_link(self, cr, uid, ids, context=None):
         for level in self.browse(cr, uid, ids, context=context):
-            if level.category_id:
-                res = self.search(cr, uid, [('category_id', '=', level.category_id.id)], context=context)
-                if len(res) > 1:
+            if level.category_ids:
+                if len(level.category_ids) > 1:
                     return False
                 
         return True
@@ -725,6 +761,18 @@ class product_product(osv.osv):
         return result
         
 product_product()
+
+class product_category(osv.osv):
+    _name = 'product.category'
+    _inherit = 'product.category'
+    
+    _columns = {
+        'family_id': fields.many2one('product.nomenclature', string='Family', 
+                                     domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '=', False)]",
+                                     ),
+    }
+    
+product_category()
 
 
 class act_window(osv.osv):

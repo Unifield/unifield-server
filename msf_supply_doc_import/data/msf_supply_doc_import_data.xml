@@ -29,6 +29,10 @@
         <field name="parent_id" ref="nomen_tbd1"/>
     </record>
     
+    <record id="cat_tbd" model="product.category">
+        <field name="family_id" ref="nomen_tbd2" />
+    </record>
+    
     <record model="product.nomenclature" id="nomen_tbd3">
         <field name="code">tbd3</field>
         <field name="name">To Be Defined3</field>
