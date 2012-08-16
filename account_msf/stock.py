@@ -60,5 +60,16 @@ class stock_picking(osv.osv):
             invoice_vals.update({'is_intermission': True})
         return invoice_vals
 
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
+        """
+        Add a link between stock picking and invoice
+        """
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        for pick in self.browse(cr, uid, [x for x in res]):
+            inv_id = res[pick.id]
+            if inv_id:
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'picking_id': pick.id})
+        return res
+
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

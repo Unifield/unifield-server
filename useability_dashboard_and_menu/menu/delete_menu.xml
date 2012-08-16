@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <delete model="ir.ui.menu" id="product_asset.asset_type_normal_action"/>
+    </data>
+</openerp>

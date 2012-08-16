@@ -73,7 +73,7 @@
         </record>
         
         <record id="account.account_type_expense_no_pl" model="account.account.type">
-            <field name="name">Expense (no P&amp;L)</field>
+            <field name="name">Extra-accounting expenses</field>
             <field name="code">expense</field>
             <field name="report_type">none</field>
             <field name="close_method">none</field>
