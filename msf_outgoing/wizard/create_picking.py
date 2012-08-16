@@ -521,7 +521,6 @@ class create_picking(osv.osv_memory):
         return partial_datas
 
     def do_create_picking(self, cr, uid, ids, context=None):
-        print "do create"
         '''
         create the picking ticket from selected stock moves
         -> only related to 'out' type stock.picking
@@ -570,7 +569,6 @@ class create_picking(osv.osv_memory):
         prodlot_check = self.integrity_check_prodlot(cr, uid, ids, partial_datas, validate=False, context=context)
         if not quantity_check or not prodlot_check:
             # the windows must be updated to trigger tree colors - so no raise
-            print "reeeeeeeeeeee"
             return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_create_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))

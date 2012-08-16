@@ -44,7 +44,6 @@ class stock_partial_picking(osv.osv_memory):
         return True
     
     def do_incoming_shipment(self, cr, uid, ids, context=None):
-        print "do incoming ship"
         '''
         create the incoming shipment from selected stock moves
         -> only related to 'in' type stock.picking
