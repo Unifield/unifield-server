@@ -515,11 +515,14 @@ class stock_picking(osv.osv):
         """
         super(stock_picking, self).action_confirm(cr, uid, ids, context=context)
         move_obj = self.pool.get('stock.move')
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for pick in self.read(cr, uid, ids, ['type', 'move_lines']):
-            if pick['move_lines'] and pick['type'] == 'in':
-                move_obj.action_assign(cr, uid, pick['move_lines'])
+        for pick in self.browse(cr, uid, ids):
+            if pick.move_lines and pick.type == 'in':
+                not_assigned_move = [x.id for x in pick.move_lines if x.state == 'confirmed']
+                if not_assigned_move:
+                    move_obj.action_assign(cr, uid, not_assigned_move)
         return True
 
 stock_picking()
