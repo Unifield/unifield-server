@@ -267,6 +267,31 @@ class product_nomenclature(osv.osv):
             return [('id', '=', categ.family_id.id)]
         
         return res
+    
+    def _get_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns if the nomenclature is active or not
+        '''
+        res = {}
+        for nomen in self.browse(cr, uid, ids, context=context):
+            if nomen.type != 'mandatory' or nomen.level != 2:
+                res[nomen.id] = True
+            else:
+                res[nomen.id] = False
+                if nomen.category_ids:
+                    res[nomen.id] = True
+                    
+        return res
+    
+    def _get_product_category(self, cr, uid, ids, context=None):
+        '''
+        Recompute the active of the product.nomenclature
+        '''
+        result = {}
+        for categ in self.pool.get('product.category').browse(cr, uid, ids, context=context):
+            if categ.family_id:
+                result[categ.family_id.id] = True
+        return result.keys()
 
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
@@ -288,6 +313,10 @@ class product_nomenclature(osv.osv):
                                        relation='product.category', string='Category',
                                        help='If empty, please contact accounting member to create a new product category associated to this family.'),
         'category_ids': fields.one2many('product.category', 'family_id', string='Categories'),
+        'active': fields.function(_get_active, method=True, type='boolean', string='Active', 
+                                  store={
+                                         'product.category': (_get_product_category, ['family_id'], 20)
+                                         })
     }
 
     _defaults = {
