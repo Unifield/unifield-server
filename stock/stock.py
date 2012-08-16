@@ -2025,6 +2025,13 @@ class stock_move(osv.osv):
         """
         self.write(cr, uid, ids, {'state': 'confirmed'})
         return True
+    
+    def _hook_check_assign(self, cr, uid, *args, **kwargs):
+        '''
+        kwargs['move'] is the current move
+        '''
+        move = kwargs['move']
+        return move.product_id.type == 'consu' or move.location_id.usage == 'supplier'
 
     #
     # Duplicate stock.move
@@ -2040,7 +2047,8 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         for move in self.browse(cr, uid, ids, context=context):
-            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
+            if self._hook_check_assign(cr, uid, move=move):
+#            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
                 if move.state in ('confirmed', 'waiting'):
                     done.append(move.id)
                 pickings[move.picking_id.id] = 1
