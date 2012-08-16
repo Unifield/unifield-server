@@ -100,7 +100,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                     product_code = row.cells[0].data
                     if not product_code:
                         to_correct_ok = True
-                        error_list.append('No Product Description')
+                        error_list.append('No Product Code')
                     else:
                         try:
                             product_code = product_code.strip()

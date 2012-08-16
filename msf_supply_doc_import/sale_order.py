@@ -126,41 +126,35 @@ class sale_order(osv.osv):
 Product Code, Product Description, Quantity, UoM, Currency, Comment.
 That means Not price, Neither Delivery requested date. """))
             try:
-                if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data:
+                if row.cells[0].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data:
                     # for each cell we check the value
                     product_code = row.cells[0].data
-                    p_name = row.cells[1].data
-                    if product_code and p_name:
+                    if product_code:
                         try:
                             product_code = product_code.strip()
-                            product_name = p_name.strip()
-                            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code),('name', '=', product_name)])
+                            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                             if not p_ids:
                                 default_code = False
-                                product_id = False
                                 to_correct_ok = True
                                 comment += ' Code: %s, Description: %s'%(product_code, product_name)
                                 error_list.append('The Product\'s Code and Description do not match.')
                             else:
                                 default_code = p_ids[0]
-                                product_id = p_ids[0]
-                                nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
-                                nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
-                                nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
-                                nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
-                                proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
+                                nomen_manda_0 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_0
+                                nomen_manda_1 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_1
+                                nomen_manda_2 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_2
+                                nomen_manda_3 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_3
+                                proc_type = product_obj.browse(cr, uid, [default_code], context=context)[0].procure_method
                         except Exception:
                              error_list.append('The Product Code and Description have to be a string.')
                              comment += ' Product Code and Description to be defined'
-                             product_id = False
                              default_code = False
                              to_correct_ok = True
                     else:
                         default_code = False
-                        product_id = False
                         to_correct_ok = True
-                        comment += ' Code: %s, Description: %s'%(product_code or 'To be defined', p_name or 'To be defined')
-                        error_list.append('The Product\'s Code and Description have to be defined both.')
+                        comment += ' Code: %s'%(product_code or 'To be defined')
+                        error_list.append('The Product\'s Code has to be defined.')
                         
                     if not row.cells[2].data:
                         to_correct_ok = True
@@ -240,8 +234,8 @@ That means Not price, Neither Delivery requested date. """))
                         'nomen_manda_3': nomen_manda_3,
                         'confirmed_delivery_date': False,
                         'order_id': obj.id,
+                        'product_id':  default_code,
                         'default_code':  default_code,
-                        'product_id': product_id,
                         'product_uom': uom_id,
                         'product_uom_qty': product_qty,
                         'functional_currency_id': functional_currency_id,
@@ -320,42 +314,37 @@ That means Not price, Neither Delivery requested date. """))
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
             try:
-                if row.cells[0].data or row.cells[1].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data or row.cells[6].data or row.cells[7].data:
+                # we do not check row.cells[1].data because we don't care, we select the product based on its CODE
+                if row.cells[0].data or row.cells[2].data or row.cells[3].data or row.cells[4].data or row.cells[5].data or row.cells[6].data or row.cells[7].data:
                     # for each cell we check the value
                     product_code = row.cells[0].data
-                    p_name = row.cells[1].data
-                    if product_code and p_name:
+                    if product_code :
                         try:
                             product_code = product_code.strip()
-                            product_name = p_name.strip()
-                            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code),('name', '=', product_name)])
+                            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                             if not p_ids:
                                 default_code = False
-                                product_id = False
                                 to_correct_ok = True
                                 comment += ' Code: %s, Description: %s'%(product_code, product_name)
                                 error_list.append('The Product\'s Code and Description do not match.')
                             else:
                                 default_code = p_ids[0]
-                                product_id = p_ids[0]
-                                nomen_manda_0 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_0
-                                nomen_manda_1 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_1
-                                nomen_manda_2 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_2
-                                nomen_manda_3 = product_obj.browse(cr, uid, [product_id], context=context)[0].nomen_manda_3
-                                proc_type = product_obj.browse(cr, uid, [product_id], context=context)[0].procure_method
-                                price_unit = product_obj.browse(cr, uid, [product_id], context=context)[0].list_price
+                                nomen_manda_0 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_0
+                                nomen_manda_1 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_1
+                                nomen_manda_2 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_2
+                                nomen_manda_3 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_3
+                                proc_type = product_obj.browse(cr, uid, [default_code], context=context)[0].procure_method
+                                price_unit = product_obj.browse(cr, uid, [default_code], context=context)[0].list_price
                         except Exception:
                              error_list.append('The Product Code and Description have to be a string.')
                              comment += ' Product Code and Description to be defined'
-                             product_id = False
                              default_code = False
                              to_correct_ok = True
                     else:
                         default_code = False
-                        product_id = False
                         to_correct_ok = True
-                        comment += ' Code: %s, Description: %s'%(product_code or 'To be defined', p_name or 'To be defined')
-                        error_list.append('The Product\'s Code and Description have to be defined both.')
+                        comment += ' Code: %s'%(product_code or 'To be defined')
+                        error_list.append('The Product\'s Code has to be defined.')
                         
                     if not row.cells[2].data :
                         to_correct_ok = True
@@ -393,16 +382,16 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                          to_correct_ok = True
                          
                     try:
-                        if not row.cells[4].data and product_id:
+                        if not row.cells[4].data and default_code:
                             to_correct_ok = True
                             error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
-                        elif not row.cells[4].data and not product_id:
+                        elif not row.cells[4].data and not default_code:
                             to_correct_ok = True
                             error_list.append('The Price Unit was not set and no product was found.')
-                        elif row.cells[4].type not in ['int','float'] and product_id:
+                        elif row.cells[4].type not in ['int','float'] and default_code:
                              error_list.append('The Price Unit was not a number, we have taken the default "Field Price" of the product.')
                              to_correct_ok = True
-                        elif row.cells[4].type not in ['int','float'] and not product_id:
+                        elif row.cells[4].type not in ['int','float'] and not default_code:
                             to_correct_ok = True
                             error_list.append('The Price Unit was not a number and no product was found.')
                         else:
@@ -462,8 +451,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         'nomen_manda_3': nomen_manda_3,
                         'confirmed_delivery_date': False,
                         'order_id': obj.id,
+                        'product_id':  default_code,
                         'default_code':  default_code,
-                        'product_id': product_id,
                         'product_uom': uom_id,
                         'product_uom_qty': product_qty,
                         'price_unit': price_unit,
