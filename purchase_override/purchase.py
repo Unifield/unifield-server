@@ -145,6 +145,7 @@ class purchase_order(osv.osv):
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=64),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'active': fields.boolean('Active', readonly=True),
     }
     
     _defaults = {
@@ -155,7 +156,8 @@ class purchase_order(osv.osv):
         'from_yml_test': lambda *a: False,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
-        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery']
+        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery'],
+        'active': True,
     }
 
     def default_get(self, cr, uid, fields, context=None):
