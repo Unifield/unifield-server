@@ -386,21 +386,19 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
     fields_ref = self.fields_get(cr, uid, context=context)
     field = fields_ref.get(dest_field)
     
-    for rec in self.browse(cr, uid, ids, context=context):
-        value = getattr(rec, dest_field)
-        if not value:
-            continue
+    data_list = self.read(cr, uid, ids, ['id', dest_field], context=context)
+    for data in data_list:
+        if not data[dest_field]:
+            result[data['id']] = False
+            
         if field['type'] == 'many2one':
-            if field['relation'] == 'msf.instance':
-                result[rec.id] = value.instance
-            else:
-                result[rec.id] = self.name_get(cr, uid, value.id, context=context)
-        elif field['type'] in ('char', 'text'):
-            result[rec.id] = value
+            result[data['id']] = data[dest_field][1]
+        elif field['type'] == 'char' or field['type'] == 'text':
+            result[data['id']] = data[dest_field]
         else:
-            raise osv.except_osv(_('Error !'), _("%s doesn't implement field of type %s, please contact system administrator to upgrade.") % ('get_destination_name()', field['type']))
-    return result
-    
+            result[data['id']] = False 
+            #TODO other case 
+    return result    
     
 osv.osv.get_destination_name = get_destination_name
 

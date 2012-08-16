@@ -62,12 +62,28 @@ class so_po_common(osv.osv_memory):
             return False
         po_split = po_ref.split('.')
         if len(po_split) != 2:
-            return False
+            raise Exception, "PO reference format/value is invalid! (correct format: instance_name.po_name) " + po_ref
 
+        if not context:
+            context = {}
+        context={'active_test': False}
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_split[1])], context=context)
         if not po_ids:
             raise Exception, "The original PO does not exist! " + po_ref
         return po_ids[0]
+
+    def get_original_so_id(self, cr, uid, so_ref, context):
+        # Get the Id of the original PO to update these info back 
+        if not so_ref:
+            return False
+        so_split = so_ref.split('.')
+        if len(so_split) != 2:
+            raise Exception, "The original sub-FO reference format/value is invalid! (correct format: instance_name.so_name) " + so_ref
+
+        so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', so_split[1])], context=context)
+        if not so_ids:
+            raise Exception, "The original sub-FO does not exist! " + so_split[1]
+        return so_ids[0]
 
     def retrieve_po_header_data(self, cr, uid, source, header_result, header_info, context):
         if 'note' in header_info:
@@ -229,13 +245,13 @@ class so_po_common(osv.osv_memory):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
                     
             if po_id: # this case is for update the PO
-                if 'sync_sol_db_id' not in line_dict:
+                if 'sync_pol_db_id' not in line_dict:
                     raise Exception, "The field sync_sol_db_id is missing - please check at the message rule!"
                 else:
-                    sync_sol_db_id = line.sync_sol_db_id
+                    sync_pol_db_id = line.sync_pol_db_id
                 
                 # look for the correct PO line for updating the value - corresponding to the SO line
-                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_sol_db_id', '=', sync_sol_db_id), ('order_id', '=', po_id)], context=context)
+                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_pol_db_id', '=', sync_pol_db_id), ('order_id', '=', po_id)], context=context)
                 if line_ids:
                     line_result.append((1, line_ids[0], values))
                 else:     
