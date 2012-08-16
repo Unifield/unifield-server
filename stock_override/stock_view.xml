@@ -344,7 +344,6 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
-                                    <field name="from_wkf_line" invisible="1" />
                                 </tree>
 
                                 <form string="Stock Moves">
@@ -433,7 +432,7 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
@@ -494,8 +493,8 @@
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="0" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"/>
                             <field name="backorder_id" readonly="1"/>
                             <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                    		<field name="order_category"/>
-                    		<field name="change_reason"/>
+                            <field name="order_category"/>
+                            <field name="change_reason"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Actual Receipt Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -505,15 +504,20 @@
                     </group>
                     <notebook colspan="4">
                         <page string="General Information">
+                            <field name="from_wkf" invisible="1"/>
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
                                 default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
-                                context="{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
+                                context="{'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
-                                attrs="{'readonly': [('from_wkf', '=', True),('state','in',['draft','confirmed','assigned'])]}"
                                 >
-                            	<tree colors="grey:scrapped==True" string="Stock Moves">
+                                <tree
+                                    colors="grey:scrapped==True"
+                                    string="Stock Moves"
+                                    hide_new_button="context.get('from_wkf')"
+                                    hide_delete_button="context.get('from_wkf')"
+                                    >
                                     <field name="line_number"/>
-									<field name="product_id"/>
+                                    <field name="product_id"/>
                                     <field name="product_qty"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="scrapped" invisible="1"/>
@@ -522,24 +526,40 @@
                                     <field name="expired_date"/>
                                     <field name="location_dest_id"/>
                                     <field name="date" string="Actual Receipt Date"/>
-									<field name="state"/>
-									<field name="kit_check" invisible="True"/>
-           							<button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('kit_check', '=', False)]}"/>
-									<field name="lot_check"/>
-									<field name="exp_check"/>
-									<field name="kc_check"/>
-									<field name="ssl_check" invisible="True"/>
-									<field name="dg_check"/>
-									<field name="np_check"/>
-                                </tree>   
-								<form string="Stock Moves">
+                                    <field name="state"/>
+                                    <field name="fake_state" invisible="1"/>
+                                    <field name="kit_check" invisible="True"/>
+                                    <button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('kit_check', '=', False)]}"/>
+                                    <button name="in_action_confirm" states="draft,confirmed" string="Confirm" type="object" icon="gtk-apply"/>
+                                    <field name="lot_check"/>
+                                    <field name="exp_check"/>
+                                    <field name="kc_check"/>
+                                    <field name="ssl_check" invisible="True"/>
+                                    <field name="dg_check"/>
+                                    <field name="np_check"/>
+                                </tree>
+                                <form string="Stock Moves">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
+                                        <field name="from_wkf_line" invisible="1" />
                                         <field name="name" invisible="1" colspan="4"/>
-                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)" colspan="4"/>
-            							<field name="change_reason" colspan="4"/>
-										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="2"/>
-                                        <field name="product_uom" string="Unit Of Measure" colspan="2"/>
+                                        <field name="product_id"
+                                            context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}"
+                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)"
+                                            colspan="4"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            />
+                                        <field name="change_reason" colspan="4"/>
+                                        <field name="product_qty"
+                                            on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            colspan="2"
+                                            />
+                                        <field name="product_uom"
+                                            string="Unit Of Measure"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            colspan="2"
+                                            />
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
                                         <field name="product_packaging" domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
@@ -547,29 +567,33 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
-                                        <field name="location_id" domain="[('usage', '=', 'supplier')]" context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"/>
-            							<field name="product_type" invisible="1"/>
-                        				<field name="location_dest_id" domain="[('usage', '=', product_type=='service_recep' and 'inventory' or 'internal'), ('service_location', '=', product_type=='service_recep' and True or False)]" on_change="location_dest_change(location_dest_id)"/>
-               						</group>
-               						
-               						<group colspan="2" col="4">
+                                        <field name="location_id"
+                                            domain="[('usage', '=', 'supplier')]"
+                                            context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            />
+                                        <field name="product_type" invisible="1"/>
+                                        <field name="location_dest_id" domain="[('usage', '=', product_type=='service_recep' and 'inventory' or 'internal'), ('service_location', '=', product_type=='service_recep' and True or False)]" on_change="location_dest_change(location_dest_id)"/>
+                                    </group>
+
+                                    <group colspan="2" col="4">
                                         <separator string="Traceability" colspan="4"/>
                                         <field name="asset_id" colspan="4" />
                                         <field name="prodlot_id" context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}" domain="[('product_id','=?',product_id), ('check_type','=', True)]" on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2" attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}"/>
                                         <field name="expired_date"/>
-                    					<field name="kit_check" invisible="True"/>
-										<button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('kit_check', '=', False)]}"/>
-										<field name="hidden_batch_management_mandatory" invisible="True"/>
-                    					<field name="hidden_perishable_mandatory" invisible="True"/>
-                    					<group colspan="4" col="10">
-											<field name="lot_check"/>
-	                   						<field name="exp_check"/>
-	                   						<field name="kc_check"/>
-	           								<field name="ssl_check" invisible="True"/>
-	           								<field name="dg_check"/>
-	           								<field name="np_check"/>
-           								</group>
-           								<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                        <field name="kit_check" invisible="True"/>
+                                        <button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('kit_check', '=', False)]}"/>
+                                        <field name="hidden_batch_management_mandatory" invisible="True"/>
+                                        <field name="hidden_perishable_mandatory" invisible="True"/>
+                                        <group colspan="4" col="10">
+                                            <field name="lot_check"/>
+                                            <field name="exp_check"/>
+                                            <field name="kc_check"/>
+                                            <field name="ssl_check" invisible="True"/>
+                                            <field name="dg_check"/>
+                                            <field name="np_check"/>
+                                        </group>
+                                        <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -583,7 +607,7 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+                                        <button name="in_action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -607,7 +631,7 @@
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
 
-                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
@@ -624,13 +648,12 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
-                            <field name="from_wkf" invisible="1"/>
                         </page>
                     </notebook>
                 </form>
-        	</field>
+            </field>
         </record>
-        
+
         <record id="stock.view_move_search" model="ir.ui.view">
             <field name="name">stock.move.search</field>
             <field name="model">stock.move</field>
@@ -740,16 +763,16 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
+                            <field name="from_wkf" invisible="1"/>
                             <field name="move_lines"
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
                                 default_get="{'move_line':move_lines, 'address_out_id': address_id}"
-                                context="{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id}" 
+                                context="{'subtype': 'standard', 'type': 'out', 'reason_type_id': reason_type_id, 'from_wkf': from_wkf}" 
                                 on_change="onchange_move()"
-                                attrs="{'readonly': [('from_wkf', '=', True), ('state', 'in', ['draft', 'confirmed', 'assigned'])]}"
                                 >
-                                <tree colors="grey:scrapped==True" string="Stock Moves">
+                                <tree colors="grey:scrapped==True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id"/>
                                     <field name="composition_list_id"/>
@@ -766,6 +789,7 @@
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     <field name="date" string="Actual Shipped Date"/>
                                     <field name="state"/>
+                                    <field name="fake_state" invisible="1"/>
                                     <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned"/>
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
@@ -781,9 +805,23 @@
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4"/>
-                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type)" colspan="4"/>
-                                        <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="2"/>
-                                        <field name="product_uom" string="Unit Of Measure" colspan="2"/>
+                                        <field name="from_wkf_line" invisible="1" />
+                                        <field name="product_id"
+                                            context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}"
+                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type)"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            colspan="4"
+                                            />
+                                        <field name="product_qty"
+                                            on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            colspan="2"
+                                            />
+                                        <field name="product_uom"
+                                            string="Unit Of Measure"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            colspan="2"
+                                            />
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
                                         <field name="product_packaging" domain="[('product_id','=',product_id)]" colspan="4"  invisible="1"/>
@@ -794,7 +832,11 @@
                                         <field name="location_virtual_id" invisible="1"/>
                                         <field name="location_output_id" invisible="1"/>
                                         <field name="location_id" domain="[('standard_out_ok', '=', 'src')]" context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"/>
-                                        <field name="location_dest_id" domain="[('standard_out_ok', '=', 'dest')]" on_change="location_dest_change(location_dest_id)"/>
+                                        <field name="location_dest_id"
+                                            domain="[('standard_out_ok', '=', 'dest')]"
+                                            on_change="location_dest_change(location_dest_id)"
+                                            attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                            />
                                     </group>
                                     
                                     <group colspan="2" col="4">
@@ -837,10 +879,10 @@
                                 <field name="subtype" invisible="True"/>
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
-                                <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
+                                <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Validate" type="object" icon="gtk-apply"/>
+                                <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
@@ -860,7 +902,6 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
-                            <field name="from_wkf" readonly="1"/>
                         </page>
                     </notebook>
                 </form>
