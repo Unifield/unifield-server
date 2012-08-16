@@ -145,7 +145,7 @@ class msf_budget_tools(osv.osv):
             
         # after all lines are parsed, absolute of every column
         for line in res.keys():
-            res[line] = map(abs, res[line])
+            res[line] = [-x for x in res[line]]
                 
         # do the view lines
         for account_destination_tuple in account_ids:

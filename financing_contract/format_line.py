@@ -232,7 +232,8 @@ class financing_contract_format_line(osv.osv):
                                                                               analytic_line.amount_currency or 0.0,
                                                                               round=False,
                                                                               context=date_context)
-                        real_sum = abs(real_sum)
+                        # Invert the result from the lines (positive for out, negative for in)
+                        real_sum = -real_sum
                         res[line.id] = real_sum
         return res
     

@@ -41635,7 +41635,7 @@ msgstr ""
 
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,granularity:0
-msgid "By parent budget line"
+msgid "By parent expense account"
 msgstr ""
 
 #. module: service_purchasing
@@ -43624,7 +43624,7 @@ msgstr ""
 
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,granularity:0
-msgid "By budget line"
+msgid "By expense account"
 msgstr ""
 
 #. module: stock_schedule

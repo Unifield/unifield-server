@@ -339,11 +339,11 @@ class sale_order(osv.osv):
         
         # objects
         sol_obj = self.pool.get('sale.order.line')
-        
         # get all corresponding sale order lines
         sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
-        # delete the lines
-        sol_obj.unlink(cr, uid, sol_ids, context=dict(context, call_unlink=True))
+        # set lines state to done
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'done'}, context=context)
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
         return True

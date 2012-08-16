@@ -44,5 +44,39 @@
             </field>
         </record>
 
+    <!-- Account View -->
+        <record id="inherit_view_account_tree" model="ir.ui.view">
+            <field name="name">inherit.view.account.tree</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="inherit_id" ref="account.view_account_tree"/>
+            <field name="priority">19</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='type']" position="replace">
+                </xpath>
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="type"/>
+                    <field name="type_for_register"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="inherit_view_account_search" model="ir.ui.view">
+            <field name="name">inherit.view.account.search</field>
+            <field name="model">account.account</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_search"/>
+            <field name="priority">17</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <newline/>
+                </xpath>
+                <xpath expr="//field[@name='type']" position="after">
+                    <field name="type_for_register"/>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>

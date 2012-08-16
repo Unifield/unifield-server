@@ -25,25 +25,49 @@ from osv import fields
 from tools.translate import _
 
 
+class ir_actions_todo(osv.osv):
+    _name = 'ir.actions.todo'
+    _inherit = 'ir.actions.todo'
+
+    def action_launch(self, cr, uid, ids, context=None):
+        """ Launch Action of Wizard"""
+        res = super(ir_actions_todo, self).action_launch(cr, uid, ids, context=context)
+        if res.get('res_model') == 'restrictive.country.setup':
+            res_id = self.pool.get('restrictive.country.setup').create(cr, uid, {})
+            c = context.copy()
+            c.update({'active_id': res_id})
+            res.update({'res_id': res_id, 'context': c})
+        return res
+    
+ir_actions_todo()
+
 class restrictive_country_setup(osv.osv_memory):
     _name = 'restrictive.country.setup'
     _inherit = 'res.config'
     
     _columns = {
-        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
-                                                 string='Restrictive countries'),
+        'restrict_country_ids': fields.one2many('res.country.restriction.memory', 'wizard_id', string='Country restriction'),
+        'error_msg': fields.text(string='Error', readonly=True),
+        'error': fields.boolean(string='Error'),
     }
-    
     
     def default_get(self, cr, uid, fields, context=None):
         '''
-        Display the default value for sale price
+        Display the default value for country restrictions
         '''
+        if not context:
+            context = {}
+        
         res = super(restrictive_country_setup, self).default_get(cr, uid, fields, context=context)
+
+        res['restrict_country_ids'] = []
         
-        country_ids = self.pool.get('res.country').search(cr, uid, [('is_restrictive', '=', True)], context=context)
-        
-        res['restrict_country_ids'] = country_ids
+        country_ids = self.pool.get('res.country.restriction').search(cr, uid, [], context=context)
+        for country in self.pool.get('res.country.restriction').browse(cr, uid, country_ids, context=context):
+            res['restrict_country_ids'].append({'name': country.name, 'restrict_id': country.id})
+
+        res['error_msg'] = ''
+        res['error'] = False
         
         return res
     
@@ -55,24 +79,62 @@ class restrictive_country_setup(osv.osv_memory):
         payload = self.browse(cr, uid, ids[0], context=context)
         
         setup_obj = self.pool.get('unifield.setup.configuration')
-        country_obj = self.pool.get('res.country')
+        country_obj = self.pool.get('res.country.restriction')
         
         setup_id = setup_obj.get_config(cr, uid)
             
+        restriction_ids = self.pool.get('res.country.restriction').search(cr, uid, [], context=context)
+
         # Update all restrictive countries
+        country_ids = []
+        to_delete = []
+        for country in payload.restrict_country_ids:
+            if not country.restrict_id or (country.restrict_id and country.restrict_id.id not in restriction_ids):
+                self.pool.get('res.country.restriction').create(cr, uid, {'name': country.name}, context=context)
+            else:
+                country_ids.append(country.restrict_id.id)
+                
+        for restrict_id in restriction_ids:
+            if restrict_id not in country_ids:
+                to_delete.append(restrict_id)
+                
+        self.pool.get('res.country.restriction').unlink(cr, uid, to_delete, context=context)
+            
+            
+    def go_to_products(self, cr, uid, ids, context=None):
+        assert len(ids) == 1, "We should only get one object from the form"
+        payload = self.browse(cr, uid, ids[0], context=context)
+        
         country_ids = []
         for country in payload.restrict_country_ids:
             country_ids.append(country.id)
             
-        product_ids = self.pool.get('product.product').search(cr, uid, [('restricted_country', '=', True), ('country_restriction', 'not in', country_ids)])
-        if product_ids:
-            raise osv.except_osv(_('Error'), _('You cannot change the restrictive countries because one or more products have a restriction on a country which is not in the new selection.'))
+        product_ids = self.pool.get('product.product').search(cr, uid, [('country_restriction', 'not in', country_ids)], order='country_restriction')
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_normal_form_view')[1]
         
-        all_countries_ids = country_obj.search(cr, uid, [('is_restrictive', '=', True)], context=context)
-        country_obj.write(cr, uid, all_countries_ids, {'is_restrictive': False}, context=context)
-        
-        country_obj.write(cr, uid, country_ids, {'is_restrictive': True}, context=context)
-    
-        setup_obj.write(cr, uid, [setup_id.id], {'restrict_country_ids': [(6,0,country_ids)]}, context=context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.product',
+                'view_mode': 'tree,form',
+                'view_type': 'form',
+                'domain': [('id', 'in', product_ids)],
+                'nodestroy': True}
         
 restrictive_country_setup()
+
+class res_country_restriction_memory(osv.osv_memory):
+    _name = 'res.country.restriction.memory'
+    
+    _columns = {
+        'name': fields.char(size=64, string='Name'),
+        'restrict_id': fields.many2one('res.country.restriction', string='Restriction'),
+        'wizard_id': fields.many2one('restrictive.country.setup', string='Wizard'),
+    }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        for restrict in self.browse(cr, uid, ids, context=context):
+            if restrict.restrict_id.product_ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove this restriction because it is in use in product(s)'))
+            
+        return super(res_country_restriction_memory, self).unlink(cr, uid, ids, context=context)
+    
+res_country_restriction_memory()

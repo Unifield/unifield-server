@@ -108,6 +108,7 @@
         "spreadsheet_xml",
         "msf_supply_doc_export",
         "msf_supply_doc_import",
+        "mission_stock_cron",
     ],
     "update_xml": [
         "report.xml",
