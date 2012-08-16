@@ -496,7 +496,7 @@
                             <field name="backorder_id" readonly="1"/>
                             <field name="reason_type_id" widget="selection"
                                    domain="[('incoming_ok', '=', True)]" 
-                                   attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                   attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                     		<field name="order_category"/>
                     		<field name="change_reason"/>
                         </group>
@@ -731,7 +731,7 @@
                             <field name="reason_type_id"
                                 domain="[('outgoing_ok', '=', True)]"
                                 widget="selection"
-                                attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
+                                attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
                                 />
                             <field name="order_category"/>
                         </group>

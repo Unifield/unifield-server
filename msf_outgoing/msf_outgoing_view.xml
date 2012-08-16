@@ -198,7 +198,7 @@
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
 							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
-							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]"/>
+							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
@@ -543,7 +543,7 @@
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
 							<field name="invoice_state" invisible="1" />
 							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
-							<field name="reason_type_id" widget="selection"/>
+							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
 							<field name="num_of_packs" />
 							<field name="total_volume" />
 							<field name="total_weight" />
