@@ -287,6 +287,11 @@ class procurement_request(osv.osv):
         for request in self.browse(cr, uid, ids, context=context):
             if len(request.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
+            for line in request.order_line:
+                if line.type == 'make_to_order' and not line.supplier:
+                    line_number = line.line_number
+                    request_name = request.name
+                    raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the type "Make to order" !')%(line_number,request_name))
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
             context.update({'view_id': proc_view and proc_view[1] or False})
