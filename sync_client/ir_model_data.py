@@ -393,12 +393,16 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         @param dest_field : field of the record from where the name will be extract
         @return a dictionnary with ids : dest_fields
     """
+    if not isinstance(ids, (tuple, list)):
+        ids = [ids]
+
     result = dict.fromkeys(ids, False)
     if not dest_field:
         return result
     
-    fields_ref = self.fields_get(cr, uid, context=context)
-    field = fields_ref.get(dest_field)
+    field = self.fields_get(cr, uid, context=context).get(dest_field)
+    if not field:
+        return result
     
     for rec in self.browse(cr, uid, ids, context=context):
         value = getattr(rec, dest_field)
@@ -408,7 +412,7 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
             if field['relation'] == 'msf.instance':
                 result[rec.id] = value.instance
             else:
-                result[rec.id] = self.name_get(cr, uid, value.id, context=context)
+                result[rec.id] = self.pool.get(field['relation']).name_get(cr, uid, [value.id], context=context)[0][1]
         elif field['type'] in ('char', 'text'):
             result[rec.id] = value
         else:
