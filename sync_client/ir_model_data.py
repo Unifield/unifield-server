@@ -64,8 +64,22 @@ MODELS_TO_IGNORE=[
                     'sync.client.message_sync',  
                     'sync.client.write_info',
                     
+                    'sync.server.test',
+                    'sync_server.version.manager',
+                    'sync.server.entity_group',
+                    'sync.server.entity',
+                    'sync.server.group_type',
+                    'sync.server.entity_group',
+                    'sync.server.entity',
+                    'sync.server.sync_manager',
+                    'sync_server.sync_rule',
+                    'sync_server.message_rule',
+                    'sync_server.sync_rule.forced_values',
+                    'sync_server.sync_rule.fallback_values',
+                    'sync_server.rule.validation.message',
                     'sync.server.update',
                     'sync.server.message',
+                    'sync_server.version',
 
                     'res.widget',
                     

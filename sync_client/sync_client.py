@@ -322,7 +322,7 @@ class entity(osv.osv, Thread):
     """
         Pull update
     """
-    def pull_update(self, cr, uid, log=None, log_id=None, context=None, recover=False):
+    def pull_update(self, cr, uid, recover=False, log=None, log_id=None, context=None):
         (status, log_id, log) = self.startSync(cr, uid, log=log, log_id=log_id, step='data_pull', context=context)
         if status is None: return False
 
@@ -516,10 +516,10 @@ class entity(osv.osv, Thread):
             raise osv.except_osv(_('Error!'), _('Unable to start the synchronization process now!'))
        
         #self.sync_core(cr, uid, log_id, log, context=context)
-        self.pull_update(cr, uid, log, log_id, context=context)
-        self.pull_message(cr, uid, log, log_id, context=context)
-        self.push_update(cr, uid, log, log_id, context=context)
-        self.push_message(cr, uid, log, log_id, context=context)
+        self.pull_update(cr, uid, log=log, log_id=log_id, context=context)
+        self.pull_message(cr, uid, log=log, log_id=log_id, context=context)
+        self.push_update(cr, uid, log=log, log_id=log_id, context=context)
+        self.push_message(cr, uid, log=log, log_id=log_id, context=context)
             
         return self.stopSync(cr, uid, log_id, log)
         
