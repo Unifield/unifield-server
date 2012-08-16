@@ -737,6 +737,11 @@ class sale_order_line(osv.osv):
             vals['type'] = 'make_to_stock'
             vals['po_cft'] = False
         
+        if vals.get('product_id',False):
+            bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
+            if bropro.type == 'consu':
+                vals['type'] = 'make_to_order'
+        
         # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
         if not vals.get('po_cft', False) and vals.get('type', False) == 'make_to_order':
             vals['po_cft'] = 'po'
@@ -823,6 +828,11 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if vals.get('product_id',False):
+            bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
+            if bropro.type == 'consu':
+                vals['type'] = 'make_to_order'
 
         # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
@@ -1016,7 +1026,7 @@ class procurement_order(osv.osv):
                 values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
         elif procurement.product_id:
             if procurement.product_id.type == 'consu':
-                location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_non_stockable')[1]
+                location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
             elif procurement.product_id.type == 'service_recep':
                 location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
             else:

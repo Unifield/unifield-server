@@ -725,7 +725,7 @@ class procurement_order(osv.osv):
         
         if procurement.product_id:
             if procurement.product_id.type == 'consu':
-                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_non_stockable')[1]
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
             elif procurement.product_id.type == 'service_recep':
                 values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
             else:
