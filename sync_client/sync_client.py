@@ -629,6 +629,8 @@ class sync_server_connection(osv.osv):
  
     def connect(self, cr, uid, ids, context=None):
         for con in self.browse(cr, uid, ids, context=context):
+            if not con.database:
+                raise osv.except_osv(_("Error"), _("Missing database name"))
             connector = self.connector_factory(con)
             #if not con.password or not con.database or not con.login:
             #    raise osv.except_osv(_('Error !'), _('All the fields in this form are mandatory!'))

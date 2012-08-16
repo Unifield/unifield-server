@@ -25,13 +25,13 @@
             <field name="arch" type="xml">
                 <form string="Instance Form">
                     <separator string="Connection information" colspan="4"/>
-                    <field name="host"/>
-                    <field name="port"/>
-                    <field name="protocol"/>
-                    <field name="database"/>
-                    <field name="login"/>
-                    <field name="password"/>
-                    <field name="max_size"/>
+                    <field name="host" required="1"/>
+                    <field name="port" required="1"/>
+                    <field name="protocol" required="1"/>
+                    <field name="database" required="1"/>
+                    <field name="login" required="1"/>
+                    <field name="password" required="1" password="1"/>
+                    <field name="max_size" required="1"/>
                     <separator string="Connection state" colspan="4"/>
                     <!-- the following line break the 6.1 web client backport because its a functional field of type integer -->
                     <!-- <field name="uid" invisible="1"/> -->

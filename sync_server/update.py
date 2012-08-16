@@ -163,18 +163,13 @@ class update(osv.osv):
             for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
                 if update.model == update_master.model and \
                    update.rule_id.id == update_master.rule_id.id and \
-                   update.source.id == update_master.source.id:
+                   update.source.id == update_master.source.id and \
+                   len(update_to_send) < max_size:
                     update_to_send.append(update)
                 else:
                     ids = ids[:ids.index(update.id)]
                     break
             offset += len(ids)
-
-        ## Truncate updates if their number exceed max_size
-        exceed = len(update_to_send) - max_size
-        if exceed > 0:
-            update_to_send = update_to_send[:max_size]
-            offset -= exceed
 
         ## Save who pulls these updates
         self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
