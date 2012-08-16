@@ -246,6 +246,19 @@ class initial_stock_inventory_line(osv.osv):
                     return False
         return True
     
+    def _check_same_cost(self, cr, uid, ids, context=None):
+        '''
+        If the inv line has a different average cost than the other lines with the same product
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            other_lines =  self.search(cr, uid, [('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
+            if other_lines:
+                cost = self.browse(cr, uid, other_lines[0], context=context).average_cost
+                if cost != obj.average_cost:
+                    return False
+                
+        return True
+    
     _constraints = [(_check_batch_management,
                  'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
                  ['prod_lot_id']),
@@ -255,9 +268,12 @@ class initial_stock_inventory_line(osv.osv):
                 (_check_prodlot_need,
                  'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
                  ['prod_lot_id']),
+                (_check_same_cost,
+                 'You cannot have two lines with the same product and different average cost.',
+                 ['product_id', 'average_cost'])
                 ]
     
-    def product_change(self, cr, uid, ids, product_id):
+    def product_change(self, cr, uid, ids, product_id, inventory_id=False):
         '''
         Set the UoM with the default UoM of the product
         '''
@@ -318,22 +334,94 @@ class stock_cost_reevaluation(osv.osv):
     _description = 'Cost reevaluation'
     
     _columns = {
+        'name': fields.char(size=64, string='Reference', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'date': fields.date(string='Creation date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'reevaluation_line_ids': fields.one2many('stock.cost.reevaluation.line', 'reevaluation_id', string='Lines', 
+                                                 readonly=True, states={'draft': [('readonly', False)]}),
+        'state': fields.selection([('draft', 'Draft'), ('confirm', 'Confirmed'), ('done', 'Done'), ('cancel', 'Cancel')],
+                                  string='State', readonly=True, required=True),
     }
+    
+    _defaults = {
+        'state': lambda *a: 'draft',
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+    
+    def copy(self, cr, uid, ids, default=None, context=None):
+        '''
+        Set the state to 'draft'
+        '''
+        if not default:
+            default = {}
+            
+        if not 'state' in default:
+            default.update({'state': 'draft'})
+            
+        return super(stock_cost_reevaluation, self).copy(cr, uid, ids, default=default, context=context)
+    
+    def action_confirm(self, cr, uid, ids, context=None):
+        '''
+        Confirm the cost reevaluation (don't change the price at this time)
+        '''
+        # Check if there are two lines with the same product
+        for obj in self.browse(cr, uid, ids, context=context):
+            products = []
+            for line in obj.reevaluation_line_ids:
+                if line.product_id.id not in products:
+                    products.append(line.product_id.id)
+                else:
+                    raise osv.except_osv(_('Error'), _('You cannot have two lines with the same product. (Product : [%s] %s)' % (line.product_id.default_code, line.product_id.name)))
+        
+        return self.write(cr, uid, ids, {'state': 'confirm'}, context=context)
+        
+    def action_done(self, cr, uid, ids, context=None):
+        '''
+        Change the price of the products in the lines
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            for line in obj.reevaluation_line_ids:
+                self.pool.get('product.product').write(cr, uid, line.product_id.id, {'standard_price': line.average_cost})
+        
+        return self.write(cr, uid, ids, {'state': 'done'}, context=context)
+    
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Change the state of the document to cancel
+        '''
+        return self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+    
+    def action_cancel_draft(self, cr, uid, ids, context=None):
+        '''
+        Change the state of the document to draft
+        '''
+        return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
     
 stock_cost_reevaluation()
 
 class stock_cost_reevaluation_line(osv.osv):
     _name = 'stock.cost.reevaluation.line'
     _description = 'Cost reevaluation line'
+    _rec_name = 'product_id'
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'average_cost': fields.float(digits=(16,2), string='Average cost', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
+        'reevaluation_id': fields.many2one('stock.cost.reevaluation', string='Header'),
     }
     
     _defaults = {
-        'currency_id': lambda obj, cr, uid, c={}: obj.poo.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+        'currency_id': lambda obj, cr, uid, c={}: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
+    
+    def product_id_change(self, cr, uid, ids, product_id, context=None):
+        '''
+        Change the average price with the cost price of the product
+        '''
+        if product_id:
+            cost_price = self.pool.get('product.product').browse(cr, uid, product_id, context=context).standard_price
+            return {'value': {'average_cost': cost_price}}
+        
+        return {'value': {'average_cost': 0.00}}
     
 stock_cost_reevaluation_line()

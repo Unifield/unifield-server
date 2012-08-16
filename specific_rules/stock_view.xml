@@ -117,6 +117,74 @@
                   id="menu_initial_inventory"
                   parent="stock.menu_stock_inventory_control"
                   sequence="99" />
+                  
+        <!-- Cost reevaluation document -->
+        <record id="cost_reevaluation_form_view" model="ir.ui.view">
+            <field name="name">cost.reevaluation.form.view</field>
+            <field name="model">stock.cost.reevaluation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product cost revaluation">
+                    <field name="name" />
+                    <field name="date" />
+                    <notebook colspan="4">
+                        <page string="Products">
+                            <field name="reevaluation_line_ids" colspan="4" mode="tree" nolabel="1">
+                                <tree string="Products" editable="top">
+                                    <field name="product_id" on_change="product_id_change(product_id)"/>
+                                    <field name="average_cost" />
+                                    <field name="currency_id" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group colspan="4" col="6">
+                        <field name="state" />
+                        <button name="action_cancel" type="object" string="Cancel" icon="gtk-cancel" colspan="2" states="draft,confirm" />
+                        <button name="action_confirm" type="object" string="Confirm" icon="gtk-apply" colspan="2" states="draft" />
+                        <button name="action_done" type="object" string="Validate" icon="gtk-jump-to" colspan="2" states="confirm" />
+                        <button name="action_cancel_draft" type="object" string="Set to Draft" icon="gtk-convert" colspan="2" states="cancel" />
+                    </group>
+                </form>
+            </field>
+        </record>
         
+        <record id="cost_reevaluation_tree_view" model="ir.ui.view">
+            <field name="name">cost.reevaluation.tree.view</field>
+            <field name="model">stock.cost.reevaluation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product cost revaluation">
+                    <field name="name" />
+                    <field name="date" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="cost_reevaluation_search_view" model="ir.ui.view">
+            <field name="name">cost.reevaluation.search.view</field>
+            <field name="model">stock.cost.reevaluation</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Product cost revaluation">
+                    <field name="name" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+        
+        <record id="action_cost_reevaluation" model="ir.actions.act_window">
+            <field name="name">Product cost revaluation</field>
+            <field name="res_model">stock.cost.reevaluation</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="cost_reevaluation_search_view" />
+        </record>
+        
+        <menuitem action="action_cost_reevaluation"
+                  id="menu_cost_reevaluation"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="99" />
     </data>
 </openerp>
