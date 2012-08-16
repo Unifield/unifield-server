@@ -133,6 +133,7 @@ class tender(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
+        obj_data = self.pool.get('ir.model.data')
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
             # check some supplier have been selected
@@ -168,6 +169,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id))
                 
                 for line in tender.tender_line_ids:
+                    if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_supply_doc_import', 'product_tbd')[1]:
+                        raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
                     # create an order line for each tender line
                     price = pricelist_obj.price_get(cr, uid, [pricelist_id], line.product_id.id, line.qty, supplier.id, {'uom': line.product_uom.id})[pricelist_id]
                     newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
@@ -542,6 +545,7 @@ class tender_line(osv.osv):
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
+                'comment': fields.char(size=128, string='Comment'),
                 }
     _defaults = {'qty': lambda *a: 1.0,
                  'state': lambda *a: 'draft',
@@ -658,6 +662,7 @@ class procurement_order(osv.osv):
                                                         }, context=context)
             # add a line to the tender
             tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
+                                             'comment': sale_order_line.comment,
                                              'qty': proc.product_qty,
                                              'tender_id': tender_id,
                                              'sale_order_line_id': sale_order_line.id,

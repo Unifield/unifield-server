@@ -27,6 +27,7 @@
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
                                     <field name="product_id" on_change="on_product_change(product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="comment" />
                                     <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                     <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                     <field name="supplier_id" />
