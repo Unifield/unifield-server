@@ -17,7 +17,7 @@
                         string="Cancel" 
                         type="object" 
                         colspan="2" 
-                        states="draft"
+                        attrs="{'invisible': [('state', 'not in', ['draft','completed'])]}"
                         icon="gtk-cancel"/>
                     </xpath>
                 </data>
