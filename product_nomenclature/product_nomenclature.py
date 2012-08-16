@@ -252,35 +252,20 @@ class product_nomenclature(osv.osv):
         Returns all nomenclature according to the category
         '''
         res = [('level', '=', 2), ('type', '=', 'mandatory')] 
-        if args[0][1] != '=':
-            raise osv.except_osv(_('Error'), _('Bad operator : You can only use the \'=\' operator'))
+        if args[0][1] not in ('=', '!='):
+            raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\' and \'!=\' as operator'))
         
         if args[0][2] != False and not isinstance(args[0][2], (int, long)):
             raise osv.except_osv(_('Error'), _('Bad operand : You can only give False or the id of a category'))
         
         if args[0][2] == False:
-            res.append(('category_ids', '=', False))
+            res.append(('category_ids', args[0][1], False))
             return res
         
         if isinstance(args[0][2], (int, long)):
             categ = self.pool.get('product.category').browse(cr, uid, args[0][2])
-            return [('id', '=', categ.family_id.id)]
+            return [('id', args[0][1], categ.family_id.id)]
         
-        return res
-    
-    def _get_active(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns if the nomenclature is active or not
-        '''
-        res = {}
-        for nomen in self.browse(cr, uid, ids, context=context):
-            if nomen.type != 'mandatory' or nomen.level != 2:
-                res[nomen.id] = True
-            else:
-                res[nomen.id] = False
-                if nomen.category_ids:
-                    res[nomen.id] = True
-                    
         return res
     
     def _get_product_category(self, cr, uid, ids, context=None):
@@ -313,10 +298,6 @@ class product_nomenclature(osv.osv):
                                        relation='product.category', string='Category',
                                        help='If empty, please contact accounting member to create a new product category associated to this family.'),
         'category_ids': fields.one2many('product.category', 'family_id', string='Categories'),
-        'active': fields.function(_get_active, method=True, type='boolean', string='Active', 
-                                  store={
-                                         'product.category': (_get_product_category, ['family_id'], 20)
-                                         })
     }
 
     _defaults = {
@@ -575,7 +556,10 @@ class product_product(osv.osv):
         # loop through children nomenclature of mandatory type
         shownum = num or context.get('withnum') == 1
         if position < 3:
-            nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+            if position == 1:
+                nomenids = nomenObj.search(cr, uid, [('category_id', '!=', False), ('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+            else:
+                nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
                 for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
                     # get the name and product number
