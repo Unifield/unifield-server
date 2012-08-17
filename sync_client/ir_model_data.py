@@ -393,10 +393,7 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         @param dest_field : field of the record from where the name will be extract
         @return a dictionnary with ids : dest_fields
     """
-    if not isinstance(ids, (tuple, list)):
-        ids = [ids]
-
-    result = dict.fromkeys(ids, False)
+    result = [False for x in ids] if isinstance(ids, (tuple, list)) else [False]
     if not dest_field:
         return result
     
@@ -404,21 +401,21 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
     if not field:
         return result
     
-    for rec in self.browse(cr, uid, ids, context=context):
+    for i, rec in enumerate(self.browse(cr, uid, (ids if isinstance(ids, (tuple, list)) else [ids]), context=context)):
         value = getattr(rec, dest_field)
         if not value:
             continue
         if field['type'] == 'many2one':
             if field['relation'] == 'msf.instance':
-                result[rec.id] = value.instance
+                result[i] = value.instance
             else:
-                result[rec.id] = self.pool.get(field['relation']).name_get(cr, uid, [value.id], context=context)[0][1]
+                result[i] = self.pool.get(field['relation']).name_get(cr, uid, [value.id], context=context)[0][1]
         elif field['type'] in ('char', 'text'):
-            result[rec.id] = value
+            result[i] = value
         else:
             raise osv.except_osv(_('Error !'), _("%s doesn't implement field of type %s, please contact system administrator to upgrade.") % ('get_destination_name()', field['type']))
-    return result
-    
+
+    return result if isinstance(ids, (tuple, list)) else result[0]
     
 osv.osv.get_destination_name = get_destination_name
 

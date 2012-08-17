@@ -170,7 +170,7 @@ class update_to_send(osv.osv):
                 if field != 'id' and fields_ref[field]['type'] in ('many2one','many2many',) and not values[i]:
                     values[i] = ''
 
-            owner = obj.get_destination_name(cr, uid, [id], rule.owner_field, context=context)[id]
+            owner = obj.get_destination_name(cr, uid, id, rule.owner_field, context=context)
 
             data = {
                 'session_id' : session_id,

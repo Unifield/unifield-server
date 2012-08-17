@@ -100,8 +100,8 @@ class message_to_send(osv.osv):
             args[obj_id] = arg
         call = rule.remote_call
         identifiers = self._generate_message_uuid(cr, uid, obj, obj_ids, rule.server_id, context=context)
-        for id in obj_ids:
-            self.create_message(cr, uid, identifiers[id], call, args[id], dest[id], context)
+        for i, id in enumerate(obj_ids):
+            self.create_message(cr, uid, identifiers[id], call, args[id], dest[i], context)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         res = {}
