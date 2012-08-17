@@ -168,10 +168,10 @@
                     </notebook>
                     <group colspan="4" col="6">
                         <field name="state" />
-                        <button name="action_cancel" type="object" string="Cancel" icon="gtk-cancel" colspan="2" states="draft,confirm" />
-                        <button name="action_confirm" type="object" string="Confirm" icon="gtk-apply" colspan="2" states="draft" />
-                        <button name="action_done" type="object" string="Validate" icon="gtk-jump-to" colspan="2" states="confirm" />
-                        <button name="action_cancel_draft" type="object" string="Set to Draft" icon="gtk-convert" colspan="2" states="cancel" />
+                        <button name="action_cancel" type="object" string="Cancel" icon="gtk-cancel" states="draft,confirm" />
+                        <button name="action_confirm" type="object" string="Confirm" icon="gtk-apply" states="draft" />
+                        <button name="action_done" type="object" string="Validate" icon="gtk-jump-to" states="confirm" />
+                        <button name="action_cancel_draft" type="object" string="Set to Draft" icon="gtk-convert" states="cancel" />
                     </group>
                 </form>
             </field>
