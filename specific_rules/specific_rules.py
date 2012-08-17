@@ -455,7 +455,7 @@ class stock_picking(osv.osv):
         
         # calling super method
         defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
-        assetId = partial_datas.get('move%s'%(move.id), False).get('asset_id')
+        assetId = partial_datas.get('move%s'%(move.id), {}).get('asset_id')
         if assetId:
             defaults.update({'asset_id': assetId})
         
