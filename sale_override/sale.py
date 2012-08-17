@@ -959,6 +959,55 @@ class sale_order_line(osv.osv):
             default.update({'so_back_update_dest_po_id_sale_order_line': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
+            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        """
+        If we select product we change the procurment type to 'Stock'
+        """
+        res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
+            uom, qty_uos, uos, name, partner_id,
+            lang, update_tax, date_order, packaging, fiscal_position, flag)
+        if product:
+            res.update({'value':{'type': 'make_to_stock'}})
+        elif not product:
+            res.update({'value':{'type': 'make_to_order'}})
+        return res
+
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        Default procurement method is 'on order' if no product selected
+        """
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        if context is None:
+            context = {}
+        sale_id = context.get('sale_id', [])
+        if not sale_id:
+            return default_data
+        else:
+            default_data.update({'type': 'make_to_order'})
+        return default_data
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Override create method so that the procurement method is on order if no product is selected
+        """
+        if context is None:
+            context = {}
+        if not vals.get('product_id') and context.get('sale_id', []):
+            vals.update({'type': 'make_to_order'})
+        return super(sale_order_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Override write method so that the procurement method is on order if no product is selected
+        """
+        if context is None:
+            context = {}
+        if not vals.get('product_id') and context.get('sale_id', []):
+            vals.update({'type': 'make_to_order'})
+        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
 sale_order_line()
 
 
