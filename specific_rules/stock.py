@@ -170,7 +170,7 @@ class initial_stock_inventory(osv.osv):
                               'average_cost': product.standard_price,
                               'hidden_batch_management_mandatory': batch_mandatory,
                               'hidden_perishable_mandatory': date_mandatory,
-                              'inventory_id': inventory.id,}
+                              'inventory_id': inventory.id, }
                     v = self.pool.get('initial.stock.inventory.line').on_change_product_id(cr, uid, [], location_id, product.id, product.uom_id.id, False)['value']
                     # Remove product_qty from values because it has been computed before
                     v.pop('product_qty')
@@ -216,7 +216,7 @@ class initial_stock_inventory_line(osv.osv):
     
     _columns = {
         'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
-        'average_cost': fields.float(digits=(16,2), string='Initial average cost', required=True),
+        'average_cost': fields.float(digits=(16, 2), string='Initial average cost', required=True),
         'currency_id': fields.many2one('res.currency', string='Functional currency', readonly=True),
         'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Message', store=False),
     }
@@ -263,7 +263,7 @@ class initial_stock_inventory_line(osv.osv):
         If the inv line has a different average cost than the other lines with the same product
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            other_lines =  self.search(cr, uid, [('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
+            other_lines = self.search(cr, uid, [('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
             if other_lines:
                 cost = self.browse(cr, uid, other_lines[0], context=context).average_cost
                 if cost != obj.average_cost:
@@ -285,7 +285,7 @@ class initial_stock_inventory_line(osv.osv):
                  ['product_id', 'average_cost'])
                 ]
     
-    def product_change(self, cr, uid, ids, product_id, location_id, inventory_id=False):
+    def product_change(self, cr, uid, ids, product_id, location_id, prodlot_id=False):
         '''
         Set the UoM with the default UoM of the product
         '''
@@ -297,6 +297,8 @@ class initial_stock_inventory_line(osv.osv):
             context = {}
             if location_id:
                 context = {'location': location_id, 'compute_child': False}
+            if prodlot_id:
+                context.update({'prodlot_id': prodlot_id})
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             value.update({'product_uom': product.uom_id.id,
                           'average_cost': product.standard_price,
@@ -356,7 +358,7 @@ class stock_cost_reevaluation(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Reference', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.date(string='Creation date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'reevaluation_line_ids': fields.one2many('stock.cost.reevaluation.line', 'reevaluation_id', string='Lines', 
+        'reevaluation_line_ids': fields.one2many('stock.cost.reevaluation.line', 'reevaluation_id', string='Lines',
                                                  readonly=True, states={'draft': [('readonly', False)]}),
         'state': fields.selection([('draft', 'Draft'), ('confirm', 'Confirmed'), ('done', 'Done'), ('cancel', 'Cancel')],
                                   string='State', readonly=True, required=True),
@@ -482,7 +484,7 @@ class stock_cost_reevaluation(osv.osv):
                 if product.id not in products:
                     values = {'product_id': product.id,
                               'average_cost': product.standard_price,
-                              'reevaluation_id': inventory.id,}
+                              'reevaluation_id': inventory.id, }
                     self.pool.get('stock.cost.reevaluation.line').create(cr, uid, values)
         
         return {'type': 'ir.actions.act_window',
@@ -508,13 +510,13 @@ class stock_cost_reevaluation_line(osv.osv):
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'average_cost': fields.float(digits=(16,2), string='Average cost', required=True),
+        'average_cost': fields.float(digits=(16, 2), string='Average cost', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'reevaluation_id': fields.many2one('stock.cost.reevaluation', string='Header'),
     }
     
     _defaults = {
-        'currency_id': lambda obj, cr, uid, c={}: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
+        'currency_id': lambda obj, cr, uid, c = {}: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
     
     def product_id_change(self, cr, uid, ids, product_id, context=None):
