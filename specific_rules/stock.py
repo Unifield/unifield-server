@@ -157,7 +157,7 @@ class initial_stock_inventory(osv.osv):
                     self.pool.get('initial.stock.inventory.line').unlink(cr, uid, line.id, context=context)
 
             c = context.copy()
-            c.update({'location_id': location_id, 'compute_child': False})
+            c.update({'location': location_id, 'compute_child': False, 'to_date': inventory.date})
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=c):
                 # Check if the product is not already on the report
                 if product.id not in products:
@@ -172,6 +172,8 @@ class initial_stock_inventory(osv.osv):
                               'hidden_perishable_mandatory': date_mandatory,
                               'inventory_id': inventory.id,}
                     v = self.pool.get('initial.stock.inventory.line').on_change_product_id(cr, uid, [], location_id, product.id, product.uom_id.id, False)['value']
+                    # Remove product_qty from values because it has been computed before
+                    v.pop('product_qty')
                     values.update(v)
                     if batch_mandatory:
                         values.update({'err_msg': 'You must assign a batch number'})
@@ -283,7 +285,7 @@ class initial_stock_inventory_line(osv.osv):
                  ['product_id', 'average_cost'])
                 ]
     
-    def product_change(self, cr, uid, ids, product_id, inventory_id=False):
+    def product_change(self, cr, uid, ids, product_id, location_id, inventory_id=False):
         '''
         Set the UoM with the default UoM of the product
         '''
@@ -292,10 +294,17 @@ class initial_stock_inventory_line(osv.osv):
                  'hidden_batch_management_mandatory': False}
         
         if product_id:
-            product = self.pool.get('product.product').browse(cr, uid, product_id)
-            value.update({'product_uom': product.uom_id.id})
-            value.update({'hidden_perishable_mandatory': product.perishable,
+            context = {}
+            if location_id:
+                context = {'location': location_id, 'compute_child': False}
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            value.update({'product_uom': product.uom_id.id,
+                          'average_cost': product.standard_price,
+                          'hidden_perishable_mandatory': product.perishable,
                           'hidden_batch_management_mandatory': product.batch_management})
+            
+            if location_id:
+                value.update({'product_qty': product.qty_available})
             
         return {'value': value}
     
