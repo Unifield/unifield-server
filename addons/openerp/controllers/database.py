@@ -247,7 +247,7 @@ class Database(BaseController):
             res = rpc.session.execute_db('dump', password, dbname)
             if res:
                 cherrypy.response.headers['Content-Type'] = "application/data"
-                cherrypy.response.headers['Content-Disposition'] = 'filename="' + dbname + '.dump"'
+                cherrypy.response.headers['Content-Disposition'] = 'filename="' + dbname + '-' + time.strftime('%Y%m%d-%H%M%S')+ '.dump"'
                 return base64.decodestring(res)
         except Exception:
             self.msg = {'message' : _("Could not create backup.")}
