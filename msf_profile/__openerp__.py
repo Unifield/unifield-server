@@ -105,6 +105,7 @@
         "msf_processes",
         "useability_dashboard_and_menu",
         "msf_custom_settings",
+        "button_delete",
         "spreadsheet_xml",
         "msf_supply_doc_export",
         "msf_supply_doc_import",
