@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*- 
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
+#    Copyright (C) 2011 TeMPO Consulting, MSF, Smile
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,9 +19,35 @@
 #
 ##############################################################################
 
-import publisher_warranty
-import stock_picking
-import consumption_calculation
-import product
-import kit_creation
-import kit
+{
+    "name": "MSF Delete Button",
+    "version": "1.0",
+    "depends": [
+                "stock",
+                "purchase",
+                "tender_flow",
+                "procurement_request",
+                "kit",
+                ],
+    "author": "MSF, TeMPO Consulting, Smile",
+    "website": "",
+    "category": "Specific Modules",
+    "description": """
+        Hide delete buttons according to the state.
+    """,
+    "init_xml": [
+    ],
+    'update_xml': ['view/picking_view.xml',
+                   'view/purchase_view.xml',
+                   'view/sale_view.xml',
+                   'view/tender_view.xml',
+                   'view/kit_view.xml',
+                   ],
+    'demo_xml': [
+    ],
+    'test': [
+             ],
+    'installable': True,
+    'active': False,
+}
+

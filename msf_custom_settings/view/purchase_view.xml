@@ -11,9 +11,6 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
@@ -66,20 +63,6 @@
                             <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
                             <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
-        <record id="purchase_order_tree" model="ir.ui.view">
-            <field name="name">purchase.order.type.tree.view</field>
-            <field name="model">purchase.order</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="purchase.purchase_order_tree" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
                     </xpath>
                 </data>
             </field>
