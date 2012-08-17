@@ -129,7 +129,7 @@
                     </xpath>
                     <xpath expr="/tree/button[@name='validate_picking']" position="after">
                         <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                        attrs="{'invisible' : [('state','!=','draft')]}" />
+                        states='draft' />
                     </xpath>
                 </data>
             </field>
