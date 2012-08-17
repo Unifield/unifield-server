@@ -201,6 +201,7 @@ class procurement_order(osv.osv):
         '''
         When you run the scheduler and you have a sale order line with type = make_to_order,
         we modify the location_id to set 'cross docking' of the purchase order created in mirror
+        But if the sale_order is an Internal Request we do want "Cross docking" but "Input" as location_id
         '''
         if context is None:
             context = {}
@@ -213,8 +214,9 @@ class procurement_order(osv.osv):
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if len(ids) and setup.allocation_setup != 'unallocated':
+        sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if len(sol_ids) and setup.allocation_setup != 'unallocated' \
+        and not sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id.procurement_request:
             values.update({'cross_docking_ok': True, 'location_id' : self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return values  
 
