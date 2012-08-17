@@ -127,6 +127,34 @@
                 <form string="Product cost revaluation">
                     <field name="name" />
                     <field name="date" />
+                    <separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('sublist_id', '!=', False)]}">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="reevaluation_line_ids" colspan="4" mode="tree" nolabel="1">
