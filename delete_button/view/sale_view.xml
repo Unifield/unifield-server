@@ -37,6 +37,25 @@
             </field>
         </record>
         
+        <record id="view_sales_tree" model="ir.ui.view">
+            <field name="name">sale.order.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="useability_dashboard_and_menu.view_sales_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        states = 'draft' />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
     <!-- INTERNAL REQUEST -->
         <record id="procurement_request_form_view" model="ir.ui.view">
             <field name="name">procurement.request.form.view</field>
