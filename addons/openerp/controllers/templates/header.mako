@@ -25,7 +25,7 @@ version = release.version
 <td id="top" colspan="3">
     <p id="cmp_logo">
         <a href="/" target="_top">
-            <img alt="MSF" id="company_logo" src="/openerp/static/images/msf.png"/>
+            <img alt="UniField" id="company_logo" src="/openerp/static/images/unifield.png"/>
         </a>
     </p>
     % if logged:

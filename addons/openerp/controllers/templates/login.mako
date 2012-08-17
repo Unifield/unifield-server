@@ -78,15 +78,7 @@
                 % if info:
                     <div class="information">${info|n}</div>
                 % endif
-                <div style="margin-top: 10px">
-                    <table cellpadding="0" cellspacing="0" width="100%" style="border:none;">
-                        <tr>
-                            <td style="padding-left:0;"><h3> ${_("Top Contributor:")}</h3></td>
-                        </tr>
-                        <tr>
-                            <td style="padding-left:0;"><img src="/openerp/static/images/axelor_logo.png"/></td>
-                        </tr>
-                    </table>
+                <div style="margin-top: 10px; height: 150px">
                 </div>
             </td>
 

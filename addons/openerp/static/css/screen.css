@@ -159,7 +159,7 @@ select {
 }
 
 #top, p#cmp_logo {
-    height: 65px;
+    height: auto;
 }
 
 #content {
@@ -172,7 +172,8 @@ select {
 }
 
 #company_logo {
-    width: 100%;
+    display: block;
+    padding: 0;
 }
 
 #top table td {
@@ -181,16 +182,14 @@ select {
 
 p#cmp_logo {
     float: left;
-    width: 180px;
-    margin: 0 10px 0 0;
+    margin: 0 0px 0 0;
     padding: 0 0 0 0px;
     background-color:  white;
-    line-height: 50px;
 }
 
 #title-menu {
     float: left;
-    margin: 0;
+    margin: 0 0 0 10px;
     padding: 4px 0;
     background: none;
     color: #fff;
