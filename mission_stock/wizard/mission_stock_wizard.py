@@ -29,9 +29,9 @@ class mission_stock_wizard(osv.osv_memory):
     _name = 'mission.stock.wizard'
     
     _columns = {
-        'report_id': fields.many2one('stock.mission.report', string='Report', required=True),
+        'report_id': fields.many2one('stock.mission.report', string='Report'),
 #        'with_valuation': fields.boolean(string='Display stock valuation ?'),
-        'with_valuation': fields.selection([('true', 'Yes'), ('false', 'No')], string='Display stock valuation ?', 
+        'with_valuation': fields.selection([('true', 'Yes'), ('false', 'No')], string='Display stock valuation ?',
                                            required=True),
         'last_update': fields.datetime(string='Last update', readonly=True),
     }
@@ -80,6 +80,9 @@ class mission_stock_wizard(osv.osv_memory):
             
         if not context:
             context = {}
+            
+        if not ids:
+            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
             
         wiz_id = self.browse(cr, uid, ids, context=context)
         c = context.copy()
