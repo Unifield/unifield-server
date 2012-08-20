@@ -292,6 +292,7 @@ class purchase_order_line(osv.osv):
             date_planned = res.get('value', {}).get('date_planned', False)
             warning_msg = res.get('warning', {}).get('message', '')
             text_error += '\n %s'%warning_msg
+            text_error += 'We use the price mechanism of the Purchase Order to compute the Price Unit.'
             to_write.update({'price_unit': price_unit, 'product_uom':uom,'text_error':text_error})
         if uom:
             self.check_data_for_uom(cr, uid, ids, to_write= to_write, context=context)

@@ -125,17 +125,22 @@ def compute_price_value(**kwargs):
     price_unit = kwargs['to_write']['price_unit']
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
-    if not row.cells[4] or not row.cells[4].data:
-        if default_code:
-            error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
-        else:
-            error_list.append('The Price and Product not found.')
-    elif row.cells[4].type not in ['int','float'] and not default_code:
-         error_list.append('The Price Unit was not a number and no product was found.')
-    elif row.cells[4].type in ['int','float']:
-         price_unit = row.cells[4].data
-    else:        
-         error_list.append('The Price Unit was not defined properly.')
+    context = kwargs['context']
+    order_type = context.get('_terp_view_name', False)
+    if order_type!= 'Purchase Orders':
+        if not row.cells[4] or not row.cells[4].data:
+            if default_code:
+                error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
+            else:
+                error_list.append('The Price and Product not found.')
+        elif row.cells[4].type not in ['int','float'] and not default_code:
+             error_list.append('The Price Unit was not a number and no product was found.')
+        elif row.cells[4].type in ['int','float']:
+             price_unit = row.cells[4].data
+        else:        
+             error_list.append('The Price Unit was not defined properly.')
+    elif order_type== 'Purchase Orders' and not row.cells[4] or not row.cells[4].data:
+        price_unit = 0.0
     return {'price_unit': price_unit, 'error_list': error_list}
 
 def compute_date_value(**kwargs):
