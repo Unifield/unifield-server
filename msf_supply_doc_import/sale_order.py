@@ -547,4 +547,3 @@ class sale_order_line(osv.osv):
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()
-
