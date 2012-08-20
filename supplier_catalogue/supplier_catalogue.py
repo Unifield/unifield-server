@@ -345,7 +345,7 @@ class supplier_catalogue(osv.osv):
                 to_correct_ok = False
                 row_len = len(row)
                 if row_len != 7:
-                    raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order: Product Code*, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment"""))
+                    raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order: Product Code*, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
 
                 #Product code
                 product_code = row.cells[0].data
@@ -624,6 +624,8 @@ class supplier_catalogue_line(osv.osv):
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v.update({'line_uom_id': product.uom_id.id})
+        else:
+            return {}
         
         return {'value': v}
     
