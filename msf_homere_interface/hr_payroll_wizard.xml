@@ -209,5 +209,10 @@
         <!-- Delete "Employee Hierarchy" action -->
         <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Employee Hierarchy%')]"/>
 
+    <!--
+        Menus
+    -->
+        <menuitem id="import_expat_employees" parent="hr.menu_hr_main" name="Import expats" sequence="20" action="action_expat_employee_import_wizard"/>
+
     </data>
 </openerp>
