@@ -184,6 +184,87 @@ class purchase_order_line(osv.osv):
             
 purchase_order_line()
 
+
+class supplier_catalogue(osv.osv):
+    
+    _inherit = 'supplier.catalogue'
+    _description = 'Supplier catalogue'
+    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
+                }
+    
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every new order
+        @param cr: cursor to database
+        @param user: id of current user
+        @param ids: list of record ids to be process
+        @param context: context arguments, like lang, time zone
+        @return: return a result
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = 'Supplier catalogue'
+        code = 'supplier.catalogue'
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        }
+        return seq_pool.create(cr, uid, seq)
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create from purchase_order
+        create the sequence for the numbering of the lines
+        '''
+        vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        
+        return super(supplier_catalogue, self).create(cr, uid, vals, context)
+
+supplier_catalogue()
+
+
+class supplier_catalogue_line(osv.osv):
+    '''
+    override of purchase_order_line class
+    '''
+    _inherit = 'supplier.catalogue.line'
+    _description = 'Supplier Catalogue Line'
+    _columns = {
+                'line_number': fields.integer(string='Line', required=True),
+                }
+    _order = 'line_number'
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        _inherit = 'supplier.catalogue.line'
+        
+        add the corresponding line number
+        '''
+        if self._name != 'supplier.catalogue.merged.line':
+            # gather the line number from the sale order sequence
+            order = self.pool.get('supplier.catalogue').browse(cr, uid, vals['catalogue_id'], context)
+            sequence = order.sequence_id
+            line = sequence.get_id(test='id', context=context)
+            vals.update({'line_number': line})
+        
+        # create the new sale order line
+        result = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
+        
+        return result
+            
+supplier_catalogue_line()
+
+
 class ir_sequence(osv.osv):
     '''
     override of ir_sequence from account as of a bug when the id is a list

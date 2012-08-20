@@ -449,13 +449,11 @@ class supplier_catalogue(osv.osv):
             ids = [ids]
         message = ''
         plural= ''
-        line = 1    
         for var in self.browse(cr, uid, ids, context=context):
             if var.line_ids:
                 for var in var.line_ids:
                     if var.to_correct_ok:
-                        line_num = line
-                        line += 1
+                        line_num = var.line_number
                         if message:
                             message += ', '
                         message += str(line_num)
@@ -614,6 +612,7 @@ class supplier_catalogue_line(osv.osv):
         return True
     
     _columns = {
+        'line_number': fields.integer(string='Line'),
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
