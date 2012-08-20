@@ -127,7 +127,7 @@ def compute_price_value(**kwargs):
     error_list = kwargs['to_write']['error_list']
     context = kwargs['context']
     order_type = context.get('_terp_view_name', False)
-    if order_type!= 'Purchase Orders':
+    if order_type not in ['Purchase Orders', 'Requests for Quotation']:
         if not row.cells[4] or not row.cells[4].data:
             if default_code:
                 error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
