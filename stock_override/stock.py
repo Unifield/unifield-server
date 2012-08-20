@@ -483,14 +483,17 @@ class stock_picking(osv.osv):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
                 sp_type = False
-                inv_type = False # by default action_invoice_create make an 'out_invoice'
-                # used to find if invoice is a refund
-                src_usage = dest_usage = None
-                
+                inv_type = self._get_invoice_type(sp)
                 if sp.type == 'in' or sp.type == 'internal':
-                    sp_type = 'purchase'
+                    if inv_type == 'out_refund':
+                        sp_type = 'sale_refund'
+                    else:
+                        sp_type = 'purchase'
                 elif sp.type == 'out':
-                    sp_type = 'sale'
+                    if inv_type == 'in_refund':
+                        sp_type = 'purchase_refund'
+                    else:
+                        sp_type = 'sale'
                 # Journal type
                 journal_type = sp_type
                 # Disturb journal for invoice only on intermission partner type
@@ -500,7 +503,7 @@ class stock_picking(osv.osv):
                 if not journal_ids:
                     raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
                 # Create invoice
-                self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, False, {})
+                self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], inv_type, False, {})
         return res
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
