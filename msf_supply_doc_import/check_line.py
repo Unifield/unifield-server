@@ -23,9 +23,12 @@ def product_value(cr, uid, **kwargs):
     msg = ''
     row = kwargs['row']
     product_obj = kwargs['product_obj']
-    comment = kwargs['to_write']['comment']
-    proc_type = kwargs['to_write']['proc_type']
-    price_unit = kwargs['to_write']['price_unit']
+    # Tender does not have comment, it is an empty string
+    comment = kwargs['to_write'].get('comment', '')
+    # Tender does not have proc_type, it is False
+    proc_type = kwargs['to_write'].get('proc_type', False)
+    # Tender does not have price_unit, it is False
+    price_unit = kwargs['to_write'].get('price_unit', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
     if row.cells[0] and row.cells[0].data:
@@ -131,21 +134,32 @@ def compute_currency_value(cr, uid, **kwargs):
     functional_currency_id = kwargs['to_write']['functional_currency_id']
     warning_list = kwargs['to_write']['warning_list']
     currency_obj = kwargs['currency_obj']
-    browse_sale = kwargs['browse_sale']
+    browse_sale = kwargs.get('browse_sale', False)
+    browse_purchase = kwargs.get('browse_sale', False)
+    # the cell number change between Internal Request and Sale Order
+    cell_nb = kwargs['cell']
     fc_id = False
     msg = None
-    if row.cells[6]: 
-        curr = row.cells[6].data
+    if row.cells[cell_nb]: 
+        curr = row.cells[cell_nb].data
         if curr:
             try:
                 curr_name = curr.strip().upper()
                 currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                if currency_ids:
+                if currency_ids and browse_sale:
                     if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
                         fc_id = currency_ids[0]
                     else:
                         imported_curr_name = currency_obj.browse(cr, uid, currency_ids)[0].name
                         default_curr_name = browse_sale.pricelist_id.currency_id.name
+                        msg = "The imported currency '%s' was not consistent and has been replaced by the \
+                            currency '%s' of the order, please check the price."%(imported_curr_name, default_curr_name)
+                elif currency_ids and browse_purchase:
+                    if currency_ids[0] == browse_purchase.pricelist_id.currency_id.id:
+                        fc_id = currency_ids[0]
+                    else:
+                        imported_curr_name = currency_obj.browse(cr, uid, currency_ids)[0].name
+                        default_curr_name = browse_purchase.pricelist_id.currency_id.name
                         msg = "The imported currency '%s' was not consistent and has been replaced by the \
                             currency '%s' of the order, please check the price."%(imported_curr_name, default_curr_name)
                         
@@ -164,11 +178,13 @@ def comment_value(**kwargs):
     row = kwargs['row']
     comment = kwargs['to_write']['comment']
     warning_list = kwargs['to_write']['warning_list']
-    if row.cells[7]:
-        if comment and row.cells[7].data:
-            comment += ', %s'%row.cells[7].data
-        elif row.cells[7].data:
-            comment = row.cells[7].data
+    # the cell number change between Internal Request and Sale Order
+    cell_nb = kwargs['cell']
+    if row.cells[cell_nb]:
+        if comment and row.cells[cell_nb].data:
+            comment += ', %s'%row.cells[cell_nb].data
+        elif row.cells[cell_nb].data:
+            comment = row.cells[cell_nb].data
     else:
         warning_list.append("No comment was defined")
     return {'comment': comment, 'warning_list': warning_list}
