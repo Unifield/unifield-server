@@ -76,12 +76,12 @@ class tender(osv.osv):
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
         
         # iterator on rows
-        reader = fileobj.getRows()
+        rows = fileobj.getRows()
         
         # ignore the first row
         line_num = 1
-        reader.next()
-        for row in reader:
+        rows.next()
+        for row in rows:
             # default values
             nb_lines_error = 0
             to_write={
@@ -141,6 +141,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
             msg_to_return = _("Please correct the red lines below, %s line%s errors ")%(nb_lines_error, plural)
         else:
             msg_to_return = _("All lines successfully imported")
+        if not [row for row in rows]:
+            msg_to_return = "The file doesn\'t contain valid line."
         
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id})
         

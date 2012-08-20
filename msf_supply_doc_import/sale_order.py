@@ -100,12 +100,12 @@ class sale_order(osv.osv):
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
         
         # iterator on rows
-        reader = fileobj.getRows()
+        rows = fileobj.getRows()
         
         # ignore the first row
-        reader.next()
+        rows.next()
         line_num = 0
-        for row in reader:
+        for row in rows:
             # default values
             browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
             to_write={
@@ -180,6 +180,8 @@ That means Not price, Neither Delivery requested date. """))
         
         if [x for x in obj.order_line if x.to_correct_ok]:
             msg_to_return = "The import of lines had errors, please correct the red lines below"
+        if not [row for row in rows]:
+            msg_to_return = "The file doesn\'t contain valid line."
         
         return self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id,})
     
@@ -304,6 +306,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         
         if [x for x in obj.order_line if x.to_correct_ok]:
             msg_to_return = "The import of lines had errors, please correct the red lines below"
+        if not [row for row in rows]:
+            msg_to_return = "The file doesn\'t contain valid line."
         
         return self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id,})
         
