@@ -120,7 +120,6 @@ class purchase_order(osv.osv):
         
         vals = {}
         vals['order_line'] = []
-        msg_to_return = _("All lines successfully imported")
 
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
@@ -134,6 +133,7 @@ class purchase_order(osv.osv):
         # ignore the first row
         rows.next()
         line_num = 0
+        to_write = {}
         for row in rows:
             browse_purchase = purchase_obj.browse(cr, uid, ids, context=context)[0]
             # default values
@@ -218,12 +218,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         # write order line on PO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
-        
-        if [x for x in obj.order_line if x.to_correct_ok]:
-            msg_to_return = "The import of lines had errors, please correct the red lines below"
-        if not [row for row in rows]:
-            msg_to_return = "The file doesn\'t contain valid line."
-        
+        msg_to_return = get_log_message(to_write = to_write, obj = obj)
         return self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id})
         
         

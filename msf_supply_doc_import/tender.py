@@ -54,7 +54,7 @@ class tender(osv.osv):
 
     def import_file(self, cr, uid, ids, context=None):
         '''
-        Import lines from file
+        Import lines from Excel file (in xml)
         '''
         if not context:
             context = {}
@@ -81,6 +81,7 @@ class tender(osv.osv):
         # ignore the first row
         line_num = 1
         rows.next()
+        to_write = {}
         for row in rows:
             # default values
             nb_lines_error = 0
@@ -130,20 +131,9 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         # write tender line on tender
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
-        
         nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True), ('tender_id', '=', ids[0])], context=context)
-        
-        if nb_lines_error:
-            if nb_lines_error > 1:
-                plural = 's have'
-            elif nb_lines_error == 1:
-                plural = ' has'
-            msg_to_return = _("Please correct the red lines below, %s line%s errors ")%(nb_lines_error, plural)
-        else:
-            msg_to_return = _("All lines successfully imported")
-        if not [row for row in rows]:
-            msg_to_return = "The file doesn\'t contain valid line."
-        
+        # log message
+        msg_to_return = get_log_message(to_write = to_write, tender = True, nb_lines_error=nb_lines_error)
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id})
         
     def check_lines_to_fix(self, cr, uid, ids, context=None):

@@ -3,7 +3,8 @@
 """
 This module is dedicated to help checking lines of Excel file at importation.
 """
-    
+from tools.translate import _
+
 def check_empty_line(**kwargs):
     """
     Check if a line is not empty.
@@ -14,6 +15,29 @@ def check_empty_line(**kwargs):
     for cell in range(col_count):
         if row.cells[cell].data:
             return True
+
+def get_log_message(**kwargs):
+    """
+    Define log message
+    """
+    obj = kwargs.get('obj', False)
+    to_write = kwargs['to_write']
+    # nb_lines_error and tender are just for tender
+    nb_lines_error = kwargs.get('nb_lines_error', False)
+    tender = kwargs.get('tender', False)
+    # not for tender
+    obj = kwargs.get('obj', False)
+    msg_to_return = _("All lines successfully imported")
+    # nb_lines_error => is just for tender
+    if tender and nb_lines_error:
+        msg_to_return = "The import of lines had errors, please correct the red lines below"
+    # is for all but tender
+    elif not tender and [x for x in obj.order_line if x.to_correct_ok]:
+        msg_to_return = "The import of lines had errors, please correct the red lines below"
+    # is for all but tender
+    elif not to_write:
+        msg_to_return = "The file doesn\'t contain valid line."
+    return msg_to_return
 
 def product_value(cr, uid, **kwargs):
     """

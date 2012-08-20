@@ -76,7 +76,7 @@ class sale_order(osv.osv):
 
     def import_internal_req(self, cr, uid, ids, context=None):
         '''
-        Import lines from file specially for internal request
+        Import lines from Excel file (in xml) for internal request
         '''
         if not context:
             context = {}
@@ -91,7 +91,6 @@ class sale_order(osv.osv):
 
         vals = {}
         vals['order_line'] = []
-        msg_to_return = _("All lines successfully imported")
 
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
@@ -105,6 +104,7 @@ class sale_order(osv.osv):
         # ignore the first row
         rows.next()
         line_num = 0
+        to_write = {}
         for row in rows:
             # default values
             browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
@@ -177,17 +177,12 @@ That means Not price, Neither Delivery requested date. """))
         # write order line on SO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
-        
-        if [x for x in obj.order_line if x.to_correct_ok]:
-            msg_to_return = "The import of lines had errors, please correct the red lines below"
-        if not [row for row in rows]:
-            msg_to_return = "The file doesn\'t contain valid line."
-        
+        msg_to_return = get_log_message(to_write = to_write, obj = obj)
         return self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id,})
     
     def import_file(self, cr, uid, ids, context=None):
         '''
-        Import lines from file
+        Import lines from Excel file (in xml)
         '''
         if not context:
             context = {}
@@ -205,7 +200,6 @@ That means Not price, Neither Delivery requested date. """))
 
         vals = {}
         vals['order_line'] = []
-        msg_to_return = _("All lines successfully imported")
 
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
@@ -219,6 +213,7 @@ That means Not price, Neither Delivery requested date. """))
         # ignore the first row
         rows.next()
         line_num = 0
+        to_write = {}
         for row in rows:
             # default values
             browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
@@ -303,12 +298,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         # write order line on PO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
-        
-        if [x for x in obj.order_line if x.to_correct_ok]:
-            msg_to_return = "The import of lines had errors, please correct the red lines below"
-        if not [row for row in rows]:
-            msg_to_return = "The file doesn\'t contain valid line."
-        
+        msg_to_return = get_log_message(to_write = to_write, obj = obj)
         return self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id,})
         
     def check_lines_to_fix(self, cr, uid, ids, context=None):
