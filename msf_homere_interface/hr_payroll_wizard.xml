@@ -136,7 +136,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Import Expats">
-                    <label string="This will import Expat employees from an XLS file." colspan="4"/>
+                    <label string="This will import Expat employees from an XML file." colspan="4"/>
                     <newline/>
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>

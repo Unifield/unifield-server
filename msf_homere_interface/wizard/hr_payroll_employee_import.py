@@ -88,6 +88,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 result = ('hq_entries_tree', 'hq.entries', 'account_hq_entries')
                 domain = ""
                 context.update({'search_default_non_validated': 1})
+            if context.get('from') == 'expat_employee_import':
+                result = ('editable_view_employee_tree', 'hr.employee')
+                context.update({'search_default_employee_type_expatriate': 1})
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:

@@ -23,17 +23,74 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from base64 import decodestring
 
 class hr_expat_employee_import_wizard(osv.osv_memory):
     _name = 'hr.expat.employee.import'
     _description = 'Expat employee import'
 
     _columns = {
-        'file': fields.binary("File", filters="*.xls", required=True),
+        'file': fields.binary("File", filters="*.xml", required=True),
         'filename': fields.char(string="Imported filename", size=256),
     }
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Import XLS file
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for wiz in self.browse(cr, uid, ids):
+            # Prepare some values
+            created = 0
+            updated = 0
+            processed = 0
+            # Check that a file is given
+            if not wiz.file:
+                raise osv.except_osv(_('Error'), _('No file given'))
+            # Check file extension
+            if wiz.filename.split('.')[-1] != 'xml':
+                raise osv.except_osv(_('Warning'), _('This wizard only accept XML files.'))
+            # Read file
+            fileobj = SpreadsheetXML(xmlstring=decodestring(wiz.file))
+            reader = fileobj.getRows()
+            reader.next()
+            for line in reader:
+                processed += 1
+                name = line.cells and line.cells[0] and line.cells[0].data or False
+                if not name:
+                    continue
+                # Create Expat employee
+                self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex'})
+                created += 1
+            
+            context.update({'message': ' '})
+            
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+            view_id = view_id and view_id[1] or False
+            
+            # This is to redirect to Employee Tree View
+            context.update({'from': 'expat_employee_import'})
+            
+            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'})
+            
+            return {
+                'name': 'Expat Employee Import Confirmation',
+                'type': 'ir.actions.act_window',
+                'res_model': 'hr.payroll.import.confirmation',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'res_id': res_id,
+                'target': 'new',
+                'context': context,
+            }
 
 hr_expat_employee_import_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
