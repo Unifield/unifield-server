@@ -140,7 +140,7 @@ That means Not price, Neither Delivery requested date. """))
                 # Cell 0 : Product Code
                 p_value = {}
                 p_value = product_value(cr, uid, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 
+                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], price_unit: p_value['price_unit'],
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
                 
                 # Cell 2 : Quantity
@@ -245,39 +245,39 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 if not check_empty_line(row=row, col_count=col_count):
                     continue
                 
-                # Cell 0
+                # Cell 0 : Product Code
                 p_value = {}
                 p_value = product_value(cr, uid, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 
+                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
                 
-                # Cell 2
+                # Cell 2 : Quantity
                 qty_value = {}
                 qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
                 
-                # Cell 3
+                # Cell 3 : UOM
                 uom_value = {}
                 uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                      
-                # Cell 4
+                # Cell 4 : Price
                 price_value = {}
                 price_value = compute_price_value(row=row, to_write=to_write, context=context)
                 to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list']})
 
-                # Cell 5
+                # Cell 5 : Date
                 date_value = {}
                 date_value = compute_date_value(row=row, to_write=to_write, context=context)
                 to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
                 
-                # Cell 6
+                # Cell 6 : Currency
                 curr_value = {}
                 curr_value = compute_currency_value(cr, uid, cell=6, browse_sale=browse_sale, currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
                 
-                # Cell 7
+                # Cell 7 : Comment
                 c_value = {}
                 c_value = comment_value(row=row, cell=7,to_write=to_write, context=context)
                 to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})

@@ -74,7 +74,7 @@ def product_value(cr, uid, **kwargs):
     if not default_code:
         comment += ' Product Code to be defined'
         error_list.append(msg or 'The Product\'s Code has to be defined')
-    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list}
+    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit':price_unit}
 
 def quantity_value(**kwargs):
     """
@@ -121,10 +121,11 @@ def compute_price_value(**kwargs):
     Retrieves Price Unit from Excel file and compute it if None.
     """
     row = kwargs['row']
+    # the price_unit was updated in the product_value method if the product exists, else it was set to 1 by default.
     price_unit = kwargs['to_write']['price_unit']
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
-    if not row.cells[4]:
+    if not row.cells[4] or not row.cells[4].data:
         if default_code:
             error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
         else:
