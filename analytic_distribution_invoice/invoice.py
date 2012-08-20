@@ -80,8 +80,11 @@ class account_invoice(osv.osv):
                 if 'order_line_id' in el[2]:
                     el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
         return res
-
+    
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
+        return self.refund(cr, uid, ids, date, period_id, description, journal_id, None)
+
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
         """
         Reverse lines for given invoice
         """
@@ -90,7 +93,11 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', [x.id for x in inv.move_id.line_id])])
             self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
-        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
+        new_ids = super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
+        # add document date
+        if document_date:
+            self.write(cr, uid, new_ids, {'document_date': document_date})
+        return new_ids
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
