@@ -85,8 +85,8 @@ class analytic_distribution1(osv.osv):
                 continue
             if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
                 return 'invalid'
-            #if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
-            #    return 'invalid'
+            if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+                return 'invalid'
         return 'valid'
 
 analytic_distribution1()

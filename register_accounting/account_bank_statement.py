@@ -1395,9 +1395,13 @@ class account_bank_statement_line(osv.osv):
             elif absl.state == "temp" and postype == "temp":
                     raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
+            # Analytic distribution
             # Check analytic distribution presence
             if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
+            # Check analytic distribution validity
+            if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
+                raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
