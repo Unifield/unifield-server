@@ -11,9 +11,6 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
                     <xpath expr="/form/notebook/page/group[2]" position="replace">
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
@@ -92,23 +89,25 @@
                             <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
                     </xpath>
-                </data>
-            </field>
-        </record>
-        
-        <record id="purchase_order_tree" model="ir.ui.view">
-            <field name="name">purchase.order.type.tree.view</field>
-            <field name="model">purchase.order</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="purchase.purchase_order_tree" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
+                    <xpath expr="/form//field[@name='pricelist_id']" position="replace">
+                        <group colspan="2" col="3">
+                            <field name="no_line" invisible="1" />
+                            <field name="pricelist_id" string="Currency" colspan="2" 
+                                   attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"
+                                   domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
+                            <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
+                                    attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        </group>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='order_line']" position="attributes">
+                        <attribute name="on_change">order_line_change(order_line)</attribute>
                     </xpath>
                 </data>
             </field>
         </record>
+        
+        <!-- Here, there was a view to remove the 'Delete' button on purchase order tree view -->
         
     </data>
 </openerp>
