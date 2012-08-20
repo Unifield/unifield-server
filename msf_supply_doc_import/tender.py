@@ -206,6 +206,7 @@ class tender_line(osv.osv):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
+        warning = {}
         if product_uom and product_id:
             product_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
@@ -219,9 +220,7 @@ class tender_line(osv.osv):
                     'message':
                         "You have to select a product UOM in the same category than the purchase UOM of the product"
                     }
-                domain = {'product_uom':[('category_id','=',product.uom_id.category_id.id)]}
-                return{'warning': warning,'domain' : domain}
-        return True
+        return {'warning': warning}
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
