@@ -443,6 +443,27 @@ class supplier_catalogue(osv.osv):
                     msg_to_return = _("The import of lines had errors, please correct the red lines below")
             
         return self.log(cr, uid, obj.id, msg_to_return,)
+
+    def check_lines_to_fix(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        message = ''
+        plural= ''
+        line = 1    
+        for var in self.browse(cr, uid, ids, context=context):
+            if var.line_ids:
+                for var in var.line_ids:
+                    if var.to_correct_ok:
+                        line_num = line
+                        line += 1
+                        if message:
+                            message += ', '
+                        message += str(line_num)
+                        if len(message.split(',')) > 1:
+                            plural = 's'
+        if message:
+            raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
+        return True
     
 supplier_catalogue()
 
