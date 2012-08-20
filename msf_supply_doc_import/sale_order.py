@@ -29,6 +29,7 @@ from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from check_line import *
 
 class sale_order(osv.osv):
     """
@@ -108,7 +109,6 @@ class sale_order(osv.osv):
             # default values
             error_list = []
             to_correct_ok = False
-            show_msg_ok = False
             comment = ''
             browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
             functional_currency_id = browse_sale.pricelist_id.currency_id.id
@@ -193,10 +193,10 @@ That means Not price, Neither Delivery requested date. """))
                          uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                          to_correct_ok = True
                         
+                    show_msg_ok = True
                     try:
                         curr = row.cells[4].data
                         if not curr:
-                            show_msg_ok = True
                             error_list.append('No currency was defined.')
                         else:
                             try:
@@ -204,15 +204,13 @@ That means Not price, Neither Delivery requested date. """))
                                 currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
                                 if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
                                     functional_currency_id = currency_ids[0]
+                                    show_msg_ok = False
                                 else:
                                     error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_sale.pricelist_id.currency_id.name))
-                                    show_msg_ok = True
                             except Exception:
                                  error_list.append('The Currency Name was not found.')
-                                 show_msg_ok = True
                     except IndexError:
                          error_list.append('The Currency Name was not properly defined.')
-                         show_msg_ok = True
                     
                     try:
                         if row.cells[5].data:
@@ -286,188 +284,94 @@ That means Not price, Neither Delivery requested date. """))
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
         
         # iterator on rows
-        reader = fileobj.getRows()
+        rows = fileobj.getRows()
         
         # ignore the first row
-        reader.next()
+        rows.next()
         line_num = 0
-        for row in reader:
+        for row in rows:
             # default values
-            error_list = []
-            to_correct_ok = False
-            show_msg_ok = False
-            comment = ''
-            date_planned = obj.delivery_requested_date
             browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
-            functional_currency_id = browse_sale.pricelist_id.currency_id.id
-            price_unit = 1 # in case that the product is not found and we do not have price
-            product_qty = 1
-            nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-            nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-            nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-            nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
-            proc_type = 'make_to_order'
+            to_write={
+                'error_list' : [],
+                'warning_list': [],
+                'to_correct_ok' : False,
+                'show_msg_ok' : False,
+                'comment' : '',
+                'date_planned' : obj.delivery_requested_date,
+                'functional_currency_id' : browse_sale.pricelist_id.currency_id.id,
+                'price_unit' : 1, # in case that the product is not found and we do not have price
+                'product_qty' : 1,
+                'nomen_manda_0' :  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
+                'nomen_manda_1' :  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
+                'nomen_manda_2' :  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
+                'nomen_manda_3' :  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
+                'proc_type' : 'make_to_order',
+                'default_code' : False,
+                'confirmed_delivery_date': False,
+            }
             
             line_num += 1
-            row_len = len(row)
-            if row_len != 8:
+            col_count = len(row)
+            if col_count != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
-            try:
+            try:    
                 # we do not check row.cells[1].data because we don't care, we select the product based on its CODE
-                if (row.cells[0] and row.cells[0].data) or (row.cells[2] and row.cells[2].data) or (row.cells[3] and row.cells[3].data) or \
-                    (row.cells[4] and row.cells[4].data) or (row.cells[5] and row.cells[5].data) or (row.cells[6] and row.cells[6].data) or \
-                    (row.cells[7] and row.cells[7].data):
-                    # for each cell we check the value
-                    
-                    # Cell 1                    
-                    if row.cells[0] and row.cells[0].data:
-                        product_code = row.cells[0].data
-                        if product_code :
-                            try:
-                                product_code = product_code.strip()
-                                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                                if not p_ids:
-                                    default_code = False
-                                    to_correct_ok = True
-                                    comment += ' Code: %s, Description: %s'%(product_code, product_name)
-                                    error_list.append('The Product\'s Code and Description do not match.')
-                                else:
-                                    default_code = p_ids[0]
-                                    nomen_manda_0 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_0
-                                    nomen_manda_1 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_1
-                                    nomen_manda_2 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_2
-                                    nomen_manda_3 = product_obj.browse(cr, uid, [default_code], context=context)[0].nomen_manda_3
-                                    proc_type = product_obj.browse(cr, uid, [default_code], context=context)[0].procure_method
-                                    price_unit = product_obj.browse(cr, uid, [default_code], context=context)[0].list_price
-                            except Exception:
-                                 error_list.append('The Product Code and Description have to be a string.')
-                                 comment += ' Product Code and Description to be defined'
-                                 default_code = False
-                                 to_correct_ok = True
-                        else:
-                            default_code = False
-                            to_correct_ok = True
-                            comment += ' Code: %s'%(product_code or 'To be defined')
-                            error_list.append('The Product\'s Code has to be defined.')
-                        
-                    if row.cells[2] and not row.cells[2].data :
-                        to_correct_ok = True
-                        error_list.append('The Product Quantity was not set, we set it to 1 by default.')
-                    else:
-                        if row.cells[2] and row.cells[2].type in ['int','float']:
-                            product_qty = row.cells[2].data
-                        else:
-                            error_list.append('The Product Quantity was not a number and it is required to be more than 0, we set it to 1 by default.')
-                            to_correct_ok = True
-                    
-                    if row.cells[3]: 
-                        p_uom = row.cells[3].data
-                        if not p_uom:
-                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                            to_correct_ok = True
-                            error_list.append('No product UoM was defined.')
-                        else:
-                            try:
-                                uom_name = p_uom.strip()
-                                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
-                                if not uom_ids:
-                                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                                    to_correct_ok = True
-                                    error_list.append('The UOM was not found.')
-                                else:
-                                    uom_id = uom_ids[0]
-                            except Exception:
-                                 error_list.append('The UOM Name has to be a string.')
-                                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                                 to_correct_ok = True
-                    else:
-                         error_list.append('The UOM Name was not defined properly.')
-                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-                         to_correct_ok = True
-                         
-                    if row.cells[4] and not row.cells[4].data and default_code:
-                        to_correct_ok = True
-                        error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
-                    elif row.cells[4] and not row.cells[4].data and not default_code:
-                        to_correct_ok = True
-                        error_list.append('The Price Unit was not set and no product was found.')
-                    elif row.cells[4] and row.cells[4].type not in ['int','float'] and default_code:
-                         error_list.append('The Price Unit was not a number, we have taken the default "Field Price" of the product.')
-                         to_correct_ok = True
-                    elif row.cells[4].type not in ['int','float'] and not default_code:
-                        to_correct_ok = True
-                        error_list.append('The Price Unit was not a number and no product was found.')
-                    elif row.cells[4]:
-                            price_unit = row.cells[4].data
-                    else:
-                         error_list.append('The Price Unit was not defined properly.')
-                         to_correct_ok = True
-                    
-                    if row.cells[5] and row.cells[5].type == 'datetime':
-                        date_planned = row.cells[5].data
-                    else:
-                        error_list.append('The date format was not in a good format so we took the one from the header.')
-                        to_correct_ok = True
-                    
-                    if row.cells[6]: 
-                        curr = row.cells[6].data
-                        if not curr:
-                            show_msg_ok = True
-                            error_list.append('No currency was defined.')
-                        else:
-                            try:
-                                curr_name = curr.strip().upper()
-                                currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
-                                if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
-                                    functional_currency_id = currency_ids[0]
-                                else:
-                                    error_list.append("The imported currency '%s' was not consistent and has been replaced by the currency '%s' of the order, please check the price."%(currency_obj.browse(cr, uid, currency_ids, context=context)[0].name, browse_sale.pricelist_id.currency_id.name))
-                                    show_msg_ok = True
-                            except Exception:
-                                 error_list.append('The Currency Name was not found.')
-                                 show_msg_ok = True
-                    else:            
-                         error_list.append('No currency was defined.')
-                    
-                    if row.cells[7] and row.cells[7].data:
-                        if comment:
-                            comment += ', %s'%row.cells[7].data
-                        else:
-                            comment = row.cells[7].data
-                    else:
-                        error_list.append("No comment was defined")
-                        show_msg_ok = True
-        
-                    to_write = {
-                        'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
-                        'show_msg_ok': show_msg_ok, # the lines with show_msg_ok=True won't change color, it is just info
-                        'comment': comment,
-                        'nomen_manda_0': nomen_manda_0,
-                        'nomen_manda_1': nomen_manda_1,
-                        'nomen_manda_2': nomen_manda_2,
-                        'nomen_manda_3': nomen_manda_3,
-                        'confirmed_delivery_date': False,
-                        'order_id': obj.id,
-                        'product_id':  default_code,
-                        'default_code':  default_code,
-                        'product_uom': uom_id,
-                        'product_uom_qty': product_qty,
-                        'price_unit': price_unit,
-                        'date_planned': date_planned,
-                        'functional_currency_id': functional_currency_id,
-                        'type': proc_type,
-                        'text_error': '\n'.join(error_list), 
-                    }
-                    # we check consistency on the model of on_change functions to call for updating values
-                    sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-                    
-                    vals['order_line'].append((0, 0, to_write))
+                if not check_empty_line(row=row, col_count=col_count):
+                    continue
+                
+                # Cell 0
+                p_value = {}
+                p_value = product_value(cr, uid, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 
+                                 'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+                
+                # Cell 2
+                qty_value = {}
+                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+                
+                # Cell 3
+                uom_value = {}
+                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                     
+                # Cell 4
+                price_value = {}
+                price_value = compute_price_value(row=row, to_write=to_write, context=context)
+                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list']})
+
+                # Cell 5
+                date_value = {}
+                date_value = compute_date_value(row=row, to_write=to_write, context=context)
+                to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
+                
+                # Cell 6
+                curr_value = {}
+                curr_value = compute_currency_value(cr, uid, browse_sale=browse_sale, currency_obj=currency_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
+                
+                # Cell 7
+                c_value = {}
+                c_value = comment_value(row=row, to_write=to_write, context=context)
+                to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
+                to_write.update({
+                    'to_correct_ok': [True for x in to_write['error_list']], # the lines with to_correct_ok=True will be red
+                    'show_msg_ok': [True for x in to_write['warning_list']], # the lines with show_msg_ok=True won't change color, it is just info
+                    'order_id': obj.id,
+                    'text_error': '\n'.join(to_write['error_list']+to_write['warning_list']), 
+                })
+                # we check consistency on the model of on_change functions to call for updating values
+                sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                
+                vals['order_line'].append((0, 0, to_write))
             
             except IndexError:
                 print "The line num %s in the Excel file got element outside the defined 8 columns"% line_num
             
-        # write order line on SO
+        # write order line on PO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
         

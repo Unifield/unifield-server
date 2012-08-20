@@ -1,0 +1,175 @@
+# -*- coding: utf-8 -*-
+
+"""
+This module is dedicated to help checking lines of Excel file at importation.
+"""
+    
+def check_empty_line(**kwargs):
+    """
+    Check if a line is not empty.
+    If all cells are empty, return False.
+    """
+    row = kwargs['row']
+    col_count = kwargs['col_count']
+    for cell in range(col_count):
+        if row.cells[cell].data:
+            return True
+
+def product_value(cr, uid, **kwargs):
+    """
+    Compute product value according to cell content.
+    Return product_code, comment, msg.
+    """
+    msg = ''
+    row = kwargs['row']
+    product_obj = kwargs['product_obj']
+    comment = kwargs['to_write']['comment']
+    proc_type = kwargs['to_write']['proc_type']
+    price_unit = kwargs['to_write']['price_unit']
+    error_list = kwargs['to_write']['error_list']
+    default_code = kwargs['to_write']['default_code']
+    if row.cells[0] and row.cells[0].data:
+        product_code = row.cells[0].data
+        if product_code :
+            try:
+                product_code = product_code.strip()
+                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                if not p_ids:
+                    comment += ' Code: %s'%(product_code)
+                    msg = 'The Product\'s Code is not found in the database.'
+                else:
+                    default_code = p_ids[0]
+                    proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
+                    price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
+            except Exception:
+                 msg = 'The Product Code has to be a string.'
+            
+    if not default_code:
+        comment += ' Product Code to be defined'
+        error_list.append(msg or 'The Product\'s Code has to be defined')
+    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list}
+
+def quantity_value(**kwargs):
+    """
+    Compute qty value of the cell.
+    """
+    row = kwargs['row']
+    product_qty = kwargs['to_write']['product_qty']
+    error_list = kwargs['to_write']['error_list']
+    if not row.cells[2] :
+        error_list.append('The Product Quantity was not set. It is set to 1 by default.')
+    else:
+        if row.cells[2].type in ['int','float']:
+            product_qty = row.cells[2].data
+        else:
+            error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
+    return {'product_qty': product_qty, 'error_list': error_list}
+
+def compute_uom_value(cr, uid, **kwargs):
+    """
+    Retrieves product UOM from Excel file
+    """
+    row = kwargs['row']
+    uom_obj = kwargs['uom_obj']
+    obj_data = kwargs['obj_data']
+    error_list = kwargs['to_write']['error_list']
+    uom_id = False
+    msg = None
+    if row.cells[3]:
+        try:
+            uom_name = row.cells[3].data.strip()
+            uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
+            if uom_ids:
+                uom_id = uom_ids[0]
+        except Exception:
+            msg = 'The UOM Name has to be a string.'
+
+    if not uom_id:
+         error_list.append(msg or 'The UOM Name was not valid.')
+         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+    return {'uom_id': uom_id, 'error_list': error_list}
+
+def compute_price_value(**kwargs):
+    """
+    Retrieves Price Unit from Excel file and compute it if None.
+    """
+    row = kwargs['row']
+    price_unit = kwargs['to_write']['price_unit']
+    default_code = kwargs['to_write']['default_code']
+    error_list = kwargs['to_write']['error_list']
+    if not row.cells[4]:
+        if default_code:
+            error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
+        else:
+            error_list.append('The Price and Product not found.')
+    elif row.cells[4].type not in ['int','float'] and not default_code:
+         error_list.append('The Price Unit was not a number and no product was found.')
+    elif row.cells[4].type in ['int','float']:
+         price_unit = row.cells[4].data
+    else:        
+         error_list.append('The Price Unit was not defined properly.')
+    return {'price_unit': price_unit, 'error_list': error_list}
+
+def compute_date_value(**kwargs):
+    """
+    Retrieves Date from Excel file or take the one from the parent
+    """
+    row = kwargs['row']
+    date_planned = kwargs['to_write']['date_planned']
+    error_list = kwargs['to_write']['error_list']
+    if row.cells[5] and row.cells[5].type == 'datetime':
+       date_planned = row.cells[5].data
+    else:
+       error_list.append('The date format was not correct. The date from the header has been taken.')
+    return {'date_planned': date_planned, 'error_list': error_list}
+
+def compute_currency_value(cr, uid, **kwargs):
+    """
+    Retrieves Currency from Excel file or take the one from the parent
+    """
+    row = kwargs['row']
+    functional_currency_id = kwargs['to_write']['functional_currency_id']
+    warning_list = kwargs['to_write']['warning_list']
+    currency_obj = kwargs['currency_obj']
+    browse_sale = kwargs['browse_sale']
+    fc_id = False
+    msg = None
+    if row.cells[6]: 
+        curr = row.cells[6].data
+        if curr:
+            try:
+                curr_name = curr.strip().upper()
+                currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
+                if currency_ids:
+                    if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
+                        fc_id = currency_ids[0]
+                    else:
+                        imported_curr_name = currency_obj.browse(cr, uid, currency_ids)[0].name
+                        default_curr_name = browse_sale.pricelist_id.currency_id.name
+                        msg = "The imported currency '%s' was not consistent and has been replaced by the \
+                            currency '%s' of the order, please check the price."%(imported_curr_name, default_curr_name)
+                        
+            except Exception:
+                 msg = 'The Currency Name was not valid.'
+    if fc_id:
+        functional_currency_id = fc_id
+    else:
+        warning_list.append(msg or 'The Currency Name was not found.')
+    return {'functional_currency_id': functional_currency_id, 'warning_list': warning_list}
+
+def comment_value(**kwargs):
+    """
+    Retrieves comment from Excel file
+    """
+    row = kwargs['row']
+    comment = kwargs['to_write']['comment']
+    warning_list = kwargs['to_write']['warning_list']
+    if row.cells[7]:
+        if comment and row.cells[7].data:
+            comment += ', %s'%row.cells[7].data
+        elif row.cells[7].data:
+            comment = row.cells[7].data
+    else:
+        warning_list.append("No comment was defined")
+    return {'comment': comment, 'warning_list': warning_list}
+        
