@@ -21,25 +21,19 @@
 #
 ##############################################################################
 
-{
-    "name" : "Homere Interface",
-    "version" : "0.1",
-    "description" : "Homere interface with OpenERP",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Human Resources",
-    "depends" : ["base", "account_override", "hr", "analytic_distribution", "spreadsheet_xml"],
-    "init_xml" : [],
-    "update_xml" : [
-        'security/ir.model.access.csv',
-        'res_company_view.xml',
-        'hr_view.xml',
-        'hr_payroll_wizard.xml',
-        'hr_payroll_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
 
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+
+class hr_expat_employee_import_wizard(osv.osv_memory):
+    _name = 'hr.expat.employee.import'
+    _description = 'Expat employee import'
+
+    _columns = {
+        'file': fields.binary("File", filters="*.xls", required=True),
+        'filename': fields.char(string="Imported filename", size=256),
+    }
+
+hr_expat_employee_import_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
