@@ -50,7 +50,7 @@ class stock_picking(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.unlink(cr, uid, ids, context)
+        return self.unlink(cr, uid, ids, context)
     
 stock_picking()
 
@@ -81,7 +81,7 @@ class purchase_order(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.unlink(cr, uid, ids, context)
+        return self.unlink(cr, uid, ids, context)
     
 purchase_order()
 
@@ -112,7 +112,7 @@ class sale_order(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.unlink(cr, uid, ids, context)
+        return self.unlink(cr, uid, ids, context)
     
 sale_order()
 
@@ -143,7 +143,7 @@ class tender(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.unlink(cr, uid, ids, context)
+        return self.unlink(cr, uid, ids, context)
     
 tender()
 
@@ -174,6 +174,6 @@ class composition_kit(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.unlink(cr, uid, ids, context)
+        return self.unlink(cr, uid, ids, context)
     
 composition_kit()
