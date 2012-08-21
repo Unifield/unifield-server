@@ -1377,6 +1377,39 @@ class account_bank_statement_line(osv.osv):
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
+    def update_analytic_lines(self, cr, uid, ids, distrib=False, context=None):
+        """
+        Update analytic lines for temp posted lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        ml_obj = self.pool.get('account.move.line')
+        distro_obj = self.pool.get('analytic.distribution')
+        aal_obj = self.pool.get('account.analytic.line')
+        for absl in self.browse(cr, uid, ids):
+            if absl.state != 'temp':
+                continue
+            # Search all moves lines linked to this register line
+            move_ids = [x.id for x in absl.move_ids]
+            move_line_ids = ml_obj.search(cr, uid, [('move_id', 'in', move_ids)])
+            # Renew analytic lines
+            for line in ml_obj.browse(cr, uid, move_line_ids):
+                if line.analytic_distribution_id:
+                    # remove distribution
+                    distro_obj.unlink(cr, uid, line.analytic_distribution_id.id)
+                    distrib_id = distrib or (absl.analytic_distribution_id and absl.analytic_distribution_id.id) or False
+                    ml_obj.write(cr, uid, line.id, {'analytic_distribution_id': distro_obj.copy(cr, uid, distrib_id, {}) or False})
+            aal_ids = aal_obj.search(cr, uid, [('move_id', 'in', move_line_ids)], context=context)
+            # first delete them
+            aal_obj.unlink(cr, uid, aal_ids)
+            # then create them again
+            ml_obj.create_analytic_lines(cr, uid, move_line_ids)
+        return True
+
     def posting(self, cr, uid, ids, postype, context=None):
         """
         Write some statement line into some account move lines with a state that depends on postype.
@@ -1393,7 +1426,7 @@ class account_bank_statement_line(osv.osv):
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
             elif absl.state == "temp" and postype == "temp":
-                    raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
+                raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
             # Analytic distribution
             # Check analytic distribution presence
@@ -1409,6 +1442,9 @@ class account_bank_statement_line(osv.osv):
                 absl = self.browse(cr, uid, absl.id, context=context)
 
             if postype == "hard":
+                # Update analytic lines
+                if absl.account_id.user_type.code in ['expense']:
+                    self.update_analytic_lines(cr, uid, absl.id)
                 # some verifications
                 if absl.is_transfer_with_change:
                     if not absl.transfer_journal_id:
