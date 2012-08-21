@@ -204,6 +204,18 @@ class res_config_configurable(osv.osv_memory):
         else:
             raise osv.except_osv(_('Error'), _('No previous wizard found !'))
         
+        current_user_menu = self.pool.get('res.users')\
+            .browse(cr, uid, uid).menu_id
+        # return the action associated with the menu
+        return self.pool.get(current_user_menu.type)\
+            .read(cr, uid, current_user_menu.id)
+        
+    def action_finish(self, cr, uid, ids, context=None):
+        open_todo_ids = self.pool.get('ir.actions.todo').search(cr, uid, [('state', '=', 'open')])
+        self.pool.get('ir.actions.todo').write(cr, uid, open_todo_ids, {'state': 'done'})
+        
+        return self.next(cr, uid, ids, context=context)
+        
 
     def action_skip(self, cr, uid, ids, context=None):
         """ Action handler for the ``skip`` event.

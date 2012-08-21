@@ -29,6 +29,8 @@
                    type="object" string="Skip" colspan="1"/>
            <button name="action_next" icon="gtk-go-forward"
                    type="object" string="Next" colspan="1"/>
+           <button name="action_finish" icon="gtk-quit"
+                   type="object" string="Finish" colspan="1" />
          </group>
         </form>
       </field>
