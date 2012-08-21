@@ -173,23 +173,20 @@ class so_po_common(osv.osv_memory):
                 values['product_uom'] = self.get_uom_id(cr, uid, line.product_uom, context=context)
 
             if 'have_analytic_distribution_from_header' in line_dict: 
-                values['product_qty'] = line.have_analytic_distribution_from_header
+                values['have_analytic_distribution_from_header'] = line.have_analytic_distribution_from_header
                 
             if 'line_number' in line_dict:
-                values['product_qty'] = line.line_number
+                values['line_number'] = line.line_number
                 
             if 'price_unit' in line_dict:
                 values['price_unit'] = line.price_unit
                 
             if 'notes' in line_dict:
-                values['product_qty'] = line.notes
+                values['notes'] = line.notes
 
             if 'comment' in line_dict:
                 values['comment'] = line.comment
 
-            if 'product_qty' in line_dict:
-                values['product_uom_qty'] = line.product_qty
-            
             if 'product_uom_qty' in line_dict: # come from the SO
                 values['product_qty'] = line.product_uom_qty
 
@@ -216,6 +213,9 @@ class so_po_common(osv.osv_memory):
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
+                    product_obj = self.pool.get('product.product')
+                    procure_method = product_obj.browse(cr, uid, [rec_id], context=context)[0].procure_method
+                    values['type'] = procure_method
                 else:
                     values['name'] = line.comment
             else:
