@@ -32,7 +32,9 @@ class sale_price_setup(osv.osv_memory):
     
     _columns = {
         'sale_price': fields.float(digits=(16,2), string='Fields price percentage', required=True,
-                                   help='This percentage will be applied on field price from product form view.'),
+                                   help="""This percentage will be applied on field price from product form view.
+  You have to give a decimal value, i.e. 0.5 for 50% or 0.02 for 2%.
+  The Field Price is computed as follow: [Standard Price * (1 + Fields price percentage)]"""),
     }
     
     def _check_sale_price_negative_value(self, cr, uid, ids, context=None):
