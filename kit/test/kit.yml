@@ -92,13 +92,91 @@
     delay: 7.0
     order_id: kit_so_A
     price_unit: 1.0
-    product_id: kit_product_A
+    product_id: kit_product_B
     product_uom: product.product_uom_unit
     product_uom_qty: 10
     salesman_id: base.user_admin
     state: draft
     th_weight: 0.0
     type: make_to_order
+-
+  I open the replacement wizard but before check the state of sale order line - to test import function
+-
+  !python {model: sale.order}: |
+    so_id = ref("kit_so_A")
+    sol_obj = self.pool.get('sale.order.line')
+    for obj in self.browse(cr, uid, [so_id], context=context):
+      assert len(obj.order_line) == 1, 'the number of sale order line is wrong - 1 - %s'%len(obj.order_line)
+      for line in obj.order_line:
+        assert line.so_state_stored == 'draft', 'so state stored is wrong - draft - %s'%line.so_state_stored
+        assert line.product_id.id == ref("kit_product_B"), 'the product from the sale order line is wrong - %s - %s'%(ref("kit_product_B"),line.product_id.id)
+        res = sol_obj.de_kitting(cr, uid, [line.id], context=context)
+        model = res['res_model']
+        id = res['res_id']
+        c = res['context']
+        context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I complete the the theoretical kit - kit_compo_03, so it can be used in the wizard
+-
+  !python {model: composition.kit}: |
+    self.mark_as_completed(cr, uid, [ref("kit_compo_03")], context=context)
+-
+  I select the theoretical kit - kit_compo_03, import the items - test on change functions
+-
+  !python {model: kit.selection.sale}: |
+    self.write(cr, uid, context['wizard']['ids'], {'kit_id': ref("kit_compo_03")}, context=context['wizard']['c'])
+    self.import_items(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+    # set price_unit and test on_change functions
+    for line in self.browse(cr, uid, context['wizard']['id'], context=context['wizard']['c']).product_ids_kit_selection:
+      line.write({'price_unit_kit_selection_line': 10}, context=context['wizard']['c'])
+      # I add pol_ids which normally comes from <field context=...
+      line.on_product_id_change(line.product_id_kit_selection_line.id, line.qty_kit_selection_line, line.uom_id_kit_selection_line.id, line.price_unit_kit_selection_line, context=dict(context['wizard']['c'], sol_ids=context['wizard']['c']['active_ids']))
+      line.on_uom_id_change(line.product_id_kit_selection_line.id, line.qty_kit_selection_line, line.uom_id_kit_selection_line.id, line.price_unit_kit_selection_line, context=dict(context['wizard']['c'], sol_ids=context['wizard']['c']['active_ids']))
+      line.on_qty_change(line.product_id_kit_selection_line.id, line.qty_kit_selection_line, line.uom_id_kit_selection_line.id, line.price_unit_kit_selection_line, context=dict(context['wizard']['c'], sol_ids=context['wizard']['c']['active_ids']))
+-
+  I open the replacement wizard to test processing
+-
+  !python {model: sale.order}: |
+    so_id = ref("kit_so_A")
+    sol_obj = self.pool.get('sale.order.line')
+    for obj in self.browse(cr, uid, [so_id], context=context):
+      assert len(obj.order_line) == 1, 'the number of sale order line is wrong - 1 - %s'%len(obj.order_line)
+      for line in obj.order_line:
+        assert line.so_state_stored == 'draft', 'so state stored is wrong - draft - %s'%line.so_state_stored
+        assert line.product_id.id == ref("kit_product_B"), 'the product from the sale order line is wrong - %s - %s'%(ref("kit_product_B"),line.product_id.id)
+        res = sol_obj.de_kitting(cr, uid, [line.id], context=context)
+        model = res['res_model']
+        id = res['res_id']
+        c = res['context']
+        context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I select kit_product_A
+-
+  !python {model: kit.selection.sale.line}: |
+    values = {'order_line_id_kit_selection_sale_line': ref("kit_sol_A1"),
+              'wizard_id_kit_selection_sale_line': context['wizard']['id'],
+              'product_id_kit_selection_sale_line': ref("kit_product_A"),
+              'qty_kit_selection_sale_line': 1.0,
+              'uom_id_kit_selection_sale_line': ref("product.product_uom_unit"),
+              'price_unit_kit_selection_sale_line': 1.0,
+              }
+    self.create(cr, uid, values, context=context=context['wizard']['c'])
+-
+  I process the wizard
+-
+  !python {model: kit.selection.sale}: |
+    self.do_de_kitting(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I check the purchase order line after replacement - 100 kit_product_C at arrival
+-
+  !python {model: sale.order}: |
+    so_id = ref("kit_so_A")
+    sol_obj = self.pool.get('sale.order.line')
+    for obj in self.browse(cr, uid, [so_id], context=context):
+      assert len(obj.order_line) == 1, 'the number of sale order line is wrong - 1 - %s'%len(obj.order_line)
+      for line in obj.order_line:
+        assert line.product_id.id == ref("kit_product_A"), 'the product from the purchase order line is wrong - %s - %s'%(ref("kit_product_A"),line.product_id.id)
+        assert line.product_qty == 10.0*1.0, 'the number of product is wrong - 10 - %s'%line.product_qty
 -
   I validate kit_sol_A1
 -
