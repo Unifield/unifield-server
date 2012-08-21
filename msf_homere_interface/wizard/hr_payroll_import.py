@@ -244,14 +244,14 @@ class hr_payroll_import(osv.osv_memory):
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
             # Decode file string
-            fileobj = NamedTemporaryFile('w+')
+            fileobj = NamedTemporaryFile('w+b')
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format
-            fileobj.seek(0)
+            filename = fileobj.name
+            fileobj.close()
             try:
-                zipobj = zf(fileobj.name, 'r')
+                zipobj = zf(filename, 'r')
             except:
-                fileobj.close()
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
             if zipobj.namelist():
                 namelist = zipobj.namelist()
