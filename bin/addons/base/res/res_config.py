@@ -45,35 +45,35 @@ class res_config_configurable(osv.osv_memory):
         a tuple of (non_open_todos:int, total_todos: int)
         '''
         return (self.pool.get('ir.actions.todo')\
-                .search_count(cr, uid, [('state','<>','open')], context),
+                .search_count(cr, uid, [('state', '<>', 'open')], context),
                 self.pool.get('ir.actions.todo')\
                 .search_count(cr, uid, [], context))
 
     def _progress(self, cr, uid, context=None):
         closed, total = self.get_current_progress(cr, uid, context=context)
         if total:
-            return round(closed*100./total)
+            return round(closed * 100. / total)
         return 100.
 
     _columns = dict(
-        progress = fields.float('Configuration Progress', readonly=True),
+        progress=fields.float('Configuration Progress', readonly=True),
     )
 
     _defaults = dict(
-        progress = _progress,
+        progress=_progress,
     )
 
     def _next_action(self, cr, uid, context=None):
         todos = self.pool.get('ir.actions.todo')
         self.__logger.info('getting next %s', todos)
-        active_todos = todos.search(cr, uid, [('state','=','open')],
+        active_todos = todos.search(cr, uid, [('state', '=', 'open')],
                                     limit=1)
         if active_todos:
             todo_obj = todos.browse(cr, uid, active_todos[0], context=None)
             todo_groups = map(lambda x:x.id, todo_obj.groups_id)
             dont_skip_todo = True
             if todo_groups:
-                cr.execute("select 1 from res_groups_users_rel where uid=%s and gid IN %s",(uid, tuple(todo_groups),))
+                cr.execute("select 1 from res_groups_users_rel where uid=%s and gid IN %s", (uid, tuple(todo_groups),))
                 dont_skip_todo = bool(cr.fetchone())
             if dont_skip_todo:
                 return todos.browse(cr, uid, active_todos[0], context=None)
@@ -94,13 +94,22 @@ class res_config_configurable(osv.osv_memory):
             self.__logger.warn(_("Couldn't find previous ir.actions.todo"))
             return
         previous_todo.write({'state':state})
+        if not context.get('no_update_previous', False):
+            next_action = self._next_action(cr, uid, context=context)
+            previous_todo.write({'previous': next_action.id})
 
     def _next(self, cr, uid, context=None):
+        if not context:
+            context = {}
         self.__logger.info('getting next operation')
         next = self._next_action(cr, uid)
         self.__logger.info('next action is %s', next)
         if next:
             action = next.action_id
+            if context.get('no_update_previous', False):
+                c = {'previous_id': next.id}
+            else:
+                c = {}
             return {
                 'view_mode': action.view_mode,
                 'view_type': action.view_type,
@@ -108,6 +117,7 @@ class res_config_configurable(osv.osv_memory):
                 'res_model': action.res_model,
                 'type': action.type,
                 'target': action.target,
+                'context': c,
             }
         self.__logger.info('all configuration actions have been executed')
 
@@ -119,8 +129,9 @@ class res_config_configurable(osv.osv_memory):
 
     def start(self, cr, uid, ids, context=None):
         ids2 = self.pool.get('ir.actions.todo').search(cr, uid, [], context=context)
+        self.pool.get('ir.actions.todo').write(cr, uid, ids2, {'previous': False})
         for todo in self.pool.get('ir.actions.todo').browse(cr, uid, ids2, context=context):
-            if (todo.restart=='always') or (todo.restart=='onskip' and (todo.state in ('skip','cancel'))):
+            if (todo.restart == 'always') or (todo.restart == 'onskip' and (todo.state in ('skip', 'cancel'))):
                 todo.write({'state':'open'})
         return self.next(cr, uid, ids, context)
 
@@ -167,6 +178,32 @@ class res_config_configurable(osv.osv_memory):
         next = self.execute(cr, uid, ids, context=None)
         if next: return next
         return self.next(cr, uid, ids, context=context)
+    
+    def action_previous(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        
+        context.update({'no_update_previous': True})
+        
+        previous = self.next(cr, uid, ids, context=context)
+        if previous.get('context', {}).get('previous_id', False):
+            previous_id = self.pool.get('ir.actions.todo').search(cr, uid, [('previous', '=', previous['context']['previous_id'])])
+            if previous_id:
+                self.pool.get('ir.actions.todo').write(cr, uid, previous_id[0], {'state': 'open'})
+                action = self.pool.get('ir.actions.todo').browse(cr, uid, previous_id[0]).action_id
+                return {
+                        'view_mode': action.view_mode,
+                        'view_type': action.view_type,
+                        'view_id': action.view_id and [action.view_id.id] or False,
+                        'res_model': action.res_model,
+                        'type': action.type,
+                        'target': action.target,
+                    }
+            else:
+                raise osv.except_osv(_('Error'), _('No previous wizard found !'))
+        else:
+            raise osv.except_osv(_('Error'), _('No previous wizard found !'))
+        
 
     def action_skip(self, cr, uid, ids, context=None):
         """ Action handler for the ``skip`` event.
@@ -309,8 +346,8 @@ class res_config_installer(osv.osv_memory):
         return modules.browse(
             cr, uid,
             modules.search(cr, uid,
-                           [('name','in',selectable),
-                            ('state','in',['to install', 'installed', 'to upgrade'])],
+                           [('name', 'in', selectable),
+                            ('state', 'in', ['to install', 'installed', 'to upgrade'])],
                            context=context),
             context=context)
 
@@ -342,7 +379,7 @@ class res_config_installer(osv.osv_memory):
 
         hooks_results = set()
         for module in base:
-            hook = getattr(self, '_if_%s'%(module), None)
+            hook = getattr(self, '_if_%s' % (module), None)
             if hook:
                 hooks_results.update(hook(cr, uid, ids, context=None) or set())
 
@@ -380,7 +417,7 @@ class res_config_installer(osv.osv_memory):
                 continue
             fields[module.name].update(
                 readonly=True,
-                help= ustr(fields[module.name].get('help', '')) +
+                help=ustr(fields[module.name].get('help', '')) + 
                      _('\n\nThis addon is already installed on your system'))
         return fields
 
@@ -391,7 +428,7 @@ class res_config_installer(osv.osv_memory):
         self.__logger.info('Selecting addons %s to install', to_install)
         modules.state_update(
             cr, uid,
-            modules.search(cr, uid, [('name','in',to_install)]),
+            modules.search(cr, uid, [('name', 'in', to_install)]),
             'to install', ['uninstalled'], context=context)
         cr.commit() #TOFIX: after remove this statement, installation wizard is fail
         new_db, self.pool = pooler.restart_pool(cr.dbname, update_module=True)
@@ -408,7 +445,7 @@ class ir_actions_configuration_wizard(osv.osv_memory):
     not to break existing but not-yet-migrated addons, the old wizard was
     reintegrated and gutted.
     '''
-    _name='ir.actions.configuration.wizard'
+    _name = 'ir.actions.configuration.wizard'
     _inherit = 'res.config'
     __logger = logging.getLogger(_name)
 

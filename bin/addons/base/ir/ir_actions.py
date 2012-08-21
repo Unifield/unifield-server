@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import fields,osv
+from osv import fields, osv
 from tools.safe_eval import safe_eval as eval
 import tools
 import time
@@ -39,7 +39,7 @@ class actions(osv.osv):
     _order = 'name'
     _columns = {
         'name': fields.char('Action Name', required=True, size=64),
-        'type': fields.char('Action Type', required=True, size=32,readonly=True),
+        'type': fields.char('Action Type', required=True, size=32, readonly=True),
         'usage': fields.char('Action Usage', size=32),
     }
     _defaults = {
@@ -68,7 +68,7 @@ class report_xml(osv.osv):
         return res
 
     def _report_content_inv(self, cursor, user, id, name, value, arg, context=None):
-        self.write(cursor, user, id, {name+'_data': value}, context=context)
+        self.write(cursor, user, id, {name + '_data': value}, context=context)
 
     def _report_sxw(self, cursor, user, ids, name, arg, context=None):
         res = {}
@@ -90,15 +90,15 @@ class report_xml(osv.osv):
         result = cr.dictfetchall()
         svcs = netsvc.Service._services
         for r in result:
-            if svcs.has_key('report.'+r['report_name']):
+            if svcs.has_key('report.' + r['report_name']):
                 continue
             if r['report_rml'] or r['report_rml_content_data']:
-                report_sxw('report.'+r['report_name'], r['model'],
-                        opj('addons',r['report_rml'] or '/'), header=r['header'])
+                report_sxw('report.' + r['report_name'], r['model'],
+                        opj('addons', r['report_rml'] or '/'), header=r['header'])
             if r['report_xsl']:
-                report_rml('report.'+r['report_name'], r['model'],
-                        opj('addons',r['report_xml']),
-                        r['report_xsl'] and opj('addons',r['report_xsl']))
+                report_rml('report.' + r['report_name'], r['model'],
+                        opj('addons', r['report_xml']),
+                        r['report_xsl'] and opj('addons', r['report_xsl']))
 
     _name = 'ir.actions.report.xml'
     _table = 'ir_act_report_xml'
@@ -164,15 +164,15 @@ class act_window(osv.osv):
         return _('Invalid model name in the action definition.')
     
     _constraints = [
-        (_check_model, _invalid_model_msg, ['res_model','src_model'])
+        (_check_model, _invalid_model_msg, ['res_model', 'src_model'])
     ]
 
     def _views_get_fnc(self, cr, uid, ids, name, arg, context=None):
-        res={}
+        res = {}
         for act in self.browse(cr, uid, ids):
-            res[act.id]=[(view.view_id.id, view.view_mode) for view in act.view_ids]
+            res[act.id] = [(view.view_id.id, view.view_mode) for view in act.view_ids]
             modes = act.view_mode.split(',')
-            if len(modes)>len(act.view_ids):
+            if len(modes) > len(act.view_ids):
                 find = False
                 if act.view_id:
                     res[act.id].append((act.view_id.id, act.view_id.type))
@@ -195,9 +195,9 @@ class act_window(osv.osv):
             if act.search_view_id:
                 search_view_id = act.search_view_id.id
             else:
-                res_view = self.pool.get('ir.ui.view').search(cr, uid, 
-                        [('model','=',act.res_model),('type','=','search'),
-                        ('inherit_id','=',False)], context=context)
+                res_view = self.pool.get('ir.ui.view').search(cr, uid,
+                        [('model', '=', act.res_model), ('type', '=', 'search'),
+                        ('inherit_id', '=', False)], context=context)
                 if res_view:
                     search_view_id = res_view[0]
             if search_view_id:
@@ -209,8 +209,8 @@ class act_window(osv.osv):
             else:
                 def process_child(node, new_node, doc):
                     for child in node.childNodes:
-                        if child.localName=='field' and child.hasAttribute('select') \
-                                and child.getAttribute('select')=='1':
+                        if child.localName == 'field' and child.hasAttribute('select') \
+                                and child.getAttribute('select') == '1':
                             if child.childNodes:
                                 fld = doc.createElement('field')
                                 for attr in child.attributes.keys():
@@ -218,7 +218,7 @@ class act_window(osv.osv):
                                 new_node.appendChild(fld)
                             else:
                                 new_node.appendChild(child)
-                        elif child.localName in ('page','group','notebook'):
+                        elif child.localName in ('page', 'group', 'notebook'):
                             process_child(child, new_node, doc)
 
                 form_arch = self.pool.get(act.res_model).fields_view_get(cr, uid, False, 'form', context)
@@ -227,7 +227,7 @@ class act_window(osv.osv):
                 for child_node in new_node.childNodes[0].childNodes:
                     if child_node.nodeType == child_node.ELEMENT_NODE:
                         new_node.childNodes[0].removeChild(child_node)
-                process_child(dom_arc.childNodes[0],new_node.childNodes[0],dom_arc)
+                process_child(dom_arc.childNodes[0], new_node.childNodes[0], dom_arc)
 
                 form_arch['arch'] = new_node.toxml()
                 form_arch['fields'].update(fields_from_fields_get)
@@ -250,8 +250,8 @@ class act_window(osv.osv):
             help="Model name of the object to open in the view window"),
         'src_model': fields.char('Source Object', size=64,
             help="Optional model name of the objects on which this action should be visible"),
-        'target': fields.selection([('current','Current Window'),('new','New Window')], 'Target Window'),
-        'view_type': fields.selection((('tree','Tree'),('form','Form')), string='View Type', required=True,
+        'target': fields.selection([('current', 'Current Window'), ('new', 'New Window')], 'Target Window'),
+        'view_type': fields.selection((('tree', 'Tree'), ('form', 'Form')), string='View Type', required=True,
             help="View type: set to 'tree' for a hierarchical tree view, or 'form' for other views"),
         'view_mode': fields.char('View Mode', size=250, required=True,
             help="Comma-separated list of allowed view modes, such as 'form', 'tree', 'calendar', etc. (Default: tree,form)"),
@@ -354,7 +354,7 @@ class act_url(osv.osv):
     _columns = {
         'name': fields.char('Action Name', size=64, translate=True),
         'type': fields.char('Action Type', size=32, required=True),
-        'url': fields.text('Action URL',required=True),
+        'url': fields.text('Action URL', required=True),
         'target': fields.selection((
             ('new', 'New Window'),
             ('self', 'This Window')),
@@ -376,7 +376,7 @@ def model_get(self, cr, uid, context=None):
     mpool = self.pool.get('ir.model')
     for osv in osvs:
         model = osv.get('osv')
-        id = mpool.search(cr, uid, [('model','=',model)])
+        id = mpool.search(cr, uid, [('model', '=', model)])
         name = mpool.read(cr, uid, id)[0]['name']
         res.append((model, name))
 
@@ -398,8 +398,8 @@ class server_object_lines(osv.osv):
         'col1': fields.many2one('ir.model.fields', 'Destination', required=True),
         'value': fields.text('Value', required=True),
         'type': fields.selection([
-            ('value','Value'),
-            ('equation','Formula')
+            ('value', 'Value'),
+            ('equation', 'Formula')
         ], 'Type', required=True, size=32, change_default=True),
     }
     _defaults = {
@@ -426,15 +426,15 @@ class actions_server(osv.osv):
 
     def _select_objects(self, cr, uid, context=None):
         model_pool = self.pool.get('ir.model')
-        ids = model_pool.search(cr, uid, [('name','not ilike','.')])
+        ids = model_pool.search(cr, uid, [('name', 'not ilike', '.')])
         res = model_pool.read(cr, uid, ids, ['model', 'name'])
-        return [(r['model'], r['name']) for r in res] +  [('','')]
+        return [(r['model'], r['name']) for r in res] + [('', '')]
 
     def change_object(self, cr, uid, ids, copy_object, state, context=None):
         if state == 'object_copy':
             model_pool = self.pool.get('ir.model')
             model = copy_object.split(',')[0]
-            mid = model_pool.search(cr, uid, [('model','=',model)])
+            mid = model_pool.search(cr, uid, [('model', '=', model)])
             return {
                 'value':{'srcmodel_id':mid[0]},
                 'context':context
@@ -450,17 +450,17 @@ class actions_server(osv.osv):
         'name': fields.char('Action Name', required=True, size=64, help="Easy to Refer action by name e.g. One Sales Order -> Many Invoices", translate=True),
         'condition' : fields.char('Condition', size=256, required=True, help="Condition that is to be tested before action is executed, e.g. object.list_price > object.cost_price"),
         'state': fields.selection([
-            ('client_action','Client Action'),
-            ('dummy','Dummy'),
-            ('loop','Iteration'),
-            ('code','Python Code'),
-            ('trigger','Trigger'),
-            ('email','Email'),
-            ('sms','SMS'),
-            ('object_create','Create Object'),
-            ('object_copy','Copy Object'),
-            ('object_write','Write Object'),
-            ('other','Multi Actions'),
+            ('client_action', 'Client Action'),
+            ('dummy', 'Dummy'),
+            ('loop', 'Iteration'),
+            ('code', 'Python Code'),
+            ('trigger', 'Trigger'),
+            ('email', 'Email'),
+            ('sms', 'SMS'),
+            ('object_create', 'Create Object'),
+            ('object_copy', 'Copy Object'),
+            ('object_write', 'Write Object'),
+            ('other', 'Multi Actions'),
         ], 'Action Type', required=True, size=32, help="Type of the Action that is to be executed"),
         'code':fields.text('Python Code', help="Python code to be executed"),
         'sequence': fields.integer('Sequence', help="Important when you deal with multiple actions, the execution order will be decided based on this, low number is higher priority."),
@@ -468,7 +468,7 @@ class actions_server(osv.osv):
         'action_id': fields.many2one('ir.actions.actions', 'Client Action', help="Select the Action Window, Report, Wizard to be executed."),
         'trigger_name': fields.selection(_select_signals, string='Trigger Name', size=128, help="Select the Signal name that is to be used as the trigger."),
         'wkf_model_id': fields.many2one('ir.model', 'Workflow On', help="Workflow to be executed on this model."),
-        'trigger_obj_id': fields.many2one('ir.model.fields','Trigger On', help="Select the object from the model on which the workflow will executed."),
+        'trigger_obj_id': fields.many2one('ir.model.fields', 'Trigger On', help="Select the object from the model on which the workflow will executed."),
         'email': fields.char('Email Address', size=512, help="Provides the fields that will be used to fetch the email address, e.g. when you select the invoice, then `object.invoice_address_id.email` is the field which gives the correct address"),
         'subject': fields.char('Subject', size=1024, translate=True, help="Specify the subject. You can use fields from the object, e.g. `Hello [[ object.partner_id.name ]]`"),
         'message': fields.text('Message', translate=True, help="Specify the message. You can use the fields from the object. e.g. `Dear [[ object.partner_id.name ]]`"),
@@ -592,13 +592,13 @@ class actions_server(osv.osv):
             if not expr:
                 continue
 
-            if action.state=='client_action':
+            if action.state == 'client_action':
                 if not action.action_id:
                     raise osv.except_osv(_('Error'), _("Please specify an action to launch !"))
                 return self.pool.get(action.action_id.type)\
                     .read(cr, uid, action.action_id.id, context=context)
 
-            if action.state=='code':
+            if action.state == 'code':
                 localdict = {
                     'self': self.pool.get(action.model_id.model),
                     'context': dict(context), # copy context to prevent side-effects of eval
@@ -617,7 +617,7 @@ class actions_server(osv.osv):
                 user = config['email_from']
                 address = str(action.email)
                 try:
-                    address =  eval(str(action.email), cxt)
+                    address = eval(str(action.email), cxt)
                 except:
                     pass
 
@@ -782,33 +782,39 @@ act_window_close()
 # This model use to register action services.
 TODO_STATES = [('open', 'To Do'),
                ('done', 'Done'),
-               ('skip','Skipped'),
-               ('cancel','Cancelled')]
+               ('skip', 'Skipped'),
+               ('cancel', 'Cancelled')]
 
 class ir_actions_todo(osv.osv):
     _name = 'ir.actions.todo'
-    _columns={
+    _columns = {
         'action_id': fields.many2one(
             'ir.actions.act_window', 'Action', select=True, required=True,
             ondelete='cascade'),
         'sequence': fields.integer('Sequence'),
         'state': fields.selection(TODO_STATES, string='State', required=True),
         'name':fields.char('Name', size=64),
-        'restart': fields.selection([('onskip','On Skip'),('always','Always'),('never','Never')],'Restart',required=True),
+        'restart': fields.selection([('onskip', 'On Skip'), ('always', 'Always'), ('never', 'Never')], 'Restart', required=True),
         'groups_id':fields.many2many('res.groups', 'res_groups_action_rel', 'uid', 'gid', 'Groups'),
         'note':fields.text('Text', translate=True),
+        'previous': fields.many2one('ir.actions.todo', string='Previous'),
     }
-    _defaults={
+    _defaults = {
         'state': 'open',
         'sequence': 10,
         'restart': 'onskip',
     }
-    _order="sequence,name,id"
+    _order = "sequence,name,id"
+    
+    def del_previous(self, cr, uid):
+        ids = self.search(cr, uid, [])
+        self.write(cr, uid, ids, {'previous': False})
 
     def action_launch(self, cr, uid, ids, context=None):
         """ Launch Action of Wizard"""
         if context is None:
             context = {}
+        self.del_previous(cr, uid)
         wizard_id = ids and ids[0] or False
         wizard = self.browse(cr, uid, wizard_id, context=context)
         res = self.pool.get('ir.actions.act_window').read(cr, uid, wizard.action_id.id, ['name', 'view_type', 'view_mode', 'res_model', 'context', 'views', 'type'], context=context)
