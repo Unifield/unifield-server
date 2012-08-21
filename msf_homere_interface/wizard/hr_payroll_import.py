@@ -244,7 +244,7 @@ class hr_payroll_import(osv.osv_memory):
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
             # Decode file string
-            fileobj = NamedTemporaryFile('w+b')
+            fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format
             filename = fileobj.name
