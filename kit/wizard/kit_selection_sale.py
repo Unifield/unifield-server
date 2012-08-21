@@ -37,7 +37,7 @@ class kit_selection_sale(osv.osv_memory):
                 'kit_id_kit_selection_sale': fields.many2one('composition.kit', string='Theoretical Kit'),
                 'order_line_id_kit_selection_sale': fields.many2one('sale.order.line', string='Sale Order Line', readonly=True, required=True),
                 # one2many
-                'product_ids_kit_selection_sale': fields.one2many('kit.selection.line', 'wizard_id_kit_selection_sale_line', string='Replacement Products'),
+                'product_ids_kit_selection_sale': fields.one2many('kit.selection.sale.line', 'wizard_id_kit_selection_sale_line', string='Replacement Products'),
                 # related fields
                 'partner_id_kit_selection_sale': fields.related('order_line_id_kit_selection_sale', 'order_id', 'partner_id', string='Partner', type='many2one', relation='res.partner', readonly=True, store=False),
                 'pricelist_id_kit_selection_sale': fields.related('order_line_id_kit_selection_sale', 'order_id', 'pricelist_id', string='Currency', type='many2one', relation='product.pricelist', readonly=True, store=False),
@@ -151,26 +151,25 @@ class kit_selection_sale(osv.osv_memory):
                 # price unit
                 price_unit = item_v.price_unit_kit_selection_sale_line
                 # call purchase order line on change function
-                data = self.pool.get('kit.selection.line')._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit,
+                data = self.pool.get('kit.selection.sale.line')._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit,
                                                                                type='product_id_change',
                                                                                context=dict(context, sol_ids=context['active_ids']))
                 # common dictionary of data
                 values = {'product_id': product_id,
                           'price_unit': price_unit,
                           'product_uom': uom_id,
+                          'product_uom_qty': sol.product_uom_qty*qty,
+                          'product_uos': uom_id,
+                          'product_uos_qty': sol.product_uos_qty*qty,
                           'default_code': data['value']['default_code'],
                           'name': data['value']['name'],
                           'default_name': data['value']['default_name'],
                           }
                 
-                # create a new sol
-                # update values for sol structure
-                values.update({'product_qty': sol.product_qty*qty})
-                
                 if last_line_id:
                     # the existing purchase order line has already been updated, we create a new one
                     # copy the original purchase order line
-                    last_line_id = pol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
+                    last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
                     # as sol state is draft anyhow, we do not need to process the created lineontext)
                 else:
                     # first item to be treated, we update the existing line
@@ -208,11 +207,12 @@ class kit_selection_sale_line(osv.osv_memory):
             price_unit = vals.get('price_unit_kit_selection_sale_line', 0.0)
             # gather default values
             data = self._call_sol_on_change(cr, uid, context['active_ids'],
-                                            product_id, qty, uom_id, price_unit,
-                                            context=dict(context, sol_ids=context['active_ids']))
+                                            product_id, qty, uom_id, price_unit, type='product_id_change',
+                                            context=context)
+            
             # update price_unit value
             vals.update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
-        return super(kit_selection_line, self).create(cr, uid, vals, context=context)
+        return super(kit_selection_sale_line, self).create(cr, uid, vals, context=context)
     
     def _call_sol_on_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, type, context=None):
         '''
@@ -275,18 +275,22 @@ class kit_selection_sale_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        # result
-        result = {'value': {'qty_kit_selection_sale_line': 0.0,
-                            'uom_id_kit_selection_sale_line': False,
-                            'price_unit_kit_selection_sale_line': 0.0}}
+        # product change, we reset everything
+        result = {'value': {'uom_id_kit_selection_sale_line': False,
+                            'price_unit_kit_selection_sale_line': 0.0,
+                            'qty_kit_selection_sale_line': 0.0}}
         # gather default values
 #        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_change', context=context)
-        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, context=context)
+        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, type='product_id_change', context=context)
+        
         # update result price_unit and default uom
-        result['value'].update({'price_unit_kit_selection_sale_line': 'price_unit' in data['value'] and data['value']['price_unit'] or 0.0,
-                                'qty_kit_selection_sale_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0,
-                                'uom_id_kit_selection_sale_line': 'product_uom' in data['value'] and data['value']['product_uom'] or False})
-        # return result
+        if 'price_unit' in data['value']:
+            result['value'].update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
+        if 'product_qty' in data['value']:
+            result['value'].update({'qty_kit_selection_sale_line': data['value']['product_qty']})
+        if 'product_uom' in data['value']:
+            result['value'].update({'uom_id_kit_selection_sale_line': data['value']['product_uom']})
+            
         return result
     
     def on_uom_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
@@ -302,15 +306,40 @@ class kit_selection_sale_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        # result
+        # uom change - we reset the qty and price
         result = {'value': {'qty_kit_selection_sale_line': 0.0,
                             'price_unit_kit_selection_sale_line': 0.0}}
         # gather default values
-        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_uom_change', context=context)
-        # update result price_unit - qty
-        result['value'].update({'price_unit_kit_selection_sale_line': 'price_unit' in data['value'] and data['value']['price_unit'] or 0.0,
-                                'qty_kit_selection_sale_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0})
-        # return result
+        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, type='product_uom_change', context=context)
+        # update result price_unit and default uom
+        if 'price_unit' in data['value']:
+            result['value'].update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
+        if 'product_qty' in data['value']:
+            result['value'].update({'qty_kit_selection_sale_line': data['value']['product_qty']})
+        return result
+    
+    def on_qty_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
+        '''
+        core function from purchase order line
+        
+        def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        # quick integrity check
+        assert context, 'No context defined, problem on method call'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # qty changed - we do not reset anything 
+        result = {'value': {}}
+        # gather default values
+        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, type='product_id_change', context=context)
+        # update result price_unit and default uom
+        if 'price_unit' in data['value']:
+            result['value'].update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
+        if 'product_uom' in data['value'] and not uom_id:
+            result['value'].update({'uom_id_kit_selection_sale_line': data['value']['product_uom']})
         return result
     
     _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),

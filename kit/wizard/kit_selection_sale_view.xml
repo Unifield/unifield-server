@@ -13,11 +13,11 @@
                 <field name="product_id_kit_selection_sale" colspan="4" />
                 <field name="kit_id_kit_selection_sale" colspan="3"
                 	context="{'wizard_composition_type': 'theoretical','composition_type': 'theoretical'}"
-                	domain="[('state', '=', 'completed'), ('composition_type', '=', 'theoretical'), ('composition_product_id', '=', product_id)]" />
+                	domain="[('state', '=', 'completed'), ('composition_type', '=', 'theoretical'), ('composition_product_id', '=', product_id_kit_selection_sale)]" />
                 <button name="import_items" type="object" string="Import Items from Theoretical Kit" icon="gtk-sort-descending" colspan="1" />
                 <group col="4" colspan="4">
                 	<field name="product_ids_kit_selection_sale" nolabel="True"
-                		context="{'pol_ids': [order_line_id_kit_selection_sale]}" />
+                		context="{'sol_ids': [order_line_id_kit_selection_sale]}" />
                 </group>
                 <group colspan="2" />
                 <button icon='gtk-cancel' special="cancel"
@@ -39,7 +39,7 @@
             			on_change="on_product_id_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
             		<field name="qty_kit_selection_sale_line"
             			context="partner_id=parent.partner_id_kit_selection_sale, quantity=qty_kit_selection_sale_line, pricelist=parent.pricelist_id_kit_selection_sale, uom=uom_id_kit_selection_sale_line, warehouse=parent.warehouse_id_kit_selection_sale"
-            			on_change="on_product_id_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
+            			on_change="on_qty_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
             		<field name="uom_id_kit_selection_sale_line"
             			on_change="on_uom_id_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
             		<field name="price_unit_kit_selection_sale_line" />
