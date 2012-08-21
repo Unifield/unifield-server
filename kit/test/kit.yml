@@ -160,7 +160,7 @@
               'uom_id_kit_selection_sale_line': ref("product.product_uom_unit"),
               'price_unit_kit_selection_sale_line': 1.0,
               }
-    self.create(cr, uid, values, context=context=context['wizard']['c'])
+    self.create(cr, uid, values, context=context['wizard']['c'])
 -
   I process the wizard
 -
