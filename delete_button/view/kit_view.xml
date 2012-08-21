@@ -31,7 +31,7 @@
                     </xpath>
                     <xpath expr="/tree/field[@name='state']" position="after">
                         <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                        states='draft' />
+                        states='draft' confirm='Do you really want to delete selected record(s) ?'/>
                     </xpath>
                 </data>
             </field>
