@@ -27,7 +27,6 @@
                 "purchase",
                 "tender_flow",
                 "procurement_request",
-                "kit",
                 ],
     "author": "MSF, TeMPO Consulting, Smile",
     "website": "",
@@ -41,7 +40,7 @@
                    'view/purchase_view.xml',
                    'view/sale_view.xml',
                    'view/tender_view.xml',
-                   'view/kit_view.xml',
+                   'view/product_view.xml',
                    ],
     'demo_xml': [
     ],
