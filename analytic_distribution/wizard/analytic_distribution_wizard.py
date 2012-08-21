@@ -1087,6 +1087,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             distrib = wizard.distribution_id or False
             aal_obj = self.pool.get('account.analytic.line')
             ml_obj = self.pool.get('account.move.line')
+            distro_obj = self.pool.get('analytic.distribution')
             if not distrib:
                 return False
             if wizard.move_line_id:
@@ -1121,6 +1122,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                             aal_obj.unlink(cr, uid, aal_ids, context=context)
                             # create new analytic lines
                             self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
+            elif wizard.register_line_id and wizard.register_line_id.state == 'temp':
+                # Search all moves lines linked to this register line
+                move_ids = [x.id for x in wizard.register_line_id.move_ids]
+                move_line_ids = ml_obj.search(cr, uid, [('move_id', 'in', move_ids)])
+                # Renew analytic lines
+                for line in ml_obj.browse(cr, uid, move_line_ids):
+                    if line.analytic_distribution_id:
+                        # remove distribution
+                        distro_obj.unlink(cr, uid, line.analytic_distribution_id.id)
+                        ml_obj.write(cr, uid, line.id, {'analytic_distribution_id': distro_obj.copy(cr, uid, distrib.id, {}) or False})
+                aal_ids = aal_obj.search(cr, uid, [('move_id', 'in', move_line_ids)], context=context)
+                # first delete them
+                aal_obj.unlink(cr, uid, aal_ids)
+                # then create them again
+                ml_obj.create_analytic_lines(cr, uid, move_line_ids)
         return True
 
 analytic_distribution_wizard()
