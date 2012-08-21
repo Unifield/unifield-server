@@ -25,7 +25,6 @@
         <field name="name">To Be Defined2</field>
         <field name="type">mandatory</field>
         <field name="level">2</field>
-        <field name="category_id" ref="cat_tbd" />
         <field name="parent_id" ref="nomen_tbd1"/>
     </record>
     

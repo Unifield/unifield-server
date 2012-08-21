@@ -21,7 +21,7 @@
 								 widget="selection"
 								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 							<field name="nomen_manda_2_s"
-								domain="[('parent_id', '=', -1)]"
+								domain="[('parent_id', '=', -1), ('category_id', '!=', False)]"
 								 widget="selection"
 								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 							<field name="nomen_manda_3_s"
