@@ -27,6 +27,7 @@
                 "purchase",
                 "tender_flow",
                 "procurement_request",
+                "useability_dashboard_and_menu",
                 ],
     "author": "MSF, TeMPO Consulting, Smile",
     "website": "",
