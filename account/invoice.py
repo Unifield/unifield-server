@@ -342,6 +342,7 @@ class account_invoice(osv.osv):
                 ctx = context.copy()
                 if vals.get('type', 'in_invoice') in ('out_invoice', 'out_refund'):
                     ctx = self.get_log_context(cr, uid, context=ctx)
+                ctx.update({'type': vals['type']})
                 message = _("Invoice '%s' is waiting for validation.") % name
                 self.log(cr, uid, inv_id, message, context=ctx)
             return res
