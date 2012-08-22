@@ -201,6 +201,7 @@ class procurement_order(osv.osv):
         '''
         When you run the scheduler and you have a sale order line with type = make_to_order,
         we modify the location_id to set 'cross docking' of the purchase order created in mirror
+        But if the sale_order is an Internal Request we do want "Cross docking" but "Input" as location_id
         '''
         if context is None:
             context = {}
@@ -213,8 +214,9 @@ class procurement_order(osv.osv):
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if len(ids) and setup.allocation_setup != 'unallocated':
+        sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if len(sol_ids) and setup.allocation_setup != 'unallocated' \
+        and not sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id.procurement_request:
             values.update({'cross_docking_ok': True, 'location_id' : self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return values  
 
@@ -354,9 +356,20 @@ class stock_picking(osv.osv):
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr,uid,[move_ids],context=context):
-                        # Don't change done stock moves
                         if move.state != 'done':
-                            move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+                            '''
+                            Specific rules for non-stockable products:
+                               * if the move is an outgoing delivery, picked them from cross-docking
+                               * else picked them from the non-stockable location
+                            '''
+                            if move.product_id.type == 'consu':
+                                if pick.type == 'out':
+                                    id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')
+                                else:
+                                    id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override','stock_location_non_stockable')
+                                move_obj.write(cr, uid, [move_ids], {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
+                            else:
+                                move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else :
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
@@ -396,6 +409,9 @@ class stock_picking(osv.osv):
         if setup.allocation_setup != 'unallocated':        
             cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        stock_location_non_stockable = self.pool.get('stock.location').search(cr, uid, [('non_stockable_ok', '=', True)])
+        if stock_location_non_stockable:
+            stock_location_non_stockable = stock_location_non_stockable[0]
 # ----------------------------------------------------------------------------------------------------------------
         partial_picking_obj = self.pool.get('stock.partial.picking')
         
@@ -419,8 +435,11 @@ class stock_picking(osv.osv):
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 if product_type not in ('service_recep', 'service'):
-                    # treat moves towards STOCK if NOT SERVICE
-                    values.update({'location_dest_id': stock_location_input})
+                    if product_type == 'consu' and stock_location_non_stockable:
+                        values.update({'location_dest_id': stock_location_non_stockable})
+                    else:
+                        # treat moves towards STOCK if NOT SERVICE
+                        values.update({'location_dest_id': stock_location_input})
         return values
     
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -446,6 +465,33 @@ class stock_picking(osv.osv):
             defaults.update({'location_id': location_id})
         
         return defaults
+    
+    def check_all_move_cross_docking(self, cr, uid, ids, context=None):
+        '''
+        Check if all stock moves are cross docking or to stock, in this case, the picking will be updated
+        '''
+        stock_todo = []
+        cross_todo = []
+        for pick in self.browse(cr, uid, ids, context=context):
+            to_cross = True
+            to_stock = True
+            for move in pick.move_lines:
+                to_cross = move.move_cross_docking_ok
+                to_stock = not move.move_cross_docking_ok
+                
+            if to_cross:
+                cross_todo.append(pick.id)
+            if to_stock:
+                cross_todo.append(pick.id)
+                
+        if stock_todo:
+            self.write(cr, uid, stock_todo, {'cross docking_ok': False})
+        if cross_todo:
+            self.write(cr, uid, cross_todo, {'cross docking_ok': True})
+            
+        return True
+                
+            
     
 stock_picking()
 
@@ -523,15 +569,21 @@ class stock_move(osv.osv):
             if move.state != 'done': 
                 todo.append(move.id)
         ret = True
+        picking_todo = []
         if todo:
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
 
             # below we cancel availability to recheck it
             stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
+            picking_todo.append(stock_picking_id)
             # we cancel availability
             self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
             # we recheck availability
             self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
+            
+#        if picking_todo:
+#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
+            
         return ret
 
     def button_stock (self, cr, uid, ids, context=None):
@@ -545,18 +597,36 @@ class stock_move(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         
         todo = []
+        picking_todo = []
         for move in self.browse(cr, uid, ids, context=context):
             if move.state != 'done':
-                self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
+                '''
+                Specific rules for non-stockable products:
+                   * if the move is an outgoing delivery, picked them from cross-docking
+                   * else picked them from the non-stockable location
+                '''
+                if move.product_id.type == 'consu':
+                    if move.picking_id.type == 'out':
+                        id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking','stock_location_cross_docking')
+                    else:
+                        id_loc_s = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override','stock_location_non_stockable')
+                    self.write(cr, uid, move.id, {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
+                else:
+                    self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id, 'move_cross_docking_ok': False}, context=context)
                 todo.append(move.id)
 
         if todo:
             # below we cancel availability to recheck it
             stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
+            picking_todo.append(stock_picking_id)
             # we cancel availability
             self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
             # we recheck availability
             self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
+            
+#        if picking_todo:
+#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
+            
         return True
 
 stock_move()

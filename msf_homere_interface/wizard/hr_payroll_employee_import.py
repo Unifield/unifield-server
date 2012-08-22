@@ -311,14 +311,14 @@ class hr_payroll_employee_import(osv.osv_memory):
         updated = 0
         processed = 0
         for wiz in self.browse(cr, uid, ids):
-            fileobj = NamedTemporaryFile('w+')
+            fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format
-            fileobj.seek(0)
+            filename = fileobj.name
+            fileobj.close()
             try:
-                zipobj = zf(fileobj.name)
+                zipobj = zf(filename)
             except:
-                fileobj.close()
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
             # read the contract file
             contract_ids = False
@@ -335,7 +335,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             try:
                 reader.next()
             except:
-                fileobj.close()
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))
             res = True
             for employee_data in reader:
@@ -346,7 +345,6 @@ class hr_payroll_employee_import(osv.osv_memory):
                 created += nb_created
                 updated += nb_updated
             # Close Temporary File
-            fileobj.close()
             # Delete previous created lines for employee's contracts
             if contract_ids:
                 self.pool.get('hr.contract.msf').unlink(cr, uid, contract_ids)

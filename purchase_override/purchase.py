@@ -25,6 +25,7 @@ from tools.translate import _
 import netsvc
 from mx.DateTime import *
 import time
+from osv.orm import browse_record, browse_null
 
 from workflow.wkf_expr import _eval_expr
 import logging
@@ -105,6 +106,18 @@ class purchase_order(osv.osv):
         
         return res
     
+    def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = True
+            for line in order.order_line:
+                res[order.id] = False
+                break
+            # better: if order.order_line: res[order.id] = False
+                
+        return res
+    
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -145,6 +158,7 @@ class purchase_order(osv.osv):
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=64),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
     
     _defaults = {
@@ -155,7 +169,8 @@ class purchase_order(osv.osv):
         'from_yml_test': lambda *a: False,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
-        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery']
+        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery'],
+        'no_line': lambda *a: True,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -332,6 +347,41 @@ class purchase_order(osv.osv):
             v.update({'dest_address_id': delivery_addr['delivery']})
         
         return {'value': v, 'domain': d}
+    
+    def change_currency(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to change the currency and update lines
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            data = {'order_id': order.id,
+                    'partner_id': order.partner_id.id,
+                    'partner_type': order.partner_id.partner_type,
+                    'new_pricelist_id': order.pricelist_id.id,
+                    'currency_rate': 1.00,
+                    'old_pricelist_id': order.pricelist_id.id}
+            wiz = self.pool.get('purchase.order.change.currency').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'purchase.order.change.currency',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': wiz,
+                    'target': 'new'}
+            
+        return True
+    
+    def order_line_change(self, cr, uid, ids, order_line):
+        res = {'no_line': True}
+        
+        if order_line:
+            res = {'no_line': False}
+        
+        return {'value': res}
 
     def _hook_confirm_order_message(self, cr, uid, context=None, *args, **kwargs):
         '''
@@ -374,6 +424,10 @@ class purchase_order(osv.osv):
         Update the confirmation date of the PO at confirmation.
         Check analytic distribution.
         '''
+        for order in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
+            if order.pricelist_id.id not in pricelist_ids:
+                raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
         # CODE MOVED TO self.check_analytic_distribution()
@@ -1155,6 +1209,74 @@ stock moves which are already processed : '''
 
         return True
     
+    def _hook_order_infos(self, cr, uid, *args, **kwargs):
+        '''
+        Hook to change the values of the PO
+        '''
+        order_infos = super(purchase_order, self)._hook_order_infos(cr, uid, *args, **kwargs)
+        order_id = kwargs['order_id']
+        
+        fields = ['invoice_method', 'minimum_planned_date', 'order_type',
+                  'categ', 'priority', 'internal_type', 'arrival_date',
+                  'transport_type', 'shipment_date', 'ready_to_ship_date',
+                  'cross_docking_ok', 'delivery_confirmed_date',
+                  'est_transport_lead_time', 'transport_mode', 'location_id',
+                  'dest_address_id', 'incoterm_id']
+        
+
+        delivery_requested_date = getattr(order_id, 'delivery_requested_date')
+        if not order_infos.get('delivery_requested_date') or delivery_requested_date < order_infos['delivery_requested_date']:
+            order_infos['delivery_requested_date'] = delivery_requested_date
+        
+        
+        for field in fields:
+            field_val = getattr(order_id, field)
+            if isinstance(field_val, browse_record):
+                field_val = field_val.id
+            elif isinstance(field_val, browse_null):
+                field_val = False
+            elif isinstance(field_val, list):
+                field_val = ((6, 0, tuple([v.id for v in field_val])),)
+            order_infos[field] = field_val
+            
+        return order_infos
+    
+    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
+        o_line = super(purchase_order, self)._hook_o_line_value(cr, uid, *args, **kwargs)
+        order_line = kwargs['order_line']
+        
+        # Copy all fields except order_id and analytic_distribution_id
+        fields = ['product_uom', 'price_unit', 'move_dest_id', 'product_qty', 'partner_id',
+                  'confirmed_delivery_date', 'nomenclature_description', 'default_code', 
+                  'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
+                  'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
+                  'to_correct_ok', 'text_error', 'sync_sol_db_id', 'sync_pol_db_id',
+                  'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 
+                  'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
+                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id']
+        
+        for field in fields:
+            field_val = getattr(order_line, field)
+            if isinstance(field_val, browse_record):
+                field_val = field_val.id
+            elif isinstance(field_val, browse_null):
+                field_val = False
+            elif isinstance(field_val, list):
+                field_val = ((6, 0, tuple([v.id for v in field_val])),)
+            o_line[field] = field_val
+            
+        
+        # Set the analytic distribution 
+        distrib_id = False
+        if order_line.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
+        elif order_line.order_id.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
+            
+        o_line['analytic_distribution_id'] = distrib_id
+        
+        return o_line
+    
 purchase_order()
 
 
@@ -1282,6 +1404,9 @@ class purchase_order_line(osv.osv):
             merged_ids = []
         
         new_vals = vals.copy()
+        # Don't include taxes on merged lines
+        if 'taxes_id' in new_vals:
+            new_vals.pop('taxes_id')
 
         if not merged_ids:
             new_vals['order_id'] = order_id
@@ -1753,6 +1878,37 @@ class purchase_order_line(osv.osv):
 
 
 purchase_order_line()
+
+class purchase_order_group(osv.osv_memory):
+    _name = "purchase.order.group"
+    _inherit = "purchase.order.group"
+    _description = "Purchase Order Merge"
+    
+    _columns = {
+        'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
+    }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
+        if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
+            raise osv.except_osv(_('Warning'),
+            _('Please select multiple order to merge in the list view.'))
+            
+        res['po_value_id'] = context['active_ids'][-1]
+        
+        return res
+    
+    def merge_orders(self, cr, uid, ids, context=None):
+        res = super(purchase_order_group, self).merge_orders(cr, uid, ids, context=context)
+        res.update({'context': {'search_default_draft': 1, 'search_default_approved': 0,'search_default_create_uid':uid, 'purchase_order': True}})
+        
+        if 'domain' in res and eval(res['domain'])[0][2]:
+            return res
+        
+        raise osv.except_osv(_('Error'), _('No PO merged !'))
+        return {'type': 'ir.actions.act_window_close'}
+    
+purchase_order_group()
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'

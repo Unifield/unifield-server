@@ -148,6 +148,7 @@ class account_invoice(osv.osv):
             debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
             inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
             intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+            supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
         except ValueError:
             return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
@@ -165,6 +166,13 @@ class account_invoice(osv.osv):
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
                 context.update(el[2])
+        # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
+        # filled with all the information; this leaded to having a "Sale" journal in the supplier
+        # invoice if it was saved after coming from this link. Here's the fix.
+        if (not context.get('journal_type', False) and context.get('type', False) == 'in_invoice'):
+            supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
+            context.update({'journal_type': 'purchase',
+                            'view_id': supplier_view_id})
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
