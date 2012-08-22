@@ -43,7 +43,7 @@ class update(osv.osv):
         'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
         'model': fields.char('Model', size=128, readonly=True),
         'session_id': fields.char('Session Id', size=128),
-        'sequence': fields.integer('Sequence'),
+        'sequence': fields.integer('Sequence', select=True),
         'version': fields.integer('Record Version'),
         'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null", select=True),
         'fields': fields.text("Fields"),
@@ -132,34 +132,38 @@ class update(osv.osv):
     
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
+        if not rules:
+            return None
         
-        where = [
-                    ('rule_id', 'in', rules), 
-                    ('sequence', '>', last_seq), 
-                    ('sequence', '<=', max_seq),
-                ]
+        base_query = ("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE sync_server_update.rule_id in ("""+"%s,"*(len(rules)-1)+"%s"+""") AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""") % (tuple(rules) + (last_seq, max_seq))
 
         ## Recover add own client updates to the list
         if not recover:
-            where.append( ('source', '!=', entity.id) )
+            base_query += " AND sync_server_update.source != %s" % entity.id
+
+        base_query += " ORDER BY sequence ASC, id ASC"
 
         ## Search first update which is "master"
         update_master = None
         while update_master is None:
-            ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
+            query = base_query + " OFFSET %s LIMIT %s" % (offset, max_size)
+            cr.execute(query)
+            ids = map(lambda x:x[0], cr.fetchall())
+            if not ids:
+                return None
             fetched_updates = self.get_update_to_send(cr, uid, entity, ids, recover, context)
             if fetched_updates:
                 update_master = fetched_updates[0]
-            elif not ids:
-                return None
             else:
                 offset += len(ids)
 
         ## Find next updates to send
-        ids = range(max_size)
+        ids = []
         update_to_send = []
-        while len(ids) == max_size and len(update_to_send) < max_size:
-            ids = self.search(cr, uid, where, offset=offset, limit=max_size, context=context)
+        while not ids:
+            query = base_query + " OFFSET %s LIMIT %s" % (offset, max_size)
+            cr.execute(query)
+            ids = map(lambda x:x[0], cr.fetchall())
             for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
                 if update.model == update_master.model and \
                    update.rule_id.id == update_master.rule_id.id and \

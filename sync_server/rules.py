@@ -158,33 +158,32 @@ class sync_rule(osv.osv):
         
         return group_ids
         
-    #TODO check when member of two group with the same type : duplicate rules
     def _compute_rules_to_send(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules_per_group(cr, uid, entity, context)
         ancestor_group = self._get_ancestor_groups(cr, uid, entity, context)
         children_group = self._get_children_groups(cr, uid, entity, context)
         
-        rules_to_send = []
+        rules_to_send = set()
         for group_id, rule_ids in rules_ids.items():
             for rule in self.browse(cr, uid, rule_ids):
                 if rule.direction == 'up' and entity.parent_id: #got a parent in the same group
                     if group_id in ancestor_group:
-                        rules_to_send.append(rule.id)
+                        rules_to_send.add(rule.id)
                 elif rule.direction == 'down' and entity.children_ids: #got children in the same group
                     if group_id in children_group:
-                        rules_to_send.append(rule.id)
+                        rules_to_send.add(rule.id)
                 else:
-                    rules_to_send.append(rule.id)
+                    rules_to_send.add(rule.id)
                     
-        return rules_to_send
+        return list(rules_to_send)
     
     def _compute_rules_to_receive(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules_per_group(cr, uid, entity, context)
-        rules_to_send = []
+        rules_to_send = set()
         for group_id, rule_ids in rules_ids.items():
-            rules_to_send.extend(rule_ids)
+            rules_to_send.update(rule_ids)
                     
-        return rules_to_send
+        return list(rules_to_send)
     
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []

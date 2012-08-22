@@ -83,7 +83,7 @@ class local_rule(osv.osv):
     _columns = {
         'server_id' : fields.integer('Server ID', required=True, readonly=True),
         'name' : fields.char('Rule name', size=64, readonly=True),
-        'model' : fields.many2one('ir.model','Model', readonly=True),
+        'model' : fields.many2one('ir.model','Model', readonly=True, select=True),
         'domain' : fields.text('Domain', required = False, readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'included_fields' : fields.text('Included Fields', readonly=True),
@@ -123,10 +123,10 @@ class update_to_send(osv.osv):
         'values':fields.text('Values', size=128, readonly=True),
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'owner' : fields.char('Owner', size=128, readonly=True),
-        'sent' : fields.boolean('Sent ?', readonly=True),
+        'sent' : fields.boolean('Sent ?', readonly=True, select=True),
         'sync_date' : fields.datetime('Start date',readonly=True),
         'sent_date' : fields.datetime('Sent date', readonly=True),
-        'session_id' : fields.char('Session Id', size=128, readonly=True),
+        'session_id' : fields.char('Session Id', size=128, readonly=True, select=True),
         'version' : fields.integer('Record Version', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
         'xml_id' : fields.many2one('ir.model.data', 'Synchronization information', readonly=True, ondelete="set null"),
@@ -140,12 +140,15 @@ class update_to_send(osv.osv):
     }
     
     def create_update(self, cr, uid, rule_id, session_id, context=None):
+        context = dict(context or {})
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         obj = self.pool.get(rule.model.model)
         
+        # Boring!
         included_fields = eval(rule.included_fields)
         if not 'id' in included_fields: 
             included_fields.append('id')
+        # --end
         
         if rule.domain:
             domain = eval(rule.domain)
@@ -154,37 +157,70 @@ class update_to_send(osv.osv):
             
         #print "domain", domain
             
-        ids = eval_poc_domain(obj, cr, uid, domain, context=context)
-        #print "ids that match the domain salut", ids
-        for id in ids:
-            xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
-            if not obj.need_to_push(cr, uid, id, included_fields, context=context):
-                continue
-
-            context['sync_context'] = True
-            
-            values = obj.export_data(cr, uid, [id], included_fields, context=context)['datas'][0]
-            fields_ref = obj.fields_get(cr, uid, [], context=context)
-            for (i,field) in enumerate(included_fields):
-                field = field.split('/')[0]
-                if field != 'id' and fields_ref[field]['type'] in ('many2one','many2many',) and not values[i]:
-                    values[i] = ''
-
-            owner = obj.get_destination_name(cr, uid, id, rule.owner_field, context=context)
-
-            data = {
+        ids_to_compute = obj.need_to_push(cr, uid,
+            eval_poc_domain(obj, cr, uid, domain, context=context),
+            included_fields, context=context)
+        if not ids_to_compute:
+            return
+        context['sync_context'] = True
+        fields_ref = obj.fields_get(cr, uid, [], context=context)
+        fields_ref['id'] = dict()
+        ustr_included_fields = tools.ustr(included_fields)
+        owners = obj.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, context)
+        datas = obj.export_data(cr, uid, ids_to_compute, included_fields, context=context)['datas']
+        xml_ids = [link_with_ir_model(obj, cr, uid, id, context=context) for id in ids_to_compute]
+        versions = obj.version(cr, uid, ids_to_compute, context=context)
+        clean_included_fields = self._clean_included_fields(cr, uid, included_fields)
+        for (i, row) in enumerate(datas):
+            # Boring: this block must be on client side
+            #for (j, field) in enumerate(clean_included_fields):
+            #    field = field.split('/')[0]
+            #    if not (field != 'id' and fields_ref[field]['type'].startswith('many2')): ##maybe better to ignore one2many..?
+            #    if 'relation' in fields_ref[field]:
+            #        row[j] = row[j] or ''
+            # --end
+            self.create(cr, uid, {
                 'session_id' : session_id,
-                'values' : tools.ustr(values),
+                'values' : tools.ustr(row),
                 'model' : rule.model.id,
-                'version' : obj.version(cr, uid, id, context=context) + 1,
+                'version' : versions[i] + 1,
                 'rule_id' : rule.id,
-                'xml_id' : xml_id,
-                'fields' : tools.ustr(included_fields),
-                'owner' : owner,
-            }
+                'xml_id' : xml_ids[i],
+                'fields' : ustr_included_fields,
+                'owner' : owners[i],
+            }, context=context)
             self.__logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
 
-            self.create(cr,uid, data, context=context)
+#        ids = eval_poc_domain(obj, cr, uid, domain, context=context)
+#        #print "ids that match the domain salut", ids
+#        for id in ids:
+#            xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
+#            if not obj.need_to_push(cr, uid, id, included_fields, context=context):
+#                continue
+#
+#            context['sync_context'] = True
+#            
+#            values = obj.export_data(cr, uid, [id], included_fields, context=context)['datas'][0]
+#            for (i,field) in enumerate(included_fields):
+#                field = field.split('/')[0]
+#                if field != 'id' and fields_ref[field]['type'] in ('many2one','many2many',) and not values[i]:
+#                    values[i] = ''
+#
+#            owner = obj.get_destination_name(cr, uid, id, rule.owner_field, context=context)
+#
+#            data = {
+#                'session_id' : session_id,
+#                'values' : tools.ustr(values),
+#                'model' : rule.model.id,
+#                'version' : obj.version(cr, uid, id, context=context) + 1,
+#                'rule_id' : rule.id,
+#                'xml_id' : xml_id,
+#                'fields' : tools.ustr(included_fields),
+#                'owner' : owner,
+#            }
+#            self.__logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
+#
+#            self.create(cr,uid, data, context=context)
             
     def create_package(self, cr, uid, session_id, packet_size, context=None):
         ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, context=context)
@@ -236,12 +272,12 @@ class update_received(osv.osv):
     _columns = {
         'source': fields.char('Source Instance', size=128, readonly=True), 
         'owner': fields.char('Owner Instance', size=128, readonly=True), 
-        'model' : fields.many2one('ir.model','Model', readonly=True),
+        'model' : fields.many2one('ir.model','Model', readonly=True, select=True),
         'sequence' : fields.integer('Sequence', readonly=True),
         'version' : fields.integer('Record Version', readonly=True),
         'fields' : fields.text("Fields"),
         'values' : fields.text("Values"),
-        'run' : fields.boolean("Run", readonly=True),
+        'run' : fields.boolean("Run", readonly=True, select=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'fallback_values':fields.text('Fallback values'),
 
@@ -399,7 +435,7 @@ class update_received(osv.osv):
     def _check_and_replace_missing_id(self, cr, uid, values, fields, fallback, message, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
         for i in xrange(0, len(fields)):
-            if '/id' in fields[i]:
+            if '/id' in fields[i] and values[i]:
                 xml_id_raw = values[i]
                 res_val = []
                 xml_ids = xml_id_raw.split(',')
