@@ -65,7 +65,7 @@
 					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
-						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner','=',sale_order_id)]"
+						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', sale_order_id)]"
 						context="{'product_id': product_id, 'choose_supplier': True, 'uom': uom_id, 'product_qty': qty}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />
