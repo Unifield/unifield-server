@@ -126,7 +126,7 @@ class kit_selection_sale(osv.osv_memory):
         integrity_check = self.validate_lines(cr, uid, ids, context=context)
         if not integrity_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, type='update', context=context)
+            return self.pool.get('wizard').open_wizard(cr, uid, sol_ids, type='update', context=context)
         # process
         ctx_keep_info = context.copy()
         ctx_keep_info['keepDateAndDistrib'] = True
@@ -344,7 +344,7 @@ class kit_selection_sale_line(osv.osv_memory):
     
     _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'order_line_id_kit_selection_sale_line': fields.many2one('sale.order.line', string='Sale Order Line', readonly=True, required=True),
-                'wizard_id_kit_selection_sale_line': fields.many2one('kit.selection', string='Kit Selection wizard'),
+                'wizard_id_kit_selection_sale_line': fields.many2one('kit.selection.sale', string='Kit Selection wizard'),
                 # data
                 'product_id_kit_selection_sale_line': fields.many2one('product.product', string='Product', required=True),
                 'qty_kit_selection_sale_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
