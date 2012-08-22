@@ -214,7 +214,7 @@
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='partner_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])],}</attribute>
-                        <attribute name="domain">[('check_partner_rfq', 'in', tender_id)]</attribute>
+                        <attribute name="domain">[('check_partner_rfq','in',tender_id)]</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='partner_address_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
