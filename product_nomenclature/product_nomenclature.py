@@ -38,25 +38,6 @@ _SUB_LEVELS = 6
 #----------------------------------------------------------
 class product_nomenclature(osv.osv):
 
-    def init(self, cr):
-        """
-        Load product_nomenclature_data.xml brefore product
-        """
-        if hasattr(super(product_nomenclature, self), 'init'):
-            super(product_nomenclature, self).init(cr)
-
-        mod_obj = self.pool.get('ir.module.module')
-        demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'product_nomenclature')])
-        if mod_id:
-            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-
-        if demo:
-            logging.getLogger('init').info('HOOK: module product_nomenclature: loading product_nomenclature_data.xml')
-            pathname = path.join('product_nomenclature', 'product_nomenclature_data.xml')
-            file = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
-
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
@@ -787,11 +768,50 @@ class product_category(osv.osv):
     _name = 'product.category'
     _inherit = 'product.category'
     
+    def init(self, cr):
+        """
+        Load product_nomenclature_data.xml brefore product
+        """
+        if hasattr(super(product_category, self), 'init'):
+            super(product_category, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        demo = False
+        mod_id = mod_obj.search(cr, 1, [('name', '=', 'product_nomenclature')])
+        if mod_id:
+            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
+
+        if demo:
+            logging.getLogger('init').info('HOOK: module product_nomenclature: loading product_nomenclature_data.xml')
+            pathname = path.join('product_nomenclature', 'product_nomenclature_data.xml')
+            file = tools.file_open(pathname)
+            tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+        if context is None:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            required = ['family_id']
+            has_required = False
+            for req in required:
+                if  req in vals:
+                    has_required = True
+                    break
+            if not has_required:
+                logging.getLogger('init').info('Loading default values for product.category')
+                vals.update({'family_id': self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 2), ('type', '=', 'mandatory'), ('category_id', '=', False)], limit=1)[0]})
+
+        return super(product_category, self).create(cr, uid, vals, context)
+
     _columns = {
         'family_id': fields.many2one('product.nomenclature', string='Family',
                                      domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '=', False)]",
                                      ),
     }
+    
     
 product_category()
 
