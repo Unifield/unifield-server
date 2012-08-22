@@ -176,7 +176,7 @@
       assert len(obj.order_line) == 1, 'the number of sale order line is wrong - 1 - %s'%len(obj.order_line)
       for line in obj.order_line:
         assert line.product_id.id == ref("kit_product_A"), 'the product from the purchase order line is wrong - %s - %s'%(ref("kit_product_A"),line.product_id.id)
-        assert line.product_qty == 10.0*1.0, 'the number of product is wrong - 10 - %s'%line.product_qty
+        assert line.product_uom_qty == 10.0*1.0, 'the number of product is wrong - 10 - %s'%line.product_uom_qty
 -
   I validate kit_sol_A1
 -
