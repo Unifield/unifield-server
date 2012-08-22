@@ -311,6 +311,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Prepare some values
         success_move_line_ids = []
         move_obj = self.pool.get('account.move')
+        aal_obj = self.pool.get('account.analytic.line')
         j_obj = self.pool.get('account.journal')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
         # Search correction journal
@@ -356,6 +357,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
+            # Search analytic lines from first move line
+            aal_ids = aal_obj.search(cr, uid, [('move_id', '=', ml.id)])
+            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
+            # Search analytic lines from reversed line and flag them as "is_reversal"
+            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)])
+            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True,})
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
         return success_move_line_ids
@@ -376,6 +383,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
+        aal_obj = self.pool.get('account.analytic.line')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
@@ -468,8 +476,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
             # Update analytic lines data (reversal: True)
-            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', new_ml_ids)])
-            self.pool.get('account.analytic.line').write(cr, uid, ana_ids, {'is_reversal': True})
+            ana_ids = aal_obj.search(cr, uid, [('move_id', 'in', new_ml_ids)])
+            aal_obj.write(cr, uid, ana_ids, {'is_reversal': True,})
+            # Update old analytic lines as "is_reallocated" to True
+            old_ana_ids = aal_obj.search(cr, uid, [('move_id', 'in', success_move_line_ids)])
+            aal_obj.write(cr, uid, old_ana_ids, {'is_reallocated': True,})
             # Save successful new move_id post
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
