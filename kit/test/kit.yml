@@ -84,7 +84,7 @@
     priority: normal
     categ: medical
 - 
-  I create a corresponding sale order line, with a batch management kit in it - prodA
+  I create a corresponding sale order line, with a batch management kit in it - prodB
 - 
   !record {model: sale.order.line, id: kit_sol_A1}:
     name: sol a1
