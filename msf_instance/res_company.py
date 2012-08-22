@@ -46,6 +46,9 @@ class res_company(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for id_ in ids:
             if 'currency_id' in vals:
                 company = self.browse(cr, uid, id_, context=context)
