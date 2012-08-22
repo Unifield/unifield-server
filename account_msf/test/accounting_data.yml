@@ -95,6 +95,7 @@
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_expatriates
     destination_ids: [analytic_distribution.analytic_account_destination_expatriates]
+    type_for_register: donation
 -
   I set 4500 account than default debit note account
 -

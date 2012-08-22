@@ -254,7 +254,8 @@
             		</xpath>
             	
             		<xpath expr="//tree[@string='Pricelist']/field[@name='rounding']" position="after">
-            			<field name="currency_id" />
+            		    <field name="partner_id" />
+            			<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
             		</xpath>
             		
             		<xpath expr="//tree[@string='Pricelist']/field[@name='valid_from']" position="after">
@@ -275,8 +276,10 @@
             <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
             	<data>	
+            	    <!-- Modificaiton of lines -->
             		<xpath expr="//form/field[@name='price']" position="after">
-            			<field name="currency_id" />
+            		    <field name="partner_id" />
+            			<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
             			<field name="valid_till" />
             			<field name="purchase_order_id" />
             			<field name="purchase_order_line_number" />

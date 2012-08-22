@@ -2016,8 +2016,10 @@ class stock_picking(osv.osv):
                     vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
 
-            # trigger workflow
+            # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [obj.id])
+            # check availability
+            self.action_assign(cr, uid, [obj.id], context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
@@ -2809,8 +2811,8 @@ class stock_move(osv.osv):
             loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
             res.update({'location_dest_id': loc_packing_id})
         elif 'subtype' in context and context.get('subtype', False) == 'standard':
-            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
-            res.update({'location_dest_id': loc_packing_id})
+            loc_output_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
+            res.update({'location_dest_id': loc_output_id})
         
         return res
     

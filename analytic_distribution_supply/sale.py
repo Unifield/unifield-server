@@ -96,7 +96,7 @@ class sale_order(osv.osv):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
 
-    def action_ship_proc_create(self, cr, uid, ids, context=None):
+    def wkf_validated(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
         Get a default analytic distribution if intermission.
@@ -149,7 +149,7 @@ class sale_order(osv.osv):
                 if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
                     raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
         # Default behaviour
-        res = super(sale_order, self).action_ship_proc_create(cr, uid, ids, context=context)
+        res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
 
     def action_invoice_create(self, cr, uid, ids, *args):

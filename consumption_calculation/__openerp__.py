@@ -38,6 +38,7 @@
         'consumption_view.xml',
         'expiry_calculation_view.xml',
         'history_consumption_view.xml',
+        'consumption_calculation_report.xml',
         'wizard/wizard_import_fmc_view.xml',
         'wizard/wizard_import_rac_view.xml',
         'wizard/wizard_export_fmc_rac_view.xml',
