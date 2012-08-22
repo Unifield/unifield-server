@@ -57,7 +57,6 @@ class hq_entries_import_wizard(osv.osv_memory):
             return False
         for x in xrange(0,12-len(line)):
             line.append('')
-        
         # Prepare some values
         vals = {
             'user_validated': False,
@@ -67,6 +66,9 @@ class hq_entries_import_wizard(osv.osv_memory):
                 destination, cost_center, funding_pool, free1, free2 = line
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('Unknown format.'))
+        acc_obj = self.pool.get('account.account')
+        anacc_obj = self.pool.get('account.analytic.account')
+        hq_obj = self.pool.get('hq.entries')
         ### TO USE IF DATE HAVE some JAN or MAR or OCT instead of 01 ####
         ### Set locale 'C' because of period
         ## locale.setlocale(locale.LC_ALL, 'C')
@@ -96,7 +98,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             account_code = account_data and account_data[0] or False
             if not account_code:
                 raise osv.except_osv(_('Error'), _('No account code found!'))
-            account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
+            account_ids = acc_obj.search(cr, uid, [('code', '=', account_code)])
             if not account_ids:
                 raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist!') % (account_code,))
             vals.update({'account_id': account_ids[0], 'account_id_first_value': account_ids[0]})
@@ -104,7 +106,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No account code found!'))
         # Retrieve Destination
         destination_id = False
-        account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
+        account = acc_obj.browse(cr, uid, account_ids[0])
         if account.user_type.code == 'expense':
             # Set default destination
             if not account.default_destination_id:
@@ -112,14 +114,14 @@ class hq_entries_import_wizard(osv.osv_memory):
             destination_id = account.default_destination_id and account.default_destination_id.id or False
             # But use those from CSV file if given
             if destination:
-                dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination)])
+                dest_id = anacc_obj.search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination)])
                 if dest_id:
                     destination_id = dest_id[0]
                 else:
                     raise osv.except_osv(_('Error'), _('Destination "%s" doesn\'t exist!') % (destination,))
         # Retrieve Cost Center and Funding Pool
         if cost_center:
-            cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
+            cc_id = anacc_obj.search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
             if not cc_id:
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
@@ -130,7 +132,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 cc_id = 0
         # Retrieve Funding Pool
         if funding_pool:
-            fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
+            fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
             if not fp_id:
                 raise osv.except_osv(_('Error'), _('Funding Pool "%s" doesn\'t exist!') % (funding_pool,))
             fp_id = fp_id[0]
@@ -160,9 +162,9 @@ class hq_entries_import_wizard(osv.osv_memory):
         if booking_amount:
             vals.update({'amount': booking_amount,})
         # Line creation
-        res = self.pool.get('hq.entries').create(cr, uid, vals)
+        res = hq_obj.create(cr, uid, vals)
         if res:
-            if self.pool.get('hq.entries').browse(cr, uid, res).analytic_state == 'invalid':
+            if hq_obj.browse(cr, uid, res).analytic_state == 'invalid':
                 raise osv.except_osv(_('Error'), _('Analytic distribution is invalid!'))
             return True
         return False
