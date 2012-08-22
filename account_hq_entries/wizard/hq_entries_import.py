@@ -112,16 +112,16 @@ class hq_entries_import_wizard(osv.osv_memory):
             destination_id = account.default_destination_id and account.default_destination_id.id or False
             # But use those from CSV file if given
             if destination:
-                dest_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', destination)])
+                dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination)])
                 if dest_id:
                     destination_id = dest_id[0]
                 else:
-                    raise osv.except_osv(_('Error'), _('Destination %s doesn\'t exist!') % (destination,))
+                    raise osv.except_osv(_('Error'), _('Destination "%s" doesn\'t exist!') % (destination,))
         # Retrieve Cost Center and Funding Pool
         if cost_center:
-            cc_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', cost_center)])
+            cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
             if not cc_id:
-                raise osv.except_osv(_('Error'), _('Cost Center %s doesn\'t exist!') % (cost_center,))
+                raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
         else:
             try:
@@ -130,9 +130,10 @@ class hq_entries_import_wizard(osv.osv_memory):
                 cc_id = 0
         # Retrieve Funding Pool
         if funding_pool:
-            fp_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', funding_pool)])
+            fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
             if not fp_id:
-                raise osv.except_osv(_('Error'), _('Funding Pool %s doesn\'t exist!') % (funding_pool,))
+                raise osv.except_osv(_('Error'), _('Funding Pool "%s" doesn\'t exist!') % (funding_pool,))
+            fp_id = fp_id[0]
         else:
             try:
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
