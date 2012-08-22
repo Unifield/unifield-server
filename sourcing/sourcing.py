@@ -1347,9 +1347,21 @@ class res_partner(osv.osv):
             return []
         newargs = []
         for arg in args:
-            if arg[0] == 'check_partner':
+            if arg[0] == 'check_partner' and arg[2]:
                 so = self.pool.get('sale.order').browse(cr,uid,arg[2])
                 if not so.procurement_request:
+                    ids = self.search(cr,uid,[('partner_type','in',['external','esc'])])
+                    newargs = [('id','in',ids)]
+        return newargs
+
+    def _check_partner_type_rfq(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner_rfq' and arg[2]:
+                tender = self.pool.get('tender').browse(cr,uid,arg[2])
+                if tender.sale_order_id:
                     ids = self.search(cr,uid,[('partner_type','in',['external','esc'])])
                     newargs = [('id','in',ids)]
         return newargs
@@ -1358,6 +1370,7 @@ class res_partner(osv.osv):
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
                                              method=True, type='boolean', string='Available for DPO', store=False),
         'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
+        'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
     }
     
 res_partner()
