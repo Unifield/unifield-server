@@ -98,7 +98,7 @@ class res_config_configurable(osv.osv_memory):
         previous_todo.write({'state':state})
         if not context.get('no_update_previous', False):
             next_action = self._next_action(cr, uid, context=context)
-            previous_todo.write({'previous': next_action.id})
+            previous_todo.write({'previous': next_action and next_action.id or False})
 
     def _next(self, cr, uid, context=None):
         if not context:
