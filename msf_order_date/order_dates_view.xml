@@ -58,7 +58,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'pricelist_id': pricelist_id}</attribute>
+                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'pricelist_id': pricelist_id, 'rfq_ok': rfq_ok}</attribute>
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
