@@ -89,6 +89,8 @@ class res_config_configurable(osv.osv_memory):
         # this is ultra brittle, but apart from storing the todo id
         # into the res.config view, I'm not sure how to get the
         # "previous" todo
+        if not context:
+            context = {}
         previous_todo = self._next_action(cr, uid, context=context)
         if not previous_todo:
             self.__logger.warn(_("Couldn't find previous ir.actions.todo"))
