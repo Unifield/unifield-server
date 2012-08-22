@@ -128,10 +128,16 @@ class hq_entries_import_wizard(osv.osv_memory):
                 cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
             except ValueError:
                 cc_id = 0
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
+        # Retrieve Funding Pool
+        if funding_pool:
+            fp_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', funding_pool)])
+            if not fp_id:
+                raise osv.except_osv(_('Error'), _('Funding Pool %s doesn\'t exist!') % (funding_pool,))
+        else:
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
         vals.update({'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
         # Fetch description
         if description:
