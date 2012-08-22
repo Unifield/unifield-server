@@ -153,6 +153,8 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Line creation
         res = self.pool.get('hq.entries').create(cr, uid, vals)
         if res:
+            if self.pool.get('hq.entries').browse(cr, uid, res).analytic_state == 'invalid':
+                raise osv.except_osv(_('Error'), _('Analytic distribution is invalid!'))
             return True
         return False
 
