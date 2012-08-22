@@ -115,6 +115,8 @@ class hq_entries_import_wizard(osv.osv_memory):
                 dest_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', destination)])
                 if dest_id:
                     destination_id = dest_id[0]
+                else:
+                    raise osv.except_osv(_('Error'), _('Destination %s doesn\'t exist!') % (destination,))
         # Retrieve Cost Center and Funding Pool
         if cost_center:
             cc_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', cost_center)])
