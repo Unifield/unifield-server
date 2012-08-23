@@ -132,6 +132,7 @@
             <field name="name">stock.production.lot.expiry.date.tree</field>
             <field name="model">stock.production.lot</field>
             <field name="type">tree</field>
+            <field name="priority" eval="200" />
             <field name="arch" type="xml">
                 <tree string="Expiry Dates" hide_new_button="True" hide_delete_button="True">
                     <field name="prefix" invisible="True" />
