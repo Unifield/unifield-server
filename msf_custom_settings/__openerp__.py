@@ -31,7 +31,6 @@
                 'stock',
                 'consumption_calculation',
                 'msf_cross_docking',
-                'kit',
                 'procurement',
                 'product',
                 'msf_supply_doc_export',
@@ -47,7 +46,6 @@
         'view/stock_view.xml',
         'view/delivery_mecanism_view.xml',
         'view/batch_view.xml',
-        'view/kit_composition_view.xml',
         'view/consumption_calculation_view.xml',
         'view/delivery_order_view.xml',
         'view/physical_inventories_view.xml',
@@ -57,7 +55,6 @@
         'view/uom_categories_view.xml',
         'view/units_of_measure_view.xml',
         'view/pack_types_view.xml',
-        'view/kitting_view.xml',
     ],
     'test': [
     ],

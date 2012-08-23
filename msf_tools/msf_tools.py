@@ -176,6 +176,16 @@ class fields_tools(osv.osv):
         name = [x[1] for x in list if x[0] == key][0]
         return name
     
+    def get_ids_from_browse_list(self, cr, uid, browse_list=False, context=None):
+        '''
+        return the list of ids corresponding to browse list in parameter
+        '''
+        if not browse_list:
+            return []
+        
+        result = [x.id for x in browse_list]
+        return result
+    
 fields_tools()
     
 

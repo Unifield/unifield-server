@@ -47,6 +47,20 @@ class composition_kit(osv.osv):
     '''
     _name = 'composition.kit'
     
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        action cancel set the state of the composition kit to 'cancel'
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # all specified kits must be in draft state
+        if not all([x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)]) and not ctx.get('flag_force_cancel_composition_kit', False):
+            raise osv.except_osv(_('Warning !'), _('You can only cancel draft theoretical kit composition and kit composition list.'))
+        else:
+            self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        return True
+    
     def get_default_expiry_date(self, cr, uid, ids, context=None):
         '''
         default value for kits

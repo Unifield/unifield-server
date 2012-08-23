@@ -448,7 +448,7 @@ class substitute(osv.osv_memory):
                 # analyze each item
                 self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
             # the corresponding kit is set to done
-            kit_obj.write(cr, uid, kit_ids, {'state': 'done'}, context=context)
+            kit_obj.close_kit(cr, uid, kit_ids, context=context)
             # a move with a kit from kitting location is created
             move_values =  {'name': obj.kit_id.composition_product_id.name[:64],
                             'picking_id': pick_id,

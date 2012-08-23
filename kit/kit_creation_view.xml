@@ -7,7 +7,7 @@
             <field name="model">kit.creation</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-            	<form string="Kitting Order">
+            	<form string="Kitting Order" hide_duplicate_button="True" hide_delete_button="True">
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
             				<field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -95,6 +95,7 @@
                     <group col="7" colspan="2">
                     	<button name="start_production" type="object" string="Start Production" icon="gtk-clear" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     	<button name="confirm_kitting" type="object" string="Confirm Kitting" icon="gtk-apply" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+                    	<button name="action_cancel" type="object" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
                     </group>
             	</form>
             </field>
@@ -105,7 +106,7 @@
             <field name="model">kit.creation</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-            	<tree string="Kitting Order">
+            	<tree string="Kitting Order" hide_delete_button="True">
             		<field name="name" />
             		<field name="product_id_kit_creation" />
             		<field name="version_id_kit_creation" />
