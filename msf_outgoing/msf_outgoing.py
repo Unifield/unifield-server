@@ -2845,7 +2845,7 @@ class stock_move(osv.osv):
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
                 }
 
-    def action_cancel(self, cr, uid, ids, context=None):$
+    def action_cancel(self, cr, uid, ids, context=None):
         '''
             Confirm or check the procurement order associated to the stock move
         '''
