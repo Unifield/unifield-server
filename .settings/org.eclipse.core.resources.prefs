@@ -1,4 +1,4 @@
-#Tue Aug 21 15:04:29 CEST 2012
+#Thu Aug 23 09:05:51 CEST 2012
 eclipse.preferences.version=1
 encoding//account_activable/account_activable.py=utf-8
 encoding//account_msf/purchase.py=utf-8
@@ -11,6 +11,7 @@ encoding//msf_cross_docking/cross_docking.py=utf-8
 encoding//msf_outgoing/msf_outgoing.py=utf-8
 encoding//msf_profile/__openerp__.py=utf-8
 encoding//msf_profile/msf_profile.py=utf-8
+encoding//order_nomenclature/order_nomenclature.py=utf-8
 encoding//partner_modification/partner_modification.py=utf-8
 encoding//procurement_request/procurement_request.py=utf-8
 encoding//product_asset/product_asset.py=utf-8
@@ -20,6 +21,8 @@ encoding//product_list/__openerp__.py=utf-8
 encoding//product_list/product_list.py=utf-8
 encoding//res_currency_functional/account_move_line_compute_currency.py=utf-8
 encoding//sale_override/sale.py=utf-8
+encoding//sourcing/sourcing.py=utf-8
+encoding//specific_rules/specific_rules.py=utf-8
 encoding//unifield_setup/__openerp__.py=utf-8
 encoding//unifield_setup/installer/sales_price.py=utf-8
 encoding//unifield_setup/setup_configuration.py=utf-8

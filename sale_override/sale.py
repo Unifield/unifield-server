@@ -969,9 +969,15 @@ class sale_order_line(osv.osv):
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
         if product:
-            res.update({'value':{'type': 'make_to_stock'}})
+            if 'value' in res:
+                res['value'].update({'type': 'make_to_stock'})
+            else:
+                res.update({'value':{'type': 'make_to_stock'}})
         elif not product:
-            res.update({'value':{'type': 'make_to_order'}})
+            if 'value' in res:
+                res['value'].update({'type': 'make_to_order'})
+            else:
+                res.update({'value':{'type': 'make_to_order'}})
         return res
 
     def default_get(self, cr, uid, fields, context=None):
