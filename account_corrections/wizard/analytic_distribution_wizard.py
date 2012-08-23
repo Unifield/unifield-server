@@ -133,7 +133,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_delete = []
         to_reverse = []
         old_line_ok = []
-        period_closed = ml.period_id.state == 'done'
+        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state == 'done' or False
 
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
@@ -183,7 +183,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id,
                     'distribution_id': distrib_id,
-                    'currency_id': ml.currency_id.id,
+                    'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
             # create the ana line
             self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, source_date=orig_date)
@@ -272,10 +272,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.state == 'correction':
                 self.write(cr, uid, ids, {'state': 'dispatch'}, context=context)
-            if 'from' in context and 'wiz_id' in context:
+            if context.get('from', False) == 'wizard.journal.items.corrections' and 'wiz_id' in context:
                 # Update cost center lines
-#                if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-#                    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+                #if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+                #    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
                 # Do some verifications before writing elements
                 self.wizard_verifications(cr, uid, wiz.id, context=context)
                 # Verify old account and new account
@@ -293,6 +293,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     self.write(cr, uid, [wiz.id], {'distribution_id': new_distrib_id})
                     super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
                     # Return to the default corrections wizard
+                    bro = self.pool.get('wizard.journal.items.corrections').browse(cr,uid,context.get('wiz_id'))
                     self.pool.get('wizard.journal.items.corrections').write(cr, uid, [context.get('wiz_id')], {'date': wiz.date})
                     return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), distrib_id=new_distrib_id)
                 # JUST Distribution have changed
