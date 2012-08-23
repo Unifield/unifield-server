@@ -1,9 +1,4 @@
 -
-  I create a product category
--
-  !record {model: product.category, id: prod_cat1}:
-    name: Categ1
--
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest0}:
@@ -55,6 +50,12 @@
     level: 3
     name: nomenclature test 4
     parent_id: product_nomenclature_nomenclaturetest12
+-
+  I create a product category
+-
+  !record {model: product.category, id: prod_cat1}:
+    name: Categ1
+    family_id: product_nomenclature_nomenclaturetest12
 -
   I create the product P1
 -
