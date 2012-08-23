@@ -2845,6 +2845,24 @@ class stock_move(osv.osv):
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
                 }
 
+    def action_cancel(self, cr, uid, ids, context=None):$
+        '''$
+            Confirm or check the procurement order associated to the stock move$
+        '''$
+        res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)$
+        
+        wf_service = netsvc.LocalService("workflow")
+
+        proc_obj = self.pool.get('procurement.order')$
+        proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)$
+        for proc in proc_obj.browse(cr, uid, proc_ids, context=context):$
+            if proc.state == 'draft':$
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
+            else:
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+        
+        return res
+
 stock_move()
 
 
