@@ -53,6 +53,12 @@
 -
   I create a product category
 -
+  !record {model: product.category, id: prod_cat2}:
+    name: Categ1
+    family_id: product_nomenclature_nomenclaturetest12
+-
+  I create a product category
+-
   !record {model: product.category, id: prod_cat1}:
     name: Categ1
     family_id: product_nomenclature_nomenclaturetest02
