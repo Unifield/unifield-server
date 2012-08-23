@@ -362,6 +362,46 @@ class purchase_order_line(osv.osv):
             res[pol['id']] = "%s%s"%(pol['analytic_distribution_state'].capitalize(), pol['have_analytic_distribution_from_header'] and " (from header)" or "")
         return res
 
+    def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get account for given lines regarding:
+        - product expense account if product_id
+        - product category expense account if product_id but no product expense account
+        - product category expense account if no product_id
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        for line in self.browse(cr, uid, ids):
+            # Prepare some values
+            res[line.id] = False
+            a = False
+            # Check if PO is inkind
+            is_inkind = False
+            if line.order_id and line.order_id.order_type == 'in_kind':
+                is_inkind = True
+            # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
+            # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
+            # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
+            # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
+            # - other case: take expense account on family that's attached to nomenclature
+            if line.product_id and is_inkind:
+                a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
+                if not a:
+                    a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
+            elif line.product_id:
+                a = line.product_id.product_tmpl_id.property_account_expense.id or False
+                if not a:
+                    a = line.product_id.categ_id.property_account_expense_categ.id or False
+            elif is_inkind:
+                a = False # Should be raise an error, but this block view display. So nothing happens.
+            else:
+                a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_expense_categ and line.nomen_manda_2.category_id.property_account_expense_categ.id or False
+            res[line.id] = a
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
@@ -371,6 +411,7 @@ class purchase_order_line(osv.osv):
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
+        'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
 
     _defaults = {
