@@ -56,7 +56,7 @@
   !record {model: product.category, id: product_category_allproducts0}:
     name: All products
     sequence: 0.0
-
+    family_id: product_nomenclature_nomenclaturetest2
 
 - 
   Creating a product.product record
