@@ -1,6 +1,10 @@
 <openerp>
 	<data noupdate="1">
 		<!-- TIME FOR CREATION OF PRODUCTS - YOUPI -->
+        <record model="product.category" id="water_sanitation">
+            <field name="name">Water sanitation</field>
+            <field name="family_id" ref="nomen_log_camps_watersanitation" />
+        </record>
 		
     	<record model="product.product" id="product_nomenclature_01">
     	
