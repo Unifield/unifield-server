@@ -344,7 +344,7 @@ class purchase_order_line(osv.osv):
         Get account for given lines regarding:
         - product expense account if product_id
         - product category expense account if product_id but no product expense account
-        - product category expense account if no product_id
+        - product category expense account if no product_id (come from family's product category link)
         """
         # Some verifications
         if isinstance(ids, (int, long)):
