@@ -3,7 +3,27 @@
 		<!-- TIME FOR CREATION OF PRODUCTS - YOUPI -->
         <record model="product.category" id="water_sanitation">
             <field name="name">Water sanitation</field>
-            <field name="family_id" ref="nomen_log_camps_watersanitation" />
+            <field name="family_id" ref="product_nomenclature.nomen_log_camps_watersanitation" />
+        </record>
+        
+        <record model="product.category" id="progsuppkits">
+            <field name="name">Program support kits</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_kits_progsuppkits" />
+        </record>
+        
+        <record model="product.category" id="progsupp_coldchain">
+            <field name="name">Program support cold chain</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_programsupport_coldchain" />
+        </record>
+        
+        <record model="product.category" id="sparepartsyamaha">
+            <field name="name">Spare Parts Yamaha</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_transport_sparepartsyamaha" />
+        </record>
+        
+        <record model="product.category" id="camps_reparing">
+            <field name="name">Camps reparing</field>
+            <field name="family_id" ref="product_nomenclature.nomen_service_camps_reparing" />
         </record>
 		
     	<record model="product.product" id="product_nomenclature_01">
