@@ -648,12 +648,12 @@ class account_bank_statement_line(osv.osv):
         for absl in self.browse(cr, uid, ids):
             # browse each move and move lines
             if absl.move_ids and absl.state == 'hard':
-                res[absl.id] = True
+                res[absl.id] = False
                 for move in absl.move_ids:
                     for move_line in move.line_id:
-                        # Result is false if the account is reconciliable but no reconcile id exists
-                        if move_line.account_id.reconcile and not move_line.reconcile_id:
-                            res[absl.id] = False
+                        # Result is True if the account is reconciliable and a reconcile_id exists
+                        if move_line.account_id.reconcile and move_line.reconcile_id:
+                            res[absl.id] = True
                             break
             else:
                 res[absl.id] = False
