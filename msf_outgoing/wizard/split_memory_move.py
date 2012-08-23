@@ -54,7 +54,7 @@ class split_memory_move(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         assert context['class_name'], 'No class name defined'
         class_name = context['class_name']
-        
+
         wiz_obj = self.pool.get('wizard')
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -87,9 +87,12 @@ class split_memory_move(osv.osv_memory):
             new_qty = available_qty - leave_qty
             
             # update the selected memory move
-            values = {'quantity_ordered': new_qty}
+            if class_name == 'stock.move.memory.ppl':
+                values = {'quantity': new_qty}
+            else:
+                values = {'quantity_ordered': new_qty}
 
-            if available_qty_to_process > 0.0:
+            if available_qty_to_process > 0.0 and class_name != 'stock.move.memory.ppl':
                 values['quantity'] = 0.0
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
@@ -108,8 +111,10 @@ class split_memory_move(osv.osv_memory):
                            'currency': memory_move.currency.id,
                            'asset_id': memory_move.asset_id.id,
                            }
+            if class_name == 'stock.move.memory.ppl':
+                default_val['quantity'] = leave_qty
 
-            if available_qty_to_process > 0.0:
+            if available_qty_to_process > 0.0 and class_name != 'stock.move.memory.ppl':
                 default_val['quantity'] = 0.0
 
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
