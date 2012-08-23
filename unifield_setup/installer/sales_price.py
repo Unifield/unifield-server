@@ -39,7 +39,7 @@ class sale_price_setup(osv.osv_memory):
         Check if the entered value is more than 0.00%
         '''
         for price in self.browse(cr, uid, ids, context=context):
-            if price < 0.00:
+            if price.sale_price < 0.00:
                 return False
         
         return True
