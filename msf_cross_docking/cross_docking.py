@@ -67,7 +67,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if cross_docking_ok:
-            l = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+            c_dock_loc = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         else:
             warehouse_obj = self.pool.get('stock.warehouse')
             if not warehouse_id:
@@ -75,8 +75,8 @@ class purchase_order(osv.osv):
                 if not warehouse_ids:
                     return {'warning': {'title': _('Error !'), 'message': _('No Warehouse defined !')}, 'value': {'location_id': False}}
                 warehouse_id = warehouse_ids[0]
-            l = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
-        return {'value': {'location_id': l}}
+            c_dock_loc = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
+        return {'value': {'location_id': c_dock_loc}}
 
     def onchange_location_id(self, cr, uid, ids, location_id, categ, context=None):
         """ If location_id == cross docking we tick the box "cross docking".
