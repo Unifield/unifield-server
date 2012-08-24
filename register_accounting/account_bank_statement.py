@@ -1001,6 +1001,9 @@ class account_bank_statement_line(osv.osv):
         # Delete down_payment value not to be given to account_move_line
         if 'down_payment_id' in move_line_values:
             del(move_line_values['down_payment_id'])
+        # Delete analytic distribution from move_line_values because each move line should have its own analytic distribution
+        if 'analytic_distribution_id' in move_line_values:
+            del(move_line_values['analytic_distribution_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
@@ -1402,7 +1405,10 @@ class account_bank_statement_line(osv.osv):
                     # remove distribution
                     distro_obj.unlink(cr, uid, line.analytic_distribution_id.id)
                     distrib_id = distrib or (absl.analytic_distribution_id and absl.analytic_distribution_id.id) or False
-                    ml_obj.write(cr, uid, line.id, {'analytic_distribution_id': distro_obj.copy(cr, uid, distrib_id, {}) or False})
+                    if not distrib_id:
+                        raise osv.except_osv(_('Error'), _('Problem with analytic distribution for this line: %s') % (absl.name or '',))
+                    new_distrib_id = distro_obj.copy(cr, uid, distrib_id, {})
+                    ml_obj.write(cr, uid, [line.id], {'analytic_distribution_id': new_distrib_id})
             aal_ids = aal_obj.search(cr, uid, [('move_id', 'in', move_line_ids)], context=context)
             # first delete them
             aal_obj.unlink(cr, uid, aal_ids)
