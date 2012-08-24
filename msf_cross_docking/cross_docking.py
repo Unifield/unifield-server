@@ -66,7 +66,6 @@ class purchase_order(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
         if cross_docking_ok:
             l = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         else:
@@ -86,17 +85,17 @@ class purchase_order(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        stock_loc_obj = self.pool.get('stock.location')
         res = {}
         res['value'] = {}
-        obj_data = self.pool.get('ir.model.data')
-        if location_id == self.pool.get('stock.location').get_cross_docking_location(cr, uid) and categ not in ['service', 'transport']:
+        if location_id == stock_loc_obj.get_cross_docking_location(cr, uid) and categ not in ['service', 'transport']:
             cross_docking_ok = True
-        elif location_id != self.pool.get('stock.location').get_cross_docking_location(cr, uid):
+        elif location_id != stock_loc_obj.get_cross_docking_location(cr, uid):
             cross_docking_ok = False
-        elif location_id != self.pool.get('stock.location').get_service_location(cr, uid) and categ in ['service', 'transport']:
+        elif location_id != stock_loc_obj.get_service_location(cr, uid) and categ in ['service', 'transport']:
             return {'warning': {'title': _('Error !'), 'message': _("""
             If the 'Order Category' is 'Service' or 'Transport', you cannot have an other location than 'Service'
-            """)}, 'value': {'location_id': self.pool.get('stock.location').get_service_location(cr, uid)}}
+            """)}, 'value': {'location_id': stock_loc_obj.get_service_location(cr, uid)}}
         res['value']['cross_docking_ok'] = cross_docking_ok
         return res
 
@@ -117,14 +116,14 @@ class purchase_order(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
+        stock_loc_obj = self.pool.get('stock.location')
         warehouse_obj = self.pool.get('stock.warehouse')
         value = {}
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cross_loc = False
         if setup.allocation_setup != 'unallocated':
-            cross_loc = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-        service_loc = self.pool.get('stock.location').get_service_location(cr, uid)
+            cross_loc = stock_loc_obj.get_cross_docking_location(cr, uid)
+        service_loc = stock_loc_obj.get_service_location(cr, uid)
         if categ in ['service', 'transport']:
             value = {'location_id': service_loc, 'cross_docking_ok': False}
         elif cross_docking_ok:
@@ -139,22 +138,23 @@ class purchase_order(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        stock_loc_obj = self.pool.get('stock.location')
         if 'order_type' in vals and vals['order_type'] == 'direct':
             vals.update({'cross_docking_ok': False})
         if 'categ' in vals and vals['categ'] in ['service', 'transport']:
-            vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
+            vals.update({'cross_docking_ok': False, 'location_id': stock_loc_obj.get_service_location(cr, uid)})
         if 'cross_docking_ok' in vals and vals['cross_docking_ok']:
-            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+            vals.update({'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
-        obj_data = self.pool.get('ir.model.data')
+        stock_loc_obj = self.pool.get('stock.location')
         if vals.get('order_type') == 'direct':
             vals.update({'cross_docking_ok': False})
         if 'categ' in vals and vals['categ'] in ['service', 'transport']:
-            vals.update({'cross_docking_ok': False, 'location_id': self.pool.get('stock.location').get_service_location(cr, uid)})
+            vals.update({'cross_docking_ok': False, 'location_id': stock_loc_obj.get_service_location(cr, uid)})
         if vals.get('cross_docking_ok'):
-            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+            vals.update({'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
     def _check_cross_docking(self, cr, uid, ids, context=None):
@@ -165,14 +165,14 @@ class purchase_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        stock_loc_obj = self.pool.get('stock.location')
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        obj_data = self.pool.get('ir.model.data')
         for purchase in self.browse(cr, uid, ids, context=context):
             if purchase.cross_docking_ok:
                 if setup.allocation_setup == 'unallocated':
                     raise osv.except_osv(_('Error'), _("""The Allocated stocks setup is set to Unallocated.
 In this configuration, you cannot made a Cross-docking Purchase order."""))
-                cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                cross_docking_location = stock_loc_obj.get_cross_docking_location(cr, uid)
                 if purchase.location_id.id != cross_docking_location:
                     raise osv.except_osv(_('Warning !'), _("""If you tick the box \"cross docking\",
 you cannot have an other location than \"Cross docking\""""))
@@ -202,15 +202,15 @@ class procurement_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        stock_loc_obj = self.pool.get('stock.location')
         sol_obj = self.pool.get('sale.order.line')
-        obj_data = self.pool.get('ir.model.data')
         procurement = kwargs['procurement']
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if len(sol_ids) and setup.allocation_setup != 'unallocated':
             if not sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id.procurement_request:
-                values.update({'cross_docking_ok': True, 'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+                values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
         return values
 
 procurement_order()
@@ -229,7 +229,6 @@ class stock_picking(osv.osv):
         """
         if hasattr(super(stock_picking, self), 'init'):
             super(stock_picking, self).init(cr)
-        mod_obj = self.pool.get('ir.module.module')
         logging.getLogger('init').info('HOOK: module msf_cross_docking: loading data/msf_msf_cross_docking_data.xml')
         pathname = path.join('msf_cross_docking', 'data/msf_cross_docking_data.xml')
         file = tools.file_open(pathname)
@@ -262,11 +261,6 @@ class stock_picking(osv.osv):
         res.update({'allocation_setup': setup.allocation_setup})
         return res
 
-    '''
-    do_partial(=function which is originally called from delivery_mechanism) modification
-    for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
-    '''
-
     def write(self, cr, uid, ids, vals, context=None):
         """
         Here we check if all stock move are in stock or in cross docking
@@ -275,7 +269,6 @@ class stock_picking(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         for pick in pick_obj.browse(cr, uid, ids, context=context):
@@ -284,7 +277,6 @@ class stock_picking(osv.osv):
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr, uid, [move_ids], context=context):
-                        move_cross_docking_ok_value = move_obj.read(cr, uid, [move_ids], ['move_cross_docking_ok'], context=context)
                         if move.move_cross_docking_ok:
                             vals.update({'cross_docking_ok': True, })
                         elif not move.move_cross_docking_ok:
@@ -299,7 +291,6 @@ class stock_picking(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         # Check the allocation setup
@@ -515,7 +506,6 @@ class stock_move(osv.osv):
         purchase_id = context.get('purchase_id', [])
         if not purchase_id:
             return default_data
-        obj_data = self.pool.get('ir.model.data')
         purchase_browse = self.pool.get('purchase.order').browse(cr, uid, purchase_id, context=context)
         # If the purchase order linked has the option cross docking then the new created
         #stock move should have the destination location to cross docking
@@ -536,7 +526,6 @@ class stock_move(osv.osv):
         if setup.allocation_setup == 'unallocated':
             raise osv.except_osv(_('Error'), _("""You cannot made moves from/to Cross-docking locations
             when the Allocated stocks configuration is set to \'Unallocated\'."""))
-        obj_data = self.pool.get('ir.model.data')
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         todo = []
         for move in self.browse(cr, uid, ids, context=context):

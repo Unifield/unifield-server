@@ -57,7 +57,6 @@ class stock_partial_picking(osv.osv_memory):
         if context is None:
             context = {}
         res = {}
-        obj_data = self.pool.get('ir.model.data')
         pick_obj = self.pool.get('stock.picking')
         res = super(stock_partial_picking, self).default_get(cr, uid, fields, context=context)
         obj_ids = context.get('active_ids', [])
@@ -65,7 +64,6 @@ class stock_partial_picking(osv.osv_memory):
             return res
 
         if context.get('active_ids', []):
-            active_id = context.get('active_ids')[0]
             if 'dest_type' in fields:
                 for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
                     if pick.purchase_id.cross_docking_ok:
@@ -91,7 +89,6 @@ class stock_partial_picking(osv.osv_memory):
         obj_ids = context.get('active_ids', [])
         if not obj_ids:
             return res
-        obj_data = self.pool.get('ir.model.data')
         pick_obj = self.pool.get('stock.picking')
         for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
             if pick.purchase_id and dest_type != 'to_cross_docking'and pick.purchase_id.cross_docking_ok:
