@@ -88,7 +88,7 @@ class split_memory_move(osv.osv_memory):
             
             # update the selected memory move
             if class_name == 'stock.move.memory.ppl':
-                values = {'quantity': new_qty}
+                values = {'quantity': new_qty, 'quantity_ordered': new_qty}
             else:
                 values = {'quantity_ordered': new_qty}
 

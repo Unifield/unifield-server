@@ -422,7 +422,7 @@ class create_picking(osv.osv_memory):
             for memory_move in getattr(wiz, field_name):
                 if not memory_move.quantity:
                     memory_move.write({'integrity_status': status,}, context=context)
-                            
+
     def integrity_check_create_picking(self, cr, uid, ids, data, context=None):
         '''
         integrity check on create picking data
@@ -842,7 +842,6 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # generate data structure
         partial_datas_ppl1 = self.generate_data_from_partial(cr, uid, ids, context=context)
-        
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
