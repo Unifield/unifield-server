@@ -1000,8 +1000,8 @@ function do_action(src, context_menu) {
             var ids = eval(jQuery('#_terp_ids').val());
             if (ids && ids.length > 0){
                 params['_terp_selection'] = '[' + ids[0] + ']';
-            } else {
-                error_display(_('You must select one or several records !'));
+            } else if ($src.attr('empty_ids')!="1") {
+                return error_display(_('You must select one or several records !'));
             }
         }
         var id = eval(params['_terp_selection'])[0]

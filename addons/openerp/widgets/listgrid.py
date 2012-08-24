@@ -125,8 +125,13 @@ class List(TinyWidget):
         attrs = node_attributes(root)
         
         # Get the hide status of some buttons - by default buttons are shown
-        self.hide_new_button = attrs.get('hide_new_button', False)
-        self.hide_delete_button = attrs.get('hide_delete_button', False)
+        self.hide_new_button = False
+        self.hide_delete_button = False
+        try:
+            self.hide_new_button = expr_eval(attrs.get('hide_new_button', False), {'context': context})
+            self.hide_delete_button = expr_eval(attrs.get('hide_delete_button', False), {'context': context})
+        except:
+            pass
         
         self.string = attrs.get('string','')
 
@@ -242,15 +247,15 @@ class List(TinyWidget):
                     pass 
 
         # make editors
-        if self.editable and attrs.get('editable') in ('top', 'bottom'):
-            if attrs.get('noteditable'):
-                for x in self.values:
-                    try:
-                        if expr_eval(attrs.get('noteditable'), x):
-                            self.noteditable.append(x['id'])
-                    except:
-                        pass 
+        if self.editable and attrs.get('noteditable'):
+            for x in self.values:
+                try:
+                    if expr_eval(attrs.get('noteditable'), x):
+                        self.noteditable.append(x['id'])
+                except:
+                    pass
 
+        if self.editable and attrs.get('editable') in ('top', 'bottom'):
             for f, fa in self.headers:
                 if not isinstance(fa, int):
                     fa['prefix'] = '_terp_listfields' + ((self.name != '_terp_list' or '') and '/' + self.name)
