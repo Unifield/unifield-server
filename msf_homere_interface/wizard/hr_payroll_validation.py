@@ -164,8 +164,9 @@ class hr_payroll_validation(osv.osv_memory):
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
         # Create lines into this move
-        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 
-            'free1_id', 'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id']):
+        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id', 
+            'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id', 
+            'destination_id']):
             line_vals = {}
             # fetch amounts
             amount = line.get('amount', 0.0)
@@ -174,9 +175,18 @@ class hr_payroll_validation(osv.osv_memory):
                 credit = abs(amount)
             else:
                 debit = amount
+            # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+            # fetch account
+            account_id = line.get('account_id', False) and line.get('account_id')[0] or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('No account found!'))
+            account = self.pool.get('account.account').browse(cr, uid, account_id)
+            # End of Note
             # create new distribution (only for expense accounts)
             distrib_id = False
-            if line.get('cost_center_id', False):
+            # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+            if account.user_type.code == 'expense':
+            # End of Note
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
                 fp_id = line.get('funding_pool_id', False) and line.get('funding_pool_id')[0] or False
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
@@ -184,6 +194,9 @@ class hr_payroll_validation(osv.osv_memory):
                 if not line.get('funding_pool_id', False):
                     fp_id = msf_fp_id
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+                dest_id = line.get('destination_id', False) and line.get('destination_id')[0] or (account.default_destination_id and account.default_destination_id.id) or False
+                # End of Note
                 if distrib_id:
                     common_vals = {
                         'distribution_id': distrib_id,
@@ -191,6 +204,9 @@ class hr_payroll_validation(osv.osv_memory):
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
+                        # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+                        'destination_id': dest_id,
+                        # End of Note
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
@@ -213,7 +229,9 @@ class hr_payroll_validation(osv.osv_memory):
                 'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
                 'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
                 'transfer_journal_id': line.get('journal_id', False) and line.get('journal_id')[0] or False,
-                'account_id': line.get('account_id', False) and line.get('account_id')[0] or False,
+                # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+                'account_id': account_id,
+                # End of Note
                 'debit_currency': debit,
                 'credit_currency': credit,
                 'journal_id': journal_id,
