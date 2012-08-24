@@ -119,7 +119,7 @@ class update(osv.osv):
                (entity.id in privates) or \
                (recover and entity.id == update.source.id):
                 
-                source_rules_ids = self.pool.get('sync_server.sync_rule')._get_group_per_rules(cr, uid, update.source, context)
+                source_rules_ids = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update.source, context)
                 s_group = source_rules_ids.get(update.rule_id.id, [])
                 for group in entity.group_ids:
                     if group.id in s_group:
@@ -141,31 +141,23 @@ class update(osv.osv):
         if not recover:
             base_query += " AND sync_server_update.source != %s" % entity.id
 
-        base_query += " ORDER BY sequence ASC, id ASC"
+        base_query += " ORDER BY sequence ASC, id ASC OFFSET %s LIMIT %s"
 
-        ## Search first update which is "master"
-        update_master = None
-        while update_master is None:
-            query = base_query + " OFFSET %s LIMIT %s" % (offset, max_size)
-            cr.execute(query)
-            ids = map(lambda x:x[0], cr.fetchall())
-            if not ids:
-                return None
-            fetched_updates = self.get_update_to_send(cr, uid, entity, ids, recover, context)
-            if fetched_updates:
-                update_master = fetched_updates[0]
-            else:
-                offset += len(ids)
-
-        ## Find next updates to send
+        ## Search first update which is "master", then find next updates to send
         ids = []
         update_to_send = []
+        update_master = None
         while not ids:
-            query = base_query + " OFFSET %s LIMIT %s" % (offset, max_size)
+            query = base_query % (offset, max_size)
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
+            if not ids and update_master is None:
+                return None
             for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
-                if update.model == update_master.model and \
+                if update_master is None:
+                    update_master = update
+                    update_to_send.append(update_master)
+                elif update.model == update_master.model and \
                    update.rule_id.id == update_master.rule_id.id and \
                    update.source.id == update_master.source.id and \
                    len(update_to_send) < max_size:

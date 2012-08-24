@@ -132,32 +132,29 @@ class sync_rule(osv.osv):
         return self.get_groups(cr, uid, children_list, context=context)
     
     def _get_rules_per_group(self, cr, uid, entity, context=None):
-        rules_ids = {}
-        for group in entity.group_ids:
-            domain = ['|',
-                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
-                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
-            ids = self.search(cr, uid, domain, context=context)
-            if ids:
-                rules_ids[group.id] = ids
-        
-        return rules_ids
-    
-    def _get_group_per_rules(self, cr, uid, entity, context=None):
-        group_ids = {}
-        for group in entity.group_ids:
-            domain = ['|',
-                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
-                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
-            ids = self.search(cr, uid, domain, context=context)
-            for i in ids:
-                if not group_ids.get(i):
-                    group_ids[i] = [group.id]
-                else:
-                    group_ids[i].append(group.id)
-        
-        return group_ids
-        
+        cr.execute("""SELECT g.id, array_agg(r.id)
+                      FROM sync_server_entity_group g 
+                           JOIN sync_server_group_type t ON (g.type_id=t.id) 
+                           JOIN sync_server_sync_rule r
+                                ON (((r.group_id = g.id AND NOT r.applies_to_type)
+                                     OR (r.type_id = t.id AND r.applies_to_type))
+                                    AND r.active)
+                      WHERE g.id IN %s
+                      GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
+        return dict(cr.fetchall())
+
+    def _get_groups_per_rule(self, cr, uid, entity, context=None):
+        cr.execute("""SELECT r.id, array_agg(g.id)
+                      FROM sync_server_entity_group g 
+                           JOIN sync_server_group_type t ON (g.type_id=t.id) 
+                           JOIN sync_server_sync_rule r
+                                ON (((r.group_id = g.id AND NOT r.applies_to_type)
+                                     OR (r.type_id = t.id AND r.applies_to_type))
+                                    AND r.active)
+                      WHERE g.id IN %s
+                      GROUP BY r.id""", (tuple(x.id for x in entity.group_ids),))
+        return dict(cr.fetchall())
+
     def _compute_rules_to_send(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules_per_group(cr, uid, entity, context)
         ancestor_group = self._get_ancestor_groups(cr, uid, entity, context)
@@ -304,6 +301,13 @@ class sync_rule(osv.osv):
                     
             if dirty:
                 values.update({'active' : False, 'status' : 'invalid'})
+
+        if 'applies_to_type' in values:
+            if values['applies_to_type']:
+                values['group_id'] = False
+            else:
+                values['type_id'] = False
+
         return super(sync_rule, self).write(cr, uid, ids, values, context=context)
 
     def validate(self, cr, uid, ids, context=None):
