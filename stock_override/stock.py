@@ -508,6 +508,23 @@ class stock_picking(osv.osv):
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': inv_id})
         return res
 
+    def action_confirm(self, cr, uid, ids, context=None):
+        """
+            stock.picking: action confirm
+            if INCOMING picking: confirm and check availability
+        """
+        super(stock_picking, self).action_confirm(cr, uid, ids, context=context)
+        move_obj = self.pool.get('stock.move')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for pick in self.browse(cr, uid, ids):
+            if pick.move_lines and pick.type == 'in':
+                not_assigned_move = [x.id for x in pick.move_lines if x.state == 'confirmed']
+                if not_assigned_move:
+                    move_obj.action_assign(cr, uid, not_assigned_move)
+        return True
+
 stock_picking()
 
 # ----------------------------------------------------
@@ -573,6 +590,8 @@ class stock_move(osv.osv):
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+        'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
+        'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
     }
     
     _defaults = {
@@ -886,6 +905,16 @@ class stock_move(osv.osv):
                 'prod_qty': move.product_qty,
             })
         return result
+
+    def in_action_confirm(self, cr, uid, ids, context=None):
+        """
+            Incoming: draft or confirmed: validate and assign
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.action_confirm(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context)
+        return True
 
 stock_move()
 
