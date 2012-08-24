@@ -510,6 +510,12 @@ class entity(osv.osv, Thread):
     def sync(self, cr, uid, context=None):
         context = context or {}
 
+#        This code is for profiling the execution time of each method
+#        import cProfile
+#        import time
+#        prof = cProfile.Profile()
+#        prof.enable()        
+
         (status, log_id, log) = self.startSync(cr, uid, context=context)
         #if status is None: return False
         if status is None:
@@ -520,7 +526,11 @@ class entity(osv.osv, Thread):
         self.pull_message(cr, uid, log, log_id, context=context)
         self.push_update(cr, uid, log, log_id, context=context)
         self.push_message(cr, uid, log, log_id, context=context)
-            
+
+#        This code is for profiling the execution time of each method
+#        prof.disable()
+#        prof.dump_stats("/tmp/sync_prof_"+str(int(time.time()))+".prof")
+        
         return self.stopSync(cr, uid, log_id, log)
         
     def run(self):
@@ -601,11 +611,12 @@ class sync_server_connection(osv.osv):
     }
     
     _defaults = {
-        'host' : 'localhost',
+        'host' : 'sync.unifield.org',
         'port' : 8070,
         'protocol': 'netrpc_gzip',
         'login' : 'admin',
-        'max_size' : 1000,
+        'max_size' : 500,
+        'database' : 'SYNC_SERVER',
     }
     
     def _get_connection_manager(self, cr, uid, context=None):
