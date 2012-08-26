@@ -34,7 +34,8 @@ class bank_statement(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         bank = self.browse(cr, uid, res_id)
-        return 'bank_statement_' + (bank.instance_id.code or 'noinstance') + '_' + (bank.name or 'nobank') + '_' + (bank.journal_id.code or 'nojournal')
+        unique_journal = (bank.journal_id.code or 'nojournal') + '_' + (bank.period_id.name or 'noperiod')
+        return 'bank_statement_' + (bank.instance_id.code or 'noinstance') + '_' + (bank.name or 'nobank') + '_' + unique_journal 
     
 bank_statement()
 
@@ -43,7 +44,6 @@ class account_period_sync(osv.osv):
     _inherit = "account.period"
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        print "generate xml name for period"
         period = self.browse(cr, uid, res_id)
         return period.fiscalyear_id.code + "/" + period.name + "_" + period.date_start
     
