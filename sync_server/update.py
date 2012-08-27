@@ -171,14 +171,12 @@ class update(osv.osv):
                     break
             offset += len(ids)
 
-        ## Save who pulls these updates
-        self._save_puller(cr, uid, [up.id for up in update_to_send], context, entity.id)
         if not update_to_send:
             self.__logger.debug("No update to send to %s" % (entity.name,))
             return None
 
         ## Prepare package
-        complete_fields = self.get_additional_forced_field(update_master) 
+        complete_fields, forced_values = self.get_additional_forced_field(update_master) 
         data = {
             'model' : update_master.model,
             'source_name' : update_master.source.name,
@@ -191,49 +189,29 @@ class update(osv.osv):
 
         ## Process & Push all updates in the packet
         for update in update_to_send:
+            values = dict(zip(complete_fields[:len(update.values)], eval(update.values)) + \
+                          forced_values.items())
             data['load'].append({
                 'version' : update.version,
-                'values' : self.set_forced_values(update, complete_fields),
+                'values' : tools.ustr([values[k] for k in complete_fields]),
                 'owner_name' : update.owner.name if update.owner else '',
             })
 
         return data
     
     def get_additional_forced_field(self, update): 
-        if not update.rule_id.forced_values:
-            return eval(update.fields)
-        
         fields = eval(update.fields)
-        forced_values = eval(update.rule_id.forced_values)  
-        
-        for key in forced_values.keys():
-            if not key in fields:
-                fields.append(key)
-                
-        return fields
-                
-    def set_forced_values(self, update, fields):
-        if not update.rule_id.forced_values:
-            return update.values
-        
-        values = eval(update.values)
-        forced_values = eval(update.rule_id.forced_values)
-        
-        #step 1 : inside the values
-        for key in fields[:len(values)]:
-            val = forced_values.get(key)
-            if val:
-                i = fields.index(key)
-                values[i] = val
-                
-        #step 2 : outside the values    
-        for key in fields[len(values):]:
-            val = forced_values.get(key)
-            if val:
-                values.append(val)      
+        forced_values = eval(update.rule_id.forced_values or '{}')
+        if forced_values:
+            fields += list(set(forced_values.keys()) - set(fields))
+            obj = self.pool.get(update.model)
+            columns = dict(obj._inherit_fields.items() + \
+                           obj._columns.items())
+            for k, v in forced_values.items():
+                if columns[k]._type == 'boolean':
+                    forced_values[k] = unicode(v)
+        return fields, forced_values
 
-        return tools.ustr(values)
-    
     _order = 'sequence asc, id asc'
     
 update()
