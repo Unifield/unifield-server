@@ -2161,7 +2161,6 @@ class stock_picking(osv.osv):
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        
         for obj in self.browse(cr, uid, ids, context=context):
             # the convert function should only be called on draft picking ticket
             assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
@@ -2183,7 +2182,10 @@ class stock_picking(osv.osv):
                 # using draft_force_assign, the moves are not treated because not in draft
                 # and the corresponding chain location on location_dest_id was not computed
                 # we therefore set them back in draft state before treatment
-                vals = {'state': 'draft'}
+                if move.product_qty == 0.0:
+                    vals = {'state': 'done'}
+                else:
+                    vals = {'state': 'draft'}
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
                     vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
