@@ -695,24 +695,7 @@ class procurement_order(osv.osv):
             data = self.read(cr, uid, ids, ['so_back_update_dest_po_id_procurement_order'], context=context)
             if not data[0]['so_back_update_dest_po_id_procurement_order']:
                 po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
-            if self.browse(cr, uid, ids[0], context=context).is_tender:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
         return result
-    
-    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        if the procurement corresponds to a tender, the created po is confirmed but not validated
-        '''
-        po_obj = self.pool.get('purchase.order')
-        procurement = kwargs['procurement']
-        purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
-        if purchase_id:
-            # if tender
-            if procurement.is_tender:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
-        return purchase_id
     
     def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
