@@ -1108,6 +1108,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             distrib = wizard.distribution_id or False
             aal_obj = self.pool.get('account.analytic.line')
             ml_obj = self.pool.get('account.move.line')
+            distro_obj = self.pool.get('analytic.distribution')
             if not distrib:
                 return False
             if wizard.move_line_id:
@@ -1142,6 +1143,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                             aal_obj.unlink(cr, uid, aal_ids, context=context)
                             # create new analytic lines
                             self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
+            elif wizard.register_line_id and wizard.register_line_id.state == 'temp':
+                # Update analytic lines
+                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, [wizard.register_line_id.id], distrib=distrib.id)
         return True
 
 analytic_distribution_wizard()

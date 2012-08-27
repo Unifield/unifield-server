@@ -207,6 +207,8 @@ class analytic_distribution(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        if not ids:
+            return res
         # Browse given invoices
         for distrib in self.browse(cr, uid, ids, context=context):
             txt = ''
