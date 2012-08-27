@@ -68,7 +68,8 @@
                 <form string="Import HQ Entries">
                     <label string="This will import HQ entries from a csv file." colspan="4"/>
                     <newline/>
-                    <field name="file"/>
+                    <field name="file" filename="hqfilename"/>
+                    <field name="hqfilename" invisible="1"/>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
