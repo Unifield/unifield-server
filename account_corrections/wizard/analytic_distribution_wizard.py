@@ -124,6 +124,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
 
         orig_date = ml.source_date or ml.date
+        orig_document_date = ml.document_date
         # OK let's go on funding pool lines
         # Search old line and new lines
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
@@ -186,7 +187,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': ml.currency_id.id,
                 })
             # create the ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, source_date=orig_date)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
 
         for line in to_delete:
             # delete distrib line
@@ -213,7 +214,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'destination_id': line.destination_id.id,
                 })
             # Create the new ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, source_date=orig_date, name=name)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
 
         for line in to_override:
             # update the ana line
@@ -229,6 +230,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'amount': amount,
                     'date': wizard.date,
                     'source_date': orig_date,
+                    'document_date': orig_document_date,
                 })
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
