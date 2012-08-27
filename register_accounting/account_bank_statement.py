@@ -774,6 +774,7 @@ class account_bank_statement_line(osv.osv):
             type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
+        'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] )
     }
 
     _defaults = {
