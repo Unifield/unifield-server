@@ -19,12 +19,9 @@
 #
 ##############################################################################
 
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
-import netsvc
 
 from sale_override import SALE_ORDER_STATE_SELECTION
 from msf_order_date.order_dates import compute_rts
@@ -159,8 +156,6 @@ class procurement_request(osv.osv):
         '''
         Changes the state of the order to allow the deletion
         '''
-        line_obj = self.pool.get('sale.order.line')
-        
         del_ids = []
         normal_ids = []
         
@@ -257,7 +252,6 @@ class procurement_request(osv.osv):
         nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
         nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
         uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-        vals = {}
         nb_lines = 0
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
