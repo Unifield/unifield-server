@@ -55,7 +55,7 @@ class composition_kit(osv.osv):
             ids = [ids]
         
         # all specified kits must be in draft state
-        if not all([x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)]) and not ctx.get('flag_force_cancel_composition_kit', False):
+        if not all([x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)]) and not context.get('flag_force_cancel_composition_kit', False):
             raise osv.except_osv(_('Warning !'), _('You can only cancel draft theoretical kit composition and kit composition list.'))
         else:
             self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -719,8 +719,17 @@ class composition_kit(osv.osv):
                         raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product does not allow Reference.'))
                     if not obj.composition_lot_id:
                         raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product needs Batch Number.'))
+                    # check the lot correspond to selected product
+                    if obj.composition_lot_id.product_id.id != obj.composition_product_id.id:
+                        raise osv.except_osv(_('Warning !'), _('Selected Batch Number\'s product does not correspond to kit composition list\' product.'))
                     if obj.composition_ref_exp:
                         raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product does not allow Reference based Expiry Date.'))
+                    # selected composition_lot_id must be unique among KCL with state in ['draft', 'in_production', 'completed']
+                    # we can have multiple canceled or done KCL with the same lot reference
+                    kcl_ids = self.search(cr, uid, [('composition_lot_id', '=', obj.composition_lot_id.id),
+                                                    ('state', 'not in', ['done', 'cancel'])], context=context)
+                    if len(kcl_ids) > 1:
+                        raise osv.except_osv(_('Warning !'), _('Batch Number must be unique for Kit Composition List not canceled or closed.'))
                 else:
                     if not obj.composition_reference:
                         raise osv.except_osv(_('Warning !'), _('Composition List without Batch Management Product needs Reference.'))
@@ -738,7 +747,8 @@ class composition_kit(osv.osv):
     _constraints = [(_composition_kit_constraint, 'Constraint error on Composition Kit.', []),
                     ]
     _sql_constraints = [('unique_composition_kit_real_ref', "unique(composition_product_id,composition_reference)", 'Kit Composition List Reference must be unique for a given product.'),
-                        ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
+                        # the composition list with lot A should not be taken into account if state is in ['done', 'cancel']
+#                        ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
                         ]
 
 composition_kit()
