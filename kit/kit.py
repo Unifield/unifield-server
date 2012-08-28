@@ -55,7 +55,7 @@ class composition_kit(osv.osv):
             ids = [ids]
         
         # all specified kits must be in draft state
-        if not all([x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)]) and not context.get('flag_force_cancel_composition_kit', False):
+        if not context.get('flag_force_cancel_composition_kit', False) and not all([x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)]):
             raise osv.except_osv(_('Warning !'), _('You can only cancel draft theoretical kit composition and kit composition list.'))
         else:
             self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
