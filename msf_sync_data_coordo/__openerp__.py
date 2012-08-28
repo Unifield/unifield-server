@@ -21,13 +21,13 @@
 
 
 {
-    'name': 'Synchronization Utility: Tests Coordo Side',
+    'name': 'Synchronization Utility: Datas Coordo Side',
     'version': '0.1',
     'category': 'Tools',
     'description': '',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_client'],
+    'depends': ['base', 'sync_client', 'msf_sync_data'],
     'init_xml': [],
     'data': [
     ],

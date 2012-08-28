@@ -21,13 +21,13 @@
 
 
 {
-    'name': 'Synchronization Utility: Tests Synchro Server Side',
+    'name': 'Synchronization Utility: Datas Synchro Server Side',
     'version': '0.1',
     'category': 'Tools',
     'description': '',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
+    'depends': ['base', 'sync_server', 'msf_sync_data_common', 'account', 'account_analytic_plans'],
     'init_xml': [],
     'data': [
         'data/sync.server.group_type.csv',

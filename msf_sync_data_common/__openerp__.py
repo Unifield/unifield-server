@@ -21,16 +21,15 @@
 
 
 {
-    'name': 'Synchronization Utility: Datas HQ Side',
+    'name': 'Synchronization Utility: Datas Common',
     'version': '0.1',
     'category': 'Tools',
     'description': '',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_client', 'msf_sync_data_common'],
+    'depends': ['base', 'sync_client'],
     'init_xml': [],
     'data': [
-        'data/account.analytic.account.csv',
     ],
     'demo_xml': [],
     'test':[],
