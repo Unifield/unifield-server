@@ -19,11 +19,6 @@
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_shipping_id']" position="replace">
                         <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" groups="base.group_extended" required="1" />
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='pricelist_id']" position="replace">
-                        <field domain="[('type','=','sale'), ('in_search', '=', partner_type)]" name="pricelist_id"
-                        	on_change="pricelist_id_change(pricelist_id)"
-                        	groups="base.group_extended" required="1" />
-                    </xpath>
                 </data>
             </field>
         </record>
@@ -35,21 +30,20 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
-                    <group col="6" colspan="4">
+                    <group col="6" colspan="4" name="header" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                         <field name="name"/>
-                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="location_requestor_id" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" />
-						<field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" string="Requested date" />
-                        <field name="origin" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="date_order" />
+                        <field name="warehouse_id" widget="selection" />
+                        <field name="requestor"  />
+                        <field name="location_requestor_id" required="1" />
+                        <field name="delivery_requested_date" required="1" string="Requested date" />
+                        <field name="origin" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'in', ['done', 'validated'])]}">
-                                <tree string="Products" editable="top" >
-                                    <field name="product_id" on_change="requested_product_id_change(product_id, type, comment)" />
-                                    <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,type)"/>
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
+                                <tree editable="top" string="Products">
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
                                     <field name="product_uom" />
                                     <field name="nomen_manda_0" invisible="1" />

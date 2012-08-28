@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="0">
+    <data noupdate="1">
     <!-- 'tbd' stands for 'to be defined' -->
     <record model="product.nomenclature" id="nomen_tbd0">
         <field name="code">tbd0</field>
@@ -25,6 +25,11 @@
         <field name="parent_id" ref="nomen_tbd1"/>
     </record>
     
+    <record id="cat_tbd" model="product.category">
+        <field name="name">Product Categ to be defined</field>
+        <field name="family_id" ref="nomen_tbd2" />
+    </record>
+    
     <record model="product.nomenclature" id="nomen_tbd3">
         <field name="code">tbd3</field>
         <field name="name">To Be Defined3</field>
@@ -36,10 +41,6 @@
     <!-- Product Categ uom tbd -->
     <record id="product_uom_tbd" model="product.uom.categ">
         <field name="name">Categ uom to be defined</field>
-    </record>
-    
-    <record id="cat_tbd" model="product.category">
-        <field name="name">Product Categ to be defined</field>
     </record>
     
     <!-- Uom to be defined -->
