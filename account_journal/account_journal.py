@@ -61,7 +61,7 @@ class account_journal(osv.osv):
                 ('correction','Correction'),
                 ('cur_adj', 'Currency Adjustement'),
                 ('depreciation', 'Depreciation'),
-                ('extra', 'Extra-Accounting'),
+                ('extra', 'OD-Extra Accounting'),
                 ('general', 'General'),
                 ('hq', 'HQ'),
                 ('hr', 'HR'),
