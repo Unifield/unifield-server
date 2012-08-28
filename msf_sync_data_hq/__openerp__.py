@@ -21,21 +21,21 @@
 
 
 {
-    'name': 'Synchronization Utility',
+    'name': 'Synchronization Utility: Tests HQ Side',
     'version': '0.1',
     'category': 'Tools',
-    'description': """
-        
-    """,
-    'author': 'OpenERP SA',
+    'description': '',
+    'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
     'depends': ['base', 'sync_client'],
     'init_xml': [],
-    'data': [ 'create_data_view.xml'],
-    'demo_xml': [
+    'data': [
+        'data/account.analytic.account.csv',
     ],
-    'test':[
-    ],
+    'demo_xml': [],
+    'test':[],
     'installable': True,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

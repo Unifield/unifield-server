@@ -21,17 +21,18 @@
 
 
 {
-    'name': 'Synchronization Utility',
+    'name': 'Synchronization Utility: Tests Synchro Server Side',
     'version': '0.1',
     'category': 'Tools',
-    'description': """
-        
-    """,
-    'author': 'OpenERP SA',
+    'description': '',
+    'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_client_test'],
+    'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
     'init_xml': [],
     'data': [
+        'data/sync.server.group_type.csv',
+        'data/sync_server.sync_rule.csv',
+        #'data/sync_server.message_rule.csv',
     ],
     'demo_xml': [
     ],
@@ -39,4 +40,6 @@
     ],
     'installable': True,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

@@ -21,25 +21,20 @@
 
 
 {
-    'name': 'Testing module for Synchronization Utility Server',
+    'name': 'Synchronization Utility: Tests Coordo Side',
     'version': '0.1',
     'category': 'Tools',
-    'description': """
-        
-    """,
-    'author': 'OpenERP SA',
+    'description': '',
+    'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
+    'depends': ['base', 'sync_client'],
     'init_xml': [],
     'data': [
-        'sync.server.group_type.csv',
-        'sync_server.sync_rule.csv',
-        #'sync_server.message_rule.csv',
     ],
-    'demo_xml': [
-    ],
-    'test':[
-    ],
+    'demo_xml': [],
+    'test':[],
     'installable': True,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
