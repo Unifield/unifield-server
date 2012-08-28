@@ -177,6 +177,7 @@
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="name" select="1" />
                     <field name="product_id_kit_creation" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
