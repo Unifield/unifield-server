@@ -108,8 +108,9 @@ class kit_creation(osv.osv):
             if kit.internal_picking_id_kit_creation:
                 picking_id = kit.internal_picking_id_kit_creation.id
                 wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_cancel', cr)
-            # cancel the kit creation
-            self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        
+        # cancel the kit creation
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
     
     def reset_to_version(self, cr, uid, ids, context=None):
