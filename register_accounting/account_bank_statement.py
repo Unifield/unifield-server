@@ -203,6 +203,10 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function
         """
+        if values.get('open_advance_amount', False):
+            values.update({'open_advance_amount': abs(values.get('open_advance_amount'))})
+        if values.get('unrecorded_expenses_amount', False):
+            values.update({'unrecorded_expenses_amount': abs(values.get('unrecorded_expenses_amount'))})
         return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -648,12 +652,12 @@ class account_bank_statement_line(osv.osv):
         for absl in self.browse(cr, uid, ids):
             # browse each move and move lines
             if absl.move_ids and absl.state == 'hard':
-                res[absl.id] = True
+                res[absl.id] = False
                 for move in absl.move_ids:
                     for move_line in move.line_id:
-                        # Result is false if the account is reconciliable but no reconcile id exists
-                        if move_line.account_id.reconcile and not move_line.reconcile_id:
-                            res[absl.id] = False
+                        # Result is True if the account is reconciliable and a reconcile_id exists
+                        if move_line.account_id.reconcile and move_line.reconcile_id:
+                            res[absl.id] = True
                             break
             else:
                 res[absl.id] = False
@@ -1001,6 +1005,9 @@ class account_bank_statement_line(osv.osv):
         # Delete down_payment value not to be given to account_move_line
         if 'down_payment_id' in move_line_values:
             del(move_line_values['down_payment_id'])
+        # Delete analytic distribution from move_line_values because each move line should have its own analytic distribution
+        if 'analytic_distribution_id' in move_line_values:
+            del(move_line_values['analytic_distribution_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
@@ -1377,6 +1384,42 @@ class account_bank_statement_line(osv.osv):
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
+    def update_analytic_lines(self, cr, uid, ids, distrib=False, context=None):
+        """
+        Update analytic lines for temp posted lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        ml_obj = self.pool.get('account.move.line')
+        distro_obj = self.pool.get('analytic.distribution')
+        aal_obj = self.pool.get('account.analytic.line')
+        for absl in self.browse(cr, uid, ids):
+            if absl.state != 'temp':
+                continue
+            # Search all moves lines linked to this register line
+            move_ids = [x.id for x in absl.move_ids]
+            move_line_ids = ml_obj.search(cr, uid, [('move_id', 'in', move_ids)])
+            # Renew analytic lines
+            for line in ml_obj.browse(cr, uid, move_line_ids):
+                if line.analytic_distribution_id:
+                    # remove distribution
+                    distro_obj.unlink(cr, uid, line.analytic_distribution_id.id)
+                    distrib_id = distrib or (absl.analytic_distribution_id and absl.analytic_distribution_id.id) or False
+                    if not distrib_id:
+                        raise osv.except_osv(_('Error'), _('Problem with analytic distribution for this line: %s') % (absl.name or '',))
+                    new_distrib_id = distro_obj.copy(cr, uid, distrib_id, {})
+                    ml_obj.write(cr, uid, [line.id], {'analytic_distribution_id': new_distrib_id})
+            aal_ids = aal_obj.search(cr, uid, [('move_id', 'in', move_line_ids)], context=context)
+            # first delete them
+            aal_obj.unlink(cr, uid, aal_ids)
+            # then create them again
+            ml_obj.create_analytic_lines(cr, uid, move_line_ids)
+        return True
+
     def posting(self, cr, uid, ids, postype, context=None):
         """
         Write some statement line into some account move lines with a state that depends on postype.
@@ -1393,7 +1436,15 @@ class account_bank_statement_line(osv.osv):
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
             elif absl.state == "temp" and postype == "temp":
-                    raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
+                raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
+
+            # Analytic distribution
+            # Check analytic distribution presence
+            if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
+                raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
+            # Check analytic distribution validity
+            if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
+                raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
@@ -1401,10 +1452,10 @@ class account_bank_statement_line(osv.osv):
                 absl = self.browse(cr, uid, absl.id, context=context)
 
             if postype == "hard":
+                # Update analytic lines
+                if absl.account_id.user_type.code in ['expense']:
+                    self.update_analytic_lines(cr, uid, absl.id)
                 # some verifications
-                if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
-                    raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
-
                 if absl.is_transfer_with_change:
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))

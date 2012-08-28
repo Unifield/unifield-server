@@ -18,7 +18,7 @@
                     </xpath>
                     <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="before">
                         <button name="button_analytic_distribution" string="Analytical distribution" type="object"
-                            icon="terp-stock_symbol-selection" attrs="{'invisible': [('analytic_distribution_available', '=', False)]}"/>
+                            icon="terp-stock_symbol-selection"/>
                         <field name="analytic_distribution_state_recap" />
                     </xpath>
                     <xpath expr="//field[@name='project_id']" position="replace">

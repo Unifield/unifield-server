@@ -41,12 +41,14 @@ class report_cheque_inventory(report_sxw.report_sxw):
             return line
 
     def create(self, cr, uid, ids, data, context=None):
+        pool = pooler.get_pool(cr.dbname)
+        lines = []
         # Create the header
         header = [['Register Name', 'Register Period', 'Register State', 'Document Date', 'Posting Date', 'Cheque Number', 'Sequence', 'Description', 'Reference', 'Account', 'Third Parties', 'Amount Out', 'Currency']]
         
         # retrieve a big sql query with all information
         sql_posted_moves = """
-            SELECT DISTINCT abs.name, ap.name, abs.state,
+            SELECT DISTINCT st.id, abs.name, ap.name, abs.state,
                    st.document_date, st.date, st.cheque_number,
                    st.sequence_for_reference, st.name, st.ref,
                    ac.code || ' ' || ac.name as account_name,
@@ -67,11 +69,16 @@ class report_cheque_inventory(report_sxw.report_sxw):
                 LEFT JOIN account_journal tpaj ON st.transfer_journal_id = tpaj.id
             WHERE 
                 aj.type = 'cheque' AND st.amount < 0.0 AND
-                rel.move_id is not null AND (move.state != 'posted' OR (line.reconcile_id IS NULL AND ac.reconcile='t'))
+                rel.move_id is not null AND ac.id = st.account_id
             ORDER BY st.date
         """
         cr.execute(sql_posted_moves)
-        res = header + map((lambda x: self.translate_state(cr, x)), cr.fetchall())
+        # Filter unreconciled statement lines
+        for statement_line in cr.fetchall():
+            statement_line_id = statement_line[0]
+            if not pool.get('account.bank.statement.line')._get_reconciled_state(cr, uid, [statement_line_id])[statement_line_id]:
+                lines.append(statement_line[1:])
+        res = header + map((lambda x: self.translate_state(cr, x)), lines)
         
         buffer = StringIO.StringIO()
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)

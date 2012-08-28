@@ -68,7 +68,8 @@
                 <form string="Import HQ Entries">
                     <label string="This will import HQ entries from a csv file." colspan="4"/>
                     <newline/>
-                    <field name="file"/>
+                    <field name="file" filename="hqfilename"/>
+                    <field name="hqfilename" invisible="1"/>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
@@ -85,7 +86,7 @@
                 <form string="Analytic Reallocation">
                     <group  colspan="6" col="6">
                         <field name="destination_id"/>
-                        <field name="cost_center_id"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)"/>
                         <field name="analytic_id"/>
                     </group>
                     <newline/>
