@@ -40,7 +40,7 @@
                         <field name="date_order" />
                         <field name="warehouse_id" widget="selection"  />
                         <field name="requestor" />
-                        <field name="location_requestor_id" />
+                        <field name="location_requestor_id" required="1" />
 						<field name="delivery_requested_date" required="1" string="Requested date" />
                         <field name="origin" />
                     </group>
