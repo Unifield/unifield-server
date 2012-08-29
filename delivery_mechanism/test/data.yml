@@ -70,4 +70,14 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
+-
+  Product E
+-
+  !record {model: product.product, id: product_E}:
+    name: ProdE
+    cost_method: average
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
         
