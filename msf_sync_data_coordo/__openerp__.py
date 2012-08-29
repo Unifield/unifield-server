@@ -27,7 +27,7 @@
     'description': '',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_client', 'msf_sync_data'],
+    'depends': ['base', 'sync_client', 'msf_sync_data_common'],
     'init_xml': [],
     'data': [
     ],
