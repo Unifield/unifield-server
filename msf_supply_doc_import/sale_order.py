@@ -47,7 +47,8 @@ class sale_order(osv.osv):
         logging.getLogger('init').info('HOOK: module msf_supply_doc_import: loading data/msf_supply_doc_import_data.xml')
         pathname = path.join('msf_supply_doc_import', 'data/msf_supply_doc_import_data.xml')
         file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'msf_supply_doc_import', file, {}, mode='init', noupdate=True)
+        # mode='noinit' to force noupdate=True when reloading this module
+        tools.convert_xml_import(cr, 'msf_supply_doc_import', file, {}, mode='noinit', noupdate=True)
 
     _columns = {
         'file_to_import': fields.binary(string='File to import', 
