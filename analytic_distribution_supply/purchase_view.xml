@@ -8,6 +8,7 @@
             <field name="model">purchase.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="res_currency_functional.purchase_order_form_inherit" />
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/field[@name='company_id']" position="after">
@@ -22,7 +23,8 @@
                             type="object"
                             attrs="{'invisible': [('rfq_ok', '=', True)]}"
                             icon="terp-stock_symbol-selection" />
-                        <field name="analytic_distribution_state_recap" invisible="context.get('rfq_ok')"/>
+                        <field name="analytic_distribution_state_recap" invisible="context.get('rfq_ok')" />
+                        <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                     </xpath>
                 </data>
             </field>
@@ -34,6 +36,7 @@
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <field name="account_analytic_id" position="replace">
                     <group colspan="6" attrs="{'invisible': [('rfq_ok', '=', True)]}">
@@ -43,6 +46,7 @@
                             <field name="line_number" invisible="1"/>
                             <field name="have_analytic_distribution_from_header"/>
                             <label string=" " />
+                            <field name="account_4_distribution" invisible="1"/>
                     </group>
                 </field>
             </field>
