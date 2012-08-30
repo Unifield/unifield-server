@@ -160,8 +160,9 @@ class financing_contract_contract(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
     ]
 
-    _sql_constraints = [('date_overlap', 'check(eligibility_from_date < eligibility_to_date)',
-                         "The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")]
+    _sql_constraints = [
+        ('date_overlap', "check (eligibility_from_date <= eligibility_from_date)", 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
+    ]
 
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         contract = self.browse(cr, uid, id, context=context)
