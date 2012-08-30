@@ -213,7 +213,7 @@ class financing_contract_contract(osv.osv):
     def onchange_date(self, cr, uid, ids, eligibility_from_date, eligibility_to_date):
         """ This function will be called on the change of dates of the financing contract"""
         if eligibility_from_date and eligibility_to_date:
-            if eligibility_from_date > eligibility_to_date:
+            if eligibility_from_date >= eligibility_to_date:
                 warning = {
                     'title': _('Error'), 
                     'message': _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")
