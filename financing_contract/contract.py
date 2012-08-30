@@ -160,6 +160,9 @@ class financing_contract_contract(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
     ]
 
+    _sql_constraints = [('date_overlap', 'check(eligibility_from_date < eligibility_to_date)',
+                         "The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")]
+
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         contract = self.browse(cr, uid, id, context=context)
         if not default:
@@ -220,30 +223,6 @@ class financing_contract_contract(osv.osv):
                 }
                 return {'warning': warning}
         return {}
-
-    def create(self, cr, uid, vals, context=None):
-        """Override the create method to prevent from having eligibility_from_date > eligibility_to_date"""
-        if context is None:
-            context = {}
-        eligibility_from_date = vals.get('eligibility_from_date', False)
-        eligibility_to_date = vals.get('eligibility_to_date', False)
-        if eligibility_from_date and eligibility_to_date:
-            if eligibility_from_date > eligibility_to_date:
-                raise osv.except_osv(_('Error'), _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'."))
-        return super(financing_contract_contract, self).create(cr, uid, vals, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """Override the write method to prevent from having eligibility_from_date > eligibility_to_date"""
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        eligibility_from_date = vals.get('eligibility_from_date', False)
-        eligibility_to_date = vals.get('eligibility_to_date', False)
-        if eligibility_from_date and eligibility_to_date:
-            if eligibility_from_date > eligibility_to_date:
-                raise osv.except_osv(_('Error'), _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'."))
-        return super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
 
     def create_reporting_line(self, cr, uid, browse_contract, browse_format_line, parent_report_line_id=None, context=None):
         format_line_obj = self.pool.get('financing.contract.format.line')
