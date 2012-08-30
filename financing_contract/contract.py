@@ -161,7 +161,7 @@ class financing_contract_contract(osv.osv):
     ]
 
     _sql_constraints = [
-        ('date_overlap', "check (eligibility_from_date <= eligibility_from_date)", 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
+        ('date_overlap', "check (eligibility_from_date <= eligibility_to_date)", 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
     ]
 
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
