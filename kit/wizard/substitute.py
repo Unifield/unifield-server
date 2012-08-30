@@ -520,14 +520,20 @@ class substitute(osv.osv_memory):
             list = ['//button[@name="do_de_kitting"]', '//field[@name="source_location_id"]']
             for xpath in list:
                 fields = root.xpath(xpath)
+                if not fields:
+                    raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
                 for field in fields:
-                    field.set('invisible', "True")
+                    field.set('invisible', 'True')
             result['arch'] = etree.tostring(root)
-            # remove the hide_new_button - only products from kit must be impacted
-#            list = ['hide_new_button="True" hide_delete_button="True" ']
-#            replace_text = result['fields']['composition_item_ids']['views']['tree']['arch']
-#            replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
-#            result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
+            # remove the hide_new_button/hide_delete button
+            # both button are originally hidden, because in de-kitting, we do not want the user to change anything
+            # for substitute, we need these button because the user can choose the products from the kit
+            # load the xml tree
+            root = etree.fromstring(result['fields']['composition_item_ids']['views']['tree']['arch'])
+            # root is the tree, we change the attribute to False
+            root.set('hide_new_button', 'False')
+            root.set('hide_delete_button', 'False')
+            result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root)
             
         if view_type == 'form' and context.get('step', False) == 'de_kitting':
             # load the xml tree
@@ -536,8 +542,10 @@ class substitute(osv.osv_memory):
             list = ['//field[@name="replacement_item_ids"]', '//button[@name="check_availability"]', '//button[@name="do_substitute"]']
             for xpath in list:
                 fields = root.xpath(xpath)
+                if not fields:
+                    raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
                 for field in fields:
-                    field.set('invisible', "True")
+                    field.set('invisible', 'True')
             result['arch'] = etree.tostring(root)
         
         return result

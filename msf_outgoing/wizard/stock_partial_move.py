@@ -98,8 +98,10 @@ class stock_partial_move_memory_out(osv.osv_memory):
                     list = ['//field[@name="composition_list_id"]']
                     for xpath in list:
                         fields = root.xpath(xpath)
+                        if not fields:
+                            raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
                         for field in fields:
-                            field.set('invisible', "True")
+                            field.set('invisible', 'True')
                     result['arch'] = etree.tostring(root)
                     
         return result

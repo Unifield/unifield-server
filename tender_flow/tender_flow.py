@@ -30,6 +30,9 @@ import netsvc
 import pooler
 import time
 
+# xml parser
+from lxml import etree
+
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class tender(osv.osv):
@@ -855,9 +858,11 @@ class purchase_order(osv.osv):
         if view_type == 'form':
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
-                arch = result['arch']
-                arch = arch.replace('<form string="Purchase Order">', '<form string="Requests for Quotation">')
-                result['arch'] = arch
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                # form is the root of the tree, we modify its string attribute
+                root.set('string', 'Requests for Quotation')
+                result['arch'] = etree.tostring(root)
         
         return result
 
