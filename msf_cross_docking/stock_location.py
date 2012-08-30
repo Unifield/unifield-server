@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2012 MSF, TeMPO Consulting, Smile
+#    Copyright (C) 2012 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as

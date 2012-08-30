@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF, Smile
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,7 @@
                 "procurement_request",
                 "useability_dashboard_and_menu",
                 ],
-    "author": "MSF, TeMPO Consulting, Smile",
+    "author": "MSF, TeMPO Consulting",
     "website": "",
     "category": "Specific Modules",
     "description": """
