@@ -59,17 +59,6 @@ class financing_contract_format(osv.osv):
         ('date_overlap', 'check(eligibility_from_date < eligibility_to_date)', 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
     ]
 
-    def onchange_date(self, cr, uid, ids, eligibility_from_date, eligibility_to_date):
-        """ This function will be called on the change of dates of the financing contract"""
-        if eligibility_from_date and eligibility_to_date:
-            if eligibility_from_date > eligibility_to_date:
-                warning = {
-                    'title': _('Error'), 
-                    'message': _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")
-                }
-                return {'warning': warning}
-        return {}
-
 financing_contract_format()
 
 class account_destination_link(osv.osv):
