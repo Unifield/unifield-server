@@ -160,10 +160,6 @@ class financing_contract_contract(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
     ]
 
-    _sql_constraints = [
-        ('date_overlap', "check (eligibility_from_date <= eligibility_to_date)", 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
-    ]
-
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         contract = self.browse(cr, uid, id, context=context)
         if not default:
@@ -213,17 +209,6 @@ class financing_contract_contract(osv.osv):
         # Restrain domain to selected table (or None if none selected
         domains = {'reporting_currency': [('currency_table_id', '=', currency_table_id)]}
         return {'value': values, 'domain': domains}
-    
-    def onchange_date(self, cr, uid, ids, eligibility_from_date, eligibility_to_date):
-        """ This function will be called on the change of dates of the financing contract"""
-        if eligibility_from_date and eligibility_to_date:
-            if eligibility_from_date > eligibility_to_date:
-                warning = {
-                    'title': _('Error'), 
-                    'message': _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")
-                }
-                return {'warning': warning}
-        return {}
 
     def create_reporting_line(self, cr, uid, browse_contract, browse_format_line, parent_report_line_id=None, context=None):
         format_line_obj = self.pool.get('financing.contract.format.line')
