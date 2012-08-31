@@ -6,7 +6,7 @@ from tools import config
 from StringIO import StringIO
 from base64 import b64decode
 from hashlib import md5
-#import logging
+import logging
 
 if sys.version_info >= (2, 6, 6):
     from zipfile import ZipFile, ZipInfo
@@ -26,7 +26,7 @@ class upgrade(osv.osv_memory):
     _name = 'sync_client.upgrade'
     _description = "OpenERP Upgrade Wizard"
 
-    #__logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.client.upgrade')
 
     def restart(self, cr, uid, ids, context=None):
         os.chdir( config['root_path'] )
@@ -77,10 +77,10 @@ class upgrade(osv.osv_memory):
             for f in reversed(find(path)):
                 target = os.path.join(path, f)
                 if os.path.isfile(target) or os.path.islink(target):
-                    print "rm", target
+                    self._logger.debug("rm `%s'" % target)
                     os.unlink( target )
                 elif os.path.isdir(target):
-                    print "rmdir", target
+                    self._logger.debug("rmdir `%s'" % target)
                     os.rmdir( target )
         if not (os.path.isdir(path) and os.access(path, os.W_OK)):
             return self.write(cr, uid, ids, {

@@ -49,7 +49,7 @@ class GzipTransport(TimeoutTransport):
 
     def __init__(self, timeout=None, *args, **kwargs):
         TimeoutTransport.__init__(self, timeout=timeout, *args, **kwargs)
-        self.__logger = logging.getLogger('xmlrpc.transport')
+        self._logger = logging.getLogger('xmlrpc.transport')
 
     def request(self, host, handler, request_body, verbose=0):
         h = self.make_connection(host)
@@ -65,7 +65,7 @@ class GzipTransport(TimeoutTransport):
         request_body = zlib.compress(request_body, zlib.Z_BEST_COMPRESSION)
         gzipped_size = len(request_body)
         saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-        self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
+        self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
                 raw_size, gzipped_size, saving)
 
         self.send_content(h, request_body)

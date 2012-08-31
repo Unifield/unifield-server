@@ -118,7 +118,7 @@ entity()
 
 class sync_manager(osv.osv):
     _inherit = "sync.server.sync_manager"
-    __logger = logging.getLogger('sync.server')
+    _logger = logging.getLogger('sync.server')
     
     @sync_server.sync_server.check_validated
     def get_next_revisions(self, cr, uid, entity, rev_sum, context=None):

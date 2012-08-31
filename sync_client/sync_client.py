@@ -41,7 +41,7 @@ class entity(osv.osv, Thread):
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
     
-    __logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.client')
 
 
     def _auto_init(self,cr,context=None):
@@ -152,10 +152,8 @@ class entity(osv.osv, Thread):
 
     #def _log_error(self, log, e):
     def errorSync(self, e, log, step):
-        message = traceback.format_exc()
-        error = "%s: %s\n%s" % (self.state_prefix[step], self._handle_error(e), message)
-        self.__logger.error(error)
-        log['error'] = log.get('error', '') + error
+        error = self.log(e, 'error', traceback=True)
+        log['error'] = log.get('error', '') + "%s: %s" % (self.state_prefix[step], error)
         log[step] = 'failed'
         return log[step]
        
@@ -201,9 +199,11 @@ class entity(osv.osv, Thread):
             log_id = self.pool.get('sync.monitor').create(cr, uid, log, context=context)
         else:
             self.pool.get('sync.monitor').write(cr, uid, [log_id], log, context=context)
+        if log[step] == 'failed':
+            return (None, log_id, log)
         self.set_syncing(cr, uid, True)
         cr.commit()
-        return (('ok' if not log[step] == 'failed' else None), log_id, log)
+        return ('ok', log_id, log)
  
     def stopSync(self, cr, uid, log_id, log, step='status', status=None, context=None):
         if status is not None:
@@ -238,15 +238,15 @@ class entity(osv.osv, Thread):
             if cont or entity.state == 'init':
                 self.create_update(cr, uid, context=context)
                 cont = True
-                self.__logger.info("init")
+                self._logger.info("init")
             if cont or entity.state == 'update_send':
                 self.send_update(cr, uid, context=context)
                 cont = True
-                self.__logger.info("sent update")
+                self._logger.info("sent update")
             if cont or entity.state == 'update_validate':
                 self.validate_update(cr, uid, context=context)
-                self.__logger.info("validate update")
-        except Exception, e:
+                self._logger.info("validate update")
+        except BaseException, e:
             status = self.errorSync(e, log, 'data_push')
 
         return self.stopSync(cr, uid, log_id, log, step='data_push', status=status, context=None)
@@ -298,7 +298,7 @@ class entity(osv.osv, Thread):
         i = 0
         while send_more:
             if i % 20 == 0:
-                self.__logger.debug("send package %s" % i)
+                self._logger.debug("send package %s" % i)
             send_more = send_package(entity.id)
             i += 1
         #state update_send => update_validate
@@ -337,8 +337,8 @@ class entity(osv.osv, Thread):
                 self.set_last_sequence(cr, uid, context)
             self.retrieve_update(cr, uid, recover=recover, context=context)
             cr.commit()
-            self.execute_update(cr, uid, context)
-        except Exception, e:
+            self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
+        except BaseException, e:
             status = self.errorSync(e, log, 'data_pull')
         
         return self.stopSync(cr, uid, log_id, log, step='data_pull', status=status, context=None)
@@ -378,11 +378,9 @@ class entity(osv.osv, Thread):
         return self.write(cr, uid, entity.id, {'update_offset' : 0, 
                                         'max_update' : 0, 
                                         'update_last' : max_seq}, context=context) 
-        
-    def execute_update(self, cr, uid, context=None):
-        self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
-             
-             
+
+
+
     """
         Push message
     """
@@ -401,7 +399,7 @@ class entity(osv.osv, Thread):
             if entity.state == 'init':
                 self.create_message(cr, uid, context)
             self.send_message(cr, uid, context)
-        except Exception, e:
+        except BaseException, e:
             status = self.errorSync(e, log, 'msg_push')
         
         return self.stopSync(cr, uid, log_id, log, step='msg_push', status=status, context=None)
@@ -453,7 +451,7 @@ class entity(osv.osv, Thread):
         try: 
             self.get_message(cr, uid, context)
             self.execute_message(cr, uid, context)
-        except Exception, e:
+        except BaseException, e:
             status = self.errorSync(e, log, 'msg_pull')
         
         return self.stopSync(cr, uid, log_id, log, step='msg_pull', status=status, context=None)

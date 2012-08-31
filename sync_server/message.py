@@ -25,16 +25,11 @@ import pprint
 import logging
 pp = pprint.PrettyPrinter(indent=4)
 
-def log(model, cr, uid, message, ids=False, data=False, context=None):
-    #more complete log system
-    print("Error : " + message)
-    pp.pprint(data)
-
 class message(osv.osv):
     _name = "sync.server.message"
     _rec_name = 'identifier'
     
-    __logger = logging.getLogger('sync.server')
+    _logger = logging.getLogger('sync.server')
     _columns = {
         'identifier': fields.char('Identifier', size=128, select=True),
         'sent': fields.boolean('Sent to destination ?', select=True),
@@ -56,11 +51,11 @@ class message(osv.osv):
             
             destination = self._get_destination(cr, uid, data['dest'], context=context)
             if not destination:
-                log(self, cr, uid, 'destination %s does not exist' % data['dest'])
+                self.log('destination %s does not exist' % data['dest'])
                 continue
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
             if ids: 
-                log(self, cr, uid, 'Message %s already in the server database' % data['id'])
+                self.log('Message %s already in the server database' % data['id'])
                 continue
             self.create(cr, uid, {
                 'identifier': data['id'],
@@ -105,11 +100,11 @@ class message(osv.osv):
     def recovery(self, cr, uid, entity, start_seq, context=None):
         ids = self.search(cr, uid, [('sequence', '>', start_seq), ('destination', '=', entity.id)], context=context)
         if ids:
-            self.__logger.debug("recovery %s" % ids)
+            self._logger.debug("recovery %s" % ids)
             self.write(cr, uid, ids, {'sent' : False}, context=context)
-            self.__logger.debug("These ids will be recovered: %s" % str(ids))
+            self._logger.debug("These ids will be recovered: %s" % str(ids))
         else:
-            self.__logger.debug("No ids to be recover! domain=%s" % str([('sequence', '>=', start_seq), ('destination', '=', entity.id)]))
+            self._logger.debug("No ids to be recover! domain=%s" % str([('sequence', '>=', start_seq), ('destination', '=', entity.id)]))
         return True
         
 message()
