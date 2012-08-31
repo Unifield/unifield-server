@@ -97,7 +97,7 @@ class analytic_account(osv.osv):
         )
         error = []
         for x in cr.fetchall():
-            error.append(_('"%s" is the default destination of "%s %s", you can\'t remove it.')%(x[2], x[0], x[1]))
+            error.append(_('"%s" is the default destination for the G/L account "%s %s", you can\'t remove it.')%(x[2], x[0], x[1]))
         if error:
             raise osv.except_osv(_('Warning !'), "\n".join(error))
         return True
