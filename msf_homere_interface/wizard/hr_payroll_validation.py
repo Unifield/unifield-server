@@ -109,12 +109,6 @@ class hr_payroll_validation(osv.osv_memory):
                 if m.groups() and m.groups()[0] and m.groups()[1]:
                     partner_id = vals.get(m.groups()[0])
                     newvals = {'partner_id': vals.get(m.groups()[0])}
-                    if partner_id:
-                        partner = partner_obj.read(cr, uid, partner_id, ['property_account_payable', 'name'])
-                        if not partner['property_account_payable']:
-                                raise osv.except_osv(_('Error'), _('Partner %s has no Account Payable')%(partner['name'],))
-                        newvals['account_id'] =  partner['property_account_payable'][0]
-
                     self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], newvals)
         for field in to_delete:
             del vals[field]
@@ -219,6 +213,14 @@ class hr_payroll_validation(osv.osv_memory):
                     if f2_id:
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+            elif account and account.type_for_register and account.type_for_register == 'payroll':
+                partner_id = line.get('partner_id', False) and line.get('partner_id')[0] or False
+                if not partner_id:
+                    raise osv.except_osv(_('Warning'), _('No partner filled in for this line: %s') % (line.get('name', ''),))
+                partner_data = self.pool.get('res.partner').read(cr, uid, partner_id, ['property_account_payable', 'property_account_receivable'])
+                account_id = partner_data.get('property_account_payable', account_id) and partner_data.get('property_account_payable')[0] or account_id
+#                if amount > 0.0:
+#                    account_id = partner_data.get('property_account_receivable', account_id) and partner_data.get('property_account_receivable')[0] or account_id
             # create move line values
             line_vals = {
                 'move_id': move_id,
