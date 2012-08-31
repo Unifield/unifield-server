@@ -67,8 +67,8 @@
 	                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
 	                    <button name="check_integrity" string="Check Integrity" type="object" icon="gtk-find" />
 	                    <button name="check_availability" string="Check Availability" type="object" icon="gtk-find" />
-	                    <button name="do_substitute" string="Process" type="object" icon="gtk-go-forward" />
-	                    <button name="do_de_kitting" string="Process" type="object" icon="gtk-go-forward" />
+	                    <button name="do_substitute" string="Process Substitute" type="object" icon="gtk-go-forward" />
+	                    <button name="do_de_kitting" string="Process De-Kitting" type="object" icon="gtk-go-forward" />
                     </group>
             	</form>
             </field>
