@@ -386,37 +386,41 @@ def import_data(model, cr, uid, fields, datas, mode='init', current_module='', n
 osv.osv.import_data = import_data 
 
 
-
 def get_destination_name(self, cr, uid, ids, dest_field, context=None):
     """
         @param ids : ids of the record from which we need to find the destination
         @param dest_field : field of the record from where the name will be extract
         @return a dictionnary with ids : dest_fields
     """
-    result = [False for x in ids] if isinstance(ids, (tuple, list)) else [False]
+    res_type = type(ids)
+    ids = ids if isinstance(ids, (tuple, list)) else [ids]
     if not dest_field:
-        return result
+        return [False for x in ids] if issubclass(res_type, (list, tuple)) else False
     
     field = self.fields_get(cr, uid, context=context).get(dest_field)
-    if not field:
-        return result
     
-    for i, rec in enumerate(self.browse(cr, uid, (ids if isinstance(ids, (tuple, list)) else [ids]), context=context)):
-        value = getattr(rec, dest_field)
-        if not value:
-            continue
-        if field['type'] == 'many2one':
-            if field['relation'] == 'msf.instance':
-                result[i] = value.instance
-            else:
-                result[i] = self.pool.get(field['relation']).name_get(cr, uid, [value.id], context=context)[0][1]
-        elif field['type'] in ('char', 'text'):
-            result[i] = value
-        else:
-            raise osv.except_osv(_('Error !'), _("%s doesn't implement field of type %s, please contact system administrator to upgrade.") % ('get_destination_name()', field['type']))
+    if field['type'] == 'many2one' and not field['relation'] == 'msf.instance':
+        values = self.read(cr, uid, ids, [dest_field], context)
+        names = dict([
+            (x['id'],(x[dest_field][1] if x[dest_field] else False)) for x in values
+        ])
+        return [names[id] for id in ids] if issubclass(res_type, (list, tuple)) \
+            else names[ids[0]]
 
-    return result if isinstance(ids, (tuple, list)) else result[0]
-    
+    result = list()
+    for rec in self.browse(cr, uid, ids, context=context):
+        value = rec[dest_field]
+        if value is False:
+            result.append(False)
+        if field['type'] == 'many2one':
+            result.append(value.instance or False)
+        elif field['type'] in ('char', 'text'):
+            result.append(value)
+        else:
+            raise osv.except_osv(_('Error !'), _("%(method)s doesn't implement field of type %(type)s, please contact system administrator to upgrade.") % {'method':'get_destination_name()', 'type':field['type']})
+
+    return result if issubclass(res_type, (list, tuple)) else result[0]
+ 
 osv.osv.get_destination_name = get_destination_name
 
 
