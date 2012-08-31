@@ -259,7 +259,18 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Change commitments state
-        self._finish_commitment(cr, uid, ids, context=context)
+        # Sidestep UF-1183
+        # If ONE invoice is in draft state, raise an error!
+        to_process = []
+        for po in self.browse(cr, uid, ids):
+            have_draft_invoice = False
+            for inv in po.invoice_ids:
+                if inv.state == 'draft':
+                    have_draft_invoice = True
+                    break
+            if not have_draft_invoice or not po.invoice_ids:
+                to_process.append(po.id)
+        self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
 purchase_order()
