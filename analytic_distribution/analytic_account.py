@@ -186,6 +186,18 @@ class analytic_account(osv.osv):
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
 
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        if not args:
+            args=[]
+        if context is None:
+            context={}
+        if context.get('current_model') == 'project.project':
+            cr.execute("select analytic_account_id from project_project")
+            project_ids = [x[0] for x in cr.fetchall()]
+            return self.name_get(cr, uid, project_ids, context=context)
+        account = self.search(cr, uid, ['|', ('code', 'ilike', '%%%s%%' % name), ('name', 'ilike', '%%%s%%' % name)]+args, limit=limit, context=context)
+        return self.name_get(cr, uid, account, context=context)
+
     def name_get(self, cr, uid, ids, context={}):
         """
         Get name for analytic account with analytic account code.
