@@ -146,20 +146,6 @@
             </field>
         </record>
 
-        <record id="inherit_view_account_search2" model="ir.ui.view">
-            <field name='name'>inherit.view.account.search2</field>
-            <field name='model'>account.account</field>
-            <field name="type">search</field>
-            <field name='inherit_id' ref='account.view_account_search'/>
-            <field name="priority" eval="20"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='name']" position="after">
-                    <newline/>
-                    <field name="is_not_hq_correctible"/>
-                    <newline/>
-                </xpath>
-            </field>
-        </record>
 
     <!-- Actions: Menu actions -->
         <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
