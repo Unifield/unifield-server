@@ -506,6 +506,9 @@ form: module.record_id""" % (xml_id,)
             res['target'] = rec.get('target','')
         if rec.get('multi'):
             res['multi'] = rec.get('multi', False)
+        if rec.get('empty_ids'):
+            res['empty_ids'] = rec.get('empty_ids', False)
+
         id = self.pool.get('ir.model.data')._update(cr, self.uid, 'ir.actions.act_window', self.module, res, xml_id, noupdate=self.isnoupdate(data_node), mode=self.mode)
         self.idref[xml_id] = int(id)
 
