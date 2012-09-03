@@ -85,10 +85,9 @@ class stock_partial_move_memory_out(osv.osv_memory):
         result = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
             picking_obj = self.pool.get('stock.picking')
-            picking_id = context.get('active_ids')
-            if picking_id:
-                picking_id = picking_id[0]
-                picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
+            picking_ids = context.get('active_ids')
+            if picking_ids:
+                picking_type = picking_obj.read(cr, uid, picking_ids, ['type'], context=context)[0]['type']
                 if picking_type == 'in':
                     # remove the kit column for memory moves
                     # the creation of composition list (if needed) is performed after the IN processing wizard
