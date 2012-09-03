@@ -53,5 +53,16 @@ class sale_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         return True
 
+    def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
+        if not context:
+            context = {}
+            
+        so_po_common = self.pool.get('so.po.common')
+        so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        
+        client_order_ref = source + "." + po_info.name
+        res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
+        return True
+
 sale_order_sync()
 
