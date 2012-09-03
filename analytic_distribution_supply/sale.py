@@ -96,6 +96,21 @@ class sale_order(osv.osv):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
 
+
+    def _get_destination_ok(self, cr, uid, ids, context):
+        dest_ok = False
+        for pol in ids:
+            if pol.product_id.property_account_expense:
+                dest_ok = pol.product_id.property_account_expense.destination_ids
+            elif pol.product_id.categ_id.property_account_expense_categ:
+                dest_ok = pol.product_id.categ_id.property_account_expense_categ.destination_ids 
+            elif self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category'):
+                dest_ok = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').destination_ids
+            else:
+                raise osv.except_osv(_('Error'), _('aaaaaa'))
+        return dest_ok
+
+
     def wkf_validated(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
@@ -146,8 +161,27 @@ class sale_order(osv.osv):
                 if not distrib_id and not so.from_yml_test:
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
                 # check distribution state
+
                 if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
+                    id_ad = self.pool.get('analytic.distribution').create(cr,uid,{})
+                    temp = []
+                    for x in so.analytic_distribution_id.cost_center_lines:
+                        bro_dests = self._get_destination_ok(cr, uid, [line], context=context)
+                        if x.destination_id in bro_dests:
+                            bro_dest_ok = x.destination_id   
+                        else:
+                            bro_dest_ok = bro_dests[0]
+                        self.pool.get('sale.order.line').write(cr,uid,[line.id],{'analytic_distribution_id': id_ad })
+                        check = self.pool.get('cost.center.distribution.line').search(cr,uid,[('distribution_id', '=', id_ad), ('destination_id', '=', bro_dest_ok.id), ('analytic_id', '=', x.analytic_id.id )])
+                        if check:
+                            bro_cccdl = self.pool.get('cost.center.distribution.line').browse(cr,uid,check[0])
+                            perc = bro_cccdl.percentage + x.percentage
+                            self.pool.get('cost.center.distribution.line').write(cr,uid,[check[0]],{'percentage':perc})
+                        else:
+                            cur = line.currency_id and line.currency_id.id or 1
+                            vals = {'name': 'Distribution Line', 'currency_id':cur, 'destination_id': bro_dest_ok.id, 'distribution_id': id_ad, 'analytic_id': x.analytic_id.id, 'percentage': x.percentage }
+                            self.pool.get('cost.center.distribution.line').create(cr,uid,vals)
+
         # Default behaviour
         res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
