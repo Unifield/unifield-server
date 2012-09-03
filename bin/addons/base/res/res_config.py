@@ -213,6 +213,7 @@ class res_config_configurable(osv.osv_memory):
             .read(cr, uid, current_user_menu.id)
         
     def action_finish(self, cr, uid, ids, context=None):
+        self.action_next(cr, uid, ids, context=context)
         open_todo_ids = self.pool.get('ir.actions.todo').search(cr, uid, [('state', '=', 'open')])
         self.pool.get('ir.actions.todo').write(cr, uid, open_todo_ids, {'state': 'done'})
         
