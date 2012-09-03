@@ -34,8 +34,8 @@ class bank_statement(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         bank = self.browse(cr, uid, res_id)
+        # to be unique, the journal xml_id must include also the period, otherwise no same name journal cannot be inserted for different periods! 
         unique_journal = (bank.journal_id.code or 'nojournal') + '_' + (bank.period_id.name or 'noperiod')
-        print "Test unique journal (Test RB!)" + unique_journal
         return 'bank_statement_' + (bank.instance_id.code or 'noinstance') + '_' + (bank.name or 'nobank') + '_' + unique_journal 
     
 bank_statement()
