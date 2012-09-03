@@ -405,7 +405,7 @@ class purchase_order(osv.osv):
             elif self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category'):
                 dest_ok = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').destination_ids
             else:
-                raise osv.except_osv(_('Error'), _('aaaaa'))
+                raise osv.except_osv(_('Error'), _('No destination found for this product'))
         return dest_ok
 
     def check_analytic_distribution(self, cr, uid, ids, context=None):
