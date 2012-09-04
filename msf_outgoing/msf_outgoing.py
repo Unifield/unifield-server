@@ -918,6 +918,7 @@ class shipment(osv.osv):
                 account_id = partner.property_account_payable.id
             
             addresses = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            today = time.strftime('%Y-%m-%d',time.localtime())  
             
             invoice_vals = {
                     'name': shipment.name,
@@ -929,9 +930,10 @@ class shipment(osv.osv):
                     'address_contact_id': addresses['contact'],
                     'payment_term': payment_term_id,
                     'fiscal_position': partner.property_account_position.id,
-                    'date_invoice': context.get('date_inv',False),
-                    'user_id':uid
+                    'date_invoice': context.get('date_inv',False) or today,
+                    'user_id':uid,
                 }
+
             cur_id = shipment.pack_family_memory_ids[0].currency_id.id
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
