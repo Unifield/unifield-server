@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF, Smile. All Rights Reserved
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -25,6 +25,8 @@
 from report import report_sxw
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
+
+import pooler
 
 def getIds(self, cr, uid, ids, context):
     if not context:

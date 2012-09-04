@@ -54,7 +54,7 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="date"/>
@@ -73,6 +73,7 @@
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
                                         <field name="amount" invisible="1"/>
@@ -116,6 +117,7 @@
                                             domain="[('filter_for_third_party', '=', account_id)]" 
                                             context="{'curr': parent.currency}" />
                                         <field name="display_analytic_button" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
@@ -186,7 +188,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object" 
@@ -208,6 +210,7 @@
                                             context="{'curr': parent.currency}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
@@ -252,6 +255,7 @@
                                             context="{'curr': parent.currency}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
@@ -271,8 +275,8 @@
                             </page>
                             <page string="CashBox">
                                 <field name="prev_reg_id" invisible="1"/>
-                                <group col="2" colspan="2" expand="1">
-                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
+                                <group col="4" colspan="4">
+                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
                                         <tree string = "Opening Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
@@ -284,8 +288,6 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                </group>
-                                <group col="2" colspan="2" expand="1">
                                     <field name="closing_balance_frozen" invisible="1"/>
                                     <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|', ('state','!=','open'), ('closing_balance_frozen', '=', True)]}">
                                         <tree string = "Closing Balance" editable="bottom">
@@ -299,7 +301,7 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                    <button name="button_confirm_closing_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply" 
+                                    <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply" 
                                         colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
                                         confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
                                 </group>
@@ -315,12 +317,13 @@
                                 <separator string="Opening Balance" colspan="4"/>
                                 <field name="balance_start" string="Opening Balance" readonly="True"/>
                                 <field name="total_entry_encoding"/>
+                                <field name="msf_calculated_balance"/>
                                 <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                                 <field name="unrecorded_expenses_amount"  attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                             </group>
                             <group col="2" colspan="2">
                                 <separator string="Closing Balance" colspan="4"/>
-                                <field name="balance_end" string="Calculated Balance" readonly="1"/>
+                                <field name="balance_end" string="Theoritical Balance" readonly="1"/>
                                 <field name="balance_end_cash" readonly="1" string="CashBox Balance"/>
                                 <field name="closing_gap" readonly="1"/>
                             </group>
@@ -622,7 +625,7 @@
                     <notebook colspan="4">
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <field name="document_date"/>
                                     <field name="date"/>
@@ -639,6 +642,7 @@
                                             context="{'curr': parent.currency}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="analytic_distribution_id" invisible="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
@@ -679,6 +683,7 @@
                                         context="{'curr': parent.currency}" 
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="analytic_distribution_id" invisible="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
