@@ -76,7 +76,7 @@ class stock_mission_report(osv.osv):
         'name': fields.char(size=128, string='Name', required=True),
         'instance_id': fields.many2one('msf.instance', string='Instance', required=True),
         'full_view': fields.boolean(string='Is a full view report ?'),
-        'local_report': fields.function(_get_local_report, fnct_search=_src_local_report, 
+        'local_report': fields.function(_get_local_report, fnct_search=_src_local_report,
                                         type='boolean', method=True, store=False,
                                         string='Is a local report ?', help='If the report is a local report, it will be updated periodically'),
         'report_line': fields.one2many('stock.mission.report.line', 'mission_report_id', string='Lines'),
@@ -233,7 +233,7 @@ class stock_mission_report_line(osv.osv):
         for arg in args:
             el = arg[0].split('_')
             el.pop()
-            narg=[('_'.join(el), arg[1], arg[2])]
+            narg = [('_'.join(el), arg[1], arg[2])]
         
         return narg
     
@@ -254,7 +254,7 @@ class stock_mission_report_line(osv.osv):
         'name': fields.related('product_id', 'name', string='Name', type='char'),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
                                    store={'product.template': (_get_template, ['type'], 10)}),
-        'type': fields.related('product_id', 'type', string='Type', type='selection', selection=_get_product_type_selection, 
+        'type': fields.related('product_id', 'type', string='Type', type='selection', selection=_get_product_type_selection,
                                store={'product.template': (_get_template, ['type'], 10)}),
         'subtype': fields.related('product_id', 'subtype', string='Subtype', type='selection', selection=_get_product_subtype_selection),
         # mandatory nomenclature levels
@@ -282,6 +282,7 @@ class stock_mission_report_line(osv.osv):
         'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
         'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
+        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                 store={'product.template': (_get_template, ['type'], 10)}),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
@@ -318,12 +319,12 @@ class stock_mission_report_line(osv.osv):
         if not isinstance(product_id, (int, long)):
             raise osv.except_osv(_('Error'), _('You can\'t build the request for some products !'))
         
-        minus_ids = obj.search(cr, uid, [('location_id', 'in', location_ids), 
-                                         ('product_id', '=', product_id), 
+        minus_ids = obj.search(cr, uid, [('location_id', 'in', location_ids),
+                                         ('product_id', '=', product_id),
                                          ('state', '=', 'done')])
         
-        plus_ids = obj.search(cr, uid, [('location_dest_id', 'in', location_ids), 
-                                        ('product_id', '=', product_id), 
+        plus_ids = obj.search(cr, uid, [('location_dest_id', 'in', location_ids),
+                                        ('product_id', '=', product_id),
                                         ('state', '=', 'done')])
         
         res = 0.00
@@ -432,7 +433,7 @@ class stock_mission_report_line(osv.osv):
         central_loc = location_obj.search(cr, uid, [('central_location_ok', '=', True)], context=context)
         cross_loc = location_obj.search(cr, uid, [('cross_docking_location_ok', '=', True)], context=context)
         stock_loc = location_obj.search(cr, uid, [('location_id', 'child_of', stock_location_id),
-                                                  ('id', 'not in', cross_loc), 
+                                                  ('id', 'not in', cross_loc),
                                                   ('central_location_ok', '=', False)], context=context)
         cu_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')], context=context)
         secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
@@ -451,14 +452,14 @@ class stock_mission_report_line(osv.osv):
             internal_val = 0.00
             if internal_loc:
                 internal_qty = self._get_request(cr, uid, internal_loc, line.product_id.id)
-                internal_val = internal_qty*standard_price
+                internal_val = internal_qty * standard_price
             
             # Stock locations
             stock_qty = 0.00
             stock_val = 0.00
             if stock_loc:
                 stock_qty = self._get_request(cr, uid, stock_loc, line.product_id.id)
-                stock_val = stock_qty*standard_price                                                    
+                stock_val = stock_qty * standard_price                                                    
             
             # Central stock locations
             central_qty = 0.00
@@ -466,7 +467,7 @@ class stock_mission_report_line(osv.osv):
             if central_loc:
                 central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
                 central_qty = self._get_request(cr, uid, central_loc, line.product_id.id)
-                central_val = central_qty*standard_price
+                central_val = central_qty * standard_price
             
             # Cross-docking locations
             cross_qty = 0.00
@@ -474,14 +475,14 @@ class stock_mission_report_line(osv.osv):
             if cross_loc:
                 cross_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cross_loc)], context=context)
                 cross_qty = self._get_request(cr, uid, cross_loc, line.product_id.id)
-                cross_val = cross_qty*standard_price
+                cross_val = cross_qty * standard_price
 
             # Secondary stock locations
             secondary_qty = 0.00
             secondary_val = 0.00
             if secondary_location_ids != False:
                 secondary_qty = self._get_request(cr, uid, secondary_location_ids, line.product_id.id)
-                secondary_val = secondary_qty*standard_price
+                secondary_val = secondary_qty * standard_price
                 
             # Consumption unit locations
             cu_qty = 0.00
@@ -489,7 +490,7 @@ class stock_mission_report_line(osv.osv):
             if cu_loc:
                 cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
                 cu_qty = self._get_request(cr, uid, cu_loc, line.product_id.id)
-                cu_val = cu_qty*standard_price
+                cu_val = cu_qty * standard_price
                 
             # In Pipe
             in_pipe_qty = 0.00
@@ -509,8 +510,8 @@ class stock_mission_report_line(osv.osv):
                 if partner == coordo_id:
                     in_pipe_not_coord_qty += qty
             
-            in_pipe_val = in_pipe_qty*standard_price
-            in_pipe_not_coord_val = in_pipe_not_coord_qty*standard_price
+            in_pipe_val = in_pipe_qty * standard_price
+            in_pipe_not_coord_val = in_pipe_not_coord_qty * standard_price
             
             values = {'product_amc': line.product_id.product_amc,
                       'reviewed_consumption': line.product_id.reviewed_consumption,
