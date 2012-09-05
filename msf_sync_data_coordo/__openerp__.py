@@ -21,13 +21,13 @@
 
 
 {
-    'name': 'Synchronization Utility: Datas Coordo Side',
+    'name': 'Synchronization Utility: Datas Post-Synchronization (Coordo Side)',
     'version': '0.1',
     'category': 'Tools',
-    'description': '',
+    'description': 'Must be installed after first synchronization',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_client', 'msf_sync_data_common'],
+    'depends': ['base', 'sync_client'],
     'init_xml': [],
     'data': [
         'data/res.partner.csv',
