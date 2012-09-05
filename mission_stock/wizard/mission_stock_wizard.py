@@ -88,6 +88,8 @@ class mission_stock_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
             
         wiz_id = self.browse(cr, uid, ids, context=context)
+        if not wiz_id.report_id:
+            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
         c = context.copy()
         c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation == 'true' and True or False, 'split_stock': wiz_id.split_stock == 'true' and True or False})
         
