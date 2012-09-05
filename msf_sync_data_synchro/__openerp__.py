@@ -31,8 +31,9 @@
     'init_xml': [],
     'data': [
         'data/sync.server.group_type.csv',
+        'data/sync.server.entity_group.csv',
         'data/sync_server.sync_rule.csv',
-        #'data/sync_server.message_rule.csv',
+        'data/sync_server.message_rule.csv',
     ],
     'demo_xml': [
     ],

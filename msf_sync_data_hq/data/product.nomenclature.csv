@@ -1,0 +1,564 @@
+level,name,type,parent_id
+0,MIX,Mandatory,
+0,SERVICE,Mandatory,
+1,Administration,Mandatory,LOG
+1,Camp,Mandatory,LOG
+1,Kit,Mandatory,LOG
+1,Library,Mandatory,LOG
+1,Programm Support,Mandatory,LOG
+1,Transport,Mandatory,LOG
+2,Data processing,Mandatory,Administration
+2,FOOD FOR MSF STAFF,Mandatory,Administration
+2,Furnitures,Mandatory,Administration
+2,Office equipment,Mandatory,Administration
+2,STATIONERY,Mandatory,Administration
+2,Team life,Mandatory,Administration
+3,"Cable, dataprocessing",Mandatory,Data processing
+3,Cartridge,Mandatory,Data processing
+3,"Computer, Laptop",Mandatory,Data processing
+3,Keyboard AZERTY,Mandatory,Data processing
+3,Modem,Mandatory,Data processing
+3,Printer,Mandatory,Data processing
+3,Screen - Monitor,Mandatory,Data processing
+3,Switch,Mandatory,Data processing
+3,Beef,Mandatory,FOOD FOR MSF STAFF
+3,Cassoulet,Mandatory,FOOD FOR MSF STAFF
+3,Coffe,Mandatory,FOOD FOR MSF STAFF
+3,dehydrated meal,Mandatory,FOOD FOR MSF STAFF
+3,Duck,Mandatory,FOOD FOR MSF STAFF
+3,Fruit,Mandatory,FOOD FOR MSF STAFF
+3,Spinatch,Mandatory,FOOD FOR MSF STAFF
+3,Sugar,Mandatory,FOOD FOR MSF STAFF
+3,Taboule,Mandatory,FOOD FOR MSF STAFF
+3,Tea,Mandatory,FOOD FOR MSF STAFF
+3,"Bed, Rigid",Mandatory,Furnitures
+3,Chair,Mandatory,Furnitures
+3,Cupboard,Mandatory,Furnitures
+3,Shelve,Mandatory,Furnitures
+3,Calculator,Mandatory,Office equipment
+3,Camera,Mandatory,Office equipment
+3,duplicator,Mandatory,Office equipment
+3,Photocopy Machine,Mandatory,Office equipment
+3,Projector,Mandatory,Office equipment
+3,Ribbon,Mandatory,Office equipment
+3,Stencil,Mandatory,Office equipment
+3,TELEFAX,Mandatory,Office equipment
+3,"Book, Accounting",Mandatory,STATIONERY
+3,"Book, Exercice",Mandatory,STATIONERY
+3,"Card, visit",Mandatory,STATIONERY
+3,Folder,Mandatory,STATIONERY
+3,Label,Mandatory,STATIONERY
+3,MAGNIFYING GLASS,Mandatory,STATIONERY
+3,Paper,Mandatory,STATIONERY
+3,Pen Felt,Mandatory,STATIONERY
+3,Pen Marker,Mandatory,STATIONERY
+3,Stamp,Mandatory,STATIONERY
+3,back-pack,Mandatory,Team life
+3,"Bin, Rubbish",Mandatory,Team life
+3,Boots,Mandatory,Team life
+3,"Boots, white colour",Mandatory,Team life
+3,Bucket,Mandatory,Team life
+3,colar,Mandatory,Team life
+3,COOKER,Mandatory,Team life
+3,Cream,Mandatory,Team life
+3,"GOURD, aluminium",Mandatory,Team life
+3,"Hat, Lined",Mandatory,Team life
+3,Leather boots,Mandatory,Team life
+3,Lighter,Mandatory,Team life
+3,"LOGISTICIAN, FEMALE",Mandatory,Team life
+3,"Logistician, Male",Mandatory,Team life
+3,Mattress,Mandatory,Team life
+3,Methanol,Mandatory,Team life
+3,RUBBER BOOTS,Mandatory,Team life
+3,Sheet,Mandatory,Team life
+3,Soap,Mandatory,Team life
+3,STOVE,Mandatory,Team life
+3,SUN GLASS,Mandatory,Team life
+3,Tee Shirt,Mandatory,Team life
+3,Towel,Mandatory,Team life
+3,Vest,Mandatory,Team life
+2,Building,Mandatory,Camp
+2,SEMIPERMANENT Shelter,Mandatory,Camp
+2,Shelters,Mandatory,Camp
+2,Water and sanitation,Mandatory,Camp
+3,Block,Mandatory,Building
+3,Gravel,Mandatory,Building
+3,"Iron, Pipe, Profile...",Mandatory,Building
+3,"Iron, Rod",Mandatory,Building
+3,"Sheet, Aluminium",Mandatory,Building
+3,VERMICULITH,Mandatory,Building
+3,"Wood, Plank",Mandatory,Building
+3,"Wood, Stud",Mandatory,Building
+3,"Wood, Timber",Mandatory,Building
+3,Container,Mandatory,SEMIPERMANENT Shelter
+3,Blanket,Mandatory,Shelters
+3,"Heater, Fuel",Mandatory,Shelters
+3,"Heater, space",Mandatory,Shelters
+3,Hospital Tent,Mandatory,Shelters
+3,Peg Sand,Mandatory,Shelters
+3,"Peg, Mud type",Mandatory,Shelters
+3,"Pegs, Wind",Mandatory,Shelters
+3,Plastic Sheeting,Mandatory,Shelters
+3,Pole,Mandatory,Shelters
+3,Tape,Mandatory,Shelters
+3,Tent Dispensary,Mandatory,Shelters
+3,Tent Family,Mandatory,Shelters
+3,"Tent, Multipurpose",Mandatory,Shelters
+3,"Tent, Team",Mandatory,Shelters
+3,Warehouse,Mandatory,Shelters
+3,Altimeter,Mandatory,Water and sanitation
+3,"beaker, 1 l, graduated, plastic",Mandatory,Water and sanitation
+3,Coupling,Mandatory,Water and sanitation
+3,"Coupling, Collar, Clip",Mandatory,Water and sanitation
+3,"Coupling, Half",Mandatory,Water and sanitation
+3,"Coupling, Nipple",Mandatory,Water and sanitation
+3,"Coupling, Reducer",Mandatory,Water and sanitation
+3,"Coupling, T",Mandatory,Water and sanitation
+3,"Coupling, Y",Mandatory,Water and sanitation
+3,dosing pump,Mandatory,Water and sanitation
+3,"Filter, water",Mandatory,Water and sanitation
+3,Hose,Mandatory,Water and sanitation
+3,Insecticide against cockroaches,Mandatory,Water and sanitation
+3,Insecticide for IRS,Mandatory,Water and sanitation
+3,Insecticide fr insecticidal dusting,Mandatory,Water and sanitation
+3,Lime quick,Mandatory,Water and sanitation
+3,Motor Pump Diesel,Mandatory,Water and sanitation
+3,Motor Pump Electrical,Mandatory,Water and sanitation
+3,"Motor Pump, Petrol",Mandatory,Water and sanitation
+3,Permethrine,Mandatory,Water and sanitation
+3,Sprayer,Mandatory,Water and sanitation
+3,Squatting slab,Mandatory,Water and sanitation
+3,Stainer,Mandatory,Water and sanitation
+3,Tank,Mandatory,Water and sanitation
+3,"Tank, Onion",Mandatory,Water and sanitation
+3,"Test, tube",Mandatory,Water and sanitation
+3,"Test, Water",Mandatory,Water and sanitation
+3,Valve,Mandatory,Water and sanitation
+2,Administration Kits,Mandatory,Kit
+2,Camps kits,Mandatory,Kit
+2,Communication kits,Mandatory,Kit
+2,Programme support kits,Mandatory,Kit
+2,Transport kits,Mandatory,Kit
+2,Water and sanitation kits,Mandatory,Kit
+3,Kit Library,Mandatory,Administration Kits
+3,Kit Life,Mandatory,Administration Kits
+3,Module Administrative,Mandatory,Administration Kits
+3,Module Life,Mandatory,Administration Kits
+3,Module Photocopy,Mandatory,Administration Kits
+3,Module Stationnery,Mandatory,Administration Kits
+3,"List, Building",Mandatory,Camps kits
+3,Module Cooking,Mandatory,Camps kits
+3,Module Installation,Mandatory,Camps kits
+3,Module Shelter,Mandatory,Camps kits
+3,Kit Hf Base,Mandatory,Communication kits
+3,Kit Hf Mobile,Mandatory,Communication kits
+3,Kit Vhf,Mandatory,Communication kits
+3,Module Hf Base,Mandatory,Communication kits
+3,Module UHF,Mandatory,Communication kits
+3,Module Vhf,Mandatory,Communication kits
+3,Kit Generator,Mandatory,Programme support kits
+3,Kit Tools,Mandatory,Programme support kits
+3,Kit Modification,Mandatory,Transport kits
+3,Module Maintenance,Mandatory,Transport kits
+3,kit electric pump,Mandatory,Water and sanitation kits
+3,"Kit Motor Pump, Diesel",Mandatory,Water and sanitation kits
+3,Kit Tank,Mandatory,Water and sanitation kits
+2,INTERNAL MEDICINE,Mandatory,Library
+2,MEDICINE GENERAL INFORMATION,Mandatory,Library
+2,VIRAL INFECTIOUS DISEASES,Mandatory,Library
+3,"Medical, Book",Mandatory,INTERNAL MEDICINE
+3,"Dictionnary, Medical terms, Book",Mandatory,MEDICINE GENERAL INFORMATION
+3,"Dengue, Book",Mandatory,VIRAL INFECTIOUS DISEASES
+3,"Measle, Guide",Mandatory,VIRAL INFECTIOUS DISEASES
+2,Cold chain,Mandatory,Programm Support
+2,Communication,Mandatory,Programm Support
+2,COOKING,Mandatory,Programm Support
+2,Electricity,Mandatory,Programm Support
+2,HARDWARE,Mandatory,Programm Support
+2,Hygiene,Mandatory,Programm Support
+2,Lighting,Mandatory,Programm Support
+2,Packing and handling,Mandatory,Programm Support
+2,Safety and protective equipment,Mandatory,Programm Support
+2,SPARE PARTS LISTER,Mandatory,Programm Support
+2,SPARE PARTS LOMBARDINI,Mandatory,Programm Support
+2,SPARE PARTS ROBIN,Mandatory,Programm Support
+2,Tools,Mandatory,Programm Support
+3,"Box, Cold Box, Ice Box",Mandatory,Cold chain
+3,Burner,Mandatory,Cold chain
+3,Control,Mandatory,Cold chain
+3,Freezer,Mandatory,Cold chain
+3,Pack,Mandatory,Cold chain
+3,Refrigerator,Mandatory,Cold chain
+3,Refrigerator Freezer,Mandatory,Cold chain
+3,SOLAR REFRIGERATOR,Mandatory,Cold chain
+3,Thermometer,Mandatory,Cold chain
+3,Adaptor Coaxial,Mandatory,Communication
+3,Antenna Accessories,Mandatory,Communication
+3,Antenna Hf,Mandatory,Communication
+3,Antenna UHF,Mandatory,Communication
+3,Antenna Vhf,Mandatory,Communication
+3,"Cable, telecom",Mandatory,Communication
+3,Connector Coaxial,Mandatory,Communication
+3,Power Supply,Mandatory,Communication
+3,Radio Telex,Mandatory,Communication
+3,"Telephone, Fax",Mandatory,Communication
+3,Transceiver Hf,Mandatory,Communication
+3,Transceiver Satellite,Mandatory,Communication
+3,Transceiver UHF,Mandatory,Communication
+3,Transceiver Vhf,Mandatory,Communication
+3,bottle,Mandatory,COOKING
+3,Bowl,Mandatory,COOKING
+3,"Box, Cold Box, Ice Box",Mandatory,COOKING
+3,Scoop,Mandatory,COOKING
+3,Spoon,Mandatory,COOKING
+3,"Battery, Charger",Mandatory,Electricity
+3,"Battery, charger - inverter",Mandatory,Electricity
+3,"Cable, Earth",Mandatory,Electricity
+3,"Clamp, electric",Mandatory,Electricity
+3,Conduit,Mandatory,Electricity
+3,electrical board,Mandatory,Electricity
+3,"Fuse, Ceramic type",Mandatory,Electricity
+3,Generator Diesel,Mandatory,Electricity
+3,Plug,Mandatory,Electricity
+3,Regulator,Mandatory,Electricity
+3,Ties,Mandatory,Electricity
+3,Transformer,Mandatory,Electricity
+3,"Bolt, Black",Mandatory,HARDWARE
+3,"Bolt, Carpentery",Mandatory,HARDWARE
+3,"Bolt, Threaded",Mandatory,HARDWARE
+3,Nail,Mandatory,HARDWARE
+3,"Nuts, Galvanised",Mandatory,HARDWARE
+3,"Screw, Wood",Mandatory,HARDWARE
+3,Washer,Mandatory,HARDWARE
+3,BASIN - BOWL,Mandatory,Hygiene
+3,DRY MACHINE,Mandatory,Hygiene
+3,Oil-cloth,Mandatory,Hygiene
+3,RUBBER BOOTS,Mandatory,Hygiene
+3,RUBBISH BAG,Mandatory,Hygiene
+3,"BULB, COMPACT FLUORESCENTE, white",Mandatory,Lighting
+3,FLUO TUBE MINI (NEON),Mandatory,Lighting
+3,Holder,Mandatory,Lighting
+3,Lamp,Mandatory,Lighting
+3,"Lamp, Fluorescent",Mandatory,Lighting
+3,"Box, Isothermal",Mandatory,Packing and handling
+3,"Box, Wooden",Mandatory,Packing and handling
+3,Card,Mandatory,Packing and handling
+3,Seal,Mandatory,Packing and handling
+3,UN Packing for class 6.2,Mandatory,Packing and handling
+3,FALL ARRESTER,Mandatory,Safety and protective equipment
+3,FALL STOP,Mandatory,Safety and protective equipment
+3,FIRE BLANKET,Mandatory,Safety and protective equipment
+3,GLOVES,Mandatory,Safety and protective equipment
+3,"GOGGLES, PROTECTIVE,",Mandatory,Safety and protective equipment
+3,HARD HAT,Mandatory,Safety and protective equipment
+3,HI VISIBILITY JACKET,Mandatory,Safety and protective equipment
+3,"Mask, respiratory protection",Mandatory,Safety and protective equipment
+3,OVERALL,Mandatory,Safety and protective equipment
+3,Filter,Mandatory,SPARE PARTS LISTER
+3,Filter,Mandatory,SPARE PARTS LOMBARDINI
+3,Gasket,Mandatory,SPARE PARTS LOMBARDINI
+3,Filter,Mandatory,SPARE PARTS ROBIN
+3,Clamp,Mandatory,Tools
+3,Compressor,Mandatory,Tools
+3,EXTRACTOR - PULLER,Mandatory,Tools
+3,Grinder,Mandatory,Tools
+3,HAMMER,Mandatory,Tools
+3,Machette,Mandatory,Tools
+3,Mallet,Mandatory,Tools
+3,MEASURING RULE,Mandatory,Tools
+3,MECHANICAL COUPLER,Mandatory,Tools
+3,METROLOGY TOOLS,Mandatory,Tools
+3,OIL FILTER SPANNER,Mandatory,Tools
+3,PLIERS,Mandatory,Tools
+3,Pump,Mandatory,Tools
+3,Scraper,Mandatory,Tools
+3,SCREWDRIVERS,Mandatory,Tools
+3,SOCKET,Mandatory,Tools
+3,Soldering,Mandatory,Tools
+3,SPANNER,Mandatory,Tools
+3,TOOL BOX OR BAG,Mandatory,Tools
+3,WRENCH,Mandatory,Tools
+2,Boats,Mandatory,Transport
+2,LAND ROVER,Mandatory,Transport
+2,PEUGEOT,Mandatory,Transport
+2,SPARE PARTS TOYOTA,Mandatory,Transport
+2,Spare parts Yamaha,Mandatory,Transport
+2,Toyota vehicles,Mandatory,Transport
+2,Vehicles accessories,Mandatory,Transport
+2,Vehicles consumables,Mandatory,Transport
+2,VEHICLES MODIFICATIONS,Mandatory,Transport
+3,ALUMINIUM boat,Mandatory,Boats
+3,"DIESEL ENGINE, boat",Mandatory,Boats
+3,Engine,Mandatory,Boats
+3,Zodiac,Mandatory,Boats
+3,110 Diesel,Mandatory,LAND ROVER
+3,405 Diesel,Mandatory,PEUGEOT
+3,504 Diesel,Mandatory,PEUGEOT
+3,Partner M59 Diesel,Mandatory,PEUGEOT
+3,"Absorber, Shock",Mandatory,SPARE PARTS TOYOTA
+3,Injection Pump,Mandatory,SPARE PARTS TOYOTA
+3,Leaf spring,Mandatory,SPARE PARTS TOYOTA
+3,PETROL PUMP,Mandatory,Spare parts Yamaha
+3,PROPELLER,Mandatory,Spare parts Yamaha
+3,SPRING,Mandatory,Spare parts Yamaha
+3,STARTER,Mandatory,Spare parts Yamaha
+3,WATER PUMP TURBINE,Mandatory,Spare parts Yamaha
+3,Corolla Petrol,Mandatory,Toyota vehicles
+3,"Dyna, Diesel",Mandatory,Toyota vehicles
+3,Hilux Diesel,Mandatory,Toyota vehicles
+3,Hzj75 Diesel,Mandatory,Toyota vehicles
+3,HZJ78 Diesel,Mandatory,Toyota vehicles
+3,Pzj75 Diesel,Mandatory,Toyota vehicles
+3,Belt,Mandatory,Vehicles accessories
+3,"Cable, battery",Mandatory,Vehicles accessories
+3,Chain,Mandatory,Vehicles accessories
+3,Clamp,Mandatory,Vehicles accessories
+3,Funnel,Mandatory,Vehicles accessories
+3,Gasket,Mandatory,Vehicles accessories
+3,"Pump, air",Mandatory,Vehicles accessories
+3,SOFT TOOL BAG,Mandatory,Vehicles accessories
+3,Additive,Mandatory,Vehicles consumables
+3,Fork fuses for toyota,Mandatory,Vehicles consumables
+3,Grease,Mandatory,Vehicles consumables
+3,"Oil, Engine",Mandatory,Vehicles consumables
+3,tyraeall terrain,Mandatory,Vehicles consumables
+3,Tyre,Mandatory,Vehicles consumables
+3,"Tyre, heavy duty profile",Mandatory,Vehicles consumables
+3,"Tyre, mud profile",Mandatory,Vehicles consumables
+3,"Tyre, sand profile",Mandatory,Vehicles consumables
+3,Fixation set,Mandatory,VEHICLES MODIFICATIONS
+3,Hardware,Mandatory,VEHICLES MODIFICATIONS
+3,Reinforcement,Mandatory,VEHICLES MODIFICATIONS
+3,Support,Mandatory,VEHICLES MODIFICATIONS
+1,Drugs,Mandatory,MED
+1,Kit,Mandatory,MED
+1,Medical Equipment,Mandatory,MED
+1,Medical renewable supplies,Mandatory,MED
+2,Diagnostic tests,Mandatory,Drugs
+2,Drugs external use,Mandatory,Drugs
+2,Infusions,Mandatory,Drugs
+2,Injectable drugs,Mandatory,Drugs
+2,Ophtalmic drugs for external use,Mandatory,Drugs
+2,Oral drugs,Mandatory,Drugs
+2,Vaccines,Mandatory,Drugs
+3,Blood Group Test,Mandatory,Diagnostic tests
+3,Brucellosis test,Mandatory,Diagnostic tests
+3,Direct agglutination test,Mandatory,Diagnostic tests
+3,Dosage kit for spectrophotometer,Mandatory,Diagnostic tests
+3,Hiv Test,Mandatory,Diagnostic tests
+3,"HIV test, Genie II",Mandatory,Diagnostic tests
+3,Meningitis Test,Mandatory,Diagnostic tests
+3,Trypano Test,Mandatory,Diagnostic tests
+3,"Trypanosomiasis, Chagas",Mandatory,Diagnostic tests
+3,Chlorhexidine,Mandatory,Drugs external use
+3,Dinoprostone,Mandatory,Drugs external use
+3,Iodine Povidone,Mandatory,Drugs external use
+3,Malathion,Mandatory,Drugs external use
+3,Permethrin,Mandatory,Drugs external use
+3,Sodium Bicarbonate,Mandatory,Drugs external use
+3,Talc,Mandatory,Drugs external use
+3,Dextrose,Mandatory,Infusions
+3,Ringer Lactate,Mandatory,Infusions
+3,Sodium Chloride,Mandatory,Infusions
+3,Amikacin,Mandatory,Injectable drugs
+3,Amphotericin B,Mandatory,Injectable drugs
+3,Cefazolin,Mandatory,Injectable drugs
+3,Chloramphenicol,Mandatory,Injectable drugs
+3,Chlorpromazine,Mandatory,Injectable drugs
+3,Eflornithine,Mandatory,Injectable drugs
+3,Ephedrine,Mandatory,Injectable drugs
+3,Erythromycin,Mandatory,Injectable drugs
+3,Ganciclovir,Mandatory,Injectable drugs
+3,Haloperidol,Mandatory,Injectable drugs
+3,Medroxyprogesteron ac + estradiol,Mandatory,Injectable drugs
+3,Meglumine Antimoniate,Mandatory,Injectable drugs
+3,Melarsoprol,Mandatory,Injectable drugs
+3,Nadroparine,Mandatory,Injectable drugs
+3,Penicilline Benzathine,Mandatory,Injectable drugs
+3,Pentamidine,Mandatory,Injectable drugs
+3,Phenobarbital,Mandatory,Injectable drugs
+3,Phytomenadione,Mandatory,Injectable drugs
+3,Protamine,Mandatory,Injectable drugs
+3,Chloramphenicol,Mandatory,Ophtalmic drugs for external use
+3,Dexamethasone + neomycine,Mandatory,Ophtalmic drugs for external use
+3,Fluoresceine,Mandatory,Ophtalmic drugs for external use
+3,Oxybuprocaine,Mandatory,Ophtalmic drugs for external use
+3,Pilocarpine,Mandatory,Ophtalmic drugs for external use
+3,Trocapinamide Mydriaticum,Mandatory,Ophtalmic drugs for external use
+3,Aluminium Hydroxide,Mandatory,Oral drugs
+3,Artemeter + Lumefantrine Blister FD,Mandatory,Oral drugs
+3,Artesunate + sulfadoxine - pyrimetham,Mandatory,Oral drugs
+3,Ascorbic Acid,Mandatory,Oral drugs
+3,"Atovaquone + Proguanil, blister",Mandatory,Oral drugs
+3,Azithromycine,Mandatory,Oral drugs
+3,Beclomethasone,Mandatory,Oral drugs
+3,Benznidazole,Mandatory,Oral drugs
+3,Biperiden,Mandatory,Oral drugs
+3,Cefixime,Mandatory,Oral drugs
+3,Clofazimine,Mandatory,Oral drugs
+3,Clomipramide,Mandatory,Oral drugs
+3,Cloxacilline,Mandatory,Oral drugs
+3,Didanosine,Mandatory,Oral drugs
+3,Diethylcarbamazine,Mandatory,Oral drugs
+3,Digoxine,Mandatory,Oral drugs
+3,Efavirenz,Mandatory,Oral drugs
+3,Fluconazole,Mandatory,Oral drugs
+3,Isoniazid,Mandatory,Oral drugs
+3,Ivermectine,Mandatory,Oral drugs
+3,Lamivudine (3TC) + Stavudine (d4T),Mandatory,Oral drugs
+3,Lamivudine + Stavudine + Nevirapine,Mandatory,Oral drugs
+3,Levothyroxine,Mandatory,Oral drugs
+3,Morphine,Mandatory,Oral drugs
+3,Ondasetron,Mandatory,Oral drugs
+3,"Dipthery, tetanus, pertussis, hep B",Mandatory,Vaccines
+3,Immunoglobulins human antirabies,Mandatory,Vaccines
+3,Vaccine Bcg,Mandatory,Vaccines
+3,Vaccine Haemophilus influenzae,Mandatory,Vaccines
+3,Vaccine Measles,Mandatory,Vaccines
+3,Vaccine Meningitis A+C,Mandatory,Vaccines
+3,Vaccine Tetanus,Mandatory,Vaccines
+3,"Vaccine, DPT+hepatitis B+Hib",Mandatory,Vaccines
+2,Medical kits,Mandatory,Kit
+3,Anaesthesia Module,Mandatory,Medical kits
+3,Basic Module,Mandatory,Medical kits
+3,Cholera Kit,Mandatory,Medical kits
+3,Cholera Module,Mandatory,Medical kits
+3,Disaster Module,Mandatory,Medical kits
+3,Ebola module,Mandatory,Medical kits
+3,First Aid Drugs Module,Mandatory,Medical kits
+3,Laboratory Module,Mandatory,Medical kits
+3,Medical-Surgical Module,Mandatory,Medical kits
+3,Module Complementary,Mandatory,Medical kits
+3,Module Immunization,Mandatory,Medical kits
+3,"Module, autoclave",Mandatory,Medical kits
+3,Nutrition Module,Mandatory,Medical kits
+3,Surgical Module,Mandatory,Medical kits
+2,Anaesthesia,Mandatory,Medical Equipment
+2,Dental surgical instruments,Mandatory,Medical Equipment
+2,Hospital equipment,Mandatory,Medical Equipment
+2,Laboratory equipment,Mandatory,Medical Equipment
+2,Linen and protective clothing,Mandatory,Medical Equipment
+2,Medical equipment,Mandatory,Medical Equipment
+2,Ophtalmic surgical instruments,Mandatory,Medical Equipment
+2,Sterilization,Mandatory,Medical Equipment
+2,Surgical instruments,Mandatory,Medical Equipment
+2,Surgical instruments for external fixator,Mandatory,Medical Equipment
+3,anaesthesia machine,Mandatory,Anaesthesia
+3,Anaesthesia Mask,Mandatory,Anaesthesia
+3,"Balloon, Anaesthesia",Mandatory,Anaesthesia
+3,"Laryngoscope, Blade",Mandatory,Anaesthesia
+3,"Mask, laryngeal",Mandatory,Anaesthesia
+3,Oxymeter,Mandatory,Anaesthesia
+3,Tourniquet,Mandatory,Anaesthesia
+3,Tube,Mandatory,Anaesthesia
+3,Curette of Gracey,Mandatory,Dental surgical instruments
+3,Curette of Hemingway,Mandatory,Dental surgical instruments
+3,Elevator,Mandatory,Dental surgical instruments
+3,Forceps Dental,Mandatory,Dental surgical instruments
+3,Concentrator,Mandatory,Hospital equipment
+3,Defibrillator,Mandatory,Hospital equipment
+3,"Dermatome, electric",Mandatory,Hospital equipment
+3,Electro Surgical Unit,Mandatory,Hospital equipment
+3,Nebulizer + compressor,Mandatory,Hospital equipment
+3,Operating Lamp,Mandatory,Hospital equipment
+3,"Saw, oscillating",Mandatory,Hospital equipment
+3,Succion Pump,Mandatory,Hospital equipment
+3,Vaccuum Extractor,Mandatory,Hospital equipment
+3,"BLOOD SAMPLING DEVICE, VACUUM",Mandatory,Laboratory equipment
+3,Centrifuge,Mandatory,Laboratory equipment
+3,Container,Mandatory,Laboratory equipment
+3,Container protection,Mandatory,Laboratory equipment
+3,Cyflow counter,Mandatory,Laboratory equipment
+3,Fluoreslens,Mandatory,Laboratory equipment
+3,Measuring Cylinder,Mandatory,Laboratory equipment
+3,Microscope,Mandatory,Laboratory equipment
+3,"Pipette, automatic, adjustable",Mandatory,Laboratory equipment
+3,Rotator,Mandatory,Laboratory equipment
+3,"CAP, DRESSING, SURGICAL, woven",Mandatory,Linen and protective clothing
+3,"Cap, Hood",Mandatory,Linen and protective clothing
+3,"Mask, protection, resp.",Mandatory,Linen and protective clothing
+3,Surgical drape single use,Mandatory,Linen and protective clothing
+3,White Coat,Mandatory,Linen and protective clothing
+3,Breast pump,Mandatory,Medical equipment
+3,"Collar, cervical",Mandatory,Medical equipment
+3,Glasses,Mandatory,Medical equipment
+3,Spacer,Mandatory,Medical equipment
+3,Forceps Of Halstead,Mandatory,Ophtalmic surgical instruments
+3,Iris Forceps Of Hess,Mandatory,Ophtalmic surgical instruments
+3,Tenotomy Scissors,Mandatory,Ophtalmic surgical instruments
+3,Autoclave,Mandatory,Sterilization
+3,Sterilization paper,Mandatory,Sterilization
+3,"Basket, instruments f sterilization",Mandatory,Surgical instruments
+3,Bow of Boehler,Mandatory,Surgical instruments
+3,Bow Of Kirschner,Mandatory,Surgical instruments
+3,"Clamp, Cardiovascular, DeBakey",Mandatory,Surgical instruments
+3,"Curette, Volkman",Mandatory,Surgical instruments
+3,"Dilator, Uterine, Hegar",Mandatory,Surgical instruments
+3,Filter for sterilizing container,Mandatory,Surgical instruments
+3,Gasket for sterilizing container,Mandatory,Surgical instruments
+3,Ventouse,Mandatory,Surgical instruments
+3,PIN,Mandatory,Surgical instruments for external fixator
+3,"TUBE, carbon",Mandatory,Surgical instruments for external fixator
+2,"Catheters, tubes and drains",Mandatory,Medical renewable supplies
+2,Dressings,Mandatory,Medical renewable supplies
+2,Injection supplies,Mandatory,Medical renewable supplies
+2,Laboratory reagents,Mandatory,Medical renewable supplies
+2,Medical stationery,Mandatory,Medical renewable supplies
+2,Small medical supplies,Mandatory,Medical renewable supplies
+2,Specialized food,Mandatory,Medical renewable supplies
+3,Alene Needle For Redon Set,Mandatory,"Catheters, tubes and drains"
+3,Breathing circuit filter,Mandatory,"Catheters, tubes and drains"
+3,Brush fr endotracheal tubes,Mandatory,"Catheters, tubes and drains"
+3,"Cannula, nasal",Mandatory,"Catheters, tubes and drains"
+3,"CATHETER URINARY, Nelaton type",Mandatory,"Catheters, tubes and drains"
+3,Connectors for drain,Mandatory,"Catheters, tubes and drains"
+3,Drain For Redon,Mandatory,"Catheters, tubes and drains"
+3,"Endotracheal Tube, Disp.",Mandatory,"Catheters, tubes and drains"
+3,"Gastric tube, Salem type",Mandatory,"Catheters, tubes and drains"
+3,Manual vacuum asp cannula,Mandatory,"Catheters, tubes and drains"
+3,Peritofix,Mandatory,"Catheters, tubes and drains"
+3,Redon System,Mandatory,"Catheters, tubes and drains"
+3,Redon system plastic,Mandatory,"Catheters, tubes and drains"
+3,Tube Tracheotomy,Mandatory,"Catheters, tubes and drains"
+3,"Tube, Gastric",Mandatory,"Catheters, tubes and drains"
+3,"Tube, silicone",Mandatory,"Catheters, tubes and drains"
+3,"Bandage, Elastic",Mandatory,Dressings
+3,"Casting tape, synthetic",Mandatory,Dressings
+3,Blood Taking Bag,Mandatory,Injection supplies
+3,Catheter with injection port,Mandatory,Injection supplies
+3,Container,Mandatory,Injection supplies
+3,I.V. Placement Unit,Mandatory,Injection supplies
+3,Intra-osseaous needle,Mandatory,Injection supplies
+3,Buffer Ph=7,Mandatory,Laboratory reagents
+3,Dynabeads,Mandatory,Laboratory reagents
+3,Giemsa,Mandatory,Laboratory reagents
+3,"Ral 555, Eosine",Mandatory,Laboratory reagents
+3,"Ral 555, Kit",Mandatory,Laboratory reagents
+3,"Ral 555, Methylene Blue",Mandatory,Laboratory reagents
+3,Ral Fixator,Mandatory,Laboratory reagents
+3,Turck solution,Mandatory,Laboratory reagents
+3,Card,Mandatory,Medical stationery
+3,"Card, nutrition",Mandatory,Medical stationery
+3,"Card, obstetrics",Mandatory,Medical stationery
+3,Guide,Mandatory,Medical stationery
+3,Medical certificate,Mandatory,Medical stationery
+3,"Bag, Body",Mandatory,Small medical supplies
+3,"Bag, Plastic",Mandatory,Small medical supplies
+3,Gloves examination nitrile,Mandatory,Small medical supplies
+3,"GLOVES, GYN - UTERINE, latex, disp.,",Mandatory,Small medical supplies
+3,Protective Gloves,Mandatory,Small medical supplies
+3,Biscuits,Mandatory,Specialized food
+3,Corned Beef,Mandatory,Specialized food
+3,"Milk, infant",Mandatory,Specialized food
+3,Ready to use supplementary food,Mandatory,Specialized food
+3,Ready to use therapeutic food,Mandatory,Specialized food
+1,KIT,Mandatory,MIX
+2,Emergency Kits,Mandatory,KIT
+2,Exploration Kits,Mandatory,KIT
+3,#,Mandatory,Emergency Kits
+3,#,Mandatory,Exploration Kits
+1,Services,Mandatory,SERVICE
+2,Administrative,Mandatory,Services
+2,Taxe,Mandatory,Services
+3,#,Mandatory,Administrative
+3,#,Mandatory,Taxe

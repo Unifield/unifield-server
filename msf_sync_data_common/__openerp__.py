@@ -30,6 +30,8 @@
     'depends': ['base', 'sync_client'],
     'init_xml': [],
     'data': [
+        'data/account.analytic.journal.csv',
+        'data/account.journal.csv',
     ],
     'demo_xml': [],
     'test':[],

@@ -31,6 +31,10 @@
     'init_xml': [],
     'data': [
         'data/account.analytic.account.csv',
+        'data/account.account.csv',
+        'data/product.category.csv',
+        'data/product.nomenclature.csv',
+        'data/product.product.csv',
     ],
     'demo_xml': [],
     'test':[],

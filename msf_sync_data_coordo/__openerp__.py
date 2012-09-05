@@ -30,6 +30,7 @@
     'depends': ['base', 'sync_client', 'msf_sync_data_common'],
     'init_xml': [],
     'data': [
+        'data/res.partner.csv',
     ],
     'demo_xml': [],
     'test':[],

@@ -307,7 +307,15 @@ class update_received(osv.osv):
         try:
             rollback = False
             run = True
-            res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
+            
+            try:
+                cr.rollback_org, cr.rollback = cr.rollback, lambda:None
+                cr.commit_org, cr.commit = cr.commit, lambda:None
+                res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
+            finally:
+                cr.rollback = cr.rollback_org
+                cr.commit = cr.commit_org
+            
             #check that the record is imported
             fields_ref = self.pool.get(update.model.model).fields_get(cr, uid, context=context)
             rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')], context=context)
