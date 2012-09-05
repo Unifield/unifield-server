@@ -115,12 +115,14 @@ class stock_mission_report(osv.osv):
     
     def update_newthread(self, cr, uid, ids=[], context=None):
         # Open a new cursor : Don't forget to close it at the end of method   
+        print 'Start'
         cr = pooler.get_db(cr.dbname).cursor()
         try:
             self.update(cr, uid, ids=[], context=None)
             cr.commit()
         finally:
             cr.close()
+        print 'End'
 
     def update(self, cr, uid, ids=[], context=None):
         '''
@@ -237,6 +239,13 @@ class stock_mission_report_line(osv.osv):
     
     def _get_template(self, cr, uid, ids, context=None):
         return self.pool.get('stock.mission.report.line').search(cr, uid, [('product_id.product_tmpl_id', 'in', ids)], context=context)
+
+    def _get_wh_qty(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.stock_qty + line.central_qty
+
+        return res
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True),
@@ -270,18 +279,19 @@ class stock_mission_report_line(osv.osv):
         'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-        'product_amc': fields.float(digits=(16,2), string='AMC'),
-        'reviewed_consumption': fields.float(digits=(16,2), string='FMC'),
+        'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
+        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                 store={'product.template': (_get_template, ['type'], 10)}),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
-        'internal_qty': fields.float(digits=(16,2), string='Internal Qty.'),
-        'internal_val': fields.float(digits=(16,2), string='Internal Val.'),
+        'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
+        'internal_val': fields.float(digits=(16,2), string='Instance Stock Val.'),
         'stock_qty': fields.float(digits=(16,2), string='Stock Qty.'),
         'stock_val': fields.float(digits=(16,2), string='Stock Val.'),
-        'central_qty': fields.float(digits=(16,2), string='Central Stock Qty.'),
-        'central_val': fields.float(digits=(16,2), string='Central Stock Val.'),
+        'central_qty': fields.float(digits=(16,2), string='Unallocated Stock Qty.'),
+        'central_val': fields.float(digits=(16,2), string='Unallocated Stock Val.'),
+        'wh_qty': fields.function(_get_wh_qty, method=True, type='float', string='Warehouse stock', store=False),
         'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
         'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
         'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.'),
