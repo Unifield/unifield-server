@@ -87,7 +87,7 @@ class hr_payroll_validation(osv.osv_memory):
                     is_required = False
                     if el.account_id.type_for_register and el.account_id.type_for_register == 'payroll':
                         is_required = True
-                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><field name="%s" required="%s"/></group>' % (not is_required, ustr(el.name), third, is_required)))
+                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><field name="%s" required="%s"/></group>' % (not is_required, ustr(el.name) + ' - ' + ustr(el.ref), third, is_required)))
             res['arch'] = ET.tostring(form)
         return res
 
