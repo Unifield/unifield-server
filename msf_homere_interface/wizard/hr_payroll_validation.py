@@ -50,9 +50,19 @@ class hr_payroll_validation(osv.osv_memory):
             third_name = 'third%s' % line.get('id')
             account = self.pool.get('account.account').read(cr, uid, line.get('account_id')[0], ['type_for_register'])
             res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner'}})
+
+            # Add fourth party field
+            fourth_name = 'fourth%s' % line.get('id')
+            res.update({fourth_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.currency','string': 'Currency'}})
+
+            # Add fifth party field
+            fifth_name = 'fifth%s' % line.get('id')
+            res.update({fifth_name: {'selectable': True, 'type': 'float', 'string': 'Amount'}})
+
         return res
 
     def default_get(self, cr, uid, fields, context=None):
+        hrp = self.pool.get('hr.payroll.msf')
         """
         Fields ' value
         """
@@ -62,6 +72,16 @@ class hr_payroll_validation(osv.osv_memory):
         pattern = re.compile('^entry(.*)$')
         for field in fields:
             res[field] = ''
+            pattern = re.compile('^(fourth(.*))$')
+            m = re.match(pattern, field)
+            if m:
+                bro = hrp.browse(cr,uid,int(m.groups()[1]))
+                res[field] = bro.currency_id and bro.currency_id.id or False
+            pattern = re.compile('^(fifth(.*))$')
+            m = re.match(pattern, field)
+            if m:
+                bro = hrp.browse(cr,uid,int(m.groups()[1]))
+                res[field] = bro.amount or False
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -84,10 +104,12 @@ class hr_payroll_validation(osv.osv_memory):
             for el in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
                 if el.account_id and el.account_id.user_type.code != 'expense':
                     third = 'third' + str(el.id)
+                    fourth = 'fourth' + str(el.id)
+                    fifth = 'fifth' + str(el.id)
                     is_required = False
                     if el.account_id.type_for_register and el.account_id.type_for_register == 'payroll':
                         is_required = True
-                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><field name="%s" required="%s"/></group>' % (not is_required, ustr(el.name) + ' - ' + ustr(el.ref), third, is_required)))
+                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><group col="6" colspan="1"><field name="%s" readonly="1"/><field name="%s" readonly="1"/><field name="%s" required="%s"/></group></group>' % (not is_required, ustr(el.name) + ' - ' + ustr(el.ref), fourth, fifth, third, is_required)))
             res['arch'] = ET.tostring(form)
         return res
 
