@@ -112,6 +112,9 @@ class documents_done_wizard(osv.osv):
         line_ids = []
         for line in order.order_line:
             line_ids.append(line.id)
+        
+        if order._name == 'sale.order' and order.procurement_request:
+            return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
         return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids), ('type', '!=', 'internal')], context=context)
 
     def _get_problem_sale_order(self, cr, uid, order, context=None):
