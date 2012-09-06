@@ -112,7 +112,7 @@ class documents_done_wizard(osv.osv):
         line_ids = []
         for line in order.order_line:
             line_ids.append(line.id)
-        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
+        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids), ('type', '!=', 'internal')], context=context)
 
     def _get_problem_sale_order(self, cr, uid, order, context=None):
         '''
@@ -148,9 +148,9 @@ class documents_done_wizard(osv.osv):
             po_ids.append(order.loan_id.id)
 
         # Invoices
-        for invoice in order.invoice_ids:
-            if invoice.state not in ('cancel', 'paid'):
-                invoice_ids.append(invoice.id)
+        #for invoice in order.invoice_ids:
+        #    if invoice.state not in ('cancel', 'paid'):
+        #        invoice_ids.append(invoice.id)
 
         if context.get('count', False):
             return move_ids or proc_ids or po_ids or tender_ids or invoice_ids or False
@@ -171,9 +171,9 @@ class documents_done_wizard(osv.osv):
             so_ids.append(order.loan_id.id)
 
         # Invoices
-        for invoice in order.invoice_ids:
-            if invoice.state not in ('cancel', 'paid'):
-                invoice_ids.append(invoice.id)
+        #for invoice in order.invoice_ids:
+        #    if invoice.state not in ('cancel', 'paid'):
+        #        invoice_ids.append(invoice.id)
 
         if context.get('count', False):
             return move_ids or so_ids or invoice_ids or False

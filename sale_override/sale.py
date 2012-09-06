@@ -682,17 +682,17 @@ class sale_order(osv.osv):
                 self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
             # Closed invoices
-            invoice_error_ids = []
-            for invoice in order.invoice_ids:
-                if invoice.state == 'draft':
-                    wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
-                elif invoice.state not in ('cancel', 'done'):
-                    invoice_error_ids.append(invoice.id)
+            #invoice_error_ids = []
+            #for invoice in order.invoice_ids:
+            #    if invoice.state == 'draft':
+            #        wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
+            #    elif invoice.state not in ('cancel', 'done'):
+            #        invoice_error_ids.append(invoice.id)
 
-            if invoice_error_ids:
-                invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
-                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
-                            'Invoices references : %s') % invoices_ref)            
+            #if invoice_error_ids:
+            #    invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
+            #    raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
+            #                'Invoices references : %s') % invoices_ref)            
 
         # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
