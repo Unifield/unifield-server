@@ -611,7 +611,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
             #- initial move line: is_reallocated is True
             #- reversal move line: is_reversal is True
             #- correction line: change is_reallocated and is_reversal to False
-            for search_data in [(ml.id, {'is_reallocated': True}), (rev_line_id, {'is_reversal': True}), (correction_line_id, {'is_reallocated': False, 'is_reversal': False})]:
+            #- old reversal line: reset is_reversal to True (lost previously in validate())
+            search_datas = [(ml.id, {'is_reallocated': True}),
+                            (rev_line_id, {'is_reversal': True}),
+                            (correction_line_id, {'is_reallocated': False, 'is_reversal': False})]
+            # If line is already a correction, take the previous reversal move line id
+            # (UF_1234: otherwise, the reversal is not set correctly)
+            if ml.corrected_line_id:
+                old_reverse_ids = self.search(cr, uid, [('reversal_line_id', '=', ml.corrected_line_id.id)])
+                if len(old_reverse_ids) > 0:
+                    search_datas += [(old_reverse_ids[0], {'is_reversal': True})]
+            for search_data in search_datas:
                 search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
                 if search_ids:
                     al_obj.write(cr, uid, search_ids, search_data[1])
