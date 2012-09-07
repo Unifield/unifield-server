@@ -1588,7 +1588,7 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'wizard_supplier_invoice_form_view'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])

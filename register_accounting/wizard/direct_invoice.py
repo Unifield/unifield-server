@@ -104,12 +104,13 @@ class wizard_account_invoice(osv.osv):
         amount = 0
         if inv['invoice_line']:
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'], 
-                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id']):
+                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id']):
                 vals['invoice_line'].append( (0, 0,
                     {
                         'product_id': line['product_id'] and line['product_id'][0] or False,
                         'account_id': line['account_id'] and line['account_id'][0] or False,
                         'account_analytic_id': line['account_analytic_id'] and line['account_analytic_id'][0] or False,
+                        'analytic_distribution_id': line['analytic_distribution_id'] and line['analytic_distribution_id'][0] or False,
                         'quantity': line['quantity'] ,
                         'price_unit': line['price_unit'] ,
                         'price_subtotal': line['price_subtotal'],
