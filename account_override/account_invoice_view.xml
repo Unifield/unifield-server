@@ -34,30 +34,6 @@
                 </data>
             </field>
         </record>
-        <record id="inherit_direct_invoice_tree" model="ir.ui.view">
-            <field name="name">inherit.invoice.tree.direct</field>
-            <field name="model">account.invoice</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="register_accounting.direct_invoice_tree"/>
-            <field name="priority">250</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='date_invoice']" position="before">
-                        <field name="document_date"/>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='user_id']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree/field[@name='amount_untaxed']" position="replace">
-                    </xpath>
-                    <xpath expr="/tree/field[@name='residual']" position="attributes">
-                        <attribute name="sum"></attribute>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='amount_total']" position="attributes">
-                        <attribute name="sum"></attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
 
     <!--
         Delete some element from Search views:

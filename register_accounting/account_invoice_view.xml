@@ -117,6 +117,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" >
+                    <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id" groups="base.group_user"/>
@@ -124,12 +125,12 @@
                     <field name="journal_id" invisible="1"/>
                     <field name="period_id" invisible="1" groups="account.group_account_user"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
-                    <field name="user_id"/>
+                    <field name="user_id" invisible="1"/>
                     <field name="date_due"/>
                     <field name="origin"/>
                     <field name="currency_id"/>
                     <field name="residual" sum="Residual Amount"/>
-                    <field name="amount_untaxed" sum="Untaxed Amount"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
                     <field name="amount_total" sum="Total Amount"/>
                     <field name="state"/>
                     <button name="invoice_open" states="draft,proforma2" string="Approve" icon="terp-camera_test"/>
