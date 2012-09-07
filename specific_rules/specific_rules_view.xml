@@ -131,6 +131,7 @@
         <record id="view_production_lot_expiry_date_tree" model="ir.ui.view">
             <field name="name">stock.production.lot.expiry.date.tree</field>
             <field name="model">stock.production.lot</field>
+            <field name="priority">99</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Expiry Dates" hide_new_button="True" hide_delete_button="True">

@@ -64,6 +64,7 @@ class initial_stock_inventory(osv.osv):
             ids = [ids]
         
         product_dict = {}
+        prodlot_obj = self.pool.get('stock.production.lot')
         
         for inventory in self.browse(cr, uid, ids, context=context):
             for inventory_line in inventory.inventory_line_id:
@@ -73,17 +74,31 @@ class initial_stock_inventory(osv.osv):
                     raise osv.except_osv(_('Error'), _('You cannot have two lines for the same product with different average cost.'))
                 
                 # Returns error if the line is batch mandatory or perishable without prodlot
+                if inventory_line.product_id.batch_management and not inventory_line.prodlot_name:
+                    raise osv.except_osv(_('Error'), _('You must assign a Batch Number.'))
+                elif inventory_line.product_id.perishable and not inventory_line.expiry_date:
+                    raise osv.except_osv(_('Error'), _('You must assign an Expiry Date.'))
+                        
                 if inventory_line.product_id.batch_management:
-                        if not inventory_line.prod_lot_id or inventory_line.prod_lot_id.type != 'standard':
-                            raise osv.except_osv(_('Error'), _('You must assign a Batch Number which corresponds to Batch Number Mandatory Products.'))
-                        
-                if inventory_line.product_id.perishable and not inventory_line.product_id.batch_management:
-                    if (not inventory_line.prod_lot_id and not inventory_line.expiry_date) or (inventory_line.prod_lot_id and inventory_line.prod_lot_id.type != 'internal'):
-                            raise osv.except_osv(_('Error'), _('The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory'))
-                        
-                if inventory_line.prod_lot_id:
-                    if not inventory_line.product_id.perishable and not inventory_line.product_id.batch_management:
-                            raise osv.except_osv(_('Error'), _('You must assign a Batch Number which corresponds to Expiry Date Mandatory Products.'))
+                    # if no production lot, we create a new one
+                    prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', inventory_line.prodlot_name),
+                                                               ('type', '=', 'standard'),
+                                                               ('product_id', '=', inventory_line.product_id.id)], context=context)
+                    if prodlot_ids:
+                        prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0])
+                        if prodlot.life_date != inventory_line.expiry_date:
+                            life_date = self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=prodlot.life_date)
+                            raise osv.except_osv(_('Error'), _('The batch number \'%s\' is already in the system but its expiry date is %s') % (prodlot.name, life_date))
+                    prodlot_id = prodlot_ids and prodlot_ids[0] or False
+                    # no prodlot, create a new one
+                    if not prodlot_ids:
+                        prodlot_id = prodlot_obj.create(cr, uid, {'name': inventory_line.prodlot_name,
+                                                                  'type': 'standard',
+                                                                  'life_date': inventory_line.expiry_date,
+                                                                  'product_id': inventory_line.product_id.id}, context=context)
+
+                    self.pool.get('initial.stock.inventory.line').write(cr, uid, [inventory_line.id], {'prod_lot_id': prodlot_id}, context=context)
+
         
         return super(initial_stock_inventory, self).action_confirm(cr, uid, ids, context=context)
     
@@ -207,7 +222,7 @@ class initial_stock_inventory_line(osv.osv):
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = ''
-            if line.hidden_batch_management_mandatory and not line.prod_lot_id:
+            if line.hidden_batch_management_mandatory and not line.prodlot_name:
                 res[line.id] = 'You must define a batch number'
             elif line.hidden_perishable_mandatory and not line.expiry_date:
                 res[line.id] = 'You must define an expiry date'
@@ -216,6 +231,7 @@ class initial_stock_inventory_line(osv.osv):
     
     _columns = {
         'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
+        'prodlot_name': fields.char(size=64, string='Batch'),
         'average_cost': fields.float(digits=(16, 2), string='Initial average cost', required=True),
         'currency_id': fields.many2one('res.currency', string='Functional currency', readonly=True),
         'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Message', store=False),
@@ -291,7 +307,9 @@ class initial_stock_inventory_line(osv.osv):
         '''
         value = {'product_uom': False,
                  'hidden_perishable_mandatory': False,
-                 'hidden_batch_management_mandatory': False}
+                 'hidden_batch_management_mandatory': False,
+                 'prod_lot_id': False,
+                 'expiry_date': False}
         
         if product_id:
             context = {}
