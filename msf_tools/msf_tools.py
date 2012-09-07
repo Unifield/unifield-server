@@ -254,6 +254,33 @@ class sequence_tools(osv.osv):
     '''
     _name = 'sequence.tools'
     
+    def reorder_sequence_number(self, cr, uid, base_object, base_seq_field, dest_object, foreign_field, foreign_id, seq_field, context=None):
+        '''
+        receive a browse list corresponding to one2many lines
+        recompute numbering corresponding to specified field
+        compute next number of sequence
+        
+        we must make sure we reorder in conservative way according to original order
+        '''
+        # objects
+        base_obj = self.pool.get(base_object)
+        dest_obj = self.pool.get(dest_object)
+        seq_obj = self.pool.get('ir.sequence')
+        
+        # will be ordered by default according to db id, it's what we want according to user sequence
+        item_ids = self.pool.get(dest_object).search(cr, uid, [(foreign_field, '=', foreign_id)], context=context)
+        if item_ids:
+            # get the sequenc id
+            seq_id = base_obj.read(cr, uid, foreign_id, [base_seq_field], context=context)[base_seq_field]
+            # we reset the sequence, and generate the new values from it for the seq_field
+            self.reset_next_number(cr, uid, [seq_id], value=1, context=context)
+            for item_id in item_ids:
+                # get next seq value
+                seq_value = seq_obj.get_id(cr, uid, seq_id, test='id', context=context)
+                dest_obj.write(cr, uid, [item_id], {seq_field: seq_value}, context=context)
+        
+        return True
+    
     def reset_next_number(self, cr, uid, seq_ids, value=1, context=None):
         '''
         reset the next number of the sequence to value, default value 1

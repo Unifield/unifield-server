@@ -150,6 +150,15 @@ class purchase_order(osv.osv):
         vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         
         return super(purchase_order, self).create(cr, uid, vals, context)
+    
+    def reorder_line_numbering(self, cr, uid, ids, context=None):
+        '''
+        test function
+        '''
+        # objects
+        tools_obj = self.pool.get('sequence.tools')
+        tools_obj.reorder_sequence_number(cr, uid, 'purchase.order', 'sequence_id', 'purchase.order.line', 'order_id', ids, 'line_number', context=context)
+        return True
 
 purchase_order()
 
