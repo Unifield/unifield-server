@@ -35,11 +35,11 @@
             </field>
         </record>
         <record id="inherit_direct_invoice_tree" model="ir.ui.view">
-            <field name="name">inherit.invoice.tree</field>
+            <field name="name">inherit.invoice.tree.direct</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="register_accounting.direct_invoice_tree"/>
-            <field name="priority">17</field>
+            <field name="priority">250</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree/field[@name='date_invoice']" position="before">
