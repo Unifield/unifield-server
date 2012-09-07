@@ -180,7 +180,6 @@ class initial_stock_inventory(osv.osv):
                     date_mandatory = not product.batch_management and product.perishable
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
-                              'location_id': location_id,
                               'product_qty': product.qty_available,
                               'average_cost': product.standard_price,
                               'hidden_batch_management_mandatory': batch_mandatory,

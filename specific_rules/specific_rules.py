@@ -1144,6 +1144,19 @@ class stock_inventory(osv.osv):
     override the action_confirm to create the production lot if needed
     '''
     _inherit = 'stock.inventory'
+
+    def _check_line_data(self, cr, uid, ids, context=None):
+        for inv in self.browse(cr, uid, ids, context=context):
+            if inv.state != 'draft':
+                for line in inv.inventory_line_id:
+                    if not line.location_id:
+                        return False
+
+        return True
+
+    _constraints = [
+        (_check_line_data, "You must define a stock location for each line", ['state']),
+    ]
     
     def action_confirm(self, cr, uid, ids, context=None):
         '''
@@ -1410,6 +1423,7 @@ class stock_inventory_line(osv.osv):
     _columns = {
         'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
         'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'location_id': fields.many2one('stock.location', 'Location'),
         'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
         'expiry_date': fields.date(string='Expiry Date'),
         'type_check': fields.char(string='Type Check', size=1024,),

@@ -445,7 +445,11 @@
 	                <xpath expr="/tree/field[@name='product_uom']" position="after">
 	                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
 	                    <field name="comment" />
-	                </xpath>
+                    </xpath>
+
+                    <field name="location_id" position="attributes">
+                        <attribute name="required">True</attribute>
+                    </field>
 	                    
 	           		<field name="prod_lot_id" position="replace">
 	           			<field name="prod_lot_id"
