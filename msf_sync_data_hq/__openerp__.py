@@ -35,7 +35,7 @@
         'data/account.account.csv',
         'data/product.category.csv',
         'data/product.nomenclature.csv',
-        'data/product.product.csv',
+#        'data/product.product.csv',
     ],
     'demo_xml': [],
     'test':[],

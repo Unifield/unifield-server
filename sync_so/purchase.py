@@ -90,6 +90,24 @@ class purchase_order_sync(osv.osv):
         res_id = self.write(cr, uid, po_id, {'state' : 'split', 'active': False, 'partner_ref': partner_ref} , context=context)
         return res_id
 
+    def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
+        print "call purchase order", source
+        
+        so_dict = so_info.to_dict()
+        so_po_common = self.pool.get('so.po.common')
+        
+        header_result = {}
+        so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, context)
+
+        default = {}
+        default.update(header_result)
+        
+        res_id = self.create(cr, uid, default , context=context)
+        # Set the original PO to "split" state -- cannot do anything with this original PO
+        return res_id
 
     def check_update(self, cr, uid, source, so_dict):
         if not source:

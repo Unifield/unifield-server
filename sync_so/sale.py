@@ -53,6 +53,22 @@ class sale_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         return True
 
+    def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
+        if not context:
+            context = {}
+        po_dict = po_info.to_dict()
+        so_po_common = self.pool.get('so.po.common')
+        
+        header_result = {}
+        so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, context)
+        
+        default = {}
+        default.update(header_result)
+
+        res_id = self.write(cr, uid, default , context=context)
+        return True
+
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
         if not context:
             context = {}
