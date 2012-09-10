@@ -169,7 +169,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 # Cell 2: Quantity
                 qty_value = {}
                 qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+                to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                 # Cell 3: UOM
                 uom_value = {}
