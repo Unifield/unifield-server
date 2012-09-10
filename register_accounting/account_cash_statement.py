@@ -179,9 +179,9 @@ class account_cash_statement(osv.osv):
         res = super(account_cash_statement, self)._end_balance(cr, uid, ids, field_name, arg, context)
         for statement in self.browse(cr, uid, ids, context):
             # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
-            res[statement.id] += statement.open_advance_amount or 0.0
+            res[statement.id] -= statement.open_advance_amount or 0.0
             # UF-810: Add a "Unrecorded Expenses" when calculating "Calculated Balance"
-            res[statement.id] += statement.unrecorded_expenses_amount or 0.0
+            res[statement.id] -= statement.unrecorded_expenses_amount or 0.0
         return res
 
     def _gap_compute(self, cursor, user, ids, name, attr, context=None):
@@ -192,8 +192,18 @@ class account_cash_statement(osv.osv):
             res[statement.id] = diff_amount
         return res
 
+    def _msf_calculated_balance_compute(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Sum of opening balance (balance_start) and sum of cash transaction (total_entry_encoding)
+        """
+        # Prepare some values
+        res = {}
+        for st in self.browse(cr, uid, ids):
+            res[st.id] = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
+        return res
+
     _columns = {
-            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
+            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
             'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
@@ -204,6 +214,8 @@ class account_cash_statement(osv.osv):
             'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
             'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
+            'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance', 
+                help="Opening balance + Cash Transaction"),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):

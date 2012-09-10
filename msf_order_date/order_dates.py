@@ -1087,6 +1087,19 @@ class sale_order(osv.osv):
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        
+        if res.get('value', {}).get('pricelist_id') and part:
+            if ids:
+                if isinstance(ids, (int, long)):
+                    ids = [ids]
+            
+                order = self.pool.get('sale.order').browse(cr, uid, ids[0])
+                partner = self.pool.get('res.partner').browse(cr, uid, part)
+                pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner.partner_type)])
+                pricelist_id = res['value'].pop('pricelist_id')
+                if order.pricelist_id.id not in pricelist_ids:
+                    res.update({'warning': {'title': 'Warning',
+                                            'message': 'The currency used currently on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
         return res
     
     def onchange_date_order(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
@@ -1244,17 +1257,16 @@ class sale_order_line(osv.osv):
         
         return False
 
-    def  _get_type_def(self, cr, uid, context=None):
-        if context is None:
-            context= {}
-        return 'make_to_order'
-
     def _get_uom_def(self, cr, uid, context=None):
         if context is None:
             context= {}
-        ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        try:
+            ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        except ValueError:
+            return False
+
         if ids:
-            return ids[1] 
+            return ids[1]
         return False
 
     _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
@@ -1267,8 +1279,8 @@ class sale_order_line(osv.osv):
     _defaults = {'date_planned': _get_planned_date,
                  'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
-                 'type': _get_type_def,
-                 'product_uom': _get_uom_def,      
+                 'type': lambda *a: 'make_to_order',
+                 'product_uom': _get_uom_def,
                  }
 
     def copy_data(self, cr, uid, id, default=None, context=None):

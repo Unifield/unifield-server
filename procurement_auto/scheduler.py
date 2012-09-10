@@ -149,6 +149,12 @@ Created documents : \n'''
             auto_sup_obj.write(cr, uid, [auto_sup.id], {'procurement_id': proc_id}, context=context)
         
         return proc_id
+    
+    def _hook_product_type_consu(self, cr, uid, *args, **kwargs):
+        '''
+        kwargs['op'] is the current min/max rule
+        '''
+        return True
         
 procurement_order()
 

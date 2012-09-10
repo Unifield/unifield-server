@@ -30,6 +30,7 @@ class stock_picking(osv.osv):
 
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
         """
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
@@ -46,6 +47,7 @@ class stock_picking(osv.osv):
         """
         Update journal by an inkind journal if we come from an inkind donation PO.
         Update partner account
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
@@ -59,6 +61,17 @@ class stock_picking(osv.osv):
         if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
             invoice_vals.update({'is_intermission': True})
         return invoice_vals
+
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
+        """
+        Add a link between stock picking and invoice
+        """
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        for pick in self.browse(cr, uid, [x for x in res]):
+            inv_id = res[pick.id]
+            if inv_id:
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'picking_id': pick.id})
+        return res
 
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

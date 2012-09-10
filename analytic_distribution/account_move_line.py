@@ -34,6 +34,9 @@ class account_move_line(osv.osv):
         """
         Create analytic lines on expense accounts that have an analytical distribution.
         """
+        # Some verifications
+        if not context:
+            context = {}
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):

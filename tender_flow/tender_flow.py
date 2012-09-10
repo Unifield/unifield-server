@@ -527,7 +527,7 @@ class tender_line(osv.osv):
     
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
                 'qty': fields.float(string="Qty", required=True),
-                'tender_id': fields.many2one('tender', string="Tender", required=True),
+                'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
                 'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
@@ -695,24 +695,7 @@ class procurement_order(osv.osv):
             data = self.read(cr, uid, ids, ['so_back_update_dest_po_id_procurement_order'], context=context)
             if not data[0]['so_back_update_dest_po_id_procurement_order']:
                 po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
-            if self.browse(cr, uid, ids[0], context=context).is_tender:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
         return result
-    
-    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        if the procurement corresponds to a tender, the created po is confirmed but not validated
-        '''
-        po_obj = self.pool.get('purchase.order')
-        procurement = kwargs['procurement']
-        purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
-        if purchase_id:
-            # if tender
-            if procurement.is_tender:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
-        return purchase_id
     
     def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -721,7 +704,19 @@ class procurement_order(osv.osv):
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
         
-        values['date_planned'] = procurement.date_planned 
+        values['date_planned'] = procurement.date_planned
+        
+        if procurement.product_id:
+            if procurement.product_id.type == 'consu':
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            elif procurement.product_id.type == 'service_recep':
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
+            else:
+                wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+                if wh_ids:
+                    values['location_id'] = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
+                else:
+                    values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
         
         return values
     
@@ -896,13 +891,23 @@ class pricelist_partnerinfo(osv.osv):
     '''
     add new information from specifications
     '''
+    def _get_line_number(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for price in self.browse(cr, uid, ids, context=context):
+            res[price.id] = 0
+            if price.purchase_order_line_id:
+                res[price.id] = price.purchase_order_line_id.line_number
+                
+        return res
+    
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True),
+    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True, domain="[('partner_currency', '=', partner_id)]"),
                 'valid_till': fields.date(string="Valid Till",),
                 'comment': fields.char(size=128, string='Comment'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
+                #'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", ),
+                'purchase_order_line_number': fields.function(_get_line_number, method=True, type="integer", string="Related Line Number", readonly=True),
                 }
 pricelist_partnerinfo()
 

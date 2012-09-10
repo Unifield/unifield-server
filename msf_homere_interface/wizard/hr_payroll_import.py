@@ -30,7 +30,9 @@ from zipfile import ZipFile as zf
 import csv
 from tools.misc import ustr
 from tools.translate import _
+from tools import config
 import time
+import sys
 
 class hr_payroll_import_period(osv.osv):
     _name = 'hr.payroll.import.period'
@@ -53,6 +55,7 @@ class hr_payroll_import(osv.osv_memory):
 
     _columns = {
         'file': fields.binary(string="File", filters="*.zip", required=True),
+        'filename': fields.char(string="Imported filename", size=256),
     }
 
     def update_payroll_entries(self, cr, uid, data='', field='', context=None):
@@ -198,6 +201,24 @@ class hr_payroll_import(osv.osv_memory):
             created += 1
         return True, amount, created
 
+    def _get_homere_password(self, cr, uid):
+        if sys.platform.startswith('win'):
+            homere_file = os.path.join(config['root_path'], 'homere.conf')
+        else:
+            homere_file = os.path.join(os.path.expanduser('~'),'tmp/homere.password') # relative path from user directory to homere password file
+        
+        # Search homere password file
+        if not os.path.exists(homere_file):
+            raise osv.except_osv(_("Error"), _("File '%s' doesn't exist!") % (homere_file,))
+        # Read homere file
+        homere_file_data = open(homere_file, 'rb')
+        pwd = homere_file_data.readline()
+        if not pwd:
+            raise osv.except_osv(_("Error"), _("File '%s' is empty !") % (homere_file,))
+        homere_file_data.close()
+        return pwd.decode('base64')
+
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Open ZIP file, take the CSV file into and parse it to import payroll entries
@@ -214,34 +235,26 @@ class hr_payroll_import(osv.osv_memory):
         # Prepare some values
         file_ext_separator = '.'
         file_ext = "csv"
-        relativepath = 'tmp/homere.password' # relative path from user directory to homere password file
         message = _("Payroll import failed.")
         res = False
         created = 0
         processed = 0
-        
-        # Search homere password file
-        homere_file = os.path.join(os.path.expanduser('~'),relativepath)
-        if not os.path.exists(homere_file):
-            raise osv.except_osv(_("Error"), _("File '%s' doesn't exist!") % (homere_file,))
-        
-        # Read homere file
-        homere_file_data = open(homere_file, 'rb')
-        if homere_file_data:
-            pwd = homere_file_data.readlines()[0]
-        xyargv = pwd.decode('base64')
-        
+
+        xyargv = self._get_homere_password(cr, uid)
+
+        filename = ""
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
             # Decode file string
-            fileobj = NamedTemporaryFile('w+')
+            fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format
-            fileobj.seek(0)
+            filename = fileobj.name
+            fileobj.close()
             try:
-                zipobj = zf(fileobj.name, 'r')
+                zipobj = zf(filename, 'r')
+                filename = wiz.filename or ""
             except:
-                fileobj.close()
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
             if zipobj.namelist():
                 namelist = zipobj.namelist()
@@ -309,7 +322,7 @@ class hr_payroll_import(osv.osv_memory):
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'total': processed, 'state': 'payroll'})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'})
         
         return {
             'name': 'Payroll Import Confirmation',

@@ -8,13 +8,14 @@
             <field name="model">wizard.journal.items.corrections.lines</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" string="">
+                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
                     <field name="journal_id"/>
                     <field name="ref"/>
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
                     <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
+                    <field name="analytic_distribution_state"/>
                     <field name="debit_currency"/>
                     <field name="credit_currency"/>
                     <field name="currency_id"/>
