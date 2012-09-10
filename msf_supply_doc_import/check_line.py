@@ -1,9 +1,27 @@
 # -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
 
 """
 This module is dedicated to help checking lines of Excel file at importation.
 """
-from tools.translate import _
 
 
 def check_empty_line(**kwargs):
@@ -61,6 +79,8 @@ def product_value(cr, uid, **kwargs):
     price_unit = kwargs['to_write'].get('price_unit', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
+    # The tender line may have a default product if it is not found
+    obj_data = kwargs['obj_data']
     if row.cells[0] and row.cells[0].data:
         product_code = row.cells[0].data
         if product_code:
@@ -76,7 +96,7 @@ def product_value(cr, uid, **kwargs):
                     price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
             except Exception:
                 msg = 'The Product Code has to be a string.'
-    if not default_code:
+    if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]:
         comment += ' Product Code to be defined'
         error_list.append(msg or 'The Product\'s Code has to be defined')
     return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit}
@@ -107,9 +127,10 @@ def compute_uom_value(cr, uid, **kwargs):
     """
     row = kwargs['row']
     uom_obj = kwargs['uom_obj']
-    obj_data = kwargs['obj_data']
     error_list = kwargs['to_write']['error_list']
-    uom_id = False
+    uom_id = kwargs['to_write'].get('uom_id', False)
+    # The tender line may have a default UOM if it is not found
+    obj_data = kwargs['obj_data']
     msg = None
     if row.cells[3]:
         try:
@@ -119,7 +140,7 @@ def compute_uom_value(cr, uid, **kwargs):
                 uom_id = uom_ids[0]
         except Exception:
             msg = 'The UOM Name has to be a string.'
-    if not uom_id:
+    if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
         error_list.append(msg or 'The UOM Name was not valid.')
         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
     return {'uom_id': uom_id, 'error_list': error_list}
@@ -136,7 +157,6 @@ def compute_price_value(**kwargs):
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
-    context = kwargs['context']
     price = kwargs['price'] or 'Price'
     if not row.cells[4] or not row.cells[4].data:
         if default_code:
