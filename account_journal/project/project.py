@@ -40,7 +40,7 @@ class account_analytic_journal(osv.osv):
             ('correction', 'Correction'),
             ('cur_adj', 'Currency Adjustement'),
             ('engagement', 'Engagement'),
-            ('extra', 'Extra-Accounting'),
+            ('extra', 'OD-Extra Accounting'),
             ('general','General'),
             ('hq', 'HQ'),
             ('hr', 'HR'),

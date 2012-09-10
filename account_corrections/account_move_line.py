@@ -335,7 +335,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             if ml.account_id and ml.account_id.type_for_register == 'donation':
                 journal_id = j_extra_id
                 if not journal_id:
-                    raise osv.except_osv(_('Error'), _('No Extra-Accounting Journal found!'))
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
             elif not journal_id:
                 raise osv.except_osv(_('Error'), _('No Correction Journal found!'))
             # Create a new move
@@ -422,7 +422,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             if is_inkind:
                 journal_id = j_extra_id
             if not journal_id and is_inkind:
-                raise osv.except_osv(_('Error'), _('No Extra-Accounting Journal found!'))
+                raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
             elif not journal_id:
                 raise osv.except_osv(_('Error'), ('No correction journal found!'))
             
@@ -568,7 +568,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
                 journal_id = j_extra_id
                 if not journal_id:
-                    raise osv.except_osv(_('Error'), _('No Extra-accounting Journal found!'))
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
             if not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             # Create a new move
@@ -687,7 +687,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             if ml.account_id.type_for_register == 'donation':
                 journal_id = j_extra_id
                 if not journal_id:
-                    raise osv.except_osv(_('Error'), _('No Extra-accounting Journal found!'))
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
             if not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             # Create a new move
