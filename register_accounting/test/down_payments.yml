@@ -4,6 +4,12 @@
   We validate it and check all is ok then we receive 2 products.
   We create invoice, validate it and check that all is ok.
 -
+  Wa update the activation date for payable account
+-
+  !python {model: account.account}: |
+     import time
+     self.write(cr, uid, ref('account.a_pay'), {'activation_date': time.strftime('%Y-01-01')})
+-
   We create a Purchase order with 5 product of 60 EUR.
 -
   !record {model: purchase.order, id: po1}:

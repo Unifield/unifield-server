@@ -6,7 +6,7 @@
  !record {model: account.bank.statement, id: account_bank_statement_81}:
     date: !eval time.strftime('%Y-04-20')
     journal_id: account_journal_cash_0
-    name: 
+    name: account_bank_statement_81
     period_id: period_4
     user_id: base.user_root
     starting_details_ids:
