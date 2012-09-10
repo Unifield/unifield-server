@@ -82,6 +82,14 @@ class sale_order(osv.osv):
         tools_obj = self.pool.get('sequence.tools')
         tools_obj.reorder_sequence_number(cr, uid, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', ids, 'line_number', context=context)
         return True
+    
+    def allow_resequencing(self, cr, uid, so_browse, context=None):
+        '''
+        allow resequencing criteria
+        '''
+        if so_browse.state == 'draft' and not so_browse.client_order_ref:
+            return True
+        return False
 
 sale_order()
 
@@ -94,7 +102,7 @@ class sale_order_line(osv.osv):
     _columns = {
                 'line_number': fields.integer(string='Line', required=True),
                 }
-    _order = 'line_number'
+    _order = 'line_number, id'
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -141,7 +149,10 @@ class sale_order_line(osv.osv):
         
         linked to Fo + Fo draft + Fo not sync
         '''
-        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft' and not x.order_id.client_order_ref]
+        # objects
+        so_obj = self.pool.get('sale.order')
+        
+        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and so_obj.allow_resequencing(cr, uid, x.order_id, context=context)]
         return resequencing_ids
             
 sale_order_line()
@@ -200,8 +211,17 @@ class purchase_order(osv.osv):
         tools_obj = self.pool.get('sequence.tools')
         tools_obj.reorder_sequence_number(cr, uid, 'purchase.order', 'sequence_id', 'purchase.order.line', 'order_id', ids, 'line_number', context=context)
         return True
+    
+    def allow_resequencing(self, cr, uid, po_browse, context=None):
+        '''
+        allow resequencing criteria
+        '''
+        if po_browse.state == 'draft':
+            return True
+        return False
 
 purchase_order()
+
 
 class purchase_order_line(osv.osv):
     '''
@@ -212,7 +232,7 @@ class purchase_order_line(osv.osv):
     _columns = {
                 'line_number': fields.integer(string='Line', required=True),
                 }
-    _order = 'line_number'
+    _order = 'line_number, id'
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -259,12 +279,50 @@ class purchase_order_line(osv.osv):
         
         return the list of ids for which resequencing will can be performed
         
-        linked to Po + Po draft
+        linked to Po + Po allows resequencing
         '''
-        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft']
+        # objects
+        po_obj = self.pool.get('purchase.order')
+        
+        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and po_obj.allow_resequencing(cr, uid, x.order_id, context=context)]
         return resequencing_ids
             
 purchase_order_line()
+
+
+class procurement_order(osv.osv):
+    '''
+    inherit po_line_values_hook
+    '''
+    _inherit = 'procurement.order'
+
+    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+        
+        - allow to modify the data for purchase order line creation
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # objects
+        po_obj = self.pool.get('purchase.order')
+        procurement = kwargs['procurement']
+        
+        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        # if we are updating the sale order from the corresponding on order purchase order
+        # the purchase order to merge the new line to is locked and provided in the procurement
+        # we split a line or dekitting, we keep original line_number if the Po does *not* allow_resequencing: behavior 2
+        # if it allows, we use behavior 1
+        if procurement.so_back_update_dest_po_id_procurement_order:
+            if not po_obj.allow_resequencing(cr, uid, procurement.so_back_update_dest_po_id_procurement_order, context=context):
+                line.update({'line_number': procurement.so_back_update_dest_pol_id_procurement_order.line_number})
+            
+        return line
+    
+procurement_order()
+
 
 class ir_sequence(osv.osv):
     '''

@@ -691,8 +691,9 @@ class sale_order(osv.osv):
         line = kwargs['line']
         # call to super
         proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # update proc_data for link to destination purchase order during back update of sale order
-        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id})
+        # update proc_data for link to destination purchase order and purchase order line (for line number) during back update of sale order
+        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
+                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id})
         return proc_data
     
     def action_ship_proc_create(self, cr, uid, ids, context=None):
@@ -908,6 +909,7 @@ class sale_order_line(osv.osv):
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
+                'so_back_update_dest_pol_id_sale_order_line': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
                 'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                 help='* The \'Draft\' state is set when the related sales order in draft state. \
                     \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
@@ -956,9 +958,10 @@ class sale_order_line(osv.osv):
         '''
         if not default:
             default = {}
-        # if the po link is not in default, we set it to False
+        # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
-            default.update({'so_back_update_dest_po_id_sale_order_line': False})
+            default.update({'so_back_update_dest_po_id_sale_order_line': False,
+                            'so_back_update_dest_pol_id_sale_order_line': False,})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,

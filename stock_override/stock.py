@@ -91,13 +91,15 @@ class procurement_order(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'so_back_update_dest_po_id_procurement_order': False})
+        default.update({'so_back_update_dest_po_id_procurement_order': False,
+                        'so_back_update_dest_pol_id_procurement_order': False})
         return super(procurement_order, self).copy_data(cr, uid, id, default, context=context)
     
     _columns = {'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_procurement_order': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
+                'so_back_update_dest_pol_id_procurement_order': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
                 }
     
     _defaults = {'from_yml_test': lambda *a: False,
