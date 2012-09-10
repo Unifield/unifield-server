@@ -231,7 +231,7 @@ class stock_mission_report(osv.osv):
                           FROM stock_move m
                               LEFT JOIN stock_picking s ON m.picking_id = s.id
                               LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE m.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')''')
+                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')''')
             
             in_pipe_moves = cr.fetchall()
             for product_id, qty, uom, partner, move_id in in_pipe_moves:
@@ -242,14 +242,16 @@ class stock_mission_report(osv.osv):
                     if uom != line.product_id.uom_id.id:
                         qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
                         
-                    vals = {'in_pipe_qty': line.in_pipe_qty,
-                            'in_pipe_coor_qty': line.in_pipe_coor_qty,
+                    vals = {'in_pipe_qty': 0.00,
+                            'in_pipe_coor_qty': 0.00,
                             'updated': True}
                     
                     vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
                     
                     if partner == coordo_id:
                         vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+
+                    line_obj.write(cr, uid, line.id, vals)
             
             # All other moves
             cr.execute('''
@@ -302,7 +304,6 @@ class stock_mission_report(osv.osv):
                         vals['cu_qty'] = vals['cu_qty'] + qty
 
                     vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
-                    
                     line_obj.write(cr, uid, line.id, vals)
                 
         return True
