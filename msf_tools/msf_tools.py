@@ -254,30 +254,100 @@ class sequence_tools(osv.osv):
     '''
     _name = 'sequence.tools'
     
-    def reorder_sequence_number(self, cr, uid, base_object, base_seq_field, dest_object, foreign_field, foreign_id, seq_field, context=None):
+    def reorder_sequence_number(self, cr, uid, base_object, base_seq_field, dest_object, foreign_field, foreign_ids, seq_field, context=None):
         '''
         receive a browse list corresponding to one2many lines
         recompute numbering corresponding to specified field
         compute next number of sequence
         
         we must make sure we reorder in conservative way according to original order
+        
+        *not used presently*
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(foreign_ids, (int, long)):
+            foreign_ids = [foreign_ids]
+            
         # objects
         base_obj = self.pool.get(base_object)
         dest_obj = self.pool.get(dest_object)
         seq_obj = self.pool.get('ir.sequence')
         
-        # will be ordered by default according to db id, it's what we want according to user sequence
-        item_ids = self.pool.get(dest_object).search(cr, uid, [(foreign_field, '=', foreign_id)], context=context)
-        if item_ids:
-            # get the sequenc id
-            seq_id = base_obj.read(cr, uid, foreign_id, [base_seq_field], context=context)[base_seq_field]
-            # we reset the sequence, and generate the new values from it for the seq_field
-            self.reset_next_number(cr, uid, [seq_id], value=1, context=context)
-            for item_id in item_ids:
-                # get next seq value
-                seq_value = seq_obj.get_id(cr, uid, seq_id, test='id', context=context)
-                dest_obj.write(cr, uid, [item_id], {seq_field: seq_value}, context=context)
+        for foreign_id in foreign_ids:
+            # will be ordered by default according to db id, it's what we want according to user sequence
+            item_ids = dest_obj.search(cr, uid, [(foreign_field, '=', foreign_id)], context=context)
+            if item_ids:
+                # read line number and id from items
+                item_data = dest_obj.read(cr, uid, item_ids, [seq_field], context=context)
+                # check the line number: data are ordered according to db id, so line number must be equal to index+1
+                for i in range(len(item_data)):
+                    if item_data[i][seq_field] != i+1:
+                        dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: i+1}, context=context)
+                # reset sequence to length + 1 all time, checking if needed would take much time
+                # get the sequence id
+                seq_id = base_obj.read(cr, uid, foreign_id, [base_seq_field], context=context)[base_seq_field][0]
+                # we reset the sequence to length+1
+                self.reset_next_number(cr, uid, [seq_id], value=len(item_ids)+1, context=context)
+        
+        return True
+    
+    def reorder_sequence_number_from_unlink(self, cr, uid, ids, base_object, base_seq_field, dest_object, foreign_field, seq_field, context=None):
+        '''
+        receive a browse list corresponding to one2many lines
+        recompute numbering corresponding to specified field
+        compute next number of sequence
+        
+        for unlink, only items with id > min(deleted id) are resequenced + reset the sequence value
+        
+        we must make sure we reorder in conservative way according to original order
+        
+        this method is called from methods of **destination object**
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        # if no ids as parameter return Tru
+        if not ids:
+            return True
+            
+        # objects
+        base_obj = self.pool.get(base_object)
+        dest_obj = self.pool.get(dest_object)
+        seq_obj = self.pool.get('ir.sequence')
+        
+        # find the corresponding base ids
+        base_ids = [x['order_id'][0] for x in dest_obj.read(cr, uid, ids, [foreign_field], context=context) if x['order_id']]
+        # simulate unique sql
+        foreign_ids = set(base_ids)
+        
+        for foreign_id in foreign_ids:
+            # will be ordered by default according to db id, it's what we want according to user sequence
+            # reorder only ids bigger than min deleted + do not select deleted ones
+            item_ids = dest_obj.search(cr, uid, [('id', '>', min(ids)), (foreign_field, '=', foreign_id), ('id', 'not in', ids)], context=context)
+            # start numbering sequence
+            start_num = 0
+            # if deleted object is not the first one, we find the numbering value of previous one
+            before_ids = dest_obj.search(cr, uid, [('id', '<', min(ids)), (foreign_field, '=', foreign_id)], context=context)
+            if before_ids:
+                # we read the numbering value of previous value (biggest id)
+                start_num = dest_obj.read(cr, uid, max(before_ids), [seq_field], context=context)[seq_field]
+            if item_ids:
+                # read line number and id from items
+                item_data = dest_obj.read(cr, uid, item_ids, [seq_field], context=context)
+                # check the line number: data are ordered according to db id, so line number must be equal to index+1
+                for i in range(len(item_data)):
+                    # numbering value
+                    start_num = start_num+1
+                    if item_data[i][seq_field] != start_num:
+                        dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
+            
+            # reset sequence to start_num + 1 all time, checking if needed would take much time
+            # get the sequence id
+            seq_id = base_obj.read(cr, uid, foreign_id, [base_seq_field], context=context)[base_seq_field][0]
+            # we reset the sequence to length+1, whether or not items
+            self.reset_next_number(cr, uid, [seq_id], value=start_num+1, context=context)
         
         return True
     

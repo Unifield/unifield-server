@@ -73,6 +73,15 @@ class sale_order(osv.osv):
         vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         
         return super(sale_order, self).create(cr, uid, vals, context)
+    
+    def reorder_line_numbering(self, cr, uid, ids, context=None):
+        '''
+        test function
+        '''
+        # objects
+        tools_obj = self.pool.get('sequence.tools')
+        tools_obj.reorder_sequence_number(cr, uid, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', ids, 'line_number', context=context)
+        return True
 
 sale_order()
 
@@ -103,6 +112,27 @@ class sale_order_line(osv.osv):
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
         
         return result
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        check the numbering on deletion
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        tools_obj = self.pool.get('sequence.tools')
+        
+        if not context.get('skip_resequencing', False):
+            # re sequencing only happen if field order is draft and not synchronized (PUSH flow) (behavior 1) 
+            # get ids with corresponding fo at draft state which is not synchronized
+            draft_not_synchronized_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft' and not x.order_id.client_order_ref]
+            tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_not_synchronized_ids, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', 'line_number', context=context)
+        
+        return super(sale_order_line, self).unlink(cr, uid, ids, context=context)
             
 sale_order_line()
 
@@ -190,6 +220,27 @@ class purchase_order_line(osv.osv):
         result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         
         return result
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        check the numbering on deletion
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        tools_obj = self.pool.get('sequence.tools')
+        
+        if not context.get('skip_resequencing', False):
+            # re sequencing only happen if purchase order is draft (behavior 1) 
+            # get ids with corresponding po at draft state
+            draft_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft']
+            tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_ids, 'purchase.order', 'sequence_id', 'purchase.order.line', 'order_id', 'line_number', context=context)
+        
+        return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
             
 purchase_order_line()
 

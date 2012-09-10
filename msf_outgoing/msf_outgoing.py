@@ -1320,12 +1320,14 @@ class stock_picking(osv.osv):
         '''
         unlink test for draft
         '''
-        datas = self.read(cr, uid, ids, ['state'], context=context)
+        datas = self.read(cr, uid, ids, ['state','type','subtype'], context=context)
         if [data for data in datas if data['state'] != 'draft']:
             raise osv.except_osv(_('Warning !'), _('Only draft picking tickets can be deleted.'))
-        data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
-        if [x for x in data.values() if x]:
-            raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
+        ids_picking_draft = [data['id'] for data in datas if data['subtype'] == 'picking' and data['type'] == 'out' and data['state'] == 'draft']
+        if ids_picking_draft:
+            data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
+            if [x for x in data.values() if x]:
+                raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
         
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
    
@@ -1444,7 +1446,7 @@ class stock_picking(osv.osv):
             # by default, nothing is in progress
             res[obj.id] = False
             # treat only draft picking
-            assert obj.subtype == 'picking' and obj.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
+            assert obj.subtype in 'picking' and obj.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
             for picking in obj.backorder_ids:
                 # take care, is_completed returns a dictionary
                 if not picking.is_completed()[picking.id]:

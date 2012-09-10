@@ -462,10 +462,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state not in ['draft']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
         return res
 
@@ -830,6 +830,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         wizard = self.browse(cr, uid, [wizard_id], context=context)[0]
         distrib = wizard.distribution_id
+        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
         # Search database lines
@@ -854,7 +855,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'analytic_id': line.get('analytic_id'),
                     'percentage': line.get('percentage'),
                     'distribution_id': distrib.id,
-                    'currency_id': wizard.currency_id and wizard.currency_id.id,
+                    'currency_id': wizard.currency_id and wizard.currency_id and wizard.currency_id.id or company_currency_id,
                     'cost_center_id': line.get('cost_center_id') or False,
                     'destination_id': line.get('destination_id') or False,
                 }

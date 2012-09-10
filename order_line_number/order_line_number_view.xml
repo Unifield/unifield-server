@@ -14,6 +14,11 @@
                     <xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']//field[@name='name']" position="before">
                         <field name="line_number" />
                     </xpath>
+                    <!-- 
+                    <xpath expr="/form/notebook//field[@name='order_line']" position="before" >
+	                    <button name="reorder_line_numbering" string="Reorder" icon="gtk-remove" colspan="1" type="object" />
+                	</xpath>
+                	 -->
                 </data>
             </field>
         </record>
@@ -30,9 +35,11 @@
                     <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='date_planned']" position="before">
                         <field name="line_number" />
                     </xpath>
+                    <!-- 
                     <xpath expr="/form/notebook//field[@name='order_line']" position="before" >
 	                    <button name="reorder_line_numbering" string="Reorder" icon="gtk-remove" colspan="1" type="object" />
                 	</xpath>
+                	 -->
                 </data>
             </field>
         </record>
