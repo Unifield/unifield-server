@@ -29,7 +29,7 @@ def get_log_message(**kwargs):
     tender = kwargs.get('tender', False)
     # not for tender
     obj = kwargs.get('obj', False)
-    msg_to_return = _("All lines successfully imported")
+    msg_to_return = False
     # nb_lines_error => is just for tender
     if tender and nb_lines_error:
         msg_to_return = "The import of lines had errors, please correct the red lines below"
@@ -219,11 +219,11 @@ def comment_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     # the cell number change between Internal Request and Sale Order
     cell_nb = kwargs['cell']
-    if row.cells[cell_nb]:
+    if not row.cells[cell_nb]:
+        warning_list.append("No comment was defined")
+    else:
         if comment and row.cells[cell_nb].data:
             comment += ', %s' % row.cells[cell_nb].data
         elif row.cells[cell_nb].data:
             comment = row.cells[cell_nb].data
-    else:
-        warning_list.append("No comment was defined")
     return {'comment': comment, 'warning_list': warning_list}
