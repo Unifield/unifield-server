@@ -265,13 +265,15 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 # Cell 4: Price
                 price_value = {}
-                price_value = compute_price_value(row=row, to_write=to_write, context=context)
-                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list']})
+                price_value = compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
+                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
+                                 'warning_list': price_value['warning_list']})
 
                 # Cell 5: Date
                 date_value = {}
                 date_value = compute_date_value(row=row, to_write=to_write, context=context)
-                to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
+                to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list'],
+                                 'warning_list': date_value['warning_list']})
 
                 # Cell 6: Currency
                 curr_value = {}

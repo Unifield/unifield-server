@@ -86,14 +86,16 @@ def quantity_value(**kwargs):
     row = kwargs['row']
     product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
+    # with warning_list: the line does not appear in red, it is just informative
+    warning_list = kwargs['to_write']['warning_list']
     if not row.cells[2]:
-        error_list.append('The Product Quantity was not set. It is set to 1 by default.')
+        warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
     else:
         if row.cells[2].type in ['int', 'float']:
             product_qty = row.cells[2].data
         else:
             error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
-    return {'product_qty': product_qty, 'error_list': error_list}
+    return {'product_qty': product_qty, 'error_list': error_list, 'warning_list': warning_list}
 
 
 def compute_uom_value(cr, uid, **kwargs):
@@ -129,23 +131,22 @@ def compute_price_value(**kwargs):
     price_unit = kwargs['to_write']['price_unit']
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
+    # with warning_list: the line does not appear in red, it is just informative
+    warning_list = kwargs['to_write']['warning_list']
     context = kwargs['context']
-    order_type = context.get('_terp_view_name', False)
-    if order_type not in ['Purchase Orders', 'Requests for Quotation']:
-        if not row.cells[4] or not row.cells[4].data:
-            if default_code:
-                error_list.append('The Price Unit was not set, we have taken the default "Field Price" of the product.')
-            else:
-                error_list.append('The Price and Product not found.')
-        elif row.cells[4].type not in ['int', 'float'] and not default_code:
-            error_list.append('The Price Unit was not a number and no product was found.')
-        elif row.cells[4].type in ['int', 'float']:
-            price_unit = row.cells[4].data
+    price = kwargs['price'] or 'Price'
+    if not row.cells[4] or not row.cells[4].data:
+        if default_code:
+            warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
         else:
-            error_list.append('The Price Unit was not defined properly.')
-    elif order_type == 'Purchase Orders' and not row.cells[4] or not row.cells[4].data:
-        price_unit = 0.0
-    return {'price_unit': price_unit, 'error_list': error_list}
+            error_list.append('The Price and Product not found.')
+    elif row.cells[4].type not in ['int', 'float'] and not default_code:
+        error_list.append('The Price Unit was not a number and no product was found.')
+    elif row.cells[4].type in ['int', 'float']:
+        price_unit = row.cells[4].data
+    else:
+        error_list.append('The Price Unit was not defined properly.')
+    return {'price_unit': price_unit, 'error_list': error_list, 'warning_list': warning_list}
 
 
 def compute_date_value(**kwargs):
@@ -155,11 +156,13 @@ def compute_date_value(**kwargs):
     row = kwargs['row']
     date_planned = kwargs['to_write']['date_planned']
     error_list = kwargs['to_write']['error_list']
+    # with warning_list: the line does not appear in red, it is just informative
+    warning_list = kwargs['to_write']['warning_list']
     if row.cells[5] and row.cells[5].type == 'datetime':
         date_planned = row.cells[5].data
     else:
-        error_list.append('The date format was not correct. The date from the header has been taken.')
-    return {'date_planned': date_planned, 'error_list': error_list}
+        warning_list.append('The date format was not correct. The date from the header has been taken.')
+    return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
 
 
 def compute_currency_value(cr, uid, **kwargs):
@@ -171,7 +174,7 @@ def compute_currency_value(cr, uid, **kwargs):
     warning_list = kwargs['to_write']['warning_list']
     currency_obj = kwargs['currency_obj']
     browse_sale = kwargs.get('browse_sale', False)
-    browse_purchase = kwargs.get('browse_sale', False)
+    browse_purchase = kwargs.get('browse_purchase', False)
     # the cell number change between Internal Request and Sale Order
     cell_nb = kwargs['cell']
     fc_id = False

@@ -169,7 +169,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 # Cell 2: Quantity
                 qty_value = {}
                 qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+                to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'],
+                                 'warning_list': qty_value['warning_list']})
 
                 # Cell 3: UOM
                 uom_value = {}
@@ -178,8 +179,9 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 # Cell 4: Price
                 price_value = {}
-                price_value = compute_price_value(row=row, to_write=to_write, context=context)
-                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list']})
+                price_value = compute_price_value(row=row, to_write=to_write, price='Cost Price', context=context)
+                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
+                                 'warning_list': price_value['warning_list']})
 
                 # Cell 5: Delivery Request Date
                 date_value = {}
