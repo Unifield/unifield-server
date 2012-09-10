@@ -975,8 +975,8 @@ stock moves which are already processed : '''
                 'company_id': order.company_id.id,
                 'move_lines' : [],
             }
-            
-            if order.order_type in ('regular', 'purchase_list', 'direct') and order.partner_id.partner_type in ('internal', 'intermission', 'inter-section', 'esc'):
+
+            if order.order_type in ('regular', 'purchase_list', 'direct') and order.partner_id.partner_type in ('internal', 'intermission', 'section', 'esc'):
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             elif order.order_type in ('regular', 'purchase_list', 'direct'):
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
@@ -991,7 +991,7 @@ stock moves which are already processed : '''
                 
             if reason_type_id:
                 picking_values.update({'reason_type_id': reason_type_id})
-            
+
             picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
             for order_line in order.order_line:
