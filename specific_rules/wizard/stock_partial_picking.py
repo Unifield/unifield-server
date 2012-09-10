@@ -40,6 +40,7 @@ class stock_partial_picking(osv.osv_memory):
         message_in = '<label string="You receive %s products, please refer to the appropriate procedure." colspan="4" />'
         message_out = '<label string="You ship %s products, please refer to the appropriate procedure and ensure that the mean of transport is appropriate." colspan="4" />'
         button = '<button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>'
+        button_2 = '<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>'
         if not picking_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
@@ -81,6 +82,7 @@ class stock_partial_picking(osv.osv_memory):
     
         if context.get('step',False) not in ['create','validate','returnproducts','ppl2','ppl1']:
             arch += button
+            arch += button_2
         arch += '<field name="date" invisible="1"/>' + message + l[1]
         result['arch'] = arch
         
@@ -93,6 +95,27 @@ class stock_partial_picking(osv.osv_memory):
             self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
         for move in partial.product_moves_in:
             self.pool.get('stock.move.memory.in').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+        return {
+            'name': context.get('wizard_name'),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': context['model'],
+            'res_id': ids[0],
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context,
+        }
+        #return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
+
+    def uncopy_all(self, cr, uid, ids, context=None):
+        partial = self.browse(cr, uid, ids[0], context=context)
+        for move in partial.product_moves_out:
+            self.pool.get('stock.move.memory.out').write(cr, uid, [move.id], {'quantity': 0.0})
+        for move in partial.product_moves_in:
+            self.pool.get('stock.move.memory.in').write(cr, uid, [move.id], {'quantity': 0.0})
         return {
             'name': context.get('wizard_name'),
             'view_mode': 'form',
@@ -127,7 +150,7 @@ class stock_partial_picking(osv.osv_memory):
         move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(move, pick_type)
         assert move_memory is not None
         
-        move_memory.update({'expiry_date' : move.expired_date, 'quantity_ordered' : move.product_qty, 'quantity': 0.0 })
+        move_memory.update({'expiry_date': move.expired_date, 'quantity_ordered': move.product_qty, 'quantity': 0.0 })
         
         return move_memory
     
@@ -143,9 +166,9 @@ class stock_partial_picking(osv.osv_memory):
         move = kwargs.get('move')
         assert move, 'move is missing'
         
-	if move.batch_number_check and not move.prodlot_id:
+        if move.batch_number_check and not move.prodlot_id:
             raise osv.except_osv(_('Error'), _('No Batch Number set for Batch Number mandatory product(s).'))
-	if move.expiry_date_check and not move.expiry_date:
+        if move.expiry_date_check and not move.expiry_date:
             raise osv.except_osv(_('Error'), _('No Expiry Date set for Expiry Date mandatory product(s).'))
 
         # if only expiry date mandatory, and not batch management

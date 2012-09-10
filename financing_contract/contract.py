@@ -18,9 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from osv import fields, osv
 import datetime
+from osv import fields, osv
+from tools.translate import _
 
 class financing_contract_funding_pool_line(osv.osv):
     # 
@@ -209,7 +209,18 @@ class financing_contract_contract(osv.osv):
         # Restrain domain to selected table (or None if none selected
         domains = {'reporting_currency': [('currency_table_id', '=', currency_table_id)]}
         return {'value': values, 'domain': domains}
-    
+
+    def onchange_date(self, cr, uid, ids, eligibility_from_date, eligibility_to_date):
+        """ This function will be called on the change of dates of the financing contract"""
+        if eligibility_from_date and eligibility_to_date:
+            if eligibility_from_date >= eligibility_to_date:
+                warning = {
+                    'title': _('Error'), 
+                    'message': _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")
+                }
+                return {'warning': warning}
+        return {}
+
     def create_reporting_line(self, cr, uid, browse_contract, browse_format_line, parent_report_line_id=None, context=None):
         format_line_obj = self.pool.get('financing.contract.format.line')
         reporting_line_obj = self.pool.get('financing.contract.donor.reporting.line')
