@@ -176,8 +176,8 @@ class initial_stock_inventory(osv.osv):
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=c):
                 # Check if the product is not already on the report
                 if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
+                    batch_mandatory = product.batch_management
+                    date_mandatory = product.perishable
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
                               'product_qty': product.qty_available,
@@ -300,15 +300,13 @@ class initial_stock_inventory_line(osv.osv):
                  ['product_id', 'average_cost'])
                 ]
     
-    def product_change(self, cr, uid, ids, product_id, location_id, prodlot_id=False):
+    def product_change(self, cr, uid, ids, product_id, location_id, change_price=False, prodlot_id=False):
         '''
         Set the UoM with the default UoM of the product
         '''
         value = {'product_uom': False,
                  'hidden_perishable_mandatory': False,
-                 'hidden_batch_management_mandatory': False,
-                 'prod_lot_id': False,
-                 'expiry_date': False}
+                 'hidden_batch_management_mandatory': False,}
         
         if product_id:
             context = {}
@@ -318,12 +316,13 @@ class initial_stock_inventory_line(osv.osv):
                 context.update({'prodlot_id': prodlot_id})
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             value.update({'product_uom': product.uom_id.id,
-                          'average_cost': product.standard_price,
                           'hidden_perishable_mandatory': product.perishable,
                           'hidden_batch_management_mandatory': product.batch_management})
+            if change_price:
+                value.update({'average_cost': product.standard_price,})
             
-            if location_id:
-                value.update({'product_qty': product.qty_available})
+#            if location_id:
+#                value.update({'product_qty': product.qty_available})
             
         return {'value': value}
     
