@@ -135,7 +135,9 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                                                                              ('tender_id', '=', ids[0])], context=context)
         # log message
         msg_to_return = get_log_message(to_write=to_write, tender=True, nb_lines_error=nb_lines_error)
-        return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id})
+        if msg_to_return:
+            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id})
+        return True
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):

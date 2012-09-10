@@ -14,8 +14,11 @@ def check_empty_line(**kwargs):
     row = kwargs['row']
     col_count = kwargs['col_count']
     for cell in range(col_count):
-        if row.cells[cell].data:
-            return True
+        try:
+            if row.cells[cell].data:
+                return True
+        except TypeError:
+            pass
 
 
 def get_log_message(**kwargs):

@@ -180,7 +180,9 @@ That means Not price, Neither Delivery requested date. """))
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
         msg_to_return = get_log_message(to_write=to_write, obj=obj)
-        return self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
+        if msg_to_return:
+            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
+        return True
 
     def import_file(self, cr, uid, ids, context=None):
         '''
