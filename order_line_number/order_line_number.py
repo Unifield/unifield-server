@@ -128,13 +128,24 @@ class sale_order_line(osv.osv):
         
         if not context.get('skip_resequencing', False):
             # re sequencing only happen if field order is draft and not synchronized (PUSH flow) (behavior 1) 
-            # get ids with corresponding fo at draft state which is not synchronized
-            draft_not_synchronized_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft' and not x.order_id.client_order_ref]
+            draft_not_synchronized_ids = self.allow_resequencing(cr, uid, ids, context=context)
             tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_not_synchronized_ids, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', 'line_number', context=context)
         
         return super(sale_order_line, self).unlink(cr, uid, ids, context=context)
+    
+    def allow_resequencing(self, cr, uid, ids, context=None):
+        '''
+        define if a resequencing has to be performed or not
+        
+        return the list of ids for which resequencing will can be performed
+        
+        linked to Fo + Fo draft + Fo not sync
+        '''
+        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft' and not x.order_id.client_order_ref]
+        return resequencing_ids
             
 sale_order_line()
+
 
 class purchase_order(osv.osv):
     
@@ -237,10 +248,21 @@ class purchase_order_line(osv.osv):
         if not context.get('skip_resequencing', False):
             # re sequencing only happen if purchase order is draft (behavior 1) 
             # get ids with corresponding po at draft state
-            draft_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft']
+            draft_ids = self.allow_resequencing(cr, uid, ids, context=context)
             tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_ids, 'purchase.order', 'sequence_id', 'purchase.order.line', 'order_id', 'line_number', context=context)
         
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
+    
+    def allow_resequencing(self, cr, uid, ids, context=None):
+        '''
+        define if a resequencing has to be performed or not
+        
+        return the list of ids for which resequencing will can be performed
+        
+        linked to Po + Po draft
+        '''
+        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and x.order_id.state == 'draft']
+        return resequencing_ids
             
 purchase_order_line()
 
