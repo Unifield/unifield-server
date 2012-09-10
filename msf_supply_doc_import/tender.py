@@ -86,6 +86,7 @@ class tender(osv.osv):
             nb_lines_error = 0
             to_write = {
                 'error_list': [],
+                'warning_list': [],
                 'to_correct_ok': False,
                 'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
                 'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
