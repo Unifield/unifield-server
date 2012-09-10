@@ -138,7 +138,7 @@ class stock_partial_picking(osv.osv_memory):
                           'change_reason': False,
                           }
                 # average computation from original openerp
-                if (picking_type == 'in') and (missing_move.product_id.cost_method == 'average'):
+                if (picking_type == 'in') and (missing_move.product_id.cost_method == 'average') and not missing_move.location_dest_id.cross_docking_location_ok:
                     values.update({'product_price' : missing_move.product_id.standard_price,
                                    'product_currency': missing_move.product_id.company_id and missing_move.product_id.company_id.currency_id and missing_move.product_id.company_id.currency_id.id or False,
                                    })

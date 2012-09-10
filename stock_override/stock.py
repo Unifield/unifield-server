@@ -295,7 +295,7 @@ class stock_picking(osv.osv):
         sequence_obj = self.pool.get('ir.sequence')
         wf_service = netsvc.LocalService("workflow")
 
-        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
         for pick in self.browse(cr, uid, ids, context=context):
@@ -328,7 +328,7 @@ class stock_picking(osv.osv):
                     too_many.append(move)
 
                 # Average price computation
-                if (pick.type == 'in') and (move.product_id.cost_method == 'average'):
+                if (pick.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                     product = product_obj.browse(cr, uid, move.product_id.id, context=ctx_avg)
                     move_currency_id = move.company_id.currency_id.id
                     context['currency_id'] = move_currency_id
@@ -462,24 +462,25 @@ class stock_picking(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
-                sp_type = False
-                inv_type = False # by default action_invoice_create make an 'out_invoice'
-                if sp.type == 'in' or sp.type == 'internal':
-                    sp_type = 'purchase'
-                    inv_type = 'in_invoice'
-                elif sp.type == 'out':
-                    sp_type = 'sale'
-                    inv_type = 'out_invoice'
-                # Journal type
-                journal_type = sp_type
-                # Disturb journal for invoice only on intermission partner type
-                if sp.partner_id.partner_type == 'intermission':
-                    journal_type = 'intermission'
-                journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
-                if not journal_ids:
-                    raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
-                # Create invoice
-                self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
+                if sp.subtype == 'standard':
+                    sp_type = False
+                    inv_type = False # by default action_invoice_create make an 'out_invoice'
+                    if sp.type == 'in' or sp.type == 'internal':
+                        sp_type = 'purchase'
+                        inv_type = 'in_invoice'
+                    elif sp.type == 'out':
+                        sp_type = 'sale'
+                        inv_type = 'out_invoice'
+                    # Journal type
+                    journal_type = sp_type
+                    # Disturb journal for invoice only on intermission partner type
+                    if sp.partner_id.partner_type == 'intermission':
+                        journal_type = 'intermission'
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
+                    if not journal_ids:
+                        raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
+                    # Create invoice
+                    self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
         return res
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
@@ -507,6 +508,23 @@ class stock_picking(osv.osv):
                 wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': inv_id})
         return res
+
+    def action_confirm(self, cr, uid, ids, context=None):
+        """
+            stock.picking: action confirm
+            if INCOMING picking: confirm and check availability
+        """
+        super(stock_picking, self).action_confirm(cr, uid, ids, context=context)
+        move_obj = self.pool.get('stock.move')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for pick in self.browse(cr, uid, ids):
+            if pick.move_lines and pick.type == 'in':
+                not_assigned_move = [x.id for x in pick.move_lines if x.state == 'confirmed']
+                if not_assigned_move:
+                    move_obj.action_assign(cr, uid, not_assigned_move)
+        return True
 
 stock_picking()
 
@@ -573,6 +591,8 @@ class stock_move(osv.osv):
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+        'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
+        'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
     }
     
     _defaults = {
@@ -740,7 +760,7 @@ class stock_move(osv.osv):
         complete, too_many, too_few = [], [], []
         move_product_qty = {}
         prodlot_ids = {}
-        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal')])
+        internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
         for move in self.browse(cr, uid, ids, context=context):
@@ -762,7 +782,7 @@ class stock_move(osv.osv):
                 too_many.append(move)
 
             # Average price computation
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
+            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                 product = product_obj.browse(cr, uid, move.product_id.id, context=ctx_avg)
                 move_currency_id = move.company_id.currency_id.id
                 context['currency_id'] = move_currency_id
@@ -886,6 +906,16 @@ class stock_move(osv.osv):
                 'prod_qty': move.product_qty,
             })
         return result
+
+    def in_action_confirm(self, cr, uid, ids, context=None):
+        """
+            Incoming: draft or confirmed: validate and assign
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.action_confirm(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context)
+        return True
 
 stock_move()
 

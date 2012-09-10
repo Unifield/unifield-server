@@ -123,7 +123,6 @@ class stock_mission_report(osv.osv):
             cr.commit()
         finally:
             cr.close()
-        b = time.strftime('%H-%M-%S')
 
     def update(self, cr, uid, ids=[], context=None):
         '''
@@ -178,14 +177,14 @@ class stock_mission_report(osv.osv):
             # Update the update date on report
             self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                
-        if context.get('update_full_report'):
-            full_view = self.search(cr, uid, [('full_view', '=', True)])
-            if full_view:
-                line_ids = line_obj.search(cr, uid, [('mission_report_id', 'in', full_view)])
-                line_obj.update_full_view_line(cr, uid, line_ids, context=context)
-        else:
-            # Update all lines
-            self.update_lines(cr, uid, [report.id])
+            if context.get('update_full_report'):
+                full_view = self.search(cr, uid, [('full_view', '=', True)])
+                if full_view:
+                    line_ids = line_obj.search(cr, uid, [('mission_report_id', 'in', full_view)])
+                    line_obj.update_full_view_line(cr, uid, line_ids, context=context)
+            elif not report.full_view:
+                # Update all lines
+                self.update_lines(cr, uid, [report.id])
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
@@ -301,7 +300,9 @@ class stock_mission_report(osv.osv):
                         vals['secondary_qty'] = vals['secondary_qty'] + qty
                     if move[5] in cu_loc:
                         vals['cu_qty'] = vals['cu_qty'] + qty
-                        
+
+                    vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
+                    
                     line_obj.write(cr, uid, line.id, vals)
                 
         return True
@@ -351,6 +352,20 @@ class stock_mission_report_line(osv.osv):
     
     def _get_template(self, cr, uid, ids, context=None):
         return self.pool.get('stock.mission.report.line').search(cr, uid, [('product_id.product_tmpl_id', 'in', ids)], context=context)
+
+    def _get_wh_qty(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.stock_qty + line.central_qty
+
+        return res
+
+    def _get_internal_val(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.internal_qty * line.cost_price
+
+        return res
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True),
@@ -384,29 +399,31 @@ class stock_mission_report_line(osv.osv):
         'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-        'product_amc': fields.float(digits=(16, 2), string='AMC'),
-        'reviewed_consumption': fields.float(digits=(16, 2), string='FMC'),
+        'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
+        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                 store={'product.template': (_get_template, ['type'], 10)}),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
-        'internal_qty': fields.float(digits=(16, 2), string='Internal Qty.'),
-        'internal_val': fields.float(digits=(16, 2), string='Internal Val.'),
-        'stock_qty': fields.float(digits=(16, 2), string='Stock Qty.'),
-        'stock_val': fields.float(digits=(16, 2), string='Stock Val.'),
-        'central_qty': fields.float(digits=(16, 2), string='Central Stock Qty.'),
-        'central_val': fields.float(digits=(16, 2), string='Central Stock Val.'),
-        'cross_qty': fields.float(digits=(16, 3), string='Cross-docking Qty.'),
-        'cross_val': fields.float(digits=(16, 3), string='Cross-docking Val.'),
-        'secondary_qty': fields.float(digits=(16, 2), string='Secondary Stock Qty.'),
-        'secondary_val': fields.float(digits=(16, 2), string='Secondary Stock Val.'),
-        'cu_qty': fields.float(digits=(16, 2), string='Internal Cons. Unit Qty.'),
-        'cu_val': fields.float(digits=(16, 2), string='Internal Cons. Unit Val.'),
-        'in_pipe_qty': fields.float(digits=(16, 2), string='In Pipe Qty.'),
-        'in_pipe_val': fields.float(digits=(16, 2), string='In Pipe Val.'),
-        'in_pipe_coor_qty': fields.float(digits=(16, 2), string='In Pipe from Coord.'),
-        'in_pipe_coor_val': fields.float(digits=(16, 2), string='In Pipe from Coord.'),
+        'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
+        'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
+        #'internal_val': fields.float(digits=(16,2), string='Instance Stock Val.'),
+        'stock_qty': fields.float(digits=(16,2), string='Stock Qty.'),
+        'stock_val': fields.float(digits=(16,2), string='Stock Val.'),
+        'central_qty': fields.float(digits=(16,2), string='Unallocated Stock Qty.'),
+        'central_val': fields.float(digits=(16,2), string='Unallocated Stock Val.'),
+        'wh_qty': fields.function(_get_wh_qty, method=True, type='float', string='Warehouse stock', store=False),
+        'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
+        'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
+        'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.'),
+        'secondary_val': fields.float(digits=(16,2), string='Secondary Stock Val.'),
+        'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.'),
+        'cu_val': fields.float(digits=(16,2), string='Internal Cons. Unit Val.'),
+        'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.'),
+        'in_pipe_val': fields.float(digits=(16,2), string='In Pipe Val.'),
+        'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.'),
+        'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.'),
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
         'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Noves'),
@@ -426,11 +443,18 @@ class stock_mission_report_line(osv.osv):
                             sum(l.secondary_qty) AS secondary_qty,
                             sum(l.cu_qty) AS cu_qty,
                             sum(l.in_pipe_qty) AS in_pipe_qty,
-                            sum(l.in_pipe_coor_qty) AS in_pipe_coor_qty
+                            sum(l.in_pipe_coor_qty) AS in_pipe_coor_qty,
+                            sum(l.internal_qty)*t.standard_price AS internal_val
                      FROM stock_mission_report_line l
                        LEFT JOIN 
                           stock_mission_report m 
                        ON l.mission_report_id = m.id
+                       LEFT JOIN
+                          product_product p 
+                       ON l.product_id = p.id
+                       LEFT JOIN
+                          product_template t
+                       ON p.product_tmpl_id = t.id
                      WHERE m.full_view = False 
                        AND (l.internal_qty != 0.00
                        OR l.stock_qty != 0.00
@@ -440,7 +464,7 @@ class stock_mission_report_line(osv.osv):
                        OR l.cu_qty != 0.00
                        OR l.in_pipe_qty != 0.00
                        OR l.in_pipe_coor_qty != 0.00)
-                     GROUP BY l.product_id'''
+                     GROUP BY l.product_id, t.standard_price'''
 
         cr.execute(request)
 
@@ -461,6 +485,7 @@ class stock_mission_report_line(osv.osv):
                 in_pipe = (line[7] or 0.00) - (line[8] or 0.00)
 
             self.write(cr, uid, [line_id], {'internal_qty': line[1] or 0.00,
+                                            'internal_val': line[9] or 0.00,
                                             'stock_qty': line[2] or 0.00,
                                             'central_qty': line[3] or 0.00,
                                             'cross_qty': line[4] or 0.00,
