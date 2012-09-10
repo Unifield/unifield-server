@@ -124,8 +124,6 @@ class stock_mission_report(osv.osv):
         finally:
             cr.close()
         b = time.strftime('%H-%M-%S')
-        print a
-        print b 
 
     def update(self, cr, uid, ids=[], context=None):
         '''
@@ -166,16 +164,16 @@ class stock_mission_report(osv.osv):
 
         # Check in each report if new products are in the database and not in the report
         for report in self.browse(cr, uid, report_ids, context=context):
-            # Don't update lines for full view or non local reports
-            if not report.local_report:
-                continue
-
             # Create one line by product
             cr.execute('''SELECT id FROM product_product
                         EXCEPT
                           SELECT product_id FROM stock_mission_report_line WHERE mission_report_id = %s''' % report.id)
             for product in cr.fetchall():
                 line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report.id}, context=context))
+            
+            # Don't update lines for full view or non local reports
+            if not report.local_report:
+                continue
         
             # Update the update date on report
             self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -415,71 +413,61 @@ class stock_mission_report_line(osv.osv):
     }
 
     def update_full_view_line(self, cr, uid, ids, context=None):
-        for line in self.browse(cr, uid, ids, context=context):
-            line_ids = self.search(cr, uid, [('mission_report_id', '!=', line.mission_report_id.id), ('product_id', '=', line.product_id.id)], context=context)
-            lines = self.browse(cr, uid, line_ids, context=context)
-    
-            internal_qty = 0.00
-            internal_val = 0.00
-            stock_qty = 0.00
-            stock_val = 0.00
-            central_qty = 0.00
-            central_val = 0.00
-            cross_qty = 0.00
-            cross_val = 0.00
-            secondary_qty = 0.00
-            secondary_val = 0.00
-            cu_qty = 0.00
-            cu_val = 0.00
-            in_pipe_qty = 0.00
-            in_pipe_val = 0.00
-            in_pipe_not_coor_qty = 0.00
-            in_pipe_not_coor_val = 0.00
+        is_project = False
+        if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
+            is_project = True
 
-            is_project = False
-            if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
-                is_project = True
-    
-            for l in lines:
-                internal_qty += l.internal_qty
-                internal_val += l.internal_val
-                stock_qty += l.stock_qty
-                stock_val += l.stock_val
-                central_qty += l.central_qty
-                central_val += l.central_val
-                cross_qty += l.cross_qty
-                cross_val += l.cross_val
-                secondary_qty += l.secondary_qty
-                secondary_val += l.secondary_val
-                cu_qty += l.cu_qty
-                cu_val += l.cu_val
-                in_pipe_qty += l.in_pipe_qty
-                in_pipe_val += l.in_pipe_val
-                in_pipe_not_coor_qty += l.in_pipe_coor_qty
-                in_pipe_not_coor_val += l.in_pipe_coor_qty
 
+        request = '''SELECT l.product_id AS product_id,
+                            sum(l.internal_qty) AS internal_qty,
+                            sum(l.stock_qty) AS stock_qty,
+                            sum(l.central_qty) AS central_qty,
+                            sum(l.cross_qty) AS cross_qty,
+                            sum(l.secondary_qty) AS secondary_qty,
+                            sum(l.cu_qty) AS cu_qty,
+                            sum(l.in_pipe_qty) AS in_pipe_qty,
+                            sum(l.in_pipe_coor_qty) AS in_pipe_coor_qty
+                     FROM stock_mission_report_line l
+                       LEFT JOIN 
+                          stock_mission_report m 
+                       ON l.mission_report_id = m.id
+                     WHERE m.full_view = False 
+                       AND (l.internal_qty != 0.00
+                       OR l.stock_qty != 0.00
+                       OR l.central_qty != 0.00
+                       OR l.cross_qty != 0.00
+                       OR l.secondary_qty != 0.00
+                       OR l.cu_qty != 0.00
+                       OR l.in_pipe_qty != 0.00
+                       OR l.in_pipe_coor_qty != 0.00)
+                     GROUP BY l.product_id'''
+
+        cr.execute(request)
+
+        vals = cr.fetchall()
+        mission_report_id = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', True)], context=context)
+        for line in vals:
+            line_ids = self.search(cr, uid, [('mission_report_id.full_view', '=', True), ('product_id', '=', line[0])], context=context)
+            if not line_ids:
+                if not mission_report_id:
+                    continue
+                line_id = self.create(cr, uid, {'mission_report_id': mission_report_id[0],
+                                                'product_id': line[0]}, context=context)
+            else:
+                line_id = line_ids[0]
+            
+            in_pipe = line[7] or 0.00
             if not is_project:
-                in_pipe_qty = in_pipe_qty - in_pipe_not_coor_qty
-                in_pipe_val = in_pipe_val - in_pipe_not_coor_val
+                in_pipe = (line[7] or 0.00) - (line[8] or 0.00)
 
-            self.write(cr, uid, [line.id], {'product_amc': line.product_id.product_amc,
-                                            'reviewed_consumption': line.product_id.reviewed_consumption,
-                                            'internal_qty': internal_qty,
-                                            'internal_val': internal_val,
-                                            'stock_qty': stock_qty,
-                                            'stock_val': stock_val,
-                                            'central_qty': central_qty,
-                                            'central_val': central_val,
-                                            'cross_qty': cross_qty,
-                                            'cross_val': cross_val,
-                                            'secondary_qty': secondary_qty,
-                                            'secondary_val': secondary_val,
-                                            'cu_qty': cu_qty,
-                                            'cu_val': cu_val,
-                                            'in_pipe_qty': in_pipe_qty,
-                                            'in_pipe_val': in_pipe_val,
-                                            'in_pipe_coor_qty': in_pipe_not_coor_qty,
-                                            'in_pipe_coor_val': in_pipe_not_coor_val}, context=context)
+            self.write(cr, uid, [line_id], {'internal_qty': line[1] or 0.00,
+                                            'stock_qty': line[2] or 0.00,
+                                            'central_qty': line[3] or 0.00,
+                                            'cross_qty': line[4] or 0.00,
+                                            'secondary_qty': line[5] or 0.00,
+                                            'cu_qty': line[6] or 0.00,
+                                            'in_pipe_qty': line[7] or 0.00,
+                                            'in_pipe_coor_qty': line[8] or 0.00,}, context=context)
             
         return True
     
