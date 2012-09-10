@@ -139,14 +139,13 @@ class wizard_import_invoice(osv.osv_memory):
             # Prepare some values
             total = 0.0
             amount_cur = 0
-            
+
             for line in ordered_lines[key]:
-                if line.amount_currency > 0:
+                    if line.journal_id.type in ['purchase_refund','sale_refund']:
+                        amount_cur -= line.amount_residual_import_inv
+                    else:
+                        amount_cur += line.amount_residual_import_inv
                     total += line.amount_currency
-                    amount_cur -= line.amount_residual_import_inv
-                else:
-                    total += line.amount_currency
-                    amount_cur += line.amount_residual_import_inv
             
             # Create register line
             new_lines.append({
