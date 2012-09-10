@@ -334,7 +334,7 @@ class account_bank_statement(osv.osv):
             id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, 
                 context={'journal_type': 'purchase', 'type': 'in_invoice'})
         return {
-            'name': "Supplier Invoice",
+            'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.account.invoice',
             'target': 'new',
@@ -1596,7 +1596,7 @@ class account_bank_statement_line(osv.osv):
         else:
             raise osv.except_osv(_('Error'), _("View not found."))
         return {
-            'name': "Supplier Invoice",
+            'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',
