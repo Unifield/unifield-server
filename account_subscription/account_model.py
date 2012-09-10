@@ -239,12 +239,16 @@ class account_model(osv.osv):
                     'period_id': period_id,
                 }
                 if line.account_id.user_type_code == 'expense':
-                    if not line.analytic_distribution_id:
-                        raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution on the '%s' line!") % (line.name))
+                    if line.analytic_distribution_state == 'invalid':
+                        raise osv.except_osv(_('Invalid Analytic Distribution !'),_("You have to define a valid analytic distribution on the '%s' line or header!") % (line.name))
                     if not model.journal_id.analytic_journal_id:
                         raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (model.journal_id.name,))
-                    new_distribution_id = ana_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
-                    val.update({'analytic_distribution_id': new_distribution_id})
+                    if line.analytic_distribution_id:
+                        new_distribution_id = ana_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+                        val.update({'analytic_distribution_id': new_distribution_id})
+                    elif model.analytic_distribution_id:
+                        new_distribution_id = ana_obj.copy(cr, uid, model.analytic_distribution_id.id, {}, context=context)
+                        val.update({'analytic_distribution_id': new_distribution_id})
                     
                 date_maturity = time.strftime('%Y-%m-%d')
                 if line.date_maturity == 'partner':

@@ -53,25 +53,24 @@
             </field>
         </record>
     
-        <record id="view_model_line_distrib_tree" model="ir.ui.view">
-            <field name="name">account.model.line.distrib.tree</field>
+        <record id="account.view_model_line_tree" model="ir.ui.view">
+            <field name="name">account.model.line.tree</field>
             <field name="model">account.model.line</field>
             <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_model_line_tree"/>
             <field name="arch" type="xml">
-                <data>
-                    <field name="account_id" position="replace">
-                        <field name="account_id" domain="[('type', '!=', 'view')]"/>
-                    </field>
-	                <field name="analytic_account_id" position="replace">
-	                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
-                        <field name="analytic_distribution_state_recap"/>
-                        <field name="have_analytic_distribution_from_header" invisible="1"/>
-                        <field name="analytic_distribution_state" invisible="1"/>
-                        <field name="is_allocatable" invisible="1"/>
-	                </field>
-                    <field name="date_maturity" position="replace"/>
-	            </data>
+                <tree string="Journal Entry Model Line" editable="bottom">
+                    <field name="sequence" readonly="1"/>
+                    <field name="name"/>
+                    <field name="account_id" domain="[('type', '!=', 'view')]"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                    <field name="analytic_distribution_state_recap"/>
+                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                    <field name="analytic_distribution_state" invisible="1"/>
+                    <field name="is_allocatable" invisible="1"/>
+                    <field name="partner_id"/>
+                    <field name="debit"/>
+                    <field name="credit"/>
+                </tree>
             </field>
         </record>
         
@@ -81,9 +80,27 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="account.view_subscription_form"/>
             <field name="arch" type="xml">
-                <separator string="Valid Up to" position="replace">
-                    <separator string="Frequency" colspan="4"/>
-                </separator>
+                <data>
+	                <separator string="Valid Up to" position="replace">
+	                    <separator string="Frequency" colspan="4"/>
+	                </separator>
+                </data>
+            </field>
+        </record>
+        
+
+        <record id="view_subscription_line_tree" model="ir.ui.view">
+            <field name="name">account.subscription.line.tree</field>
+            <field name="model">account.subscription.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_subscription_line_tree"/>
+            <field name="arch" type="xml">
+                <tree string="Subscription lines" position="replace">
+	                <tree string="Subscription lines" hide_new_button="1" hide_delete_button="1" noteditable="1">
+	                    <field name="date"/>
+	                    <field name="move_id"/>
+	                </tree>
+                </tree>
             </field>
         </record>
 
@@ -93,6 +110,23 @@
             domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
             res_model="account.move.line"
             src_model="account.subscription"/>
+
+        <record id="account.validate_account_move_line_view" model="ir.ui.view">
+            <field name="name">Post Journal Entries</field>
+            <field name="model">validate.account.move.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Post Journal Entries">
+                <separator string="Post Journal Entries" colspan="4"/>
+                <label string="All selected journal entries will be validated and posted. It means you won't be able to modify their accounting fields anymore." colspan="2"/>
+                <separator colspan="4"/>
+                <group colspan="4" col="6">
+                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                    <button icon="terp-camera_test" string="Approve" name="validate_move_lines" type="object" default_focus="1"/>
+               </group>
+            </form>
+            </field>
+        </record>
         
     </data>
 </openerp>
