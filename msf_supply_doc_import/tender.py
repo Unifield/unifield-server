@@ -58,25 +58,19 @@ class tender(osv.osv):
         '''
         if not context:
             context = {}
-
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         tender_line_obj = self.pool.get('tender.line')
         view_id = obj_data.get_object_reference(cr, uid, 'tender_flow', 'tender_form')[1]
-
         vals = {}
         vals['tender_line_ids'] = []
-
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-
         # iterator on rows
         rows = fileobj.getRows()
-
         # ignore the first row
         line_num = 1
         rows.next()
@@ -92,7 +86,6 @@ class tender(osv.osv):
                 'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
                 'product_qty': 1,
             }
-
             line_num += 1
             col_count = len(row)
             if col_count != 6:
@@ -142,7 +135,6 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         for var in self.browse(cr, uid, ids, context=context):
             if var.tender_line_ids:
                 for var in var.tender_line_ids:
@@ -183,8 +175,8 @@ class tender_line(osv.osv):
             uom = uom_obj.browse(cr, uid, uom_id, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
                 # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += """\n You have to select a product UOM in the same category than the UOM of the product.
-                The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
+                text_error += """The product UOM must be in the same category than the UOM of the product.
+The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
                 """ % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
@@ -207,10 +199,8 @@ class tender_line(osv.osv):
         if product_uom and product_id:
             product_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
-
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
-
             if product.uom_id.category_id.id != uom.category_id.id:
                 warning = {'title': 'Wrong Product UOM !',
                            'message': "You have to select a product UOM in the same category than the purchase UOM of the product"}
@@ -226,7 +216,6 @@ class tender_line(osv.osv):
             tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
             tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
             message = ''
-
             if vals.get('product_uom'):
                 if vals.get('product_uom') == tbd_uom:
                     message += 'You have to define a valid UOM, i.e. not "To be define".'
@@ -244,7 +233,6 @@ class tender_line(osv.osv):
             else:
                 vals['to_correct_ok'] = False
                 vals['text_error'] = False
-
         return super(tender_line, self).write(cr, uid, ids, vals, context=context)
 
 tender_line()

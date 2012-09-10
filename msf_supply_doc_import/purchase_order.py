@@ -162,7 +162,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 # Cell 0: Product Code
                 p_value = {}
-                p_value = product_value(cr, uid, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
