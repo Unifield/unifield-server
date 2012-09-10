@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
+#    Copyright (C) 2012 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -460,7 +460,7 @@ class stock_picking(osv.osv):
         # calling super method
         defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
         # location_id is equivalent to the source location: does it exist when we go through the "_do_partial_hook" in the msf_cross_docking> stock_partial_piking> "do_partial_hook"
-        location_id = partial_datas.get('move%s'%(move.id), False).get('location_id')
+        location_id = partial_datas.get('move%s'%(move.id), {}).get('location_id')
         if location_id:
             defaults.update({'location_id': location_id})
         

@@ -273,5 +273,5 @@
     ids = po_obj.search(cr, uid, [('origin', '=', so.name + '/' + tender.name),('id', '=', po_id)])
     assert ids, 'The origin of the generated purchase order is not correct'
     po = po_obj.browse(cr, uid, ids[0])
-    assert po.state in ('approved', 'confirmed',), 'the state of purchase order is wrong. %s-approved'%po.state # state depends on the installation or not of double validation module for purchase order
+    assert po.state == 'draft', 'the state of purchase order is wrong. %s-draft'%po.state # state depends on the installation or not of double validation module for purchase order
     

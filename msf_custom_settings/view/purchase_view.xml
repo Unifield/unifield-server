@@ -108,6 +108,5 @@
         </record>
         
         <!-- Here, there was a view to remove the 'Delete' button on purchase order tree view -->
-        
     </data>
 </openerp>

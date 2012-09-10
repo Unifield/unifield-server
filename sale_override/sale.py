@@ -123,9 +123,11 @@ class sale_order(osv.osv):
                 res[sale.id] = 100.0
                 continue
             tot = 0.0
-            for invoice in sale.invoice_ids:
-                if invoice.state not in ('draft', 'cancel'):
-                    tot += invoice.amount_untaxed
+            for line in sale.order_line:
+                if line.invoiced:
+                    for invoice_line in line.invoice_lines:
+                        if invoice_line.invoice_id.state not in ('draft', 'cancel'):
+                            tot += invoice_line.price_subtotal
             if tot:
                 res[sale.id] = min(100.0, tot * 100.0 / (sale.amount_untaxed or 1.00))
             else:
@@ -969,9 +971,15 @@ class sale_order_line(osv.osv):
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
         if product:
-            res.update({'value':{'type': 'make_to_stock'}})
+            if 'value' in res:
+                res['value'].update({'type': 'make_to_stock'})
+            else:
+                res.update({'value':{'type': 'make_to_stock'}})
         elif not product:
-            res.update({'value':{'type': 'make_to_order'}})
+            if 'value' in res:
+                res['value'].update({'type': 'make_to_order'})
+            else:
+                res.update({'value':{'type': 'make_to_order'}})
         return res
 
     def default_get(self, cr, uid, fields, context=None):

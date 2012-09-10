@@ -94,7 +94,7 @@
                                         attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_manda_2"
-										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+										domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '!=', False)]"
 										widget="selection"
                                         get_selection="get_nomen"
                                         on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
@@ -264,7 +264,7 @@
                                         attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_manda_2"
-										domain="[('level', '=', '2'), ('type', '=', 'mandatory')]"
+										domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '!=', False)]"
 										widget="selection"
                                         get_selection="get_nomen"
                                         on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"

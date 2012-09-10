@@ -159,6 +159,7 @@ class purchase_order(osv.osv):
         'partner_ref': fields.char('Supplier Reference', size=64),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
+        'active': fields.boolean('Active', readonly=True),
     }
     
     _defaults = {
@@ -171,6 +172,7 @@ class purchase_order(osv.osv):
         'invoice_method': lambda *a: 'picking',
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery'],
         'no_line': lambda *a: True,
+        'active': True,
     }
 
     def default_get(self, cr, uid, fields, context=None):
