@@ -111,6 +111,25 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def get_hq(self, cr, uid, parent, context=None):
+        if parent:
+            check = self.get_hq(cr, uid, parent.parent_id)
+            return check and check or parent.code
+        return False
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(tender, self).default_get(cr, uid, fields, context=context)
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        instance_code = company and company.instance_id and company.instance_id.code or ''
+        hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+        yy = time.strftime('%y',time.localtime())
+        order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+res.get('name','')
+        res.update({'name': order_ref})
+        return res
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''

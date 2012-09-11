@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+import time
 
 class sale_order_followup_test(osv.osv_memory):
     _name = 'sale.order.followup.test'
@@ -804,6 +805,18 @@ class request_for_quotation(osv.osv):
                 'view_mode': 'form',
                 'view_id': [view_id],
                 'res_id': ids[0],}
+
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(request_for_quotation, self).default_get(cr, uid, fields, context=context)
+        if res.get('rfq_ok',False):
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+res.get('name','')
+            res.update({'name': order_ref})
+        return res
     
 request_for_quotation()
 

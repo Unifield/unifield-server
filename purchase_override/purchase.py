@@ -26,7 +26,7 @@ import netsvc
 from mx.DateTime import *
 import time
 from osv.orm import browse_record, browse_null
-
+import traceback
 from workflow.wkf_expr import _eval_expr
 import logging
 
@@ -133,7 +133,7 @@ class purchase_order(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'date_order':fields.date(string='Creation Date', readonly=True, required=True,
                             states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
-        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
+        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'draft':[('readonly',True)], 'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'confirmed': [('readonly',False)]}),
@@ -175,18 +175,33 @@ class purchase_order(osv.osv):
         'active': True,
     }
 
+    def get_hq(self, cr, uid, parent, context=None):
+        if parent:
+            check = self.get_hq(cr, uid, parent.parent_id)
+            return check and check or parent.code
+        return False
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+
+        if not res.get('rfq_ok',False):
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            instance_code = company and company.instance_id and company.instance_id.code or ''
+            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+res.get('name','')
+            res.update({'name': order_ref})
+
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
         if setup.allocation_setup == 'unallocated':
             res.update({'unallocation_ok': True})
 
         return res
+
 
     def _check_user_company(self, cr, uid, company_id, context=None):
         '''
