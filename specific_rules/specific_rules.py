@@ -1265,9 +1265,9 @@ class stock_inventory(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
                 if line.hidden_perishable_mandatory and not line.expiry_date:
-                    raise osv.except_osv(_('Error'), _('The product %s is perishable and the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
+                    raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
-                    raise osv.except_osv(_('Error'), _('The product %s is batch mandatory and the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
+                    raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
