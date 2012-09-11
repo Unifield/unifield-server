@@ -19,6 +19,9 @@
 #
 ##############################################################################
 
+# max number of lines to import per file
+MAX_LINES_NB = 300
+
 import tender
 import purchase_order
 import sale_order

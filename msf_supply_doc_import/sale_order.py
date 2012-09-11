@@ -28,6 +28,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
+from msf_supply_doc_import import MAX_LINES_NB
 
 
 class sale_order(osv.osv):
@@ -55,9 +56,9 @@ class sale_order(osv.osv):
         'file_to_import': fields.binary(string='File to import',
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format.
-                                                * You can import up to 300 lines each time,
+                                                * You can import up to %s lines each time,
                                                 else you have to split the lines in several files and import each one by one.
-                                                """),
+                                                """ % MAX_LINES_NB),
     }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -100,10 +101,11 @@ class sale_order(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-
+        # check that the max number of lines is not excedeed
+        if nb_of_lines(fileobj=fileobj):
+            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
         # iterator on rows
         rows = fileobj.getRows()
-
         # ignore the first row
         rows.next()
         line_num = 0
@@ -212,10 +214,11 @@ That means Not price, Neither Delivery requested date. """))
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-
+        # check that the max number of lines is not excedeed
+        if nb_of_lines(fileobj=fileobj):
+            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
         # iterator on rows
         rows = fileobj.getRows()
-
         # ignore the first row
         rows.next()
         line_num = 0

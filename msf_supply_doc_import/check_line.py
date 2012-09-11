@@ -22,6 +22,21 @@
 """
 This module is dedicated to help checking lines of Excel file at importation.
 """
+from msf_supply_doc_import import MAX_LINES_NB
+
+
+def nb_of_lines(**kwargs):
+    """
+    Compute number of lines in the xml file to import.
+    """
+    fileobj = kwargs['fileobj']
+    rows = fileobj.getRows()
+    i = 0
+    for x in rows.__iter__():
+        i = i + 1
+        if i > MAX_LINES_NB + 1:
+            return True
+    return False
 
 
 def check_empty_line(**kwargs):
