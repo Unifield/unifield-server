@@ -123,12 +123,12 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and not split.corresponding_so_id_split_po_line_wizard.procurement_request:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
                     so_copy_data = {'line_number': split.corresponding_so_line_id_split_po_line_wizard.line_number, # the Fo is not draft anyway, following sequencing policy, split Fo line maintains original one
-                                 'po_cft': 'po',
-                                 'product_uom_qty': split.new_line_qty,
-                                 'product_uos_qty': split.new_line_qty,
-                                 'so_back_update_dest_po_id_sale_order_line': split.purchase_line_id.order_id.id,
-                                 'so_back_update_dest_pol_id_sale_order_line': split.purchase_line_id.id,
-                                 }
+                                    'po_cft': 'po',
+                                    'product_uom_qty': split.new_line_qty,
+                                    'product_uos_qty': split.new_line_qty,
+                                    'so_back_update_dest_po_id_sale_order_line': split.purchase_line_id.order_id.id,
+                                    'so_back_update_dest_pol_id_sale_order_line': split.purchase_line_id.id,
+                                    }
                     new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, so_copy_data, context=dict(context, keepDateAndDistrib=True))
                     # call the new procurement creation method
                     so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)

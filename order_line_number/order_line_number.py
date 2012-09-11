@@ -29,6 +29,7 @@ import netsvc
 import pooler
 import time
 
+
 class sale_order(osv.osv):
     
     _inherit = 'sale.order'
@@ -93,33 +94,46 @@ class sale_order(osv.osv):
 
 sale_order()
 
+
 class sale_order_line(osv.osv):
     '''
     override of sale_order_line class
     '''
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
-    _columns = {
-                'line_number': fields.integer(string='Line', required=True),
+    _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
     _order = 'line_number, id'
     
     def create(self, cr, uid, vals, context=None):
         '''
         _inherit = 'sale.order.line'
-        
         add the corresponding line number
         '''
-        # gather the line number from the sale order sequence
-        order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
-        sequence = order.sequence_id
-        line = sequence.get_id(test='id', context=context)
-        vals.update({'line_number': line})
+        # gather the line number from the sale order sequence if not specified in vals
+        # either line_number is not specified or set to False from copy, we need a new value
+        if not vals.get('line_number', False):
+            order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
+            sequence = order.sequence_id
+            line = sequence.get_id(test='id', context=context)
+            vals.update({'line_number': line})
         
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
         
         return result
+    
+    def copy(self, cr, uid, id, defaults=None, context=None):
+        '''
+        if the line_number is not in the defaults, we set it to False
+        '''
+        if defaults is None:
+            defaults = {}
+        
+        # we set line_number, so it will not be copied in copy_data
+        if 'line_number' not in defaults:
+            defaults.update({'line_number': False})
+        return super(sale_order_line, self).copy(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -229,28 +243,44 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Line'
-    _columns = {
-                'line_number': fields.integer(string='Line', required=True),
+    _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
     _order = 'line_number, id'
 
     def create(self, cr, uid, vals, context=None):
         '''
         _inherit = 'purchase.order.line'
-        
         add the corresponding line number
         '''
+        # I leave this line from QT related to purchase.order.merged.line for compatibility and safety reasons
+        # merged lines, set the line_number to 0 when calling create function
+        # the following line should *logically* be removed safely
+        # copy method should work as well, as merged line do *not* need to keep original line number with copy function (QT confirmed)
         if self._name != 'purchase.order.merged.line':
-            # gather the line number from the sale order sequence
-            order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
-            sequence = order.sequence_id
-            line = sequence.get_id(test='id', context=context)
-            vals.update({'line_number': line})
+            # gather the line number from the sale order sequence if not specified in vals
+            # either line_number is not specified or set to False from copy, we need a new value
+            if not vals.get('line_number', False):
+                order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
+                sequence = order.sequence_id
+                line = sequence.get_id(test='id', context=context)
+                vals.update({'line_number': line})
         
         # create the new sale order line
         result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         
         return result
+    
+    def copy(self, cr, uid, id, defaults=None, context=None):
+        '''
+        if the line_number is not in the defaults, we set it to False
+        '''
+        if defaults is None:
+            defaults = {}
+        
+        # we set line_number, so it will not be copied in copy_data
+        if 'line_number' not in defaults:
+            defaults.update({'line_number': False})
+        return super(purchase_order_line, self).copy(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -341,3 +371,4 @@ class ir_sequence(osv.osv):
         return super(ir_sequence, self).get_id(cr, uid, sequence_id, test, context=context)
         
 ir_sequence()
+
