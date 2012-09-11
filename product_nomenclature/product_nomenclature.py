@@ -795,7 +795,8 @@ class product_category(osv.osv):
                     break
             if not has_required:
                 logging.getLogger('init').info('Loading default values for product.category')
-                vals.update({'family_id': self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 2), ('type', '=', 'mandatory'), ('category_id', '=', False)], limit=1)[0]})
+                temp = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 2), ('type', '=', 'mandatory'), ('category_id', '=', False)], limit=1)
+                vals.update({'family_id': temp and temp[0] or None})
 
         return super(product_category, self).create(cr, uid, vals, context)
 
