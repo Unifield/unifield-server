@@ -205,21 +205,22 @@ class real_average_consumption(osv.osv):
             
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
             for line in rac.line_ids:
-                move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
-                                                    'picking_id': picking_id,
-                                                    'product_uom': line.uom_id.id,
-                                                    'product_id': line.product_id.id,
-                                                    'date_expected': date,
-                                                    'date': date,
-                                                    'product_qty': line.consumed_qty,
-                                                    'prodlot_id': line.prodlot_id.id,
-                                                    'expiry_date': line.expiry_date,
-                                                    'location_id': rac.cons_location_id.id,
-                                                    'location_dest_id': rac.activity_id.id,
-                                                    'state': 'done',
-                                                    'reason_type_id': reason_type_id})
-                move_ids.append(move_id)
-                line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                if line.consumed_qty != 0.00:
+                    move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
+                                                        'picking_id': picking_id,
+                                                        'product_uom': line.uom_id.id,
+                                                        'product_id': line.product_id.id,
+                                                        'date_expected': date,
+                                                        'date': date,
+                                                        'product_qty': line.consumed_qty,
+                                                        'prodlot_id': line.prodlot_id.id,
+                                                        'expiry_date': line.expiry_date,
+                                                        'location_id': rac.cons_location_id.id,
+                                                        'location_dest_id': rac.activity_id.id,
+                                                        'state': 'done',
+                                                       'reason_type_id': reason_type_id})
+                    move_ids.append(move_id)
+                    line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
             self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
 
