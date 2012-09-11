@@ -55,11 +55,11 @@ class stock_move(osv.osv):
         seq_pool = self.pool.get('ir.sequence')
 
         # line number correspondance to be checked with Magali
-        if vals.get('picking_id'):
-            if vals.get('purchase_line_id') and False:
+        if vals.get('picking_id', False):
+            if vals.get('purchase_line_id', False):
                 # from purchase order line
                 line = pol_obj.read(cr, uid, [vals.get('purchase_line_id')], ['line_number'], context=context)[0]['line_number']
-            elif vals.get('sale_line_id') and False:
+            elif vals.get('sale_line_id', False):
                 # from sale order line
                 line = sol_obj.read(cr, uid, [vals.get('sale_line_id')], ['line_number'], context=context)[0]['line_number']
             else:
