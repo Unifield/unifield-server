@@ -74,7 +74,7 @@ class tender(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
         # check that the max number of lines is not excedeed
-        if nb_of_lines(fileobj=fileobj):
+        if check_nb_of_lines(fileobj=fileobj):
             raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
         # iterator on rows
         rows = fileobj.getRows()
