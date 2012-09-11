@@ -29,7 +29,7 @@ class HeaderTempEditor(openobject.templating.TemplateEditor):
             <script type="text/javascript">
                 jQuery(document).ready(function() {
                     UpdateDiv();
-                    setInterval ( "UpdateDiv()", 6000 ); //every 6 seconds function will call
+                    setInterval ( "UpdateDiv()", 16000 ); //every 16 seconds function will call
                 });
                 function UpdateDiv()
                 {
