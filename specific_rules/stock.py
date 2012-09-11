@@ -65,11 +65,15 @@ class initial_stock_inventory(osv.osv):
         
         product_dict = {}
         prodlot_obj = self.pool.get('stock.production.lot')
+        product_obj = self.pool.get('product.proudct')
         
         for inventory in self.browse(cr, uid, ids, context=context):
+            # Prevent confirmation with no lines
             if len(inventory.inventory_line_id) == 0:
                 raise osv.except_osv(_('Error'), _('Please enter at least one line in stock inventory before confirm it.'))
+
             for inventory_line in inventory.inventory_line_id:
+                # Check if there is two lines with the same product and with difference average cost
                 if inventory_line.product_id.id not in product_dict:
                     product_dict.update({inventory_line.product_id.id: inventory_line.average_cost})
                 elif product_dict[inventory_line.product_id.id] != inventory_line.average_cost:
@@ -77,9 +81,9 @@ class initial_stock_inventory(osv.osv):
                 
                 # Returns error if the line is batch mandatory or perishable without prodlot
                 if inventory_line.product_id.batch_management and not inventory_line.prodlot_name:
-                    raise osv.except_osv(_('Error'), _('You must assign a Batch Number.'))
+                    raise osv.except_osv(_('Error'), _('You must assign a Batch Number on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id])[0][1])
                 elif inventory_line.product_id.perishable and not inventory_line.expiry_date:
-                    raise osv.except_osv(_('Error'), _('You must assign an Expiry Date.'))
+                    raise osv.except_osv(_('Error'), _('You must assign an Expiry Date on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id)[0][1])
                         
                 if inventory_line.product_id.batch_management:
                     # if no production lot, we create a new one
@@ -87,6 +91,7 @@ class initial_stock_inventory(osv.osv):
                                                                ('type', '=', 'standard'),
                                                                ('product_id', '=', inventory_line.product_id.id)], context=context)
                     if prodlot_ids:
+                        # Prevent creation of two batch with the same name/product but different expiry date
                         prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0])
                         if prodlot.life_date != inventory_line.expiry_date:
                             life_date = self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=prodlot.life_date)
@@ -117,6 +122,7 @@ class initial_stock_inventory(osv.osv):
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
         for inv in self.browse(cr, uid, ids, context=context):
+            # Set the cost price on product form with the new value, and process the stock move
             for move in inv.move_ids:
                 new_std_price = move.price_unit
                 prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
@@ -182,7 +188,7 @@ class initial_stock_inventory(osv.osv):
                     date_mandatory = product.perishable
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
-                              'product_qty': product.qty_available,
+                              'product_qty': 0.00,
                               'average_cost': product.standard_price,
                               'hidden_batch_management_mandatory': batch_mandatory,
                               'hidden_perishable_mandatory': date_mandatory,
@@ -322,7 +328,8 @@ class initial_stock_inventory_line(osv.osv):
                           'hidden_batch_management_mandatory': product.batch_management})
             if change_price:
                 value.update({'average_cost': product.standard_price,})
-            
+
+            # Don't recompute the product qty according to batch because no selection of batch
 #            if location_id:
 #                value.update({'product_qty': product.qty_available})
             
@@ -411,10 +418,12 @@ class stock_cost_reevaluation(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        # Check if there are two lines with the same product
         for obj in self.browse(cr, uid, ids, context=context):
+            # Prevent confirmation without lines
             if len(obj.reevaluation_line_ids) == 0:
                 raise osv.except_osv(_('Error'), _('Please enter at least one revaluation line before confirm it.'))
+        
+            # Check if there are two lines with the same product
             products = []
             for line in obj.reevaluation_line_ids:
                 if line.product_id.id not in products:

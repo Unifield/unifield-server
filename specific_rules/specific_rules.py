@@ -1248,7 +1248,6 @@ class stock_inventory(osv.osv):
                     line_obj.create(cr, uid, {'inventory_id': inv.id,
                                               'product_id': product.id,
                                               'reason_type_id': discrepancy_id,
-                                              'safety_stock': 0.00,
                                               'product_uom': product.uom_id.id}, context=context)
         
         return True
@@ -1492,6 +1491,7 @@ class stock_inventory_line(osv.osv):
                 result[obj.id]['exp_check'] = True
 
             # has a problem
+            # Line will be displayed in red if it's not correct
             result[obj.id]['has_problem'] = False
             if not obj.location_id \
                or not self._check_perishable(cr, uid, [obj.id]) \
@@ -1533,6 +1533,8 @@ class stock_inventory_line(osv.osv):
     _columns = {
         'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
         'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        # Remove the 'required' attribute on location_id to allow the possiblity to fill lines with list or nomenclature
+        # The required attribute is True on the XML view
         'location_id': fields.many2one('stock.location', 'Location'),
         'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
         'expiry_date': fields.date(string='Expiry Date'),

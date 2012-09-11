@@ -436,6 +436,7 @@
            	</field>
         </record>
 
+        <!-- Add product filters on Physical inventories to fill lines with list or nomenclature level -->
         <record id="stock_inventory_form" model="ir.ui.view">
             <field name="name">stock.inventory.form</field>
             <field name="model">stock.inventory</field>
@@ -478,18 +479,11 @@
             <field name="inherit_id" ref="stock.stock_inventory_line_tree" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name="colors">'red': has_problem == True</attribute>
-                    </xpath>
 	                <xpath expr="/tree/field[@name='product_uom']" position="after">
 	                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
 	                    <field name="comment" />
                     </xpath>
 
-                    <field name="location_id" position="attributes">
-                        <attribute name="required">True</attribute>
-                    </field>
-	                    
 	           		<field name="prod_lot_id" position="replace">
 	           			<field name="prod_lot_id"
 	                       	on_change="change_lot(prod_lot_id)"
