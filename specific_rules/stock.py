@@ -83,7 +83,7 @@ class initial_stock_inventory(osv.osv):
                 if inventory_line.product_id.batch_management and not inventory_line.prodlot_name:
                     raise osv.except_osv(_('Error'), _('You must assign a Batch Number on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id])[0][1])
                 elif inventory_line.product_id.perishable and not inventory_line.expiry_date:
-                    raise osv.except_osv(_('Error'), _('You must assign an Expiry Date on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id)[0][1])
+                    raise osv.except_osv(_('Error'), _('You must assign an Expiry Date on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id])[0][1])
                         
                 if inventory_line.product_id.batch_management:
                     # if no production lot, we create a new one
