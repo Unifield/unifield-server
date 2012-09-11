@@ -261,7 +261,7 @@ class sale_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.from_yml_test:
                 res[line.id] = 'valid'
-            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
+            elif line.order_id and ( not line.order_id.analytic_distribution_id or not line.order_id.analytic_distribution_id.cost_center_lines ) and ( not line.analytic_distribution_id or not line.analytic_distribution_id.cost_center_lines ) :
                 res[line.id] = 'none'
             else:
                 so_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
