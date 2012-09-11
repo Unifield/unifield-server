@@ -113,7 +113,6 @@ class so_po_common(osv.osv_memory):
         header_result['partner_address_id'] = address_id
         header_result['pricelist_id'] = price_list
         header_result['location_id'] = location_id
-        header_result['split_po'] = True
         
         return header_result
 
@@ -158,7 +157,7 @@ class so_po_common(osv.osv_memory):
         
         return header_result
     
-    def get_lines(self, cr, uid, line_values, po_id, context):
+    def get_lines(self, cr, uid, line_values, po_id, so_id, context):
         line_result = []
         
         line_vals_dict = line_values.to_dict()
@@ -196,12 +195,9 @@ class so_po_common(osv.osv_memory):
             if 'date_planned' in line_dict:
                 values['date_planned'] = line.date_planned 
 
-            if 'sync_pol_db_id' in line_dict:
-                values['sync_pol_db_id'] = line.sync_pol_db_id 
+            if 'sync_order_line_db_id' in line_dict:
+                values['sync_order_line_db_id'] = line.sync_order_line_db_id 
 
-            if 'sync_sol_db_id' in line_dict:
-                values['sync_sol_db_id'] = line.sync_sol_db_id 
-            
             if 'confirmed_delivery_date' in line_dict:
                 values['confirmed_delivery_date'] = line.confirmed_delivery_date
                  
@@ -245,13 +241,25 @@ class so_po_common(osv.osv_memory):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
                     
             if po_id: # this case is for update the PO
-                if 'sync_pol_db_id' not in line_dict:
-                    raise Exception, "The field sync_sol_db_id is missing - please check at the message rule!"
+                if 'sync_order_line_db_id' not in line_dict:
+                    raise Exception, "The field sync_order_line_db_id is missing - please check at the message rule!"
                 else:
-                    sync_pol_db_id = line.sync_pol_db_id
+                    sync_order_line_db_id = line.sync_order_line_db_id
                 
                 # look for the correct PO line for updating the value - corresponding to the SO line
-                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_pol_db_id', '=', sync_pol_db_id), ('order_id', '=', po_id)], context=context)
+                line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
+                if line_ids:
+                    line_result.append((1, line_ids[0], values))
+                else:     
+                    line_result.append((0, 0, values))
+            elif so_id:
+                if 'sync_order_line_db_id' not in line_dict:
+                    raise Exception, "The field sync_order_line_db_id is missing - please check at the message rule!"
+                else:
+                    sync_order_line_db_id = line.sync_order_line_db_id
+                
+                # look for the correct PO line for updating the value - corresponding to the SO line
+                line_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', so_id)], context=context)
                 if line_ids:
                     line_result.append((1, line_ids[0], values))
                 else:     

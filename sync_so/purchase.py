@@ -38,10 +38,12 @@ class purchase_order_sync(osv.osv):
     _columns = {
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
+        'push_fo': fields.boolean('The Push FO case', readonly=False),
     }
 
     _defaults = {
-        'split_po': False
+        'split_po': False,
+        'push_fo': False
     }
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -60,7 +62,9 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, context)
+        header_result['split_po'] = True
+        
         po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
 
         wf_service = netsvc.LocalService("workflow")
@@ -100,14 +104,33 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, context)
+        
+        # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
+        po_id = self.check_existing_po(cr, uid, source, so_dict)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, context)
+        header_result['push_fo'] = True
 
         default = {}
         default.update(header_result)
         
-        res_id = self.create(cr, uid, default , context=context)
-        # Set the original PO to "split" state -- cannot do anything with this original PO
+        if po_id: # only update the PO
+            res_id = self.write(cr, uid, po_id, default, context=context)
+        else:
+            res_id = self.create(cr, uid, default , context=context)
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'purchase.order', res_id, 'purchase_confirm', cr)
+        
         return res_id
+
+    def check_existing_po(self, cr, uid, source, so_dict):
+        if not source:
+            raise Exception, "The partner is missing!"
+
+        name = source + '.' + so_dict.get('name')
+        po_ids = self.search(cr, uid, [('partner_ref', '=', name), ('state', '!=', 'cancelled')])
+        if not po_ids:
+            return False
+        return po_ids[0]
 
     def check_update(self, cr, uid, source, so_dict):
         if not source:
@@ -143,7 +166,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, context)
 
         default = {}
         default.update(header_result)
@@ -171,7 +194,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, context)
         
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref

@@ -45,7 +45,7 @@ class sale_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, False, context)
         
         default = {}
         default.update(header_result)
@@ -61,12 +61,15 @@ class sale_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, context)
+        so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, so_id, context)
         
         default = {}
         default.update(header_result)
 
-        res_id = self.write(cr, uid, default , context=context)
+        res_id = self.write(cr, uid, so_id, default , context=context)
+        
         return True
 
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
@@ -76,8 +79,10 @@ class sale_order_sync(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         
-        client_order_ref = source + "." + po_info.name
-        res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
+        ref = self.browse(cr, uid, so_id).client_order_ref
+        if not ref: # only issue a write if the client_order_reference is not yet set!
+            client_order_ref = source + "." + po_info.name
+            res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
         return True
 
 sale_order_sync()
