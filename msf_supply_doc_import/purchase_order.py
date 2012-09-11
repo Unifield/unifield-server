@@ -45,11 +45,6 @@ class purchase_order(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product', file, {}, mode='init', noupdate=False)
 
-    _columns = {
-        'file_to_import': fields.binary(string='File to import',
-                                        help='You can use the template of the export for the format that you need to use'),
-    }
-
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
         '''
         Please copy this to your module's method also.
@@ -77,8 +72,11 @@ class purchase_order(osv.osv):
 
     _columns = {
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
-                                        help='* You can use the template of the export for the format that you need to use. \
-                                             \n* The file should be in XML Spreadsheet 2003 format.'),
+                                        help="""* You can use the template of the export for the format that you need to use.
+                                                * The file should be in XML Spreadsheet 2003 format.
+                                                * You can import up to 300 lines each time,
+                                                else you have to split the lines in several files and import each one by one.
+                                                """),
         'import_error_ok': fields.function(_get_import_error, method=True, type="boolean", string="Error in Import", store=True),
     }
 
