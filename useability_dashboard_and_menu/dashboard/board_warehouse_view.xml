@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
+        <record id="action_picking_tree_available" model="ir.actions.act_window">
+            <field name="name">Incoming Shipments</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <!-- 'assigned' is for 'Available' -->
+            <field name="domain">[('type','=','in'), ('state', '=', 'assigned')]</field>
+            <field name="context">{'contact_display': 'partner_address',"search_default_available":1}</field>
+            <field name="search_view_id" ref="stock.view_picking_in_search"/>
+            <field name="help">The Incoming Shipments is the list of all orders you will receive from your supplier. An incoming shipment contains a list of products to be received according to the original purchase order. You can validate the shipment totally or partially.</field>
+        </record>
+    
         <record id="board_warehouse_form_default" model="ir.ui.view">
             <field name="name">board.warehouse.form.default</field>
             <field name="model">board.board</field>
@@ -9,7 +22,7 @@
                 <form string="Warehouse board">
                     <hpaned position="100">
                         <child1>
-                            <action name="%(stock.action_picking_tree4)d" string="Incoming Shipment"/>
+                            <action name="%(action_picking_tree_available)d" string="Incoming Shipment"/>
                             <action name="%(stock.action_outgoing_product_board)d" string="Outgoing delivery"/>
                             <action name="%(stock.action_out_picking_move)d" string="Deliver Products"/>
                             <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" />
