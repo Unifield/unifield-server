@@ -67,6 +67,8 @@ class initial_stock_inventory(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         
         for inventory in self.browse(cr, uid, ids, context=context):
+            if len(inventory.inventory_line_id) == 0:
+                raise osv.except_osv(_('Error'), _('Please enter at least one line in stock inventory before confirm it.'))
             for inventory_line in inventory.inventory_line_id:
                 if inventory_line.product_id.id not in product_dict:
                     product_dict.update({inventory_line.product_id.id: inventory_line.average_cost})
@@ -411,6 +413,8 @@ class stock_cost_reevaluation(osv.osv):
         
         # Check if there are two lines with the same product
         for obj in self.browse(cr, uid, ids, context=context):
+            if len(obj.reevaluation_line_ids) == 0:
+                raise osv.except_osv(_('Error'), _('Please enter at least one revaluation line before confirm it.'))
             products = []
             for line in obj.reevaluation_line_ids:
                 if line.product_id.id not in products:
