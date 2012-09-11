@@ -415,7 +415,7 @@ class real_average_consumption_line(osv.osv):
             batch_mandatory = obj.product_id.batch_management or obj.product_id.perishable
             date_mandatory = not obj.product_id.batch_management and obj.product_id.perishable
         
-            if batch_mandatory:
+            if batch_mandatory and obj.consumed_qty != 0.00:
                 if not obj.prodlot_id and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
