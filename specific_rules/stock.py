@@ -34,7 +34,7 @@ class initial_stock_inventory(osv.osv):
         Prevent the deletion of a non-draft/cancel initial inventory
         '''
         for inv in self.browse(cr, uid, ids, context=context):
-            if inv.state == 'done':
+            if inv.state not in ('draft', 'cancel'):
                 raise osv.except_osv(_('Error'), _('You cannot remove an initial inventory which is done'))
             
         return super(initial_stock_inventory, self).unlink(cr, uid, ids, context=context)
@@ -258,7 +258,7 @@ class initial_stock_inventory_line(osv.osv):
         check for batch management
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.batch_management and obj.inventory_id.state != 'draft':
+            if obj.product_id.batch_management and obj.inventory_id.state not in ('draft', 'cancel'):
                 if not obj.prod_lot_id or obj.prod_lot_id.type != 'standard':
                     return False
         return True
@@ -268,7 +268,7 @@ class initial_stock_inventory_line(osv.osv):
         check for perishable ONLY
         """
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.perishable and not obj.product_id.batch_management and obj.inventory_id.state != 'draft':
+            if obj.product_id.perishable and not obj.product_id.batch_management and obj.inventory_id.state not in ('draft', 'cancel'):
                 if (not obj.prod_lot_id and not obj.expiry_date) or (obj.prod_lot_id and obj.prod_lot_id.type != 'internal'):
                     return False
         return True
@@ -278,7 +278,7 @@ class initial_stock_inventory_line(osv.osv):
         If the inv line has a prodlot but does not need one, return False.
         """
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.prod_lot_id and obj.inventory_id.state != 'draft':
+            if obj.prod_lot_id and obj.inventory_id.state not in ('draft', 'cancel'):
                 if not obj.product_id.perishable and not obj.product_id.batch_management:
                     return False
         return True

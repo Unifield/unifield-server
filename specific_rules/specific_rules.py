@@ -1180,7 +1180,7 @@ class stock_inventory(osv.osv):
 
     def _check_line_data(self, cr, uid, ids, context=None):
         for inv in self.browse(cr, uid, ids, context=context):
-            if inv.state != 'draft':
+            if inv.state not in ('draft', 'cancel'):
                 for line in inv.inventory_line_id:
                     if not line.location_id:
                         return False
@@ -1505,7 +1505,7 @@ class stock_inventory_line(osv.osv):
         check for batch management
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.inventory_id.state != 'draft' and obj.product_id.batch_management:
+            if obj.inventory_id.state not in ('draft', 'cancel') and obj.product_id.batch_management:
                 if not obj.prod_lot_id or obj.prod_lot_id.type != 'standard':
                     return False
         return True
@@ -1515,7 +1515,7 @@ class stock_inventory_line(osv.osv):
         check for perishable ONLY
         """
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.inventory_id.state != 'draft' and obj.product_id.perishable and not obj.product_id.batch_management:
+            if obj.inventory_id.state not in ('draft', 'cancel') and obj.product_id.perishable and not obj.product_id.batch_management:
                 if (not obj.prod_lot_id and not obj.expiry_date) or (obj.prod_lot_id and obj.prod_lot_id.type != 'internal'):
                     return False
         return True
