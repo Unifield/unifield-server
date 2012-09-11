@@ -65,7 +65,7 @@ class initial_stock_inventory(osv.osv):
         
         product_dict = {}
         prodlot_obj = self.pool.get('stock.production.lot')
-        product_obj = self.pool.get('product.proudct')
+        product_obj = self.pool.get('product.product')
         
         for inventory in self.browse(cr, uid, ids, context=context):
             # Prevent confirmation with no lines
