@@ -229,6 +229,8 @@ class initial_stock_inventory_line(osv.osv):
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = ''
+            if not line.location_id:
+                res[line.id] = 'You must define a stock location'
             if line.hidden_batch_management_mandatory and not line.prodlot_name:
                 res[line.id] = 'You must define a batch number'
             elif line.hidden_perishable_mandatory and not line.expiry_date:
