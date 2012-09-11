@@ -120,7 +120,6 @@ class sale_order_line(osv.osv):
         
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
-        
         return result
     
     def copy(self, cr, uid, id, defaults=None, context=None):
