@@ -408,6 +408,10 @@ class real_average_consumption_line(osv.osv):
             if obj.rac_id.created_ok:
                 continue
 
+            # Prevent negative consumption qty.
+            if obj.consumed_qty < 0.00:
+                raise osv.except_osv(_('Error'), _('The consumed qty. must be positive or 0.00'))
+
             location = obj.rac_id.cons_location_id.id
             prodlot_id = None
             expiry_date = None
