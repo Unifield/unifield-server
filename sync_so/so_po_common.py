@@ -86,8 +86,13 @@ class so_po_common(osv.osv_memory):
         return so_ids[0]
 
     def retrieve_po_header_data(self, cr, uid, source, header_result, header_info, context):
-        if 'note' in header_info:
+        if 'notes' in header_info:
+            header_result['notes'] = header_info.get('notes')
+            header_result['note'] = header_info.get('notes')
+        elif 'note' in header_info:
+            header_result['notes'] = header_info.get('note')
             header_result['note'] = header_info.get('note')
+            
         if 'details' in header_info:
             header_result['details'] = header_info.get('details')
         if 'delivery_confirmed_date' in header_info:
