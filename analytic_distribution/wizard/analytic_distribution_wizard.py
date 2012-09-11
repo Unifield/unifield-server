@@ -680,19 +680,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
-            #+ move line, commitment or commitment line
-            if not wiz.fp_line_ids and (wiz.invoice_id or wiz.invoice_line_id) :
-                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            if not wiz.fp_line_ids and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
-                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            if not wiz.fp_line_ids and wiz.register_line_id:
-                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            if not wiz.fp_line_ids and wiz.move_line_id:
-                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            if not wiz.fp_line_ids and (wiz.commitment_id or wiz.commitment_line_id):
-                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            if not wiz.fp_line_ids and wiz.accrual_line_id:
-                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
+            #+ move line, commitment, commitment line, model
+            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id']:
+                if getattr(wiz, obj, False) and not wiz.fp_line_ids:
+                    raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
                 # Do nothing if there no lines for the current type
