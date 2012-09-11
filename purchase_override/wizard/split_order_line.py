@@ -157,6 +157,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                         po_copy_data.update({'line_number': split.purchase_line_id.line_number})
                     # copy original line
                     new_line_id = po_line_obj.copy(cr, uid, split.purchase_line_id.id, po_copy_data, context=context)
+                    # if original po line is confirmed, we action_confirm new line
+                    if split.purchase_line_id.state == 'confirmed':
+                        po_line_obj.action_confirm(cr, uid, [new_line_id], context=context)
                 
         return {'type': 'ir.actions.act_window_close'}
 
