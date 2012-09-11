@@ -43,7 +43,7 @@
   !record {model: account.journal, id: register_creation_wiz_cheque_journal_0}:
     code: chqeur
     company_id: base.main_company
-    name: Cheque Journal (for register creation test)
+    name: Cheque_Journal
     type: cheque
     view_id: account_journal_view0
     default_debit_account_id: account_account_cheque0

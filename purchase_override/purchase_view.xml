@@ -146,6 +146,10 @@
                       <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
                       <filter icon="terp-check" name="confirmed_wait" string="Confirmed (waiting)" domain="[('state', 'in', ['confirmed_wait'])]" separator="1" help="Purchase orders which are in approved state." />
                       <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
+
+                      <filter icon="gtk-missing-image" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
+                      <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','split')]" context="{'active_test': False}" separator="1" />
+
                       <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
                       <separator orientation="vertical" />
                       <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state." />
@@ -277,6 +281,34 @@
                 </data>
             </field>
         </record>
+        
+        <!-- Modify the view of the merge PO wizard -->
+        <record id="inherit_view_purchase_order_group" model="ir.ui.view">
+            <field name="name">Merger Purchase Orders</field>
+            <field name="model">purchase.order.group</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_group" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//label" position="replace">
+                    <group colspan="4">
+                        <html>
+                            <p>Please note that: </p>
+                            <p style="margin-left:10px">Orders will only be merged if: </p>
+                            <p style="margin-left:20px">* Purchase Orders are in draft</p>
+                            <p style="margin-left:20px">* Purchase Orders belong to the same supplier and the same currency</p>
+                        </html>
+                    </group>
+                    <separator colspan="4" />
+                    <group colspan="4">
+                        <field name="po_value_id" readonly="1" colspan="2" />
+                        <newline />
+                        <html colspan="4">
+                            <p>All information of the PO template will be written in the new PO,</p>
+                            <p>except the Delivery Requested date which will be the earliest date of all POs.</p>
+                        </html>
+                    </group>
+                 </xpath>
+            </field>
+        </record>
 
         <record id="purchase_order_confirm_wizard" model="ir.ui.view">
             <field name="name">purchase.order.confirm.wizard</field>
@@ -294,7 +326,8 @@
                 </form>
             </field>
         </record>
-
+        
+	<!-- Invoice control -->
         <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
 
         <!-- Invoice control -->

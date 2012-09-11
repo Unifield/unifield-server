@@ -369,7 +369,28 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         # Otherway: delete FP
         else:
             res = {'value': {'analytic_id': False}}
-        # If destination given, search if given 
+        return res
+
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
+        """
+        Check given cost_center with funding pool
+        """
+        # Prepare some values
+        res = {}
+        if cost_center_id and analytic_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
+                res = {'value': {'analytic_id': False}}
+        elif not cost_center_id:
+            res = {}
+        else:
+            res = {'value': {'analytic_id': False}}
         return res
 
 analytic_distribution_wizard_fp_lines()
@@ -443,10 +464,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state not in ['draft']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
         return res
 
@@ -816,6 +837,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         wizard = self.browse(cr, uid, [wizard_id], context=context)[0]
         distrib = wizard.distribution_id
+        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
         # Search database lines
@@ -840,7 +862,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'analytic_id': line.get('analytic_id'),
                     'percentage': line.get('percentage'),
                     'distribution_id': distrib.id,
-                    'currency_id': wizard.currency_id and wizard.currency_id.id,
+                    'currency_id': wizard.currency_id and wizard.currency_id and wizard.currency_id.id or company_currency_id,
                     'cost_center_id': line.get('cost_center_id') or False,
                     'destination_id': line.get('destination_id') or False,
                 }
@@ -1097,6 +1119,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             distrib = wizard.distribution_id or False
             aal_obj = self.pool.get('account.analytic.line')
             ml_obj = self.pool.get('account.move.line')
+            distro_obj = self.pool.get('analytic.distribution')
             if not distrib:
                 return False
             if wizard.move_line_id:
@@ -1131,6 +1154,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                             aal_obj.unlink(cr, uid, aal_ids, context=context)
                             # create new analytic lines
                             self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
+            elif wizard.register_line_id and wizard.register_line_id.state == 'temp':
+                # Update analytic lines
+                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, [wizard.register_line_id.id], distrib=distrib.id)
         return True
 
 analytic_distribution_wizard()

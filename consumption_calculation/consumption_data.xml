@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data noupdate="1">
-    
         <record id="stock.stock_location_internal_customers" model="stock.location">
             <field name="name">MSF Customer</field>
             <field name="usage">customer</field>
@@ -10,6 +9,5 @@
             <field name="name">MSF Suppliers</field>
             <field name="usage">supplier</field>
         </record>
-    
     </data>
 </openerp>

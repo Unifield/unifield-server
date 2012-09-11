@@ -98,7 +98,7 @@ class journal_items_corrections_lines(osv.osv_memory):
             tree = etree.fromstring(view['arch'])
             fields = tree.xpath('//field[@name="account_id"]')
             for field in fields:
-                field.set('domain', "[('type', '!=', 'view'), ('type_for_register', '=', 'donation')]")
+                field.set('domain', "[('type', '!=', 'view'), ('type_for_register', '=', 'donation'), ('user_type.report_type', '=', 'none')]")
             view['arch'] = etree.tostring(tree)
         return view
 

@@ -54,7 +54,11 @@ class financing_contract_format(osv.osv):
             format_name = rs.format_name
             res += [(rs.id, format_name)]
         return res
-        
+
+    _sql_constraints = [
+        ('date_overlap', 'check(eligibility_from_date < eligibility_to_date)', 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
+    ]
+
 financing_contract_format()
 
 class account_destination_link(osv.osv):
