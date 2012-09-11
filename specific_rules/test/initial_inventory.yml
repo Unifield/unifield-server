@@ -5,16 +5,12 @@
 - 
   !record {model: product.nomenclature, id: product_nomenclature_initial0}:
     name: test
-    
-    
 - 
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_initial1}:
     level: 1
     name: test1
-    parent_id: product_nomenclature_initial0
-    
     
 - 
   Creating a product.nomenclature record
@@ -23,8 +19,6 @@
     level: 2
     name: test2
     parent_id: product_nomenclature_initial1
-    
-    
 - 
   Creating a product.nomenclature record
 - 
@@ -32,8 +26,12 @@
     level: 3
     name: test3
     parent_id: product_nomenclature_initial2
-    
-    
+-  
+  Creating a product.category record
+-
+  !record {model: product.category, id: product_category_initial1}:
+    name: Initial1
+    family_id: product_nomenclature_initial2
 - 
   Creating a product.product record
 - 

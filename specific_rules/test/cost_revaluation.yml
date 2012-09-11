@@ -5,8 +5,6 @@
 - 
   !record {model: product.nomenclature, id: product_nomenclature_reval0}:
     name: test
-    
-    
 - 
   Creating a product.nomenclature record
 - 
@@ -14,8 +12,6 @@
     level: 1
     name: test1
     parent_id: product_nomenclature_reval0
-    
-    
 - 
   Creating a product.nomenclature record
 - 
@@ -23,8 +19,6 @@
     level: 2
     name: test2
     parent_id: product_nomenclature_reval1
-    
-    
 - 
   Creating a product.nomenclature record
 - 
@@ -32,8 +26,12 @@
     level: 3
     name: test3
     parent_id: product_nomenclature_reval2
-    
-    
+- 
+  Creating a product.category record
+-
+  !record {model: product.category, id: product_category_reval0}:
+    name: Reval0
+    family_id: product_nomenclature_reval2
 - 
   Creating a product.product record
 - 
