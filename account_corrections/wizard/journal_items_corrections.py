@@ -62,18 +62,9 @@ class journal_items_corrections_lines(osv.osv_memory):
         'journal_id': fields.many2one('account.journal', string="Journal Code", readonly=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'date': fields.date('Posting date', readonly=True),
-        # Third Parties Fields - BEGIN
         'partner_id': fields.many2one('res.partner', 'Partner'),
         'register_id': fields.many2one("account.bank.statement", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
-#        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-#            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
-#            multi="third_parties_key"),
-#        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-#        'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-#            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
-#            help="To use for python code when registering", multi="third_parties_key"),
-        # Third Parties fields - END
         'debit_currency': fields.float('Book. Debit', readonly=True),
         'credit_currency': fields.float('Book. Credit', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
@@ -308,8 +299,6 @@ class journal_items_corrections(osv.osv_memory):
         res = [] # no result yet
         # Correct account
         if comparison == 1:
-#            if not old_line.statement_id:
-#                raise osv.except_osv(_('Error'), _('Account correction is only possible on move line that come from a register!'))
             res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
@@ -320,8 +309,6 @@ class journal_items_corrections(osv.osv_memory):
                 if not res:
                     raise osv.except_osv(_('Error'), 
                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
-#        elif old_line.partner_id and old_line.partner_id.id != new_lines[0].partner_id.id:
-#            raise osv.except_osv('Information', 'Entering third parties change')
         elif comparison == 4:
             raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
         elif comparison in [3, 5, 7]:
