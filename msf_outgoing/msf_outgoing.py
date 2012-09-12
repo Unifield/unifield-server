@@ -3052,9 +3052,15 @@ class sale_order(osv.osv):
         '''
         move_data = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']
-        # first go to packing location
+        # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
+        # according to the configuration
         packing_id = order.shop_id.warehouse_id.lot_packing_id.id
-        move_data['location_dest_id'] = packing_id
+        output_id = order.shop_id.warehouse_id.lot_output_id.id
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup.delivery_process == 'simple':
+            move_data['location_dest_id'] = output_id
+        else:
+            move_data['location_dest_id'] = packing_id
         move_data['state'] = 'confirmed'
         return move_data
     
@@ -3095,8 +3101,11 @@ class sale_order(osv.osv):
         - trigger the logging message for the created picking, as it stays in draft state and no call to action_confirm is performed
           for the moment within the msf_outgoing logic
         '''
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
-        cond = cond and False
+        # On Simple OUT configuration, the system should confirm the OUT and launch a first check availability
+        if setup.delivery_process != 'simple':
+            cond = cond and False
         
         # diplay creation message for draft picking ticket
         picking_id = kwargs['picking_id']

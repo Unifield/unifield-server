@@ -78,7 +78,7 @@ class unifield_setup_configuration(osv.osv):
     _defaults = {
         'name': lambda *a: 'Unifield setup',
         'delivery_process': lambda *a: 'complex',
-        'allocation_setup': lambda *a: 'allocated',
+        'allocation_setup': lambda *a: 'mixed',
         'sale_price': lambda *a: 0.00,
         'field_orders_ok': lambda *a: True,
         'lang_id': lambda *a: 'en_MF',
