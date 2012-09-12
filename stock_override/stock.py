@@ -172,7 +172,11 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
-            
+        if vals.get('move_lines'):
+            for line in self.pool.get('stock.move').browse(cr, uid, vals['move_lines'], context):
+                if all(line.state == 'done'):
+                    vals['state'] = 'done'
+
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
