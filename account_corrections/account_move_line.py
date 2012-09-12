@@ -48,6 +48,9 @@ class account_move_line(osv.osv):
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = True
+            # False if account type is transfer
+            if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
+               res[ml.id] = False
             # False if move is posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
