@@ -10,6 +10,7 @@
             
         <menuitem 
             id="purchase.menu_purchase_rfq"
+            action="purchase.purchase_rfq"
             name="Requests for Quotation"
             parent="purchase.menu_procurement_management"
             sequence="3"/>

@@ -201,7 +201,7 @@ class sourcing_line(osv.osv):
             else:
                 newargs.append(('sale_order_state', arg[1], arg[2]))
         return newargs
-    
+
     def _get_date(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         
@@ -772,6 +772,11 @@ class sale_order_line(osv.osv):
         orderCategory = order.categ
         customer_id = order.partner_id.id
         
+        if sellerId:
+            seller = self.pool.get('res.partner').browse(cr,uid,sellerId)
+            if seller.partner_type and not order.procurement_request and not seller.partner_type in ['external','esc']:
+                sellerId = False
+ 
         values = {
                   'sale_order_id': vals['order_id'],
                   'sale_order_line_id': result,
@@ -788,7 +793,7 @@ class sale_order_line(osv.osv):
 #                  'sale_order_state': orderState,
                   'state': self.browse(cr, uid, result, context=context).state
                   }
-        
+
         sourcing_line_id = self.pool.get('sourcing.line').create(cr, uid, values, context=context)
         # update sourcing line - trigger update of fields.function values -- OPENERP BUG ? with empty values
         self.pool.get('sourcing.line').write(cr, uid, [sourcing_line_id], {}, context=context)
@@ -1330,11 +1335,52 @@ class res_partner(osv.osv):
                     res.append(('supplier', '=', True))
                     
         return res
+
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
         
-    
+    def _check_partner_type(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner':
+                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
+                if arg[2]:
+                    so = self.pool.get('sale.order').browse(cr, uid, arg[2])
+                    if not so.procurement_request:
+                        newargs.append(('partner_type', 'in', ['external', 'esc']))
+            else:
+                newargs.append(args)
+        return newargs
+
+    def _check_partner_type_rfq(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner_rfq':
+                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner_rfq different than (arg[0], =, id) not implemented.'))
+                if arg[2]:
+                    tender = self.pool.get('tender').browse(cr, uid, arg[2])
+                    if tender.sale_order_id:
+                        newargs.append(('partner_type', 'in', ['external', 'esc']))
+            else:
+                newargs.append(args)
+        return newargs
+
     _columns = {
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
                                              method=True, type='boolean', string='Available for DPO', store=False),
+        'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
+        'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
     }
     
 res_partner()

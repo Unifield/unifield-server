@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
+#    Copyright (C) 2012 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,7 @@
     'name': 'MSF Cross Docking Management',
     'version': '1.0',
     'category': 'Stock',
-    'author': 'MSF, TeMPO Consulting, Smile',
+    'author': 'MSF, TeMPO Consulting',
     'developer': 'Matthieu Choplin',
     'depends': ['purchase_msf','delivery_mechanism', 'stock', 'purchase_override', 'unifield_setup',],
     'description': '''
