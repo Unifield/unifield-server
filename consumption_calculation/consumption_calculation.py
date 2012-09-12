@@ -330,8 +330,8 @@ class real_average_consumption(osv.osv):
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
+                    batch_mandatory = product.batch_management
+                    date_mandatory = product.perishable
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
                               'consumed_qty': 0.00,
@@ -416,8 +416,8 @@ class real_average_consumption_line(osv.osv):
             prodlot_id = None
             expiry_date = None
 
-            batch_mandatory = obj.product_id.batch_management or obj.product_id.perishable
-            date_mandatory = not obj.product_id.batch_management and obj.product_id.perishable
+            batch_mandatory = obj.product_id.batch_management
+            date_mandatory = obj.product_id.perishable
         
             if batch_mandatory and obj.consumed_qty != 0.00:
                 if not obj.prodlot_id and not context.get('noraise'):
@@ -427,15 +427,15 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-#            if date_mandatory:
-#                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
-#                                                    ('type', '=', 'internal'),
-#                                                    ('product_id', '=', obj.product_id.id)])
-#                expiry_date = obj.expiry_date
-#                if not prod_ids:
-#                    raise osv.except_osv(_('Error'), 
-#                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
-#                prodlot_id = prod_ids[0]
+            if date_mandatory and not batch_mandatory:
+                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', obj.product_id.id)])
+                expiry_date = obj.expiry_date
+                if not prod_ids:
+                    raise osv.except_osv(_('Error'), 
+                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
+                prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
@@ -589,10 +589,10 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             qty_available = product.qty_available
                 
-            if product.batch_management or product.perishable:
-                v.update({'batch_mandatory': True})
-            if not product.batch_management and product.perishable:
-                v.update({'date_mandatory': True})
+            if product.batch_management:
+                v.update({'batch_mandatory': True, 'remark': 'You must assign a batch'})
+            if product.perishable:
+                v.update({'date_mandatory': True, 'remark': 'You must assign an expiry date'})
 
             uom = product.uom_id.id
             v.update({'uom_id': uom})
