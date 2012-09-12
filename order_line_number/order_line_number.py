@@ -91,6 +91,20 @@ class sale_order(osv.osv):
         if so_browse.state == 'draft' and not so_browse.client_order_ref:
             return True
         return False
+    
+    def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for stock move creation
+        - set the line number of the Out corresponding to the one from Sale order
+        '''
+        move_data = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
+        line = kwargs['line']
+        # copy original line number
+        move_data['line_number'] = line.line_number
+        return move_data
 
 sale_order()
 
