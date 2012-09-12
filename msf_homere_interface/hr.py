@@ -44,6 +44,7 @@ class hr_employee(osv.osv):
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination",),
     }
 
     _defaults = {

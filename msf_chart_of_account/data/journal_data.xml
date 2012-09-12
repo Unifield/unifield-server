@@ -93,10 +93,8 @@
             <field name="type">hr</field>
             <field name="analytic_journal_id" ref="hr_analytic_journal"/>
         </record>
-       
-        <delete model="account.journal" id="stock.stock_journal"/>
 
-        <record id="stock_journal" model="account.journal">
+        <record id="stock.stock_journal" model="account.journal">
             <field name="name">Stock</field>
             <field name="code">STO</field>
             <field name="type">stock</field>
@@ -196,6 +194,7 @@
             <field name="code">MT</field>
             <field name="type">cur_adj</field>
             <field name="default_debit_account_id" ref="msf_chart_of_account.6940" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.6940" />
             <field name="analytic_journal_id" ref="analytic_miscellaneous_transactions"/>
         </record>
 

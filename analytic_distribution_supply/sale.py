@@ -96,7 +96,7 @@ class sale_order(osv.osv):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
 
-    def wkf_validated(self, cr, uid, ids, context=None):
+    def analytic_distribution_checks(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
         Get a default analytic distribution if intermission.
@@ -117,24 +117,9 @@ class sale_order(osv.osv):
                 # check distribution presence
                 distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
                 if not distrib_id and so.partner_id.partner_type == 'intermission':
-                    # Search product account_id
-                    a = False
-                    if line.product_id:
-                        a = line.product_id.product_tmpl_id.property_account_income.id
-                        if not a:
-                            a = line.product_id.categ_id.property_account_income_categ.id
-                        if not a:
-                            raise osv.except_osv(_('Error !'),
-                                    _('There is no income account defined ' \
-                                            'for this product: "%s" (id:%d)') % \
-                                            (line.product_id.name, line.product_id.id,))
-                    else:
-                        prop = self.pool.get('ir.property').get(cr, uid,
-                                'property_account_income_categ', 'product.category',
-                                context=context)
-                        a = prop and prop.id or False
+                    account_id = line.account_4_distribution and line.account_4_distribution.id or False
                     # Search default destination_id
-                    destination_id = self.pool.get('account.account').read(cr, uid, a, ['default_destination_id']).get('default_destination_id', False)
+                    destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
                     distrib_id = ana_obj.create(cr, uid, {'sale_order_line_ids': [(4,line.id)], 
                         'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id})
@@ -148,6 +133,33 @@ class sale_order(osv.osv):
                 # check distribution state
                 if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
                     raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
+        return True
+
+    def action_ship_proc_create(self, cr, uid, ids, context=None):
+        """
+        Do some analytic distribution checks for SO confirmation.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Launch some checks
+        self.analytic_distribution_checks(cr, uid, ids)
+        # Default behaviour
+        res = super(sale_order, self).action_ship_proc_create(cr, uid, ids, context=context)
+        return res
+
+    def wkf_validated(self, cr, uid, ids, context=None):
+        """
+        Do some analytic distribution checks for SO validation.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.analytic_distribution_checks(cr, uid, ids)
         # Default behaviour
         res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
@@ -219,23 +231,11 @@ class sale_order_line(osv.osv):
             else:
                 so_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
                 distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
-                # Search product account_id
-                a = False
-                if line.product_id:
-                    a = line.product_id.product_tmpl_id.property_account_income.id
-                    if not a:
-                        a = line.product_id.categ_id.property_account_income_categ.id
-                    if not a:
-                        raise osv.except_osv(_('Error !'),
-                                _('There is no income account defined ' \
-                                        'for this product: "%s" (id:%d)') % \
-                                        (line.product_id.name, line.product_id.id,))
-                else:
-                    prop = self.pool.get('ir.property').get(cr, uid,
-                            'property_account_income_categ', 'product.category',
-                            context=context)
-                    a = prop and prop.id or False
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, so_distrib_id, a)
+                account_id = line.account_4_distribution and line.account_4_distribution.id or False
+                if not account_id:
+                    res[line.id] = 'invalid'
+                    continue
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, so_distrib_id, account_id)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -246,6 +246,32 @@ class sale_order_line(osv.osv):
             res[sol['id']] = "%s%s"%(sol['analytic_distribution_state'].capitalize(), sol['have_analytic_distribution_from_header'] and " (from header)" or "")
         return res
 
+    def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get account for given lines regarding:
+        - product expense account if product_id
+        - product category expense account if product_id but no product expense account
+        - product category expense account if no product_id (come from family's product category link)
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        for line in self.browse(cr, uid, ids):
+            # Prepare some values
+            res[line.id] = False
+            a = False
+            # Fetch account
+            if line.product_id:
+                a = line.product_id.product_tmpl_id.property_account_income.id or False
+                if not a:
+                    a = line.product_id.categ_id.property_account_income_categ.id or False
+            else:
+                a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_income_categ and line.nomen_manda_2.category_id.property_account_income_categ.id or False
+            res[line.id] = a
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
@@ -254,6 +280,7 @@ class sale_order_line(osv.osv):
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
+        'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
 
     _defaults = {
@@ -278,28 +305,17 @@ class sale_order_line(osv.osv):
         # Get analytic_distribution_id
         distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id
         # Search account_id
-        a = False
-        if sol.product_id:
-            a = sol.product_id.product_tmpl_id.property_account_income.id
-            if not a:
-                a = sol.product_id.categ_id.property_account_income_categ.id
-            if not a:
-                raise osv.except_osv(_('Error !'),
-                        _('There is no income account defined ' \
-                                'for this product: "%s" (id:%d)') % \
-                                (sol.product_id.name, sol.product_id.id,))
-        else:
-            prop = self.pool.get('ir.property').get(cr, uid,
-                    'property_account_income_categ', 'product.category',
-                    context=context)
-            a = prop and prop.id or False
+        account_id = sol.account_4_distribution and sol.account_4_distribution.id or False
+        if not account_id:
+            raise osv.except_osv(_('Error !'), _('There is no income account defined for this product: "%s" (id:%d)') % \
+                (sol.product_id.name, sol.product_id.id,))
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'sale_order_line_id': sol.id,
             'currency_id': currency or False,
             'state': 'cc',
-            'account_id': a,
+            'account_id': account_id or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

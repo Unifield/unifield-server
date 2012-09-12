@@ -27,7 +27,7 @@
     "description" : "Homere interface with OpenERP",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Human Resources",
-    "depends" : ["base", "account_override", "hr", "analytic_distribution"],
+    "depends" : ["base", "account_override", "hr", "analytic_distribution", "spreadsheet_xml"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
