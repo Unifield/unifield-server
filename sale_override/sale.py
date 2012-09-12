@@ -368,7 +368,7 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True))
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
