@@ -63,7 +63,7 @@
                             <field name="prodlot_id" 
                                 on_change="change_prodlot(product_id, prodlot_id, expiry_date, parent.cons_location_id, uom_id, remark)"
                                 domain="[('product_id', '=', product_id), ('stock_available', '>', 0)]"
-                                context="{'location_id': parent.cons_location_id, 'uom': uom_id, 'hidden_perishable_mandatory': batch_mandatory}"
+                                context="{'location_id': parent.cons_location_id, 'uom': uom_id, 'hidden_perishable_mandatory': not batch_mandatory}"
                                 attrs="{'required': [('batch_mandatory', '=', True)], 'readonly': [('date_mandatory', '=', False), ('batch_mandatory', '=', False)]}" />
                             <field name="expiry_date"
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id, remark)"
