@@ -40,7 +40,7 @@ class report_open_advances(report_sxw.report_sxw):
         
         # retrieve a big sql query with all information
         sql_open_advances = """
-            SELECT DISTINCT journal.name, move.name, line.instance_id.code,
+            SELECT DISTINCT journal.name, move.name, instance.code,
                    line.ref, line.document_date, line.date, period.name,
                    account.code || ' ' || account.name as account_name,
                    line.partner_txt, line.name,
@@ -55,6 +55,7 @@ class report_open_advances(report_sxw.report_sxw):
                 LEFT JOIN res_currency booking_currency ON line.currency_id = booking_currency.id
                 LEFT JOIN res_company company ON line.company_id = company.id
                 LEFT JOIN res_currency functional_currency ON company.currency_id = functional_currency.id
+                LEFT JOIN msf_instance instance ON line.instance_id = instance.id
             WHERE 
                 account.type_for_register = 'advance' AND
                 line.state = 'valid' AND
