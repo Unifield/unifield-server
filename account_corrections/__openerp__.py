@@ -30,7 +30,7 @@
     "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal'],
+    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal', 'account_msf'],
     "init_xml" : [],
     "update_xml" : [
         'account_view.xml',
