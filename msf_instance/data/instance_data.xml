@@ -8,6 +8,8 @@
             <field name="level">section</field>
             <field name="state">draft</field>
             <field name="cost_center_id" ref="analytic_distribution.analytic_account_project"/>
+            <field name="move_prefix">SO120</field>
+            <field name="reconcile_prefix">A1</field>
         </record>
 
         <record model="res.company" id="base.main_company">
