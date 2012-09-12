@@ -34,7 +34,7 @@ class delivery_process_setup(osv.osv_memory):
     }
     
     def _check_not_done_picking(self, cr, uid):
-        shipment_ids = self.pool.get('shipment').search(cr, uid, [('state', 'not in', ['delivered', 'cancel'])])
+        shipment_ids = self.pool.get('shipment').search(cr, uid, [('state', 'not in', ['delivered', 'cancel', 'done'])])
         picking_ids = self.pool.get('stock.picking').search(cr, uid, [('subtype', '!=', 'standard'), ('state', 'not in', ['cancel', 'done'])])
         
         return (picking_ids or shipment_ids) and True or False
