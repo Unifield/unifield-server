@@ -141,19 +141,19 @@ class sale_order_line(osv.osv):
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
         return result
     
-    def copy_data(self, cr, uid, id, defaults=None, context=None):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         '''
-        if the line_number is not in the defaults, we set it to False
+        if the line_number is not in the default, we set it to False
         '''
-        if defaults is None:
-            defaults = {}
+        if default is None:
+            default = {}
         if context is None:
             context = {}
         
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
-        if 'line_number' not in defaults and not context.get('keepLineNumber', False):
-            defaults.update({'line_number': False})
-        return super(sale_order_line, self).copy_data(cr, uid, id, defaults, context=context)
+        if 'line_number' not in default and not context.get('keepLineNumber', False):
+            default.update({'line_number': False})
+        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -306,19 +306,19 @@ class purchase_order_line(osv.osv):
         result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         return result
     
-    def copy_data(self, cr, uid, id, defaults=None, context=None):
+    def copy_data(self, cr, uid, id, default=None, context=None):
         '''
-        if the line_number is not in the defaults, we set it to False
+        if the line_number is not in the default, we set it to False
         '''
-        if defaults is None:
-            defaults = {}
+        if default is None:
+            default = {}
         if context is None:
             context = {}
         
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
-        if 'line_number' not in defaults and not context.get('keepLineNumber', False):
-            defaults.update({'line_number': False})
-        return super(purchase_order_line, self).copy_data(cr, uid, id, defaults, context=context)
+        if 'line_number' not in default and not context.get('keepLineNumber', False):
+            default.update({'line_number': False})
+        return super(purchase_order_line, self).copy_data(cr, uid, id, default, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
