@@ -28,7 +28,7 @@
             key2="client_action_multi"
 		    id="action_compute_schedulers_threshold"/>
 		    
-		<menuitem action="action_compute_schedulers_threshold" id="menu_stock_proc_schedulers_threshold" parent="procurement.menu_stock_sched" sequence="20" groups="stock.group_stock_manager"/>
+		<menuitem action="action_compute_schedulers_threshold" id="menu_stock_proc_schedulers_threshold" parent="procurement.menu_stock_sched" sequence="20" />
 		    
 
 	</data>

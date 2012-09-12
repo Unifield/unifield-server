@@ -397,7 +397,7 @@
                                     <group colspan="2" col="4">
                                         <separator string="Traceability" colspan="4"/>
                                         <field name="asset_id" colspan="4" />
-                                        <field name="prodlot_id" groups="base.group_extended"
+                                        <field name="prodlot_id"
                                             context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,'search_default_real': True}"
                                             domain="[('product_id','=?',product_id), ('check_type','=', True)]"
                                             on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" 
@@ -689,11 +689,11 @@
 						<field name="state"/>
                     </group>
                     <newline/>
-                    <group expand="0" string="Extended Filters..." colspan="4" col="8" groups="base.group_extended">
+                    <group expand="0" string="Extended Filters..." colspan="4" col="8">
                             <field name="prodlot_id"/>
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By..." colspan="4" col="8" groups="base.group_extended">
+                    <group expand="0" string="Group By..." colspan="4" col="8">
                         <filter string="Product" name="by_product" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'product_id'}"/>
                         <filter string="Picking" name="groupby_picking_id" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'picking_id'}"/>
                         <filter string="Lot" name="groupby_prodlot_id" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'prodlot_id'}"/>
@@ -955,7 +955,6 @@
                                 <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
                                 <field name="prod_lot_id"
                                     on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
-                                    groups="base.group_extended"
                                     context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory, 'search_default_real': True}"
                                     domain="[('check_type','=', True), ('product_id', '=?', product_id)]"
                                     attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
@@ -975,7 +974,7 @@
                                 <field name="np_check" />
                                 <field name="comment" />
                                 <button name="%(stock.action_view_stock_inventory_line_split)d"
-                                    string="Split inventory lines" groups="base.group_extended"
+                                    string="Split inventory lines"
                                     type="action" icon="terp-stock_effects-object-colorize" states="draft,confirm"/>
                                 <field name="state" invisible="True"/>
                             </tree>
@@ -986,31 +985,29 @@
                                 <field name="product_qty"/>
                                 <field name="product_uom"/>
                                 <group colspan="2" col="4">
-                                <field name="prod_lot_id" groups="base.group_extended"/>
+                                <field name="prod_lot_id" />
                                     <button name="%(stock.action_view_stock_inventory_line_split)d"
-                                        string="Split inventory lines" groups="base.group_extended"
+                                        string="Split inventory lines"
                                         type="action" icon="terp-stock_effects-object-colorize"/>
                                 </group>
                             </form>
                         </field>
                     </page>
-                    <page string="Posted Inventory" groups="base.group_extended">
+                    <page string="Posted Inventory">
                              <field colspan="2" name="move_ids" nolabel="1" widget="one2many_list" context="{'inventory_id':active_id}"  attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Stock Moves">
                                     <field name="product_id"/>
                                     <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
-                                    <field name="prodlot_id" groups="base.group_extended"/>
+                                    <field name="prodlot_id" />
                                     <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
                                      <button name="%(stock.track_line)d" string="Split in production lots" type="action"
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}"
                                         states="draft,done,cancel"
-                                        context="{'inventory_id':parent.id}"
-                                        groups="base.group_extended"/>
-                                     <field groups="base.group_extended" name="tracking_id"/>
+                                        context="{'inventory_id':parent.id}" />
+                                     <field name="tracking_id"/>
                                      <button name="%(stock.split_into)d" string="Put in a new pack" type="action"
-                                        groups="base.group_extended"
                                         icon="terp-stock_effects-object-colorize"
                                         context="{'inventory_id':parent.id}"
                                         states="draft,done,cancel"/>

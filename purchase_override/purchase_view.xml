@@ -55,7 +55,7 @@
                             </group>
                             <separator string="Invoices" colspan="4"/>
                             <newline/>
-                            <field name="invoice_ids" groups="base.group_extended" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
+                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
                         </page>
                    </xpath>
 
@@ -191,7 +191,7 @@
                       <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                </group>
                     <newline />
-                    <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                    <group expand="0" string="Group By..." colspan="4" col="10">
                       <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
                       <separator orientation="vertical" />
                       <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />

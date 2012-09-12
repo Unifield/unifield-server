@@ -23,7 +23,7 @@
                     <field name="name"/>
                     <field name="warehouse_id"/>
                     <field name="pricelist_id"/>
-                    <field name="project_id" groups="analytic.group_analytic_accounting"/>
+                    <field name="project_id" />
                 </tree>
             </field>
         </record>

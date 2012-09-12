@@ -55,7 +55,7 @@
                     <field name="composition_list_id" readonly="True" />
                     <field name="quantity_ordered" readonly="True" />
                     <field name="product_uom" readonly="True" string="UOM" />
-                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
                     <field name="qty_to_return" />
                     <field name="lot_check" />
                    	<field name="exp_check" />
@@ -80,7 +80,7 @@
                     <field name="composition_list_id" readonly="True" />
                     <field name="quantity" string="Quantity" readonly="1" />
                     <field name="product_uom" readonly="True" string="UOM" />
-                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
                     <field name="qty_per_pack" />
 					<field name="from_pack" />
 					<field name="to_pack" />

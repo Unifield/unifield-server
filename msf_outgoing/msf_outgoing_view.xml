@@ -135,7 +135,6 @@
 			<field name="help">This is the list of all your pack types.</field>
 		</record>
 		<menuitem action="action_pack_type_tree" id="menu_action_pack_type_tree"
-		groups="base.group_extended"
 		sequence="6"
 		parent="stock.menu_product_in_config_stock"/>
 		<!-- Changed name to 'Picking Tickets' -->
@@ -148,7 +147,7 @@
 				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking Tickets">
 					<field name="name"/>
 					<field name="partner_id2" />
-					<field name="backorder_id" groups="base.group_extended"/>
+					<field name="backorder_id" />
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
@@ -197,12 +196,12 @@
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
-							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
+							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection"/>
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
-							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
+							<field name="stock_journal_id" widget="selection" invisible="True" />
 							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" />
@@ -224,9 +223,9 @@
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
-									<field name="product_uos" groups="product.group_uos"/>
+									<field name="product_uos" />
 									<field name="asset_id" />
-									<field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
+									<field name="prodlot_id" string="Batch Number" />
 									<field name="expired_date" />
 									<field name="kc_dg" invisible="1" />
 									<field name="location_id" string="Src. Loc"  />
@@ -268,9 +267,9 @@
 											attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
 											colspan="2"
 											 />
-										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
-										<field groups="product.group_uos" name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
+										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
+										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
+										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -284,12 +283,12 @@
 										 	 />
 										<field name="location_dest_id" readonly="1" on_change="location_dest_change(location_dest_id)" />
 									</group>
-									<group colspan="2" col="4" groups="base.group_extended">
-										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
+									<group colspan="2" col="4">
+										<separator string="Traceability" colspan="4" />
 										<field name="asset_id" colspan="4" />
 										<field name="hidden_batch_management_mandatory" invisible="True" />
 										<field name="hidden_perishable_mandatory" invisible="True" />
-										<field name="prodlot_id" groups="base.group_extended"
+										<field name="prodlot_id"
 											context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 											'search_default_real': True}"
 											domain="[('product_id','=?',product_id), ('check_type','=', True)]"
@@ -329,7 +328,7 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
-								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
 								<button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" />
 								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" />
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
@@ -337,11 +336,11 @@
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>
 						</page>
-						<page string="Additional info" groups="base.group_extended,base.group_multi_company">
-							<field name="auto_picking" groups="base.group_extended" invisible="1"/>
-							<field name="date_done" groups="base.group_extended"/>
-							<field name="move_type" groups="base.group_extended" invisible="1"/>
-							<field name="type" groups="base.group_extended" invisible="1"/>
+						<page string="Additional info">
+							<field name="auto_picking" invisible="1"/>
+							<field name="date_done" />
+							<field name="move_type" invisible="1"/>
+							<field name="type" invisible="1"/>
 							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
 						</page>
 						<page string="Notes">
@@ -364,7 +363,7 @@
 						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" />
 						<separator orientation="vertical"/>
-						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
@@ -390,7 +389,7 @@
 						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
 						<separator orientation="vertical" />
                                                 <!-- Field stock_journal_id is not in the tree view
-						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>-->
+						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}" />-->
 					</group>
 				</search>
 			</field>
@@ -409,7 +408,7 @@
 						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" />
 						<separator orientation="vertical"/>
-						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
@@ -520,7 +519,7 @@
 					<field name="name"/>
                     <field name="description_ppl"/>
 					<field name="partner_id2"/>
-					<field name="backorder_id" groups="base.group_extended"/>
+					<field name="backorder_id" />
 					<field name="origin"/>
 					<field name="reason_type_id" />
 					<field name="date"/>
@@ -566,7 +565,7 @@
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))]}" />
 							<field name="invoice_state" invisible="1" />
-							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
+							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection"/>
 							<field name="num_of_packs" />
 							<field name="total_volume" />
@@ -574,7 +573,7 @@
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1" />
-							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
+							<field name="stock_journal_id" widget="selection" invisible="True" />
 							<field name="min_date" string="Expected Pack Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" />
@@ -592,9 +591,9 @@
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
-									<field name="product_uos" groups="product.group_uos"/>
+									<field name="product_uos" />
 									<field name="asset_id" />
-									<field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
+									<field name="prodlot_id" string="Batch Number" />
 									<field name="expired_date" />
 									<field name="kc_dg" />
 									<field name="location_id" string="Src. Loc" />
@@ -621,9 +620,9 @@
                                         <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="2" />
-										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
-										<field groups="product.group_uos" name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
+										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
+										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
+										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -631,12 +630,12 @@
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
 										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" readonly="1" />
 									</group>
-									<group colspan="2" col="4" groups="base.group_extended">
-										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
+									<group colspan="2" col="4">
+										<separator string="Traceability" colspan="4" />
 										<field name="asset_id" colspan="4" />
 										<field name="hidden_batch_management_mandatory" invisible="True" />
 										<field name="hidden_perishable_mandatory" invisible="True" />
-										<field name="prodlot_id" groups="base.group_extended"
+										<field name="prodlot_id"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 										'search_default_real': True}"
 										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
@@ -676,17 +675,17 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="return_products" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo"/>
-								<button name="action_assign" states="" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>
 						</page>
-						<page string="Additional info" groups="base.group_extended,base.group_multi_company">
-							<field name="auto_picking" groups="base.group_extended" invisible="1" />
-							<field name="date_done" groups="base.group_extended"/>
-							<field name="move_type" groups="base.group_extended" invisible="1"/>
-							<field name="type" groups="base.group_extended" invisible="1"/>
+						<page string="Additional info">
+							<field name="auto_picking" invisible="1" />
+							<field name="date_done" />
+							<field name="move_type" invisible="1"/>
+							<field name="type" invisible="1"/>
 							<field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
 						</page>
 						<page string="Notes">
@@ -780,13 +779,13 @@
 							 />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"  readonly="1"/>
 							<field name="invoice_state"/>
-							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
+							<field name="backorder_id" readonly="1" />
 							<field name="num_of_packs" attrs="{'invisible': [('subtype', 'in', ('picking'))]}"/>
 							<field name="total_weight" attrs="{'invisible': [('subtype', 'in', ('picking'))]}"/>
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
-							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
+							<field name="stock_journal_id" widget="selection" invisible="True" />
 							<field name="min_date" readonly="1" string="Expected Pack Date"  />
 							<field name="reason_type_id" widget="selection" readonly="1"/>
 							<field name="sale_id" invisible="True" />
@@ -804,8 +803,8 @@
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
-									<field name="product_uos" groups="product.group_uos"/>
-									<field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
+									<field name="product_uos" />
+									<field name="prodlot_id" string="Batch Number" />
 									<field name="expired_date" />
 									<field name="kc_dg" />
 									<field name="location_id" string="Src. Loc" />
@@ -828,11 +827,11 @@
 								<field name="flow_type" />
 							</group>
 						</page>
-						<page string="Additional info" groups="base.group_extended,base.group_multi_company">
-							<field name="auto_picking" groups="base.group_extended" readonly="1"/>
-							<field name="date_done" groups="base.group_extended" readonly="1"/>
-							<field name="move_type" groups="base.group_extended" readonly="1"/>
-							<field name="type" groups="base.group_extended" readonly="1"/>
+						<page string="Additional info">
+							<field name="auto_picking" readonly="1"/>
+							<field name="date_done" readonly="1"/>
+							<field name="move_type" readonly="1"/>
+							<field name="type" readonly="1"/>
 							<field name="company_id" groups="base.group_multi_company" widget="selection" readonly="1"/>
 						</page>
 						<page string="Notes">
@@ -857,9 +856,9 @@
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
-					<field name="backorder_id" groups="base.group_extended"/>
+					<field name="backorder_id" />
 					<field name="invoice_state"/>
-					<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+					<field name="stock_journal_id" widget="selection"/>
 					<field name="state"/>
 				</tree>
 			</field>
@@ -901,9 +900,9 @@
 					<field name="reason_type_id" />
 					<field name="date"/>
 					<field name="min_date"/>
-					<field name="backorder_id" groups="base.group_extended"/>
+					<field name="backorder_id" />
 					<field name="invoice_state"/>
-					<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+					<field name="stock_journal_id" widget="selection"/>
 					<field name="state"/>
 				</tree>
 			</field>
@@ -944,13 +943,13 @@
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" />
 							<field name="invoice_state"/>
-							<field name="backorder_id" readonly="1" groups="base.group_extended"/>
+							<field name="backorder_id" readonly="1" />
 							<field name="shipment_id" readonly="True" />
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1" />
 							<field name="min_date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
-							<field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
+							<field name="stock_journal_id" widget="selection" invisible="True" />
 							<field name="reason_type_id" widget="selection"/>
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" />
@@ -965,9 +964,9 @@
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
-									<field name="product_uos" groups="product.group_uos"/>
+									<field name="product_uos" />
 									<field name="asset_id" />
-									<field name="prodlot_id" string="Batch Number" groups="base.group_extended"/>
+									<field name="prodlot_id" string="Batch Number" />
 									<field name="expired_date" />
 									<field name="kc_dg" />
 									<field name="location_id" string="Src. Loc" />
@@ -996,9 +995,9 @@
                                         <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="4" />
-										<field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
-										<field groups="product.group_uos" name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-										<field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
+										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
+										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
+										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -1012,10 +1011,10 @@
 										<field name="date"/>
 										<field name="date_expected"/>
 									</group>
-									<group colspan="2" col="4" groups="base.group_extended">
-										<separator string="Traceability" colspan="4" groups="base.group_extended"/>
+									<group colspan="2" col="4">
+										<separator string="Traceability" colspan="4" />
 										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
-										<field name="prodlot_id" groups="base.group_extended"
+										<field name="prodlot_id"
 										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
 										'search_default_real': True}"
 										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
@@ -1045,18 +1044,18 @@
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
 								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
-								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" icon="gtk-find"/>
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="packing" states="assigned" string="Pack..." type="object" icon="gtk-go-forward"/>
 								<button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>
 						</page>
-						<page string="Additional info" groups="base.group_extended,base.group_multi_company">
-							<field name="auto_picking" groups="base.group_extended"/>
-							<field name="date_done" groups="base.group_extended"/>
-							<field name="move_type" groups="base.group_extended"/>
-							<field name="type" groups="base.group_extended"/>
+						<page string="Additional info">
+							<field name="auto_picking" />
+							<field name="date_done" />
+							<field name="move_type" />
+							<field name="type" />
 							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
 						</page>
 						<page string="Notes">
@@ -1078,7 +1077,7 @@
 						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
 						<filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
 						<separator orientation="vertical"/>
-						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-dolar" name="to_invoice" string="To Invoice" domain="[('invoice_state','=','2binvoiced')]" help="Delivery orders to invoice"/>
 						<separator orientation="vertical"/>
@@ -1086,7 +1085,7 @@
 						<field name="partner_id2" />
 						<field name="origin"/>
 						<field name="reason_type_id" widget="selection"/>
-						<field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+						<field name="stock_journal_id" widget="selection"/>
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
 					</group>
 					<newline/>
@@ -1100,7 +1099,7 @@
 						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
 						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
 						<separator orientation="vertical" />
-						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>
+						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}" />
 					</group>
 				</search>
 			</field>
@@ -1236,11 +1235,11 @@
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
 								<button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo"/>
-								<button name="create_shipment" states="draft" string="Create Shipment..." type="object" groups="base.group_extended" icon="gtk-add" />
-								<button name="action_cancel" states="packed" string="Cancel Shipment" type="object" groups="base.group_extended" icon="gtk-cancel" />
-								<button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-redo" />
+								<button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" />
+								<button name="action_cancel" states="packed" string="Cancel Shipment" type="object" icon="gtk-cancel" />
+								<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo" />
 								<button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo"/>
-								<button name="validate" states="shipped" string="Validate" type="object" groups="base.group_extended" icon="gtk-apply" />
+								<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" />
 								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}" />
 							</group>
 						</page>

@@ -45,6 +45,17 @@ class res_company(osv.osv):
         return
     
     def write(self, cr, uid, ids, vals, context=None):
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for id_ in ids:
+            if 'currency_id' in vals:
+                company = self.browse(cr, uid, id_, context=context)
+                sale = self.pool.get('product.pricelist').search(cr,uid,[('currency_id','=',vals['currency_id']), ('type','=','sale')])
+                purchase = self.pool.get('product.pricelist').search(cr,uid,[('currency_id','=',vals['currency_id']), ('type','=','purchase')])
+                self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], { 'property_product_pricelist_purchase': purchase[0], 'property_product_pricelist':sale[0], } )
+
         instance_obj = self.pool.get('msf.instance')
         if 'instance_id' in vals:
             # only one company (unicity)

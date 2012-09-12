@@ -175,7 +175,44 @@ class res_partner(osv.osv):
         'partner_type': lambda *a: 'external',
     }
 
+
+    def _check_main_partner(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        comp = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'main_company')
+        bro = self.pool.get('res.company').browse(cr,uid,comp[1])
+        res =  bro and bro.partner_id and bro.partner_id.id
+        cur =  bro and bro.currency_id and bro.currency_id.id
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if res == obj.id:
+                if obj.property_product_pricelist_purchase and obj.property_product_pricelist_purchase.currency_id and cur != obj.property_product_pricelist_purchase.currency_id.id:
+                    raise osv.except_osv(('Warning !'), ('You can not change the Purchase Default Currency of this partner'))
+                if obj.property_product_pricelist and obj.property_product_pricelist.currency_id and cur != obj.property_product_pricelist.currency_id.id:
+                    raise osv.except_osv(('Warning !'), ('You can not change the Field Orders Default Currency of this partner'))
+                if obj.customer:
+                    raise osv.except_osv(('Warning !'), ('This partner can not be checked as customer'))
+                if obj.supplier:
+                    raise osv.except_osv(('Warning !'), ('This partner can not be checked as supplier'))
+        return True
+
+    _constraints = [(_check_main_partner, 'Check purchase and sale currency', []),
+                    ]
+
+    def write(self, cr, uid, ids, vals, context=None):
+        comp = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'main_company')
+        bro = self.pool.get('res.company').browse(cr,uid,comp[1])
+        res =  bro and bro.partner_id and bro.partner_id.id
+        for part in ids:
+            if res and part == res and 'name' in vals:
+                del vals['name']
+        return super(res_partner, self).write(cr, uid, ids, vals, context=context)
+
     def create(self, cr, uid, vals, context=None):
+
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')

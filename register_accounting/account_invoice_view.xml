@@ -72,8 +72,8 @@
                             <field name="payment_term" widget="selection"/>
                             <field name="name"/>
                             <newline/>
-                            <field name="origin" groups="base.group_extended"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
+                            <field name="origin" />
+                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
                             <field name="user_id"/>
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>

@@ -182,7 +182,7 @@
                     <field name="version_id_kit_creation" select="1" context="{'wizard_composition_type': 'theoretical'}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="creation_date_kit_creation" />
                     <newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'product_id_kit_creation'}" />
 	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'version_id_kit_creation'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>

@@ -155,7 +155,7 @@
         <menuitem action="action_account_analytic_account_form"
                   id="account.account_analytic_def_account"
                   parent="account.menu_analytic_accounting"
-                  groups="analytic.group_analytic_accounting"/>
+                  />
 
     </data>
 </openerp>

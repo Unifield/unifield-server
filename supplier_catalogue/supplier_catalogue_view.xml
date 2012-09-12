@@ -83,7 +83,7 @@
                     <separator orientation="vertical"/>
                     <field name="default_code"/>
                     <field name="name"/>
-                    <field name="categ_id" widget="selection" operator="child_of" groups="base.group_extended"/>
+                    <field name="categ_id" widget="selection" operator="child_of" />
                     <newline/>
                     <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                     <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
