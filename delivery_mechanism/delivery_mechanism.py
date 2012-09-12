@@ -593,8 +593,28 @@ class purchase_order_line(osv.osv):
                }
     _defaults = {'procurement_id': False,}
     
-    
 purchase_order_line()
+
+
+class purchase_order(osv.osv):
+    '''
+    hook to modify created In moves
+    '''
+    _inherit = 'purchase.order'
+    
+    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        modify data for stock move creation
+        - line number of stock move is taken from purchase order line
+        '''
+        if context is None:
+            context = {}
+        move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
+        order_line = kwargs['order_line']
+        move_values.update({'line_number': order_line.line_number})
+        return move_values
+    
+purchase_order()
 
 
 class procurement_order(osv.osv):
