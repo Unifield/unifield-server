@@ -414,7 +414,7 @@ class procurement_request_line(osv.osv):
             v.update({'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'})
         elif comment and not product_id:
             pass
-        else:
+        elif product_id:
             product = product_obj.browse(cr, uid, product_id, context=context)
             type = product.procure_method
             v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type':type})
