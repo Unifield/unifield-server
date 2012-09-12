@@ -110,13 +110,18 @@ class sale_order_line(osv.osv):
         _inherit = 'sale.order.line'
         add the corresponding line number
         '''
+        # objects
+        so_obj = self.pool.get('sale.order')
+        seq_pool = self.pool.get('ir.sequence')
+        
         # gather the line number from the sale order sequence if not specified in vals
         # either line_number is not specified or set to False from copy, we need a new value
-        if not vals.get('line_number', False):
-            order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
-            sequence = order.sequence_id
-            line = sequence.get_id(test='id', context=context)
-            vals.update({'line_number': line})
+        if vals.get('order_id', False):
+            if not vals.get('line_number', False):
+                # new number needed - gather the line number from the sequence
+                sequence_id = so_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
+                line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
+                vals.update({'line_number': line})
         
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
@@ -128,9 +133,11 @@ class sale_order_line(osv.osv):
         '''
         if defaults is None:
             defaults = {}
+        if context is None:
+            context = {}
         
-        # we set line_number, so it will not be copied in copy_data
-        if 'line_number' not in defaults:
+        # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
+        if 'line_number' not in defaults and not context.get('keepLineNumber', False):
             defaults.update({'line_number': False})
         return super(sale_order_line, self).copy(cr, uid, id, defaults, context=context)
     
@@ -147,7 +154,7 @@ class sale_order_line(osv.osv):
         # objects
         tools_obj = self.pool.get('sequence.tools')
         
-        if not context.get('skip_resequencing', False):
+        if not context.get('skipResequencing', False):
             # re sequencing only happen if field order is draft and not synchronized (PUSH flow) (behavior 1) 
             draft_not_synchronized_ids = self.allow_resequencing(cr, uid, ids, context=context)
             tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_not_synchronized_ids, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', 'line_number', context=context)
@@ -251,22 +258,26 @@ class purchase_order_line(osv.osv):
         _inherit = 'purchase.order.line'
         add the corresponding line number
         '''
+        # objects
+        po_obj = self.pool.get('purchase.order')
+        seq_pool = self.pool.get('ir.sequence')
+        
         # I leave this line from QT related to purchase.order.merged.line for compatibility and safety reasons
         # merged lines, set the line_number to 0 when calling create function
         # the following line should *logically* be removed safely
         # copy method should work as well, as merged line do *not* need to keep original line number with copy function (QT confirmed)
         if self._name != 'purchase.order.merged.line':
-            # gather the line number from the sale order sequence if not specified in vals
-            # either line_number is not specified or set to False from copy, we need a new value
-            if not vals.get('line_number', False):
-                order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
-                sequence = order.sequence_id
-                line = sequence.get_id(test='id', context=context)
-                vals.update({'line_number': line})
+            if vals.get('order_id', False):
+                # gather the line number from the sale order sequence if not specified in vals
+                # either line_number is not specified or set to False from copy, we need a new value
+                if not vals.get('line_number', False):
+                    # new number needed - gather the line number from the sequence
+                    sequence_id = po_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
+                    line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
+                    vals.update({'line_number': line})
         
         # create the new sale order line
         result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        
         return result
     
     def copy(self, cr, uid, id, defaults=None, context=None):
@@ -275,9 +286,11 @@ class purchase_order_line(osv.osv):
         '''
         if defaults is None:
             defaults = {}
+        if context is None:
+            context = {}
         
-        # we set line_number, so it will not be copied in copy_data
-        if 'line_number' not in defaults:
+        # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
+        if 'line_number' not in defaults and not context.get('keepLineNumber', False):
             defaults.update({'line_number': False})
         return super(purchase_order_line, self).copy(cr, uid, id, defaults, context=context)
     
@@ -294,7 +307,7 @@ class purchase_order_line(osv.osv):
         # objects
         tools_obj = self.pool.get('sequence.tools')
         
-        if not context.get('skip_resequencing', False):
+        if not context.get('skipResequencing', False):
             # re sequencing only happen if purchase order is draft (behavior 1) 
             # get ids with corresponding po at draft state
             draft_ids = self.allow_resequencing(cr, uid, ids, context=context)
