@@ -330,6 +330,10 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            # if the source location and the destination location are the same, the state is closed
+            if 'location_id' in vals:
+                if vals['location_dest_id'] == vals['location_id']:
+                    vals['state'] = 'done'
                 
         # Change the reason type of the picking if it is not the same
         if vals.get('picking_id'):
@@ -350,6 +354,10 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location and not dest_id.virtual_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            # if the source location and the destination location are the same, the state is done
+            if 'location_id' in vals:
+                if vals['location_dest_id'] == vals['location_id']:
+                    vals['state'] = 'done'
                 
         # Change the reason type of the picking if it is not the same
         if 'reason_type_id' in vals:
@@ -401,7 +409,7 @@ class stock_move(osv.osv):
         'not_chained': lambda *a: False,
     }
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
@@ -413,6 +421,10 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+        # if the source and the destination locations are the same the state is done
+        if location_dest_id and location_id:
+            if location_dest_id == location_id:
+                vals['state'] = 'done'
 
 
         return {'value': vals}
