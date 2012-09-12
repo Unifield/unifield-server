@@ -334,7 +334,6 @@ class stock_move(osv.osv):
             if 'location_id' in vals:
                 if vals['location_dest_id'] == vals['location_id']:
                     vals['state'] = 'done'
-                
         # Change the reason type of the picking if it is not the same
         if vals.get('picking_id'):
             pick_id = self.pool.get('stock.picking').browse(cr, uid, vals['picking_id'], context=context)
@@ -358,7 +357,6 @@ class stock_move(osv.osv):
             if 'location_id' in vals:
                 if vals['location_dest_id'] == vals['location_id']:
                     vals['state'] = 'done'
-                
         # Change the reason type of the picking if it is not the same
         if 'reason_type_id' in vals:
             for pick_id in self.browse(cr, uid, ids, context=context):
