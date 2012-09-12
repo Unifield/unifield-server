@@ -114,18 +114,6 @@ class stock_move(osv.osv):
         resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.picking_id and pick_obj.allow_resequencing(cr, uid, x.picking_id, context=context)]
         return resequencing_ids
     
-    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        modify data for stock move creation
-        - line number of stock move is taken from purchase order line
-        '''
-        if context is None:
-            context = {}
-        move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
-        order_line = kwargs['order_line']
-        move_values.update({'line_number': order_line.line_number})
-        return move_values
-    
     def get_mirror_move(self, cr, uid, ids, data_back, context=None):
         '''
         return a dictionary with IN for OUT and OUT for IN, if exists, False otherwise
