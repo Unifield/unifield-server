@@ -182,13 +182,14 @@ class res_partner(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        comp = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'main_company')
-        bro = self.pool.get('res.company').browse(cr,uid,comp[1])
+        bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
+        bro = bro_uid.company_id
+
         res =  bro and bro.partner_id and bro.partner_id.id
         cur =  bro and bro.currency_id and bro.currency_id.id
             
-        for obj in self.browse(cr, uid, ids, context=context):
-            if res == obj.id:
+        if res in ids:
+            for obj in self.browse(cr, uid, [res], context=context):
                 if obj.property_product_pricelist_purchase and obj.property_product_pricelist_purchase.currency_id and cur != obj.property_product_pricelist_purchase.currency_id.id:
                     raise osv.except_osv(('Warning !'), ('You can not change the Purchase Default Currency of this partner'))
                 if obj.property_product_pricelist and obj.property_product_pricelist.currency_id and cur != obj.property_product_pricelist.currency_id.id:
@@ -203,16 +204,14 @@ class res_partner(osv.osv):
                     ]
 
     def write(self, cr, uid, ids, vals, context=None):
-        comp = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'main_company')
-        bro = self.pool.get('res.company').browse(cr,uid,comp[1])
+        bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
+        bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
-        for part in ids:
-            if res and part == res and 'name' in vals:
+        if res and res in ids and 'name' in vals:
                 del vals['name']
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
-
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
@@ -220,7 +219,6 @@ class res_partner(osv.osv):
                 vals['property_stock_customer'] = msf_customer[1]
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
-
         return super(res_partner, self).create(cr, uid, vals, context=context)
     
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
