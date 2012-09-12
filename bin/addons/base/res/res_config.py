@@ -89,18 +89,29 @@ class res_config_configurable(osv.osv_memory):
         # this is ultra brittle, but apart from storing the todo id
         # into the res.config view, I'm not sure how to get the
         # "previous" todo
+        if not context:
+            context = {}
         previous_todo = self._next_action(cr, uid, context=context)
         if not previous_todo:
             self.__logger.warn(_("Couldn't find previous ir.actions.todo"))
             return
         previous_todo.write({'state':state})
+        if not context.get('no_update_previous', False):
+            next_action = self._next_action(cr, uid, context=context)
+            previous_todo.write({'previous': next_action and next_action.id or False})
 
     def _next(self, cr, uid, context=None):
+        if not context:
+            context = {}
         self.__logger.info('getting next operation')
         next = self._next_action(cr, uid)
         self.__logger.info('next action is %s', next)
         if next:
             action = next.action_id
+            if context.get('no_update_previous', False):
+                c = {'previous_id': next.id}
+            else:
+                c = {}
             return {
                 'view_mode': action.view_mode,
                 'view_type': action.view_type,
@@ -108,6 +119,7 @@ class res_config_configurable(osv.osv_memory):
                 'res_model': action.res_model,
                 'type': action.type,
                 'target': action.target,
+                'context': c,
             }
         self.__logger.info('all configuration actions have been executed')
 
@@ -119,6 +131,7 @@ class res_config_configurable(osv.osv_memory):
 
     def start(self, cr, uid, ids, context=None):
         ids2 = self.pool.get('ir.actions.todo').search(cr, uid, [], context=context)
+        self.pool.get('ir.actions.todo').write(cr, uid, ids2, {'previous': False})
         for todo in self.pool.get('ir.actions.todo').browse(cr, uid, ids2, context=context):
             if (todo.restart=='always') or (todo.restart=='onskip' and (todo.state in ('skip','cancel'))):
                 todo.write({'state':'open'})
@@ -167,6 +180,45 @@ class res_config_configurable(osv.osv_memory):
         next = self.execute(cr, uid, ids, context=None)
         if next: return next
         return self.next(cr, uid, ids, context=context)
+    
+    def action_previous(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        
+        context.update({'no_update_previous': True})
+        
+        previous = self.next(cr, uid, ids, context=context)
+        if previous.get('context', {}).get('previous_id', False):
+            previous_id = self.pool.get('ir.actions.todo').search(cr, uid, [('previous', '=', previous['context']['previous_id'])])
+            if previous_id:
+                self.pool.get('ir.actions.todo').write(cr, uid, previous_id[0], {'state': 'open'})
+                action = self.pool.get('ir.actions.todo').browse(cr, uid, previous_id[0]).action_id
+                return {
+                        'view_mode': action.view_mode,
+                        'view_type': action.view_type,
+                        'view_id': action.view_id and [action.view_id.id] or False,
+                        'res_model': action.res_model,
+                        'type': action.type,
+                        'target': action.target,
+                    }
+            else:
+                raise osv.except_osv(_('Error'), _('No previous wizard found !'))
+        else:
+            raise osv.except_osv(_('Error'), _('No previous wizard found !'))
+        
+        current_user_menu = self.pool.get('res.users')\
+            .browse(cr, uid, uid).menu_id
+        # return the action associated with the menu
+        return self.pool.get(current_user_menu.type)\
+            .read(cr, uid, current_user_menu.id)
+        
+    def action_finish(self, cr, uid, ids, context=None):
+        self.action_next(cr, uid, ids, context=context)
+        open_todo_ids = self.pool.get('ir.actions.todo').search(cr, uid, [('state', '=', 'open')])
+        self.pool.get('ir.actions.todo').write(cr, uid, open_todo_ids, {'state': 'done'})
+        
+        return self.next(cr, uid, ids, context=context)
+        
 
     def action_skip(self, cr, uid, ids, context=None):
         """ Action handler for the ``skip`` event.
