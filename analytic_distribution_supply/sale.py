@@ -99,20 +99,10 @@ class sale_order(osv.osv):
     def _get_destination_ok(self, cr, uid, ids, context):
         dest_ok = False
         for pol in ids:
-            if pol.product_id and pol.product_id.property_account_expense:
-                dest_ok = pol.product_id.property_account_expense.destination_ids
-            elif pol.product_id and pol.product_id.categ_id.property_account_expense_categ:
-                dest_ok = pol.product_id.categ_id.property_account_expense_categ.destination_ids 
-            elif pol.product_id and self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category'):
-                dest_ok = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').destination_ids
-############ PLEASE TEST THIS CODE
-            elif pol.nomen_manda_2 and pol.nomen_manda_2.category_id and pol.nomen_manda_2.category_id.property_account_income_categ:
-                dest_ok = pol.nomen_manda_2.category_id.property_account_income_categ.id
-############ END PLEASE
-            else:
-                raise osv.except_osv(_('Error'), _('No destination found for this product'))
+            dest_ok = pol.account_4_distribution and pol.account_4_distribution.destination_ids
+            if not dest_ok:
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (pol.name or '',))
         return dest_ok
-
 
     def analytic_distribution_checks(self, cr, uid, ids, context=None):
         """
