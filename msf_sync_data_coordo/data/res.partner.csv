@@ -1,19 +1,3 @@
 address/type,address/city,address/name,address/street,address/zip,address/country_id,property_account_payable,property_account_receivable,name,partner_type,customer,supplier
-default,JOHANNESBURG,None,,,South Africa,3000,1205,AFRICA DRILLING Ltd,External,FALSE,TRUE
-default,JOHANNESBURG,C.S CHAMANCULO,Av. Ahmed Sekou Toure,,South Africa,3000,1205,Afri Farmacia,External,FALSE,TRUE
-default,NAIROBI,Hitan Patel,P.O.BOX 43829,,Kenya,3000,1205,AFRO INDUSTRIES AGENCIES,External,FALSE,TRUE
-default,NAIROBI,None,P.O.BOX 5001,,Kenya,3000,1205,ANGELICA medical supplies LTD,External,FALSE,TRUE
-default,NAIROBI,None,P.O.BOX 76174,,Kenya,3000,1205,Auto and electro care ltd,External,FALSE,TRUE
-default,NAIROBI,Wilson Mungai,P.O.BOX 26032,,Kenya,3000,1205,BLUE CHIP TECHNOLOGIES LTD,External,FALSE,TRUE
-default,NAIROBI,David Mombasa,P.O.BOX 30336,,Kenya,3000,1205,Honda doughty ltd,External,FALSE,TRUE
-default,NAIROBI,Musa Tomko,P.O.BIX 56,,Kenya,3000,1205,IPEET FREIGHT,External,FALSE,TRUE
-default,NAIROBI,None,,,Kenya,3000,1205,LOCAL MARKET,External,FALSE,TRUE
-default,NAIROBI,Shalin,P.O.BIX 41658,,Kenya,3000,1205,METRO Pharmaceuticals Ltd,External,FALSE,TRUE
-default,CAMPALA,Chetan Solenki,Bamburi Road,,Uganda,3000,1205,PACKAGING AND ALLIED,External,FALSE,TRUE
-default,HAMBURG,None,AMG Center UFER,21129,Germany,3000,1205,PANALPINA WELTTRANSPORT GMBH,External,FALSE,TRUE
-default,NAIROBI,James Mathenge,P.O.BOX 4221,,Kenya,3000,1205,POWER OPTIONS LTD,External,FALSE,TRUE
-default,VIWANDAM,Bruce Field,B.O.BOX 78201,,Kenya,3000,1205,SPECIALISED FIBREGLASS LTD,External,FALSE,TRUE
-default,CAMPALA,M. Chana,,,Uganda,3000,1205,TELECA BUILDERS LTD,External,FALSE,TRUE
-default,Nairobi,Khalid,Uhuru Highway,3391,Kenya,3000,1205,Toyota east africa ltd,External,FALSE,TRUE
-default,NAIROBI,None,P.O.BOX 73167,,Kenya,3000,1205,UCHUMI SUPERMARKETS LIMITED,External,FALSE,TRUE
-default,MUSOMA,None,,,Tanzania,3000,1205,ZEDCO RADIATOR LTD,External,FALSE,TRUE
+default,Geneva,None,,,Switzerland,3000,1205,ITCompany,External,FALSE,TRUE
+default,Johannesburg,C.S CHAMANCULO,Av. Ahmed Sekou Toure,,South Africa,3000,1205,Afri Farmacia,External,FALSE,TRUE
