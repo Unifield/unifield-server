@@ -96,12 +96,12 @@ class sale_order(osv.osv):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
 
-    def _get_destination_ok(self, cr, uid, ids, context):
+    def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
-        for pol in ids:
-            dest_ok = pol.account_4_distribution and pol.account_4_distribution.destination_ids
+        for line in lines:
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
             if not dest_ok:
-                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (pol.name or '',))
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
 
     def analytic_distribution_checks(self, cr, uid, ids, context=None):
@@ -139,26 +139,25 @@ class sale_order(osv.osv):
                 if not distrib_id and not so.from_yml_test:
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
                 # check distribution state
-
                 if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
+                    # raise an error if no analytic distribution on line and NONE on header (because no possibility to change anything)
+                    if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and not so.analytic_distribution_id:
+                        raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s') % (line.name or '',))
+                    # Change distribution to be valid if needed by using those from header
                     id_ad = self.pool.get('analytic.distribution').create(cr,uid,{})
-                    temp = []
                     for x in line.analytic_distribution_id and line.analytic_distribution_id.cost_center_lines or so.analytic_distribution_id.cost_center_lines:
+                        # fetch compatible destinations then use one of them:
+                        # - destination if compatible
+                        # - else default destination of given account
                         bro_dests = self._get_destination_ok(cr, uid, [line], context=context)
                         if x.destination_id in bro_dests:
-                            bro_dest_ok = x.destination_id   
+                            bro_dest_ok = x.destination_id
                         else:
-                            bro_dest_ok = bro_dests[0]
-                        self.pool.get('sale.order.line').write(cr,uid,[line.id],{'analytic_distribution_id': id_ad })
-                        check = self.pool.get('cost.center.distribution.line').search(cr,uid,[('distribution_id', '=', id_ad), ('destination_id', '=', bro_dest_ok.id), ('analytic_id', '=', x.analytic_id.id )])
-                        if check:
-                            bro_cccdl = self.pool.get('cost.center.distribution.line').browse(cr,uid,check[0])
-                            perc = bro_cccdl.percentage + x.percentage
-                            self.pool.get('cost.center.distribution.line').write(cr,uid,[check[0]],{'percentage':perc})
-                        else:
-                            cur = line.currency_id and line.currency_id.id or 1
-                            vals = {'name': 'Distribution Line', 'currency_id':cur, 'destination_id': bro_dest_ok.id, 'distribution_id': id_ad, 'analytic_id': x.analytic_id.id, 'percentage': x.percentage }
-                            self.pool.get('cost.center.distribution.line').create(cr,uid,vals)
+                            bro_dest_ok = line.account_4_distribution.default_destination_id
+                        # Copy cost center line to the new distribution
+                        self.pool.get('cost.center.distribution.line').copy(cr, uid, x.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        # Write new distribution and link it to the line
+                        self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': id_ad})
         return True
 
     def action_ship_proc_create(self, cr, uid, ids, context=None):

@@ -397,17 +397,12 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
 
-    def _get_destination_ok(self, cr, uid, ids, context):
+    def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
-        for pol in ids:
-            if pol.product_id.property_account_expense:
-                dest_ok = pol.product_id.property_account_expense.destination_ids
-            elif pol.product_id.categ_id.property_account_expense_categ:
-                dest_ok = pol.product_id.categ_id.property_account_expense_categ.destination_ids 
-            elif self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category'):
-                dest_ok = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').destination_ids
-            else:
-                raise osv.except_osv(_('Error'), _('No destination found for this product'))
+        for line in lines:
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
+            if not dest_ok:
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
 
     def check_analytic_distribution(self, cr, uid, ids, context=None):
@@ -430,25 +425,22 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib_id:
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
-
+                # Change distribution to be valid if needed by using those from header
                 if pol.analytic_distribution_state != 'valid':
-                    id_ad = self.pool.get('analytic.distribution').create(cr,uid,{})
-                    for line in po.analytic_distribution_id.cost_center_lines:
+                    id_ad = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    for line in pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines:
+                        # fetch compatible destinations then use on of them:
+                        # - destination if compatible
+                        # - else default destination of given account
                         bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
                         if line.destination_id in bro_dests:
-                            bro_dest_ok = line.destination_id   
+                            bro_dest_ok = line.destination_id
                         else:
-                            bro_dest_ok = bro_dests[0]
-                        self.pool.get('purchase.order.line').write(cr,uid,[pol.id],{'analytic_distribution_id': id_ad })
-                        check = self.pool.get('cost.center.distribution.line').search(cr,uid,[('distribution_id', '=', id_ad), ('destination_id', '=', bro_dest_ok.id), ('analytic_id', '=', line.analytic_id.id )])
-                        if check:
-                            bro_cccdl = self.pool.get('cost.center.distribution.line').browse(cr,uid,check[0])
-                            perc = bro_cccdl.percentage + line.percentage
-                            self.pool.get('cost.center.distribution.line').write(cr,uid,[check[0]],{'percentage':perc})
-                        else:
-                            cur = line.currency_id and line.currency_id.id or 1
-                            vals = {'name': 'Distribution Line', 'currency_id': cur, 'destination_id': bro_dest_ok.id, 'distribution_id': id_ad, 'analytic_id': line.analytic_id.id, 'percentage': line.percentage }
-                            self.pool.get('cost.center.distribution.line').create(cr,uid,vals)
+                            bro_dest_ok = pol.account_4_distribution.default_destination_id
+                        # Copy cost center line to the new distribution
+                        self.pool.get('cost.center.distribution.line').copy(cr, uid, line.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        # Write result
+                        self.pool.get('purchase.order.line').write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
         return True
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
