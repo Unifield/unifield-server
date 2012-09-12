@@ -1588,7 +1588,8 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
-            self._update_merged_line(cr, uid, line_id, False, context=context)
+            # we want to skip resequencing because unlink is performed on merged purchase order lines
+            self._update_merged_line(cr, uid, line_id, False, context=dict(context, skipResequencing=True))
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 

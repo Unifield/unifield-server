@@ -65,7 +65,7 @@ class stock_move(osv.osv):
         result = super(stock_move, self).create(cr, uid, vals, context=context)
         return result
     
-    def copy(self, cr, uid, id, defaults=None, context=None):
+    def copy_data(self, cr, uid, id, defaults=None, context=None):
         '''
         if the line_number is not in the defaults, we set it to False
         '''
@@ -77,7 +77,7 @@ class stock_move(osv.osv):
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):
             defaults.update({'line_number': False})
-        return super(stock_move, self).copy(cr, uid, id, defaults, context=context)
+        return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
