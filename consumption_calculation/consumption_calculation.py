@@ -76,8 +76,6 @@ class real_average_consumption(osv.osv):
             context = {}
         if not 'picking_id' in default:
             default['picking_id'] = False
-        if not 'valid_ok' in default:
-            default['valid_ok'] = False
 
         default['name'] = self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')
 
@@ -108,7 +106,6 @@ class real_average_consumption(osv.osv):
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True),
-        'valid_ok': fields.boolean(string='Create and process out moves'),
         'created_ok': fields.boolean(string='Out moves created'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
@@ -122,7 +119,6 @@ class real_average_consumption(osv.osv):
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
-        'valid_ok': lambda *a: True,
     }
 
     _sql_constraints = [
@@ -176,8 +172,6 @@ class real_average_consumption(osv.osv):
        
         # check and update lines
         for rac in self.browse(cr, uid, ids, context=context):
-            if not rac.valid_ok:
-                raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if DateFrom(rac.period_to) > now():
                 raise osv.except_osv(_('Error'), _('"Period to" can\'t be in the future.'))
 

@@ -90,8 +90,6 @@
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <form string="Need confirmation">
-                    <separator colspan="4" string="Need confirmation" />
-                    <field name="valid_ok" />
                     <separator colspan="4" string="Actions" />
                     <button name="process_moves" string="Process moves" icon="gtk-execute" type="object" colspan="2" />
                 </form>
