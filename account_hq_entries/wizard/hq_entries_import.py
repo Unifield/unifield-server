@@ -141,7 +141,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
-        vals.update({'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
+        vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
         # Fetch description
         if description:
             vals.update({'name': description})
