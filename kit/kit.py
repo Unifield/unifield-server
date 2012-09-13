@@ -1383,7 +1383,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         # data
-        name = _("Replacement Items Selection from Sale Order")
+        name = _("Replacement Items Selection from Field Order")
         model = 'kit.selection.sale'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
