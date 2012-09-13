@@ -95,10 +95,14 @@ class financing_contract_contract(osv.osv):
         if reporting_type == 'allocated':
             analytic_domain = [date_domain[0],
                                date_domain[1],
+                               ('is_reallocated', '=', False),
+                               ('is_reversal', '=', False),
                                eval(general_domain['funding_pool_domain'])]
         else: 
             analytic_domain = [date_domain[0],
                                date_domain[1],
+                               ('is_reallocated', '=', False),
+                               ('is_reversal', '=', False),
                                eval(general_domain['funding_pool_domain']),
                                eval(general_domain['cost_center_domain'])]
         analytic_domain += account_domain

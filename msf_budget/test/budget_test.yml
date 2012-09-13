@@ -234,6 +234,8 @@
     name: Test Instance
     level: section
     cost_center_id: analytic_account_OC1
+    move_prefix: TEST
+    reconcile_prefix: T1
 -
   I add the instance to the default company
 -

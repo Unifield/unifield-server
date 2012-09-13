@@ -33,6 +33,8 @@ class allocation_stock_setup(osv.osv_memory):
         'allocation_setup': fields.selection([('allocated', 'Allocated'),
                                               ('unallocated', 'Unallocated'),
                                               ('mixed', 'Mixed')], 
+                                              # UF-1261 : As long as the Unallocated stock are not developped, user shouldn't be able to change this option
+                                              readonly=True,
                                               string='Allocated stocks', required=True),
         'unallocated_ok': fields.selection([('yes', 'Yes'), ('no', 'No')], string='System will use unallocated moves on finance side ?', readonly=True),
         'error_ok': fields.boolean(string='Error'),
@@ -57,6 +59,7 @@ These documents can be some Cross-docking purchase orders not done, stock moves 
 To change the Allocated stocks configuration, locations which will be inactivated should be empty.
         
 Please click on the below buttons to see the different blocking documents.''',
+        'allocation_setup': lambda *a: 'mixed',
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -156,7 +159,7 @@ Please click on the below buttons to see the different blocking documents.''',
         if payload.allocation_setup == 'allocated':
             po_ids, picking_cross_ids, picking_central_ids, nok_location_ids = self._get_allocated_mvmt(cr, uid, 'allocated')
             if po_ids or picking_cross_ids or picking_central_ids or nok_location_ids:
-                self.write(cr, uid, [payload.id], {'allocation_setup': 'unallocated',
+                self.write(cr, uid, [payload.id], {'allocation_setup': 'allocated',
                                                    'error_ok': True,
                                                    'error_po_ok': po_ids and True or False,
                                                    'error_cross_ok': picking_cross_ids and True or False,

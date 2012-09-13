@@ -171,10 +171,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
         active_ids = context.get('active_ids')
         if isinstance(active_ids, (int, long)):
             active_ids = [active_ids]
+        # Fetch some data
         ana_line_obj = self.pool.get('account.analytic.line')
         distrib_obj = self.pool.get('account.analytic.distribution')
         distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
+        # Search an analytic correction journal
+        acor_journal_id = False
+        acor_journal_ids = self.pool.get('analytic.account.journal').search(cr, uid, [('type', '=', 'correction')])
+        if acor_journal_ids:
+            acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated
         to_write = {}
         account_change = []
@@ -223,13 +229,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
             distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
             distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date})
 
-
             # reverse ana lines
             fp_old_lines = ana_line_obj.search(cr, uid, [
                 ('cost_center_id', '=', line.cost_center_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            ana_line_obj.reverse(cr, uid, fp_old_lines)
+            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines)
+            # Give them analytic correction journal
+            if not acor_journal_id:
+                raise osv.except_osv(_(''), _(''))
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': })
             # create new lines
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
                 'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,})
@@ -427,12 +436,8 @@ class hq_entries(osv.osv):
             context={}
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
-            expat_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account and \
-                self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account.id or False
-            if not expat_account_id:
-                raise osv.except_osv(_('Warning'), _('Expat Salaries account is not set. Please configure it to Company Settings.'))
             for line in self.browse(cr, uid, ids):
-                if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.id == expat_account_id and account.id != expat_account_id:
+                if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         return super(hq_entries, self).write(cr, uid, ids, vals, context)
 
