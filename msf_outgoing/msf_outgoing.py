@@ -2288,7 +2288,7 @@ class stock_picking(osv.osv):
                               'backmove_id': move.id}
                     #add hook
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                    new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                    new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                     
                 # decrement the initial move, cannot be less than zero
                 initial_qty = max(initial_qty - count, 0)
@@ -2396,7 +2396,7 @@ class stock_picking(osv.osv):
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                        new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                        new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the validation does not correspond to the picking ticket quantity
@@ -2422,7 +2422,7 @@ class stock_picking(osv.osv):
             new_ppl_id = self.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
                                                       'subtype': 'ppl',
                                                       'previous_step_id': pick.id,
-                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True, keepLineNumber=True))
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             # update locations of stock moves - if the move quantity is equal to zero, the stock move is removed
             for move in new_ppl.move_lines:
@@ -2433,7 +2433,7 @@ class stock_picking(osv.osv):
                                                         'date': today,
                                                         'date_expected': today,}, context=context)
                 else:
-                    move_obj.unlink(cr, uid, [move.id], context=context)
+                    move_obj.unlink(cr, uid, [move.id], context=dict(context, skipResequencing=True))
             
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
