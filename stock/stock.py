@@ -1186,7 +1186,7 @@ class stock_picking(osv.osv):
             elif pick.state in ['confirmed','assigned', 'draft']:
                 ids2 = [move.id for move in pick.move_lines]
                 ctx = context.copy()
-                ctx.update({'call_unlink':True})
+                ctx.update({'call_unlink':True, 'skipResequencing': True})
                 if pick.state != 'draft':
                     #Cancelling the move in order to affect Virtual stock of product
                     move_obj.action_cancel(cr, uid, ids2, ctx)
