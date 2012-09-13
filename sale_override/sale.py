@@ -362,6 +362,7 @@ class sale_order(osv.osv):
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
                                                               'split_type_sale_order': fo_type,
+                                                              'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
