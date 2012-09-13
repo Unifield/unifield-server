@@ -126,9 +126,9 @@ class purchase_order_line_allocation_report(osv.osv):
                     po.date_order AS creation_date,
                     so.client_order_ref AS partner_doc
                 FROM
-                    purchase_order po
-                  LEFT JOIN
                     purchase_order_line pol
+                  LEFT JOIN
+                    purchase_order po
                     ON
                     pol.order_id = po.id
                   LEFT JOIN
@@ -181,9 +181,9 @@ class purchase_order_line_allocation_report(osv.osv):
                     po.date_order AS creation_date,
                     so.client_order_ref AS partner_doc
                 FROM
-                    purchase_order po
-                  LEFT JOIN
                     purchase_order_line pol
+                  LEFT JOIN
+                    purchase_order po
                     ON
                     pol.order_id = po.id
                   LEFT JOIN
