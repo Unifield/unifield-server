@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@
     "name" : "Import Files in Excel Format",
     "version" : "0.1",
     "description" : "This module enables to import file in xls format",
-    "author" : "MSF - TeMPO Consulting - Smile",
+    "author" : "MSF - TeMPO Consulting",
     "category" : "Sale",
     "depends" : ["sale", "purchase", "tender_flow", "msf_supply_doc_export", "spreadsheet_xml"],
     "init_xml" : [],

@@ -271,6 +271,7 @@ class shipment(osv.osv):
                 'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
                 # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
+                'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
                 }
     _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
     
@@ -873,6 +874,182 @@ class shipment(osv.osv):
             
             # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
         return True
+    
+    def shipment_create_invoice(self, cr, uid, ids, context=None):
+        '''
+        Create invoices for validated shipment
+        '''
+        invoice_obj = self.pool.get('account.invoice')
+        line_obj = self.pool.get('account.invoice.line')
+        partner_obj = self.pool.get('res.partner')
+        distrib_obj = self.pool.get('analytic.distribution')
+        sale_line_obj = self.pool.get('sale.order.line')
+        sale_obj = self.pool.get('sale.order')
+        company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
+        
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for shipment in self.browse(cr, uid, ids, context=context):
+            make_invoice = False
+            for pack in shipment.pack_family_memory_ids:
+                for move in pack.move_lines:
+                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
+                        make_invoice = True
+                    
+            if not make_invoice:
+                continue
+                    
+            payment_term_id = False
+            partner =  shipment.partner_id2
+            if not partner:
+                raise osv.except_osv(_('Error, no partner !'),
+                    _('Please put a partner on the shipment if you want to generate invoice.'))
+            
+            inv_type = 'out_invoice'
+            
+            if inv_type in ('out_invoice', 'out_refund'):
+                account_id = partner.property_account_receivable.id
+                payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
+            else:
+                account_id = partner.property_account_payable.id
+            
+            addresses = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
+            today = time.strftime('%Y-%m-%d',time.localtime())  
+            
+            invoice_vals = {
+                    'name': shipment.name,
+                    'origin': shipment.name or '',
+                    'type': inv_type,
+                    'account_id': account_id,
+                    'partner_id': partner.id,
+                    'address_invoice_id': addresses['invoice'],
+                    'address_contact_id': addresses['contact'],
+                    'payment_term': payment_term_id,
+                    'fiscal_position': partner.property_account_position.id,
+                    'date_invoice': context.get('date_inv',False) or today,
+                    'user_id':uid,
+                }
+
+            cur_id = shipment.pack_family_memory_ids[0].currency_id.id
+            if cur_id:
+                invoice_vals['currency_id'] = cur_id
+            # Journal type
+            journal_type = 'sale'
+            # Disturb journal for invoice only on intermission partner type
+            if shipment.partner_id2.partner_type == 'intermission':
+                if not company.intermission_default_counterpart or not company.intermission_default_counterpart.id:
+                    raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+                invoice_vals['is_intermission'] = True
+                invoice_vals['account_id'] = company.intermission_default_counterpart.id
+                journal_type = 'intermission'
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
+            if not journal_ids:
+                raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
+            invoice_vals['journal_id'] = journal_ids[0]
+                
+            invoice_id = invoice_obj.create(cr, uid, invoice_vals,
+                        context=context)
+            
+            # Change currency for the intermission invoice
+            if shipment.partner_id2.partner_type == 'intermission':
+                company_currency = company.currency_id and company.currency_id.id or False
+                if not company_currency:
+                    raise osv.except_osv(_('Warning'), _('No company currency found!'))
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
+            
+            # Link the invoice to the shipment
+            self.write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+            
+            # For each stock moves, create an invoice line
+            for pack in shipment.pack_family_memory_ids:
+                for move in pack.move_lines:
+                    if move.state == 'cancel':
+                        continue
+                    
+                    if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
+                        continue
+                    
+                    origin = move.picking_id.name or ''
+                    if move.picking_id.origin:
+                        origin += ':' + move.picking_id.origin
+                        
+                    if inv_type in ('out_invoice', 'out_refund'):
+                        account_id = move.product_id.product_tmpl_id.\
+                                property_account_income.id
+                        if not account_id:
+                            account_id = move.product_id.categ_id.\
+                                    property_account_income_categ.id
+                    else:
+                        account_id = move.product_id.product_tmpl_id.\
+                                property_account_expense.id
+                        if not account_id:
+                            account_id = move.product_id.categ_id.\
+                                    property_account_expense_categ.id
+                                    
+                    # Compute unit price from FO line if the move is linked to
+                    price_unit = move.product_id.list_price
+                    if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
+                        uom_id = move.product_id.uom_id.id
+                        uos_id = move.product_id.uos_id and move.product_id.uos_id.id or False
+                        price = move.sale_line_id.price_unit
+                        coeff = move.product_id.uos_coeff
+                        if uom_id != uos_id and coeff != 0:
+                            price_unit = price / coeff
+                        else:
+                            price_unit = move.sale_line_id.price_unit
+                            
+                    # Get discount from FO line
+                    discount = 0.00
+                    if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
+                        discount = move.sale_line_id.discount
+                        
+                    # Get taxes from FO line
+                    taxes = move.product_id.taxes_id
+                    if move.sale_line_id and move.sale_line_id.product_id.id == move.product_id.id:
+                        taxes = [x.id for x in move.sale_line_id.tax_id]
+                        
+                    if shipment.partner_id2:
+                        tax_ids = self.pool.get('account.fiscal.position').map_tax(cr, uid, shipment.partner_id2.property_account_position, taxes)
+                    else:
+                        tax_ids = map(lambda x: x.id, taxes)
+                        
+                    distrib_id = False
+                    if move.sale_line_id:
+                        sol_ana_dist_id = move.sale_line_id.analytic_distribution_id or move.sale_line_id.order_id.analytic_distribution_id
+                        if sol_ana_dist_id:
+                            distrib_id = distrib_obj.copy(cr, uid, sol_ana_dist_id.id, context=context)
+                        
+                    #set UoS if it's a sale and the picking doesn't have one
+                    uos_id = move.product_uos and move.product_uos.id or False
+                    if not uos_id and inv_type in ('out_invoice', 'out_refund'):
+                        uos_id = move.product_uom.id
+                    account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
+                        
+                    line_id = line_obj.create(cr, uid, {'name': move.name,
+                                                        'origin': origin,
+                                                        'invoice_id': invoice_id,
+                                                        'uos_id': uos_id,
+                                                        'product_id': move.product_id.id,
+                                                        'account_id': account_id,
+                                                        'price_unit': price_unit,
+                                                        'discount': discount,
+                                                        'quantity': move.product_qty or move.product_uos_qty,
+                                                        'invoice_line_tax_id': [(6, 0, tax_ids)],
+                                                        'analytic_distribution_id': distrib_id,
+                                                       }, context=context)
+
+                    self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+                    if move.sale_line_id:
+                        sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)],})
+                        sale_line_obj.write(cr, uid, [move.sale_line_id.id], {'invoiced': True,
+                                                                              'invoice_lines': [(4, line_id)],})
+            
+        return True
         
     def validate(self, cr, uid, ids, context=None):
         '''
@@ -899,6 +1076,9 @@ class shipment(osv.osv):
                 # trigger standard workflow
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
+            
+            # Create automatically the invoice
+            self.shipment_create_invoice(cr, uid, shipment.id, context=context)
                 
             # log validate action
             self.log(cr, uid, shipment.id, _('The Shipment %s has been validated.')%(shipment.name,))
@@ -1142,12 +1322,14 @@ class stock_picking(osv.osv):
         '''
         unlink test for draft
         '''
-        datas = self.read(cr, uid, ids, ['state'], context=context)
+        datas = self.read(cr, uid, ids, ['state','type','subtype'], context=context)
         if [data for data in datas if data['state'] != 'draft']:
             raise osv.except_osv(_('Warning !'), _('Only draft picking tickets can be deleted.'))
-        data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
-        if [x for x in data.values() if x]:
-            raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
+        ids_picking_draft = [data['id'] for data in datas if data['subtype'] == 'picking' and data['type'] == 'out' and data['state'] == 'draft']
+        if ids_picking_draft:
+            data = self.has_picking_ticket_in_progress(cr, uid, ids, context=context)
+            if [x for x in data.values() if x]:
+                raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
         
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
    
@@ -1266,7 +1448,7 @@ class stock_picking(osv.osv):
             # by default, nothing is in progress
             res[obj.id] = False
             # treat only draft picking
-            assert obj.subtype == 'picking' and obj.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
+            assert obj.subtype in 'picking' and obj.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
             for picking in obj.backorder_ids:
                 # take care, is_completed returns a dictionary
                 if not picking.is_completed()[picking.id]:
@@ -1763,6 +1945,9 @@ class stock_picking(osv.osv):
         special behavior :
          - creation of corresponding shipment
         '''
+        # For picking ticket from scratch, invoice it !
+        if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
+            vals['invoice_state'] = '2binvoiced'
         # objects
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
@@ -1980,7 +2165,6 @@ class stock_picking(osv.osv):
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        
         for obj in self.browse(cr, uid, ids, context=context):
             # the convert function should only be called on draft picking ticket
             assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
@@ -2002,7 +2186,10 @@ class stock_picking(osv.osv):
                 # using draft_force_assign, the moves are not treated because not in draft
                 # and the corresponding chain location on location_dest_id was not computed
                 # we therefore set them back in draft state before treatment
-                vals = {'state': 'draft'}
+                if move.product_qty == 0.0:
+                    vals = {'state': 'done'}
+                else:
+                    vals = {'state': 'draft'}
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
                     vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
@@ -2811,8 +2998,8 @@ class stock_move(osv.osv):
             loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
             res.update({'location_dest_id': loc_packing_id})
         elif 'subtype' in context and context.get('subtype', False) == 'standard':
-            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
-            res.update({'location_dest_id': loc_packing_id})
+            loc_output_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
+            res.update({'location_dest_id': loc_output_id})
         
         return res
     
@@ -2843,6 +3030,7 @@ class stock_move(osv.osv):
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
+                'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
                 }
 
 stock_move()
