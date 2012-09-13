@@ -24,6 +24,7 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from osv import osv, fields
 from osv.orm import browse_record, browse_null
 from tools.translate import _
+from lxml import etree
 
 import decimal_precision as dp
 import netsvc
@@ -855,9 +856,11 @@ class purchase_order(osv.osv):
         if view_type == 'form':
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
-                arch = result['arch']
-                arch = arch.replace('<form string="Purchase Order">', '<form string="Requests for Quotation">')
-                result['arch'] = arch
+                form = etree.fromstring(result['arch'])
+                fields = form.xpath('//form[@string="Purchase Order"]')
+                for field in fields:
+                    field.set('string', "Requests for Quotation")
+                result['arch'] = etree.tostring(form)
         
         return result
 
