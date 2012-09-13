@@ -21,11 +21,19 @@
 #
 ##############################################################################
 
-import res_company
-import hr
-import hr_payroll
-import hr_job_msf
-import hr_contract_msf
-import wizard
+from osv import osv
+from osv import fields
 
+class hr_job(osv.osv):
+    _inherit = 'hr.job'
+    _description = 'MSF Employee job from Homère'
+
+    _columns = {
+        'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=True),
+        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=True),
+        'code': fields.char(string='Job code', size=6, readonly=True, required=True),
+        'name': fields.char(string='Employee Job', size=255, readonly=True, required=True),
+    }
+
+hr_job()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
