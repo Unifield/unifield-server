@@ -1530,7 +1530,7 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        vals = self._update_merged_line(cr, uid, False, vals, context=context)
+        vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
@@ -1568,7 +1568,7 @@ class purchase_order_line(osv.osv):
         
         if not context.get('update_merge'):
             for line in ids:
-                vals = self._update_merged_line(cr, uid, line, vals, context=context)
+                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True))
                 
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
