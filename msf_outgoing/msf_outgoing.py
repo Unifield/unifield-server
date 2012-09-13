@@ -2406,14 +2406,8 @@ class stock_picking(osv.osv):
                 # is positive if some qty was removed during the validation -> draft qty is increased
                 # is negative if some qty was added during the validation -> draft qty is decreased
                 if diff_qty != 0:
-                    backorder_id = pick.backorder_id.id
-                    assert backorder_id, 'No backorder defined.'
-                    original_moves = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
-                                                               ('product_id', '=', move.product_id.id),
-                                                               ('product_uom', '=', move.product_uom.id)])
                     # original move from the draft picking ticket which will be updated
                     original_move = move.backmove_id
-                    assert len(original_moves) == 1, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(move.product_id.name, move.product_uom.name)
                     backorder_qty = move_obj.read(cr, uid, [original_move.id], ['product_qty'], context=context)[0]['product_qty']
                     backorder_qty = max(backorder_qty + diff_qty, 0)
                     move_obj.write(cr, uid, [original_move.id], {'product_qty': backorder_qty}, context=context)
