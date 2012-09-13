@@ -178,7 +178,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
         # Search an analytic correction journal
         acor_journal_id = False
-        acor_journal_ids = self.pool.get('analytic.account.journal').search(cr, uid, [('type', '=', 'correction')])
+        acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
         if acor_journal_ids:
             acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated
@@ -235,13 +235,13 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ('move_id', '=', all_lines[line.id])
                 ])
             res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines)
-            # Give them analytic correction journal
+            # Give them analytic correction journal (UF-1385 in comments)
             if not acor_journal_id:
-                raise osv.except_osv(_(''), _(''))
-            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': })
+                raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
             # create new lines
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
-                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,})
+                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
