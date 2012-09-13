@@ -166,11 +166,17 @@ class kit_selection_sale(osv.osv_memory):
                           'default_name': data['value']['default_name'],
                           }
                 
+                # following new sequencing policy, we check if resequencing occur (behavior 1).
+                # if not (behavior 2), the split line keeps the same line number as original line
+                if not sol_obj.allow_resequencing(cr, uid, [obj.order_line_id_kit_selection_sale.id], context=context):
+                    # set default value for line_number as the same as original line
+                    values.update({'line_number': obj.order_line_id_kit_selection_sale.line_number})
+                
                 if last_line_id:
                     # the existing purchase order line has already been updated, we create a new one
                     # copy the original purchase order line
                     last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
-                    # as sol state is draft anyhow, we do not need to process the created lineontext)
+                    # as so *line* state is draft anyhow, we do not need to process the created line
                 else:
                     # first item to be treated, we update the existing line
                     last_line_id = obj.order_line_id_kit_selection_sale.id
