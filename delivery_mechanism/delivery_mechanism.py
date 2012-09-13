@@ -130,6 +130,25 @@ class stock_move(osv.osv):
         move_data.update({'line_number': move.line_number})
         return move_data
     
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        
+        - update the line number, keep original line number
+        >> performed for all cases (too few (copy - new numbering policy), complete (simple update - no impact), to many (simple update - no impact)
+        '''
+        # variable parameters
+        move = kwargs.get('move', False)
+        assert move, 'delivery_mechanism.py >> stock_move: _do_partial_hook - missing move'
+        
+        # calling super method
+        defaults = super(stock_move, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        assert defaults is not None, 'delivery_mechanism.py >> stock_move: _do_partial_hook - missing defaults'
+        # update the line number, copy original line_number value
+        defaults.update({'line_number': move.line_number})
+        
+        return defaults
+    
     def get_mirror_move(self, cr, uid, ids, data_back, context=None):
         '''
         return a dictionary with IN for OUT and OUT for IN, if exists, False otherwise
@@ -252,6 +271,22 @@ class stock_picking(osv.osv):
         if pick_browse.state == 'draft' and not pick_browse.purchase_id and not pick_browse.sale_id:
             return True
         return False
+    
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'delivery_mechanism.py >> stock_picking: _do_partial_hook - missing move'
+        
+        # calling super method
+        defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        assert defaults is not None, 'delivery_mechanism.py >> stock_picking: _do_partial_hook - missing defaults'
+        # update the line number, copy original line_number value
+        defaults.update({'line_number': move.line_number})
+        
+        return defaults
     
     def create_data_back(self, cr, uid, move, context=None):
         '''
