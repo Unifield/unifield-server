@@ -274,9 +274,11 @@ class act_window(osv.osv):
         'display_menu_tip':fields.function(_get_help_status, type='boolean', method=True, string='Display Menu Tips',
             help='It gives the status if the tip has to be displayed or not when a user executes an action'),
         'multi': fields.boolean('Action on Multiple Doc.', help="If set to true, the action will not be displayed on the right toolbar of a form view"),
+        'empty_ids': fields.boolean('For action: is selection of records needed ?'),
     }
 
     _defaults = {
+        'empty_ids': lambda *a: False,
         'type': lambda *a: 'ir.actions.act_window',
         'view_type': lambda *a: 'form',
         'view_mode': lambda *a: 'tree,form',
@@ -797,6 +799,7 @@ class ir_actions_todo(osv.osv):
         'restart': fields.selection([('onskip','On Skip'),('always','Always'),('never','Never')],'Restart',required=True),
         'groups_id':fields.many2many('res.groups', 'res_groups_action_rel', 'uid', 'gid', 'Groups'),
         'note':fields.text('Text', translate=True),
+        'previous': fields.many2one('ir.actions.todo', string='Previous'),
     }
     _defaults={
         'state': 'open',
@@ -804,11 +807,16 @@ class ir_actions_todo(osv.osv):
         'restart': 'onskip',
     }
     _order="sequence,name,id"
+    
+    def del_previous(self, cr, uid):
+        ids = self.search(cr, uid, [])
+        self.write(cr, uid, ids, {'previous': False})
 
     def action_launch(self, cr, uid, ids, context=None):
         """ Launch Action of Wizard"""
         if context is None:
             context = {}
+        self.del_previous(cr, uid)
         wizard_id = ids and ids[0] or False
         wizard = self.browse(cr, uid, wizard_id, context=context)
         res = self.pool.get('ir.actions.act_window').read(cr, uid, wizard.action_id.id, ['name', 'view_type', 'view_mode', 'res_model', 'context', 'views', 'type'], context=context)
