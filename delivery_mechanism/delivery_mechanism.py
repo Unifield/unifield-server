@@ -114,6 +114,22 @@ class stock_move(osv.osv):
         resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.picking_id and pick_obj.allow_resequencing(cr, uid, x.picking_id, context=context)]
         return resequencing_ids
     
+    def _create_chained_picking_move_values_hook(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_process method from stock>stock.py>stock_picking
+        
+        - set the line number of the original picking, could have used the keepLineNumber flag, but used hook to modify original class minimally
+        '''
+        if context is None:
+            context = {}
+        move_data = super(stock_move, self)._create_chained_picking_move_values_hook(cr, uid, context=context, *args, **kwargs)
+        # get move reference
+        move = kwargs['move']
+        # set the line number from original stock move
+        move_data.update({'line_number': move.line_number})
+        return move_data
+    
     def get_mirror_move(self, cr, uid, ids, data_back, context=None):
         '''
         return a dictionary with IN for OUT and OUT for IN, if exists, False otherwise

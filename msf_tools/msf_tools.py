@@ -318,7 +318,7 @@ class sequence_tools(osv.osv):
         seq_obj = self.pool.get('ir.sequence')
         
         # find the corresponding base ids
-        base_ids = [x['order_id'][0] for x in dest_obj.read(cr, uid, ids, [foreign_field], context=context) if x['order_id']]
+        base_ids = [x[foreign_field][0] for x in dest_obj.read(cr, uid, ids, [foreign_field], context=context) if x[foreign_field]]
         # simulate unique sql
         foreign_ids = set(base_ids)
         
