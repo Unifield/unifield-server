@@ -65,7 +65,7 @@
   !python {model: real.average.consumption}: |
     rac = self.browse(cr, uid, ref('rac2'))
     for line in rac.line_ids:
-      assert not line.move_id, "Moves created for the %s" % line.product_id.name
+      assert line.move_id, "No moves created for the %s" % line.product_id.name
 -
   I create a third RAC report
 -
