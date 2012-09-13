@@ -62,6 +62,19 @@
             auto="False"
             menu="True"
          />
+     
+     <!-- STOCK INITIAL INVENTORY-->
+        <report
+            id="report_stock_initial_inventory_xls"
+            string="Stock Initial Excel Export"
+            model="initial.stock.inventory"
+            name="initial.stock.inventory_xls"
+            file="msf_supply_doc_export/report/stock_initial_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
 
     </data>
 </openerp>

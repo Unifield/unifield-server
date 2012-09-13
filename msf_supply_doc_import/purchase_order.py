@@ -46,11 +46,6 @@ class purchase_order(osv.osv):
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product', file, {}, mode='init', noupdate=False)
 
-    _columns = {
-        'file_to_import': fields.binary(string='File to import', 
-                                        help='You can use the template of the export for the format that you need to use'),
-    }
-
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
         '''
         Please copy this to your module's method also.
