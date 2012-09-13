@@ -2659,7 +2659,7 @@ class stock_picking(osv.osv):
                 # the good location is stored in the 'initial_location' field
                 move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
                                                  'location_dest_id': move.initial_location.id,
-                                                 'state': 'done'})
+                                                 'state': 'done'}, context=dict(context, keepLineNumber=True))
                 
                 # increase the draft move with the move quantity
                 draft_move_id = move.backmove_id.id
