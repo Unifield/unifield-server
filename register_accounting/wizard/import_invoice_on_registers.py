@@ -124,7 +124,7 @@ class wizard_import_invoice(osv.osv_memory):
             if line.id in already:
                 raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
-                key = "%s-%s-%s"%(line.amount_currency < 0 and "-" or "+", line.partner_id.id, line.account_id.id)
+                key = "%s-%s-%s"%("all", line.partner_id.id, line.account_id.id)
             else:
                 key = line.id
 
@@ -141,8 +141,11 @@ class wizard_import_invoice(osv.osv_memory):
             amount_cur = 0
 
             for line in ordered_lines[key]:
-                total += line.amount_currency
-                amount_cur += line.amount_residual_import_inv
+                    if line.journal_id.type in ['purchase_refund','sale_refund']:
+                        amount_cur -= line.amount_residual_import_inv
+                    else:
+                        amount_cur += line.amount_residual_import_inv
+                    total += line.amount_currency
             
             # Create register line
             new_lines.append({

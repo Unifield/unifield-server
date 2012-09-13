@@ -29,8 +29,6 @@ class res_company(osv.osv):
     _inherit = 'res.company'
 
     _columns = {
-        'expat_salaries_default_account': fields.many2one('account.account', string="Expat Salaries", 
-            help="Account not allowed to be changed in HQ entries import."),
         'counterpart_hq_entries_default_account': fields.many2one('account.account', string="Default counterpart", 
             help="Account that will be used as counterpart for HQ Validated Entries."),
     }

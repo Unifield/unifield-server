@@ -54,26 +54,25 @@ class account_journal(osv.osv):
 
 
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank'),
+        return [('accrual', 'Accrual'),
+                ('bank', 'Bank'),
                 ('cash','Cash'),
-                ('purchase', 'Purchase'),
-                ('correction','Correction'),
                 ('cheque', 'Cheque'),
+                ('correction','Correction'),
+                ('cur_adj', 'Currency Adjustement'),
+                ('depreciation', 'Depreciation'),
+                ('extra', 'OD-Extra Accounting'),
+                ('general', 'General'),
                 ('hq', 'HQ'),
                 ('hr', 'HR'),
-                ('accrual', 'Accrual'),
-                ('stock', 'Stock'),
-                ('depreciation', 'Depreciation'), 
-                # Old journal types: not used, but kept to
-                # not break OpenERP's demo/install data
-                ('sale', 'Sale'), 
-                ('sale_refund','Sale Refund'), 
-                ('purchase_refund','Purchase Refund'), 
-                ('general', 'General'), 
-                ('situation', 'Opening/Closing Situation'),
-                ('cur_adj', 'Currency Adjustement'),
                 ('inkind', 'In-kind Donation'),
                 ('intermission', 'Intermission'),
+                ('situation', 'Opening/Closing Situation'),
+                ('purchase', 'Purchase'),
+                ('purchase_refund','Purchase Refund'),
+                ('sale', 'Sale'),
+                ('sale_refund','Sale Refund'),
+                ('stock', 'Stock'),
         ]
     
     _columns = {
@@ -130,8 +129,20 @@ class account_journal(osv.osv):
                                                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         elif type == 'cur_adj':
-            default_dom += [('user_type.code', '=', 'expense')]
-            value['domain']['default_debit_account_id'] = default_dom
+            debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
+            credit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
+            try:
+                xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_expense')
+                debit_default_dom += [('user_type', '=', xml_id[1])]
+            except KeyError:
+                pass
+            try:
+                xml_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'account_type_income')
+                credit_default_dom += [('user_type', '=', xml_id[1])]
+            except KeyError:
+                pass
+            value['domain']['default_debit_account_id'] = debit_default_dom
+            value['domain']['default_credit_account_id'] = credit_default_dom
         return value
 
     def create(self, cr, uid, vals, context=None):

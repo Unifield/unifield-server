@@ -420,7 +420,7 @@ class res_currency(osv.osv):
         return dom
     
     def _get_partner_currency(self, cr, uid, ids, field_name, args, context=None):
-        res = []
+        res = {}
         for id in ids:
             res[id] = True
             

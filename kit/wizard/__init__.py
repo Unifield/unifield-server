@@ -24,6 +24,7 @@ import stock_partial_move
 import stock_partial_picking
 import confirm
 import kit_selection
+import kit_selection_sale
 import modify_expiry_date
 import process_to_consume
 import assign_to_kit

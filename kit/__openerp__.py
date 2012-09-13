@@ -38,6 +38,7 @@
         'wizard/stock_partial_move_view.xml',
         'wizard/confirm_view.xml',
         'wizard/kit_selection_view.xml',
+        'wizard/kit_selection_sale_view.xml',
         'wizard/modify_expiry_date_view.xml',
         'wizard/process_to_consume_view.xml',
         'wizard/assign_to_kit_view.xml',
