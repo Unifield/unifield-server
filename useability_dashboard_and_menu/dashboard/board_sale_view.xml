@@ -21,7 +21,7 @@
                 </tree>
             </field>
         </record>
-    
+
         <record id="order_action_draft" model="ir.actions.act_window">
             <field name="name">Order Waiting For Validation</field>
             <field name="res_model">sale.order</field>
@@ -30,7 +30,7 @@
             <field name="domain">[('state','=','draft'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
-    
+
         <record id="order_action_validated" model="ir.actions.act_window">
             <field name="name">Order Waiting For Sourcing</field>
             <field name="res_model">sale.order</field>
@@ -39,7 +39,16 @@
             <field name="domain">[('state','=','validated'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
-    
+
+        <record id="order_action_sourced" model="ir.actions.act_window">
+            <field name="name">Order Sourced</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','sourced'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+
         <record id="board_sales_manager_form_msf" model="ir.ui.view">
             <field name="name">board.sales.manager.form</field>
             <field name="model">board.board</field>
@@ -48,8 +57,9 @@
                 <form string="Sales Manager Dashboard">
                     <hpaned position="100">
                         <child1>
-                            <action  name="%(order_action_draft)d" string="Order Waiting For Validation"/>
-                            <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing"/>
+                            <action colspan="4" height="220" name="%(order_action_draft)d" string="Orders Waiting For Validation" width="510"/>
+                            <action colspan="4" height="220" name="%(order_action_validated)d" string="Orders Waiting For Sourcing" width="510"/>
+                            <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510"/>
                         </child1>
                     </hpaned>
                 </form>
