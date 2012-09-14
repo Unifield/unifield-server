@@ -294,7 +294,7 @@ osv.osv.need_to_push = need_to_push
 
     
 # we modify the create method such that it creates a line in ir_model_data for each creation
-old_create=orm.orm.create
+old_create=orm.create
 def create(model,cr,uid,values,context=None):
     if not context:
         context = {}
@@ -308,10 +308,10 @@ def create(model,cr,uid,values,context=None):
     
     return res_id
     
-orm.orm.create=create
+orm.create=create
 
 #to be sure to access last_modification for every record
-old_write=orm.orm.write
+old_write = orm.write
 def write(model,cr,uid,ids,values,context=None):
     if not context:
         context = {}
@@ -329,7 +329,7 @@ def write(model,cr,uid,ids,values,context=None):
     res = old_write(model, cr, uid, ids, values,context=context)
     return res
     
-orm.orm.write=write
+orm.write = write
 
 #record modification of m2o if the corresponding o2m is modified
 def modif_o2m(model,cr,uid,id,values,context=None):
