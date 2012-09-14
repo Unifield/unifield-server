@@ -29,10 +29,7 @@ class hr_job(osv.osv):
     _description = 'MSF Employee job from Homère'
 
     _columns = {
-        'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=True),
-        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=True),
-        'code': fields.char(string='Job code', size=6, readonly=True, required=True),
-        'name': fields.char(string='Employee Job', size=255, readonly=True, required=True),
+        'code': fields.char(string='Job code', size=6, readonly=True, required=False),
     }
 
 hr_job()
