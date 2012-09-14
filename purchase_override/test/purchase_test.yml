@@ -485,7 +485,7 @@
 -
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('origin', '=', 'List7')])
-    assert invoice_ids, ("No invoices generated from Purchase List")
+    assert not invoice_ids, ("Invoices generated from Purchase List. This should not because of picking invoice method!")
     for invoice in self.browse(cr, uid, invoice_ids):
       assert invoice.purchase_list, ("Purchase list isn't checked in Invoice")
 -
