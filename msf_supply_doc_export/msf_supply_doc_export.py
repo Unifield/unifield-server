@@ -136,7 +136,7 @@ class stock_cost_reevaluation_report_xls(WebKitParser):
 
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
-        a = super(stock_cost_reevaluaton_report_xls, self).create(cr, uid, ids, data, context)
+        a = super(stock_cost_reevaluation_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
 stock_cost_reevaluation_report_xls('report.stock.cost.reevaluation_xls','stock.cost.reevaluation','addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako')

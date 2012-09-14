@@ -156,15 +156,15 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         import_to_correct = True
                         error_list.append('The Product was not found in the list of the products.')
                     else:
-                        product_id = p_ids[0]
+                        product_id = product_ids[0]
                 except Exception:
                      error_list.append('The Product Description has to be a string.')
                      to_correct_ok = True
                      import_to_correct = True
 
             if not product_id:
-                if not product_code or not product_name:
-                    raise osv.except_osv(_('Error'), _('You has to fill at least the product code or the product name on each line'))
+                if not product_code or not p_name:
+                    raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
                 raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
 
             # Average cost
