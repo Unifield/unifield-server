@@ -74,7 +74,9 @@ class account_invoice_refund(osv.osv_memory):
         """
         Permits to adapt invoice creation
         """
-        if form.get('document_date', False):
+        if form.get('document_date', False) and form.get('date', False):
+            if form['date'] < form['document_date']:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
             data.update({'document_date': form['document_date']})
         return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
 
