@@ -1,6 +1,6 @@
 active,applies_to_type,direction,domain,included_fields,type_id,model_id,owner_field,name,sequence_number,forced_values,status
 TRUE,TRUE,Down,"[('category' , 'in' , ['OC', 'FREE1', 'FREE2'])]","['category', 'code', 'date', 'date_start', 'description', 'for_fx_gain_loss', 'name', 'type']",OC,account.analytic.account,,Cost Center (CC & Free 1 & 2),1,,Valid
-TRUE,TRUE,Bidirectional,[],"['code', 'cost_center_id/id', 'instance', 'level', 'mission', 'name', 'note', 'state']",OC,msf.instance,,Proprietary Instance,2,,Valid
+TRUE,TRUE,Bidirectional,[],"['code', 'cost_center_id/id', 'instance', 'level', 'reconcile_prefix', 'move_prefix', 'mission', 'name', 'note', 'state']",OC,msf.instance,,Proprietary Instance,2,,Valid
 TRUE,TRUE,Bidirectional,"[('parent_id','!=','')]",['parent_id/id'],OC,msf.instance,,Proprietary Instance Tree,3,,Valid
 TRUE,TRUE,Down,[],"['code', 'date_start', 'date_stop', 'name']",OC,account.fiscalyear,,Fiscal Year,10,,Valid
 TRUE,TRUE,Down,[],"['code', 'date_start', 'date_stop', 'fiscalyear_id/id', 'name', 'number', 'special']",OC,account.period,,Periods (TEMP),11,{'state': 'draft'},Valid
