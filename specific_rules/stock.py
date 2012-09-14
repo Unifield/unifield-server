@@ -73,11 +73,16 @@ class initial_stock_inventory(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please enter at least one line in stock inventory before confirm it.'))
 
             for inventory_line in inventory.inventory_line_id:
+                # Don't check integrity on line with no quantity
+                if inventory_line.product_qty == 0.0:
+                    inventory_line.write({'dont_move': True})
+                    continue
+
                 # Check if there is two lines with the same product and with difference average cost
                 if inventory_line.product_id.id not in product_dict:
                     product_dict.update({inventory_line.product_id.id: inventory_line.average_cost})
                 elif product_dict[inventory_line.product_id.id] != inventory_line.average_cost:
-                    raise osv.except_osv(_('Error'), _('You cannot have two lines for the same product with different average cost.'))
+                    raise osv.except_osv(_('Error'), _('You cannot have two lines for the product %s with different average cost.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id], context=context)[0][1])
                 
                 # Returns error if the line is batch mandatory or perishable without prodlot
                 if inventory_line.product_id.batch_management and not inventory_line.prodlot_name:
@@ -288,8 +293,8 @@ class initial_stock_inventory_line(osv.osv):
         If the inv line has a different average cost than the other lines with the same product
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            other_lines = self.search(cr, uid, [('id', '!=', obj.id), ('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
-            if other_lines:
+            other_lines = self.search(cr, uid, [('product_qty', '!=', 0.00), ('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
+            if other_lines and obj.product_qty != 0.00:
                 cost = self.browse(cr, uid, other_lines[0], context=context).average_cost
                 if cost != obj.average_cost:
                     raise osv.except_osv(_('Error'), _('You cannot have two lines with the product %s and different average cost.') % self.pool.get('product.product').name_get(cr, uid, [obj.product_id.id])[0][1])
