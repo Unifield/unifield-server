@@ -387,6 +387,7 @@ class sale_order(osv.osv):
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
                                                               'split_type_sale_order': fo_type,
+                                                              'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
@@ -639,6 +640,17 @@ class sale_order(osv.osv):
         # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
         return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
+
+    def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+
+        - allow to add more actions when the picking is confirmed
+        '''
+        picking_id = kwargs['pick_id']
+        res = super(sale_order, self)._hook_execute_action_assign(cr, uid, *args, **kwargs)
+        return self.pool.get('stock.picking').action_assign(cr, uid, [picking_id])
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
@@ -941,18 +953,8 @@ class sale_order_line(osv.osv):
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
 
                 # these 2 columns are for the sync module
-                'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
-                'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
+                'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
                 }
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Add the database ID of the SO line to the value sync_sol_db_id
-        '''
-        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
-
-        super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_sol_db_id': so_line_ids,} , context=context)
-        return so_line_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -1029,7 +1031,16 @@ class sale_order_line(osv.osv):
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
-        return super(sale_order_line, self).create(cr, uid, vals, context=context)
+            
+        '''
+        Add the database ID of the SO line to the value sync_order_line_db_id
+        '''
+            
+        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        if 'sync_order_line_db_id' not in vals:
+            super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': so_line_ids,} , context=context)
+            
+        return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
         """

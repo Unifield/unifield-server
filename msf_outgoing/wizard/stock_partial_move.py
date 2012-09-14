@@ -287,6 +287,21 @@ class stock_partial_move_memory_families(osv.osv_memory):
     _defaults = {'integrity_status': 'empty',
                  }
     
+    def onchange_pack_type(self, cr, uid, ids, pack_type, context=None):
+        '''
+        Update values of stock.move.memory.families from the stock_pack selected
+        '''
+        res = {}
+        p_type_obj = self.pool.get('pack.type')
+        if pack_type :
+            # if 'pack_type' is not a list, turn it into list
+            if isinstance(pack_type,(int,long)):
+                pack_type = [pack_type]
+            p_type_read = p_type_obj.read(cr, uid, pack_type, ['length', 'width', 'height'], context=context)[0]
+            length, width, height = p_type_read['length'], p_type_read['width'], p_type_read['height']
+            res.update({'value': {'length': length, 'width': width, 'height': height}})
+        return res
+    
 stock_partial_move_memory_families()
 
 

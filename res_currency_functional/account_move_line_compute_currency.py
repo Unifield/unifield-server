@@ -74,11 +74,13 @@ class account_move_line_compute_currency(osv.osv):
             raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
         journal_id = j_ids[0]
         # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
-        journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
-        if not journal.default_debit_account_id:
+        journal = j_obj.browse(cr, uid, journal_id)
+        if not journal.default_debit_account_id or not journal.default_credit_account_id:
             raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
-        addendum_line_account_id = journal.default_debit_account_id.id
-        addendum_line_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
+        addendum_line_debit_account_id = journal.default_debit_account_id.id
+        addendum_line_credit_account_id = journal.default_credit_account_id.id
+        addendum_line_debit_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
+        addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
         # Create analytic distribution if this account is an expense account
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
@@ -114,29 +116,42 @@ class account_move_line_compute_currency(osv.osv):
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
             if not search_ids:
                 raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "Fox FX gain/loss" to permit reconciliation!'))
-            # create an analytic distribution
-            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
-            # add a cost center for analytic distribution
-            distrib_line_vals = {
-                'distribution_id': distrib_id,
-                'currency_id': company_currency_id,
-                'analytic_id': search_ids[0],
-                'percentage': 100.0,
-                'date': oldiest_date or current_date,
-                'source_date': oldiest_date or current_date,
-                'destination_id': addendum_line_account_default_destination_id,
-            }
-            cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
-            # add a funding pool line for analytic distribution
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            if not fp_id:
-                raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
-            distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0], 
-                'destination_id': addendum_line_account_default_destination_id,})
-            self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+            # Prepare some values
+            partner_db = partner_cr = addendum_db = addendum_cr = None
+            if total < 0.0:
+                # data for partner line
+                partner_db = addendum_cr = abs(total)
+                addendum_line_account_id = addendum_line_credit_account_id
+                addendum_line_account_default_destination_id = addendum_line_credit_account_default_destination_id
+            # Conversely some amount is missing @credit for partner
+            else:
+                partner_cr = addendum_db = abs(total)
+                addendum_line_account_id = addendum_line_debit_account_id
+                addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
+            # create an analytic distribution if addendum_line_account_id is an expense account
+            account = self.pool.get('account.account').browse(cr, uid, addendum_line_account_id)
+            if account and account.user_type and account.user_type.code == 'expense':
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
+                # add a cost center for analytic distribution
+                distrib_line_vals = {
+                    'distribution_id': distrib_id,
+                    'currency_id': company_currency_id,
+                    'analytic_id': search_ids[0],
+                    'percentage': 100.0,
+                    'date': oldiest_date or current_date,
+                    'source_date': oldiest_date or current_date,
+                    'destination_id': addendum_line_account_default_destination_id,
+                }
+                cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+                # add a funding pool line for analytic distribution
+                try:
+                    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    fp_id = 0
+                if not fp_id:
+                    raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
+                distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0],})
+                self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             
             move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
             # Create default vals for the new two move lines
@@ -157,13 +172,6 @@ class account_move_line_compute_currency(osv.osv):
                 'currency_id': currency_id,
                 #'functional_currency_id': functional_currency_id,
             }
-            partner_db = partner_cr = addendum_db = addendum_cr = None
-            if total < 0.0:
-                # data for partner line
-                partner_db = addendum_cr = abs(total)
-            # Conversely some amount is missing @credit for partner
-            else:
-                partner_cr = addendum_db = abs(total)
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
             partner_line_id = self.create(cr, uid, vals, context=context)
@@ -192,6 +200,21 @@ class account_move_line_compute_currency(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         reconciled_obj = self.pool.get('account.move.reconcile')
+        al_obj = self.pool.get('account.analytic.line')
+        # Search Miscellaneous Transactions journal
+        j_obj = self.pool.get('account.journal')
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], order='id', context=context)
+        if not j_ids:
+            raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
+        journal_id = j_ids[0]
+        # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
+        journal = j_obj.browse(cr, uid, journal_id)
+        if not journal.default_debit_account_id or not journal.default_credit_account_id:
+            raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
+        addendum_line_debit_account_id = journal.default_debit_account_id.id
+        addendum_line_credit_account_id = journal.default_credit_account_id.id
+        addendum_line_debit_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
+        addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
         # Check line state
         for reconciled in reconciled_obj.browse(cr, uid, ids, context=context):
             # Search addendum line
@@ -207,8 +230,12 @@ class account_move_line_compute_currency(osv.osv):
                 partner_db = partner_cr = addendum_db = addendum_cr = None
                 if total < 0.0:
                     partner_cr = addendum_db = abs(total)
+                    addendum_line_account_id = addendum_line_credit_account_id
+                    addendum_line_account_default_destination_id = addendum_line_credit_account_default_destination_id
                 else:
                     partner_db = addendum_cr = abs(total)
+                    addendum_line_account_id = addendum_line_debit_account_id
+                    addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
                 for al in self.browse(cr, uid, addendum_line_ids, context=context):
                     # search other line from same move in order to update its amount
                     other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
@@ -224,8 +251,21 @@ class account_move_line_compute_currency(osv.osv):
                         other_line_ids = [other_line_ids]
                     cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple(other_line_ids)])
                     # Update analytic lines
-                    analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                    self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total}, context=context)
+                    analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
+                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total,}, context=context)
+                    # Update Addendum line that's not reconciled
+                    addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
+                    if not addendum_counterpart_ids:
+                        continue
+                    counterpart_sql = """
+                        UPDATE account_move_line
+                        SET account_id=%s
+                        WHERE id=%s
+                    """
+                    cr.execute(counterpart_sql, [addendum_line_account_id, tuple(addendum_counterpart_ids)])
+                    # then update their analytic lines with default destination
+                    analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', addendum_counterpart_ids)])
+                    al_obj.write(cr, uid, analytic_line_ids, {'general_account_id': addendum_line_account_id, 'destination_id': addendum_line_account_default_destination_id,})
             else:
                 # Search all lines that have same reconcile_id
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)

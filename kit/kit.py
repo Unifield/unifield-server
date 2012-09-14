@@ -1357,7 +1357,7 @@ class purchase_order_line(osv.osv):
             # - the product is a kit AND
             # - at least one theoretical kit exists for this product - is displayed anyway, because the user can now add products not from the theoretical template
             product = obj.product_id
-            if product.type == 'product' and product.subtype == 'kit':
+            if product and product.type == 'product' and product.subtype == 'kit':
                 result[obj.id].update({'kit_pol_check': True})
 #                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
 #                if kit_ids:
@@ -1368,3 +1368,62 @@ class purchase_order_line(osv.osv):
                 }
 
 purchase_order_line()
+
+
+class sale_order_line(osv.osv):
+    '''
+    add theoretical de-kitting capabilities
+    '''
+    _inherit = 'sale.order.line'
+    
+    def de_kitting(self, cr, uid, ids, context=None):
+        '''
+        open theoretical kit selection
+        '''
+        if context is None:
+            context = {}
+        # data
+        name = _("Replacement Items Selection from Sale Order")
+        model = 'kit.selection.sale'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # this purchase order line replacement function can only be used when the po is in state ('confirmed', 'Validated'),
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.so_state_stored not in ['draft', 'validated']:
+                raise osv.except_osv(_('Warning !'), _('Sale order line kit replacement with components function is only available for Draft and Validated states.'))
+        # open the selected wizard
+        data = self.read(cr, uid, ids, ['product_id'], context=context)[0]
+        product_id = data['product_id'][0]
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context,
+                                                                                                product_id=product_id))
+        return res
+
+    def _vals_get_kit(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        kit_obj = self.pool.get('composition.kit')
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {'kit_pol_check_sale_order_line': False}
+            # we want the possibility to explose the kit within the purchase order
+            # - the product is a kit AND
+            # - at least one theoretical kit exists for this product - is displayed anyway, because the user can now add products not from the theoretical template
+            product = obj.product_id
+            if product and product.type == 'product' and product.subtype == 'kit':
+                result[obj.id].update({'kit_pol_check_sale_order_line': True})
+#                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
+#                if kit_ids:
+#                    result[obj.id].update({'kit_pol_check_sale_order_line': True})
+        return result
+    
+    _columns = {'kit_pol_check_sale_order_line' : fields.function(_vals_get_kit, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals_kit', store=False),
+                }
+
+sale_order_line()

@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,9 +21,16 @@
 #
 ##############################################################################
 
-import account_move_line
-import account_model
-import account_use_model
-import account_subscription
+from osv import osv
+from osv import fields
 
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = 'account.account'
+
+    _columns = {
+        'is_not_hq_correctible': fields.boolean("Can not be corrected on HQ entries", help='If checked, this attribute will prevent user from correcting the expense account on the entry imported from HQ system'),
+    }
+
+account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

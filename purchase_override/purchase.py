@@ -1046,8 +1046,10 @@ stock moves which are already processed : '''
                 'company_id': order.company_id.id,
                 'move_lines' : [],
             }
-            
-            if order.order_type in ('regular', 'purchase_list', 'direct'):
+
+            if order.order_type in ('regular', 'purchase_list', 'direct') and order.partner_id.partner_type in ('internal', 'intermission', 'section', 'esc'):
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+            elif order.order_type in ('regular', 'purchase_list', 'direct'):
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
             if order.order_type == 'loan':
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
@@ -1060,7 +1062,7 @@ stock moves which are already processed : '''
                 
             if reason_type_id:
                 picking_values.update({'reason_type_id': reason_type_id})
-            
+
             picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
             for order_line in order.order_line:
@@ -1267,7 +1269,7 @@ stock moves which are already processed : '''
                   'confirmed_delivery_date', 'nomenclature_description', 'default_code', 
                   'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
                   'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
-                  'to_correct_ok', 'text_error', 'sync_sol_db_id', 'sync_pol_db_id',
+                  'to_correct_ok', 'text_error', 
                   'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 
                   'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
                   'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id']
@@ -1547,10 +1549,10 @@ class purchase_order_line(osv.osv):
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
-        # add the database Id to the sync_pol_db_id
+        # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        if 'sync_pol_db_id' not in vals:
-            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_pol_db_id': po_line_id}, context=context)
+        if 'sync_order_line_db_id' not in vals:
+            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': po_line_id}, context=context)
 
         return po_line_id
 
@@ -1690,8 +1692,8 @@ class purchase_order_line(osv.osv):
         'old_price_unit': fields.float(digits=(16,2), string='Old price'),
         'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
 
-        'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
-        'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
+        'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
+        
     }
 
     _defaults = {

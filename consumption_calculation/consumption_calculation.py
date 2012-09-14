@@ -1158,6 +1158,8 @@ class product_product(osv.osv):
         loss_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
         discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        return_good_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
 
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
@@ -1194,7 +1196,7 @@ class product_product(osv.osv):
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
-            if move.reason_type_id.id == return_id and move.location_id.usage == 'customer':
+            if move.reason_type_id.id in (return_id, return_good_id, replacement_id) and move.location_id.usage == 'customer':
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             elif move.location_dest_id.usage == 'customer':
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
