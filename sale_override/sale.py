@@ -240,6 +240,19 @@ class sale_order(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+
+        yy = time.strftime('%y',time.localtime())
+        if context.get('__copy_data_seen',False) and context.get('procurement_request',False):
+            order_ref = yy+'/'+vals.get('name','')
+            vals.update({'name': order_ref})
+
+        elif context.get('__copy_data_seen',False) and not context.get('procurement_request',False):
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            instance_code = company and company.instance_id and company.instance_id.code or ''
+            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+            vals.update({'name': order_ref})
+
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True

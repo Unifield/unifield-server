@@ -12,7 +12,7 @@
                     	<field name="creator" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     	<field name="creation_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     	<field name="requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="name"  />
+                        <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="sale_order_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />

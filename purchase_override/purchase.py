@@ -133,7 +133,7 @@ class purchase_order(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'date_order':fields.date(string='Creation Date', readonly=True, required=True,
                             states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
-        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'draft':[('readonly',True)], 'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
+        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'confirmed': [('readonly',False)]}),
@@ -1118,6 +1118,20 @@ stock moves which are already processed : '''
         """
         if not context:
             context = {}
+
+        if context.get('__copy_data_seen',False) and not context.get('request_for_quotation',False):
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            instance_code = company and company.instance_id and company.instance_id.code or ''
+            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+            vals.update({'name': order_ref})
+
+        if vals.get('tender_id',False):
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+vals.get('name','')
+            vals.update({'name': order_ref})
+
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True

@@ -28,7 +28,7 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'not in', [])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
                     </xpath>
 
                     <xpath expr="/form//field[@name='partner_id']" position="replace">

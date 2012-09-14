@@ -30,14 +30,16 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
-                    <group col="6" colspan="4" name="header" >
-                        <field name="name" attrs="{'readonly': [('state', 'not in', [])]}"/>
-                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="requestor"  attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
+
+                    <group col="6" colspan="4" name="header" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
+                        <field name="name"/>
+                        <field name="date_order" />
+                        <field name="warehouse_id" widget="selection" />
+                        <field name="requestor"  />
+                        <field name="delivery_requested_date" required="1" string="Requested date" />
+                        <field name="origin" />
                     </group>
+
                     <notebook colspan="5">
                         <page string="Products">
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">

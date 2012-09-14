@@ -112,6 +112,23 @@ class tender(osv.osv):
     
     _order = 'name desc'
 
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the line number to 0
+        '''
+        if context.get('__copy_data_seen',False):
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            instance_code = company and company.instance_id and company.instance_id.code or ''
+            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+            vals.update({'name': order_ref})
+
+        if self._name == 'purchase.order.merged.line':
+            vals.update({'line_number': 0})
+        return super(tender, self).create(cr, uid, vals, context=context)
+
     def get_hq(self, cr, uid, parent, context=None):
         if parent:
             check = self.get_hq(cr, uid, parent.parent_id)

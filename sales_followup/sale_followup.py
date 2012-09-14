@@ -812,11 +812,21 @@ class request_for_quotation(osv.osv):
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(request_for_quotation, self).default_get(cr, uid, fields, context=context)
+
         if res.get('rfq_ok',False):
             yy = time.strftime('%y',time.localtime())
             order_ref = yy+'/'+res.get('name','')
             res.update({'name': order_ref})
+
         return res
+
+    def create(self, cr, uid, vals, context=None):
+        if context.get('__copy_data_seen',False) and context.get('request_for_quotation',False):
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+vals.get('name','')
+            vals.update({'name': order_ref})
+        return super(request_for_quotation, self).create(cr, uid, vals, context=context)
+
     
 request_for_quotation()
 
