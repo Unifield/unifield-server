@@ -293,8 +293,8 @@ class initial_stock_inventory_line(osv.osv):
         If the inv line has a different average cost than the other lines with the same product
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            other_lines = self.search(cr, uid, [('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
-            if other_lines:
+            other_lines = self.search(cr, uid, [('product_qty', '!=', 0.00), ('inventory_id', '=', obj.inventory_id.id), ('product_id', '=', obj.product_id.id)], context=context)
+            if other_lines and obj.product_qty != 0.00:
                 cost = self.browse(cr, uid, other_lines[0], context=context).average_cost
                 if cost != obj.average_cost:
                     return False
