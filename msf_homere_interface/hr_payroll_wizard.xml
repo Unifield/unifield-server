@@ -145,7 +145,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Import Expats">
-                    <label string="This will import Expat employees from an XML file." colspan="4"/>
+                  <label string="This wizard will import an XML Expat employees file from Microsoft Office 2003 Suite. To generate this file, please open Excel 2003, create a Speadsheet with 2 columns: 'Name' and 'Code'. Complete lines with name and code of each employee. Then go to 'File' > 'Save as…' and save file as 'Speadsheet 2003 (xml)'. You can now take the result file and import it here." colspan="4"/>
                     <newline/>
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>
