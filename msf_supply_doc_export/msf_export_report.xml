@@ -76,5 +76,18 @@
             menu="True"
          />
 
+     <!-- STOCK COST REEVALUATION-->
+        <report
+            id="report_stock_cost_reevaluation_xls"
+            string="Cost Reevaluation Excel Export"
+            model="stock.cost.reevaluation"
+            name="stock.cost.reevaluation_xls"
+            file="msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
     </data>
 </openerp>
