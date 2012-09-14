@@ -106,8 +106,8 @@
             <field name="arch" type="xml">
                 <field name="period" position="replace"/>
                 <field name="date" position="replace">
-                    <field name="date" on_change="onchange_date(date)"/>
                     <field name="document_date"/>
+                    <field name="date" on_change="onchange_date(date)"/>
                 </field>
             </field>
         </record>

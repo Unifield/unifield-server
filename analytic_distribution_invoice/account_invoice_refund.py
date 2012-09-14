@@ -29,6 +29,7 @@ class account_invoice_refund(osv.osv_memory):
     _inherit = 'account.invoice.refund'
     
     _columns = {
+        'date': fields.date('Posting date'),
         'document_date': fields.date('Document Date', required=True),
     }
     
