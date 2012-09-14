@@ -440,7 +440,7 @@
     name: List7
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
-    invoice_method: order
+    invoice_method: picking
     location_id: stock.stock_location_stock
     partner_address_id: localmarket_addr
     partner_id: localmarket
