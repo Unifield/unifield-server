@@ -81,6 +81,7 @@ class stock_mission_report(osv.osv):
                                         string='Is a local report ?', help='If the report is a local report, it will be updated periodically'),
         'report_line': fields.one2many('stock.mission.report.line', 'mission_report_id', string='Lines'),
         'last_update': fields.datetime(string='Last update'),
+        'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
     }
     
     _defaults = {
@@ -96,7 +97,7 @@ class stock_mission_report(osv.osv):
         local_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         
         # Not update lines for full view or non local reports
-        if (vals.get('instance_id', False) and vals['instance_id'] != local_instance_id) or not vals.get('full_view', False):
+        if vals.get('instance_id', False) and vals['instance_id'] == local_instance_id and not vals.get('full_view', False):
             if not context.get('no_update', False):
                 self.update(cr, uid, res, context=context)
         
@@ -114,8 +115,9 @@ class stock_mission_report(osv.osv):
         return {'type': 'ir.actions.act_window_close'}
     
     def update_newthread(self, cr, uid, ids=[], context=None):
-        # Open a new cursor : Don't forget to close it at the end of method   
+        # Open a new cursor : Don't forget to close it at the end of method
         cr = pooler.get_db(cr.dbname).cursor()
+        a = time.strftime('%H-%M-%S')
         try:
             self.update(cr, uid, ids=[], context=None)
             cr.commit()
@@ -134,12 +136,12 @@ class stock_mission_report(osv.osv):
         
         line_obj = self.pool.get('stock.mission.report.line')
         
-        product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
         report_ids = self.search(cr, uid, [('local_report', '=', True)], context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         line_ids = []
         
+        # Create a local report if no exist
         if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
             c = context.copy()
             c.update({'no_update': True})
@@ -147,6 +149,7 @@ class stock_mission_report(osv.osv):
                                                'instance_id': instance_id.id,
                                                'full_view': False}, context=c)]
 
+        # Create a full view report if no exist
         if not full_report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
             c = context.copy()
             c.update({'no_update': True})
@@ -160,30 +163,28 @@ class stock_mission_report(osv.osv):
 
         # Check in each report if new products are in the database and not in the report
         for report in self.browse(cr, uid, report_ids, context=context):
+            # Create one line by product
+            cr.execute('''SELECT id FROM product_product
+                        EXCEPT
+                          SELECT product_id FROM stock_mission_report_line WHERE mission_report_id = %s''' % report.id)
+            for product in cr.fetchall():
+                line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report.id}, context=context))
+            
             # Don't update lines for full view or non local reports
             if not report.local_report:
                 continue
-            
-            product_in_report = []
-            if report.report_line:
-                for line in report.report_line:
-                    line_ids.append(line.id)
-                    product_in_report.append(line.product_id.id)
-        
-            # Difference between product list and products in report
-            product_diff = filter(lambda x:x not in product_in_report, product_ids)
-            for product in product_diff:
-                line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report.id}, context=context))
         
             # Update the update date on report
             self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                
-        if context.get('update_full_report'):
-            line_obj.update_full_view_line(cr, uid, line_ids, context=context)
-        else:
-            # Update all lines
-            line_obj.update(cr, uid, line_ids, context=context)
-
+            if context.get('update_full_report'):
+                full_view = self.search(cr, uid, [('full_view', '=', True)])
+                if full_view:
+                    line_ids = line_obj.search(cr, uid, [('mission_report_id', 'in', full_view)])
+                    line_obj.update_full_view_line(cr, uid, line_ids, context=context)
+            elif not report.full_view:
+                # Update all lines
+                self.update_lines(cr, uid, [report.id])
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
@@ -191,6 +192,120 @@ class stock_mission_report(osv.osv):
             c.update({'update_full_report': True})
             self.update(cr, uid, [], context=c)
 
+        return True
+    
+    def update_lines(self, cr, uid, ids, context=None):
+        location_obj = self.pool.get('stock.location')
+        data_obj = self.pool.get('ir.model.data')
+        line_obj = self.pool.get('stock.mission.report.line')
+        product_obj = self.pool.get('product.product')
+        # Search considered SLocation
+        stock_location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
+        if stock_location_id:
+            stock_location_id = stock_location_id[1]
+        internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
+        central_loc = location_obj.search(cr, uid, [('central_location_ok', '=', True)], context=context)
+        cross_loc = location_obj.search(cr, uid, [('cross_docking_location_ok', '=', True)], context=context)
+        stock_loc = location_obj.search(cr, uid, [('location_id', 'child_of', stock_location_id),
+                                                  ('id', 'not in', cross_loc),
+                                                  ('central_location_ok', '=', False)], context=context)
+        cu_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')], context=context)
+        secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+        if secondary_location_id:
+            secondary_location_id = secondary_location_id[1]
+        secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
+        
+        cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
+        central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
+        
+        # Check if the instance is a coordination or a project
+        coordo_id = False
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        coordo = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
+        if company.instance_id.level == 'project' and coordo:
+            coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
+        
+        for id in ids:
+            # In-Pipe moves
+            cr.execute('''SELECT m.product_id, m.product_qty, m.product_uom, p.name, m.id
+                          FROM stock_move m
+                              LEFT JOIN stock_picking s ON m.picking_id = s.id
+                              LEFT JOIN res_partner p ON s.partner_id2 = p.id
+                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')''')
+            
+            in_pipe_moves = cr.fetchall()
+            for product_id, qty, uom, partner, move_id in in_pipe_moves:
+                line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
+                                                    ('mission_report_id', '=', id)])
+                if line_id:
+                    line = line_obj.browse(cr, uid, line_id[0])
+                    if uom != line.product_id.uom_id.id:
+                        qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
+                        
+                    vals = {'in_pipe_qty': 0.00,
+                            'in_pipe_coor_qty': 0.00,
+                            'updated': True}
+                    
+                    vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
+                    
+                    if partner == coordo_id:
+                        vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+
+                    line_obj.write(cr, uid, line.id, vals)
+            
+            # All other moves
+            cr.execute('''
+                        SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
+                        FROM stock_move 
+                        WHERE state = 'done'
+                        AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
+            ''' % (id))
+            res = cr.fetchall()
+            for move in res:
+                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' % (id, move[0]))
+                product = product_obj.browse(cr, uid, move[1])
+                line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
+                                                    ('mission_report_id', '=', id)])
+                if line_id:
+                    line = line_obj.browse(cr, uid, line_id[0])
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
+                    vals = {'internal_qty': line.internal_qty,
+                            'stock_qty': line.stock_qty,
+                            'central_qty': line.central_qty,
+                            'cross_qty': line.cross_qty,
+                            'secondary_qty': line.secondary_qty,
+                            'cu_qty': line.cu_qty,
+                            'updated': True}
+                    
+                    if move[4] in internal_loc:
+                        vals['internal_qty'] = vals['internal_qty'] - qty
+                    if move[4] in stock_loc:
+                        vals['stock_qty'] = vals['stock_qty'] - qty
+                    if move[4] in central_loc:
+                        vals['central_qty'] = vals['central_qty'] - qty
+                    if move[4] in cross_loc:
+                        vals['cross_qty'] = vals['cross_qty'] - qty
+                    if move[4] in secondary_location_ids:
+                        vals['secondary_qty'] = vals['secondary_qty'] - qty
+                    if move[4] in cu_loc:
+                        vals['cu_qty'] = vals['cu_qty'] - qty
+                        
+                    if move[5] in internal_loc:
+                        vals['internal_qty'] = vals['internal_qty'] + qty
+                    if move[5] in stock_loc:
+                        vals['stock_qty'] = vals['stock_qty'] + qty
+                    if move[5] in central_loc:
+                        vals['central_qty'] = vals['central_qty'] + qty
+                    if move[5] in cross_loc:
+                        vals['cross_qty'] = vals['cross_qty'] + qty
+                    if move[5] in secondary_location_ids:
+                        vals['secondary_qty'] = vals['secondary_qty'] + qty
+                    if move[5] in cu_loc:
+                        vals['cu_qty'] = vals['cu_qty'] + qty
+
+                    vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
+                    line_obj.write(cr, uid, line.id, vals)
+                
         return True
                 
     
@@ -200,6 +315,7 @@ stock_mission_report()
 class stock_mission_report_line(osv.osv):
     _name = 'stock.mission.report.line'
     _description = 'Mission stock report line'
+    _order = 'default_code'
     
     def _get_product_type_selection(self, cr, uid, context=None):
         return self.pool.get('product.template').PRODUCT_TYPE
@@ -237,10 +353,24 @@ class stock_mission_report_line(osv.osv):
     
     def _get_template(self, cr, uid, ids, context=None):
         return self.pool.get('stock.mission.report.line').search(cr, uid, [('product_id.product_tmpl_id', 'in', ids)], context=context)
+
+    def _get_wh_qty(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.stock_qty + line.central_qty
+
+        return res
+
+    def _get_internal_val(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.internal_qty * line.cost_price
+
+        return res
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True),
-        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char'),
+        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
@@ -270,265 +400,101 @@ class stock_mission_report_line(osv.osv):
         'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-        'product_amc': fields.float(digits=(16, 2), string='AMC'),
-        'reviewed_consumption': fields.float(digits=(16, 2), string='FMC'),
+        'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
+        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
                                 store={'product.template': (_get_template, ['type'], 10)}),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
-        'internal_qty': fields.float(digits=(16, 2), string='Internal Qty.'),
-        'internal_val': fields.float(digits=(16, 2), string='Internal Val.'),
-        'stock_qty': fields.float(digits=(16, 2), string='Stock Qty.'),
-        'stock_val': fields.float(digits=(16, 2), string='Stock Val.'),
-        'central_qty': fields.float(digits=(16, 2), string='Central Stock Qty.'),
-        'central_val': fields.float(digits=(16, 2), string='Central Stock Val.'),
-        'cross_qty': fields.float(digits=(16, 3), string='Cross-docking Qty.'),
-        'cross_val': fields.float(digits=(16, 3), string='Cross-docking Val.'),
-        'secondary_qty': fields.float(digits=(16, 2), string='Secondary Stock Qty.'),
-        'secondary_val': fields.float(digits=(16, 2), string='Secondary Stock Val.'),
-        'cu_qty': fields.float(digits=(16, 2), string='Internal Cons. Unit Qty.'),
-        'cu_val': fields.float(digits=(16, 2), string='Internal Cons. Unit Val.'),
-        'in_pipe_qty': fields.float(digits=(16, 2), string='In Pipe Qty.'),
-        'in_pipe_val': fields.float(digits=(16, 2), string='In Pipe Val.'),
-        'in_pipe_coor_qty': fields.float(digits=(16, 2), string='In Pipe from Coord.'),
-        'in_pipe_coor_val': fields.float(digits=(16, 2), string='In Pipe from Coord.'),
+        'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
+        'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
+        #'internal_val': fields.float(digits=(16,2), string='Instance Stock Val.'),
+        'stock_qty': fields.float(digits=(16,2), string='Stock Qty.'),
+        'stock_val': fields.float(digits=(16,2), string='Stock Val.'),
+        'central_qty': fields.float(digits=(16,2), string='Unallocated Stock Qty.'),
+        'central_val': fields.float(digits=(16,2), string='Unallocated Stock Val.'),
+        'wh_qty': fields.function(_get_wh_qty, method=True, type='float', string='Warehouse stock', store=False),
+        'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
+        'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
+        'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.'),
+        'secondary_val': fields.float(digits=(16,2), string='Secondary Stock Val.'),
+        'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.'),
+        'cu_val': fields.float(digits=(16,2), string='Internal Cons. Unit Val.'),
+        'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.'),
+        'in_pipe_val': fields.float(digits=(16,2), string='In Pipe Val.'),
+        'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.'),
+        'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.'),
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
+        'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Noves'),
     }
-    
-    def _get_request(self, cr, uid, location_ids, product_id):
-        '''
-        Browse the good values and give the result
-        '''
-        obj = self.pool.get('report.stock.move')
-        
-        if isinstance(location_ids, (int, long)):
-            location_ids = [location_ids]
-            
-        if not isinstance(product_id, (int, long)):
-            raise osv.except_osv(_('Error'), _('You can\'t build the request for some products !'))
-        
-        minus_ids = obj.search(cr, uid, [('location_id', 'in', location_ids),
-                                         ('product_id', '=', product_id),
-                                         ('state', '=', 'done')])
-        
-        plus_ids = obj.search(cr, uid, [('location_dest_id', 'in', location_ids),
-                                        ('product_id', '=', product_id),
-                                        ('state', '=', 'done')])
-        
-        res = 0.00
-        for r in obj.browse(cr, uid, plus_ids):
-            res += r.product_qty
-        for r in obj.browse(cr, uid, minus_ids):
-            res -= r.product_qty
-            
-        return res
 
     def update_full_view_line(self, cr, uid, ids, context=None):
-        for line in self.browse(cr, uid, ids, context=context):
-            line_ids = self.search(cr, uid, [('mission_report_id', '!=', line.mission_report_id.id), ('product_id', '=', line.product_id.id)], context=context)
-            lines = self.browse(cr, uid, line_ids, context=context)
-    
-            internal_qty = 0.00
-            internal_val = 0.00
-            stock_qty = 0.00
-            stock_val = 0.00
-            central_qty = 0.00
-            central_val = 0.00
-            cross_qty = 0.00
-            cross_val = 0.00
-            secondary_qty = 0.00
-            secondary_val = 0.00
-            cu_qty = 0.00
-            cu_val = 0.00
-            in_pipe_qty = 0.00
-            in_pipe_val = 0.00
-            in_pipe_not_coor_qty = 0.00
-            in_pipe_not_coor_val = 0.00
+        is_project = False
+        if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
+            is_project = True
 
-            is_project = False
-            if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
-                is_project = True
-    
-            for l in lines:
-                internal_qty += l.internal_qty
-                internal_val += l.internal_val
-                stock_qty += l.stock_qty
-                stock_val += l.stock_val
-                central_qty += l.central_qty
-                central_val += l.central_val
-                cross_qty += l.cross_qty
-                cross_val += l.cross_val
-                secondary_qty += l.secondary_qty
-                secondary_val += l.secondary_val
-                cu_qty += l.cu_qty
-                cu_val += l.cu_val
-                in_pipe_qty += l.in_pipe_qty
-                in_pipe_val += l.in_pipe_val
-                in_pipe_not_coor_qty += l.in_pipe_coor_qty
-                in_pipe_not_coor_val += l.in_pipe_coor_qty
 
+        request = '''SELECT l.product_id AS product_id,
+                            sum(l.internal_qty) AS internal_qty,
+                            sum(l.stock_qty) AS stock_qty,
+                            sum(l.central_qty) AS central_qty,
+                            sum(l.cross_qty) AS cross_qty,
+                            sum(l.secondary_qty) AS secondary_qty,
+                            sum(l.cu_qty) AS cu_qty,
+                            sum(l.in_pipe_qty) AS in_pipe_qty,
+                            sum(l.in_pipe_coor_qty) AS in_pipe_coor_qty,
+                            sum(l.internal_qty)*t.standard_price AS internal_val
+                     FROM stock_mission_report_line l
+                       LEFT JOIN 
+                          stock_mission_report m 
+                       ON l.mission_report_id = m.id
+                       LEFT JOIN
+                          product_product p 
+                       ON l.product_id = p.id
+                       LEFT JOIN
+                          product_template t
+                       ON p.product_tmpl_id = t.id
+                     WHERE m.full_view = False 
+                       AND (l.internal_qty != 0.00
+                       OR l.stock_qty != 0.00
+                       OR l.central_qty != 0.00
+                       OR l.cross_qty != 0.00
+                       OR l.secondary_qty != 0.00
+                       OR l.cu_qty != 0.00
+                       OR l.in_pipe_qty != 0.00
+                       OR l.in_pipe_coor_qty != 0.00)
+                     GROUP BY l.product_id, t.standard_price'''
+
+        cr.execute(request)
+
+        vals = cr.fetchall()
+        mission_report_id = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', True)], context=context)
+        for line in vals:
+            line_ids = self.search(cr, uid, [('mission_report_id.full_view', '=', True), ('product_id', '=', line[0])], context=context)
+            if not line_ids:
+                if not mission_report_id:
+                    continue
+                line_id = self.create(cr, uid, {'mission_report_id': mission_report_id[0],
+                                                'product_id': line[0]}, context=context)
+            else:
+                line_id = line_ids[0]
+            
+            in_pipe = line[7] or 0.00
             if not is_project:
-                in_pipe_qty = in_pipe_qty - in_pipe_not_coor_qty
-                in_pipe_val = in_pipe_val - in_pipe_not_coor_val
+                in_pipe = (line[7] or 0.00) - (line[8] or 0.00)
 
-            self.write(cr, uid, [line.id], {'product_amc': line.product_id.product_amc,
-                                            'reviewed_consumption': line.product_id.reviewed_consumption,
-                                            'internal_qty': internal_qty,
-                                            'internal_val': internal_val,
-                                            'stock_qty': stock_qty,
-                                            'stock_val': stock_val,
-                                            'central_qty': central_qty,
-                                            'central_val': central_val,
-                                            'cross_qty': cross_qty,
-                                            'cross_val': cross_val,
-                                            'secondary_qty': secondary_qty,
-                                            'secondary_val': secondary_val,
-                                            'cu_qty': cu_qty,
-                                            'cu_val': cu_val,
-                                            'in_pipe_qty': in_pipe_qty,
-                                            'in_pipe_val': in_pipe_val,
-                                            'in_pipe_coor_qty': in_pipe_not_coor_qty,
-                                            'in_pipe_coor_val': in_pipe_not_coor_val}, context=context)
+            self.write(cr, uid, [line_id], {'internal_qty': line[1] or 0.00,
+                                            'internal_val': line[9] or 0.00,
+                                            'stock_qty': line[2] or 0.00,
+                                            'central_qty': line[3] or 0.00,
+                                            'cross_qty': line[4] or 0.00,
+                                            'secondary_qty': line[5] or 0.00,
+                                            'cu_qty': line[6] or 0.00,
+                                            'in_pipe_qty': line[7] or 0.00,
+                                            'in_pipe_coor_qty': line[8] or 0.00,}, context=context)
             
-        return True
-    
-    def update(self, cr, uid, ids, context=None):
-        '''
-        Update line values
-        '''
-        if not context:
-            context = {}
-            
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        
-        location_obj = self.pool.get('stock.location')
-        data_obj = self.pool.get('ir.model.data')
-        
-        stock_location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
-        if stock_location_id:
-            stock_location_id = stock_location_id[1]
-            
-        # Check if the instance is a coordination or a project
-        coordo_id = False
-        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        coordo = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        if company.instance_id.level == 'project' and coordo:
-            coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
-        
-        # Search considered SLocation
-        internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
-        central_loc = location_obj.search(cr, uid, [('central_location_ok', '=', True)], context=context)
-        cross_loc = location_obj.search(cr, uid, [('cross_docking_location_ok', '=', True)], context=context)
-        stock_loc = location_obj.search(cr, uid, [('location_id', 'child_of', stock_location_id),
-                                                  ('id', 'not in', cross_loc),
-                                                  ('central_location_ok', '=', False)], context=context)
-        cu_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')], context=context)
-        secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
-        if secondary_location_id:
-            secondary_location_id = secondary_location_id[1]
-        secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
-        
-        for line in self.browse(cr, uid, ids, context=context):
-            # In case of full report
-            if line.mission_report_id.full_view:
-                continue
-            
-            standard_price = line.product_id.standard_price
-            # Internal locations
-            internal_qty = 0.00
-            internal_val = 0.00
-            if internal_loc:
-                internal_qty = self._get_request(cr, uid, internal_loc, line.product_id.id)
-                internal_val = internal_qty * standard_price
-            
-            # Stock locations
-            stock_qty = 0.00
-            stock_val = 0.00
-            if stock_loc:
-                stock_qty = self._get_request(cr, uid, stock_loc, line.product_id.id)
-                stock_val = stock_qty * standard_price                                                    
-            
-            # Central stock locations
-            central_qty = 0.00
-            central_val = 0.00
-            if central_loc:
-                central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
-                central_qty = self._get_request(cr, uid, central_loc, line.product_id.id)
-                central_val = central_qty * standard_price
-            
-            # Cross-docking locations
-            cross_qty = 0.00
-            cross_val = 0.00
-            if cross_loc:
-                cross_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cross_loc)], context=context)
-                cross_qty = self._get_request(cr, uid, cross_loc, line.product_id.id)
-                cross_val = cross_qty * standard_price
-
-            # Secondary stock locations
-            secondary_qty = 0.00
-            secondary_val = 0.00
-            if secondary_location_ids != False:
-                secondary_qty = self._get_request(cr, uid, secondary_location_ids, line.product_id.id)
-                secondary_val = secondary_qty * standard_price
-                
-            # Consumption unit locations
-            cu_qty = 0.00
-            cu_val = 0.00
-            if cu_loc:
-                cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
-                cu_qty = self._get_request(cr, uid, cu_loc, line.product_id.id)
-                cu_val = cu_qty * standard_price
-                
-            # In Pipe
-            in_pipe_qty = 0.00
-            in_pipe_not_coord_qty = 0.00
-            cr.execute('''SELECT m.product_qty, m.product_uom, p.name
-                          FROM stock_move m 
-                              LEFT JOIN stock_picking s ON m.picking_id = s.id
-                              LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE m.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
-                              AND m.product_id = %s''' % line.product_id.id)
-            moves = cr.fetchall()
-            for qty, uom, partner in moves:
-                if uom != line.product_id.uom_id.id:
-                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
-                
-                in_pipe_qty += qty
-                if partner == coordo_id:
-                    in_pipe_not_coord_qty += qty
-            
-            in_pipe_val = in_pipe_qty * standard_price
-            in_pipe_not_coord_val = in_pipe_not_coord_qty * standard_price
-            
-            values = {'product_amc': line.product_id.product_amc,
-                      'reviewed_consumption': line.product_id.reviewed_consumption,
-                      'internal_qty': internal_qty,
-                      'internal_val': internal_val,
-                      'stock_qty': stock_qty,
-                      'stock_val': stock_val,
-                      'central_qty': central_qty,
-                      'central_val': central_val,
-                      'cross_qty': cross_qty,
-                      'cross_val': cross_val,
-                      'secondary_qty': secondary_qty,
-                      'secondary_val': secondary_val,
-                      'cu_qty': cu_qty,
-                      'cu_val': cu_val,
-                      'in_pipe_qty': in_pipe_qty,
-                      'in_pipe_val': in_pipe_val,
-                      'in_pipe_coor_qty': in_pipe_not_coord_qty,
-                      'in_pipe_coor_val': in_pipe_not_coord_val,
-                      'updated': False}
-            
-            line_read = self.read(cr, uid, line.id, values.keys(), context=context)
-            for k in values.keys():
-                if line_read[k] != values[k]:
-                    values.update({'updated': True})
-            
-            self.write(cr, uid, [line.id], values, context=context)
         return True
     
 stock_mission_report_line()
