@@ -836,13 +836,19 @@ class sale_order(osv.osv):
         # Po is only treated if line is make_to_order
         # IN nor OUT are yet (or just) created, we theoretically wont have problem with backorders and co
         if order.state != 'shipping_except' and not order.procurement_request and line.procurement_id:
+            cancel_move_id = False
             # if the procurement already has a stock move linked to it (during action_confirm of procurement order), we cancel it
+            # UF-1155 : Divided the cancel of the move in two times to avoid the cancelation of the field order
             if line.procurement_id.move_id:
+                cancel_move_id = line.procurement_id.move_id.id
+            
+            # update corresponding procurement order with the new stock move
+            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
+
+            if cancel_move_id:
                 # use action_cancel actually, because there is not stock picking or related stock moves
                 move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
                 #move_obj.write(cr, uid, [line.procurement_id.move_id.id], {'state': 'cancel'}, context=context)
-            # corresponding procurement order
-            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
             # corresponding purchase order, if it exists (make_to_order)
             if line.type == 'make_to_order':
                 pol_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
