@@ -1186,7 +1186,7 @@ class stock_picking(osv.osv):
             elif pick.state in ['confirmed','assigned', 'draft']:
                 ids2 = [move.id for move in pick.move_lines]
                 ctx = context.copy()
-                ctx.update({'call_unlink':True})
+                ctx.update({'call_unlink':True, 'skipResequencing': True})
                 if pick.state != 'draft':
                     #Cancelling the move in order to affect Virtual stock of product
                     move_obj.action_cancel(cr, uid, ids2, ctx)
@@ -1928,6 +1928,19 @@ class stock_move(osv.osv):
         pick_values = self.hook__create_chained_picking(cr, uid, pick_values, picking)
         pick_id= picking_obj.create(cr, uid, pick_values, context=context)
         return pick_id
+    
+    def _create_chained_picking_move_values_hook(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_process method from stock>stock.py>stock_picking
+        
+        - allow to modify the data for chained move creation
+        '''
+        if context is None:
+            context = {}
+        move_data = kwargs['move_data']
+        return move_data
+    
     def create_chained_picking(self, cr, uid, moves, context=None):
         res_obj = self.pool.get('res.company')
         location_obj = self.pool.get('stock.location')
@@ -1952,17 +1965,18 @@ class stock_move(osv.osv):
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
-                new_id = move_obj.copy(cr, uid, move.id, {
-                    'location_id': move.location_dest_id.id,
-                    'location_dest_id': loc.id,
-                    'date_moved': time.strftime('%Y-%m-%d'),
-                    'picking_id': pickid,
-                    'state': 'waiting',
-                    'company_id': company_id or res_obj._company_default_get(cr, uid, 'stock.company', context=context)  ,
-                    'move_history_ids': [],
-                    'date': (datetime.strptime(move.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=delay or 0)).strftime('%Y-%m-%d'),
-                    'move_history_ids2': []}
-                )
+                move_data = {'location_id': move.location_dest_id.id,
+                             'location_dest_id': loc.id,
+                             'date_moved': time.strftime('%Y-%m-%d'),
+                             'picking_id': pickid,
+                             'state': 'waiting',
+                             'company_id': company_id or res_obj._company_default_get(cr, uid, 'stock.company', context=context)  ,
+                             'move_history_ids': [],
+                             'date': (datetime.strptime(move.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=delay or 0)).strftime('%Y-%m-%d'),
+                             'move_history_ids2': [],
+                             }
+                move_data = self._create_chained_picking_move_values_hook(cr, uid, context=context, move_data=move_data, move=move)
+                new_id = move_obj.copy(cr, uid, move.id, move_data)
                 move_obj.write(cr, uid, [move.id], {
                     'move_dest_id': new_id,
                     'move_history_ids': [(4, new_id)]
