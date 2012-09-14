@@ -115,7 +115,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             expiry = False
             product_qty = 0.00
             product_uom = False
-            comment = False
+            comment = ''
             to_correct_ok = False
             error_list = []
 
@@ -126,7 +126,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 to_correct_ok = True
                 import_to_correct = True
                 error_list.append('No Product Code.')
-                comment = 'Product Code to be defined'
             else:
                 try:
                     product_code = product_code.strip()
@@ -139,7 +138,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                             product_cache.update({product_code: product_id})
                 except Exception:
                     error_list.append('The Product Code has to be a string.')
-                    comment = 'Product Code to be defined'
                     to_correct_ok = True
                     import_to_correct = True
 
@@ -149,7 +147,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 to_correct_ok = True
                 import_to_correct = True
                 error_list.append('No Product Description')
-                comment = 'Product Description to be defined'
             else:
                 try:
                     p_name = p_name.strip()
@@ -157,13 +154,11 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     if not product_ids:
                         to_correct_ok = True
                         import_to_correct = True
-                        comment = 'Description: %s' % p_name
                         error_list.append('The Product was not found in the list of the products.')
                     else:
                         product_id = p_ids[0]
                 except Exception:
                      error_list.append('The Product Description has to be a string.')
-                     comment = 'Product Description to be defined'
                      to_correct_ok = True
                      import_to_correct = True
 
@@ -199,7 +194,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 to_correct_ok = True
                 import_to_correct = True
                 error_list.append('No location')
-                comment = 'Location to be defined'
             else:
                 try:
                     location_name = loc_id.strip()
@@ -208,13 +202,11 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         location_id = False
                         to_correct_ok = True
                         import_to_correct = True
-                        comment = 'Location: %s' % location_name
                         error_list.append('The location was not found in the of the locations.')
                     else:
                         location_id = loc_ids[0]
                 except Exception:
                     error_list.append('The Location has to be a string.')
-                    comment = 'Location to be defined'
                     location_id = False
             
             # Batch
@@ -224,7 +216,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     batch = batch.strip()
                 except Exception:
                     error_list.append('The Batch has to be a string.')
-                    comment = 'Batch to be defined'
 
             # Expiry date
             if row.cells[5].data:
@@ -251,11 +242,17 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     product_qty = 0.00
                     error_list.append('The Product Quantity was not set, we set it to 0.00.')
 
+            if not location_id:
+                comment += 'Location is missing.\n'
             if product_id:
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
                 hidden_perishable_mandatory = product.perishable
+                if hidden_batch_management_mandatory and not batch:
+                    comment += 'Batch is missing.\n'
+                if hidden_perishable_mandatory and not expiry:
+                    comment += 'Expiry date is missing.\n'
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [])[0]
                 hidden_batch_management_mandatory = False
@@ -334,8 +331,71 @@ class initial_stock_inventory_line(osv.osv):
     _inherit = 'initial.stock.inventory.line'
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
-        'comment': fields.text('Errors when trying to import file'),
+        'comment': fields.text('Comment', readonly=True),
     }
+
+    def create(self, cr, uid, vals, context=None):
+        comment = ''
+        hidden_batch_management_mandatory = False
+        hidden_perishable_mandatory = False
+        
+        if vals.get('product_id', False):
+            product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
+            hidden_batch_management_mandatory = product.batch_management
+            hidden_perishable_mandatory = product.perishable
+
+        location_id = vals.get('location_id')
+        batch = vals.get('prodlot_name')
+        expiry = vals.get('expiry_date')
+
+
+        if not location_id:
+            comment += 'Location is missing.\n'
+
+        if hidden_batch_management_mandatory and not batch:
+            comment += 'Batch is missing.\n'
+        if hidden_perishable_mandatory and not expiry:
+            comment += 'Expiry date is missing.\n'
+
+        if not comment:
+            vals.update({'comment': comment, 'to_correct_ok': False})
+        else:
+            vals.update({'comment': comment, 'to_correct_ok': True})
+
+        res = super(initial_stock_inventory_line, self).create(cr, uid, vals, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        comment = ''
+        
+        line = self.browse(cr, uid, ids[0], context=context)
+
+        if vals.get('product_id', False):
+            product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
+        else:
+            product = line.product_id
+
+        location_id = vals.get('location_id') or line.location_id
+        batch = vals.get('prodlot_name') or line.prodlot_name
+        expiry = vals.get('expiry_date') or line.expiry_date
+
+        hidden_batch_management_mandatory = product.batch_management
+        hidden_perishable_mandatory = product.perishable
+
+        if not location_id:
+            comment += 'Location is missing.\n'
+        if hidden_batch_management_mandatory and not batch:
+            comment += 'Batch is missing.\n'
+        if hidden_perishable_mandatory and not expiry:
+            comment += 'Expiry date is missing.\n'
+
+        if not comment:
+            vals.update({'comment': comment, 'to_correct_ok': False})
+        else:
+            vals.update({'comment': comment, 'to_correct_ok': True})
+
+        res = super(initial_stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
+        return res
 
 initial_stock_inventory_line()
 

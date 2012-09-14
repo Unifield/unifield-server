@@ -12,6 +12,7 @@
                 <data>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='hidden_perishable_mandatory']" position="after">
                     <field name="to_correct_ok" invisible="1"/>
+                    <field name="comment" attrs="{'invisible': [('to_correct_ok', '=', True)]'}" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >
                     <attribute name="colors">red:to_correct_ok == True or err_msg!=''</attribute>
