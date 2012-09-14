@@ -2713,6 +2713,9 @@ class stock_inventory(osv.osv):
             self.write(cr, uid, [inv.id], {'state':'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
         return True
 
+    def _hook_dont_move(self, cr, uid, *args, **kwargs):
+        return True
+
     def action_confirm(self, cr, uid, ids, context=None):
         """ Confirm the inventory and writes its finished date
         @return: True
@@ -2733,7 +2736,7 @@ class stock_inventory(osv.osv):
 
                 change = line.product_qty - amount
                 lot_id = line.prod_lot_id.id
-                if change:
+                if change and self._hook_dont_move(cr, uid, line=line):
                     location_id = line.product_id.product_tmpl_id.property_stock_inventory.id
                     value = {
                         'name': 'INV:' + str(line.inventory_id.id) + ':' + line.inventory_id.name,
