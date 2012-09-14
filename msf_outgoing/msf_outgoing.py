@@ -2015,6 +2015,9 @@ class stock_picking(osv.osv):
                     rts = rts.strftime(db_date_format)
                     vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
+                if move.product_qty == 0.00:
+                    move.action_done(context=context)
+
 
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [obj.id])
