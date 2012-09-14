@@ -1182,7 +1182,7 @@ class stock_inventory(osv.osv):
         for inv in self.browse(cr, uid, ids, context=context):
             if inv.state not in ('draft', 'cancel'):
                 for line in inv.inventory_line_id:
-                    if not line.location_id:
+                    if line.product_qty != 0.00 and not line.location_id:
                         return False
 
         return True
@@ -1254,6 +1254,13 @@ class stock_inventory(osv.osv):
 
     def get_nomen(self, cr, uid, ids, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, ids, field, context={'withnum': 1})
+
+    def _hook_dont_move(self, cr, uid, *args, **kwargs):
+        res = super(stock_inventory, self)._hook_dont_move(cr, uid, *args, **kwargs)
+        if 'line' in kwargs:
+            return res and not kwargs['line'].dont_move
+
+        return res
     
     def action_confirm(self, cr, uid, ids, context=None):
         '''
@@ -1264,6 +1271,9 @@ class stock_inventory(osv.osv):
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
+                if self._name == 'initial.stock.inventory' and line.product_qty == 0.00:
+                    line.write({'dont_move': True})
+                    continue
                 if line.hidden_perishable_mandatory and not line.expiry_date:
                     raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
@@ -1546,10 +1556,12 @@ class stock_inventory_line(osv.osv):
         'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'has_problem': fields.function(_get_checks_all, method=True, string='Has problem', type='boolean', readonly=True, multi="m"),
+        'dont_move': fields.boolean(string='Don\'t create stock.move for this line'),
     }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
+                 'dont_move': lambda *a: False,
                  }
     
     _constraints = [(_check_batch_management,

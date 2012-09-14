@@ -77,7 +77,12 @@ class initial_stock_inventory(osv.osv):
                 if inventory_line.product_id.id not in product_dict:
                     product_dict.update({inventory_line.product_id.id: inventory_line.average_cost})
                 elif product_dict[inventory_line.product_id.id] != inventory_line.average_cost:
-                    raise osv.except_osv(_('Error'), _('You cannot have two lines for the same product with different average cost.'))
+                    raise osv.except_osv(_('Error'), _('You cannot have two lines for the product %s with different average cost.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id], context=context)[0][1])
+
+                # Don't check integrity on line with no quantity
+                if inventory_line.product_qty == 0.0:
+                    inventory_line.write({'dont_move': True})
+                    continue
                 
                 # Returns error if the line is batch mandatory or perishable without prodlot
                 if inventory_line.product_id.batch_management and not inventory_line.prodlot_name:
