@@ -70,7 +70,7 @@ class stock_cost_reevaluation(osv.osv):
             line_num += 1
             # Check length of the row
             if len(row) != 3:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 3 columns in this order:
 Product Code*, Product Description*, Product Cost*"""))
 
             # default values
@@ -109,9 +109,9 @@ Product Code*, Product Description*, Product Cost*"""))
                     pass
 
             if not product_id:
-                if not product_code or not product_name:
+                if not product_code and not product_name:
                     raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
+                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', product_name or ''))
 
             # Average cost
             cost = row.cells[2].data

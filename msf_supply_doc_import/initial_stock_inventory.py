@@ -163,7 +163,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                      import_to_correct = True
 
             if not product_id:
-                if not product_code or not p_name:
+                if not product_code and not p_name:
                     raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
                 raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
 
