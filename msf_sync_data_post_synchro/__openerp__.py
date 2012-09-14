@@ -21,15 +21,17 @@
 
 
 {
-    'name': 'Synchronization Utility: Datas Common',
+    'name': 'Synchronization Utility: Datas Post-Synchronization',
     'version': '0.1',
     'category': 'Tools',
-    'description': '',
+    'description': 'Must be installed after first synchronization',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
     'depends': ['base', 'sync_client'],
     'init_xml': [],
     'data': [
+        'data/account.analytic.journal.csv',
+        'data/account.journal.csv',
     ],
     'demo_xml': [],
     'test':[],

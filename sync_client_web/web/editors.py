@@ -49,3 +49,4 @@ class HeaderTempEditor(openobject.templating.TemplateEditor):
     }
 </script>
         ''' + output[form_insertion_point:]
+

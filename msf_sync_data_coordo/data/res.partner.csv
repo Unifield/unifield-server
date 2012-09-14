@@ -1,0 +1,3 @@
+address/type,address/city,address/name,address/street,address/zip,address/country_id,property_account_payable,property_account_receivable,name,partner_type,customer,supplier
+default,Geneva,None,,,Switzerland,3000,1205,ITCompany,External,FALSE,TRUE
+default,Johannesburg,C.S CHAMANCULO,Av. Ahmed Sekou Toure,,South Africa,3000,1205,Afri Farmacia,External,FALSE,TRUE
