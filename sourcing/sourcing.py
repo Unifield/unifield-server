@@ -859,6 +859,8 @@ class sale_order_line(osv.osv):
                     vals.update({'supplier': False})
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
+            if 'line_number' in vals:
+                values.update({'line_number': vals['line_number']})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):

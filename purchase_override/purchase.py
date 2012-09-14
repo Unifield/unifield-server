@@ -1530,7 +1530,7 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        vals = self._update_merged_line(cr, uid, False, vals, context=context)
+        vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
@@ -1568,7 +1568,7 @@ class purchase_order_line(osv.osv):
         
         if not context.get('update_merge'):
             for line in ids:
-                vals = self._update_merged_line(cr, uid, line, vals, context=context)
+                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True))
                 
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
@@ -1590,7 +1590,8 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
-            self._update_merged_line(cr, uid, line_id, False, context=context)
+            # we want to skip resequencing because unlink is performed on merged purchase order lines
+            self._update_merged_line(cr, uid, line_id, False, context=dict(context, skipResequencing=True))
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
