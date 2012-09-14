@@ -931,6 +931,10 @@ class sale_order_line(osv.osv):
                 'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
                 }
 
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
+
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
         Open the wizard to split the line
@@ -997,7 +1001,7 @@ class sale_order_line(osv.osv):
         else:
             default_data.update({'type': 'make_to_order'})
         return default_data
-
+    
     def create(self, cr, uid, vals, context=None):
         """
         Override create method so that the procurement method is on order if no product is selected
