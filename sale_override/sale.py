@@ -662,6 +662,8 @@ class sale_order(osv.osv):
         if context is None:
             context = {}
         order_lines = []
+        procurement_ids = []
+        proc_move_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             # Done picking
             for pick in order.picking_ids:
@@ -671,9 +673,9 @@ class sale_order(osv.osv):
             for line in order.order_line:
                 order_lines.append(line.id)
                 if line.procurement_id:
-                    # Closed procurement
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+                    procurement_ids.append(line.procurement_id.id)
+                    if line.procurement_id.move_id:
+                        proc_move_ids.append(line.procurement_id.move_id.id)
 
             # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
@@ -697,6 +699,13 @@ class sale_order(osv.osv):
         # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, proc_move_ids, all_doc=all_doc, context=context)
+
+        for procurement in procurement_ids:
+            # Closed procurement
+            wf_service.trg_validate(uid, 'procurement.order', procurement, 'subflow.cancel', cr)
+            wf_service.trg_validate(uid, 'procurement.order', procurement, 'button_check', cr)
+
 
         if all_doc:
             # Detach the PO from his workflow and set the state to done
