@@ -131,6 +131,7 @@
         <record id="view_production_lot_expiry_date_tree" model="ir.ui.view">
             <field name="name">stock.production.lot.expiry.date.tree</field>
             <field name="model">stock.production.lot</field>
+            <field name="priority">99</field>
             <field name="type">tree</field>
             <field name="priority" eval="200" />
             <field name="arch" type="xml">
@@ -433,7 +434,43 @@
             	
             	</data>
            	</field>
-       	</record>
+        </record>
+
+        <!-- Add product filters on Physical inventories to fill lines with list or nomenclature level -->
+        <record id="stock_inventory_form" model="ir.ui.view">
+            <field name="name">stock.inventory.form</field>
+            <field name="model">stock.inventory</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_inventory_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="before">
+                    <separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('sublist_id', '!=', False)]}">
+                        <field name="nomen_manda_0"
+                               domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                               widget="selection"
+                               on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                        <field name="nomen_manda_1"
+                               domain="[('id','=', 0)]"
+                               widget="selection"
+                               get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                        <field name="nomen_manda_2"
+                               domain="[('id','=', 0)]"
+                               widget="selection"
+                               get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                        <field name="nomen_manda_3"
+                               domain="[('id','=', 0)]"
+                               widget="selection"
+                               get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                </xpath>
+            </field>
+        </record>
         
         <record id="stock_inventory_line_tree" model="ir.ui.view">
             <field name="name">stock.inventory.line.tree</field>
@@ -441,12 +478,12 @@
             <field name="type">tree</field>
             <field name="inherit_id" ref="stock.stock_inventory_line_tree" />
             <field name="arch" type="xml">
-            	<data>
+                <data>
 	                <xpath expr="/tree/field[@name='product_uom']" position="after">
 	                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
 	                    <field name="comment" />
-	                </xpath>
-	                    
+                    </xpath>
+
 	           		<field name="prod_lot_id" position="replace">
 	           			<field name="prod_lot_id"
 	                       	on_change="change_lot(prod_lot_id)"
@@ -466,7 +503,8 @@
 	                   	<field name="kc_check" />
 	           			<field name="ssl_check" invisible="True" />
 	           			<field name="dg_check" />
-	           			<field name="np_check" />
+                        <field name="np_check" />
+                    <field name="has_problem" invisible="True" />
 	           		</field>
             	</data>
             </field>

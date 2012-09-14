@@ -1117,6 +1117,7 @@ class stock_location_chained_options(osv.osv):
 
 stock_location_chained_options()
 
+
 class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
