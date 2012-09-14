@@ -39,8 +39,6 @@
                     <newline />
 
                     <group name="import" string=" Import Lines " colspan="4"  >
-                    <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
-                    <label colspan="4" string="The columns should be in this order : Product Code*, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment." align="0.0"/>
 					    <field name="file_to_import" />
 					    <button name="catalogue_import_lines" type="object" string="Import the file" icon="gtk-execute" colspan="1" />
                         <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" />

@@ -253,7 +253,7 @@ class supplier_catalogue(osv.osv):
         'active': fields.boolean(string='Active'),
         'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
-        'file_to_import': fields.binary(string='File to import', filters='*.xml',),
+        'file_to_import': fields.binary(string='File to import', filters='*.xml', help="The file should be in XML Spreadsheet 2003 format. The columns should be in this order : Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."),
     }
     
     _defaults = {
@@ -340,12 +340,11 @@ class supplier_catalogue(osv.osv):
 
             reader.next()
             line_num = 1
-            
             for row in reader:
                 to_correct_ok = False
                 row_len = len(row)
-                if row_len != 7:
-                    raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order: Product Code*, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
+                if row_len != 8:
+                    raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
 
                 #Product code
                 product_code = row.cells[0].data
@@ -366,8 +365,11 @@ class supplier_catalogue(osv.osv):
                          default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
                          to_correct_ok = True
 
+                #Product Description
+                p_descr = row.cells[1].data
+
                 #Product UoM
-                p_uom = row.cells[1].data
+                p_uom = row.cells[2].data
                 if not p_uom:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                     to_correct_ok = True
@@ -385,43 +387,50 @@ class supplier_catalogue(osv.osv):
                          to_correct_ok = True
 
                 #Product Min Qty
-                if not row.cells[2].data :
+                if not row.cells[3].data :
                     p_min_qty = 1.0
                 else:
-                    if row.cells[2].type in ['int', 'float']:
-                        p_min_qty = row.cells[2].data
+                    if row.cells[3].type in ['int', 'float']:
+                        p_min_qty = row.cells[3].data
                     else:
                         raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Qty"') )
 
                 #Product Unit Price
-                if not row.cells[3].data :
+                if not row.cells[4].data :
                     p_unit_price = 1.0
                 else:
-                    if row.cells[3].type in ['int', 'float']:
-                        p_unit_price = row.cells[3].data
+                    if row.cells[4].type in ['int', 'float']:
+                        p_unit_price = row.cells[4].data
                     else:
                         raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Unit Price"') )
 
                 #Product Rounding
-                if row.cells[4].type in ['int', 'float']:
-                    p_rounding = row.cells[4].data
+                if not row.cells[5].data:
+                    p_rounding = False
                 else:
-                   raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Rounding"') )
+                    if row.cells[5] and row.cells[5].type in ['int', 'float']:
+                        p_rounding = row.cells[5].data
+                    else:
+                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Rounding"') )
 
                 #Product Min Order Qty
-                if row.cells[5].type in ['int', 'float']:
-                    p_min_order_qty = row.cells[5].data
+                if not row.cells[6].data:
+                    p_min_order_qty = 0
                 else:
-                   raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Order Qty"') )
+                    if row.cells[6].type in ['int', 'float']:
+                        p_min_order_qty = row.cells[6].data
+                    else:
+                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Order Qty"') )
 
                 #Product Comment
-                p_comment = row.cells[6].data
+                p_comment = row.cells[7].data
 
                 line_num += 1
 
                 to_write = {
                     'to_correct_ok': to_correct_ok, 
                     'product_id': default_code,
+                    'product_description': p_descr,
                     'min_qty': p_min_qty,
                     'line_uom_id': uom_id,
                     'unit_price': p_unit_price,
@@ -431,6 +440,7 @@ class supplier_catalogue(osv.osv):
                 }
 
                 vals['line_ids'].append((0, 0, to_write))
+
             self.write(cr, uid, ids, vals, context=context)
 
             # TODO: To implement
