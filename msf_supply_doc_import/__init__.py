@@ -22,3 +22,4 @@
 import tender
 import purchase_order
 import sale_order
+import initial_stock_inventory

@@ -52,22 +52,22 @@ class initial_stock_inventory(osv.osv):
         'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=True),
     }
 
-    '''def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['order_line'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.order_line
-            for var in line_browse_list:
-                vals['order_line'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True'''
+    #def button_remove_lines(self, cr, uid, ids, context=None):
+    #    '''
+    #    Remove lines
+    #    '''
+    #    if context is None:
+    #        context = {}
+    #    if isinstance(ids, (int, long)):
+    #        ids = [ids]
+    #    vals = {}
+    #    vals['order_line'] = []
+    #    for line in self.browse(cr, uid, ids, context=context):
+    #        line_browse_list = line.order_line
+    #        for var in line_browse_list:
+    #            vals['order_line'].append((2, var.id))
+    #        self.write(cr, uid, ids, vals, context=context)
+    #    return True'''
 
     def import_file(self, cr, uid, ids, context=None):
         '''
@@ -87,8 +87,9 @@ class initial_stock_inventory(osv.osv):
 
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
-            raise osv.except_osv(_('Error'), _('Nothing to import'.))
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
+        product_cache = {}
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
 
@@ -129,9 +130,13 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 try:
                     product_code = product_code.strip()
-                    product_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                    if product_ids:
-                        product_id = product_ids[0]
+                    if product_code in product_cache:
+                        product_id = product_cache.get(product_code)
+                    if not product_id:
+                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
+                        if product_ids:
+                            product_id = product_ids[0]
+                            product_cache.update({product_code: product_id})
                 except Exception:
                     error_list.append('The Product Code has to be a string.')
                     comment = 'Product Code to be defined'
@@ -139,7 +144,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     import_to_correct = True
 
             # Product name
-            p_name = rew.cells[1].date
+            p_name = row.cells[1].data
             if not product_id and not p_name:
                 to_correct_ok = True
                 import_to_correct = True
@@ -161,6 +166,11 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                      comment = 'Product Description to be defined'
                      to_correct_ok = True
                      import_to_correct = True
+
+            if not product_id:
+                if not product_code or not product_name:
+                    raise osv.except_osv(_('Error'), _('You has to fill at least the product code or the product name on each line'))
+                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of the products') % (product_code or '', p_name or ''))
 
             # Average cost
             cost = row.cells[2].data
@@ -244,7 +254,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if product_id:
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
-                hidden_batch_management_mandatory = product.batch_mandatory
+                hidden_batch_management_mandatory = product.batch_management
                 hidden_perishable_mandatory = product.perishable
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [])[0]
@@ -258,17 +268,18 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'location_id': location_id,
                 'prodlot_name': batch,
                 'expiry_date': expiry,
-                'product_qty': product qty,
+                'product_qty': product_qty,
                 'product_uom': product_uom,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
                 'hidden_perishable_mandatory': hidden_perishable_mandatory,
                 'comment': comment,
-                'to_correct': to_correct,
+                'to_correct': to_correct_ok,
             }
             
             vals['inventory_line_id'].append((0, 0, to_write))
             
         # write order line on Inventory
+        vals.update({'file_to_import': False})
         self.write(cr, uid, ids, vals, context=context)
         
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','stock_initial_inventory_form_view')[1]
@@ -285,17 +296,33 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
         plural= ''
             
         for var in self.browse(cr, uid, ids, context=context):
-            if var.order_line:
-                for var in var.order_line:
+            if var.inventory_line_id:
+                for var in var.inventory_line_id:
                     if var.to_correct_ok:
-                        line_num = var.line_number
                         if message:
                             message += ', '
-                        message += str(line_num)
+                        message += self.pool.get('product.product').name_get(cr, uid, [var.product_id.id])[0][1]
                         if len(message.split(',')) > 1:
                             plural = 's'
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
+        return True
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        '''
+        Remove lines
+        '''
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        vals = {}
+        vals['inventory_line_id'] = []
+        for line in self.browse(cr, uid, ids, context=context):
+            line_browse_list = line.inventory_line_id
+            for var in line_browse_list:
+                vals['inventory_line_id'].append((2, var.id))
+            self.write(cr, uid, ids, vals, context=context)
         return True
         
 initial_stock_inventory()

@@ -32,6 +32,7 @@
         'view/internal_request_import_line_view.xml',
         'view/tender_import_line_view.xml',
         'view/purchase_order_import_line_view.xml',
+        'view/initial_stock_inventory_line_view.xml',
         
         'data/msf_supply_doc_import_data.xml',
         'workflow/purchase_workflow.xml',
