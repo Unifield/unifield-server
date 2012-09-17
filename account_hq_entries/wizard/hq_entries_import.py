@@ -215,7 +215,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             # Omit first line that contains columns ' name
             try:
                 reader.next()
-            except e:
+            except StopIteration:
                 raise osv.except_osv(_('Error'), _('File is empty!'))
             nbline = 1
             for line in reader:
