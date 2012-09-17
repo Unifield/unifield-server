@@ -69,7 +69,9 @@ class stock_partial_picking(osv.osv_memory):
                 for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
                     if pick.purchase_id.cross_docking_ok:
                         res.update({'dest_type': 'to_cross_docking'})
-                    elif not pick.purchase_id.cross_docking_ok:
+                    elif pick.purchase_id.cross_docking_ok == False:
+                    # take care: if pick.purchase_id.cross_docking_ok is None we shouldn't be here but in the next else block
+                    # pick.purchase_id.cross_docking_ok is None if pick.purchase_id is empty
                         res.update({'dest_type': 'to_stock'})
                     else:
                         res.update({'dest_type': 'default'})
