@@ -21,11 +21,16 @@
 #
 ##############################################################################
 
-import res_company
-import hr
-import hr_payroll
-import hr_job_msf
-import hr_contract_msf
-import wizard
+from osv import osv
+from osv import fields
 
+class hr_job(osv.osv):
+    _inherit = 'hr.job'
+    _description = 'MSF Employee job from Homère'
+
+    _columns = {
+        'code': fields.char(string='Job code', size=6, readonly=True, required=False),
+    }
+
+hr_job()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
