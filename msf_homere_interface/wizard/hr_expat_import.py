@@ -66,8 +66,9 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 name = line.cells and line.cells[0] and line.cells[0].data or False
                 if not name:
                     continue
+                code = line.cells and line.cells[1] and line.cells[1].data or False
                 # Create Expat employee
-                self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex'})
+                self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'ex', 'identification_id': code})
                 created += 1
             
             context.update({'message': ' '})
