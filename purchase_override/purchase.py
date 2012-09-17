@@ -1538,7 +1538,7 @@ class purchase_order_line(osv.osv):
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
-            name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
+            name = self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id'), context=context).name
             super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
 
         return po_line_id
@@ -1691,8 +1691,8 @@ class purchase_order_line(osv.osv):
         'old_price_unit': fields.float(digits=(16,2), string='Old price'),
         'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
 
-        'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
-        
+        # This field is used to identify the FO PO line between 2 instances of the sync
+        'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
     }
 
     _defaults = {
