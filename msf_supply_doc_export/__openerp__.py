@@ -25,7 +25,7 @@
     "description" : "This module enables to export file in xls format",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Sale",
-    "depends" : ["sale", "purchase"],
+    "depends" : ["sale", "purchase","specific_rules"],
     "init_xml" : [],
     "update_xml" : [
         'msf_export_report.xml',

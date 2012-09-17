@@ -50,40 +50,25 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-<ss:Worksheet ss:Name="Purchase Order">
+<ss:Worksheet ss:Name="Stock cost reevaluation">
 <Table >
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
-## ==================================== we loop over the purchase_order so "objects" == purchase_order  ====================================================
+## ==================================== we loop over the stock_cost_reevaluation so "objects" == stock_cost_reevaluation  ====================================================
 % for o in objects:
 
-## we loop over the purchase_order_line
+## we loop over the stock_cost_reevaluation_line
 
     
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Price</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Delivery requested date</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Currency</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Cost</Data></Cell>
     </Row>
-    % for line in o.order_line:
+    % for line in o.reevaluation_line_ids:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        % if line.date_planned :
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_requested_date:
-        ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
-        % endif
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.average_cost or 0.00)|x}</Data></Cell>
     </Row>
     % endfor
 % endfor
