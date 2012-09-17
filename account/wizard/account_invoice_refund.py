@@ -85,12 +85,18 @@ class account_invoice_refund(osv.osv_memory):
         res = ['address_contact_id', 'address_invoice_id', 'partner_id', 'account_id', 'currency_id', 'payment_term', 'journal_id']
         return res
 
-    def _hook_create_invoice(self, cr, uid, data, *args):
+    def _hook_create_invoice(self, cr, uid, data, form, *args):
         """
         Permits to adapt invoice creation
         """
         res = self.pool.get('account.invoice').create(cr, uid, data, {})
         return res
+
+    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form):
+        """
+        Permits to adapt refund creation
+        """
+        return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
 
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         """
@@ -160,7 +166,7 @@ class account_invoice_refund(osv.osv_memory):
                     raise osv.except_osv(_('Data Insufficient !'), \
                                             _('No Period found on Invoice!'))
 
-                refund_id = inv_obj.refund(cr, uid, [inv.id], date, period, description, journal_id)
+                refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form)
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
                                                 'check_total': inv.check_total})
@@ -207,7 +213,7 @@ class account_invoice_refund(osv.osv_memory):
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                                 invoice[field] = invoice[field] and invoice[field][0]
-                        inv_id = self._hook_create_invoice(cr, uid, invoice)
+                        inv_id = self._hook_create_invoice(cr, uid, invoice, form)
                         if inv.payment_term.id:
                             data = inv_obj.onchange_payment_term_date_invoice(cr, uid, [inv_id], inv.payment_term.id, date)
                             if 'value' in data and data['value']:
