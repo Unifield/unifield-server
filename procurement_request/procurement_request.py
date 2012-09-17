@@ -266,7 +266,7 @@ class procurement_request(osv.osv):
                     nb_lines += 1
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !')%nb_lines)
-        wf_service.trg_validate(uid, 'sale.order', id, 'order_validated', cr)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
     
