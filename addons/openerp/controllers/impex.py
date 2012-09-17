@@ -396,7 +396,7 @@ class ImpEx(SecuredController):
 
         if not params.ids or all_records:
             domain = params.search_domain or []
-            ids = proxy.search(domain, 0, 2000, 0, ctx)
+            ids = proxy.search(domain, 0, None, 0, ctx)
         else:
             ids = params.ids or []
         result = datas_read(ids, params.model, flds, context=ctx)
