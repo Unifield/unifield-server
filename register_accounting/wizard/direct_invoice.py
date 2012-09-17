@@ -187,12 +187,14 @@ class wizard_account_invoice(osv.osv):
             amount += line.price_subtotal
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
+        account_id = invoice.account_id and invoice.account_id.id
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'direct_invoice_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
+            'account_id': account_id or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
