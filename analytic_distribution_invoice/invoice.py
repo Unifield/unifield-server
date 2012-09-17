@@ -34,6 +34,7 @@ class account_invoice(osv.osv):
         """
         res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
+        res.append('document_date')
         return res
 
     def _hook_fields_m2o_for_refund(self, cr, uid, *args):
