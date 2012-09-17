@@ -28,7 +28,7 @@
     <!-- FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object-->
         <report
             id="report_sale_order_xls"
-            string="Sale Order Excel Export"
+            string="Field Order Excel Export"
             model="sale.order"
             name="sale.order_xls"
             file="msf_supply_doc_export/report/report_sale_order_xls.mako"
@@ -62,7 +62,7 @@
             auto="False"
             menu="True"
          />
-     
+
      <!-- STOCK INITIAL INVENTORY-->
         <report
             id="report_stock_initial_inventory_xls"
