@@ -117,6 +117,8 @@ class tender(osv.osv):
         '''
         Set the line number to 0
         '''
+        if context is None:
+            context = {}
         if context.get('__copy_data_seen',False):
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             instance_code = company and company.instance_id and company.instance_id.code or ''

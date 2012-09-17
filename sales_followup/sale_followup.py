@@ -821,6 +821,8 @@ class request_for_quotation(osv.osv):
         return res
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         if context.get('__copy_data_seen',False) and context.get('request_for_quotation',False):
             yy = time.strftime('%y',time.localtime())
             order_ref = yy+'/'+vals.get('name','')
