@@ -3121,7 +3121,7 @@ class sale_order(osv.osv):
                 move_data['location_dest_id'] = output_id
             else:
                 move_data['location_dest_id'] = packing_id
-            move_data['state'] = 'confirmed'
+        move_data['state'] = 'confirmed'
         return move_data
     
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
