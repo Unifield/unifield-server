@@ -82,6 +82,37 @@ class kit_creation(osv.osv):
         '''
         raise osv.except_osv(_('Warning !'), _('Copy is deactivated for Kitting Order.'))
     
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        cancel the kit_creation
+        - cancel the related kit in production
+        - cancel the related internal picking (stock moves are canceled at the same time)
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        wf_service = netsvc.LocalService("workflow")
+        move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.kit')
+        fields_tool_obj = self.pool.get('fields.tools')
+        
+        for kit in self.browse(cr, uid, ids, context=context):
+            # cancel related kits in production
+            kit_ids = fields_tool_obj.get_ids_from_browse_list(cr, uid, browse_list=kit.kit_ids_kit_creation, context=context)
+            if kit_ids:
+                kit_obj.action_cancel(cr, uid, kit_ids, context=dict(context, flag_force_cancel_composition_kit=True))
+            # cancel the picking - stock moves are canceled at the same time
+            if kit.internal_picking_id_kit_creation:
+                picking_id = kit.internal_picking_id_kit_creation.id
+                wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_cancel', cr)
+        
+        # cancel the kit creation
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        return True
+    
     def reset_to_version(self, cr, uid, ids, context=None):
         '''
         open confirmation wizard

@@ -78,6 +78,7 @@
                     	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="action_cancel" string="Cancel" type="object" icon="gtk-cancel" attrs="{'invisible': [('state', 'not in', ['draft'])]}" />
                         <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
                         <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
                     </group>
@@ -114,6 +115,7 @@
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
                     <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                     <separator orientation="vertical" />
@@ -161,6 +163,7 @@
                     <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
                     <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="composition_version_id"
