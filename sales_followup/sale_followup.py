@@ -344,7 +344,8 @@ class sale_order_line_followup(osv.osv_memory):
                             'available_qty': 0.00}
 
             # Set the available qty in stock
-            res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+            if line.line_id.product_id:
+                qty_available = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             # Define if the line is sourced or not according to the state on the SO line
             if line.line_id.state == 'draft':
