@@ -62,7 +62,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, context)
         header_result['split_po'] = True
         
         po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
@@ -83,6 +83,7 @@ class purchase_order_sync(osv.osv):
         default.update(header_result)
         
         res_id = self.create(cr, uid, default , context=context)
+        so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
         
         # after created this splitted PO, pass it to the confirmed, as the split SO has been done so too.
         if so_info.state == 'confirmed':
@@ -107,7 +108,7 @@ class purchase_order_sync(osv.osv):
         
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
         po_id = self.check_existing_po(cr, uid, source, so_dict)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, False, context)
         header_result['push_fo'] = True
 
         default = {}
@@ -116,11 +117,15 @@ class purchase_order_sync(osv.osv):
         if po_id: # only update the PO
             res_id = self.write(cr, uid, po_id, default, context=context)
         else:
-            res_id = self.create(cr, uid, default , context=context)
+            po_id = self.create(cr, uid, default , context=context)
+            
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', res_id, 'purchase_confirm', cr)
         
-        return res_id
+        
+        so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)        
+        
+        return True
 
     def check_existing_po(self, cr, uid, source, so_dict):
         if not source:
@@ -166,7 +171,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, context)
 
         default = {}
         default.update(header_result)
@@ -194,7 +199,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, context)
         
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref

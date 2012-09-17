@@ -45,12 +45,21 @@ class sale_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, False, False, context)
         
         default = {}
         default.update(header_result)
 
-        res_id = self.create(cr, uid, default , context=context)
+        so_id = self.create(cr, uid, default , context=context)
+        
+        # reset confirmed_delivery_date to all lines
+        so_line_obj = self.pool.get('sale.order.line')
+        
+        for order in self.browse(cr, uid, [so_id], context=context):
+            for line in order.order_line:
+                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
+        
+        so_po_common.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)        
         return True
 
     def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
@@ -63,7 +72,7 @@ class sale_order_sync(osv.osv):
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, so_id, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, so_id, True, context)
         
         default = {}
         default.update(header_result)
