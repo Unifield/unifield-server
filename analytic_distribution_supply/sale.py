@@ -96,6 +96,14 @@ class sale_order(osv.osv):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
 
+    def _get_destination_ok(self, cr, uid, lines, context):
+        dest_ok = False
+        for line in lines:
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
+            if not dest_ok:
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
+        return dest_ok
+
     def analytic_distribution_checks(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
@@ -132,7 +140,24 @@ class sale_order(osv.osv):
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
                 # check distribution state
                 if line.analytic_distribution_state != 'valid' and not so.from_yml_test:
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is invalid for this line: %s') % (line.name or ''))
+                    # raise an error if no analytic distribution on line and NONE on header (because no possibility to change anything)
+                    if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and not so.analytic_distribution_id:
+                        raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s') % (line.name or '',))
+                    # Change distribution to be valid if needed by using those from header
+                    id_ad = self.pool.get('analytic.distribution').create(cr,uid,{})
+                    for x in line.analytic_distribution_id and line.analytic_distribution_id.cost_center_lines or so.analytic_distribution_id.cost_center_lines:
+                        # fetch compatible destinations then use one of them:
+                        # - destination if compatible
+                        # - else default destination of given account
+                        bro_dests = self._get_destination_ok(cr, uid, [line], context=context)
+                        if x.destination_id in bro_dests:
+                            bro_dest_ok = x.destination_id
+                        else:
+                            bro_dest_ok = line.account_4_distribution.default_destination_id
+                        # Copy cost center line to the new distribution
+                        self.pool.get('cost.center.distribution.line').copy(cr, uid, x.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        # Write new distribution and link it to the line
+                        self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': id_ad})
         return True
 
     def action_ship_proc_create(self, cr, uid, ids, context=None):
@@ -161,8 +186,7 @@ class sale_order(osv.osv):
             ids = [ids]
         self.analytic_distribution_checks(cr, uid, ids)
         # Default behaviour
-        res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
-        return res
+        return super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
 
     def action_invoice_create(self, cr, uid, ids, *args):
         """
@@ -226,7 +250,7 @@ class sale_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.from_yml_test:
                 res[line.id] = 'valid'
-            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
+            elif line.order_id and ( not line.order_id.analytic_distribution_id or not line.order_id.analytic_distribution_id.cost_center_lines ) and ( not line.analytic_distribution_id or not line.analytic_distribution_id.cost_center_lines ) :
                 res[line.id] = 'none'
             else:
                 so_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False

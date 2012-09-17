@@ -397,6 +397,19 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
 
+    def _get_destination_ok(self, cr, uid, lines, context):
+        dest_ok = False
+        for line in lines:
+            is_inkind = False
+            if line.order_id and line.order_id.order_type == 'in_kind':
+                is_inkind = True
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
+            if not dest_ok:
+                if is_inkind:
+                    raise osv.except_osv(_('Error'), _('No destination found. An In-kind Donation expense account is probably missing for this line: %s.') % (line.name or ''))
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
+        return dest_ok
+
     def check_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Check analytic distribution validity for given PO.
@@ -417,8 +430,22 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib_id:
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                # Change distribution to be valid if needed by using those from header
                 if pol.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
+                    id_ad = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    for line in pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines:
+                        # fetch compatible destinations then use on of them:
+                        # - destination if compatible
+                        # - else default destination of given account
+                        bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
+                        if line.destination_id in bro_dests:
+                            bro_dest_ok = line.destination_id
+                        else:
+                            bro_dest_ok = pol.account_4_distribution.default_destination_id
+                        # Copy cost center line to the new distribution
+                        self.pool.get('cost.center.distribution.line').copy(cr, uid, line.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        # Write result
+                        self.pool.get('purchase.order.line').write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
         return True
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
