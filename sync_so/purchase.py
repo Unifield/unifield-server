@@ -117,14 +117,14 @@ class purchase_order_sync(osv.osv):
         if po_id: # only update the PO
             res_id = self.write(cr, uid, po_id, default, context=context)
         else:
+            # create a new PO, then send it to Validated state
             po_id = self.create(cr, uid, default , context=context)
-            
             wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'purchase.order', res_id, 'purchase_confirm', cr)
-        
-        
-        so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)        
-        
+            wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+            
+            # update the next line number for the PO if needed        
+            so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)        
+
         return True
 
     def check_existing_po(self, cr, uid, source, so_dict):
