@@ -30,6 +30,9 @@ import tools
 import time
 from os import path
 
+# xml parser
+from lxml import etree
+
 KIT_COMPOSITION_TYPE = [('theoretical', 'Theoretical'),
                         ('real', 'Real'),
                         ]
@@ -47,33 +50,6 @@ class composition_kit(osv.osv):
     '''
     _name = 'composition.kit'
     
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Hide the button duplicate and delete for the "Kit Composition List"
-        """
-        if context is None:
-            context = {}
-        # call super
-        res = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        # if the view is called from the menu "Kit Composition List" the button duplicate and delete are hidden
-        if view_type == 'form' and context.get('composition_type', False) == 'real':
-            # fields to be modified
-            res['arch'] = res['arch'].replace(
-            '<form string="Kit Composition">',
-            '<form string="Kit Composition" hide_duplicate_button="1" hide_delete_button="1">')
-        
-        # in tree view, hide the delete button and replace it by a delete button of type "object" to hide if it is not draft state
-        if view_type == 'tree' and context.get('composition_type', False) == 'real':
-            res['arch'] = res['arch'].replace(
-            '<tree string="Kit Composition">',
-            '<tree string="Kit Composition" hide_delete_button="1">')
-            res['arch'] = res['arch'].replace(
-            '<field name="state"/>',
-            """<field name="state"/>
-               <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                states='draft' confirm='Do you really want to delete selected record(s) ?'/>""")
-        return res
-
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         action cancel set the state of the composition kit to 'cancel'
@@ -465,21 +441,71 @@ class composition_kit(osv.osv):
         # call super
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type - fields from one2many field
-        if view_type == 'form' and context.get('composition_type', False) == 'theoretical':
-            # fields to be modified
-            list = ['<field name="item_lot"', '<field name="item_exp"']
-            replace_text = result['fields']['composition_item_ids']['views']['tree']['arch']
-            replace_text = reduce(lambda x, y: x.replace(y, y + ' invisible="True" '), [replace_text] + list)
-            result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
-        
-        list = ['<field name="composition_exp"', '<field name="composition_combined_ref_lot"']
-        # columns from kit composition tree - if we display from theoretical menu or diplay the search view of version_id from real_filter
+        if view_type == 'form':
+            if context.get('composition_type', False) == 'theoretical':
+                # load the xml tree
+                root = etree.fromstring(result['fields']['composition_item_ids']['views']['tree']['arch'])
+                # xpath of fields to be modified
+                list = ['//field[@name="item_lot"]', '//field[@name="item_exp"]']
+                for xpath in list:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                    for field in fields:
+                        field.set('invisible', 'True')
+                result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root)
+            
+            # if the view is called from the menu "Kit Composition List" the button duplicate and delete are hidden
+            if context.get('composition_type', False) == 'real':
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                # the root is form tag
+                root.set('hide_duplicate_button', 'True')
+                root.set('hide_delete_button', 'True')
+                # fields to be modified
+                result['arch'] = etree.tostring(root)
+                
+        # columns from kit composition tree - if we display from theoretical menu or display the search view of version_id from real_filter
         if view_type == 'tree':
             if context.get('wizard_composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'theoretical' and not context.get('wizard_composition_type', False)):
-                replace_text = result['arch']
-                replace_text = reduce(lambda x, y: x.replace(y, y + ' invisible="True" '), [replace_text] + list)
-                result['arch'] = replace_text
-        
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                # xpath of fields to be modified
+                list = ['//field[@name="composition_exp"]', '//field[@name="composition_combined_ref_lot"]']
+                for xpath in list:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                    for field in fields:
+                        field.set('invisible', 'True')
+                result['arch'] = etree.tostring(root)
+                
+            # in tree view, hide the delete button and replace it by a delete button of type "object" to hide if it is not draft state
+            if context.get('composition_type', False) == 'real':
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                # the root is tree tag
+                root.set('hide_delete_button', 'True')
+                # fields to be modified
+                list = ['//field[@name="state"]']
+                fields = []
+                for xpath in list:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                # get separator index within xml tree
+                state_index = root.index(fields[0])
+                new_button_txt = '''
+                                 <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                                                     states='draft' confirm='Do you really want to delete selected record(s) ?'/>
+                                                     '''
+                # generate xml tree
+                new_tree = etree.fromstring(new_button_txt)
+                # insert new tree just after state index position
+                root.insert(state_index+1, new_tree)
+                # generate xml back to string
+                result['arch'] = etree.tostring(root)
+                
         return result
     
     def name_get(self, cr, uid, ids, context=None):
@@ -915,12 +941,22 @@ class composition_item(osv.osv):
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type
-        if view_type == 'tree' and context.get('composition_type', False) == 'theoretical':
-            # fields to be modified
-            list = ['<field name="item_lot"', '<field name="item_exp"']
-            replace_text = result['arch']
-            replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
-            result['arch'] = replace_text
+        if view_type == 'tree':
+            if context.get('composition_type', False) == 'theoretical':
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                # get the original empty separator ref and hide it 
+                # fields to be modified
+                list = ['//field[@name="item_lot"]', '//field[@name="item_exp"]']
+                fields = []
+                for xpath in list:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                    for field in fields:
+                        field.set('invisible', 'True')
+                
+                result['arch'] = etree.tostring(root)
         
         return result
     

@@ -22,7 +22,8 @@
 
 from osv import fields, osv
 from tools.translate import _
-
+# xml parser
+from lxml import etree
 
 class stock_partial_picking(osv.osv_memory):
     """
@@ -119,33 +120,54 @@ class stock_partial_picking(osv.osv_memory):
         '''
         add the field 'dest_type' for the wizard 'incoming shipment' and 'delivery orders'
         '''
-        res = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form',
-                                                                 context=context, toolbar=toolbar, submenu=submenu)
+        result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
         picking_obj = self.pool.get('stock.picking')
         picking_id = context.get('active_ids')
         if picking_id:
             picking_id = picking_id[0]
             data = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)
             picking_type = data[0]['type']
+            # for both type, we add a field before the cancel button
+            new_field_txt = False
+            # define the new field according to picking type
             if picking_type == 'in':
                 # replace line '<group col="2" colspan="2">' for 'incoming_shipment' only to select the 'stock location' destination
-                res['arch'] = res['arch'].replace(
-                    '<group col="2" colspan="2">',
-                    """
-                    <group col="4" colspan="4">
-                    <field name="dest_type" invisible="0" on_change="onchange_dest_type(dest_type,context)" required="0"/>
-                    """
-                )
+                new_field_txt = '<field name="dest_type" invisible="0" on_change="onchange_dest_type(dest_type,context)" required="0"/>'
             elif picking_type == 'out':
                 # replace line '<group col="2" colspan="2">' for 'delivery orders' only to select the 'stock location' source
-                res['arch'] = res['arch'].replace(
-                    '<group col="2" colspan="2">',
-                    """
-                    <group col="4" colspan="4">
-                    <field name="source_type" invisible="1" required="0"/>
-                    """
-                )
-        return res
+                new_field_txt = '<field name="source_type" invisible="1" required="0"/>'
+            # if a new field has been defined, we resize the group tag, and add the new field before cancel button
+            if new_field_txt:
+                # modify the group size
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                # xpath of fields to be modified
+                list_xpath = ['//group[@col="2" and @colspan="2"]']
+                group_field = False
+                for xpath in list_xpath:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                    for field in fields:
+                        group_field = field
+                        field.set('col', '4')
+                        field.set('colspan', '4')
+                # find the cancel button
+                list_xpath = ['//button[@special="cancel"]']
+                fields = False
+                for xpath in list_xpath:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                # cancel button index
+                cancel_index = list(group_field).index(fields[0])
+                # generate xml tree
+                new_field = etree.fromstring(new_field_txt)
+                # insert new field at the place of cancel button
+                group_field.insert(cancel_index, new_field)
+                result['arch'] = etree.tostring(root)
+
+        return result
 
     def do_partial_hook(self, cr, uid, context=None, *args, **kwargs):
         '''

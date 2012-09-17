@@ -31,6 +31,9 @@ import netsvc
 import pooler
 import time
 
+# xml parser
+from lxml import etree
+
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class tender(osv.osv):
