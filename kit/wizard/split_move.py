@@ -72,6 +72,7 @@ class split_move(osv.osv_memory):
                                                            'product_qty': selected_qty,
                                                            'product_uos_qty': selected_qty,
                                                            'prodlot_id': False,
+                                                           'asset_id': False,
                                                            'location_id': location_id}, context=context)
         
         return {'type': 'ir.actions.act_window_close'}

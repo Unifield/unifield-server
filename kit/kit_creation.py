@@ -305,6 +305,8 @@ class kit_creation(osv.osv):
             raise osv.except_osv(_(assertion), _(assertion))
         
         for obj in self.browse(cr, uid, ids, context=context):
+            # we copy the notes from kitting order to each kit
+            notes = obj.notes_kit_creation
             # assign products to kits TODO modify to many2many to keep stock move traceability?? needed?
             for kit in obj.kit_ids_kit_creation:
                 for item in obj.version_id_kit_creation.composition_item_ids:
@@ -347,7 +349,16 @@ class kit_creation(osv.osv):
                 # for all kit, we compute the expiry date if batch management will update corresponding lot, otherwise corresponding field
                 # we need to compute it for each kit, as the distribution of lots across kits is not homogeneous
                 expiry_date = kit_obj._compute_expiry_date(cr, uid, [kit.id], context=context)
-                kit_obj.write(cr, uid, [kit.id], {'composition_exp': expiry_date}, context=context)
+                kit_values = {'composition_exp': expiry_date}
+                # notes depend if notes exist already
+                if notes:
+                    if kit.composition_description:
+                        new_notes = notes + '\n' + kit.composition_description
+                    else:
+                        new_notes = notes
+                    kit_values.update({'composition_description': new_notes})
+                # update the kit
+                kit_obj.write(cr, uid, [kit.id], kit_values, context=context)
                 # all kits are completed
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
             # state of kitting order is Done
@@ -533,29 +544,32 @@ class kit_creation(osv.osv):
                     # the consolidated data contains a move which was original
                     original_flag = data[product_id]['uoms'][uom_id].get('original', False)
                     if res['total'] < needed_qty:
+                        if res['total'] <= 0:
+                            diff_qty = needed_qty
+                        else:
                             diff_qty = needed_qty - res['total']
-                            needed_qty -= diff_qty
-                            # we don't have enough availability, a first move 'confirmed' is created with missing qty
-                            # true for both batch management and not batch management products
-                            values = {'kit_creation_id_stock_move': obj.id,
-                                      'name': data[product_id]['object'].name,
-                                      'picking_id': obj.internal_picking_id_kit_creation.id,
-                                      'product_uom': uom_id,
-                                      'product_id': product_id,
-                                      'date_expected': context['common']['date'],
-                                      'date': context['common']['date'],
-                                      'product_qty': diff_qty,
-                                      'prodlot_id': False, # the qty is not available
-                                      'location_id': default_location_id,
-                                      'location_dest_id': context['common']['kitting_id'],
-                                      'state': 'confirmed', # not available
-                                      'reason_type_id': context['common']['reason_type_id'],
-                                      'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                      'original_from_process_stock_move': original_flag,
-                                      }
-                            move_obj.create(cr, uid, values, context=context)
-                            # we reset original move flag
-                            original_flag = False
+                        needed_qty -= diff_qty
+                        # we don't have enough availability, a first move 'confirmed' is created with missing qty
+                        # true for both batch management and not batch management products
+                        values = {'kit_creation_id_stock_move': obj.id,
+                                  'name': data[product_id]['object'].name,
+                                  'picking_id': obj.internal_picking_id_kit_creation.id,
+                                  'product_uom': uom_id,
+                                  'product_id': product_id,
+                                  'date_expected': context['common']['date'],
+                                  'date': context['common']['date'],
+                                  'product_qty': diff_qty,
+                                  'prodlot_id': False, # the qty is not available
+                                  'location_id': default_location_id,
+                                  'location_dest_id': context['common']['kitting_id'],
+                                  'state': 'confirmed', # not available
+                                  'reason_type_id': context['common']['reason_type_id'],
+                                  'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                                  'original_from_process_stock_move': original_flag,
+                                  }
+                        move_obj.create(cr, uid, values, context=context)
+                        # we reset original move flag
+                        original_flag = False
                                 
                     if data[product_id]['object'].perishable: # perishable for perishable or batch management
                         # the product is batch management we use the FEFO list
