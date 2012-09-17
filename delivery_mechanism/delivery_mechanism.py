@@ -480,8 +480,6 @@ class stock_picking(osv.osv):
                         # line number does not need to be updated
                         # average computation - empty if not average
                         values.update(average_values)
-                        move_obj.write(cr, uid, [move.id], values, context=context)
-                        done_moves.append(move.id)
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
                             if update_out:
@@ -491,6 +489,11 @@ class stock_picking(osv.osv):
                                 move_obj.write(cr, uid, [out_move_id], values, context=context)
                                 # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
                                 update_out = True
+                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
+                        move_obj.write(cr, uid, [move.id], values, context=context)
+                        done_moves.append(move.id)
+                        # we move the update of the OUT before because the updated "values" in "_do_incoming_shipment_first_hook" are interesting only for the incoming
+
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
