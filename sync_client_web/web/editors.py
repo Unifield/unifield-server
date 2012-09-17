@@ -24,29 +24,34 @@ class HeaderTempEditor(openobject.templating.TemplateEditor):
 
         form_insertion_point = output.index(self.BINARY_ATTACHMENTS_FORM)
         return output[:form_insertion_point] + '''
-<div id="client_string_one">   </div>
-<div id="client_string_two">   </div>
+<div id="client_string_one"></div>
+<div id="client_string_two"></div>
 <script type="text/javascript">
-    var delay = 6000; //refresh divs delay
-    jQuery(document).ready(function() {
-        UpdateDiv();
+
+//refresh divs delay
+var delay = 30000;
+
+function UpdateDiv()
+{
+    $.ajax({
+        type: 'post',
+        data: {},
+        dataType : 'json',
+        timeout: 5000,
+        url: '/sync_client_web/synchro_client/get_data',
+        success: function(res) {
+            $('#client_string_one').html(res.status);
+            $('#client_string_two').html(res.upgrade_status);
+        },
+        complete: function() {
+            setTimeout("UpdateDiv()", delay);
+        }
     });
-    function UpdateDiv()
-    {
-        $.ajax({
-            type: 'post',
-            data: {},
-            dataType : 'json',
-            url: '/sync_client_web/synchro_client/get_data',
-            success: function(res) {
-                $('#client_string_one').html(res.status);
-                $('#client_string_two').html(res.upgrade_status);
-            },
-            complete: function() {
-                setTimeout("UpdateDiv()", delay);
-            }
-        });
-    }
-</script>
-        ''' + output[form_insertion_point:]
+}
+
+jQuery(document).ready(function() {
+    UpdateDiv();
+});
+
+</script>''' + output[form_insertion_point:]
 
