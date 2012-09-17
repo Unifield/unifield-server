@@ -345,13 +345,13 @@ class supplier_catalogue(osv.osv):
                 row_len = len(row)
                 if row_len != 8:
                     raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
-
+                comment = []
+                p_comment = False
                 #Product code
                 product_code = row.cells[0].data
                 if not product_code :
                     default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
                     to_correct_ok = True
-                    comment = 'Product Code to be defined'
                 else:
                     try:
                         product_code = product_code.strip()
@@ -398,6 +398,8 @@ class supplier_catalogue(osv.osv):
                 #Product Unit Price
                 if not row.cells[4].data :
                     p_unit_price = 1.0
+                    to_correct_ok = True
+                    comment.append('Unit Price defined automatically as 1.00')
                 else:
                     if row.cells[4].type in ['int', 'float']:
                         p_unit_price = row.cells[4].data
@@ -423,8 +425,10 @@ class supplier_catalogue(osv.osv):
                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Order Qty"') )
 
                 #Product Comment
-                p_comment = row.cells[7].data
-
+                if row.cells[7].data:
+                    comment.append(str(row.cells[7].data))
+                if comment:
+                    p_comment = ', '.join(comment)
                 line_num += 1
 
                 to_write = {
