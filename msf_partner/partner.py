@@ -22,8 +22,10 @@
 
 from osv import osv
 from osv import fields
-from msf_partner import PARTNER_TYPE 
+from msf_partner import PARTNER_TYPE
 import time
+from tools.translate import _
+
 
 
 class res_partner(osv.osv):
@@ -175,6 +177,43 @@ class res_partner(osv.osv):
         'partner_type': lambda *a: 'external',
     }
 
+
+    def _check_main_partner(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
+        bro = bro_uid.company_id
+
+        res =  bro and bro.partner_id and bro.partner_id.id
+        cur =  bro and bro.currency_id and bro.currency_id.id
+            
+        if res in ids:
+            for obj in self.browse(cr, uid, [res], context=context):
+                if obj.property_product_pricelist_purchase and obj.property_product_pricelist_purchase.currency_id and cur != obj.property_product_pricelist_purchase.currency_id.id:
+                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner'))
+                if obj.property_product_pricelist and obj.property_product_pricelist.currency_id and cur != obj.property_product_pricelist.currency_id.id:
+                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner'))
+                if obj.customer:
+                    raise osv.except_osv(_('Warning !'), _('This partner can not be checked as customer'))
+                if obj.supplier:
+                    raise osv.except_osv(_('Warning !'), _('This partner can not be checked as supplier'))
+        return True
+
+    _constraints = [
+        (_check_main_partner, 'Check purchase and sale currency', []),
+    ]
+
+    def write(self, cr, uid, ids, vals, context=None):
+        bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
+        bro = bro_uid.company_id
+        res =  bro and bro.partner_id and bro.partner_id.id
+        if res and res in ids and 'name' in vals:
+                del vals['name']
+        return super(res_partner, self).write(cr, uid, ids, vals, context=context)
+
     def create(self, cr, uid, vals, context=None):
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
@@ -183,7 +222,6 @@ class res_partner(osv.osv):
                 vals['property_stock_customer'] = msf_customer[1]
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
-
         return super(res_partner, self).create(cr, uid, vals, context=context)
     
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
