@@ -50,6 +50,10 @@ class sale_order(osv.osv):
 
         default.update({'loan_id': False,
                         'active': True})
+
+        if not context.get('keepClientOrder', False):
+            default.update({'client_order_ref': False})
+                    
         # if splitting related attributes are not set with default values, we reset their values
         if 'split_type_sale_order' not in default:
             default.update({'split_type_sale_order': 'original_sale_order'})
@@ -363,7 +367,7 @@ class sale_order(osv.osv):
                                                               'order_line': [],
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
-                                                              'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
+                                                              'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
@@ -936,7 +940,7 @@ class sale_order_line(osv.osv):
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
 
                 # these 2 columns are for the sync module
-                'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
+                'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
                 }
 
     _sql_constraints = [
@@ -1010,7 +1014,20 @@ class sale_order_line(osv.osv):
         else:
             default_data.update({'type': 'make_to_order'})
         return default_data
-    
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale order line
+        '''
+        if not context:
+            context = {}
+        
+        if not default:
+            default = {}
+            
+        default.update({'sync_order_line_db_id': False})
+        return super(sale_order_line, self).copy(cr, uid, id, default, context)
+
     def create(self, cr, uid, vals, context=None):
         """
         Override create method so that the procurement method is on order if no product is selected
@@ -1025,8 +1042,10 @@ class sale_order_line(osv.osv):
         '''
             
         so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
-        if 'sync_order_line_db_id' not in vals:
-            super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': so_line_ids,} , context=context)
+        if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
+            if vals.get('order_id', False):
+                name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
+                super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
             
         return so_line_ids
 

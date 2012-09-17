@@ -61,7 +61,8 @@ class purchase_order(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'loan_id': False, 'merged_line_ids': False, 'origin': False})
+            
+        default.update({'loan_id': False, 'merged_line_ids': False, 'origin': False, 'partner_ref': False, })
         return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
@@ -1536,8 +1537,8 @@ class purchase_order_line(osv.osv):
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        if 'sync_order_line_db_id' not in vals:
-            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': po_line_id}, context=context)
+        if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
+            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': order.name + "_" + str(po_line_id),}, context=context)
 
         return po_line_id
 
@@ -1545,9 +1546,20 @@ class purchase_order_line(osv.osv):
         '''
         Remove link to merged line
         '''
-        defaults.update({'merged_id': False})
+        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        """
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+        default.update({'sync_order_line_db_id': False})
+        return super(purchase_order_line, self).copy_data(cr, uid, id, default=default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
