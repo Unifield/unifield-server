@@ -3051,6 +3051,9 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        
         wf_service = netsvc.LocalService("workflow")
         proc_id = kwargs['proc_id']
         order = kwargs['order']
@@ -3058,6 +3061,9 @@ class sale_order(osv.osv):
             pick_id = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)[0].move_id.picking_id.id
             if pick_id:
                 wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
+                # We also do a first 'check availability': cancel then check
+                pick_obj.cancel_assign(cr, uid, [pick_id], context)
+                pick_obj.action_assign(cr, uid, [pick_id], context)
         
         return True
     
