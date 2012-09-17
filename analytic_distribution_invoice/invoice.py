@@ -81,17 +81,6 @@ class account_invoice(osv.osv):
                     el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
         return res
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
-        """
-        Reverse lines for given invoice
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for inv in self.browse(cr, uid, ids):
-            ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', [x.id for x in inv.move_id.line_id])])
-            self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
-        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
-
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy global distribution and give it to new invoice
