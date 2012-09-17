@@ -136,6 +136,23 @@
     analytic_journal_id: account_analytic_correction_journal0
     allow_date: 0
 -
+  I create an analytic extra-accounting Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_extra_accounting_journal0}:
+    code: AEA
+    name: Analytic Extra-Accounting Journal
+    type: extra
+-
+  I create an Extra-Accounting Journal.
+-
+  !record {model: account.journal, id: account_journal_extra0}:
+    code: XTRA
+    company_id: base.main_company
+    name: Extra-Accounting Journal
+    type: extra
+    analytic_journal_id: account_analytic_extra_accounting_journal0
+    allow_date: 0
+-
   I create a analytic distribution
 -
   !record {model: analytic.distribution, id: analytic_distrib1}:

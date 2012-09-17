@@ -14,7 +14,7 @@
  !record {model: account.bank.statement, id: account_bank_statement_7}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cash_0
-    name: 
+    name: account_bank_statement_7
     period_id: register_accounting.current_period
     user_id: base.user_root
     starting_details_ids:
@@ -210,7 +210,7 @@
  !record {model: account.bank.statement, id: account_bank_statement_8}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cash_0
-    name: 
+    name: account_bank_statement_8
     period_id: period_0001
     user_id: base.user_root
     starting_details_ids:

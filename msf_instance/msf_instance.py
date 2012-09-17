@@ -39,6 +39,8 @@ class msf_instance(osv.osv):
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
                                    ('inactive', 'Inactive')], 'State', required=True),
+        'move_prefix': fields.char('Account move prefix', size=5, required=True),
+        'reconcile_prefix': fields.char('Reconcilation prefix', size=2, required=True),
     }
     
     _defaults = {
@@ -84,11 +86,35 @@ class msf_instance(osv.osv):
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
+    
+    def _check_move_prefix_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for instance in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('&'),
+                                            ('state', '!=', 'inactive'),
+                                            ('move_prefix', '=ilike', instance.move_prefix)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    def _check_reconcile_prefix_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for instance in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('&'),
+                                            ('state', '!=', 'inactive'),
+                                            ('reconcile_prefix', '=ilike', instance.reconcile_prefix)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
 
     _constraints = [
-        (_check_name_code_unicity, 'You cannot have the same code or name than an active instance!', ['code', 'name']),
-        (_check_cost_center_unicity, 'You cannot have the same cost_center than an active instance!', ['cost_center_id']),
-        (_check_database_unicity, 'You cannot have the same database than an active instance!', ['instance']),
+         (_check_name_code_unicity, 'You cannot have the same code or name than an active instance!', ['code', 'name']),
+         (_check_cost_center_unicity, 'You cannot have the same cost_center than an active instance!', ['cost_center_id']),
+         (_check_database_unicity, 'You cannot have the same database than an active instance!', ['instance']),
+         (_check_move_prefix_unicity, 'You cannot have the same move prefix than an active instance!', ['move_prefix']),
+         (_check_reconcile_prefix_unicity, 'You cannot have the same reconciliation prefix than an active instance!', ['reconcile_prefix']),
     ]
     
     def name_get(self, cr, user, ids, context=None):

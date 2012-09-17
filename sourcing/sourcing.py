@@ -201,7 +201,7 @@ class sourcing_line(osv.osv):
             else:
                 newargs.append(('sale_order_state', arg[1], arg[2]))
         return newargs
-    
+
     def _get_date(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         
@@ -212,10 +212,11 @@ class sourcing_line(osv.osv):
                 delay = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
                 res[line.id]['estimated_delivery_date'] = line.cf_estimated_delivery_date and line.state in ('done', 'confirmed') and line.cf_estimated_delivery_date or delay
             
-            tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
-            ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
-            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
-            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
+##            tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
+#            ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
+#            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
+#            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
+            res[line.id]['rts'] = line.sale_order_id.ready_to_ship_date
         
         return res
 
@@ -737,6 +738,11 @@ class sale_order_line(osv.osv):
             vals['type'] = 'make_to_stock'
             vals['po_cft'] = False
         
+        if vals.get('product_id',False):
+            bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
+            if bropro.type == 'consu':
+                vals['type'] = 'make_to_order'
+        
         # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
         if not vals.get('po_cft', False) and vals.get('type', False) == 'make_to_order':
             vals['po_cft'] = 'po'
@@ -764,6 +770,11 @@ class sale_order_line(osv.osv):
         orderCategory = order.categ
         customer_id = order.partner_id.id
         
+        if sellerId:
+            seller = self.pool.get('res.partner').browse(cr,uid,sellerId)
+            if seller.partner_type and not order.procurement_request and not seller.partner_type in ['external','esc']:
+                sellerId = False
+ 
         values = {
                   'sale_order_id': vals['order_id'],
                   'sale_order_line_id': result,
@@ -780,7 +791,7 @@ class sale_order_line(osv.osv):
 #                  'sale_order_state': orderState,
                   'state': self.browse(cr, uid, result, context=context).state
                   }
-        
+
         sourcing_line_id = self.pool.get('sourcing.line').create(cr, uid, values, context=context)
         # update sourcing line - trigger update of fields.function values -- OPENERP BUG ? with empty values
         self.pool.get('sourcing.line').write(cr, uid, [sourcing_line_id], {}, context=context)
@@ -823,6 +834,11 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if vals.get('product_id',False):
+            bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
+            if bropro.type == 'consu':
+                vals['type'] = 'make_to_order'
 
         # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
@@ -1003,6 +1019,7 @@ class procurement_order(osv.osv):
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        location_id = False
         if sol_ids:
             sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
             if sol.analytic_distribution_id:
@@ -1013,6 +1030,17 @@ class procurement_order(osv.osv):
                 new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, 
                                                     uid, sol.order_id.analytic_distribution_id.id, context=context)
                 values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
+        elif procurement.product_id:
+            if procurement.product_id.type == 'consu':
+                location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            elif procurement.product_id.type == 'service_recep':
+                location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
+            else:
+                wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+                if wh_ids:
+                    location_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
+                else:
+                    location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
             
         if purchase_ids:
             line_values = values['order_line'][0][2]
@@ -1023,7 +1051,9 @@ class procurement_order(osv.osv):
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s/%s' % (po.origin, procurement.origin)}, context=context)
             elif not po.origin:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s' % (procurement.origin)}, context=context)
-                
+            
+            if location_id:
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=context)
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
@@ -1303,11 +1333,52 @@ class res_partner(osv.osv):
                     res.append(('supplier', '=', True))
                     
         return res
+
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
         
-    
+    def _check_partner_type(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner':
+                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
+                if arg[2]:
+                    so = self.pool.get('sale.order').browse(cr, uid, arg[2])
+                    if not so.procurement_request:
+                        newargs.append(('partner_type', 'in', ['external', 'esc']))
+            else:
+                newargs.append(args)
+        return newargs
+
+    def _check_partner_type_rfq(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner_rfq':
+                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner_rfq different than (arg[0], =, id) not implemented.'))
+                if arg[2]:
+                    tender = self.pool.get('tender').browse(cr, uid, arg[2])
+                    if tender.sale_order_id:
+                        newargs.append(('partner_type', 'in', ['external', 'esc']))
+            else:
+                newargs.append(args)
+        return newargs
+
     _columns = {
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
                                              method=True, type='boolean', string='Available for DPO', store=False),
+        'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
+        'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
     }
     
 res_partner()

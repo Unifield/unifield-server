@@ -37,6 +37,7 @@
         'account_invoice_view.xml',
         'account_invoice_report.xml',
         'account_analytic_line_view.xml',
+        'account_sequence.xml',
     ],
     'test': [],
     'installable': True,

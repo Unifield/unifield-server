@@ -24,7 +24,7 @@
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
                     <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)"/>
-                    <field name="cost_center_id"/>
+                    <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
@@ -69,6 +69,7 @@
                     <field name="commitment_id" invisible="1"/>
                     <field name="purchase_id" invisible="1"/>
                     <field name="purchase_line_id" invisible="1"/>
+                    <field name="model_id" invisible="1"/>
                     <field name="sale_order_id" invisible="1"/>
                     <field name="sale_order_line_id" invisible="1"/>
                     <group colspan="2" col="3">
@@ -88,7 +89,7 @@
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
-                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'from_commitment': commitment_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <group colspan="2">

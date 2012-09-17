@@ -101,23 +101,24 @@
                                         <field name="default_code" />
                                         <field name="name" />
 					<field name="uom_id" />
+					<field name="cost_price" invisible="not context.get('with_valuation')" />
 					<field name="currency_id" invisible="not context.get('with_valuation')" />
 					<field name="internal_qty" />
 					<field name="internal_val" invisible="not context.get('with_valuation')" />
 					<field name="in_pipe_qty" />
-					<field name="in_pipe_val" invisible="not context.get('with_valuation')" />
+					<!-- <field name="in_pipe_val" invisible="not context.get('with_valuation')" /> -->
 					<!-- field name="in_pipe_coor_qty" />
 					<field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
 					<field name="stock_qty" />
-					<field name="stock_val" invisible="not context.get('with_valuation')" />
+					<!-- <field name="stock_val" invisible="not context.get('with_valuation')" /> -->
 					<field name="central_qty" />
-					<field name="central_val" invisible="not context.get('with_valuation')" />
+					<!-- <field name="central_val" invisible="not context.get('with_valuation')" /> -->
 					<field name="cross_qty" />
-					<field name="cross_val" invisible="not context.get('with_valuation')" />
+					<!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
 					<field name="secondary_qty" />
-					<field name="secondary_val" invisible="not context.get('with_valuation')" />
+					<!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
 					<field name="cu_qty" />
-					<field name="cu_val" invisible="not context.get('with_valuation')" />
+					<!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
 					<field name="product_amc" />
 					<field name="reviewed_consumption" />
 					<field name="categ_id" invisible="1" />

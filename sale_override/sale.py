@@ -123,9 +123,11 @@ class sale_order(osv.osv):
                 res[sale.id] = 100.0
                 continue
             tot = 0.0
-            for invoice in sale.invoice_ids:
-                if invoice.state not in ('draft', 'cancel'):
-                    tot += invoice.amount_untaxed
+            for line in sale.order_line:
+                if line.invoiced:
+                    for invoice_line in line.invoice_lines:
+                        if invoice_line.invoice_id.state not in ('draft', 'cancel'):
+                            tot += invoice_line.price_subtotal
             if tot:
                 res[sale.id] = min(100.0, tot * 100.0 / (sale.amount_untaxed or 1.00))
             else:
@@ -155,6 +157,18 @@ class sale_order(osv.osv):
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
             
         return result
+    
+    def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = True
+            for line in order.order_line:
+                res[order.id] = False
+                break
+            # better: if order.order_line: res[order.id] = False
+                
+        return res
     
     _columns = {
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
@@ -197,6 +211,7 @@ class sale_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
+        'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
     }
     
     _defaults = {
@@ -209,6 +224,7 @@ class sale_order(osv.osv):
         'order_policy': lambda *a: 'picking',
         'split_type_sale_order': 'original_sale_order',
         'active': True,
+        'no_line': lambda *a: True,
     }
 
     def _check_own_company(self, cr, uid, company_id, context=None):
@@ -249,9 +265,39 @@ class sale_order(osv.osv):
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+    
+    def change_currency(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to change the currency and update lines
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            data = {'order_id': order.id,
+                    'partner_id': order.partner_id.id,
+                    'partner_type': order.partner_id.partner_type,
+                    'new_pricelist_id': order.pricelist_id.id,
+                    'currency_rate': 1.00,
+                    'old_pricelist_id': order.pricelist_id.id}
+            wiz = self.pool.get('sale.order.change.currency').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'sale.order.change.currency',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': wiz,
+                    'target': 'new'}
+            
+        return True
 
     def wkf_validated(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
+            if order.pricelist_id.id not in pricelist_ids:
+                raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated', 'validated_date': time.strftime('%Y-%m-%d')}, context=context)
@@ -277,6 +323,9 @@ class sale_order(osv.osv):
         
         # must be original-sale-order to reach this method
         for so in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', so.partner_id.partner_type)], context=context)
+            if so.pricelist_id.id not in pricelist_ids:
+                raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
             # links to split Fo
             split_fo_dic = {'esc_split_sale_order': False,
                             'stock_split_sale_order': False,
@@ -313,6 +362,7 @@ class sale_order(osv.osv):
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
                                                               'split_type_sale_order': fo_type,
+                                                              'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
@@ -488,6 +538,14 @@ class sale_order(osv.osv):
 
         return False
     
+    def order_line_change(self, cr, uid, ids, order_line):
+        res = {'no_line': True}
+        
+        if order_line:
+            res = {'no_line': False}
+        
+        return {'value': res}
+    
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -557,6 +615,17 @@ class sale_order(osv.osv):
         # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
         return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
+
+    def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+
+        - allow to add more actions when the picking is confirmed
+        '''
+        picking_id = kwargs['pick_id']
+        res = super(sale_order, self)._hook_execute_action_assign(cr, uid, *args, **kwargs)
+        return self.pool.get('stock.picking').action_assign(cr, uid, [picking_id])
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
@@ -859,18 +928,8 @@ class sale_order_line(osv.osv):
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
 
                 # these 2 columns are for the sync module
-                'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
-                'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
+                'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
                 }
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Add the database ID of the SO line to the value sync_sol_db_id
-        '''
-        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
-
-        super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_sol_db_id': so_line_ids,} , context=context)
-        return so_line_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -903,6 +962,70 @@ class sale_order_line(osv.osv):
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({'so_back_update_dest_po_id_sale_order_line': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
+
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
+            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        """
+        If we select product we change the procurment type to 'Stock'
+        """
+        res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
+            uom, qty_uos, uos, name, partner_id,
+            lang, update_tax, date_order, packaging, fiscal_position, flag)
+        if product:
+            if 'value' in res:
+                res['value'].update({'type': 'make_to_stock'})
+            else:
+                res.update({'value':{'type': 'make_to_stock'}})
+        elif not product:
+            if 'value' in res:
+                res['value'].update({'type': 'make_to_order'})
+            else:
+                res.update({'value':{'type': 'make_to_order'}})
+        return res
+
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        Default procurement method is 'on order' if no product selected
+        """
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        if context is None:
+            context = {}
+        sale_id = context.get('sale_id', [])
+        if not sale_id:
+            return default_data
+        else:
+            default_data.update({'type': 'make_to_order'})
+        return default_data
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Override create method so that the procurement method is on order if no product is selected
+        """
+        if context is None:
+            context = {}
+        if not vals.get('product_id') and context.get('sale_id', []):
+            vals.update({'type': 'make_to_order'})
+            
+        '''
+        Add the database ID of the SO line to the value sync_order_line_db_id
+        '''
+            
+        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        if 'sync_order_line_db_id' not in vals:
+            super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': so_line_ids,} , context=context)
+            
+        return so_line_ids
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Override write method so that the procurement method is on order if no product is selected
+        """
+        if context is None:
+            context = {}
+        if not vals.get('product_id') and context.get('sale_id', []):
+            vals.update({'type': 'make_to_order'})
+        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()
 

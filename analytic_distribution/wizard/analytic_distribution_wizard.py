@@ -201,7 +201,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     if context.get('from_accrual_line', False):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
-                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)):
+                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
+                      or (context.get('from_model', False) and isinstance(context.get('from_model'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
@@ -211,7 +212,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
-                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)):
+                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
+                        or (context.get('from_model', False) and isinstance(context.get('from_model'), int)):
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
@@ -367,7 +369,28 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         # Otherway: delete FP
         else:
             res = {'value': {'analytic_id': False}}
-        # If destination given, search if given 
+        return res
+
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
+        """
+        Check given cost_center with funding pool
+        """
+        # Prepare some values
+        res = {}
+        if cost_center_id and analytic_id:
+            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
+            # Search MSF Private Fund element, because it's valid with all accounts
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
+                res = {'value': {'analytic_id': False}}
+        elif not cost_center_id:
+            res = {}
+        else:
+            res = {'value': {'analytic_id': False}}
         return res
 
 analytic_distribution_wizard_fp_lines()
@@ -441,10 +464,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state in ['posted']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state not in ['draft']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
         return res
 
@@ -469,6 +492,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id and wiz.direct_invoice_line_id.invoice_id.analytic_distribution_id:
                 res[wiz.id] = True
             elif wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.analytic_distribution_id:
+                res[wiz.id] = True
+            if wiz.model_line_id and wiz.model_line_id.model_id and wiz.model_line_id.model_id.analytic_distribution_id:
                 res[wiz.id] = True
         return res
 
@@ -502,6 +527,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
         'commitment_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'commitment_line_id': fields.many2one('account.commitment.line', string="Commitment Voucher Line"),
+        'model_id': fields.many2one('account.model', string="Account Model"),
         'model_line_id': fields.many2one('account.model.line', string="Account Model Line"),
         'accrual_line_id': fields.many2one('msf.accrual.line', string="Accrual Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
@@ -672,6 +698,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             if not wiz.fp_line_ids and wiz.accrual_line_id:
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
+            if not wiz.fp_line_ids and (wiz.model_id or wiz.model_line_id) :
+                raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
                 # Do nothing if there no lines for the current type
@@ -809,6 +837,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         wizard = self.browse(cr, uid, [wizard_id], context=context)[0]
         distrib = wizard.distribution_id
+        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         line_obj_name = '.'.join([line_type, 'distribution.line']) # get something like "cost.center.distribution.line"
         line_obj = self.pool.get(line_obj_name)
         # Search database lines
@@ -833,7 +862,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'analytic_id': line.get('analytic_id'),
                     'percentage': line.get('percentage'),
                     'distribution_id': distrib.id,
-                    'currency_id': wizard.currency_id and wizard.currency_id.id,
+                    'currency_id': wizard.currency_id and wizard.currency_id and wizard.currency_id.id or company_currency_id,
                     'cost_center_id': line.get('cost_center_id') or False,
                     'destination_id': line.get('destination_id') or False,
                 }
@@ -873,7 +902,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
                     ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
-                    ('commitment_line_id', 'account.commitment.line'), ('model_line_id', 'account.model.line'),
+                    ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
                     ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
@@ -1013,6 +1042,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.commitment_line_id:
                 pl = wiz.commitment_line_id
                 distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
+            elif wiz.model_line_id:
+                pl = wiz.model_line_id
+                distrib = pl.model_id and pl.model_id.analytic_distribution_id or False
 
             if distrib:
                 # Check if distribution if valid with wizard account
@@ -1087,6 +1119,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             distrib = wizard.distribution_id or False
             aal_obj = self.pool.get('account.analytic.line')
             ml_obj = self.pool.get('account.move.line')
+            distro_obj = self.pool.get('analytic.distribution')
             if not distrib:
                 return False
             if wizard.move_line_id:
@@ -1121,6 +1154,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                             aal_obj.unlink(cr, uid, aal_ids, context=context)
                             # create new analytic lines
                             self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
+            elif wizard.register_line_id and wizard.register_line_id.state == 'temp':
+                # Update analytic lines
+                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, [wizard.register_line_id.id], distrib=distrib.id)
         return True
 
 analytic_distribution_wizard()

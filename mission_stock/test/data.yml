@@ -68,6 +68,8 @@
     name: Project 1
     cost_center_id: analytic_account_kenya
     state: active
+    move_prefix: TEST
+    reconcile_prefix: T1
 -
   Activate the local instance
 -
