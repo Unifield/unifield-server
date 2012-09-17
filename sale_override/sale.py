@@ -302,7 +302,10 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated', 'validated_date': time.strftime('%Y-%m-%d')}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
-            self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
+            if not order.procurement_request:
+                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
+            else:
+                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated.' % order.name, context=context)
 
         return True
     
