@@ -22,6 +22,7 @@
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import netsvc
 
 from sale_override import SALE_ORDER_STATE_SELECTION
 from msf_order_date.order_dates import compute_rts
@@ -244,9 +245,10 @@ class procurement_request(osv.osv):
 
     def validate_procurement(self, cr, uid, ids, context=None):
         '''
-        Validate the request
+        Validate the request (which is a the same object as a SO)
         '''
         obj_data = self.pool.get('ir.model.data')
+        wf_service = netsvc.LocalService("workflow")
         nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
         nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
         nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
@@ -265,7 +267,9 @@ class procurement_request(osv.osv):
                     nb_lines += 1
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !')%nb_lines)
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        # the sale order is treated, we process the workflow of the new so
+        for id in ids:
+            wf_service.trg_validate(uid, 'sale.order', id, 'order_validated', cr)
 
         return True
     
