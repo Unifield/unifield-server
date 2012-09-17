@@ -68,7 +68,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_credit = 0
             
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date']):
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
+                'destination_id_first_value']):
                 account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
@@ -81,7 +82,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     fp_id = private_fund_id
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
                 f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
-                destination_id = (line.get('destination_id') and line.get('destination_id')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
+                destination_id = (line.get('destination_id_first_value') and line.get('destination_id_first_value')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                 if distrib_id:
                     common_vals = {
@@ -171,10 +172,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
         active_ids = context.get('active_ids')
         if isinstance(active_ids, (int, long)):
             active_ids = [active_ids]
+        # Fetch some data
         ana_line_obj = self.pool.get('account.analytic.line')
         distrib_obj = self.pool.get('account.analytic.distribution')
         distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
+        # Search an analytic correction journal
+        acor_journal_id = False
+        acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        if acor_journal_ids:
+            acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated
         to_write = {}
         account_change = []
@@ -186,11 +193,11 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, []).append(line.id)
 
                 if line.account_id.id != line.account_id_first_value.id:
-                    if line.cost_center_id.id != line.cost_center_id_first_value.id:
+                    if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                         cc_account_change.append(line)
                     else:
                         account_change.append(line)
-                elif line.cost_center_id.id != line.cost_center_id_first_value.id:
+                elif line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                         cc_change.append(line)
         all_lines = {}
         for currency in to_write:
@@ -219,20 +226,24 @@ class hq_entries_validation_wizard(osv.osv_memory):
             distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
             # update the distribution
             distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date})
+            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
             distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date})
-
+            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
 
             # reverse ana lines
             fp_old_lines = ana_line_obj.search(cr, uid, [
                 ('cost_center_id', '=', line.cost_center_id_first_value.id),
+                ('destination_id', '=', line.destination_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            ana_line_obj.reverse(cr, uid, fp_old_lines)
+            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines)
+            # Give them analytic correction journal (UF-1385 in comments)
+            if not acor_journal_id:
+                raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
             # create new lines
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
-                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,})
+                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
@@ -359,6 +370,7 @@ class hq_entries(osv.osv):
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=True, readonly=True),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
+        'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
     }
