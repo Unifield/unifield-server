@@ -418,7 +418,7 @@
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P2)"
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (5/P2)"
               
-            if line.product_id.id == ref('product3'):
+            if line.product_id.id == ref('product3') and not line.line_id.order_id.procurement_request:
               assert line.sourced_ok == 'Closed', "Sourced is not equal to 'Closed' (5/P3)"
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P3)"
               assert line.tender_status == 'N/A (0)', "Tender status is different than 'N/A (0)' (5/P3)"
@@ -466,7 +466,7 @@
         assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (6)"
 
         for line in wiz.line_ids:
-            if line.product_id.id == ref('product3'):
+            if line.product_id.id == ref('product3') and not line.line_id.order_id.procurement_request:
               assert line.available_qty == 1997.0, "The available qty is not equal to 1997.00 (6/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (6/P3)"
               assert line.outgoing_status == 'Closed (1)', "Outgoing status is different than 'Closed (1)' (6/P3)"
