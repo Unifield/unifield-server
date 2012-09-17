@@ -44,9 +44,10 @@
         'security/ir.model.access.csv',
     ],
     "demo_xml": [],
-    'test': ['test/kit_data.yml',
-             'test/kit.yml',
-             'test/kitting.yml',
+    'test': [
+#             'test/kit_data.yml',
+#             'test/kit.yml',
+#             'test/kitting.yml',
              ],
     'installable': True,
 }
