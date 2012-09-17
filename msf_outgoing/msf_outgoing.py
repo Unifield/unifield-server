@@ -3106,9 +3106,15 @@ class sale_order(osv.osv):
             move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
         else:
-            # first go to packing location
+            # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
+            # according to the configuration
             packing_id = order.shop_id.warehouse_id.lot_packing_id.id
-            move_data['location_dest_id'] = packing_id
+            output_id = order.shop_id.warehouse_id.lot_output_id.id
+            setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+            if setup.delivery_process == 'simple':
+                move_data['location_dest_id'] = output_id
+            else:
+                move_data['location_dest_id'] = packing_id
             move_data['state'] = 'confirmed'
         return move_data
     
