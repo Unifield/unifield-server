@@ -172,11 +172,6 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
-        # if all the move lines state are done then the picking is done
-        if vals.get('move_lines'):
-            move_lines_state = [line[0][2].get('state', False) for line in vals.get('move_lines')]
-            if all(move_lines_state == 'done'):
-                vals['state'] = 'done'
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
