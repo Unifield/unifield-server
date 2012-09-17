@@ -112,6 +112,19 @@ class tender(osv.osv):
     
     _order = 'name desc'
 
+    def get_hq(self, cr, uid, parent, context=None):
+        if parent:
+            check = self.get_hq(cr, uid, parent.parent_id)
+            return check and check or parent.code
+        return False
+
+    def _get_new_order_ref(self, cr, uid, vals, context=None):
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        instance_code = company and company.instance_id and company.instance_id.code or ''
+        hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+        yy = time.strftime('%y',time.localtime())
+        order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+        vals.update({'name': order_ref})
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -119,35 +132,23 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
+
         if context.get('__copy_data_seen',False):
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            instance_code = company and company.instance_id and company.instance_id.code or ''
-            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
-            yy = time.strftime('%y',time.localtime())
-            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
-            vals.update({'name': order_ref})
+            self._get_new_order_ref(cr, uid, vals, context)
 
         if self._name == 'purchase.order.merged.line':
             vals.update({'line_number': 0})
-        return super(tender, self).create(cr, uid, vals, context=context)
 
-    def get_hq(self, cr, uid, parent, context=None):
-        if parent:
-            check = self.get_hq(cr, uid, parent.parent_id)
-            return check and check or parent.code
-        return False
+        return super(tender, self).create(cr, uid, vals, context=context)
 
     def default_get(self, cr, uid, fields, context=None):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(tender, self).default_get(cr, uid, fields, context=context)
-        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        instance_code = company and company.instance_id and company.instance_id.code or ''
-        hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
-        yy = time.strftime('%y',time.localtime())
-        order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+res.get('name','')
-        res.update({'name': order_ref})
+
+        self._get_new_order_ref(cr, uid, res, context)
+
         return res
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):

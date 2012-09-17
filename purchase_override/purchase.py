@@ -181,19 +181,22 @@ class purchase_order(osv.osv):
             return check and check or parent.code
         return False
 
+    def _get_new_order_ref_po(self, cr, uid, vals, context=None):
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        instance_code = company and company.instance_id and company.instance_id.code or ''
+        hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+        yy = time.strftime('%y',time.localtime())
+        order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+        vals.update({'name': order_ref})
+
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
-
         if not res.get('rfq_ok',False):
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            instance_code = company and company.instance_id and company.instance_id.code or ''
-            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
-            yy = time.strftime('%y',time.localtime())
-            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+res.get('name','')
-            res.update({'name': order_ref})
+            self._get_new_order_ref_po(cr, uid, res, context)
 
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
@@ -1119,15 +1122,10 @@ stock moves which are already processed : '''
         if not context:
             context = {}
 
-        if context.get('__copy_data_seen',False) and not context.get('request_for_quotation',False):
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            instance_code = company and company.instance_id and company.instance_id.code or ''
-            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
-            yy = time.strftime('%y',time.localtime())
-            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
-            vals.update({'name': order_ref})
+        if context.get('__copy_data_seen',False) and not context.get('request_for_quotation',False) and not context.get('copy_rfq',False) :
+            self._get_new_order_ref_po(cr, uid, vals, context)
 
-        if vals.get('tender_id',False):
+        if vals.get('tender_id',False) and not context.get('request_for_quotation',False) and not context.get('copy_rfq',False):
             yy = time.strftime('%y',time.localtime())
             order_ref = yy+'/'+vals.get('name','')
             vals.update({'name': order_ref})

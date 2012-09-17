@@ -806,30 +806,28 @@ class request_for_quotation(osv.osv):
                 'view_id': [view_id],
                 'res_id': ids[0],}
 
+    def _get_new_order_ref(self, cr, uid, vals, context=None):
+        yy = time.strftime('%y',time.localtime())
+        order_ref = yy+'/'+vals.get('name','')
+        vals.update({'name': order_ref})
 
     def default_get(self, cr, uid, fields, context=None):
         '''
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(request_for_quotation, self).default_get(cr, uid, fields, context=context)
-
         if res.get('rfq_ok',False):
-            yy = time.strftime('%y',time.localtime())
-            order_ref = yy+'/'+res.get('name','')
-            res.update({'name': order_ref})
-
+            self._get_new_order_ref(cr, uid, res, context)
         return res
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        if context.get('__copy_data_seen',False) and context.get('request_for_quotation',False):
-            yy = time.strftime('%y',time.localtime())
-            order_ref = yy+'/'+vals.get('name','')
-            vals.update({'name': order_ref})
+        if context.get('__copy_data_seen',False) and ( context.get('request_for_quotation',False) or context.get('rfq_ok',False) ) :
+            context['copy_rfq'] = True
+            self._get_new_order_ref(cr, uid, vals, context)
         return super(request_for_quotation, self).create(cr, uid, vals, context=context)
 
-    
 request_for_quotation()
 
 

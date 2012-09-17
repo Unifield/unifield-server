@@ -236,21 +236,47 @@ class sale_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
+
+    def _get_new_order_ref_so(self, cr, uid, vals, context=None):
+        yy = time.strftime('%y',time.localtime())
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        instance_code = company and company.instance_id and company.instance_id.code or ''
+        hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
+        return yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+
+
+    def get_hq(self, cr, uid, parent, context=None):
+        if parent:
+            check = self.get_hq(cr, uid, parent.parent_id)
+            return check and check or parent.code
+        return False
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Fill the unallocated_ok field according to Unifield setup
+        '''
+        res = super(sale_order, self).default_get(cr, uid, fields, context=context)
+
+        if not context.get('procurement_request',False):
+            order_ref = self._get_new_order_ref_so(cr, uid, res, context)
+        else:
+            yy = time.strftime('%y',time.localtime())
+            order_ref = yy+'/'+res.get('name','')
+
+        res.update({'name': order_ref})
+        return res
     
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
 
-        yy = time.strftime('%y',time.localtime())
         if context.get('__copy_data_seen',False) and context.get('procurement_request',False):
+            yy = time.strftime('%y',time.localtime())
             order_ref = yy+'/'+vals.get('name','')
             vals.update({'name': order_ref})
 
         elif context.get('__copy_data_seen',False) and not context.get('procurement_request',False):
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            instance_code = company and company.instance_id and company.instance_id.code or ''
-            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
-            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+vals.get('name','')
+            order_ref = self._get_new_order_ref_so(cr, uid, vals, context)
             vals.update({'name': order_ref})
 
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
@@ -278,30 +304,6 @@ class sale_order(osv.osv):
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
-
-    def get_hq(self, cr, uid, parent, context=None):
-        if parent:
-            check = self.get_hq(cr, uid, parent.parent_id)
-            return check and check or parent.code
-        return False
-
-    def default_get(self, cr, uid, fields, context=None):
-        '''
-        Fill the unallocated_ok field according to Unifield setup
-        '''
-        res = super(sale_order, self).default_get(cr, uid, fields, context=context)
-
-        yy = time.strftime('%y',time.localtime())
-        if not context.get('procurement_request',False):
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            instance_code = company and company.instance_id and company.instance_id.code or ''
-            hq_code = self.get_hq(cr,uid,company.instance_id.parent_id,context) or instance_code
-            order_ref = yy+'/'+hq_code+'/'+instance_code+'/'+res.get('name','')
-        else:
-            order_ref = yy+'/'+res.get('name','')
-
-        res.update({'name': order_ref})
-        return res
 
     
     def change_currency(self, cr, uid, ids, context=None):
