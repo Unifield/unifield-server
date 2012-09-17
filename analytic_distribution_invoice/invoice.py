@@ -80,9 +80,6 @@ class account_invoice(osv.osv):
                 if 'order_line_id' in el[2]:
                     el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
         return res
-    
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
-        return self.refund(cr, uid, ids, date, period_id, description, journal_id, None)
 
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
         """
@@ -91,6 +88,11 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for inv in self.browse(cr, uid, ids):
+            # Check for dates (refund must be done after invoice)
+            if date and date < inv.date_invoice:
+                raise osv.except_osv(_('Error'), _("Posting date for the refund is before the invoice's posting date!"))
+            if document_date and document_date < inv.document_date:
+                raise osv.except_osv(_('Error'), _("Document date for the refund is before the invoice's document date!"))
             ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', [x.id for x in inv.move_id.line_id])])
             self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
         new_ids = super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
