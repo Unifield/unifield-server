@@ -35,7 +35,7 @@
     Add sourcing specification
     """,
     'test': [
-#             'test/tender_flow.yml',
+             'test/tender_flow.yml',
              ],
     'update_xml': [
         'security/ir.model.access.csv',

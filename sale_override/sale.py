@@ -582,11 +582,11 @@ class sale_order(osv.osv):
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
         # DE-Comment because the confirmation of the Internal Request DOES NOT confirmed automatically the associated procurement order
-        wf_service = netsvc.LocalService("workflow")
-        order = kwargs['order']
-        proc_id = kwargs['proc_id']
-        if order.procurement_request and order.state == 'progress':
-            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+#        wf_service = netsvc.LocalService("workflow")
+#        order = kwargs['order']
+#        proc_id = kwargs['proc_id']
+#        if order.procurement_request and order.state == 'progress':
+#            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         
         return True
     

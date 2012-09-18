@@ -344,6 +344,7 @@ class sale_order_line_followup(osv.osv_memory):
                             'available_qty': 0.00}
 
             # Set the available qty in stock
+            # You may not have product with an Internal Request
             if line.line_id.product_id:
                 qty_available = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
