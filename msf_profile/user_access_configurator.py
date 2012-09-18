@@ -25,19 +25,24 @@ import base64
 from os.path import join as opj
 import tools
 
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from msf_supply_doc_import.check_line import *
+from msf_supply_doc_import import MAX_LINES_NB
+
 
 class user_access_configurator(osv.osv_memory):
     _name = 'user.access.configurator'
-    _columns = {'file_to_import': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity')}
+    _columns = {'file_to_import_uac': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity')}
     
-    def import_data_uacc(self, cr, uid, ids, context=None):
+    
+    def import_data_uac(self, cr, uid, ids, context=None):
         '''
         import data and generate data structure
         
-        {
-        'group_list': [group_names],
-        'menus_groups': {'menu_name': [group_names]} - we only take the group_name into account if True
-        }
+        {id: {
+              'group_list': [group_names],
+              'menus_groups': {'menu_name': [group_names]} - we only take the group_name into account if True
+              }
         
         '''
         # Some verifications
@@ -45,10 +50,15 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        
         # data structure returned with processed data from file
+        data_structure = {}
+        
+        for id in ids:
+            # data structure returned with processed data from file
+            data_structure.update({id: {'group_list': [], 'menus_groups': {}}})
             
-        return False
+        return data_structure
     
     def process_groups_uac(self, cr, uid, ids, context=None):
         '''
@@ -120,7 +130,7 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        return False
+        return {'type': 'ir.actions.act_window_close'}
 
 user_access_configurator()
 

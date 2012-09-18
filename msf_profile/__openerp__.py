@@ -115,6 +115,7 @@
         "report.xml",
         "purchase_double_validation_workflow.xml",
         "usability.xml",
+        "user_access_configurator_view.xml",
     ],
     "demo_xml": [
     ],
