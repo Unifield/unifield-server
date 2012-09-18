@@ -388,6 +388,15 @@ class ImpEx(SecuredController):
             fields = fields.replace('/.id','.id')
             flds = [fields]
 
+        # UF-1257 Delete Real stock and Virtual stock from export
+        if params.model == 'product.product':
+            for el in ['qty_available', 'virtual_available']:
+                if el in flds:
+                    flds.remove(el)
+                if el in fields:
+                    fields.remove(el)
+            for fld_header in ['Real Stock', 'Virtual Stock']:
+                params.fields2.remove(fld_header)
 
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
@@ -396,7 +405,10 @@ class ImpEx(SecuredController):
 
         if not params.ids or all_records:
             domain = params.search_domain or []
-            ids = proxy.search(domain, 0, None, 0, ctx)
+            if params.model == 'product.product':
+                ids = proxy.search(domain, 0, None, 0, ctx)
+            else:
+                ids = proxy.search(domain, 0, 2000, 0, ctx)
         else:
             ids = params.ids or []
         result = datas_read(ids, params.model, flds, context=ctx)
