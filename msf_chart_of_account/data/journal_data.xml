@@ -59,7 +59,7 @@
         <record id="od_analytic_journal" model="account.analytic.journal">
             <field name="name">Correction</field>
             <field name="code">OD</field>
-            <field name="type">general</field>
+            <field name="type">correction</field>
         </record>
 
         <record id="correction_journal" model="account.journal">

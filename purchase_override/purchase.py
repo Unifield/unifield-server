@@ -218,7 +218,8 @@ class purchase_order(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
-        Check if the partner is correct
+        Check if the partner is correct.
+        # UTP-114 demand purchase_list PO to be "from picking" as invoice_method
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
@@ -226,14 +227,14 @@ class purchase_order(osv.osv):
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list']:
+            elif vals.get('order_type') in ['direct',]:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         '''
         Changes the invoice method of the purchase order according to
         the choosen order type
@@ -261,10 +262,10 @@ class purchase_order(osv.osv):
         
         if order_type in ['donation_exp', 'donation_st', 'loan']:
             v['invoice_method'] = 'manual'
-        elif order_type in ['direct', 'purchase_list']:
+        elif order_type in ['direct']:
             v['invoice_method'] = 'order'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
-        elif order_type in ['in_kind']:
+        elif order_type in ['in_kind', 'purchase_list']:
             v['invoice_method'] = 'picking'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
@@ -415,6 +416,19 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
 
+    def _get_destination_ok(self, cr, uid, lines, context):
+        dest_ok = False
+        for line in lines:
+            is_inkind = False
+            if line.order_id and line.order_id.order_type == 'in_kind':
+                is_inkind = True
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
+            if not dest_ok:
+                if is_inkind:
+                    raise osv.except_osv(_('Error'), _('No destination found. An In-kind Donation expense account is probably missing for this line: %s.') % (line.name or ''))
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
+        return dest_ok
+
     def check_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Check analytic distribution validity for given PO.
@@ -435,8 +449,22 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib_id:
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                # Change distribution to be valid if needed by using those from header
                 if pol.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Warning'), _("Analytic distribution is not valid for '%s'!") % (pol.name or '',))
+                    id_ad = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    for line in pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines:
+                        # fetch compatible destinations then use on of them:
+                        # - destination if compatible
+                        # - else default destination of given account
+                        bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
+                        if line.destination_id in bro_dests:
+                            bro_dest_ok = line.destination_id
+                        else:
+                            bro_dest_ok = pol.account_4_distribution.default_destination_id
+                        # Copy cost center line to the new distribution
+                        self.pool.get('cost.center.distribution.line').copy(cr, uid, line.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id})
+                        # Write result
+                        self.pool.get('purchase.order.line').write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
         return True
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
@@ -859,7 +887,8 @@ stock moves which are already processed : '''
 
         for order in self.browse(cr, uid, ids):
             # Create commitments for each PO only if po is "from picking"
-            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type != 'in_kind' and order.partner_id.partner_type != 'intermission':
+            # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
+            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission':
                 self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
@@ -1118,6 +1147,7 @@ stock moves which are already processed : '''
     def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
+        # UTP-114 demands purchase_list PO to be 'from picking'.
         """
         if not context:
             context = {}
@@ -1137,7 +1167,7 @@ stock moves which are already processed : '''
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list']:
+            elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
@@ -1557,7 +1587,7 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        vals = self._update_merged_line(cr, uid, False, vals, context=context)
+        vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
@@ -1595,7 +1625,7 @@ class purchase_order_line(osv.osv):
         
         if not context.get('update_merge'):
             for line in ids:
-                vals = self._update_merged_line(cr, uid, line, vals, context=context)
+                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True))
                 
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
@@ -1617,7 +1647,8 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
-            self._update_merged_line(cr, uid, line_id, False, context=context)
+            # we want to skip resequencing because unlink is performed on merged purchase order lines
+            self._update_merged_line(cr, uid, line_id, False, context=dict(context, skipResequencing=True))
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
@@ -1714,6 +1745,10 @@ class purchase_order_line(osv.osv):
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
     }
+    
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
     
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,

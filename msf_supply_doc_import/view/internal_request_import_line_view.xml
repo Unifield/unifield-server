@@ -12,8 +12,8 @@
                       <page string="Order Line">
                          <field name="product_id" colspan="4" on_change="requested_product_id_change(product_id, type)" />
                          <field name="product_uom_qty" />
-                         <field name="product_uom" />
-                         <field name="price_unit" />
+                         <field name="product_uom" on_change="onchange_uom(product_id, product_uom)"/>
+                         <field name="price_unit" invisible="1"/>
                          <field name="currency_id" />
                          <field name="date_planned" />
                          <field name="type" on_change="requested_product_id_change(product_id, type)"/>
@@ -125,11 +125,12 @@
                   
                   <newline/>
                   <field name="to_correct_ok" readonly="1" invisible="1"/>
+                  <field name="show_msg_ok" readonly="1" invisible="1"/>
                   <field name="text_error" 
                   nolabel="1" 
                   readonly="1" 
                   colspan="3" 
-                  attrs="{'invisible': [('to_correct_ok', '=', False)]}"/>
+                  attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
                   <newline/>
                   <button 
                   name="save_and_close" 
@@ -167,10 +168,12 @@
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree/field[@name='product_id']" position="before" >
                     <field name="line_number" readonly="1"/>
                 </xpath>
+                <xpath expr="/form//field[@name='product_uom']" position="attributes">
+                    <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+                </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                    <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
-                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Currency*, Comment" align="0.0"/>
+                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Currency*, Comment" align="0.0" invisible="1"/>
                     <field name="file_to_import" colspan="2" />
                     <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1"/>

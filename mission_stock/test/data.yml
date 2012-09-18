@@ -78,7 +78,7 @@
     if user.company_id.instance_id:
         comp_instance = user.company_id.instance_id.id
     else:
-        comp_instance = self.create(cr, uid, {'code': 'Comp Instance', 'name': 'Comp', 'level': 'section', 'cost_center_id': ref('analytic_account_mal')})
+        comp_instance = self.create(cr, uid, {'code': 'Comp Instance', 'name': 'Comp', 'level': 'section', 'cost_center_id': ref('analytic_account_mal'), 'move_prefix': 'COMP', 'reconcile_prefix': 'C1'})
         self.pool.get('res.company').write(cr, uid, [user.company_id.id], {'instance_id': comp_instance})
     self.write(cr, uid, ref('proj1'), {'parent_id': comp_instance})
     self.write(cr, uid, comp_instance, {'state': 'active'})

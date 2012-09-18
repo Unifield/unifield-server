@@ -91,13 +91,15 @@ class procurement_order(osv.osv):
         '''
         if not default:
             default = {}
-        default.update({'so_back_update_dest_po_id_procurement_order': False})
+        default.update({'so_back_update_dest_po_id_procurement_order': False,
+                        'so_back_update_dest_pol_id_procurement_order': False})
         return super(procurement_order, self).copy_data(cr, uid, id, default, context=context)
     
     _columns = {'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_procurement_order': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
+                'so_back_update_dest_pol_id_procurement_order': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
                 }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -487,12 +489,18 @@ class stock_picking(osv.osv):
         """
         Attach an intermission journal to the Intermission Voucher IN/OUT if partner type is intermission from the picking.
         Prepare intermission voucher IN/OUT
+        Change invoice purchase_list field to TRUE if this picking come from a PO which is 'purchase_list'
         """
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')])
         company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
         intermission_default_account = company.intermission_default_counterpart
         for pick in self.browse(cr, uid, [x for x in res]):
+            # Check if PO and PO is purchase_list
+            if pick.purchase_id and pick.purchase_id.order_type and pick.purchase_id.order_type == 'purchase_list':
+                inv_id = res[pick.id]
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'purchase_list': True})
+            # Check intermission
             if pick.partner_id.partner_type == 'intermission':
                 inv_id = res[pick.id]
                 if not intermission_journal_ids:
@@ -1116,6 +1124,7 @@ class stock_location_chained_options(osv.osv):
     }
 
 stock_location_chained_options()
+
 
 class ir_values(osv.osv):
     _name = 'ir.values'

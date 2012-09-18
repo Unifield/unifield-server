@@ -383,8 +383,10 @@ class purchase_order_line(osv.osv):
                 a = line.product_id.product_tmpl_id.property_account_expense.id or False
                 if not a:
                     a = line.product_id.categ_id.property_account_expense_categ.id or False
-            elif is_inkind:
-                a = False # Should be raise an error, but this block view display. So nothing happens.
+##### Line delete because we decided that nomenclature is possible in Inkind donations
+#            elif is_inkind:
+#                a = False # Should be raise an error, but this block view display. So nothing happens.
+##### END of Line delete…
             else:
                 a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_expense_categ and line.nomen_manda_2.category_id.property_account_expense_categ.id or False
             res[line.id] = a

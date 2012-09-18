@@ -796,7 +796,7 @@ class claim_event(osv.osv):
                 replacement_move_values.update({'location_id': context['common']['stock_id'],
                                                 'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id})
             # we copy the event return picking
-            replacement_id = pick_obj.copy(cr, uid, event_picking.id, replacement_values, context=context)
+            replacement_id = pick_obj.copy(cr, uid, event_picking.id, replacement_values, context=dict(context, keepLineNumber=True))
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # get the move values according to claim type

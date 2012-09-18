@@ -76,8 +76,16 @@ class analytic_distribution1(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
+        account = self.pool.get('account.account').browse(cr, uid, account_id)
+        # Check Cost Center lines with destination/account link
+        for cc_line in distrib.cost_center_lines:
+            if cc_line.destination_id.id not in [x.id for x in account.destination_ids]:
+                return 'invalid'
+        # Check Funding pool lines regarding:
+        # - destination / account
+        # - If analytic account is MSF Private funds
+        # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
-            account = self.pool.get('account.account').browse(cr, uid, account_id)
             if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok

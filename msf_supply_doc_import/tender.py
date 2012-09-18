@@ -24,14 +24,19 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from check_line import *
+from msf_supply_doc_import import MAX_LINES_NB
 
 
 class tender(osv.osv):
     _inherit = 'tender'
-
     _columns = {
-        'file_to_import': fields.binary(string='File to import', 
-                                        help='You can use the template of the export for the format that you need to use'),
+        'file_to_import': fields.binary(string='File to import',
+                                        help="""* You can use the template of the export for the format that you need to use.
+                                                * The file should be in XML Spreadsheet 2003 format.
+                                                * You can import up to %s lines each time,
+                                                else you have to split the lines in several files and import each one by one.
+                                                """ % MAX_LINES_NB),
     }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -53,132 +58,99 @@ class tender(osv.osv):
 
     def import_file(self, cr, uid, ids, context=None):
         '''
-        Import lines from file
+        Import lines from Excel file (in xml)
         '''
         if not context:
             context = {}
-
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-
+        tender_line_obj = self.pool.get('tender.line')
+        view_id = obj_data.get_object_reference(cr, uid, 'tender_flow', 'tender_form')[1]
         vals = {}
         vals['tender_line_ids'] = []
-        text_error = ''
-
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-        
+        # check that the max number of lines is not excedeed
+        if check_nb_of_lines(fileobj=fileobj):
+            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
         # iterator on rows
-        reader = fileobj.getRows()
-        
+        rows = fileobj.getRows()
         # ignore the first row
         line_num = 1
-        reader.next()
-        for row in reader:
+        rows.next()
+        to_write = {}
+        for row in rows:
             # default values
-            error_list = []
-            to_correct_ok = False
-            default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
-            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-            product_qty = 1
             nb_lines_error = 0
-            
-            line_num += 1
-            row_len = len(row)
-            if row_len != 6:
-                raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
- Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
-            
-            product_code = row.cells[0].data
-            if not product_code:
-                to_correct_ok = True
-                error_list.append('No Product Description')
-            else:
-                try:
-                    product_code = product_code.strip()
-                    code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                    if not code_ids:
-                        to_correct_ok = True
-                    else:
-                        default_code = code_ids[0]
-                except Exception:
-                     error_list.append('The Product Code has to be a string.')
-                     to_correct_ok = True
-            
-            if not row.cells[2].data :
-                product_qty = 1.0
-                to_correct_ok = True
-                error_list.append('The Product Quantity was not set, we set it to 1 by default.')
-            else:
-                if row.cells[4].type in ['int','float']:
-                    product_qty = row.cells[2].data
-                else:
-                     error_list.append('The Product Quantity was not a number, we set it to 1 by default.')
-                     to_correct_ok = True
-                     product_qty = 1.0
-            
-            p_uom = row.cells[3].data
-            if not p_uom:
-                to_correct_ok = True
-                error_list.append('No product UoM was defined.')
-            else:
-                try:
-                    uom_name = p_uom.strip()
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
-                    if not uom_ids:
-                        to_correct_ok = True
-                        error_list.append('The UOM was not found.')
-                    else:
-                        uom_id = uom_ids[0]
-                except Exception:
-                     error_list.append('The UoM Name has to be a string.')
-                     to_correct_ok = True
-                
             to_write = {
-                'to_correct_ok': to_correct_ok, # the lines with to_correct_ok=True will be red
-                'text_error': '\n'.join(error_list), 
-                'tender_id': obj.id,
-                'product_id': default_code,
-                'product_uom': uom_id,
-                'qty': product_qty,
+                'error_list': [],
+                'warning_list': [],
+                'to_correct_ok': False,
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'product_qty': 1,
             }
-            
-            vals['tender_line_ids'].append((0, 0, to_write))
-            
+            line_num += 1
+            col_count = len(row)
+            if col_count != 6:
+                raise osv.except_osv(_('Error'), _(""" Tenders should have exactly 6 columns in this order:
+Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"""))
+            try:
+                if not check_empty_line(row=row, col_count=col_count):
+                    continue
+                # for each cell we check the value
+                # Cell 0: Product Code
+                p_value = {}
+                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
+
+                # Cell 2: Quantity
+                qty_value = {}
+                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
+
+                # Cell 3: UoM
+                uom_value = {}
+                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                to_write.update({
+                    'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+                    'text_error': '\n'.join(to_write['error_list']),
+                    'tender_id': obj.id,
+                })
+                # we check consistency of uom and product values
+                tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                vals['tender_line_ids'].append((0, 0, to_write))
+            except IndexError:
+                print "The line num %s in the Excel file got element outside the defined 6 columns" % line_num
+
         # write tender line on tender
+        context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
-        
-        view_id = obj_data.get_object_reference(cr, uid, 'tender_flow','tender_form')[1]
-        
-        nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True), ('tender_id', '=', ids[0])], context=context)
-        
-        if nb_lines_error:
-            if nb_lines_error > 1:
-                plural = 's have'
-            elif nb_lines_error == 1:
-                plural = ' has'
-            msg_to_return = _("Please correct the red lines below, %s line%s errors ")%(nb_lines_error, plural)
-        else:
-            msg_to_return = _("All lines successfully imported")
-        
-        return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
-        
+        nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True),
+                                                                             ('tender_id', '=', ids[0])], context=context)
+        # log message
+        msg_to_return = get_log_message(to_write=to_write, tender=True, nb_lines_error=nb_lines_error)
+        if msg_to_return:
+            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id})
+        return True
+
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
         for var in self.browse(cr, uid, ids, context=context):
             if var.tender_line_ids:
                 for var in var.tender_line_ids:
                     if var.to_correct_ok:
                         raise osv.except_osv(_('Warning !'), _('You still have lines to correct: check the red lines'))
         return True
-        
+
 tender()
+
 
 class tender_line(osv.osv):
     '''
@@ -191,27 +163,83 @@ class tender_line(osv.osv):
         'text_error': fields.text('Errors'),
     }
 
+    def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
+        context = kwargs['context']
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        # we take the values that we are going to write in SO line in "to_write"
+        to_write = kwargs['to_write']
+        text_error = to_write['text_error']
+        product_id = to_write['product_id']
+        uom_id = to_write['product_uom']
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+            if product.uom_id.category_id.id != uom.category_id.id:
+                # this is inspired by onchange_uom in specific_rules>specific_rules.py
+                text_error += """The product UOM must be in the same category than the UOM of the product.
+The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
+                """ % (product.uom_id.category_id.name, uom.category_id.name)
+                return to_write.update({'text_error': text_error,
+                                        'to_correct_ok': True})
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
+            # we take the default uom of the product
+            product_uom = product.uom_id.id
+            return to_write.update({'product_uom': product_uom})
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+            # this is inspired by the on_change in purchase>purchase.py: product_uom_change
+            text_error += "\n The UoM was not defined so we set the price unit to 0.0."
+            return to_write.update({'text_error': text_error,
+                                    'to_correct_ok': True,
+                                    'price_unit': 0.0, })
+
+    def onchange_uom(self, cr, uid, ids, product_id, product_uom, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        warning = {}
+        if product_uom and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, product_uom, context=context)
+            if product.uom_id.category_id.id != uom.category_id.id:
+                warning = {'title': 'Wrong Product UOM !',
+                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product"}
+        return {'warning': warning}
+
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        uom_obj = self.pool.get('product.uom')
-        obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-        tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
-        message = ''
-        
-        if vals.get('product_uom'):
-            if vals.get('product_uom') == tbd_uom:
-                message += 'You have to define a valid UOM, i.e. not "To be define".'
-        if vals.get('product_id'):
-            if vals.get('product_id') == tbd_product:
-                message += 'You have to define a valid product, i.e. not "To be define".'
-        if message:
-            raise osv.except_osv(_('Warning !'), _(message))
-        else:
-            vals['to_correct_ok'] = False
-            vals['text_error'] = False
-        
+        if context is None:
+            context = {}
+        if not context.get('import_in_progress') and not context.get('button'):
+            obj_data = self.pool.get('ir.model.data')
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            message = ''
+            if vals.get('product_uom'):
+                if vals.get('product_uom') == tbd_uom:
+                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if vals.get('product_id'):
+                if vals.get('product_id') == tbd_product:
+                    message += 'You have to define a valid product, i.e. not "To be define".'
+            if vals.get('product_uom') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+            else:
+                vals['to_correct_ok'] = False
+                vals['text_error'] = False
         return super(tender_line, self).write(cr, uid, ids, vals, context=context)
 
 tender_line()

@@ -37,7 +37,7 @@
                             <separator colspan="4" string="Dates" />
                             <group colspan="2" col="3">
 	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}"
-	                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)" />
+	                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent"
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
@@ -55,6 +55,11 @@
                             <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
                         </group>
                     </xpath>
+                    
+					<!-- Improve functionalities of onchange_order_type -->
+					<xpath expr="/form//field[@name='order_type']" position="replace">
+					    <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id,delivery_requested_date)" />
+					</xpath>
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">

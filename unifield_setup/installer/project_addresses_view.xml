@@ -32,7 +32,7 @@
     	              			<notebook>
         	          				<page string="Default address">
 					                    <field name="company_id" invisible="1"/>
-					                    <field name="name" required="True"/>
+					                    <field name="name" readonly="1"/>
 				    	                <field name="website"/>
 				        	            <field name="street" required="True"/>
 				            	        <field name="street2"/>

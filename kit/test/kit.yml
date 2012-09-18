@@ -314,6 +314,11 @@
     c = res['context']
     context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
+  I update mandatory locations - 
+-
+  !python {model: substitute}: |
+    self.write(cr, uid, context['wizard']['ids'], {'destination_location_id': ref("stock.stock_location_stock")}, context=context)
+-
   I complete the lot name for the product C
 -
   !python {model: substitute.item.mirror}: |
@@ -344,7 +349,26 @@
               'uom_id_substitute_item': ref("product.product_uom_unit"),
               'lot_id_substitute_item': ref("kit_lot_Cs"),
               }
-    self.create(cr, uid, values, context=context)
+    item_id = self.create(cr, uid, values, context=context)
+    assert self.browse(cr, uid, item_id, context=context).exp_substitute_item, 'expiried date has not been completed by create function'
+-
+  I create an inventory to enter this product into the stock
+-
+  !record {model: stock.inventory, id: inventory_kit_01}:
+    name: Kit inventory
+    date: !eval time.strftime('%Y-%m-%d')
+    inventory_line_id:
+      - location_id: stock.stock_location_stock
+        product_uom: product.product_uom_unit
+        product_id: kit_product_C
+        product_qty: 100
+        prod_lot_id: kit_lot_Cs
+-
+  I confirm the inventory
+-
+  !python {model: stock.inventory}: |
+    self.action_confirm(cr, uid, [ref('inventory_kit_01')], context=context)
+    self.action_done(cr, uid, [ref('inventory_kit_01')], context=context)
 -
   I test the on_change functions for substitute.item - type check is 'out' for standard substitute.item (products come from the stock)
 -
@@ -364,6 +388,13 @@
     id = res['res_id']
     c = res['context']
     context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check that the kit items have been updated
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_04")], context=context):
+      for item in obj.composition_item_ids:
+        assert item.item_exp, 'expiry date is missing for item %s'%item.name
 -
   I compute the date from the items, check it, confirm it - the date must now come from the substitute product from stock - 2012-12-24
 -

@@ -88,7 +88,7 @@ class account_move(osv.osv):
         journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'])
         sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id)
         if instance and journal and sequence_number:
-            vals['name'] = instance.move_prefix + "-" + journal.code + "-" + sequence_number
+            vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
         return super(account_move, self).create(cr, uid, vals, context=context)
     
     def name_get(self, cursor, user, ids, context=None):
